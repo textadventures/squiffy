@@ -10,3 +10,11 @@ a.squiffy-link.disabled
     color: inherit !important;
     cursor: inherit;
 }
+div#squiffy-output
+{
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+    font-family: Georgia, serif;
+    font-size: 18px;
+}
