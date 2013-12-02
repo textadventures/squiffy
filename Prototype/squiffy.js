@@ -41,6 +41,7 @@ var squiffy = {
 	ui: {
 		sectionCount: 0,
 		currentSection: null,
+		screenIsClear: true,
 		newSection: function() {
 			if (squiffy.ui.currentSection) {
 				$(".squiffy-link", squiffy.ui.currentSection).addClass("disabled");
@@ -51,7 +52,15 @@ var squiffy = {
 		    }).appendTo("#squiffy-output");
 		},
 		write: function(text) {
-			squiffy.ui.currentSection.append(text);
+			if (!squiffy.ui.screenIsClear) {
+				squiffy.ui.currentSection.append("<hr/>");
+			}
+			squiffy.ui.screenIsClear = false;
+			squiffy.ui.currentSection.append($("<div/>").html(text));
+		},
+		clearScreen: function() {
+			$("#squiffy-output").html("");
+			squiffy.ui.screenIsClear = true;
 		}
 	}
 };
