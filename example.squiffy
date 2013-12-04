@@ -1,6 +1,16 @@
-Squiffy Test
-============
+[[Introduction]]:
+# Squiffy Test
+This is [a website link](http://textadventures.co.uk).
 
-This doesn't really *do* anything yet...
+This should be a [a link to a passage](passage). Here's [another one](passage2).
 
-This is [a link](http://textadventures.co.uk).
+And this goes to the [[next section]](section2).
+
+[passage]:
+Here's some text for the passage.
+
+[passage2]:
+This is the text for the second passage.
+
+[[section2]]:
+This is the next section.
