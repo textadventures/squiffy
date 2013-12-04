@@ -67,6 +67,22 @@ def process_text(input):
     #   closing bracket
     named_passage_link_regex = re.compile(r"\[(.*?)\]\(((?!https?://).*?)\)")
     input = named_passage_link_regex.sub(r"<a class='squiffy-link' data-passage='\2'>\1</a>", input)
+
+    # unnamed_section_link_regex matches:
+    #   open [[
+    #   any text - the link text
+    #   closing ]]
+    unnamed_section_link_regex = re.compile(r"\[\[(.*?)\]\]")
+    input = unnamed_section_link_regex.sub(r"<a class='squiffy-link' data-section='\1'>\1</a>", input)
+
+    # unnamed_passage_link_regex matches:
+    #   open [
+    #   any text - the link text
+    #   closing ]
+    #   no bracket after
+    unnamed_passage_link_regex = re.compile(r"\[(.*?)\]([^\(])")
+    input = unnamed_passage_link_regex.sub(r"<a class='squiffy-link' data-passage='\1'>\1</a>\2", input)
+
     return markdown.markdown(input)
 
 class Story:
