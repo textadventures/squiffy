@@ -1,9 +1,10 @@
 import sys
 import re
 from collections import OrderedDict
+import json
 import markdown
 
-def process(input_filename, output_filename):
+def process(input_filename):
     input_file = open(input_filename)
     input_data = input_file.read()
     input_lines = input_data.splitlines()
@@ -31,20 +32,27 @@ def process(input_filename, output_filename):
             else:
                 passage.addText(line)
 
-    output_data = []
+    output_data = OrderedDict()
+    js_template_file = open("squiffy.template.js")
+    js_data = js_template_file.read()
 
     for section_name in story.sections:
         section = story.sections[section_name]
-        output_data.append("<h2>Section: " + section_name + "</h2>\n")
-        output_data.append(process_text("\n".join(section.text)))
+        output_data[section_name] = OrderedDict()
+        output_data[section_name]["text"] = process_text("\n".join(section.text))
+        output_data[section_name]["passages"] = OrderedDict()
 
         for passage_name in section.passages:
             passage = section.passages[passage_name]
-            output_data.append("<h3>Passage: " + passage_name + "</h2>\n")
-            output_data.append(process_text("\n".join(passage.text)))
+            output_data[section_name]["passages"][passage_name] = OrderedDict()
+            output_data[section_name]["passages"][passage_name]["text"] = process_text("\n".join(passage.text))
 
-    output_file = open(output_filename, 'w')
-    output_file.write("\n".join(output_data))
+    output_file = open("story.js", 'w')
+    output_file.write(js_data)
+    output_file.write("\n\n")
+    output_file.write("squiffy.story.start = \"" + list(story.sections.keys())[0] + "\";\n")
+    output_file.write("squiffy.story.sections = ")
+    output_file.write(json.dumps(output_data, indent=4))
     print("Done.")
 
 def process_text(input):
@@ -116,6 +124,6 @@ class Passage:
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
-        print("Syntax: input.squiffy output.html")
+        print("Syntax: input.squiffy")
     else:
-        process(sys.argv[1], sys.argv[2])
+        process(sys.argv[1])
