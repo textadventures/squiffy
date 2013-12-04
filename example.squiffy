@@ -2,7 +2,9 @@
 # Squiffy Test
 This is [a website link](http://textadventures.co.uk).
 
-This should be a [a link to a passage](passage). Here's [another one](passage2).
+This should be [a link to a passage](passage). Here's [another one](passage2).
+
+You don't need to specify a name - for example, this [link] and this [[section]].
 
 And this goes to the [[next section]](section2).
 
@@ -12,5 +14,11 @@ Here's some text for the passage.
 [passage2]:
 This is the text for the second passage.
 
+[link]:
+Here is the text for the simple link.
+
 [[section2]]:
 This is the next section.
+
+[[section]]:
+This is another section.

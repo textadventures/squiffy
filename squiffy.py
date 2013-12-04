@@ -21,7 +21,6 @@ def process(input_filename, output_filename):
         section_match = section_regex.match(line)
         passage_match = passage_regex.match(line)
         if section_match:
-            oldsection = section
             section = story.addSection(section_match.group(1))
             passage = None
         elif passage_match:
@@ -37,16 +36,38 @@ def process(input_filename, output_filename):
     for section_name in story.sections:
         section = story.sections[section_name]
         output_data.append("<h2>Section: " + section_name + "</h2>\n")
-        output_data.append(markdown.markdown("\n".join(section.text)))
+        output_data.append(process_text("\n".join(section.text)))
 
         for passage_name in section.passages:
             passage = section.passages[passage_name]
             output_data.append("<h3>Passage: " + passage_name + "</h2>\n")
-            output_data.append(markdown.markdown("\n".join(passage.text)))
+            output_data.append(process_text("\n".join(passage.text)))
 
     output_file = open(output_filename, 'w')
     output_file.write("\n".join(output_data))
     print("Done.")
+
+def process_text(input):
+    # named_section_link_regex matches:
+    #   open [[
+    #   any text - the link text
+    #   closing ]]
+    #   open bracket
+    #   any text - the name of the section
+    #   closing bracket
+    named_section_link_regex = re.compile(r"\[\[(.*?)\]\]\((.*?)\)")
+    input = named_section_link_regex.sub(r"<a class='squiffy-link' data-section='\2'>\1</a>", input)
+
+    # named_passage_link_regex matches:
+    #   open [
+    #   any text - the link text
+    #   closing ]
+    #   open bracket, but not http(s):// after it
+    #   any text - the name of the passage
+    #   closing bracket
+    named_passage_link_regex = re.compile(r"\[(.*?)\]\(((?!https?://).*?)\)")
+    input = named_passage_link_regex.sub(r"<a class='squiffy-link' data-passage='\2'>\1</a>", input)
+    return markdown.markdown(input)
 
 class Story:
     def __init__(self):
