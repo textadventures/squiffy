@@ -1,3 +1,4 @@
+import os
 import sys
 import re
 from collections import OrderedDict
@@ -5,6 +6,9 @@ import json
 import markdown
 
 def process(input_filename):
+    if not os.path.exists("output"):
+        os.makedirs("output")
+
     input_file = open(input_filename)
     input_data = input_file.read()
     input_lines = input_data.splitlines()
@@ -33,8 +37,7 @@ def process(input_filename):
                 passage.addText(line)
 
     output_data = OrderedDict()
-    js_template_file = open("squiffy.template.js")
-    js_data = js_template_file.read()
+    
 
     for section_name in story.sections:
         section = story.sections[section_name]
@@ -47,12 +50,25 @@ def process(input_filename):
             output_data[section_name]["passages"][passage_name] = OrderedDict()
             output_data[section_name]["passages"][passage_name]["text"] = process_text("\n".join(passage.text))
 
-    output_file = open("story.js", 'w')
-    output_file.write(js_data)
-    output_file.write("\n\n")
-    output_file.write("squiffy.story.start = \"" + list(story.sections.keys())[0] + "\";\n")
-    output_file.write("squiffy.story.sections = ")
-    output_file.write(json.dumps(output_data, indent=4))
+    js_template_file = open("squiffy.template.js")
+    js_data = js_template_file.read()
+    output_js_file = open(os.path.join("output", "story.js"), 'w')
+    output_js_file.write(js_data)
+    output_js_file.write("\n\n")
+    output_js_file.write("squiffy.story.start = \"" + list(story.sections.keys())[0] + "\";\n")
+    output_js_file.write("squiffy.story.sections = ")
+    output_js_file.write(json.dumps(output_data, indent=4))
+
+    html_template_file = open("index.template.html")
+    html_data = html_template_file.read()
+    output_html_file = open(os.path.join("output", "index.html"), 'w')
+    output_html_file.write(html_data)
+
+    css_template_file = open("style.template.css")
+    css_data = css_template_file.read()
+    output_css_file = open(os.path.join("output", "style.css"), 'w')
+    output_css_file.write(css_data)
+
     print("Done.")
 
 def process_text(input):
