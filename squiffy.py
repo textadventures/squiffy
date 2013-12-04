@@ -16,28 +16,34 @@ def process(input_filename):
 
     section_regex = re.compile(r"^\[\[(.*)\]\]:$")
     passage_regex = re.compile(r"^\[(.*)\]:$")
+    title_regex = re.compile(r"@title (.*)")
 
     story = Story()
     section = None
     passage = None
 
     for line in input_lines:
+        stripline = line.strip()
         c += 1
-        section_match = section_regex.match(line)
-        passage_match = passage_regex.match(line)
+        section_match = section_regex.match(stripline)
+        passage_match = passage_regex.match(stripline)
+        title_match = title_regex.match(stripline)
         if section_match:
             section = story.addSection(section_match.group(1))
             passage = None
         elif passage_match:
             passage = section.addPassage(passage_match.group(1))
+        elif title_match:
+            story.title = title_match.group(1)
         else:
             if passage is None:
+                if section is None:
+                    continue
                 section.addText(line)
             else:
                 passage.addText(line)
 
     output_data = OrderedDict()
-    
 
     for section_name in story.sections:
         section = story.sections[section_name]
@@ -61,6 +67,7 @@ def process(input_filename):
 
     html_template_file = open("index.template.html")
     html_data = html_template_file.read()
+    html_data = html_data.replace("<title></title>", "<title>" + story.title + "</title>")
     output_html_file = open(os.path.join("output", "index.html"), 'w')
     output_html_file.write(html_data)
 
@@ -112,6 +119,7 @@ def process_text(input):
 class Story:
     def __init__(self):
         self.sections = OrderedDict()
+        self.title = ""
 
     def addSection(self, name):
         section = Section()
