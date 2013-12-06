@@ -14,12 +14,17 @@ And this goes to the [[next section]](section2).
 Here's some text for the passage.
 
 [passage2]:
+	alert ("This passage has some JavaScript");
+
 This is the text for the second passage.
 
 [link]:
 Here is the text for the simple link.
 
 [[section2]]:
+
+	alert ("This section has some JavaScript");
+
 This is the next section.
 
 [[section]]:

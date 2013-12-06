@@ -17,10 +17,12 @@ def process(input_filename):
     section_regex = re.compile(r"^\[\[(.*)\]\]:$")
     passage_regex = re.compile(r"^\[(.*)\]:$")
     title_regex = re.compile(r"@title (.*)")
+    js_regex = re.compile(r"^(\t| {4})(.*)")
 
     story = Story()
     section = None
     passage = None
+    text_started = False
 
     for line in input_lines:
         stripline = line.strip()
@@ -28,33 +30,32 @@ def process(input_filename):
         section_match = section_regex.match(stripline)
         passage_match = passage_regex.match(stripline)
         title_match = title_regex.match(stripline)
+        js_match = js_regex.match(line)
         if section_match:
             section = story.addSection(section_match.group(1))
             passage = None
+            text_started = False
         elif passage_match:
             passage = section.addPassage(passage_match.group(1))
+            text_started = False
         elif title_match:
             story.title = title_match.group(1)
+        elif not text_started and js_match:
+            if passage is None:
+                section.addJS(js_match.group(2))
+            else:
+                passage.addJS(js_match.group(2))
         else:
+            if not text_started and len(stripline) == 0:
+                continue
             if passage is None:
                 if section is None:
                     continue
                 section.addText(line)
+                text_started = True
             else:
                 passage.addText(line)
-
-    output_data = OrderedDict()
-
-    for section_name in story.sections:
-        section = story.sections[section_name]
-        output_data[section_name] = OrderedDict()
-        output_data[section_name]["text"] = process_text("\n".join(section.text))
-        output_data[section_name]["passages"] = OrderedDict()
-
-        for passage_name in section.passages:
-            passage = section.passages[passage_name]
-            output_data[section_name]["passages"][passage_name] = OrderedDict()
-            output_data[section_name]["passages"][passage_name]["text"] = process_text("\n".join(passage.text))
+                text_started = True
 
     js_template_file = open("squiffy.template.js")
     js_data = js_template_file.read()
@@ -62,8 +63,32 @@ def process(input_filename):
     output_js_file.write(js_data)
     output_js_file.write("\n\n")
     output_js_file.write("squiffy.story.start = \"" + list(story.sections.keys())[0] + "\";\n")
-    output_js_file.write("squiffy.story.sections = ")
-    output_js_file.write(json.dumps(output_data, indent=4))
+    output_js_file.write("squiffy.story.sections = {\n")
+
+    for section_name in story.sections:
+        section = story.sections[section_name]
+
+        output_js_file.write("\t\"{0}\": {{\n".format(section_name))
+        output_js_file.write("\t\t\"text\": {0},\n".format(json.dumps(process_text("\n".join(section.text)))))
+        if len(section.js) > 0:
+            write_js(output_js_file, 2, section.js)
+
+        if len(section.passages) > 0:
+            output_js_file.write("\t\t\"passages\": {{\n".format(json.dumps(process_text("\n".join(section.text)))))
+            for passage_name in section.passages:
+                passage = section.passages[passage_name]
+
+                output_js_file.write("\t\t\t\"{0}\": {{\n".format(passage_name))
+                output_js_file.write("\t\t\t\t\"text\": {0},\n".format(json.dumps(process_text("\n".join(passage.text)))))
+                if len(passage.js) > 0:
+                    write_js(output_js_file, 4, passage.js)
+                output_js_file.write("\t\t\t},\n")
+
+            output_js_file.write("\t\t},\n")
+
+        output_js_file.write("\t},\n")
+
+    output_js_file.write("}\n")
 
     html_template_file = open("index.template.html")
     html_data = html_template_file.read()
@@ -116,6 +141,13 @@ def process_text(input):
 
     return markdown.markdown(input)
 
+def write_js(output_js_file, tab_count, js):
+    tabs = "\t" * tab_count
+    output_js_file.write("{0}\"js\": function() {{\n".format(tabs))
+    for js_line in js:
+        output_js_file.write("{0}\t{1}\n".format(tabs, js_line))
+    output_js_file.write("{0}}},\n".format(tabs))
+
 class Story:
     def __init__(self):
         self.sections = OrderedDict()
@@ -130,6 +162,7 @@ class Section:
     def __init__(self):
         self.text = []
         self.passages = OrderedDict()
+        self.js = []
 
     def addPassage(self, name):
         passage = Passage()
@@ -139,12 +172,19 @@ class Section:
     def addText(self, text):
         self.text.append(text)
 
+    def addJS(self, text):
+        self.js.append(text)
+
 class Passage:
     def __init__(self):
         self.text = []
+        self.js = []
 
     def addText(self, text):
         self.text.append(text)
+
+    def addJS(self, text):
+        self.js.append(text)
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
