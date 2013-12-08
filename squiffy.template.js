@@ -5,7 +5,7 @@ var squiffy = {
 				if ($(this).hasClass("disabled")) return;
 				var passage = $(this).data("passage");
 				if (passage) {
-					squiffy.ui.write(squiffy.story.section.passages[passage].text);
+					squiffy.story.passage(passage);
 					$(this).addClass("disabled");
 					return;
 				}
@@ -20,8 +20,18 @@ var squiffy = {
 		go: function(section) {
 			squiffy.ui.newSection();
 			squiffy.story.section = squiffy.story.sections[section];
+			if (squiffy.story.section.js) {
+				squiffy.story.section.js();
+			}
 			squiffy.ui.write(squiffy.story.section.text);
 		},
+		passage: function(passageName) {
+			var passage = squiffy.story.section.passages[passageName];
+			if (passage.js) {
+				passage.js();
+			}
+			squiffy.ui.write(passage.text);
+		}
 	},
 	ui: {
 		sectionCount: 0,
