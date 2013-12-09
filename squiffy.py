@@ -9,7 +9,7 @@ def process(input_filename, source_path):
     output_path = os.path.abspath(os.path.dirname(input_filename))
     
     story = Story()
-    process_file(story, input_filename, True)
+    process_file(story, os.path.abspath(input_filename), True)
 
     js_template_file = open(os.path.join(source_path, "squiffy.template.js"))
     js_data = js_template_file.read()
@@ -63,7 +63,7 @@ def process(input_filename, source_path):
     print("Done.")
 
 def process_file(story, input_filename, is_first):
-    print ("Loading " + os.path.abspath(input_filename))
+    print ("Loading " + input_filename)
     input_file = open(input_filename)
     line_count = 0
 
@@ -87,11 +87,11 @@ def process_file(story, input_filename, is_first):
         passage_match = passage_regex.match(stripline)
         js_match = js_regex.match(line)
         if section_match:
-            section = story.addSection(section_match.group(1))
+            section = story.addSection(section_match.group(1), input_filename, line_count)
             passage = None
             text_started = False
         elif passage_match:
-            passage = section.addPassage(passage_match.group(1))
+            passage = section.addPassage(passage_match.group(1), line_count)
             text_started = False
         elif stripline.startswith("@"):
             title_match = title_regex.match(stripline)
@@ -117,7 +117,7 @@ def process_file(story, input_filename, is_first):
                 continue
             if passage is None:
                 if section is None and is_first:
-                        section = story.addSection("_default")
+                        section = story.addSection("_default", input_filename, line_count)
                 if not section is None:
                     section.addText(line)
                     text_started = True
@@ -189,10 +189,13 @@ def check_passage_links(story, links, section, passage):
 
 def show_bad_links_warning(bad_links, link_to, before, after, section, passage):
     for bad_link in bad_links:
-        warning = "In section \"{0}\"".format(section.name)
-        if not passage is None:
-            warning += " (passage \"{0}\")".format(passage.name)
-        print("  WARNING: {0} there is a link to a {1} called {2}{3}{4}, which doesn't exist".format(warning, link_to, before, bad_link, after))
+        
+        if passage is None:
+            warning = "{0} line {1}: In section \"{2}\"".format(section.filename, section.line, section.name)
+        else:
+            warning = "{0} line {1}: In section \"{2}\", passage \"{3}\"".format(
+                section.filename, passage.line, section.name, passage.name)
+        print("WARNING: {0} there is a link to a {1} called {2}{3}{4}, which doesn't exist".format(warning, link_to, before, bad_link, after))
 
 def write_js(output_js_file, tab_count, js):
     tabs = "\t" * tab_count
@@ -207,20 +210,22 @@ class Story:
         self.title = ""
         self.scripts = []
 
-    def addSection(self, name):
-        section = Section(name)
+    def addSection(self, name, filename, line):
+        section = Section(name, filename, line)
         self.sections[name] = section
         return section
 
 class Section:
-    def __init__(self, name):
+    def __init__(self, name, filename, line):
         self.name = name
+        self.filename = filename
+        self.line = line
         self.text = []
         self.passages = OrderedDict()
         self.js = []
 
-    def addPassage(self, name):
-        passage = Passage(name)
+    def addPassage(self, name, line):
+        passage = Passage(name, line)
         self.passages[name] = passage
         return passage
 
@@ -231,8 +236,9 @@ class Section:
         self.js.append(text)
 
 class Passage:
-    def __init__(self, name):
+    def __init__(self, name, line):
         self.name = name
+        self.line = line
         self.text = []
         self.js = []
 

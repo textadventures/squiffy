@@ -19,3 +19,5 @@ This [other link](badpassage2) doesn't exist.
 [passage]:
 
 This exists. But it has a link to a [non-existent passage].
+
+@import warnings2.squiffy
