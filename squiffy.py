@@ -24,17 +24,17 @@ def process(input_filename, source_path):
         section = story.sections[section_name]
 
         output_js_file.write("\t\"{0}\": {{\n".format(section_name))
-        output_js_file.write("\t\t\"text\": {0},\n".format(json.dumps(process_text("\n".join(section.text)))))
+        output_js_file.write("\t\t\"text\": {0},\n".format(json.dumps(process_text("\n".join(section.text), story, section, None))))
         if len(section.js) > 0:
             write_js(output_js_file, 2, section.js)
 
         if len(section.passages) > 0:
-            output_js_file.write("\t\t\"passages\": {{\n".format(json.dumps(process_text("\n".join(section.text)))))
+            output_js_file.write("\t\t\"passages\": {{\n")
             for passage_name in section.passages:
                 passage = section.passages[passage_name]
 
                 output_js_file.write("\t\t\t\"{0}\": {{\n".format(passage_name))
-                output_js_file.write("\t\t\t\t\"text\": {0},\n".format(json.dumps(process_text("\n".join(passage.text)))))
+                output_js_file.write("\t\t\t\t\"text\": {0},\n".format(json.dumps(process_text("\n".join(passage.text), story, section, passage))))
                 if len(passage.js) > 0:
                     write_js(output_js_file, 4, passage.js)
                 output_js_file.write("\t\t\t},\n")
@@ -125,7 +125,7 @@ def process_file(story, input_filename, is_first):
                 passage.addText(line)
                 text_started = True
 
-def process_text(input):
+def process_text(input, story, section, passage):
     # named_section_link_regex matches:
     #   open [[
     #   any text - the link text
@@ -134,6 +134,10 @@ def process_text(input):
     #   any text - the name of the section
     #   closing bracket
     named_section_link_regex = re.compile(r"\[\[(.*?)\]\]\((.*?)\)")
+
+    links = map(lambda m: m.group(2), named_section_link_regex.finditer(input))
+    check_section_links(story, links, section, passage)
+
     input = named_section_link_regex.sub(r"<a class='squiffy-link' data-section='\2'>\1</a>", input)
 
     # named_passage_link_regex matches:
@@ -144,6 +148,10 @@ def process_text(input):
     #   any text - the name of the passage
     #   closing bracket
     named_passage_link_regex = re.compile(r"\[(.*?)\]\(((?!https?://).*?)\)")
+
+    links = map(lambda m: m.group(2), named_passage_link_regex.finditer(input))
+    check_passage_links(story, links, section, passage)
+
     input = named_passage_link_regex.sub(r"<a class='squiffy-link' data-passage='\2'>\1</a>", input)
 
     # unnamed_section_link_regex matches:
@@ -151,6 +159,10 @@ def process_text(input):
     #   any text - the link text
     #   closing ]]
     unnamed_section_link_regex = re.compile(r"\[\[(.*?)\]\]")
+
+    links = map(lambda m: m.group(1), unnamed_section_link_regex.finditer(input))
+    check_section_links(story, links, section, passage)
+
     input = unnamed_section_link_regex.sub(r"<a class='squiffy-link' data-section='\1'>\1</a>", input)
 
     # unnamed_passage_link_regex matches:
@@ -159,9 +171,28 @@ def process_text(input):
     #   closing ]
     #   no bracket after
     unnamed_passage_link_regex = re.compile(r"\[(.*?)\]([^\(])")
+
+    links = map(lambda m: m.group(1), unnamed_passage_link_regex.finditer(input))
+    check_passage_links(story, links, section, passage)
+
     input = unnamed_passage_link_regex.sub(r"<a class='squiffy-link' data-passage='\1'>\1</a>\2", input)
 
     return markdown.markdown(input)
+
+def check_section_links(story, links, section, passage):
+    bad_links = filter(lambda m: not m in story.sections, links)
+    show_bad_links_warning(bad_links, "section", "[[", "]]", section, passage)
+
+def check_passage_links(story, links, section, passage):
+    bad_links = filter(lambda m: not m in section.passages, links)
+    show_bad_links_warning(bad_links, "passage", "[", "]", section, passage)
+
+def show_bad_links_warning(bad_links, link_to, before, after, section, passage):
+    for bad_link in bad_links:
+        warning = "In section \"{0}\"".format(section.name)
+        if not passage is None:
+            warning += " (passage \"{0}\")".format(passage.name)
+        print("  WARNING: {0} there is a link to a {1} called {2}{3}{4}, which doesn't exist".format(warning, link_to, before, bad_link, after))
 
 def write_js(output_js_file, tab_count, js):
     tabs = "\t" * tab_count
@@ -177,18 +208,19 @@ class Story:
         self.scripts = []
 
     def addSection(self, name):
-        section = Section()
+        section = Section(name)
         self.sections[name] = section
         return section
 
 class Section:
-    def __init__(self):
+    def __init__(self, name):
+        self.name = name
         self.text = []
         self.passages = OrderedDict()
         self.js = []
 
     def addPassage(self, name):
-        passage = Passage()
+        passage = Passage(name)
         self.passages[name] = passage
         return passage
 
@@ -199,7 +231,8 @@ class Section:
         self.js.append(text)
 
 class Passage:
-    def __init__(self):
+    def __init__(self, name):
+        self.name = name
         self.text = []
         self.js = []
 
