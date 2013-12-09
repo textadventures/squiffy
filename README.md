@@ -23,7 +23,9 @@ We can write Hello World with no markup at all:
 
     Hello, World!
     
-But the whole point of using Squiffy is to create interactive stories, so let's add some links. There are two types of text block you can use in Squiffy:
+You can format text using [Markdown](http://daringfireball.net/projects/markdown/syntax), and also use HTML.
+
+To create interactive stories, we'll need to add some links. There are two types of text block you can use in Squiffy:
 
 - **Sections** are the main units of text.
 - **Passages** are smaller units which exist within sections.
@@ -73,3 +75,17 @@ The cover opens up to reveal the pages all glued together, with an empty key-sha
 ```
 
 Passage links can be explored in any order - in the example above, the player might look at the book first, then look at the TV, then open the book. Only after clicking a link the next section will any remaining passage links be deactivated.
+
+JavaScript
+----------
+
+Any section or passage can call some JavaScript when it is displayed. Simply indent with four spaces or a tab, before the text.
+
+```
+Clicking this [link] will show an alert.
+
+[link]
+    alert ("Hello!")
+    
+Text for the passage.
+```
