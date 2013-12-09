@@ -5,7 +5,7 @@ Squiffy is a tool for creating interactive fiction.
 
 This Github project is for the Squiffy compiler. It reads in a Squiffy script file, and outputs HTML, CSS and JavaScript.
 
-The Squiffy compiler has been tested with Python 2.7 and Python 3.3.
+The Squiffy compiler has been tested with Python 2.7 and Python 3.3. To run it you will need to install the [Markdown package](https://pypi.python.org/pypi/Markdown).
 
 Using Squiffy
 -------------
@@ -56,7 +56,10 @@ Passages
 
 To link to a passage, use single square brackets.
 
-    Looking around the room, you can see a [TV], a [book] and a piece of [paper] with some handwriting scribbled on it.
+```
+Looking around the room, you can see a [TV], a [book] and a piece
+of [paper] with some handwriting scribbled on it.
+```
     
 Set up a passage using single square brackets, followed by a colon. Passages can link to further passages. After the player clicks a link to a passage, that link is deactivated, so the player can only click it once.
 
