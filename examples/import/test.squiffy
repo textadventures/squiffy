@@ -1,0 +1,5 @@
+Text from file 1.
+
+[[Go to file 2]](file2)
+
+@import file2.squiffy

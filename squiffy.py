@@ -6,57 +6,14 @@ import json
 import markdown
 
 def process(input_filename, source_path):
-    input_file = open(input_filename)
     output_path = os.path.abspath(os.path.dirname(input_filename))
-    input_data = input_file.read()
-    input_lines = input_data.splitlines()
-    c = 0
-
-    section_regex = re.compile(r"^\[\[(.*)\]\]:$")
-    passage_regex = re.compile(r"^\[(.*)\]:$")
-    title_regex = re.compile(r"@title (.*)")
-    js_regex = re.compile(r"^(\t| {4})(.*)")
-
+    
     story = Story()
-    section = None
-    passage = None
-    text_started = False
-
-    for line in input_lines:
-        stripline = line.strip()
-        c += 1
-        section_match = section_regex.match(stripline)
-        passage_match = passage_regex.match(stripline)
-        title_match = title_regex.match(stripline)
-        js_match = js_regex.match(line)
-        if section_match:
-            section = story.addSection(section_match.group(1))
-            passage = None
-            text_started = False
-        elif passage_match:
-            passage = section.addPassage(passage_match.group(1))
-            text_started = False
-        elif title_match:
-            story.title = title_match.group(1)
-        elif not text_started and js_match:
-            if passage is None:
-                section.addJS(js_match.group(2))
-            else:
-                passage.addJS(js_match.group(2))
-        else:
-            if not text_started and len(stripline) == 0:
-                continue
-            if passage is None:
-                if section is None:
-                    section = story.addSection("_default")
-                section.addText(line)
-                text_started = True
-            else:
-                passage.addText(line)
-                text_started = True
+    process_file(story, input_filename, True)
 
     js_template_file = open(os.path.join(source_path, "squiffy.template.js"))
     js_data = js_template_file.read()
+    print ("Writing story.js")
     output_js_file = open(os.path.join(output_path, "story.js"), 'w')
     output_js_file.write(js_data)
     output_js_file.write("\n\n")
@@ -91,15 +48,76 @@ def process(input_filename, source_path):
     html_template_file = open(os.path.join(source_path, "index.template.html"))
     html_data = html_template_file.read()
     html_data = html_data.replace("<title></title>", "<title>" + story.title + "</title>")
+    print ("Writing index.html")
     output_html_file = open(os.path.join(output_path, "index.html"), 'w')
     output_html_file.write(html_data)
 
     css_template_file = open(os.path.join(source_path, "style.template.css"))
     css_data = css_template_file.read()
+    print ("Writing style.css")
     output_css_file = open(os.path.join(output_path, "style.css"), 'w')
     output_css_file.write(css_data)
 
     print("Done.")
+
+def process_file(story, input_filename, is_first):
+    print ("Loading " + os.path.abspath(input_filename))
+    input_file = open(input_filename)
+    line_count = 0
+
+    section_regex = re.compile(r"^\[\[(.*)\]\]:$")
+    passage_regex = re.compile(r"^\[(.*)\]:$")
+    title_regex = re.compile(r"@title (.*)")
+    import_regex = re.compile(r"@import (.*)")
+    js_regex = re.compile(r"^(\t| {4})(.*)")
+
+    section = None
+    passage = None
+    text_started = False
+
+    input_data = input_file.read()
+    input_lines = input_data.splitlines()
+
+    for line in input_lines:
+        stripline = line.strip()
+        line_count += 1
+        section_match = section_regex.match(stripline)
+        passage_match = passage_regex.match(stripline)
+        js_match = js_regex.match(line)
+        if section_match:
+            section = story.addSection(section_match.group(1))
+            passage = None
+            text_started = False
+        elif passage_match:
+            passage = section.addPassage(passage_match.group(1))
+            text_started = False
+        elif stripline.startswith("@"):
+            title_match = title_regex.match(stripline)
+            import_match = import_regex.match(stripline)
+            if title_match:
+                story.title = title_match.group(1)
+            if import_match:
+                base_path = os.path.abspath(os.path.dirname(input_filename))
+                new_filename = os.path.join(base_path, import_match.group(1))
+                process_file(story, new_filename, False)
+                
+        elif not text_started and js_match:
+            if passage is None:
+                section.addJS(js_match.group(2))
+            else:
+                passage.addJS(js_match.group(2))
+        else:
+            if not text_started and len(stripline) == 0:
+                continue
+            if passage is None:
+                if section is None and is_first:
+                        section = story.addSection("_default")
+                if not section is None:
+                    section.addText(line)
+                    text_started = True
+            else:
+                passage.addText(line)
+                text_started = True
 
 def process_text(input):
     # named_section_link_regex matches:
