@@ -5,10 +5,7 @@ from collections import OrderedDict
 import json
 import markdown
 
-def process(input_filename):
-    if not os.path.exists("output"):
-        os.makedirs("output")
-
+def process(input_filename, source_path):
     input_file = open(input_filename)
     input_data = input_file.read()
     input_lines = input_data.splitlines()
@@ -57,9 +54,9 @@ def process(input_filename):
                 passage.addText(line)
                 text_started = True
 
-    js_template_file = open("squiffy.template.js")
+    js_template_file = open(os.path.join(source_path, "squiffy.template.js"))
     js_data = js_template_file.read()
-    output_js_file = open(os.path.join("output", "story.js"), 'w')
+    output_js_file = open("story.js", 'w')
     output_js_file.write(js_data)
     output_js_file.write("\n\n")
     output_js_file.write("squiffy.story.start = \"" + list(story.sections.keys())[0] + "\";\n")
@@ -90,15 +87,15 @@ def process(input_filename):
 
     output_js_file.write("}\n")
 
-    html_template_file = open("index.template.html")
+    html_template_file = open(os.path.join(source_path, "index.template.html"))
     html_data = html_template_file.read()
     html_data = html_data.replace("<title></title>", "<title>" + story.title + "</title>")
-    output_html_file = open(os.path.join("output", "index.html"), 'w')
+    output_html_file = open("index.html", 'w')
     output_html_file.write(html_data)
 
-    css_template_file = open("style.template.css")
+    css_template_file = open(os.path.join(source_path, "style.template.css"))
     css_data = css_template_file.read()
-    output_css_file = open(os.path.join("output", "style.css"), 'w')
+    output_css_file = open("style.css", 'w')
     output_css_file.write(css_data)
 
     print("Done.")
@@ -190,4 +187,4 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Syntax: input.squiffy")
     else:
-        process(sys.argv[1])
+        process(sys.argv[1], os.path.abspath(os.path.dirname(sys.argv[0])))
