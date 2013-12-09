@@ -89,3 +89,14 @@ Clicking this [link] will show an alert.
     
 Text for the passage.
 ```
+
+Importing files
+---------------
+
+You can split your script up into multiple files and import them:
+
+    @import other_file.squiffy
+    
+You can also use the same syntax to import external JavaScript files:
+
+    @import my_script.js
