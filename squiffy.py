@@ -47,7 +47,9 @@ def process(input_filename, source_path):
 
     html_template_file = open(os.path.join(source_path, "index.template.html"))
     html_data = html_template_file.read()
-    html_data = html_data.replace("<title></title>", "<title>" + story.title + "</title>")
+    html_data = html_data.replace("<!-- TITLE -->", story.title)
+    script_data = "\n".join(map(lambda script: "<script src=\"{0}\"></script>".format(script), story.scripts))
+    html_data = html_data.replace("<!-- SCRIPTS -->", script_data)
     print ("Writing index.html")
     output_html_file = open(os.path.join(output_path, "index.html"), 'w')
     output_html_file.write(html_data)
@@ -97,9 +99,13 @@ def process_file(story, input_filename, is_first):
             if title_match:
                 story.title = title_match.group(1)
             if import_match:
-                base_path = os.path.abspath(os.path.dirname(input_filename))
-                new_filename = os.path.join(base_path, import_match.group(1))
-                process_file(story, new_filename, False)
+                import_filename = import_match.group(1)
+                if import_filename.endswith(".squiffy"):
+                    base_path = os.path.abspath(os.path.dirname(input_filename))
+                    new_filename = os.path.join(base_path, import_filename)
+                    process_file(story, new_filename, False)
+                elif import_filename.endswith(".js"):
+                    story.scripts.append(import_filename)
                 
         elif not text_started and js_match:
             if passage is None:
@@ -168,6 +174,7 @@ class Story:
     def __init__(self):
         self.sections = OrderedDict()
         self.title = ""
+        self.scripts = []
 
     def addSection(self, name):
         section = Section()
