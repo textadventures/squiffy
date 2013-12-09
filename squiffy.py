@@ -7,6 +7,7 @@ import markdown
 
 def process(input_filename, source_path):
     input_file = open(input_filename)
+    output_path = os.path.abspath(os.path.dirname(input_filename))
     input_data = input_file.read()
     input_lines = input_data.splitlines()
     c = 0
@@ -56,7 +57,7 @@ def process(input_filename, source_path):
 
     js_template_file = open(os.path.join(source_path, "squiffy.template.js"))
     js_data = js_template_file.read()
-    output_js_file = open("story.js", 'w')
+    output_js_file = open(os.path.join(output_path, "story.js"), 'w')
     output_js_file.write(js_data)
     output_js_file.write("\n\n")
     output_js_file.write("squiffy.story.start = \"" + list(story.sections.keys())[0] + "\";\n")
@@ -90,12 +91,12 @@ def process(input_filename, source_path):
     html_template_file = open(os.path.join(source_path, "index.template.html"))
     html_data = html_template_file.read()
     html_data = html_data.replace("<title></title>", "<title>" + story.title + "</title>")
-    output_html_file = open("index.html", 'w')
+    output_html_file = open(os.path.join(output_path, "index.html"), 'w')
     output_html_file.write(html_data)
 
     css_template_file = open(os.path.join(source_path, "style.template.css"))
     css_data = css_template_file.read()
-    output_css_file = open("style.css", 'w')
+    output_css_file = open(os.path.join(output_path, "style.css"), 'w')
     output_css_file.write(css_data)
 
     print("Done.")
