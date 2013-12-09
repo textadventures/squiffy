@@ -47,7 +47,7 @@ def process(input_filename, source_path):
                 continue
             if passage is None:
                 if section is None:
-                    continue
+                    section = story.addSection("_default")
                 section.addText(line)
                 text_started = True
             else:
