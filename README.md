@@ -74,7 +74,7 @@ The cover opens up to reveal the pages all glued together, with an empty key-sha
 "Gone out for a walk. May be a while."
 ```
 
-Passage links can be explored in any order - in the example above, the player might look at the book first, then look at the TV, then open the book. Only after clicking a link the next section will any remaining passage links be deactivated.
+Passage links can be explored in any order - in the example above, the player might look at the book first, then look at the TV, then open the book. Only after clicking a link to another section will any remaining passage links be deactivated.
 
 JavaScript
 ----------
