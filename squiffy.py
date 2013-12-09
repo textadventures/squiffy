@@ -29,7 +29,7 @@ def process(input_filename, source_path):
             write_js(output_js_file, 2, section.js)
 
         if len(section.passages) > 0:
-            output_js_file.write("\t\t\"passages\": {{\n")
+            output_js_file.write("\t\t\"passages\": {\n")
             for passage_name in section.passages:
                 passage = section.passages[passage_name]
 
