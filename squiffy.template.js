@@ -20,6 +20,7 @@ var squiffy = {
 		go: function(section) {
 			squiffy.ui.newSection();
 			squiffy.story.section = squiffy.story.sections[section];
+			if (!squiffy.story.section) return;
 			if (squiffy.story.section.js) {
 				squiffy.story.section.js();
 			}
@@ -27,6 +28,7 @@ var squiffy = {
 		},
 		passage: function(passageName) {
 			var passage = squiffy.story.section.passages[passageName];
+			if (!passage) return;
 			if (passage.js) {
 				passage.js();
 			}
