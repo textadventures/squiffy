@@ -7,6 +7,8 @@ This Github project is for the Squiffy compiler. It reads in a Squiffy script fi
 
 The Squiffy compiler has been tested with Python 2.7 and Python 3.3. To run it you will need to install the [Markdown package](https://pypi.python.org/pypi/Markdown).
 
+Squiffy is under development. A binary release of the compiler will be made available for Windows and Mac OS X. There will eventually be a web-based editor too. The aim is to create a lightweight and flexible tool for interactive stories that lets you simply sit down and write.
+
 Using Squiffy
 -------------
 
