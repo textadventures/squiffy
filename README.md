@@ -53,6 +53,8 @@ This plate of roast chicken looks delicious.
 Three different flavours of ice cream - yum!
 ```
 
+Section names must be unique within a story.
+
 Passages
 --------
 
@@ -80,6 +82,8 @@ The cover opens up to reveal the pages all glued together, with an empty key-sha
 ```
 
 Passage links can be explored in any order - in the example above, the player might look at the book first, then look at the TV, then open the book. Only after clicking a link to another section will any remaining passage links be deactivated.
+
+Passage names must be unique within their section.
 
 JavaScript
 ----------
