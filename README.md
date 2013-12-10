@@ -90,6 +90,7 @@ Any section or passage can call some JavaScript when it is displayed. Simply ind
 Clicking this [link] will show an alert.
 
 [link]:
+
     alert ("Hello!")
     
 Text for the passage.
