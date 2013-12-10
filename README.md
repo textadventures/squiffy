@@ -66,16 +66,16 @@ of [paper] with some handwriting scribbled on it.
 Set up a passage using single square brackets, followed by a colon. Passages can link to further passages. After the player clicks a link to a passage, that link is deactivated, so the player can only click it once.
 
 ```
-[TV]
+[TV]:
 Covered in dust and the plug is missing.
 
-[book]
+[book]:
 It's a book of magic tricks. Maybe you should [open] it?
 
-[open]
+[open]:
 The cover opens up to reveal the pages all glued together, with an empty key-shaped hole cut out.
 
-[paper]
+[paper]:
 "Gone out for a walk. May be a while."
 ```
 
@@ -89,7 +89,7 @@ Any section or passage can call some JavaScript when it is displayed. Simply ind
 ```
 Clicking this [link] will show an alert.
 
-[link]
+[link]:
     alert ("Hello!")
     
 Text for the passage.
