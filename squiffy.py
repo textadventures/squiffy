@@ -9,7 +9,11 @@ def process(input_filename, source_path):
     output_path = os.path.abspath(os.path.dirname(input_filename))
     
     story = Story()
-    process_file(story, os.path.abspath(input_filename), True)
+    success = process_file(story, os.path.abspath(input_filename), True)
+
+    if not success:
+        print ("Failed.")
+        return
 
     js_template_file = open(os.path.join(source_path, "squiffy.template.js"))
     js_data = js_template_file.read()
@@ -91,6 +95,10 @@ def process_file(story, input_filename, is_first):
             passage = None
             text_started = False
         elif passage_match:
+            if section is None:
+                print("ERROR: {0} line {1}: Can't add passage '{2}' as no section has been created.".format(
+                    input_filename, line_count, passage_match.group(1)))
+                return False
             passage = section.addPassage(passage_match.group(1), line_count)
             text_started = False
         elif stripline.startswith("@"):
@@ -103,7 +111,9 @@ def process_file(story, input_filename, is_first):
                 if import_filename.endswith(".squiffy"):
                     base_path = os.path.abspath(os.path.dirname(input_filename))
                     new_filename = os.path.join(base_path, import_filename)
-                    process_file(story, new_filename, False)
+                    success = process_file(story, new_filename, False)
+                    if not success:
+                        return False
                 elif import_filename.endswith(".js"):
                     story.scripts.append(import_filename)
                 
@@ -124,6 +134,8 @@ def process_file(story, input_filename, is_first):
             else:
                 passage.addText(line)
                 text_started = True
+
+    return True
 
 def process_text(input, story, section, passage):
     # named_section_link_regex matches:
