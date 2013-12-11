@@ -1,0 +1,41 @@
+After clicking two links in this section, an additional passage will be displayed.
+
+[One], [two], [three], [four].
+
+[One]:
+First passage.
+
+[two]:
+Second passage.
+
+[three]:
+Third passage.
+
+[four]:
+Fourth passage.
+
+[@2]:
+This is some extra text to appear after the second click. The [[next section]] is also good.
+
+[[next section]]:
+In this section, you can only click one link, and then you'll be taken to the final section.
+
+[One], [two], [three], [four].
+
+[One]:
+First passage.
+
+[two]:
+Second passage.
+
+[three]:
+Third passage.
+
+[four]:
+Fourth passage.
+
+[@1]:
+	squiffy.story.go("final section");
+
+[[final section]]:
+**THE END**

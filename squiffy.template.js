@@ -3,9 +3,15 @@ var squiffy = {
 		begin: function () {
 			$(document).on("click", "a.squiffy-link", function (event) {
 				if ($(this).hasClass("disabled")) return;
+				squiffy.ui.currentSection.append("<hr/>");
 				var passage = $(this).data("passage");
 				if (passage) {
+					squiffy.story.section.turncount++;
 					squiffy.story.passage(passage);
+					var turnPassage = "@" + squiffy.story.section.turncount;
+					if (turnPassage in squiffy.story.section.passages) {
+						squiffy.story.passage(turnPassage);
+					}
 					$(this).addClass("disabled");
 					return;
 				}
@@ -24,7 +30,8 @@ var squiffy = {
 			if (squiffy.story.section.js) {
 				squiffy.story.section.js();
 			}
-			squiffy.ui.write(squiffy.story.section.text);
+			squiffy.story.section.turncount = 0;
+			squiffy.ui.write(squiffy.story.section.text, true);
 		},
 		passage: function(passageName) {
 			var passage = squiffy.story.section.passages[passageName];
@@ -50,9 +57,6 @@ var squiffy = {
 		    }).appendTo("#squiffy-output");
 		},
 		write: function(text) {
-			if (!squiffy.ui.screenIsClear) {
-				squiffy.ui.currentSection.append("<hr/>");
-			}
 			squiffy.ui.screenIsClear = false;
 			squiffy.ui.scrollPosition = $("#squiffy-output").height();
 			squiffy.ui.currentSection.append($("<div/>").html(text));
