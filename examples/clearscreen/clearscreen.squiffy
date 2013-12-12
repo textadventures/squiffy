@@ -1,0 +1,15 @@
+[This link](one) doesn't clear the screen. But [this link](two) does.
+
+[one]:
+This text is on the same screen.
+
+[two]:
+@clear
+This text is on a new screen. This [[section]](same page) will be on the same screen, and this [[section]](clear section) clears the screen.
+
+[[same page]]:
+This section is on the same screen.
+
+[[clear section]]:
+@clear
+Another new page.

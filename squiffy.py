@@ -28,6 +28,8 @@ def process(input_filename, source_path):
         section = story.sections[section_name]
 
         output_js_file.write("\t\"{0}\": {{\n".format(section_name))
+        if section.clear:
+            output_js_file.write("\t\t\"clear\": true,\n".format(section_name))
         output_js_file.write("\t\t\"text\": {0},\n".format(json.dumps(process_text("\n".join(section.text), story, section, None))))
         if len(section.js) > 0:
             write_js(output_js_file, 2, section.js)
@@ -38,6 +40,8 @@ def process(input_filename, source_path):
                 passage = section.passages[passage_name]
 
                 output_js_file.write("\t\t\t\"{0}\": {{\n".format(passage_name))
+                if passage.clear:
+                    output_js_file.write("\t\t\t\t\"clear\": true,\n".format(section_name))
                 output_js_file.write("\t\t\t\t\"text\": {0},\n".format(json.dumps(process_text("\n".join(passage.text), story, section, passage))))
                 if len(passage.js) > 0:
                     write_js(output_js_file, 4, passage.js)
@@ -104,7 +108,14 @@ def process_file(story, input_filename, is_first):
         elif stripline.startswith("@"):
             title_match = title_regex.match(stripline)
             import_match = import_regex.match(stripline)
-            if title_match:
+            if stripline == "@clear":
+                if passage is None:
+                    if section is None and is_first:
+                        section = story.addSection("_default", input_filename, line_count)
+                    section.clear = True
+                else:
+                    passage.clear = True
+            elif title_match:
                 story.title = title_match.group(1)
             if import_match:
                 import_filename = import_match.group(1)
@@ -235,6 +246,7 @@ class Section:
         self.text = []
         self.passages = OrderedDict()
         self.js = []
+        self.clear = False
 
     def addPassage(self, name, line):
         passage = Passage(name, line)
@@ -253,6 +265,7 @@ class Passage:
         self.line = line
         self.text = []
         self.js = []
+        self.clear = False
 
     def addText(self, text):
         self.text.append(text)

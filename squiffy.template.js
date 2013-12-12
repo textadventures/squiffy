@@ -27,6 +27,9 @@ var squiffy = {
 			squiffy.ui.newSection();
 			squiffy.story.section = squiffy.story.sections[section];
 			if (!squiffy.story.section) return;
+			if (squiffy.story.section.clear) {
+				squiffy.ui.clearScreen();
+			}
 			if (squiffy.story.section.js) {
 				squiffy.story.section.js();
 			}
@@ -36,6 +39,9 @@ var squiffy = {
 		passage: function(passageName) {
 			var passage = squiffy.story.section.passages[passageName];
 			if (!passage) return;
+			if (passage.clear) {
+				squiffy.ui.clearScreen();
+			}
 			if (passage.js) {
 				passage.js();
 			}
@@ -65,6 +71,7 @@ var squiffy = {
 		clearScreen: function() {
 			$("#squiffy-output").html("");
 			squiffy.ui.screenIsClear = true;
+			squiffy.ui.newSection();
 		},
 		scrollToEnd: function() {
 		    var scrollTo = squiffy.ui.scrollPosition;
