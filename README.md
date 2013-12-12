@@ -135,3 +135,12 @@ We're nearly here. The train is pulling into the platform.
 
     squiffy.story.go("station");
 ```
+
+Clearing the screen
+-------------------
+
+Any section or passage can clear the screen using @clear on a line on its own:
+
+    [[Chapter 2]]
+    @clear
+    My first reaction to the explosion was...
