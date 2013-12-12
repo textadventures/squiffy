@@ -6,22 +6,21 @@ var squiffy = {
 				squiffy.ui.currentSection.append("<hr/>");
 				var passage = $(this).data("passage");
 				if (passage) {
+					$(this).addClass("disabled");
 					squiffy.set("_turncount", squiffy.getInt("_turncount") + 1);
 					squiffy.story.passage(passage);
 					var turnPassage = "@" + squiffy.get("_turncount");
 					if (turnPassage in squiffy.story.section.passages) {
 						squiffy.story.passage(turnPassage);
 					}
-					$(this).addClass("disabled");
 				}
 				else {
 					var section = $(this).data("section");
 					if (section) {
-						squiffy.story.go(section);
 						$(this).addClass("disabled");
+						squiffy.story.go(section);
 					}
 				}
-				squiffy.story.save();
 			});
 			$("#squiffy-restart").click(function (){
 				if (confirm("Are you sure you want to restart?")) {
@@ -45,6 +44,7 @@ var squiffy = {
 			}
 			squiffy.set("_turncount", 0);
 			squiffy.ui.write(squiffy.story.section.text, true);
+			squiffy.story.save();
 		},
 		passage: function(passageName) {
 			var passage = squiffy.story.section.passages[passageName];
@@ -56,6 +56,7 @@ var squiffy = {
 				passage.js();
 			}
 			squiffy.ui.write(passage.text);
+			squiffy.story.save();
 		},
 		restart: function() {
 			localStorage.clear();
@@ -136,14 +137,6 @@ var squiffy = {
 		}
 	}
 };
-
-$.extend($.easing,
-{
-	easeInOutQuad: function (x, t, b, c, d) {
-		if ((t/=d/2) < 1) return c/2*t*t + b;
-		return -c/2 * ((--t)*(t-2) - 1) + b;
-	}
-});
 
 $(function(){
 	squiffy.story.begin();
