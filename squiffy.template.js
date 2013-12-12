@@ -6,39 +6,44 @@ var squiffy = {
 				squiffy.ui.currentSection.append("<hr/>");
 				var passage = $(this).data("passage");
 				if (passage) {
-					squiffy.story.section.turncount++;
+					squiffy.set("_turncount", squiffy.getInt("_turncount") + 1);
 					squiffy.story.passage(passage);
-					var turnPassage = "@" + squiffy.story.section.turncount;
+					var turnPassage = "@" + squiffy.get("_turncount");
 					if (turnPassage in squiffy.story.section.passages) {
 						squiffy.story.passage(turnPassage);
 					}
 					$(this).addClass("disabled");
-					return;
 				}
-				var section = $(this).data("section");
-				if (section) {
-					squiffy.story.go(section);
-					$(this).addClass("disabled");
+				else {
+					var section = $(this).data("section");
+					if (section) {
+						squiffy.story.go(section);
+						$(this).addClass("disabled");
+					}
 				}
+				squiffy.story.save();
 			});
 			$("#squiffy-restart").click(function (){
 				if (confirm("Are you sure you want to restart?")) {
 					squiffy.story.restart();
 				}
 			});
-			squiffy.story.go(squiffy.story.start);
+			if (!squiffy.story.load()) {
+				squiffy.story.go(squiffy.story.start);
+			}
 		},
 		go: function(section) {
 			squiffy.ui.newSection();
 			squiffy.story.section = squiffy.story.sections[section];
 			if (!squiffy.story.section) return;
+			squiffy.set("_section", section);
 			if (squiffy.story.section.clear) {
 				squiffy.ui.clearScreen();
 			}
 			if (squiffy.story.section.js) {
 				squiffy.story.section.js();
 			}
-			squiffy.story.section.turncount = 0;
+			squiffy.set("_turncount", 0);
 			squiffy.ui.write(squiffy.story.section.text, true);
 		},
 		passage: function(passageName) {
@@ -53,7 +58,19 @@ var squiffy = {
 			squiffy.ui.write(passage.text);
 		},
 		restart: function() {
+			localStorage.clear();
 			location.reload();
+		},
+		save: function() {
+			squiffy.set("_output", $("#squiffy-output").html());
+		},
+		load: function() {
+			var output = squiffy.get("_output");
+			if (!output) return false;
+			$("#squiffy-output").html(output);
+			squiffy.ui.currentSection = $("#" + squiffy.get("_output-section"));
+			squiffy.story.section = squiffy.story.sections[squiffy.get("_section")];
+			return true;
 		}
 	},
 	ui: {
@@ -65,10 +82,13 @@ var squiffy = {
 			if (squiffy.ui.currentSection) {
 				$(".squiffy-link", squiffy.ui.currentSection).addClass("disabled");
 			}
-			var id = "squiffy-section-" + squiffy.ui.sectionCount++;
+			var sectionCount = squiffy.getInt("_section-count") + 1;
+			squiffy.set("_section-count", sectionCount);
+			var id = "squiffy-section-" + sectionCount;
 			squiffy.ui.currentSection = $("<div/>", {
 		        id: id,
 		    }).appendTo("#squiffy-output");
+		    squiffy.set("_output-section", id);
 		},
 		write: function(text) {
 			squiffy.ui.screenIsClear = false;
@@ -90,6 +110,28 @@ var squiffy = {
 		        var distance = scrollTo - currentScrollTop;
 		        var duration = distance / 0.5;
 		        $("body,html").stop().animate({ scrollTop: scrollTo }, duration, "easeInOutQuad");
+		    }
+		}
+	},
+	set: function(attribute, value) {
+		if (!squiffy.util.isStorageSupported()) return;
+		localStorage[attribute] = value;
+	},
+	get: function(attribute) {
+		if (!squiffy.util.isStorageSupported()) return null;
+		return localStorage[attribute];
+	},
+	getInt: function(attribute) {
+		var result = squiffy.get(attribute);
+		if (!result) return 0;
+		return parseInt(result);
+	},
+	util: {
+		isStorageSupported: function() {
+			try {
+		        return 'localStorage' in window && window['localStorage'] !== null;
+		    } catch(e) {
+		        return false;
 		    }
 		}
 	}
