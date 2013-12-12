@@ -3,7 +3,7 @@ Squiffy
 
 Squiffy is a tool for creating interactive fiction.
 
-This Github project is for the Squiffy compiler. It reads in a Squiffy script file, and outputs HTML, CSS and JavaScript.
+This Github project is for the Squiffy compiler. It reads in a Squiffy script file, and outputs HTML, CSS and JavaScript. A player's game state is saved automatically to Local Storage.
 
 The Squiffy compiler has been tested with Python 2.7 and Python 3.3. To run it you will need to install the [Markdown package](https://pypi.python.org/pypi/Markdown).
 
