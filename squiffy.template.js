@@ -21,6 +21,11 @@ var squiffy = {
 					$(this).addClass("disabled");
 				}
 			});
+			$("#squiffy-restart").click(function (){
+				if (confirm("Are you sure you want to restart?")) {
+					squiffy.story.restart();
+				}
+			});
 			squiffy.story.go(squiffy.story.start);
 		},
 		go: function(section) {
@@ -46,6 +51,9 @@ var squiffy = {
 				passage.js();
 			}
 			squiffy.ui.write(passage.text);
+		},
+		restart: function() {
+			location.reload();
 		}
 	},
 	ui: {
