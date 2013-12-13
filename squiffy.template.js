@@ -42,9 +42,12 @@ var squiffy = {
 			if (squiffy.story.section.js) {
 				squiffy.story.section.js();
 			}
-			squiffy.set("_turncount", 0);
-			squiffy.ui.write(squiffy.story.section.text, true);
-			squiffy.story.save();
+			// The JS might have changed which section we're in
+			if (squiffy.get("_section") == section) {
+				squiffy.set("_turncount", 0);
+				squiffy.ui.write(squiffy.story.section.text, true);
+				squiffy.story.save();
+			}
 		},
 		passage: function(passageName) {
 			var passage = squiffy.story.section.passages[passageName];
