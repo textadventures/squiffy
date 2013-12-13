@@ -55,6 +55,10 @@ Three different flavours of ice cream - yum!
 
 Section names must be unique within a story.
 
+To use different link text, put the name of the section in brackets afterwards.
+
+    This is [[how to use custom link text]](section2).
+
 Passages
 --------
 
@@ -84,6 +88,10 @@ The cover opens up to reveal the pages all glued together, with an empty key-sha
 Passage links can be explored in any order - in the example above, the player might look at the book first, then look at the TV, then open the book. Only after clicking a link to another section will any remaining passage links be deactivated.
 
 Passage names must be unique within their section.
+
+To use different link text, put the name of the passage in brackets afterwards.
+
+    This is [how to use custom link text](passage1).
 
 JavaScript
 ----------
