@@ -7,7 +7,7 @@ var squiffy = {
 				var passage = $(this).data("passage");
 				if (passage) {
 					$(this).addClass("disabled");
-					squiffy.set("_turncount", squiffy.getInt("_turncount") + 1);
+					squiffy.set("_turncount", squiffy.get("_turncount") + 1);
 					squiffy.story.passage(passage);
 					var turnPassage = "@" + squiffy.get("_turncount");
 					if (turnPassage in squiffy.story.section.passages) {
@@ -83,7 +83,7 @@ var squiffy = {
 			if (squiffy.ui.currentSection) {
 				$(".squiffy-link", squiffy.ui.currentSection).addClass("disabled");
 			}
-			var sectionCount = squiffy.getInt("_section-count") + 1;
+			var sectionCount = squiffy.get("_section-count") + 1;
 			squiffy.set("_section-count", sectionCount);
 			var id = "squiffy-section-" + sectionCount;
 			squiffy.ui.currentSection = $("<div/>", {
@@ -116,16 +116,13 @@ var squiffy = {
 	},
 	set: function(attribute, value) {
 		if (!squiffy.util.isStorageSupported()) return;
-		localStorage[attribute] = value;
+		localStorage[attribute] = JSON.stringify(value);
 	},
 	get: function(attribute) {
 		if (!squiffy.util.isStorageSupported()) return null;
-		return localStorage[attribute];
-	},
-	getInt: function(attribute) {
-		var result = squiffy.get(attribute);
-		if (!result) return 0;
-		return parseInt(result);
+		var result = localStorage[attribute];
+		if (!result) return null;
+		return JSON.parse(result);
 	},
 	util: {
 		isStorageSupported: function() {
