@@ -1,0 +1,15 @@
+Choose a gender:
+
+* [[Male]]
+* [[Female]]
+
+[[Male]]:
+	squiffy.set("gender", "male");
+	squiffy.story.go("Chosen");
+
+[[Female]]:
+	squiffy.set("gender", "female");
+	squiffy.story.go("Chosen");
+
+[[Chosen]]:
+You chose {gender}.
