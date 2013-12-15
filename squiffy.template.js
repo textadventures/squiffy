@@ -173,6 +173,7 @@ var squiffy = {
 	},
 	set: function(attribute, value) {
 		if (!squiffy.util.isStorageSupported()) return;
+		if (typeof value === 'undefined') value = true;
 		localStorage[attribute] = JSON.stringify(value);
 	},
 	get: function(attribute) {
