@@ -203,11 +203,11 @@ def process_text(input, story, section, passage):
     return markdown.markdown(input)
 
 def check_section_links(story, links, section, passage):
-    bad_links = filter(lambda m: not m in story.sections, links)
+    bad_links = filter(lambda m: not m.split(",")[0] in story.sections, links)
     show_bad_links_warning(bad_links, "section", "[[", "]]", section, passage)
 
 def check_passage_links(story, links, section, passage):
-    bad_links = filter(lambda m: not m in section.passages, links)
+    bad_links = filter(lambda m: not m.split(",")[0] in section.passages, links)
     show_bad_links_warning(bad_links, "passage", "[", "]", section, passage)
 
 def show_bad_links_warning(bad_links, link_to, before, after, section, passage):

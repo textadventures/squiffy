@@ -8,6 +8,7 @@ var squiffy = {
 				if (passage) {
 					$(this).addClass("disabled");
 					squiffy.set("_turncount", squiffy.get("_turncount") + 1);
+					passage = squiffy.story.processLink(passage);
 					squiffy.story.passage(passage);
 					var turnPassage = "@" + squiffy.get("_turncount");
 					if (turnPassage in squiffy.story.section.passages) {
@@ -18,6 +19,7 @@ var squiffy = {
 					var section = $(this).data("section");
 					if (section) {
 						$(this).addClass("disabled");
+						section = squiffy.story.processLink(section);
 						squiffy.story.go(section);
 					}
 				}
@@ -30,6 +32,25 @@ var squiffy = {
 			if (!squiffy.story.load()) {
 				squiffy.story.go(squiffy.story.start);
 			}
+		},
+		processLink: function(link) {
+			var sections = link.split(",");
+			var target = sections.shift();
+			var regex = /([\w]*)=(.*)/;
+			sections.forEach(function (section){
+				var match = regex.exec(section);
+				if (match) {
+					var lhs = match[1];
+					var rhs = match[2];
+					if (isNaN(rhs)) {
+						squiffy.set(lhs, rhs);
+					}
+					else {
+						squiffy.set(lhs, parseFloat(rhs));
+					}
+				}
+			});
+			return target;
 		},
 		go: function(section) {
 			squiffy.ui.newSection();
