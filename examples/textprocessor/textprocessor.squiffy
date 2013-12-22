@@ -15,4 +15,4 @@ Choose a gender:
 You chose {gender}.
 
 {if gender=male:You are a man.}
-{if gender=female:You are a woman.}
+{else:You are a woman.}

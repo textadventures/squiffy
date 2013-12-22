@@ -165,6 +165,9 @@ var squiffy = {
 				if (squiffy.util.startsWith(text, "if ")) {
 					return processTextCommand_If(text, data);
 				}
+				else if (squiffy.util.startsWith(text, "else:")) {
+					return processTextCommand_Else(text, data);
+				}
 				var attributeName = text;
 				return squiffy.get(attributeName);
 			}
@@ -208,10 +211,16 @@ var squiffy = {
 					result = (value == checkValue);
 				}
 
-				if (result) {
-					return process(text, data);
-				}
-				return "";
+				var textResult = result ? process(text, data) : "";
+
+				data.lastIf = result;
+				return textResult;
+			}
+
+			function processTextCommand_Else(section, data) {
+				if (!('lastIf' in data) || data.lastIf) return "";
+				var text = section.substring(5);
+				return process(text, data);
 			}
 
 			var data = {
