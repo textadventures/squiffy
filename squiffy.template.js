@@ -162,7 +162,8 @@ var squiffy = {
 			}
 
 			function processTextCommand(text, data) {
-				return "--(" + text + ")--";
+				var attributeName = text;
+				return squiffy.get(attributeName);
 			}
 
 			var data = {
