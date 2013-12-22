@@ -162,8 +162,56 @@ var squiffy = {
 			}
 
 			function processTextCommand(text, data) {
+				if (squiffy.util.startsWith(text, "if ")) {
+					return processTextCommand_If(text, data);
+				}
 				var attributeName = text;
 				return squiffy.get(attributeName);
+			}
+
+			function processTextCommand_If(section, data) {
+				var command = section.substring(3);
+				var colon = command.indexOf(":");
+				if (colon == -1) {
+					return ("{if " + command + "}");
+				}
+
+				var text = command.substring(colon + 1);
+				var condition = command.substring(0, colon);
+
+				var operatorRegex = /([\w ]*)(=|&lt;=|&gt;=|&lt;&gt;|&lt;|&gt;)(.*)/;
+				var match = operatorRegex.exec(condition);
+
+				var result = false;
+
+				if (match) {
+					var lhs = squiffy.get(match[1]);
+					var op = match[2];
+					var rhs = match[3];
+
+					if (op == "=" && lhs == rhs) result = true;
+					if (op == "&lt;&gt;" && lhs != rhs) result = true;
+					if (op == "&gt;" && lhs > rhs) result = true;
+					if (op == "&lt;" && lhs < rhs) result = true;
+					if (op == "&gt;=" && lhs >= rhs) result = true;
+					if (op == "&lt;=" && lhs <= rhs) result = true;
+				}
+				else {
+					var checkValue = true;
+					if (squiffy.util.startsWith(condition, "not ")) {
+						condition = condition.substring(4);
+						checkValue = false;
+					}
+
+					var value = squiffy.get(condition);
+					if (value === null)	value = false;
+					result = (value == checkValue);
+				}
+
+				if (result) {
+					return process(text, data);
+				}
+				return "";
 			}
 
 			var data = {
@@ -190,6 +238,9 @@ var squiffy = {
 			} catch(e) {
 				return false;
 			}
+		},
+		startsWith: function(string, prefix) {
+			return string.substring(0, prefix.length) === prefix;
 		}
 	}
 };

@@ -13,3 +13,6 @@ Choose a gender:
 
 [[Chosen]]:
 You chose {gender}.
+
+{if gender=male:You are a man.}
+{if gender=female:You are a woman.}
