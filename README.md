@@ -152,3 +152,42 @@ Any section or passage can clear the screen using @clear on a line on its own:
     [[Chapter 2]]
     @clear
     My first reaction to the explosion was...
+
+Setting attributes
+------------------
+
+You can set an attribute value from a section or passage link.
+
+```
+Are you [[male]](start, gender=male) or [[female]](start, gender=female)?
+
+[[start]]:
+Your choice has been recorded.
+```
+
+You can also set a value in JavaScript:
+
+```
+    squiffy.set("gender", "female");
+```
+
+Reading attributes
+------------------
+
+You can display the value of an attribute by surrounding it with curly brackets.
+
+```
+You chose {gender}.
+```
+
+You can also read a value using JavaScript:
+
+```
+    var gender = squiffy.get("gender");
+```
+
+You can conditionally display text depending on the value of an attribute using "if" inside curly brackets. You can also use "else":
+
+```
+{if gender=male:You are a man.}{else:You are a woman.}
+```
