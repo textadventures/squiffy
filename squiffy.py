@@ -3,6 +3,7 @@ import sys
 import re
 from collections import OrderedDict
 import json
+import glob
 import markdown
 
 def process(input_filename, source_path):
@@ -77,6 +78,9 @@ def find_file(filename, output_path, source_path):
     return os.path.join(source_path, filename)
 
 def process_file(story, input_filename, is_first):
+    if input_filename in story.files:
+        return True
+    story.files.append(input_filename)
     print ("Loading " + input_filename)
     input_file = open(input_filename)
     line_count = 0
@@ -123,16 +127,17 @@ def process_file(story, input_filename, is_first):
                     passage.clear = True
             elif title_match:
                 story.title = title_match.group(1)
-            if import_match:
-                import_filename = import_match.group(1)
-                if import_filename.endswith(".squiffy"):
-                    base_path = os.path.abspath(os.path.dirname(input_filename))
-                    new_filename = os.path.join(base_path, import_filename)
-                    success = process_file(story, new_filename, False)
-                    if not success:
-                        return False
-                elif import_filename.endswith(".js"):
-                    story.scripts.append(import_filename)
+            elif import_match:
+                base_path = os.path.abspath(os.path.dirname(input_filename))
+                new_filenames = os.path.join(base_path, import_match.group(1))
+                import_filenames = glob.glob(new_filenames)
+                for import_filename in import_filenames:
+                    if import_filename.endswith(".squiffy"):
+                        success = process_file(story, import_filename, False)
+                        if not success:
+                            return False
+                    elif import_filename.endswith(".js"):
+                        story.scripts.append(os.path.relpath(import_filename, base_path))
                 
         elif not text_started and js_match:
             if passage is None:
@@ -238,6 +243,7 @@ class Story:
         self.sections = OrderedDict()
         self.title = ""
         self.scripts = []
+        self.files = []
 
     def addSection(self, name, filename, line):
         section = Section(name, filename, line)
