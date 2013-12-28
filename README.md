@@ -118,6 +118,10 @@ You can split your script up into multiple files and import them:
 You can also use the same syntax to import external JavaScript files:
 
     @import my_script.js
+    
+This syntax also accepts wildcards, so you can include all .squiffy files in a directory:
+
+    @import *.squiffy
 
 Turn counting
 -------------
@@ -191,3 +195,8 @@ You can conditionally display text depending on the value of an attribute using 
 ```
 {if gender=male:You are a man.}{else:You are a woman.}
 ```
+
+Customising HTML and CSS
+------------------------
+
+The index.template.html and story.template.css files are customisable. It is better not to edit the ones in your Squiffy directory - you can copy them to the same directory as your .squiffy story script file, and make edits there instead.
