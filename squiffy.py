@@ -53,7 +53,7 @@ def process(input_filename, source_path):
 
     output_js_file.write("}\n")
 
-    html_template_file = open(os.path.join(source_path, "index.template.html"))
+    html_template_file = open(find_file("index.template.html", output_path, source_path))
     html_data = html_template_file.read()
     html_data = html_data.replace("<!-- TITLE -->", story.title)
     script_data = "\n".join(map(lambda script: "<script src=\"{0}\"></script>".format(script), story.scripts))
@@ -62,13 +62,19 @@ def process(input_filename, source_path):
     output_html_file = open(os.path.join(output_path, "index.html"), 'w')
     output_html_file.write(html_data)
 
-    css_template_file = open(os.path.join(source_path, "style.template.css"))
+    css_template_file = open(find_file("style.template.css", output_path, source_path))
     css_data = css_template_file.read()
     print ("Writing style.css")
     output_css_file = open(os.path.join(output_path, "style.css"), 'w')
     output_css_file.write(css_data)
 
     print("Done.")
+
+def find_file(filename, output_path, source_path):
+    output_path_file = os.path.join(output_path, filename)
+    if os.path.exists(output_path_file):
+        return output_path_file
+    return os.path.join(source_path, filename)
 
 def process_file(story, input_filename, is_first):
     print ("Loading " + input_filename)
