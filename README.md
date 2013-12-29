@@ -200,3 +200,40 @@ Customising HTML and CSS
 ------------------------
 
 The index.template.html and story.template.css files are customisable. It is better not to edit the ones in your Squiffy directory - you can copy them to the same directory as your .squiffy story script file, and make edits there instead.
+
+Embedding text
+--------------
+
+You can embed text from another section, or from a passage in the current section, by surrounding its name with curly brackets.
+
+```
+[[section1]]:
+Here is some text from the next section: {section2}
+
+Here is some text from a passage in this section: {passage}
+
+[passage]:
+Text from passage.
+
+[[section2]]:
+Text from next section.
+```
+
+Tracking which sections and passages have been seen
+---------------------------------------------------
+
+You can tell if the player has seen a passage or section using JavaScript:
+
+    if (squiffy.story.seen("passage3")) alert ("You have seen passage3!");
+    
+You can also conditionally display text:
+
+```
+You can see a [cupboard]. Maybe you should [open] it?
+
+[open]:
+You open the cupboard.
+
+[cupboard]:
+The cupboard is {if seen open:open, and there are empty bottles inside}{else:closed}.
+```
