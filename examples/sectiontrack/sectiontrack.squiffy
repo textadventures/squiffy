@@ -1,0 +1,11 @@
+Choose: [[a]], [[b]], [[c]].
+
+[[a]]:
+Now choose [[b]] or [[c]].
+
+[[b]]:
+Now go to [[c]].
+
+[[c]]:
+{if seen a:You saw A.}{else:You didn't see A.}
+{if not seen b:You didn't see B.}{else:You saw B.}

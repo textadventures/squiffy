@@ -57,6 +57,7 @@ var squiffy = {
 			squiffy.story.section = squiffy.story.sections[section];
 			if (!squiffy.story.section) return;
 			squiffy.set("_section", section);
+			squiffy.story.setSeen(section);
 			if (squiffy.story.section.clear) {
 				squiffy.ui.clearScreen();
 			}
@@ -96,6 +97,19 @@ var squiffy = {
 			squiffy.ui.currentSection = $("#" + squiffy.get("_output-section"));
 			squiffy.story.section = squiffy.story.sections[squiffy.get("_section")];
 			return true;
+		},
+		setSeen: function(sectionName) {
+			var seenSections = squiffy.get("seen_sections");
+			if (!seenSections) seenSections = [];
+			if (seenSections.indexOf(sectionName) == -1) {
+				seenSections.push(sectionName);
+				squiffy.set("seen_sections", seenSections);
+			}
+		},
+		seen: function(sectionName) {
+			var seenSections = squiffy.get("seen_sections");
+			if (!seenSections) return false;
+			return (seenSections.indexOf(sectionName) > -1);
 		}
 	},
 	ui: {
@@ -232,9 +246,14 @@ var squiffy = {
 						checkValue = false;
 					}
 
-					var value = squiffy.get(condition);
-					if (value === null)	value = false;
-					result = (value == checkValue);
+					if (squiffy.util.startsWith(condition, "seen ")) {
+						result = (squiffy.story.seen(condition.substring(5)) == checkValue);
+					}
+					else {
+						var value = squiffy.get(condition);
+						if (value === null)	value = false;
+						result = (value == checkValue);
+					}
 				}
 
 				var textResult = result ? process(text, data) : "";
