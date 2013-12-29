@@ -8,3 +8,14 @@ You chose {gender}.
 
 {if gender=male:You are a man.}
 {else:You are a woman.}
+
+[Next]
+
+[Next]:
+This is a test. {passage} {section}
+
+[passage]:
+Text from passage.
+
+[[section]]:
+Text from section.

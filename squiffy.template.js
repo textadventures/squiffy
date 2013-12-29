@@ -189,8 +189,13 @@ var squiffy = {
 				else if (squiffy.util.startsWith(text, "else:")) {
 					return processTextCommand_Else(text, data);
 				}
-				var attributeName = text;
-				return squiffy.get(attributeName);
+				else if (text in squiffy.story.section.passages) {
+					return process(squiffy.story.section.passages[text].text, data);
+				}
+				else if (text in squiffy.story.sections) {
+					return process(squiffy.story.sections[text].text, data);
+				}
+				return squiffy.get(text);
 			}
 
 			function processTextCommand_If(section, data) {
