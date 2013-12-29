@@ -1,4 +1,7 @@
-Choose: [[a]], [[b]], [[c]].
+Choose: [[a]], [[b]], [[c]]. Or read this [note].
+
+[note]:
+This is a passage.
 
 [[a]]:
 Now choose [[b]] or [[c]].
@@ -9,3 +12,5 @@ Now go to [[c]].
 [[c]]:
 {if seen a:You saw A.}{else:You didn't see A.}
 {if not seen b:You didn't see B.}{else:You saw B.}
+
+{if seen note:You looked at the note.}{else:You didn't look at the note.}

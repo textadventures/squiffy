@@ -74,6 +74,7 @@ var squiffy = {
 		passage: function(passageName) {
 			var passage = squiffy.story.section.passages[passageName];
 			if (!passage) return;
+			squiffy.story.setSeen(passageName);
 			if (passage.clear) {
 				squiffy.ui.clearScreen();
 			}
