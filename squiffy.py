@@ -204,7 +204,7 @@ def process_text(input, story, section, passage):
     #   any text - the link text
     #   closing ]
     #   no bracket after
-    unnamed_passage_link_regex = re.compile(r"\[(.*?)\]([^\(])")
+    unnamed_passage_link_regex = re.compile(r"\[(.*?)\]([^\(]|$)")
 
     links = map(lambda m: m.group(1), unnamed_passage_link_regex.finditer(input))
     check_passage_links(story, links, section, passage)
