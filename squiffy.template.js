@@ -276,24 +276,15 @@ var squiffy = {
 		},
 	},
 	set: function(attribute, value) {
-		if (!squiffy.util.isStorageSupported()) return;
 		if (typeof value === 'undefined') value = true;
 		localStorage[attribute] = JSON.stringify(value);
 	},
 	get: function(attribute) {
-		if (!squiffy.util.isStorageSupported()) return null;
 		var result = localStorage[attribute];
 		if (!result) return null;
 		return JSON.parse(result);
 	},
 	util: {
-		isStorageSupported: function() {
-			try {
-				return 'localStorage' in window && window['localStorage'] !== null;
-			} catch(e) {
-				return false;
-			}
-		},
 		startsWith: function(string, prefix) {
 			return string.substring(0, prefix.length) === prefix;
 		}
