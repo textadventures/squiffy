@@ -100,15 +100,15 @@ var squiffy = {
 			return true;
 		},
 		setSeen: function(sectionName) {
-			var seenSections = squiffy.get("seen_sections");
+			var seenSections = squiffy.get("_seen_sections");
 			if (!seenSections) seenSections = [];
 			if (seenSections.indexOf(sectionName) == -1) {
 				seenSections.push(sectionName);
-				squiffy.set("seen_sections", seenSections);
+				squiffy.set("_seen_sections", seenSections);
 			}
 		},
 		seen: function(sectionName) {
-			var seenSections = squiffy.get("seen_sections");
+			var seenSections = squiffy.get("_seen_sections");
 			if (!seenSections) return false;
 			return (seenSections.indexOf(sectionName) > -1);
 		}
