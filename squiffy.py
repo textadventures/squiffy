@@ -30,7 +30,7 @@ def process(input_filename, source_path):
 
         output_js_file.write("\t\"{0}\": {{\n".format(section_name))
         if section.clear:
-            output_js_file.write("\t\t\"clear\": true,\n".format(section_name))
+            output_js_file.write("\t\t\"clear\": true,\n")
         output_js_file.write("\t\t\"text\": {0},\n".format(json.dumps(process_text("\n".join(section.text), story, section, None))))
         if len(section.js) > 0:
             write_js(output_js_file, 2, section.js)
@@ -42,7 +42,7 @@ def process(input_filename, source_path):
 
                 output_js_file.write("\t\t\t\"{0}\": {{\n".format(passage_name))
                 if passage.clear:
-                    output_js_file.write("\t\t\t\t\"clear\": true,\n".format(section_name))
+                    output_js_file.write("\t\t\t\t\"clear\": true,\n")
                 output_js_file.write("\t\t\t\t\"text\": {0},\n".format(json.dumps(process_text("\n".join(passage.text), story, section, passage))))
                 if len(passage.js) > 0:
                     write_js(output_js_file, 4, passage.js)
