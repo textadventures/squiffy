@@ -5,11 +5,14 @@ from collections import OrderedDict
 import json
 import glob
 import markdown
+import uuid
+import hashlib
 
 def process(input_filename, source_path):
     output_path = os.path.abspath(os.path.dirname(input_filename))
     
     story = Story()
+    story.set_id(os.path.abspath(input_filename))
     success = process_file(story, os.path.abspath(input_filename), True)
 
     if not success:
@@ -23,6 +26,7 @@ def process(input_filename, source_path):
     output_js_file.write(js_data)
     output_js_file.write("\n\n")
     output_js_file.write("squiffy.story.start = \"" + list(story.sections.keys())[0] + "\";\n")
+    output_js_file.write("squiffy.story.id = \"{0}\";\n".format(story.id))
     output_js_file.write("squiffy.story.sections = {\n")
 
     for section_name in story.sections:
@@ -249,6 +253,10 @@ class Story:
         section = Section(name, filename, line)
         self.sections[name] = section
         return section
+
+    def set_id(self, filename):
+        file_id = str(uuid.getnode()) + filename
+        self.id = hashlib.sha1(file_id).hexdigest()[0:10]
 
 class Section:
     def __init__(self, name, filename, line):

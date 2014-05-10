@@ -85,7 +85,12 @@ var squiffy = {
 			squiffy.story.save();
 		},
 		restart: function() {
-			localStorage.clear();
+			var keys = Object.keys(localStorage);
+			$.each(keys, function (idx, key) {
+				if (squiffy.util.startsWith(key, squiffy.story.id)) {
+					localStorage.removeItem(key);
+				}
+			});
 			location.reload();
 		},
 		save: function() {
@@ -277,10 +282,10 @@ var squiffy = {
 	},
 	set: function(attribute, value) {
 		if (typeof value === 'undefined') value = true;
-		localStorage[attribute] = JSON.stringify(value);
+		localStorage[squiffy.story.id + '-' + attribute] = JSON.stringify(value);
 	},
 	get: function(attribute) {
-		var result = localStorage[attribute];
+		var result = localStorage[squiffy.story.id + '-' + attribute];
 		if (!result) return null;
 		return JSON.parse(result);
 	},
