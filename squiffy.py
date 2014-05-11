@@ -38,6 +38,8 @@ def process(input_filename, source_path):
         if section.clear:
             output_js_file.write("\t\t\"clear\": true,\n")
         output_js_file.write("\t\t\"text\": {0},\n".format(json.dumps(process_text("\n".join(section.text), story, section, None))))
+        if len(section.attributes) > 0:
+            output_js_file.write("\t\t\"attributes\": {0},\n".format(json.dumps(section.attributes)))
         if len(section.js) > 0:
             write_js(output_js_file, 2, section.js)
 
@@ -49,6 +51,8 @@ def process(input_filename, source_path):
             if passage.clear:
                 output_js_file.write("\t\t\t\t\"clear\": true,\n")
             output_js_file.write("\t\t\t\t\"text\": {0},\n".format(json.dumps(process_text("\n".join(passage.text), story, section, passage))))
+            if len(passage.attributes) > 0:
+                output_js_file.write("\t\t\t\t\"attributes\": {0},\n".format(json.dumps(passage.attributes)))
             if len(passage.js) > 0:
                 write_js(output_js_file, 4, passage.js)
             output_js_file.write("\t\t\t},\n")
@@ -94,6 +98,7 @@ def process_file(story, input_filename, is_first):
     title_regex = re.compile(r"@title (.*)")
     import_regex = re.compile(r"@import (.*)")
     start_regex = re.compile(r"@start (.*)")
+    attributes_regex = re.compile(r"@set (.*)")
     js_regex = re.compile(r"^(\t| {4})(.*)")
 
     section = None
@@ -124,6 +129,7 @@ def process_file(story, input_filename, is_first):
             title_match = title_regex.match(stripline)
             start_match = start_regex.match(stripline)
             import_match = import_regex.match(stripline)
+            attributes_match = attributes_regex.match(stripline)
             if stripline == "@clear":
                 if passage is None:
                     if section is None and is_first:
@@ -146,6 +152,11 @@ def process_file(story, input_filename, is_first):
                             return False
                     elif import_filename.endswith(".js"):
                         story.scripts.append(os.path.relpath(import_filename, base_path))
+            elif attributes_match:
+                if passage is None:
+                    section.addAttribute(attributes_match.group(1))
+                else:
+                    passage.addAttribute(attributes_match.group(1))
                 
         elif not text_started and js_match:
             if passage is None:
@@ -272,6 +283,7 @@ class Section:
         self.passages = OrderedDict()
         self.js = []
         self.clear = False
+        self.attributes = []
 
     def addPassage(self, name, line):
         passage = Passage(name, line)
@@ -284,6 +296,9 @@ class Section:
     def addJS(self, text):
         self.js.append(text)
 
+    def addAttribute(self, text):
+        self.attributes.append(text)
+
 class Passage:
     def __init__(self, name, line):
         self.name = name
@@ -291,12 +306,16 @@ class Passage:
         self.text = []
         self.js = []
         self.clear = False
+        self.attributes = []
 
     def addText(self, text):
         self.text.append(text)
 
     def addJS(self, text):
         self.js.append(text)
+
+    def addAttribute(self, text):
+        self.attributes.append(text)
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:

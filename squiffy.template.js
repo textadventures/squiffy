@@ -36,21 +36,24 @@ var squiffy = {
 		processLink: function(link) {
 			var sections = link.split(",");
 			var target = sections.shift();
-			var regex = /([\w]*)=(.*)/;
 			sections.forEach(function (section){
-				var match = regex.exec(section);
-				if (match) {
-					var lhs = match[1];
-					var rhs = match[2];
-					if (isNaN(rhs)) {
-						squiffy.set(lhs, rhs);
-					}
-					else {
-						squiffy.set(lhs, parseFloat(rhs));
-					}
-				}
+				squiffy.story.setAttribute(section);
 			});
 			return target;
+		},
+		setAttribute: function(expr) {
+			var regex = /([\w]*)=(.*)/;
+			var match = regex.exec(expr);
+			if (match) {
+				var lhs = match[1];
+				var rhs = match[2];
+				if (isNaN(rhs)) {
+					squiffy.set(lhs, rhs);
+				}
+				else {
+					squiffy.set(lhs, parseFloat(rhs));
+				}
+			}
 		},
 		go: function(section) {
 			squiffy.ui.newSection();
@@ -60,6 +63,11 @@ var squiffy = {
 			squiffy.story.setSeen(section);
 			if (squiffy.story.section.clear) {
 				squiffy.ui.clearScreen();
+			}
+			if (squiffy.story.section.attributes) {
+				squiffy.story.section.attributes.forEach(function (attribute) {
+					squiffy.story.setAttribute(attribute);
+				});
 			}
 			if (squiffy.story.section.js) {
 				squiffy.story.section.js();
@@ -77,6 +85,11 @@ var squiffy = {
 			squiffy.story.setSeen(passageName);
 			if (passage.clear) {
 				squiffy.ui.clearScreen();
+			}
+			if (passage.attributes) {
+				passage.attributes.forEach(function (attribute) {
+					squiffy.story.setAttribute(attribute);
+				});
 			}
 			if (passage.js) {
 				passage.js();

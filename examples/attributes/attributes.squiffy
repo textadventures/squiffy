@@ -1,0 +1,24 @@
+Set a start value: [[1]](one) or [[2]](two).
+
+[[one]]:
+@set my_attribute=1
+
+Maybe you'd like it to be [3](three) instead? Or you could just [[continue...]](next)
+
+[three]:
+@set my_attribute=3
+
+OK. Three it is.
+
+[[two]]:
+@set my_attribute=2
+
+Maybe you'd like it to be [4](four) instead? Or you could just [[continue...]](next)
+
+[four]:
+@set my_attribute=4
+
+OK. Four it is.
+
+[[next]]:
+my_attribute = {my_attribute}
