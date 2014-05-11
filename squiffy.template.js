@@ -42,7 +42,7 @@ var squiffy = {
 			return target;
 		},
 		setAttribute: function(expr) {
-			var regex = /([\w]*)=(.*)/;
+			var regex = /([\w]*)\s*=\s*(.*)/;
 			var match = regex.exec(expr);
 			if (match) {
 				var lhs = match[1];

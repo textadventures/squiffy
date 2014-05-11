@@ -132,8 +132,7 @@ def process_file(story, input_filename, is_first):
             attributes_match = attributes_regex.match(stripline)
             if stripline == "@clear":
                 if passage is None:
-                    if section is None and is_first:
-                        section = story.addSection("_default", input_filename, line_count)
+                    section = ensure_section_exists(story, section, is_first, input_filename, line_count)
                     section.clear = True
                 else:
                     passage.clear = True
@@ -154,6 +153,7 @@ def process_file(story, input_filename, is_first):
                         story.scripts.append(os.path.relpath(import_filename, base_path))
             elif attributes_match:
                 if passage is None:
+                    section = ensure_section_exists(story, section, is_first, input_filename, line_count)
                     section.addAttribute(attributes_match.group(1))
                 else:
                     passage.addAttribute(attributes_match.group(1))
@@ -167,8 +167,7 @@ def process_file(story, input_filename, is_first):
             if not text_started and len(stripline) == 0:
                 continue
             if passage is None:
-                if section is None and is_first:
-                        section = story.addSection("_default", input_filename, line_count)
+                section = ensure_section_exists(story, section, is_first, input_filename, line_count)
                 if not section is None:
                     section.addText(line)
                     text_started = True
@@ -177,6 +176,11 @@ def process_file(story, input_filename, is_first):
                 text_started = True
 
     return True
+
+def ensure_section_exists(story, section, is_first, input_filename, line_count):
+    if section is None and is_first:
+        section = story.addSection("_default", input_filename, line_count)
+    return section
 
 def process_text(input, story, section, passage):
     # named_section_link_regex matches:
