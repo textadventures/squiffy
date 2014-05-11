@@ -41,21 +41,19 @@ def process(input_filename, source_path):
         if len(section.js) > 0:
             write_js(output_js_file, 2, section.js)
 
-        if len(section.passages) > 0:
-            output_js_file.write("\t\t\"passages\": {\n")
-            for passage_name in section.passages:
-                passage = section.passages[passage_name]
+        output_js_file.write("\t\t\"passages\": {\n")
+        for passage_name in section.passages:
+            passage = section.passages[passage_name]
 
-                output_js_file.write("\t\t\t\"{0}\": {{\n".format(passage_name))
-                if passage.clear:
-                    output_js_file.write("\t\t\t\t\"clear\": true,\n")
-                output_js_file.write("\t\t\t\t\"text\": {0},\n".format(json.dumps(process_text("\n".join(passage.text), story, section, passage))))
-                if len(passage.js) > 0:
-                    write_js(output_js_file, 4, passage.js)
-                output_js_file.write("\t\t\t},\n")
+            output_js_file.write("\t\t\t\"{0}\": {{\n".format(passage_name))
+            if passage.clear:
+                output_js_file.write("\t\t\t\t\"clear\": true,\n")
+            output_js_file.write("\t\t\t\t\"text\": {0},\n".format(json.dumps(process_text("\n".join(passage.text), story, section, passage))))
+            if len(passage.js) > 0:
+                write_js(output_js_file, 4, passage.js)
+            output_js_file.write("\t\t\t},\n")
 
-            output_js_file.write("\t\t},\n")
-
+        output_js_file.write("\t\t},\n")
         output_js_file.write("\t},\n")
 
     output_js_file.write("}\n")
