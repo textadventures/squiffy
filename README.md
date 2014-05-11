@@ -177,6 +177,11 @@ and to set as false:
 or alternatively:
 
     @unset my_false_value
+    
+For number values, you can increase or decrease the value by 1:
+
+    @inc score
+    @dec health
 
 You can also set an attribute value from a link:
 
