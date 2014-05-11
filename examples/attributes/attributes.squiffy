@@ -30,7 +30,41 @@ Also, my_string = "{my_string}"
 
 Did you choose a passage link? {if chose_passage:yes}{else:no} [unset]
 
+Click some more links: [a], [b], [c], [d], [e] and then click [[done]].
+
 [unset]:
 @unset chose_passage
 
 Now the value is: {if chose_passage:yes}{else:no}
+
+[a]:
+@inc count
+
+OK...
+
+[b]:
+@inc count
+
+OK...
+
+[c]:
+@inc count
+
+OK...
+
+[d]:
+@inc count
+
+OK...
+
+[e]:
+@inc count
+
+OK...
+
+[[done]]:
+You clicked {count} links. What about calling [dec]?
+
+[dec]:
+@dec count
+Now count is {count}.

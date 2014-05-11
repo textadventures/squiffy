@@ -42,11 +42,11 @@ var squiffy = {
 			return target;
 		},
 		setAttribute: function(expr) {
-			var regex = /([\w]*)\s*=\s*(.*)/;
-			var match = regex.exec(expr);
-			if (match) {
-				var lhs = match[1];
-				var rhs = match[2];
+			var setRegex = /^([\w]*)\s*=\s*(.*)$/;
+			var setMatch = setRegex.exec(expr);
+			if (setMatch) {
+				var lhs = setMatch[1];
+				var rhs = setMatch[2];
 				if (isNaN(rhs)) {
 					squiffy.set(lhs, rhs);
 				}
@@ -55,12 +55,30 @@ var squiffy = {
 				}
 			}
 			else {
-				var value = true;
-				if (squiffy.util.startsWith(expr, "not ")) {
-					expr = expr.substring(4);
-					value = false;
+				var incDecRegex = /^([\w]*)\s*([\+\-])=\s*(.*)$/;
+				var incDecMatch = incDecRegex.exec(expr);
+				if (incDecMatch) {
+					var lhs = incDecMatch[1];
+					var op = incDecMatch[2];
+					var rhs = parseFloat(incDecMatch[3]);
+					var value = squiffy.get(lhs);
+					if (value == null) value = 0;
+					if (op == "+") {
+						value += rhs;
+					}
+					if (op == "-") {
+						value -= rhs;
+					}
+					squiffy.set(lhs, value);
 				}
-				squiffy.set(expr, value);
+				else {
+					var value = true;
+					if (squiffy.util.startsWith(expr, "not ")) {
+						expr = expr.substring(4);
+						value = false;
+					}
+					squiffy.set(expr, value);
+				}
 			}
 		},
 		go: function(section) {

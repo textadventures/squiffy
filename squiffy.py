@@ -100,6 +100,8 @@ def process_file(story, input_filename, is_first):
     start_regex = re.compile(r"@start (.*)")
     attributes_regex = re.compile(r"@set (.*)")
     unset_regex = re.compile(r"@unset (.*)")
+    inc_regex = re.compile(r"@inc (.*)")
+    dec_regex = re.compile(r"@dec (.*)")
     js_regex = re.compile(r"^(\t| {4})(.*)")
 
     section = None
@@ -132,6 +134,8 @@ def process_file(story, input_filename, is_first):
             import_match = import_regex.match(stripline)
             attributes_match = attributes_regex.match(stripline)
             unset_match = unset_regex.match(stripline)
+            inc_match = inc_regex.match(stripline)
+            dec_match = dec_regex.match(stripline)
             if stripline == "@clear":
                 if passage is None:
                     section = ensure_section_exists(story, section, is_first, input_filename, line_count)
@@ -154,17 +158,13 @@ def process_file(story, input_filename, is_first):
                     elif import_filename.endswith(".js"):
                         story.scripts.append(os.path.relpath(import_filename, base_path))
             elif attributes_match:
-                if passage is None:
-                    section = ensure_section_exists(story, section, is_first, input_filename, line_count)
-                    section.addAttribute(attributes_match.group(1))
-                else:
-                    passage.addAttribute(attributes_match.group(1))
+                section = add_attribute(attributes_match.group(1), story, section, passage, is_first, input_filename, line_count)
             elif unset_match:
-                if passage is None:
-                    section = ensure_section_exists(story, section, is_first, input_filename, line_count)
-                    section.addAttribute("not " + unset_match.group(1))
-                else:
-                    passage.addAttribute("not " + unset_match.group(1))
+                section = add_attribute("not " + unset_match.group(1), story, section, passage, is_first, input_filename, line_count)
+            elif inc_match:
+                section = add_attribute(inc_match.group(1) + "+=1", story, section, passage, is_first, input_filename, line_count)
+            elif dec_match:
+                section = add_attribute(dec_match.group(1) + "-=1", story, section, passage, is_first, input_filename, line_count)
                 
         elif not text_started and js_match:
             if passage is None:
@@ -188,6 +188,14 @@ def process_file(story, input_filename, is_first):
 def ensure_section_exists(story, section, is_first, input_filename, line_count):
     if section is None and is_first:
         section = story.addSection("_default", input_filename, line_count)
+    return section
+
+def add_attribute(attribute, story, section, passage, is_first, input_filename, line_count):
+    if passage is None:
+        section = ensure_section_exists(story, section, is_first, input_filename, line_count)
+        section.addAttribute(attribute)
+    else:
+        passage.addAttribute(attribute)
     return section
 
 def process_text(input, story, section, passage):
