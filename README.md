@@ -166,6 +166,14 @@ You can set an attribute within a section or passage like this:
 
 If the value is a number, it will be stored as a number. Otherwise, it will be stored as a string.
 
+For boolean (true/false) values, to set as true:
+
+    @set my_true_value
+    
+and to set as false:
+
+    @set not my_false_value
+
 You can also set an attribute value from a link:
 
 ```
