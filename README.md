@@ -224,8 +224,10 @@ Tracking which sections and passages have been seen
 
 You can tell if the player has seen a passage or section using JavaScript:
 
+```
     if (squiffy.story.seen("passage3")) alert ("You have seen passage3!");
-    
+```
+
 You can also conditionally display text:
 
 ```
@@ -236,4 +238,19 @@ You open the cupboard.
 
 [cupboard]:
 The cupboard is {if seen open:open, and there are empty bottles inside}{else:closed}.
+```
+
+Setting the start section
+-------------------------
+
+By default, the story begins in the first section. You can choose a different section like this:
+
+```
+@start Beginning
+
+[[some other section]]:
+This section would normally be the start, but we have overridden it.
+
+[[Beginning]]:
+This is where the story begins.
 ```
