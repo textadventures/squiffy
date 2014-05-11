@@ -173,6 +173,10 @@ For boolean (true/false) values, to set as true:
 and to set as false:
 
     @set not my_false_value
+    
+or alternatively:
+
+    @unset my_false_value
 
 You can also set an attribute value from a link:
 
