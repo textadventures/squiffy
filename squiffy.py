@@ -25,7 +25,9 @@ def process(input_filename, source_path):
     output_js_file = open(os.path.join(output_path, "story.js"), 'w')
     output_js_file.write(js_data)
     output_js_file.write("\n\n")
-    output_js_file.write("squiffy.story.start = \"" + list(story.sections.keys())[0] + "\";\n")
+    if len(story.start) == 0:
+        story.start = list(story.sections.keys())[0]
+    output_js_file.write("squiffy.story.start = \"" + story.start + "\";\n")
     output_js_file.write("squiffy.story.id = \"{0}\";\n".format(story.id))
     output_js_file.write("squiffy.story.sections = {\n")
 
@@ -93,6 +95,7 @@ def process_file(story, input_filename, is_first):
     passage_regex = re.compile(r"^\[(.*)\]:$")
     title_regex = re.compile(r"@title (.*)")
     import_regex = re.compile(r"@import (.*)")
+    start_regex = re.compile(r"@start (.*)")
     js_regex = re.compile(r"^(\t| {4})(.*)")
 
     section = None
@@ -121,6 +124,7 @@ def process_file(story, input_filename, is_first):
             text_started = False
         elif stripline.startswith("@"):
             title_match = title_regex.match(stripline)
+            start_match = start_regex.match(stripline)
             import_match = import_regex.match(stripline)
             if stripline == "@clear":
                 if passage is None:
@@ -131,6 +135,8 @@ def process_file(story, input_filename, is_first):
                     passage.clear = True
             elif title_match:
                 story.title = title_match.group(1)
+            elif start_match:
+                story.start = start_match.group(1)
             elif import_match:
                 base_path = os.path.abspath(os.path.dirname(input_filename))
                 new_filenames = os.path.join(base_path, import_match.group(1))
@@ -248,6 +254,7 @@ class Story:
         self.title = ""
         self.scripts = []
         self.files = []
+        self.start = ""
 
     def addSection(self, name, filename, line):
         section = Section(name, filename, line)

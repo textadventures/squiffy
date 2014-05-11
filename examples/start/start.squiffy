@@ -1,0 +1,7 @@
+@start the start section
+
+[[not the start section]]:
+This is page 2, although it was defined first.
+
+[[the start section]]:
+This is the start section. We also defined a section called [[not the start section]].
