@@ -254,3 +254,12 @@ This section would normally be the start, but we have overridden it.
 [[Beginning]]:
 This is where the story begins.
 ```
+
+Setting the title
+-----------------
+
+Set the title like this:
+
+```
+@title My Amazing Interactive Story
+```
