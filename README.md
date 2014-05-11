@@ -160,7 +160,13 @@ Any section or passage can clear the screen using @clear on a line on its own:
 Setting attributes
 ------------------
 
-You can set an attribute value from a section or passage link.
+You can set an attribute within a section or passage like this:
+
+    @set score = 1000
+
+If the value is a number, it will be stored as a number. Otherwise, it will be stored as a string.
+
+You can also set an attribute value from a link:
 
 ```
 Are you [[male]](start, gender=male) or [[female]](start, gender=female)?
@@ -169,7 +175,7 @@ Are you [[male]](start, gender=male) or [[female]](start, gender=female)?
 Your choice has been recorded.
 ```
 
-You can also set a value in JavaScript:
+And you can also set a value in JavaScript:
 
 ```
     squiffy.set("gender", "female");
