@@ -99,6 +99,7 @@ def process_file(story, input_filename, is_first):
     import_regex = re.compile(r"@import (.*)")
     start_regex = re.compile(r"@start (.*)")
     attributes_regex = re.compile(r"@set (.*)")
+    unset_regex = re.compile(r"@unset (.*)")
     js_regex = re.compile(r"^(\t| {4})(.*)")
 
     section = None
@@ -130,6 +131,7 @@ def process_file(story, input_filename, is_first):
             start_match = start_regex.match(stripline)
             import_match = import_regex.match(stripline)
             attributes_match = attributes_regex.match(stripline)
+            unset_match = unset_regex.match(stripline)
             if stripline == "@clear":
                 if passage is None:
                     section = ensure_section_exists(story, section, is_first, input_filename, line_count)
@@ -157,6 +159,12 @@ def process_file(story, input_filename, is_first):
                     section.addAttribute(attributes_match.group(1))
                 else:
                     passage.addAttribute(attributes_match.group(1))
+            elif unset_match:
+                if passage is None:
+                    section = ensure_section_exists(story, section, is_first, input_filename, line_count)
+                    section.addAttribute("not " + unset_match.group(1))
+                else:
+                    passage.addAttribute("not " + unset_match.group(1))
                 
         elif not text_started and js_match:
             if passage is None:
