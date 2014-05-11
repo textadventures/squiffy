@@ -54,6 +54,14 @@ var squiffy = {
 					squiffy.set(lhs, parseFloat(rhs));
 				}
 			}
+			else {
+				var value = true;
+				if (squiffy.util.startsWith(expr, "not ")) {
+					expr = expr.substring(4);
+					value = false;
+				}
+				squiffy.set(expr, value);
+			}
 		},
 		go: function(section) {
 			squiffy.ui.newSection();

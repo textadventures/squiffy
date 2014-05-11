@@ -8,6 +8,7 @@ Maybe you'd like it to be [3](three) instead? Or you could just [[continue...]](
 
 [three]:
 @set my_attribute = 3
+@set chose_passage
 
 OK. Three it is.
 
@@ -18,6 +19,7 @@ Maybe you'd like it to be [4](four) instead? Or you could just [[continue...]](n
 
 [four]:
 @set my_attribute = 4
+@set chose_passage
 
 OK. Four it is.
 
@@ -25,3 +27,5 @@ OK. Four it is.
 my_attribute = {my_attribute}
 
 Also, my_string = "{my_string}"
+
+Did you choose a passage link? {if chose_passage:yes}{else:no}
