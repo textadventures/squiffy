@@ -1,0 +1,18 @@
+Here is some text.
+
++++Continue...
+
+More text.
+
++++Carry on further...
+
+There's some more text now.
+
++++Keep walking!
+
+Oh, even more text appeared!
+
++++A little closer...
+	alert("BOO!")
+
+Pretty scary.

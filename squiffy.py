@@ -92,17 +92,19 @@ def process_file(story, input_filename, is_first):
     print ("Loading " + input_filename)
     input_file = open(input_filename)
     line_count = 0
+    auto_section_count = 0
 
     section_regex = re.compile(r"^\[\[(.*)\]\]:$")
     passage_regex = re.compile(r"^\[(.*)\]:$")
-    title_regex = re.compile(r"@title (.*)")
-    import_regex = re.compile(r"@import (.*)")
-    start_regex = re.compile(r"@start (.*)")
-    attributes_regex = re.compile(r"@set (.*)")
-    unset_regex = re.compile(r"@unset (.*)")
-    inc_regex = re.compile(r"@inc (.*)")
-    dec_regex = re.compile(r"@dec (.*)")
-    js_regex = re.compile(r"^(\t| {4})(.*)")
+    title_regex = re.compile(r"^@title (.*)$")
+    import_regex = re.compile(r"^@import (.*)$")
+    start_regex = re.compile(r"^@start (.*)$")
+    attributes_regex = re.compile(r"^@set (.*)$")
+    unset_regex = re.compile(r"^@unset (.*)$")
+    inc_regex = re.compile(r"^@inc (.*)$")
+    dec_regex = re.compile(r"^@dec (.*)$")
+    js_regex = re.compile(r"^(\t| {4})(.*)$")
+    continue_regex = re.compile(r"^\+\+\+(.*)$")
 
     section = None
     passage = None
@@ -116,6 +118,7 @@ def process_file(story, input_filename, is_first):
         line_count += 1
         section_match = section_regex.match(stripline)
         passage_match = passage_regex.match(stripline)
+        continue_match = continue_regex.match(stripline)
         js_match = js_regex.match(line)
         if section_match:
             section = story.addSection(section_match.group(1), input_filename, line_count)
@@ -127,6 +130,14 @@ def process_file(story, input_filename, is_first):
                     input_filename, line_count, passage_match.group(1)))
                 return False
             passage = section.addPassage(passage_match.group(1), line_count)
+            text_started = False
+        elif continue_match:
+            section = ensure_section_exists(story, section, is_first, input_filename, line_count)
+            auto_section_count += 1
+            auto_section_name = "_continue{0}".format(auto_section_count)
+            section.addText("[[{0}]]({1})".format(continue_match.group(1), auto_section_name))
+            section = story.addSection(auto_section_name, input_filename, line_count)
+            passage = None
             text_started = False
         elif stripline.startswith("@"):
             title_match = title_regex.match(stripline)
