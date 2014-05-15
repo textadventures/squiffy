@@ -303,7 +303,7 @@ class Story:
 
     def set_id(self, filename):
         file_id = str(uuid.getnode()) + filename
-        self.id = hashlib.sha1(file_id).hexdigest()[0:10]
+        self.id = hashlib.sha1(file_id.encode('utf-8')).hexdigest()[0:10]
 
 class Section:
     def __init__(self, name, filename, line):
