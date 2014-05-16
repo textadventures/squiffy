@@ -196,6 +196,7 @@ def process_file(story, input_filename, is_first):
                 
         elif not text_started and js_match:
             if passage is None:
+                section = ensure_section_exists(story, section, is_first, input_filename, line_count)
                 section.addJS(js_match.group(2))
             else:
                 passage.addJS(js_match.group(2))
@@ -281,12 +282,25 @@ def process_text(input, story, section, passage):
     return markdown.markdown(input)
 
 def check_section_links(story, links, section, passage):
-    bad_links = filter(lambda m: not m.split(",")[0] in story.sections, links)
+    bad_links = filter(lambda m: not link_destination_exists(m, story.sections), links)
     show_bad_links_warning(bad_links, "section", "[[", "]]", section, passage)
 
 def check_passage_links(story, links, section, passage):
-    bad_links = filter(lambda m: not m.split(",")[0] in section.passages, links)
+    bad_links = filter(lambda m: not link_destination_exists(m, section.passages), links)
     show_bad_links_warning(bad_links, "passage", "[", "]", section, passage)
+
+def link_destination_exists(link, keys):
+    # Link destination data may look like:
+    #   passageName
+    #   passageName, my_attribute=2
+    #   passageName, @replace 1=new text, some_attribute=5
+    #   @replace 2=some words
+    # We're only interested in checking if the named passage or section exists.
+    
+    link_destination = link.split(",")[0]
+    if link_destination[0] == "@":
+        return True
+    return link_destination in keys
 
 def show_bad_links_warning(bad_links, link_to, before, after, section, passage):
     for bad_link in bad_links:
