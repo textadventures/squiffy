@@ -3,13 +3,16 @@ I {label:1=walked} to the shops and I bought {label:2=a pint of milk}.
 But then I thought, hang on, I [don't really like milk](next, @replace 2=beer).
 
 [beer]:
-a create of beer
+a [crate of beer]
+
+[crate of beer]:
+Yes, beer.
 
 [next]:
 And then I thought, hang on, I {label:3=[hate walking](@replace 1=teleported, @replace 3=love teleporting)}.
 
 [love teleporting]:
-love teleporting, so much I might [[embark on a wild and crazy adventure]](section2).
+love teleporting, so much I might [[embark on a wild and crazy adventure]](section2)
 
 [[section2]]:
 And so it {label:4=began...}
