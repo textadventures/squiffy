@@ -117,7 +117,9 @@ var squiffy = {
 			var $labels = $(".squiffy-label-" + label);
 			$labels.fadeOut(1000, function() {
 				$labels.html(squiffy.ui.processText(text));
-				$labels.fadeIn(1000);
+				$labels.fadeIn(1000, function() {
+					squiffy.story.save();
+				});
 			});
 		},
 		go: function(section) {
