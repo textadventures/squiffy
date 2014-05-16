@@ -12,4 +12,10 @@ And then I thought, hang on, I {label:3=[hate walking](@replace 1=teleported, @r
 love teleporting, so much I might [[embark on a wild and crazy adventure]](section2).
 
 [[section2]]:
-And so it began...
+And so it {label:4=began...}
+
+[[Or did it?]](section3)
+
+[[section3]]:
+@replace 4=ended abruptly.
+Oh well.

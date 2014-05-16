@@ -130,9 +130,7 @@ var squiffy = {
 				squiffy.ui.clearScreen();
 			}
 			if (squiffy.story.section.attributes) {
-				squiffy.story.section.attributes.forEach(function (attribute) {
-					squiffy.story.setAttribute(attribute);
-				});
+				squiffy.story.processAttributes(squiffy.story.section.attributes);
 			}
 			if (squiffy.story.section.js) {
 				squiffy.story.section.js();
@@ -152,15 +150,23 @@ var squiffy = {
 				squiffy.ui.clearScreen();
 			}
 			if (passage.attributes) {
-				passage.attributes.forEach(function (attribute) {
-					squiffy.story.setAttribute(attribute);
-				});
+				squiffy.story.processAttributes(passage.attributes);
 			}
 			if (passage.js) {
 				passage.js();
 			}
 			squiffy.ui.write(passage.text);
 			squiffy.story.save();
+		},
+		processAttributes: function(attributes) {
+			attributes.forEach(function (attribute) {
+				if (squiffy.util.startsWith(attribute, "@replace ")) {
+					squiffy.story.replaceLabel(attribute.substring(9));
+				}
+				else {
+					squiffy.story.setAttribute(attribute);
+				}
+			});
 		},
 		restart: function() {
 			var keys = Object.keys(localStorage);

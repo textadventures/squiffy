@@ -120,6 +120,7 @@ def process_file(story, input_filename, is_first):
     unset_regex = re.compile(r"^@unset (.*)$")
     inc_regex = re.compile(r"^@inc (.*)$")
     dec_regex = re.compile(r"^@dec (.*)$")
+    replace_regex = re.compile(r"^@replace (.*$)")
     js_regex = re.compile(r"^(\t| {4})(.*)$")
     continue_regex = re.compile(r"^\+\+\+(.*)$")
 
@@ -164,6 +165,7 @@ def process_file(story, input_filename, is_first):
             unset_match = unset_regex.match(stripline)
             inc_match = inc_regex.match(stripline)
             dec_match = dec_regex.match(stripline)
+            replace_match = replace_regex.match(stripline)
             if stripline == "@clear":
                 if passage is None:
                     section = ensure_section_exists(story, section, is_first, input_filename, line_count)
@@ -193,7 +195,9 @@ def process_file(story, input_filename, is_first):
                 section = add_attribute(inc_match.group(1) + "+=1", story, section, passage, is_first, input_filename, line_count)
             elif dec_match:
                 section = add_attribute(dec_match.group(1) + "-=1", story, section, passage, is_first, input_filename, line_count)
-                
+            elif replace_match:
+                section = add_attribute("@replace " + replace_match.group(1), story, section, passage, is_first, input_filename, line_count)
+
         elif not text_started and js_match:
             if passage is None:
                 section = ensure_section_exists(story, section, is_first, input_filename, line_count)
@@ -296,7 +300,7 @@ def link_destination_exists(link, keys):
     #   passageName, @replace 1=new text, some_attribute=5
     #   @replace 2=some words
     # We're only interested in checking if the named passage or section exists.
-    
+
     link_destination = link.split(",")[0]
     if link_destination[0] == "@":
         return True
