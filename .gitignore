@@ -2,6 +2,7 @@ index.html
 story.js
 style.css
 squiffy.spec
+examples/*/jquery*.js
 
 *.py[cod]
 

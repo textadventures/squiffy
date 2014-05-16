@@ -7,8 +7,9 @@ import glob
 import markdown
 import uuid
 import hashlib
+import shutil
 
-def process(input_filename, source_path):
+def process(input_filename, source_path, options):
     output_path = os.path.abspath(os.path.dirname(input_filename))
     
     story = Story()
@@ -19,9 +20,10 @@ def process(input_filename, source_path):
         print ("Failed.")
         return
 
+    print ("Writing story.js")
+
     js_template_file = open(os.path.join(source_path, "squiffy.template.js"))
     js_data = js_template_file.read()
-    print ("Writing story.js")
     output_js_file = open(os.path.join(output_path, "story.js"), 'w')
     output_js_file.write(js_data)
     output_js_file.write("\n\n")
@@ -62,18 +64,33 @@ def process(input_filename, source_path):
 
     output_js_file.write("}\n")
 
+    print ("Writing index.html")
+
     html_template_file = open(find_file("index.template.html", output_path, source_path))
     html_data = html_template_file.read()
     html_data = html_data.replace("<!-- TITLE -->", story.title)
+    jquery_js = "jquery.min.js"
+    jqueryui_js = "jquery-ui.min.js"
+    
+    if options.use_cdn:
+        jquery_js = "http://ajax.aspnetcdn.com/ajax/jquery/jquery-1.10.2.min.js"
+        jqueryui_js = "http://ajax.aspnetcdn.com/ajax/jquery.ui/1.10.3/jquery-ui.min.js"
+    else:
+        shutil.copy2(os.path.join(source_path, "jquery.min.js"), output_path)
+        shutil.copy2(os.path.join(source_path, "jquery-ui.min.js"), output_path)
+    
+    html_data = html_data.replace("<!-- JQUERY -->", jquery_js)
+    html_data = html_data.replace("<!-- JQUERYUI -->", jqueryui_js)
+
     script_data = "\n".join(map(lambda script: "<script src=\"{0}\"></script>".format(script), story.scripts))
     html_data = html_data.replace("<!-- SCRIPTS -->", script_data)
-    print ("Writing index.html")
     output_html_file = open(os.path.join(output_path, "index.html"), 'w')
     output_html_file.write(html_data)
 
+    print ("Writing style.css")
+
     css_template_file = open(find_file("style.template.css", output_path, source_path))
     css_data = css_template_file.read()
-    print ("Writing style.css")
     output_css_file = open(os.path.join(output_path, "style.css"), 'w')
     output_css_file.write(css_data)
 
@@ -348,8 +365,15 @@ class Passage:
     def addAttribute(self, text):
         self.attributes.append(text)
 
+class Options:
+    def __init__(self, args):
+        self.use_cdn = "-c" in args
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Syntax: input.squiffy")
+        print("Syntax: input.squiffy [-c]")
+        print("Options:")
+        print("   -c     Use CDN for jQuery")
     else:
-        process(sys.argv[1], os.path.abspath(os.path.dirname(sys.argv[0])))
+        options = Options(sys.argv[1:])
+        process(sys.argv[1], os.path.abspath(os.path.dirname(sys.argv[0])), options)
