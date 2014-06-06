@@ -4,6 +4,8 @@ var squiffy = {
 			$(document).on("click", "a.squiffy-link", function (event) {
 				if ($(this).hasClass("disabled")) return;
 				var passage = $(this).data("passage");
+				var section = $(this).data("section");
+				var rotate = $(this).attr("data-rotate");
 				if (passage) {
 					$(this).addClass("disabled");
 					squiffy.set("_turncount", squiffy.get("_turncount") + 1);
@@ -17,14 +19,17 @@ var squiffy = {
 						squiffy.story.passage(turnPassage);
 					}
 				}
-				else {
-					var section = $(this).data("section");
-					if (section) {
-						squiffy.ui.currentSection.append("<hr/>");
-						$(this).addClass("disabled");
-						section = squiffy.story.processLink(section);
-						squiffy.story.go(section);
-					}
+				else if (section) {
+					squiffy.ui.currentSection.append("<hr/>");
+					$(this).addClass("disabled");
+					section = squiffy.story.processLink(section);
+					squiffy.story.go(section);
+				}
+				else if (rotate) {
+					var result = squiffy.util.rotate(rotate, $(this).text());
+					$(this).text(result[0]);
+					$(this).attr("data-rotate", result[1]);
+					squiffy.story.save();
 				}
 			});
 			$("#squiffy-restart").click(function (){
@@ -298,6 +303,9 @@ var squiffy = {
 				else if (squiffy.util.startsWith(text, "label:")) {
 					return processTextCommand_Label(text, data);
 				}
+				else if (squiffy.util.startsWith(text, "rotate:")) {
+					return processTextCommand_Rotate(text, data);
+				}
 				else if (text in squiffy.story.section.passages) {
 					return process(squiffy.story.section.passages[text].text, data);
 				}
@@ -376,6 +384,12 @@ var squiffy = {
 				return "<span class='squiffy-label-" + label + "'>" + process(text, data) + "</span>";
 			}
 
+			function processTextCommand_Rotate(section, data) {
+				var options = section.substring(7);
+				var rotate = squiffy.util.rotate(options);
+				return "<a class='squiffy-link' data-rotate='" + rotate[1] + "'>" + rotate[0] + "</span>";
+			}
+
 			var data = {
 				fulltext: text
 			};
@@ -394,6 +408,16 @@ var squiffy = {
 	util: {
 		startsWith: function(string, prefix) {
 			return string.substring(0, prefix.length) === prefix;
+		},
+		rotate: function(options, current) {
+			var colon = options.indexOf(":");
+			if (colon == -1) {
+				return [options, current];
+			}
+			var next = options.substring(0, colon);
+			var remaining = options.substring(colon + 1);
+			if (current) remaining += ":" + current;
+			return [next, remaining];
 		}
 	}
 };
