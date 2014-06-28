@@ -6,6 +6,7 @@ var squiffy = {
 				var passage = $(this).data("passage");
 				var section = $(this).data("section");
 				var rotate = $(this).attr("data-rotate");
+				var sequence = $(this).attr("data-sequence");
 				if (passage) {
 					$(this).addClass("disabled");
 					squiffy.set("_turncount", squiffy.get("_turncount") + 1);
@@ -25,10 +26,14 @@ var squiffy = {
 					section = squiffy.story.processLink(section);
 					squiffy.story.go(section);
 				}
-				else if (rotate) {
-					var result = squiffy.util.rotate(rotate, $(this).text());
-					$(this).text(result[0]);
-					$(this).attr("data-rotate", result[1]);
+				else if (rotate || sequence) {
+					var result = squiffy.util.rotate(rotate || sequence, rotate ? $(this).text() : "");
+					$(this).html(result[0].replace(/&quot;/g, '"').replace(/&#39;/g, "'"));
+					var dataAttribute = rotate ? "data-rotate" : "data-sequence";
+					$(this).attr(dataAttribute, result[1]);
+					if (!result[1]) {
+						$(this).addClass("disabled");
+					}
 					if ($(this).attr("data-attribute")) {
 						squiffy.set($(this).attr("data-attribute"), result[0]);
 					}
@@ -310,7 +315,10 @@ var squiffy = {
 					return processTextCommand_Label(text, data);
 				}
 				else if (/^rotate[: ]/.test(text)) {
-					return processTextCommand_Rotate(text, data);
+					return processTextCommand_Rotate("rotate", text, data);
+				}
+				else if (/^sequence[: ]/.test(text)) {
+					return processTextCommand_Rotate("sequence", text, data);	
 				}
 				else if (text in squiffy.story.section.passages) {
 					return process(squiffy.story.section.passages[text].text, data);
@@ -390,22 +398,25 @@ var squiffy = {
 				return "<span class='squiffy-label-" + label + "'>" + process(text, data) + "</span>";
 			}
 
-			function processTextCommand_Rotate(section, data) {
+			function processTextCommand_Rotate(type, section, data) {
 				var options;
 				var attribute = "";
-				if (section.substring(6, 7) == " ") {
+				if (section.substring(type.length, type.length + 1) == " ") {
 					var colon = section.indexOf(":");
 					if (colon == -1) {
 						return "{" + section + "}";
 					}
 					options = section.substring(colon + 1);
-					attribute = section.substring(7, colon);
+					attribute = section.substring(type.length + 1, colon);
 				}
 				else {
-					options = section.substring(7);
+					options = section.substring(type.length + 1);
 				}
-				var rotate = squiffy.util.rotate(options);
-				return "<a class='squiffy-link' data-rotate='" + rotate[1] + "' data-attribute='" + attribute + "'>" + rotate[0] + "</span>";
+				var rotate = squiffy.util.rotate(options.replace(/"/g, "&quot;").replace(/'/g, "&#39;"));
+				if (attribute) {
+					squiffy.set(attribute, rotate[0]);
+				}
+				return "<a class='squiffy-link' data-" + type + "='" + rotate[1] + "' data-attribute='" + attribute + "'>" + rotate[0] + "</a>";
 			}
 
 			var data = {

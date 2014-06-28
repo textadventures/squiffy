@@ -7,3 +7,19 @@ Now {rotate result:four:five:six}
 +++OK...
 
 You chose {result}.
+
+Now for a sequence: {sequence:one:two:three:four:five}.
+
++++And another...
+
+Another sequence: {sequence seqresult:a:b:c:d:e:f:g}.
+
++++Finally...
+
+You chose {seqresult}.
+
+Here's a sequence that links to another section. {sequence:Ready...:Steady...:[[Go!]]}
+
+[[Go!]]:
+
+That's all folks!
