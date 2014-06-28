@@ -1,7 +1,9 @@
 Choose a number: {rotate:one:two:three}
 
-[OK...]
++++OK...
 
-[OK...]:
+Now {rotate result:four:five:six}
 
-Now {rotate:four:five:six}
++++OK...
+
+You chose {result}.

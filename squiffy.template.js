@@ -29,6 +29,9 @@ var squiffy = {
 					var result = squiffy.util.rotate(rotate, $(this).text());
 					$(this).text(result[0]);
 					$(this).attr("data-rotate", result[1]);
+					if ($(this).attr("data-attribute")) {
+						squiffy.set($(this).attr("data-attribute"), result[0]);
+					}
 					squiffy.story.save();
 				}
 			});
@@ -306,7 +309,7 @@ var squiffy = {
 				else if (squiffy.util.startsWith(text, "label:")) {
 					return processTextCommand_Label(text, data);
 				}
-				else if (squiffy.util.startsWith(text, "rotate:")) {
+				else if (/^rotate[: ]/.test(text)) {
 					return processTextCommand_Rotate(text, data);
 				}
 				else if (text in squiffy.story.section.passages) {
@@ -388,9 +391,21 @@ var squiffy = {
 			}
 
 			function processTextCommand_Rotate(section, data) {
-				var options = section.substring(7);
+				var options;
+				var attribute = "";
+				if (section.substring(6, 7) == " ") {
+					var colon = section.indexOf(":");
+					if (colon == -1) {
+						return "{" + section + "}";
+					}
+					options = section.substring(colon + 1);
+					attribute = section.substring(7, colon);
+				}
+				else {
+					options = section.substring(7);
+				}
 				var rotate = squiffy.util.rotate(options);
-				return "<a class='squiffy-link' data-rotate='" + rotate[1] + "'>" + rotate[0] + "</span>";
+				return "<a class='squiffy-link' data-rotate='" + rotate[1] + "' data-attribute='" + attribute + "'>" + rotate[0] + "</span>";
 			}
 
 			var data = {
