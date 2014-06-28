@@ -32,6 +32,9 @@ var squiffy = {
 					squiffy.story.save();
 				}
 			});
+			$(document).on("mousedown", "a.squiffy-link", function (event) {
+				event.preventDefault();
+			});
 			$("#squiffy-restart").click(function (){
 				if (confirm("Are you sure you want to restart?")) {
 					squiffy.story.restart();
