@@ -144,20 +144,28 @@ var squiffy = {
 			if (!squiffy.story.section) return;
 			squiffy.set("_section", section);
 			squiffy.story.setSeen(section);
-			if (squiffy.story.section.clear) {
-				squiffy.ui.clearScreen();
+			var master = squiffy.story.sections[""];
+			if (master) {
+				squiffy.story.runSection(master);
+				squiffy.ui.write(master.text);
 			}
-			if (squiffy.story.section.attributes) {
-				squiffy.story.processAttributes(squiffy.story.section.attributes);
-			}
-			if (squiffy.story.section.js) {
-				squiffy.story.section.js();
-			}
+			squiffy.story.runSection(squiffy.story.section);
 			// The JS might have changed which section we're in
 			if (squiffy.get("_section") == section) {
 				squiffy.set("_turncount", 0);
-				squiffy.ui.write(squiffy.story.section.text, true);
+				squiffy.ui.write(squiffy.story.section.text);
 				squiffy.story.save();
+			}
+		},
+		runSection: function(section) {
+			if (section.clear) {
+				squiffy.ui.clearScreen();
+			}
+			if (section.attributes) {
+				squiffy.story.processAttributes(section.attributes);
+			}
+			if (section.js) {
+				section.js();
 			}
 		},
 		passage: function(passageName) {

@@ -1,0 +1,11 @@
+@start intro
+
+[[]]:
+This text appears before each section.
+
+[[intro]]:
+This is the first section.
+
++++Continue...
+
+This is the second section.
