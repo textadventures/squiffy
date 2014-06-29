@@ -365,3 +365,17 @@ If you don't want a rotating list, use a sequence instead. The final option won'
 As a variation on this, you can use a section link as the final option in a sequence.
 
     {sequence:Click me:Click me again:[[And once more]](next)}
+
+Master sections and passages
+----------------------------
+
+An empty name for a section or passage creates a "master", which is triggered for every section or passage in the game. (A master passage defined in a named section will only be triggered for every passage in that section)
+
+e.g. to clear the screen before every section, and to increase a global turn counter:
+
+```
+[[]]:
+@clear
+@inc turns
+    if (squiffy.get("turns") > 5) ...
+```
