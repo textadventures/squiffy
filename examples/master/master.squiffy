@@ -1,7 +1,10 @@
 @start intro
 
 [[]]:
-This text appears before each section.
+This text appears before each section in the game.
+
+[]:
+	console.log("This JS runs for each passage in the entire game.")
 
 [[intro]]:
 This is the first section.
@@ -11,7 +14,7 @@ This is the first section.
 This is the second section. [One], [two], [three]. [[Next!]]
 
 []:
-	console.log("This JS runs for each passage too...");
+	console.log("This JS runs for each passage in the second section.");
 
 This text appears before each passage in this section.
 

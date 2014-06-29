@@ -172,6 +172,14 @@ var squiffy = {
 			var passage = squiffy.story.section.passages[passageName];
 			if (!passage) return;
 			squiffy.story.setSeen(passageName);
+			var masterSection = squiffy.story.sections[""];
+			if (masterSection) {
+				var masterPassage = masterSection.passages[""];
+				if (masterPassage) {
+					squiffy.story.run(masterPassage);
+					squiffy.ui.write(masterPassage.text);
+				}
+			}
 			var master = squiffy.story.section.passages[""];
 			if (master) {
 				squiffy.story.run(master);
