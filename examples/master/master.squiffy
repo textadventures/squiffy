@@ -8,4 +8,25 @@ This is the first section.
 
 +++Continue...
 
-This is the second section.
+This is the second section. [One], [two], [three]. [[Next!]]
+
+[]:
+	console.log("This JS runs for each passage too...");
+
+This text appears before each passage in this section.
+
+[One]:
+1...
+
+[two]:
+2...
+
+[three]:
+3...
+
+[[Next!]]:
+
+Final section, no master passages here. [See].
+
+[See]:
+The end...

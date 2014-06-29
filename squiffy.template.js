@@ -146,10 +146,10 @@ var squiffy = {
 			squiffy.story.setSeen(section);
 			var master = squiffy.story.sections[""];
 			if (master) {
-				squiffy.story.runSection(master);
+				squiffy.story.run(master);
 				squiffy.ui.write(master.text);
 			}
-			squiffy.story.runSection(squiffy.story.section);
+			squiffy.story.run(squiffy.story.section);
 			// The JS might have changed which section we're in
 			if (squiffy.get("_section") == section) {
 				squiffy.set("_turncount", 0);
@@ -157,7 +157,7 @@ var squiffy = {
 				squiffy.story.save();
 			}
 		},
-		runSection: function(section) {
+		run: function(section) {
 			if (section.clear) {
 				squiffy.ui.clearScreen();
 			}
@@ -172,15 +172,12 @@ var squiffy = {
 			var passage = squiffy.story.section.passages[passageName];
 			if (!passage) return;
 			squiffy.story.setSeen(passageName);
-			if (passage.clear) {
-				squiffy.ui.clearScreen();
+			var master = squiffy.story.section.passages[""];
+			if (master) {
+				squiffy.story.run(master);
+				squiffy.ui.write(master.text);
 			}
-			if (passage.attributes) {
-				squiffy.story.processAttributes(passage.attributes);
-			}
-			if (passage.js) {
-				passage.js();
-			}
+			squiffy.story.run(passage);
 			squiffy.ui.write(passage.text);
 			squiffy.story.save();
 		},
