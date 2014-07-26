@@ -3,6 +3,7 @@ story.js
 style.css
 squiffy.spec
 examples/*/jquery*.js
+_site
 
 *.py[cod]
 
