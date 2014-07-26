@@ -201,12 +201,14 @@ var squiffy = {
 			});
 		},
 		restart: function() {
-			var keys = Object.keys(localStorage);
-			$.each(keys, function (idx, key) {
-				if (squiffy.util.startsWith(key, squiffy.story.id)) {
-					localStorage.removeItem(key);
-				}
-			});
+			if (window.localStorage) {
+				var keys = Object.keys(localStorage);
+				$.each(keys, function (idx, key) {
+					if (squiffy.util.startsWith(key, squiffy.story.id)) {
+						localStorage.removeItem(key);
+					}
+				});
+			}
 			location.reload();
 		},
 		save: function() {
@@ -447,12 +449,24 @@ var squiffy = {
 			f();
 		},
 	},
+	storageFallback: {},
 	set: function(attribute, value) {
 		if (typeof value === 'undefined') value = true;
-		localStorage[squiffy.story.id + '-' + attribute] = JSON.stringify(value);
+		if (window.localStorage) {
+			localStorage[squiffy.story.id + '-' + attribute] = JSON.stringify(value);
+		}
+		else {
+			squiffy.storageFallback[attribute] = JSON.stringify(value);
+		}
 	},
 	get: function(attribute) {
-		var result = localStorage[squiffy.story.id + '-' + attribute];
+		var result;
+		if (window.localStorage) {
+			result = localStorage[squiffy.story.id + '-' + attribute];
+		}
+		else {
+			result = squiffy.storageFallback[attribute];
+		}
 		if (!result) return null;
 		return JSON.parse(result);
 	},
