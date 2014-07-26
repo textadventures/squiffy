@@ -5,7 +5,7 @@ title: Installing Squiffy
 
 The Squiffy compiler is written in Python, and has been tested with Python 2.7 and Python 3.3. It requires the [Markdown package](https://pypi.python.org/pypi/Markdown).
 
-Detailed step-by-step instructions for Windows and Mac OS X are below.
+Detailed step-by-step instructions for Windows, Mac OS X and Linux are below.
 
 Windows
 -------
@@ -20,14 +20,14 @@ Install the [Markdown package](https://pypi.python.org/pypi/Markdown) by typing 
 
 Finally, [download Squiffy](https://github.com/textadventures/squiffy/archive/master.zip) and unzip it somewhere.
 
-Mac OS X
---------
+Mac OS X and Linux
+------------------
 
-Python is already installed on your machine, as it's part of OS X.
+Python is already installed on your machine (it's preinstalled on OS X, and most Linux distributions).
 
 First, [install pip](https://pip.pypa.io/en/latest/installing.html).
 
-Install the [Markdown package](https://pypi.python.org/pypi/Markdown) by typing this at a command prompt:
+Install the [Markdown package](https://pypi.python.org/pypi/Markdown) by typing this in a Terminal window:
 
 	sudo pip install markdown
 
