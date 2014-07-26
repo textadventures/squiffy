@@ -18,7 +18,7 @@ Install the [Markdown package](https://pypi.python.org/pypi/Markdown) by typing 
 
 	pip install markdown
 
-Finally, [download Squiffy](https://github.com/textadventures/squiffy/archive/master.zip) and unzip it somewhere.
+Finally, [download Squiffy](https://github.com/textadventures/squiffy/releases/download/v1.0/squiffy-1.0.zip) and unzip it somewhere.
 
 Mac OS X and Linux
 ------------------
@@ -31,4 +31,4 @@ Install the [Markdown package](https://pypi.python.org/pypi/Markdown) by typing 
 
 	sudo pip install markdown
 
-Finally, [download Squiffy](https://github.com/textadventures/squiffy/archive/master.zip) and unzip it somewhere.
+Finally, [download Squiffy](https://github.com/textadventures/squiffy/releases/download/v1.0/squiffy-1.0.zip) and unzip it somewhere.
