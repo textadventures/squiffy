@@ -28,7 +28,7 @@ The Squiffy compiler reads in a Squiffy script file, and outputs HTML, CSS and J
 Publishing your game
 --------------------
 
-Squiffy creates HTML, CSS and JavaScript files, which you can upload anywhere. You don't need to distribute your source .squiffy file - everything that is needed for the game to run is contained in the HTML and JavaScript.
+Squiffy creates HTML, CSS and JavaScript files, which you can upload anywhere. You don't need to distribute your source `.squiffy` file - everything that is needed for the game to run is contained in the HTML and JavaScript.
 
 An easy way to distribute your game is to create a ZIP file and [submit it to textadventures.co.uk](http://textadventures.co.uk/create/submit).
 
