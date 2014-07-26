@@ -11,7 +11,7 @@ You can get involved by contributing [on GitHub](https://github.com/textadventur
 
 ## Squiffy 1
 
-**Status:** Nearly complete. Planned release August 2014.
+**Status:** Released 26 July 2014.
 
 This release of Squiffy is a simple command-line Python script.
 
