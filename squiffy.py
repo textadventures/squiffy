@@ -9,6 +9,8 @@ import uuid
 import hashlib
 import shutil
 
+squiffy_version = "1.0"
+
 def process(input_filename, source_path, options):
     output_path = os.path.abspath(os.path.dirname(input_filename))
     
@@ -23,7 +25,7 @@ def process(input_filename, source_path, options):
     print ("Writing story.js")
 
     js_template_file = open(os.path.join(source_path, "squiffy.template.js"))
-    js_data = js_template_file.read()
+    js_data = "// Created with Squiffy {0}\n// https://github.com/textadventures/squiffy\n\n".format(squiffy_version) + js_template_file.read()
     output_js_file = open(os.path.join(output_path, "story.js"), 'w')
     output_js_file.write(js_data)
     output_js_file.write("\n\n")
@@ -68,6 +70,7 @@ def process(input_filename, source_path, options):
 
     html_template_file = open(find_file("index.template.html", output_path, source_path))
     html_data = html_template_file.read()
+    html_data = html_data.replace("<!-- INFO -->", "<!--\n\nCreated with Squiffy {0}\n\n\nhttps://github.com/textadventures/squiffy\n\n-->".format(squiffy_version))
     html_data = html_data.replace("<!-- TITLE -->", story.title)
     jquery_js = "jquery.min.js"
     jqueryui_js = "jquery-ui.min.js"
@@ -394,7 +397,7 @@ class Options:
         self.use_cdn = "-c" in args
 
 if __name__ == "__main__":
-    print("Squiffy 1.0")
+    print("Squiffy " + squiffy_version)
     if len(sys.argv) < 2:
         print("Syntax: input.squiffy [-c]")
         print("Options:")
