@@ -139,6 +139,7 @@ var squiffy = {
 			});
 		},
 		go: function(section) {
+			squiffy.set("_transition", null);
 			squiffy.ui.newSection();
 			squiffy.story.section = squiffy.story.sections[section];
 			if (!squiffy.story.section) return;
@@ -217,6 +218,10 @@ var squiffy = {
 			$("#squiffy-output").html(output);
 			squiffy.ui.currentSection = $("#" + squiffy.get("_output-section"));
 			squiffy.story.section = squiffy.story.sections[squiffy.get("_section")];
+			var transition = squiffy.get("_transition");
+			if (transition) {
+				eval("(" + transition + ")()");
+			}
 			return true;
 		},
 		setSeen: function(sectionName) {
@@ -436,6 +441,10 @@ var squiffy = {
 				fulltext: text
 			};
 			return process(text, data);
+		},
+		transition: function(f) {
+			squiffy.set("_transition", f.toString());
+			f();
 		},
 	},
 	set: function(attribute, value) {
