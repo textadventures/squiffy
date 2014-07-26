@@ -394,6 +394,7 @@ class Options:
         self.use_cdn = "-c" in args
 
 if __name__ == "__main__":
+    print("Squiffy 1.0")
     if len(sys.argv) < 2:
         print("Syntax: input.squiffy [-c]")
         print("Options:")
