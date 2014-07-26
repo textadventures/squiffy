@@ -19,6 +19,8 @@ This folder of files can now be uploaded anywhere, and it will run entirely loca
 
 The browser's local storage will be used to save the state of the game. This means the player can close their browser, and the next time they go back to that page, the game will resume from where they left off.
 
+**Note: Even if you recompile a game, the previous state will still be loaded.** This means that after making a change to your game, you'll need to click the Restart link at the top of the screen to see your changes.
+
 Getting jQuery and jQueryUI from a CDN
 --------------------------------------
 
