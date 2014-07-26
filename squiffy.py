@@ -196,7 +196,11 @@ def process_file(story, input_filename, is_first):
             elif dec_match:
                 section = add_attribute(dec_match.group(1) + "-=1", story, section, passage, is_first, input_filename, line_count)
             elif replace_match:
-                section = add_attribute("@replace " + replace_match.group(1), story, section, passage, is_first, input_filename, line_count)
+                replace_attribute = replace_match.group(1)
+                attribute_match = re.match(r"^(.*?)=(.*)$", replace_attribute)
+                if attribute_match:
+                    replace_attribute = attribute_match.group(1) + "=" + process_text(attribute_match.group(2), None, None, None)
+                section = add_attribute("@replace " + replace_attribute, story, section, passage, is_first, input_filename, line_count)
 
         elif not text_started and js_match:
             if passage is None:
@@ -286,12 +290,14 @@ def process_text(input, story, section, passage):
     return markdown.markdown(input)
 
 def check_section_links(story, links, section, passage):
-    bad_links = filter(lambda m: not link_destination_exists(m, story.sections), links)
-    show_bad_links_warning(bad_links, "section", "[[", "]]", section, passage)
+    if story:
+        bad_links = filter(lambda m: not link_destination_exists(m, story.sections), links)
+        show_bad_links_warning(bad_links, "section", "[[", "]]", section, passage)
 
 def check_passage_links(story, links, section, passage):
-    bad_links = filter(lambda m: not link_destination_exists(m, section.passages), links)
-    show_bad_links_warning(bad_links, "passage", "[", "]", section, passage)
+    if story:
+        bad_links = filter(lambda m: not link_destination_exists(m, section.passages), links)
+        show_bad_links_warning(bad_links, "passage", "[", "]", section, passage)
 
 def link_destination_exists(link, keys):
     # Link destination data may look like:

@@ -20,5 +20,8 @@ And so it {label:4=began...}
 [[Or did it?]](section3)
 
 [[section3]]:
-@replace 4=ended abruptly.
+@replace 4=ended [abruptly].
 Oh well.
+
+[abruptly]:
+That is all.
