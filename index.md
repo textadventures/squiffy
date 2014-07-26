@@ -35,6 +35,8 @@ An easy way to distribute your game is to create a ZIP file and [submit it to te
 Contributing
 ------------
 
+[Development Roadmap](roadmap.html)
+
 If you find a bug, please log it on the [Issue Tracker](https://github.com/textadventures/squiffy/issues).
 
 You can also discuss Squiffy at [the forum](http://forum.textadventures.co.uk/viewforum.php?f=24).
