@@ -1,8 +1,0 @@
-[[file2]]:
-
-Text from file 2. Run the [test] function.
-
-[test]:
-	test();
-
-@import test.js
