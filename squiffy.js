@@ -4,6 +4,7 @@ var _ = require("underscore");
 var path = require("path");
 var fs = require("fs");
 var glob = require("glob");
+var markdown = require("markdown").markdown;
 
 if (!String.prototype.format) {
   String.prototype.format = function() {
@@ -38,6 +39,23 @@ function Compiler() {
 	        console.log("Failed.");
 	        return;
 		}
+
+		console.log ("Writing story.js")
+
+	    var jsTemplateFile = fs.readFileSync(path.join(sourcePath, "squiffy.template.js"));
+	    var jsData = "// Created with Squiffy {0}\n// https://github.com/textadventures/squiffy\n\n".format(squiffy_version) + jsTemplateFile.toString();
+
+	    var outputJsFile = [];
+	    outputJsFile.push(jsData);
+	    outputJsFile.push("\n\n");
+	    if (!story.start) {
+	        story.start = Object.keys(story.sections)[0];
+	    }
+	    outputJsFile.push("squiffy.story.start = \"" + story.start + "\";\n");
+	    outputJsFile.push("squiffy.story.id = \"{0}\";\n".format(story.id));
+	    outputJsFile.push("squiffy.story.sections = {\n");
+	    
+	    fs.writeFileSync(path.join(outputPath, "story.js"), outputJsFile.join(""));
 	}
 
 	this.regex = {
@@ -203,8 +221,59 @@ function Compiler() {
 	    return section;
 	};
 
-	this.processText = function(text) {
-		return text;
+	this.processText = function(input, story, section, passage) {
+	    // namedSectionLinkRegex matches:
+	    //   open [[
+	    //   any text - the link text
+	    //   closing ]]
+	    //   open bracket
+	    //   any text - the name of the section
+	    //   closing bracket
+	    namedSectionLinkRegex = /\[\[(.*?)\]\]\((.*?)\)/;
+
+	    //links = map(lambda m: m.group(2), namedSectionLinkRegex.finditer(input))
+	    //check_section_links(story, links, section, passage)
+
+	    input = input.replace(namedSectionLinkRegex, "<a class='squiffy-link' data-section='$2'>$1</a>");
+
+	    // namedPassageLinkRegex matches:
+	    //   open [
+	    //   any text - the link text
+	    //   closing ]
+	    //   open bracket, but not http(s):// after it
+	    //   any text - the name of the passage
+	    //   closing bracket
+	    namedPassageLinkRegex = /\[(.*?)\]\(((?!https?:\/\/).*?)\)/;
+
+	    //links = map(lambda m: m.group(2), namedPassageLinkRegex.finditer(input))
+	    //check_passage_links(story, links, section, passage)
+
+	    input = input.replace(namedPassageLinkRegex, "<a class='squiffy-link' data-passage='$2'>$1</a>");
+
+	    // unnamedSectionLinkRegex matches:
+	    //   open [[
+	    //   any text - the link text
+	    //   closing ]]
+	    unnamedSectionLinkRegex = /\[\[(.*?)\]\]/;
+
+	    //links = map(lambda m: m.group(1), unnamedSectionLinkRegex.finditer(input))
+	    //check_section_links(story, links, section, passage)
+
+	    input = input.replace(unnamedSectionLinkRegex, "<a class='squiffy-link' data-section='$1'>$1</a>");
+
+	    // unnamedPassageLinkRegex matches:
+	    //   open [
+	    //   any text - the link text
+	    //   closing ]
+	    //   no bracket after
+	    unnamedPassageLinkRegex = /\[(.*?)\]([^\(]|$)/;
+
+	    //links = map(lambda m: m.group(1), unnamedPassageLinkRegex.finditer(input))
+	    //check_passage_links(story, links, section, passage)
+
+	    input = input.replace(unnamedPassageLinkRegex, "<a class='squiffy-link' data-passage='$1'>$1</a>$2");
+
+	    return markdown.toHTML(input);
 	}
 }
 
