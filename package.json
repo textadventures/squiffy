@@ -1,15 +1,11 @@
 {
   "name": "squiffy",
-  "version": "1.9.0",
-  "description": "",
+  "version": "2.0.0",
+  "description": "A tool for creating multiple-choice interactive stories",
   "dependencies": {
     "glob": "^4.0.6",
     "marked": "^0.3.2",
     "underscore": "^1.7.0"
-  },
-  "devDependencies": {},
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Alex Warren <alex@textadventures.co.uk>",
   "repository": {
