@@ -4,7 +4,7 @@ var _ = require("underscore");
 var path = require("path");
 var fs = require("fs");
 var glob = require("glob");
-var markdown = require("markdown").markdown;
+var marked = require("marked");
 
 if (!String.prototype.format) {
   String.prototype.format = function() {
@@ -261,7 +261,7 @@ function Compiler() {
 	    //   open bracket
 	    //   any text - the name of the section
 	    //   closing bracket
-	    namedSectionLinkRegex = /\[\[(.*?)\]\]\((.*?)\)/;
+	    namedSectionLinkRegex = /\[\[(.*?)\]\]\((.*?)\)/g;
 
 	    //links = map(lambda m: m.group(2), namedSectionLinkRegex.finditer(input))
 	    //check_section_links(story, links, section, passage)
@@ -275,7 +275,7 @@ function Compiler() {
 	    //   open bracket, but not http(s):// after it
 	    //   any text - the name of the passage
 	    //   closing bracket
-	    namedPassageLinkRegex = /\[(.*?)\]\(((?!https?:\/\/).*?)\)/;
+	    namedPassageLinkRegex = /\[(.*?)\]\(((?!https?:\/\/).*?)\)/g;
 
 	    //links = map(lambda m: m.group(2), namedPassageLinkRegex.finditer(input))
 	    //check_passage_links(story, links, section, passage)
@@ -286,7 +286,7 @@ function Compiler() {
 	    //   open [[
 	    //   any text - the link text
 	    //   closing ]]
-	    unnamedSectionLinkRegex = /\[\[(.*?)\]\]/;
+	    unnamedSectionLinkRegex = /\[\[(.*?)\]\]/g;
 
 	    //links = map(lambda m: m.group(1), unnamedSectionLinkRegex.finditer(input))
 	    //check_section_links(story, links, section, passage)
@@ -298,14 +298,14 @@ function Compiler() {
 	    //   any text - the link text
 	    //   closing ]
 	    //   no bracket after
-	    unnamedPassageLinkRegex = /\[(.*?)\]([^\(]|$)/;
+	    unnamedPassageLinkRegex = /\[(.*?)\]([^\(]|$)/g;
 
 	    //links = map(lambda m: m.group(1), unnamedPassageLinkRegex.finditer(input))
 	    //check_passage_links(story, links, section, passage)
 
 	    input = input.replace(unnamedPassageLinkRegex, "<a class='squiffy-link' data-passage='$1'>$1</a>$2");
 
-	    return markdown.toHTML(input);
+	    return marked(input);
 	};
 
 	this.writeJs = function(outputJsFile, tabCount, js) {
