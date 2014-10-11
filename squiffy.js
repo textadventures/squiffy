@@ -3,6 +3,7 @@
 var _ = require("underscore");
 var path = require("path");
 var fs = require("fs");
+var glob = require("glob");
 
 if (!String.prototype.format) {
   String.prototype.format = function() {
@@ -15,6 +16,10 @@ if (!String.prototype.format) {
     });
   };
 }
+
+String.prototype.endsWith = function(suffix) {
+    return this.indexOf(suffix, this.length - suffix.length) !== -1;
+};
 
 var squiffy_version = "2.0";
 
@@ -70,7 +75,7 @@ function Compiler() {
 			section = this.ensureSectionExists(story, section, isFirst, inputFilename, lineCount);
 		};
 
-		inputLines.forEach(function(line) {
+		return inputLines.every(function(line) {
 			var stripLine = line.trim();
         	lineCount++;
 
@@ -116,9 +121,25 @@ function Compiler() {
             else if (match.start) {
                 story.start = match.start[1];
             }
-		}, this);
+            else if (match.import) {
+                var basePath = path.resolve(path.dirname(inputFilename));
+                var newFilenames = path.join(basePath, match.import[1]);
+                var importFilenames = glob.sync(newFilenames);
+                importFilenames.every(function(importFilename) {
+                    if (importFilename.endsWith(".squiffy")) {
+                    	var success = this.processFile(story, importFilename, false);
+                    	if (!success) return false;
+                    }
+                    else if (importFilename.endsWith(".js")) {
+                    	story.scripts.push(path.relative(basePath, importFilename));
+                    }
 
-    	return true;
+                    return true;
+                }, this);
+            }
+
+            return true;
+		}, this);
 	};
 
 	this.ensureSectionExists = function(story, section, isFirst, inputFilename, lineCount) {
