@@ -382,7 +382,7 @@ function Compiler() {
 	    // We're only interested in checking if the named passage or section exists.
 
 	    var linkDestination = link.split(",")[0];
-	    if (linkDestination.substr[0, 1] == "@") {
+	    if (linkDestination.substr(0, 1) == "@") {
 	        return true;
 	    }
 	    return _.contains(Object.keys(keys), linkDestination);
