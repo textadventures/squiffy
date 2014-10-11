@@ -2,6 +2,19 @@
 
 var _ = require("underscore");
 var path = require("path");
+var fs = require("fs");
+
+if (!String.prototype.format) {
+  String.prototype.format = function() {
+    var args = arguments;
+    return this.replace(/{(\d+)}/g, function(match, number) { 
+      return typeof args[number] != 'undefined'
+        ? args[number]
+        : match
+      ;
+    });
+  };
+}
 
 var squiffy_version = "2.0";
 
@@ -22,6 +35,21 @@ function Compiler() {
 		}
 	}
 
+	this.regex = {
+		section: /^\[\[(.*)\]\]:$/,
+	    passage: /^\[(.*)\]:$/,
+	    title: /^@title (.*)$/,
+	    import: /^@import (.*)$/,
+	    start: /^@start (.*)$/,
+	    attributes: /^@set (.*)$/,
+	    unset: /^@unset (.*)$/,
+	    inc: /^@inc (.*)$/,
+	    dec: /^@dec (.*)$/,
+	    replace: /^@replace (.*$)/,
+	    js: /^(\t| {4})(.*)$/,
+	    continue: /^\+\+\+(.*)$/,
+	};
+
 	this.processFile = function(story, inputFilename, isFirst) {
 		if (_.contains(story.files, inputFilename)) {
 			return true;
@@ -29,6 +57,39 @@ function Compiler() {
 
 		story.files.push(inputFilename)
     	console.log("Loading " + inputFilename);
+
+    	var inputFile = fs.readFileSync(inputFilename);
+		var inputLines = inputFile.toString().split("\n");
+
+		var lineCount = 0;
+		var autoSectionCount = 0;
+		var section = null;
+		var passage = null;
+		var textStarted = false;
+
+		inputLines.forEach(function(line) {
+			var stripLine = line.trim();
+        	lineCount++;
+
+        	var match = _.object(_.map(this.regex, function (regex, key) {
+			    return [key, regex.exec(stripLine)];
+			}));
+
+        	if (match.section) {
+        		section = story.addSection(match.section[1], inputFilename, lineCount);
+            	passage = null;
+            	textStarted = false;
+        	}
+            else if (match.passage) {
+            	if (!section) {
+	                console.log("ERROR: {0} line {1}: Can't add passage '{2}' as no section has been created.".format(
+	                    inputFilename, lineCount, match.passage[1]));
+	                return false;
+	            }
+	            passage = section.addPassage(match.passage[1], lineCount);
+	            textStarted = false;
+            }
+		}, this);
 
     	return true;
 	}
