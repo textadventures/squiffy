@@ -1,0 +1,20 @@
+{
+  "name": "squiffy",
+  "version": "1.9.0",
+  "description": "",
+  "dependencies": {
+    "markdown": "^0.5.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Alex Warren <alex@textadventures.co.uk>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/textadventures/squiffy.git"
+  },
+  "license": "MIT",
+  "bin": "./squiffy.js",
+  "preferGlobal": true
+}
