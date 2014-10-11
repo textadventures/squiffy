@@ -305,10 +305,10 @@ function Compiler() {
 	    //   open bracket
 	    //   any text - the name of the section
 	    //   closing bracket
-	    namedSectionLinkRegex = /\[\[(.*?)\]\]\((.*?)\)/g;
+	    var namedSectionLinkRegex = /\[\[(.*?)\]\]\((.*?)\)/g;
 
-	    //links = map(lambda m: m.group(2), namedSectionLinkRegex.finditer(input))
-	    //check_section_links(story, links, section, passage)
+	    var links = this.allMatchesForGroup(input, namedSectionLinkRegex, 2);
+	    this.checkSectionLinks(story, links, section, passage);
 
 	    input = input.replace(namedSectionLinkRegex, "<a class='squiffy-link' data-section='$2'>$1</a>");
 
@@ -319,10 +319,10 @@ function Compiler() {
 	    //   open bracket, but not http(s):// after it
 	    //   any text - the name of the passage
 	    //   closing bracket
-	    namedPassageLinkRegex = /\[(.*?)\]\(((?!https?:\/\/).*?)\)/g;
+	    var namedPassageLinkRegex = /\[(.*?)\]\(((?!https?:\/\/).*?)\)/g;
 
-	    //links = map(lambda m: m.group(2), namedPassageLinkRegex.finditer(input))
-	    //check_passage_links(story, links, section, passage)
+	    links = this.allMatchesForGroup(input, namedPassageLinkRegex, 2);
+	    this.checkPassageLinks(story, links, section, passage);
 
 	    input = input.replace(namedPassageLinkRegex, "<a class='squiffy-link' data-passage='$2'>$1</a>");
 
@@ -330,10 +330,10 @@ function Compiler() {
 	    //   open [[
 	    //   any text - the link text
 	    //   closing ]]
-	    unnamedSectionLinkRegex = /\[\[(.*?)\]\]/g;
+	    var unnamedSectionLinkRegex = /\[\[(.*?)\]\]/g;
 
-	    //links = map(lambda m: m.group(1), unnamedSectionLinkRegex.finditer(input))
-	    //check_section_links(story, links, section, passage)
+	    links = this.allMatchesForGroup(input, unnamedSectionLinkRegex, 1);
+	    this.checkSectionLinks(story, links, section, passage);
 
 	    input = input.replace(unnamedSectionLinkRegex, "<a class='squiffy-link' data-section='$1'>$1</a>");
 
@@ -342,15 +342,65 @@ function Compiler() {
 	    //   any text - the link text
 	    //   closing ]
 	    //   no bracket after
-	    unnamedPassageLinkRegex = /\[(.*?)\]([^\(]|$)/g;
+	    var unnamedPassageLinkRegex = /\[(.*?)\]([^\(]|$)/g;
 
-	    //links = map(lambda m: m.group(1), unnamedPassageLinkRegex.finditer(input))
-	    //check_passage_links(story, links, section, passage)
+    	links = this.allMatchesForGroup(input, unnamedPassageLinkRegex, 1);
+	    this.checkPassageLinks(story, links, section, passage);
 
 	    input = input.replace(unnamedPassageLinkRegex, "<a class='squiffy-link' data-passage='$1'>$1</a>$2");
 
 	    return marked(input);
 	};
+
+	this.allMatchesForGroup = function(input, regex, groupNumber) {
+		var result = [];
+		var match;
+		while (match = regex.exec(input)) {
+			result.push(match[groupNumber]);
+		}
+		return result;
+	};
+
+	this.checkSectionLinks = function(story, links, section, passage) {
+	    if (!story) return;
+        var badLinks = _.filter(links, function(m) { return !this.linkDestinationExists(m, story.sections) }, this);
+        this.showBadLinksWarning(badLinks, "section", "[[", "]]", section, passage);
+	}
+
+	this.checkPassageLinks = function(story, links, section, passage) {
+	    if (!story) return;
+	    var badLinks = _.filter(links, function(m) { return !this.linkDestinationExists(m, section.passages) }, this);
+        this.showBadLinksWarning(badLinks, "passage", "[", "]", section, passage);
+	}
+
+	this.linkDestinationExists = function(link, keys) {
+	    // Link destination data may look like:
+	    //   passageName
+	    //   passageName, my_attribute=2
+	    //   passageName, @replace 1=new text, some_attribute=5
+	    //   @replace 2=some words
+	    // We're only interested in checking if the named passage or section exists.
+
+	    var linkDestination = link.split(",")[0];
+	    if (linkDestination.substr[0, 1] == "@") {
+	        return true;
+	    }
+	    return _.contains(Object.keys(keys), linkDestination);
+	}
+
+	this.showBadLinksWarning = function(badLinks, linkTo, before, after, section, passage) {
+		badLinks.forEach(function(badLink) {
+			var warning;
+	        if (!passage) {
+	            warning = "{0} line {1}: In section \"{2}\"".format(section.filename, section.line, section.name);
+	        }
+	        else {
+	            warning = "{0} line {1}: In section \"{2}\", passage \"{3}\"".format(
+	                section.filename, passage.line, section.name, passage.name);
+	        }
+	        console.log("WARNING: {0} there is a link to a {1} called {2}{3}{4}, which doesn't exist".format(warning, linkTo, before, badLink, after));
+		});
+	}
 
 	this.writeJs = function(outputJsFile, tabCount, js) {
 	    var tabs = new Array(tabCount + 1).join("\t");
