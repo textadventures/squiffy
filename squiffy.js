@@ -137,6 +137,18 @@ function Compiler() {
                     return true;
                 }, this);
             }
+			else if (match.attributes) {
+                section = this.addAttribute(match.attributes[1], story, section, passage, isFirst, inputFilename, lineCount);
+            }
+            else if (match.unset) {
+                section = this.addAttribute("not " + match.unset[1], story, section, passage, isFirst, inputFilename, lineCount);
+            }
+            else if (match.inc) {
+                section = this.addAttribute(match.inc[1] + "+=1", story, section, passage, isFirst, inputFilename, lineCount);
+            }
+            else if (match.dec) {
+                section = this.addAttribute(match.dec[1] + "-=1", story, section, passage, isFirst, inputFilename, lineCount);
+            }
 
             return true;
 		}, this);
@@ -145,6 +157,17 @@ function Compiler() {
 	this.ensureSectionExists = function(story, section, isFirst, inputFilename, lineCount) {
 	    if (!section && isFirst) {
 	        section = story.addSection("_default", inputFilename, lineCount);
+	    }
+	    return section;
+	};
+
+	this.addAttribute = function (attribute, story, section, passage, isFirst, inputFilename, lineCount) {
+	    if (!passage) {
+	        section = this.ensureSectionExists(story, section, isFirst, inputFilename, lineCount);
+	        section.addAttribute(attribute);
+	    }
+	    else {
+	        passage.addAttribute(attribute);
 	    }
 	    return section;
 	};
