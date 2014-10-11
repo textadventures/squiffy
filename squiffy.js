@@ -56,7 +56,7 @@ function Compiler() {
 	    outputJsFile.push("squiffy.story.sections = {\n");
 
 	    _.each(story.sections, function(section, sectionName) {
-	        outputJsFile.push("\t\"{0}\": {{\n".format(sectionName));
+	        outputJsFile.push("\t\"{0}\": {\n".format(sectionName));
 	        if (section.clear) {
 	            outputJsFile.push("\t\t\"clear\": true,\n");
 	        }
@@ -310,7 +310,7 @@ function Compiler() {
 
 	this.writeJs = function(outputJsFile, tabCount, js) {
 	    var tabs = new Array(tabCount + 1).join("\t");
-	    outputJsFile.push("{0}\"js\": function() {{\n".format(tabs));
+	    outputJsFile.push("{0}\"js\": function() {\n".format(tabs));
 	    js.forEach(function(jsLine) {
 	    	outputJsFile.push("{0}\t{1}\n".format(tabs, jsLine));
 	    });
