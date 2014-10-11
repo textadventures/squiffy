@@ -22,9 +22,9 @@ String.prototype.endsWith = function(suffix) {
     return this.indexOf(suffix, this.length - suffix.length) !== -1;
 };
 
-var squiffy_version = "2.0";
+var squiffyVersion = "2.0";
 
-console.log("Squiffy " + squiffy_version);
+console.log("Squiffy " + squiffyVersion);
 
 function Compiler() {
 	this.process = function(inputFilename, sourcePath, options) {
@@ -40,10 +40,10 @@ function Compiler() {
 	        return;
 		}
 
-		console.log ("Writing story.js")
+		console.log("Writing story.js")
 
 	    var jsTemplateFile = fs.readFileSync(path.join(sourcePath, "squiffy.template.js"));
-	    var jsData = "// Created with Squiffy {0}\n// https://github.com/textadventures/squiffy\n\n".format(squiffy_version) + jsTemplateFile.toString();
+	    var jsData = "// Created with Squiffy {0}\n// https://github.com/textadventures/squiffy\n\n".format(squiffyVersion) + jsTemplateFile.toString();
 
 	    var outputJsFile = [];
 	    outputJsFile.push(jsData);
@@ -68,26 +68,71 @@ function Compiler() {
 	            this.writeJs(outputJsFile, 2, section.js);
 	        }
 
-	        /*outputJsFile.push("\t\t\"passages\": {\n")
-	        for passage_name in section.passages:
-	            passage = section.passages[passage_name]
+	        outputJsFile.push("\t\t\"passages\": {\n")
+	        _.each(section.passages, function(passage, passageName) {
+	            outputJsFile.push("\t\t\t\"{0}\": {\n".format(passageName));
+	            if (passage.clear) {
+	                outputJsFile.push("\t\t\t\t\"clear\": true,\n");
+	            }
+	            outputJsFile.push("\t\t\t\t\"text\": {0},\n".format(JSON.stringify(this.processText(passage.text.join("\n"), story, section, passage))));
+	            if (passage.attributes.length > 0) {
+	                outputJsFile.push("\t\t\t\t\"attributes\": {0},\n".format(JSON.stringify(passage.attributes)));
+	            }
+	            if (passage.js.length > 0) {
+	                this.writeJs(outputJsFile, 4, passage.js);
+	            }
+	            outputJsFile.push("\t\t\t},\n");
+	        }, this);
 
-	            outputJsFile.push("\t\t\t\"{0}\": {{\n".format(passage_name))
-	            if passage.clear:
-	                outputJsFile.push("\t\t\t\t\"clear\": true,\n")
-	            outputJsFile.push("\t\t\t\t\"text\": {0},\n".format(json.dumps(process_text("\n".join(passage.text), story, section, passage))))
-	            if len(passage.attributes) > 0:
-	                outputJsFile.push("\t\t\t\t\"attributes\": {0},\n".format(json.dumps(passage.attributes)))
-	            if len(passage.js) > 0:
-	                write_js(output_js_file, 4, passage.js)
-	            outputJsFile.push("\t\t\t},\n")
-
-	        outputJsFile.push("\t\t},\n")
-	        outputJsFile.push("\t},\n")
-	        */
+	        outputJsFile.push("\t\t},\n");
+	        outputJsFile.push("\t},\n");
 	    }, this);
+
+		outputJsFile.push("}\n");
 	    
 	    fs.writeFileSync(path.join(outputPath, "story.js"), outputJsFile.join(""));
+
+	    console.log("Writing index.html");
+
+	    var htmlTemplateFile = fs.readFileSync(this.findFile("index.template.html", outputPath, sourcePath));
+	    var htmlData = htmlTemplateFile.toString();
+	    htmlData = htmlData.replace("<!-- INFO -->", "<!--\n\nCreated with Squiffy {0}\n\n\nhttps://github.com/textadventures/squiffy\n\n-->".format(squiffyVersion));
+	    htmlData = htmlData.replace("<!-- TITLE -->", story.title);
+	    var jqueryJs = "jquery.min.js";
+	    var jqueryuiJs = "jquery-ui.min.js";
+
+	    if (options.useCdn) {
+	        jqueryJs = "http://ajax.aspnetcdn.com/ajax/jquery/jquery-1.10.2.min.js";
+	        jqueryuiJs = "http://ajax.aspnetcdn.com/ajax/jquery.ui/1.10.3/jquery-ui.min.js";
+	    }
+	    else {
+	    	fs.createReadStream(path.join(sourcePath, "jquery.min.js")).pipe(fs.createWriteStream(path.join(outputPath, "jquery.min.js")));
+	    	fs.createReadStream(path.join(sourcePath, "jquery-ui.min.js")).pipe(fs.createWriteStream(path.join(outputPath, "jquery-ui.min.js")));
+	    }
+	    
+	    htmlData = htmlData.replace("<!-- JQUERY -->", jqueryJs)
+	    htmlData = htmlData.replace("<!-- JQUERYUI -->", jqueryuiJs)
+
+	    var scriptData = _.map(story.scripts, function (script) { return "<script src=\"{0}\"></script>".format(script); }).join("\n");
+	    htmlData = htmlData.replace("<!-- SCRIPTS -->", scriptData);
+
+		fs.writeFileSync(path.join(outputPath, "index.html"), htmlData);
+
+	    console.log("Writing style.css");
+
+	    var cssTemplateFile = fs.readFileSync(this.findFile("style.template.css", outputPath, sourcePath));
+	    var cssData = cssTemplateFile.toString();
+	    fs.writeFileSync(path.join(outputPath, "style.css"), cssData);
+
+	    console.log("Done.");
+	}
+
+	this.findFile = function(filename, outputPath, sourcePath) {
+	    var outputPathFile = path.join(outputPath, filename);
+	    if (fs.existsSync(outputPathFile)) {
+	        return outputPathFile;
+	    }
+	    return path.join(sourcePath, filename);
 	}
 
 	this.regex = {
@@ -314,7 +359,7 @@ function Compiler() {
 	    js.forEach(function(jsLine) {
 	    	outputJsFile.push("{0}\t{1}\n".format(tabs, jsLine));
 	    });
-	    outputJsFile.push("{0}}},\n".format(tabs));
+	    outputJsFile.push("{0}},\n".format(tabs));
 	}
 }
 
