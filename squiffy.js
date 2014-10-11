@@ -54,6 +54,38 @@ function Compiler() {
 	    outputJsFile.push("squiffy.story.start = \"" + story.start + "\";\n");
 	    outputJsFile.push("squiffy.story.id = \"{0}\";\n".format(story.id));
 	    outputJsFile.push("squiffy.story.sections = {\n");
+
+	    _.each(story.sections, function(section, sectionName) {
+	        outputJsFile.push("\t\"{0}\": {{\n".format(sectionName));
+	        if (section.clear) {
+	            outputJsFile.push("\t\t\"clear\": true,\n");
+	        }
+	        outputJsFile.push("\t\t\"text\": {0},\n".format(JSON.stringify(this.processText(section.text.join("\n"), story, section, null))));
+	        if (section.attributes.length > 0) {
+	            outputJsFile.push("\t\t\"attributes\": {0},\n".format(JSON.stringify(section.attributes)));
+	        }
+	        if (section.js.length > 0) {
+	            this.writeJs(outputJsFile, 2, section.js);
+	        }
+
+	        /*outputJsFile.push("\t\t\"passages\": {\n")
+	        for passage_name in section.passages:
+	            passage = section.passages[passage_name]
+
+	            outputJsFile.push("\t\t\t\"{0}\": {{\n".format(passage_name))
+	            if passage.clear:
+	                outputJsFile.push("\t\t\t\t\"clear\": true,\n")
+	            outputJsFile.push("\t\t\t\t\"text\": {0},\n".format(json.dumps(process_text("\n".join(passage.text), story, section, passage))))
+	            if len(passage.attributes) > 0:
+	                outputJsFile.push("\t\t\t\t\"attributes\": {0},\n".format(json.dumps(passage.attributes)))
+	            if len(passage.js) > 0:
+	                write_js(output_js_file, 4, passage.js)
+	            outputJsFile.push("\t\t\t},\n")
+
+	        outputJsFile.push("\t\t},\n")
+	        outputJsFile.push("\t},\n")
+	        */
+	    }, this);
 	    
 	    fs.writeFileSync(path.join(outputPath, "story.js"), outputJsFile.join(""));
 	}
@@ -99,7 +131,7 @@ function Compiler() {
         	lineCount++;
 
         	var match = _.object(_.map(this.regex, function (regex, key) {
-			    return [key, regex.exec(stripLine)];
+			    return [key, key == "js" ? regex.exec(line) : regex.exec(stripLine)];
 			}));
 
         	if (match.section) {
@@ -274,6 +306,15 @@ function Compiler() {
 	    input = input.replace(unnamedPassageLinkRegex, "<a class='squiffy-link' data-passage='$1'>$1</a>$2");
 
 	    return markdown.toHTML(input);
+	};
+
+	this.writeJs = function(outputJsFile, tabCount, js) {
+	    var tabs = new Array(tabCount + 1).join("\t");
+	    outputJsFile.push("{0}\"js\": function() {{\n".format(tabs));
+	    js.forEach(function(jsLine) {
+	    	outputJsFile.push("{0}\t{1}\n".format(tabs, jsLine));
+	    });
+	    outputJsFile.push("{0}}},\n".format(tabs));
 	}
 }
 
