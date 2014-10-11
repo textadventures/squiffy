@@ -66,6 +66,9 @@ function Compiler() {
 		var section = null;
 		var passage = null;
 		var textStarted = false;
+		var ensureSectionExists = function() {
+			section = this.ensureSectionExists(story, section, isFirst, inputFilename, lineCount);
+		};
 
 		inputLines.forEach(function(line) {
 			var stripLine = line.trim();
@@ -90,13 +93,28 @@ function Compiler() {
 	            textStarted = false;
             }
             else if (match.continue) {
-            	section = this.ensureSectionExists(story, section, isFirst, inputFilename, lineCount);
+            	ensureSectionExists();
 	            autoSectionCount++;
 	            var autoSectionName = "_continue{0}".format(autoSectionCount);
 	            section.addText("[[{0}]]({1})".format(match.continue[1], autoSectionName));
 	            section = story.addSection(autoSectionName, inputFilename, lineCount);
 	            passage = null;
 	            textStarted = false;
+            }
+            else if (stripLine == "@clear") {
+                if (!passage) {
+                    ensureSectionExists();
+                    section.clear = true;
+                }
+                else {
+                    passage.clear = true;
+                }
+            }
+            else if (match.title) {
+                story.title = match.title[1];
+            }
+            else if (match.start) {
+                story.start = match.start[1];
             }
 		}, this);
 
