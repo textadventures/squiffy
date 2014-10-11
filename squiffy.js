@@ -349,7 +349,7 @@ function Compiler() {
 
 	    input = input.replace(unnamedPassageLinkRegex, "<a class='squiffy-link' data-passage='$1'>$1</a>$2");
 
-	    return marked(input);
+	    return marked(input).trim();
 	};
 
 	this.allMatchesForGroup = function(input, regex, groupNumber) {
