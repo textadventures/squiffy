@@ -89,10 +89,26 @@ function Compiler() {
 	            passage = section.addPassage(match.passage[1], lineCount);
 	            textStarted = false;
             }
+            else if (match.continue) {
+            	section = this.ensureSectionExists(story, section, isFirst, inputFilename, lineCount);
+	            autoSectionCount++;
+	            var autoSectionName = "_continue{0}".format(autoSectionCount);
+	            section.addText("[[{0}]]({1})".format(match.continue[1], autoSectionName));
+	            section = story.addSection(autoSectionName, inputFilename, lineCount);
+	            passage = null;
+	            textStarted = false;
+            }
 		}, this);
 
     	return true;
-	}
+	};
+
+	this.ensureSectionExists = function(story, section, isFirst, inputFilename, lineCount) {
+	    if (!section && isFirst) {
+	        section = story.addSection("_default", inputFilename, lineCount);
+	    }
+	    return section;
+	};
 }
 
 function Story() {
@@ -116,6 +132,7 @@ function Story() {
 }
 
 function Section(name, filename, line) {
+	console.log("SECTION " + name);
     this.name = name;
     this.filename = filename;
     this.line = line;
@@ -145,6 +162,7 @@ function Section(name, filename, line) {
 }
 
 function Passage(name, line) {
+	console.log("PASSAGE " + name);
 	this.name = name;
 	this.line = line;
 	this.text = [];
