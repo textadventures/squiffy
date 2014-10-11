@@ -5,6 +5,7 @@ var path = require("path");
 var fs = require("fs");
 var glob = require("glob");
 var marked = require("marked");
+var crypto = require("crypto");
 
 if (!String.prototype.format) {
   String.prototype.format = function() {
@@ -23,8 +24,6 @@ String.prototype.endsWith = function(suffix) {
 };
 
 var squiffyVersion = "2.0";
-
-console.log("Squiffy " + squiffyVersion);
 
 function Compiler() {
 	this.process = function(inputFilename, sourcePath, options) {
@@ -377,14 +376,13 @@ function Story() {
     }
 
     this.set_id = function(filename) {
-    	// TODO
-        //file_id = str(uuid.getnode()) + filename
-        //self.id = hashlib.sha1(file_id.encode('utf-8')).hexdigest()[0:10]
+    	var shasum = crypto.createHash("sha1");
+    	shasum.update(filename);
+        this.id = shasum.digest("hex").substr(0, 10);
     }
 }
 
 function Section(name, filename, line) {
-	console.log("SECTION " + name);
     this.name = name;
     this.filename = filename;
     this.line = line;
@@ -414,7 +412,6 @@ function Section(name, filename, line) {
 }
 
 function Passage(name, line) {
-	console.log("PASSAGE " + name);
 	this.name = name;
 	this.line = line;
 	this.text = [];
@@ -440,6 +437,8 @@ function getOptions() {
 		useCdn: _.contains(process.argv, "-c"),
 	};
 }
+
+console.log("Squiffy " + squiffyVersion);
 
 if (process.argv.length < 3) {
 	console.log("Syntax: input.squiffy [-c]");
