@@ -3,32 +3,12 @@ layout: index
 title: Installing Squiffy
 ---
 
-The Squiffy compiler is written in Python, and has been tested with Python 2.7 and Python 3.3. It requires the [Markdown package](https://pypi.python.org/pypi/Markdown).
+Squiffy is a command-line Node package, and runs on Windows, Mac and Linux.
 
-Detailed step-by-step instructions for Windows, Mac OS X and Linux are below.
+To install Squiffy, first [install Node.js](http://nodejs.org/).
 
-Windows
--------
+Next, install the [squiffy package](https://www.npmjs.org/package/squiffy) from npm, by typing this into a Command Prompt or Terminal:
 
-First, [install Python](https://www.python.org/downloads/). Either Python 2 or Python 3 should work.
+    npm install squiffy -g
 
-Next, [install pip](https://pip.pypa.io/en/latest/installing.html) (not necessary if you installed Python 3).
-
-Install the [Markdown package](https://pypi.python.org/pypi/Markdown) by typing this at a command prompt:
-
-	pip install markdown
-
-Finally, [download Squiffy](https://github.com/textadventures/squiffy/releases/download/v1.0/squiffy-1.0.zip) and unzip it somewhere.
-
-Mac OS X and Linux
-------------------
-
-Python is already installed on your machine (it's preinstalled on OS X, and most Linux distributions).
-
-First, [install pip](https://pip.pypa.io/en/latest/installing.html).
-
-Install the [Markdown package](https://pypi.python.org/pypi/Markdown) by typing this in a Terminal window:
-
-	sudo pip install markdown
-
-Finally, [download Squiffy](https://github.com/textadventures/squiffy/releases/download/v1.0/squiffy-1.0.zip) and unzip it somewhere.
+The `-g` option installs Squiffy globally, so you can easily run it from any directory.

@@ -17,7 +17,9 @@ This release of Squiffy is a simple command-line Python script.
 
 ## Squiffy 2
 
-The plan for this release is to re-write the Squiffy compiler to use [Node.js](http://nodejs.org/) instead of Python. The reason for this is that it will enable the compiler to run easily pretty much anywhere - as a web service, or as part of a desktop application (using [node-webkit](https://github.com/rogerwang/node-webkit)). It also means all of Squiffy - both the compiler and the run-time - will be written using one language, JavaScript.
+**Status:** Released 11 October 2014.
+
+This release is a re-write of the Squiffy compiler to use [Node.js](http://nodejs.org/) instead of Python. This enables the compiler to run easily pretty much anywhere - as a web service, or as part of a desktop application (using [node-webkit](https://github.com/rogerwang/node-webkit)). It also means all of Squiffy - both the compiler and the run-time - is now written using one language, JavaScript.
 
 ## Squiffy 3
 
