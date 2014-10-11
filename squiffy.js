@@ -66,13 +66,14 @@ function Compiler() {
     	var inputFile = fs.readFileSync(inputFilename);
 		var inputLines = inputFile.toString().split("\n");
 
+		var compiler = this;
 		var lineCount = 0;
 		var autoSectionCount = 0;
 		var section = null;
 		var passage = null;
 		var textStarted = false;
 		var ensureSectionExists = function() {
-			section = this.ensureSectionExists(story, section, isFirst, inputFilename, lineCount);
+			section = compiler.ensureSectionExists(story, section, isFirst, inputFilename, lineCount);
 		};
 
 		return inputLines.every(function(line) {
@@ -149,6 +150,36 @@ function Compiler() {
             else if (match.dec) {
                 section = this.addAttribute(match.dec[1] + "-=1", story, section, passage, isFirst, inputFilename, lineCount);
             }
+            else if (match.replace) {
+                var replaceAttribute = match.replace[1];
+                var attributeMatch = /^(.*?)=(.*)$/.exec(replaceAttribute);
+                if (attributeMatch) {
+                    replaceAttribute = attributeMatch[1] + "=" + this.processText(attributeMatch[2]);
+                }
+                section = this.addAttribute("@replace " + replaceAttribute, story, section, passage, isFirst, inputFilename, lineCount);
+            }
+            else if (!textStarted && match.js) {
+	            if (!passage) {
+	                ensureSectionExists();
+	                section.addJS(match.js[2]);
+	            }
+	            else {
+	                passage.addJS(match.js[2]);
+	            }
+	        }
+	        else if (textStarted || stripLine.length > 0) {
+	            if (!passage) {
+	                ensureSectionExists();
+	                if (section) {
+	                    section.addText(line);
+	                    textStarted = true;
+	                }
+	            }
+	            else {
+	                passage.addText(line);
+	                textStarted = true;
+	            }
+	        }
 
             return true;
 		}, this);
@@ -171,6 +202,10 @@ function Compiler() {
 	    }
 	    return section;
 	};
+
+	this.processText = function(text) {
+		return text;
+	}
 }
 
 function Story() {
