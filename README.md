@@ -1,7 +1,7 @@
 Squiffy
 =======
 
-Squiffy is a tool for creating multiple choice interactive fiction. The first release of Squiffy is written in Python.
+Squiffy is a tool for creating multiple choice interactive fiction. Squiffy is written entirely in JavaScript - the compiler uses [Node.js](http://nodejs.org/) and the games it generates run in a web browser.
 
 For installation and usage instructions, [see the documentation](http://docs.textadventures.co.uk/squiffy/).
 
