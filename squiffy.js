@@ -7,8 +7,7 @@ var glob = require("glob");
 var marked = require("marked");
 var crypto = require("crypto");
 
-if (!String.prototype.format) {
-  String.prototype.format = function() {
+String.prototype.format = function() {
     var args = arguments;
     return this.replace(/{(\d+)}/g, function(match, number) { 
       return typeof args[number] != 'undefined'
@@ -16,8 +15,7 @@ if (!String.prototype.format) {
         : match
       ;
     });
-  };
-}
+};
 
 String.prototype.endsWith = function(suffix) {
     return this.indexOf(suffix, this.length - suffix.length) !== -1;
@@ -26,180 +24,180 @@ String.prototype.endsWith = function(suffix) {
 var squiffyVersion = "2.0";
 
 function Compiler() {
-	this.process = function(inputFilename, sourcePath, options) {
-		var outputPath = path.resolve(path.dirname(inputFilename));
+    this.process = function(inputFilename, sourcePath, options) {
+        var outputPath = path.resolve(path.dirname(inputFilename));
 
-		var story = new Story();
-		story.set_id(path.resolve(inputFilename));
+        var story = new Story();
+        story.set_id(path.resolve(inputFilename));
 
-		var success = this.processFile(story, path.resolve(inputFilename), true);
+        var success = this.processFile(story, path.resolve(inputFilename), true);
 
-	    if (!success) {
-	        console.log("Failed.");
-	        return;
-		}
+        if (!success) {
+            console.log("Failed.");
+            return;
+        }
 
-		console.log("Writing story.js")
+        console.log("Writing story.js")
 
-	    var jsTemplateFile = fs.readFileSync(path.join(sourcePath, "squiffy.template.js"));
-	    var jsData = "// Created with Squiffy {0}\n// https://github.com/textadventures/squiffy\n\n".format(squiffyVersion) + jsTemplateFile.toString();
+        var jsTemplateFile = fs.readFileSync(path.join(sourcePath, "squiffy.template.js"));
+        var jsData = "// Created with Squiffy {0}\n// https://github.com/textadventures/squiffy\n\n".format(squiffyVersion) + jsTemplateFile.toString();
 
-	    var outputJsFile = [];
-	    outputJsFile.push(jsData);
-	    outputJsFile.push("\n\n");
-	    if (!story.start) {
-	        story.start = Object.keys(story.sections)[0];
-	    }
-	    outputJsFile.push("squiffy.story.start = \"" + story.start + "\";\n");
-	    outputJsFile.push("squiffy.story.id = \"{0}\";\n".format(story.id));
-	    outputJsFile.push("squiffy.story.sections = {\n");
+        var outputJsFile = [];
+        outputJsFile.push(jsData);
+        outputJsFile.push("\n\n");
+        if (!story.start) {
+            story.start = Object.keys(story.sections)[0];
+        }
+        outputJsFile.push("squiffy.story.start = \"" + story.start + "\";\n");
+        outputJsFile.push("squiffy.story.id = \"{0}\";\n".format(story.id));
+        outputJsFile.push("squiffy.story.sections = {\n");
 
-	    _.each(story.sections, function(section, sectionName) {
-	        outputJsFile.push("\t\"{0}\": {\n".format(sectionName));
-	        if (section.clear) {
-	            outputJsFile.push("\t\t\"clear\": true,\n");
-	        }
-	        outputJsFile.push("\t\t\"text\": {0},\n".format(JSON.stringify(this.processText(section.text.join("\n"), story, section, null))));
-	        if (section.attributes.length > 0) {
-	            outputJsFile.push("\t\t\"attributes\": {0},\n".format(JSON.stringify(section.attributes)));
-	        }
-	        if (section.js.length > 0) {
-	            this.writeJs(outputJsFile, 2, section.js);
-	        }
+        _.each(story.sections, function(section, sectionName) {
+            outputJsFile.push("\t\"{0}\": {\n".format(sectionName));
+            if (section.clear) {
+                outputJsFile.push("\t\t\"clear\": true,\n");
+            }
+            outputJsFile.push("\t\t\"text\": {0},\n".format(JSON.stringify(this.processText(section.text.join("\n"), story, section, null))));
+            if (section.attributes.length > 0) {
+                outputJsFile.push("\t\t\"attributes\": {0},\n".format(JSON.stringify(section.attributes)));
+            }
+            if (section.js.length > 0) {
+                this.writeJs(outputJsFile, 2, section.js);
+            }
 
-	        outputJsFile.push("\t\t\"passages\": {\n")
-	        _.each(section.passages, function(passage, passageName) {
-	            outputJsFile.push("\t\t\t\"{0}\": {\n".format(passageName));
-	            if (passage.clear) {
-	                outputJsFile.push("\t\t\t\t\"clear\": true,\n");
-	            }
-	            outputJsFile.push("\t\t\t\t\"text\": {0},\n".format(JSON.stringify(this.processText(passage.text.join("\n"), story, section, passage))));
-	            if (passage.attributes.length > 0) {
-	                outputJsFile.push("\t\t\t\t\"attributes\": {0},\n".format(JSON.stringify(passage.attributes)));
-	            }
-	            if (passage.js.length > 0) {
-	                this.writeJs(outputJsFile, 4, passage.js);
-	            }
-	            outputJsFile.push("\t\t\t},\n");
-	        }, this);
+            outputJsFile.push("\t\t\"passages\": {\n")
+            _.each(section.passages, function(passage, passageName) {
+                outputJsFile.push("\t\t\t\"{0}\": {\n".format(passageName));
+                if (passage.clear) {
+                    outputJsFile.push("\t\t\t\t\"clear\": true,\n");
+                }
+                outputJsFile.push("\t\t\t\t\"text\": {0},\n".format(JSON.stringify(this.processText(passage.text.join("\n"), story, section, passage))));
+                if (passage.attributes.length > 0) {
+                    outputJsFile.push("\t\t\t\t\"attributes\": {0},\n".format(JSON.stringify(passage.attributes)));
+                }
+                if (passage.js.length > 0) {
+                    this.writeJs(outputJsFile, 4, passage.js);
+                }
+                outputJsFile.push("\t\t\t},\n");
+            }, this);
 
-	        outputJsFile.push("\t\t},\n");
-	        outputJsFile.push("\t},\n");
-	    }, this);
+            outputJsFile.push("\t\t},\n");
+            outputJsFile.push("\t},\n");
+        }, this);
 
-		outputJsFile.push("}\n");
-	    
-	    fs.writeFileSync(path.join(outputPath, "story.js"), outputJsFile.join(""));
+        outputJsFile.push("}\n");
+        
+        fs.writeFileSync(path.join(outputPath, "story.js"), outputJsFile.join(""));
 
-	    console.log("Writing index.html");
+        console.log("Writing index.html");
 
-	    var htmlTemplateFile = fs.readFileSync(this.findFile("index.template.html", outputPath, sourcePath));
-	    var htmlData = htmlTemplateFile.toString();
-	    htmlData = htmlData.replace("<!-- INFO -->", "<!--\n\nCreated with Squiffy {0}\n\n\nhttps://github.com/textadventures/squiffy\n\n-->".format(squiffyVersion));
-	    htmlData = htmlData.replace("<!-- TITLE -->", story.title);
-	    var jqueryJs = "jquery.min.js";
-	    var jqueryuiJs = "jquery-ui.min.js";
+        var htmlTemplateFile = fs.readFileSync(this.findFile("index.template.html", outputPath, sourcePath));
+        var htmlData = htmlTemplateFile.toString();
+        htmlData = htmlData.replace("<!-- INFO -->", "<!--\n\nCreated with Squiffy {0}\n\n\nhttps://github.com/textadventures/squiffy\n\n-->".format(squiffyVersion));
+        htmlData = htmlData.replace("<!-- TITLE -->", story.title);
+        var jqueryJs = "jquery.min.js";
+        var jqueryuiJs = "jquery-ui.min.js";
 
-	    if (options.useCdn) {
-	        jqueryJs = "http://ajax.aspnetcdn.com/ajax/jquery/jquery-1.10.2.min.js";
-	        jqueryuiJs = "http://ajax.aspnetcdn.com/ajax/jquery.ui/1.10.3/jquery-ui.min.js";
-	    }
-	    else {
-	    	fs.createReadStream(path.join(sourcePath, "jquery.min.js")).pipe(fs.createWriteStream(path.join(outputPath, "jquery.min.js")));
-	    	fs.createReadStream(path.join(sourcePath, "jquery-ui.min.js")).pipe(fs.createWriteStream(path.join(outputPath, "jquery-ui.min.js")));
-	    }
-	    
-	    htmlData = htmlData.replace("<!-- JQUERY -->", jqueryJs)
-	    htmlData = htmlData.replace("<!-- JQUERYUI -->", jqueryuiJs)
+        if (options.useCdn) {
+            jqueryJs = "http://ajax.aspnetcdn.com/ajax/jquery/jquery-1.10.2.min.js";
+            jqueryuiJs = "http://ajax.aspnetcdn.com/ajax/jquery.ui/1.10.3/jquery-ui.min.js";
+        }
+        else {
+            fs.createReadStream(path.join(sourcePath, "jquery.min.js")).pipe(fs.createWriteStream(path.join(outputPath, "jquery.min.js")));
+            fs.createReadStream(path.join(sourcePath, "jquery-ui.min.js")).pipe(fs.createWriteStream(path.join(outputPath, "jquery-ui.min.js")));
+        }
+        
+        htmlData = htmlData.replace("<!-- JQUERY -->", jqueryJs)
+        htmlData = htmlData.replace("<!-- JQUERYUI -->", jqueryuiJs)
 
-	    var scriptData = _.map(story.scripts, function (script) { return "<script src=\"{0}\"></script>".format(script); }).join("\n");
-	    htmlData = htmlData.replace("<!-- SCRIPTS -->", scriptData);
+        var scriptData = _.map(story.scripts, function (script) { return "<script src=\"{0}\"></script>".format(script); }).join("\n");
+        htmlData = htmlData.replace("<!-- SCRIPTS -->", scriptData);
 
-		fs.writeFileSync(path.join(outputPath, "index.html"), htmlData);
+        fs.writeFileSync(path.join(outputPath, "index.html"), htmlData);
 
-	    console.log("Writing style.css");
+        console.log("Writing style.css");
 
-	    var cssTemplateFile = fs.readFileSync(this.findFile("style.template.css", outputPath, sourcePath));
-	    var cssData = cssTemplateFile.toString();
-	    fs.writeFileSync(path.join(outputPath, "style.css"), cssData);
+        var cssTemplateFile = fs.readFileSync(this.findFile("style.template.css", outputPath, sourcePath));
+        var cssData = cssTemplateFile.toString();
+        fs.writeFileSync(path.join(outputPath, "style.css"), cssData);
 
-	    console.log("Done.");
-	}
+        console.log("Done.");
+    }
 
-	this.findFile = function(filename, outputPath, sourcePath) {
-	    var outputPathFile = path.join(outputPath, filename);
-	    if (fs.existsSync(outputPathFile)) {
-	        return outputPathFile;
-	    }
-	    return path.join(sourcePath, filename);
-	}
+    this.findFile = function(filename, outputPath, sourcePath) {
+        var outputPathFile = path.join(outputPath, filename);
+        if (fs.existsSync(outputPathFile)) {
+            return outputPathFile;
+        }
+        return path.join(sourcePath, filename);
+    }
 
-	this.regex = {
-		section: /^\[\[(.*)\]\]:$/,
-	    passage: /^\[(.*)\]:$/,
-	    title: /^@title (.*)$/,
-	    import: /^@import (.*)$/,
-	    start: /^@start (.*)$/,
-	    attributes: /^@set (.*)$/,
-	    unset: /^@unset (.*)$/,
-	    inc: /^@inc (.*)$/,
-	    dec: /^@dec (.*)$/,
-	    replace: /^@replace (.*$)/,
-	    js: /^(\t| {4})(.*)$/,
-	    continue: /^\+\+\+(.*)$/,
-	};
+    this.regex = {
+        section: /^\[\[(.*)\]\]:$/,
+        passage: /^\[(.*)\]:$/,
+        title: /^@title (.*)$/,
+        import: /^@import (.*)$/,
+        start: /^@start (.*)$/,
+        attributes: /^@set (.*)$/,
+        unset: /^@unset (.*)$/,
+        inc: /^@inc (.*)$/,
+        dec: /^@dec (.*)$/,
+        replace: /^@replace (.*$)/,
+        js: /^(\t| {4})(.*)$/,
+        continue: /^\+\+\+(.*)$/,
+    };
 
-	this.processFile = function(story, inputFilename, isFirst) {
-		if (_.contains(story.files, inputFilename)) {
-			return true;
-		}
+    this.processFile = function(story, inputFilename, isFirst) {
+        if (_.contains(story.files, inputFilename)) {
+            return true;
+        }
 
-		story.files.push(inputFilename)
-    	console.log("Loading " + inputFilename);
+        story.files.push(inputFilename)
+        console.log("Loading " + inputFilename);
 
-    	var inputFile = fs.readFileSync(inputFilename);
-		var inputLines = inputFile.toString().split("\n");
+        var inputFile = fs.readFileSync(inputFilename);
+        var inputLines = inputFile.toString().split("\n");
 
-		var compiler = this;
-		var lineCount = 0;
-		var autoSectionCount = 0;
-		var section = null;
-		var passage = null;
-		var textStarted = false;
-		var ensureSectionExists = function() {
-			section = compiler.ensureSectionExists(story, section, isFirst, inputFilename, lineCount);
-		};
+        var compiler = this;
+        var lineCount = 0;
+        var autoSectionCount = 0;
+        var section = null;
+        var passage = null;
+        var textStarted = false;
+        var ensureSectionExists = function() {
+            section = compiler.ensureSectionExists(story, section, isFirst, inputFilename, lineCount);
+        };
 
-		return inputLines.every(function(line) {
-			var stripLine = line.trim();
-        	lineCount++;
+        return inputLines.every(function(line) {
+            var stripLine = line.trim();
+            lineCount++;
 
-        	var match = _.object(_.map(this.regex, function (regex, key) {
-			    return [key, key == "js" ? regex.exec(line) : regex.exec(stripLine)];
-			}));
+            var match = _.object(_.map(this.regex, function (regex, key) {
+                return [key, key == "js" ? regex.exec(line) : regex.exec(stripLine)];
+            }));
 
-        	if (match.section) {
-        		section = story.addSection(match.section[1], inputFilename, lineCount);
-            	passage = null;
-            	textStarted = false;
-        	}
+            if (match.section) {
+                section = story.addSection(match.section[1], inputFilename, lineCount);
+                passage = null;
+                textStarted = false;
+            }
             else if (match.passage) {
-            	if (!section) {
-	                console.log("ERROR: {0} line {1}: Can't add passage '{2}' as no section has been created.".format(
-	                    inputFilename, lineCount, match.passage[1]));
-	                return false;
-	            }
-	            passage = section.addPassage(match.passage[1], lineCount);
-	            textStarted = false;
+                if (!section) {
+                    console.log("ERROR: {0} line {1}: Can't add passage '{2}' as no section has been created.".format(
+                        inputFilename, lineCount, match.passage[1]));
+                    return false;
+                }
+                passage = section.addPassage(match.passage[1], lineCount);
+                textStarted = false;
             }
             else if (match.continue) {
-            	ensureSectionExists();
-	            autoSectionCount++;
-	            var autoSectionName = "_continue{0}".format(autoSectionCount);
-	            section.addText("[[{0}]]({1})".format(match.continue[1], autoSectionName));
-	            section = story.addSection(autoSectionName, inputFilename, lineCount);
-	            passage = null;
-	            textStarted = false;
+                ensureSectionExists();
+                autoSectionCount++;
+                var autoSectionName = "_continue{0}".format(autoSectionCount);
+                section.addText("[[{0}]]({1})".format(match.continue[1], autoSectionName));
+                section = story.addSection(autoSectionName, inputFilename, lineCount);
+                passage = null;
+                textStarted = false;
             }
             else if (stripLine == "@clear") {
                 if (!passage) {
@@ -222,17 +220,17 @@ function Compiler() {
                 var importFilenames = glob.sync(newFilenames);
                 importFilenames.every(function(importFilename) {
                     if (importFilename.endsWith(".squiffy")) {
-                    	var success = this.processFile(story, importFilename, false);
-                    	if (!success) return false;
+                        var success = this.processFile(story, importFilename, false);
+                        if (!success) return false;
                     }
                     else if (importFilename.endsWith(".js")) {
-                    	story.scripts.push(path.relative(basePath, importFilename));
+                        story.scripts.push(path.relative(basePath, importFilename));
                     }
 
                     return true;
                 }, this);
             }
-			else if (match.attributes) {
+            else if (match.attributes) {
                 section = this.addAttribute(match.attributes[1], story, section, passage, isFirst, inputFilename, lineCount);
             }
             else if (match.unset) {
@@ -253,163 +251,163 @@ function Compiler() {
                 section = this.addAttribute("@replace " + replaceAttribute, story, section, passage, isFirst, inputFilename, lineCount);
             }
             else if (!textStarted && match.js) {
-	            if (!passage) {
-	                ensureSectionExists();
-	                section.addJS(match.js[2]);
-	            }
-	            else {
-	                passage.addJS(match.js[2]);
-	            }
-	        }
-	        else if (textStarted || stripLine.length > 0) {
-	            if (!passage) {
-	                ensureSectionExists();
-	                if (section) {
-	                    section.addText(line);
-	                    textStarted = true;
-	                }
-	            }
-	            else {
-	                passage.addText(line);
-	                textStarted = true;
-	            }
-	        }
+                if (!passage) {
+                    ensureSectionExists();
+                    section.addJS(match.js[2]);
+                }
+                else {
+                    passage.addJS(match.js[2]);
+                }
+            }
+            else if (textStarted || stripLine.length > 0) {
+                if (!passage) {
+                    ensureSectionExists();
+                    if (section) {
+                        section.addText(line);
+                        textStarted = true;
+                    }
+                }
+                else {
+                    passage.addText(line);
+                    textStarted = true;
+                }
+            }
 
             return true;
-		}, this);
-	};
+        }, this);
+    };
 
-	this.ensureSectionExists = function(story, section, isFirst, inputFilename, lineCount) {
-	    if (!section && isFirst) {
-	        section = story.addSection("_default", inputFilename, lineCount);
-	    }
-	    return section;
-	};
+    this.ensureSectionExists = function(story, section, isFirst, inputFilename, lineCount) {
+        if (!section && isFirst) {
+            section = story.addSection("_default", inputFilename, lineCount);
+        }
+        return section;
+    };
 
-	this.addAttribute = function (attribute, story, section, passage, isFirst, inputFilename, lineCount) {
-	    if (!passage) {
-	        section = this.ensureSectionExists(story, section, isFirst, inputFilename, lineCount);
-	        section.addAttribute(attribute);
-	    }
-	    else {
-	        passage.addAttribute(attribute);
-	    }
-	    return section;
-	};
+    this.addAttribute = function (attribute, story, section, passage, isFirst, inputFilename, lineCount) {
+        if (!passage) {
+            section = this.ensureSectionExists(story, section, isFirst, inputFilename, lineCount);
+            section.addAttribute(attribute);
+        }
+        else {
+            passage.addAttribute(attribute);
+        }
+        return section;
+    };
 
-	this.processText = function(input, story, section, passage) {
-	    // namedSectionLinkRegex matches:
-	    //   open [[
-	    //   any text - the link text
-	    //   closing ]]
-	    //   open bracket
-	    //   any text - the name of the section
-	    //   closing bracket
-	    var namedSectionLinkRegex = /\[\[(.*?)\]\]\((.*?)\)/g;
+    this.processText = function(input, story, section, passage) {
+        // namedSectionLinkRegex matches:
+        //   open [[
+        //   any text - the link text
+        //   closing ]]
+        //   open bracket
+        //   any text - the name of the section
+        //   closing bracket
+        var namedSectionLinkRegex = /\[\[(.*?)\]\]\((.*?)\)/g;
 
-	    var links = this.allMatchesForGroup(input, namedSectionLinkRegex, 2);
-	    this.checkSectionLinks(story, links, section, passage);
+        var links = this.allMatchesForGroup(input, namedSectionLinkRegex, 2);
+        this.checkSectionLinks(story, links, section, passage);
 
-	    input = input.replace(namedSectionLinkRegex, "<a class='squiffy-link' data-section='$2'>$1</a>");
+        input = input.replace(namedSectionLinkRegex, "<a class='squiffy-link' data-section='$2'>$1</a>");
 
-	    // namedPassageLinkRegex matches:
-	    //   open [
-	    //   any text - the link text
-	    //   closing ]
-	    //   open bracket, but not http(s):// after it
-	    //   any text - the name of the passage
-	    //   closing bracket
-	    var namedPassageLinkRegex = /\[(.*?)\]\(((?!https?:\/\/).*?)\)/g;
+        // namedPassageLinkRegex matches:
+        //   open [
+        //   any text - the link text
+        //   closing ]
+        //   open bracket, but not http(s):// after it
+        //   any text - the name of the passage
+        //   closing bracket
+        var namedPassageLinkRegex = /\[(.*?)\]\(((?!https?:\/\/).*?)\)/g;
 
-	    links = this.allMatchesForGroup(input, namedPassageLinkRegex, 2);
-	    this.checkPassageLinks(story, links, section, passage);
+        links = this.allMatchesForGroup(input, namedPassageLinkRegex, 2);
+        this.checkPassageLinks(story, links, section, passage);
 
-	    input = input.replace(namedPassageLinkRegex, "<a class='squiffy-link' data-passage='$2'>$1</a>");
+        input = input.replace(namedPassageLinkRegex, "<a class='squiffy-link' data-passage='$2'>$1</a>");
 
-	    // unnamedSectionLinkRegex matches:
-	    //   open [[
-	    //   any text - the link text
-	    //   closing ]]
-	    var unnamedSectionLinkRegex = /\[\[(.*?)\]\]/g;
+        // unnamedSectionLinkRegex matches:
+        //   open [[
+        //   any text - the link text
+        //   closing ]]
+        var unnamedSectionLinkRegex = /\[\[(.*?)\]\]/g;
 
-	    links = this.allMatchesForGroup(input, unnamedSectionLinkRegex, 1);
-	    this.checkSectionLinks(story, links, section, passage);
+        links = this.allMatchesForGroup(input, unnamedSectionLinkRegex, 1);
+        this.checkSectionLinks(story, links, section, passage);
 
-	    input = input.replace(unnamedSectionLinkRegex, "<a class='squiffy-link' data-section='$1'>$1</a>");
+        input = input.replace(unnamedSectionLinkRegex, "<a class='squiffy-link' data-section='$1'>$1</a>");
 
-	    // unnamedPassageLinkRegex matches:
-	    //   open [
-	    //   any text - the link text
-	    //   closing ]
-	    //   no bracket after
-	    var unnamedPassageLinkRegex = /\[(.*?)\]([^\(]|$)/g;
+        // unnamedPassageLinkRegex matches:
+        //   open [
+        //   any text - the link text
+        //   closing ]
+        //   no bracket after
+        var unnamedPassageLinkRegex = /\[(.*?)\]([^\(]|$)/g;
 
-    	links = this.allMatchesForGroup(input, unnamedPassageLinkRegex, 1);
-	    this.checkPassageLinks(story, links, section, passage);
+        links = this.allMatchesForGroup(input, unnamedPassageLinkRegex, 1);
+        this.checkPassageLinks(story, links, section, passage);
 
-	    input = input.replace(unnamedPassageLinkRegex, "<a class='squiffy-link' data-passage='$1'>$1</a>$2");
+        input = input.replace(unnamedPassageLinkRegex, "<a class='squiffy-link' data-passage='$1'>$1</a>$2");
 
-	    return marked(input).trim();
-	};
+        return marked(input).trim();
+    };
 
-	this.allMatchesForGroup = function(input, regex, groupNumber) {
-		var result = [];
-		var match;
-		while (match = regex.exec(input)) {
-			result.push(match[groupNumber]);
-		}
-		return result;
-	};
+    this.allMatchesForGroup = function(input, regex, groupNumber) {
+        var result = [];
+        var match;
+        while (match = regex.exec(input)) {
+            result.push(match[groupNumber]);
+        }
+        return result;
+    };
 
-	this.checkSectionLinks = function(story, links, section, passage) {
-	    if (!story) return;
+    this.checkSectionLinks = function(story, links, section, passage) {
+        if (!story) return;
         var badLinks = _.filter(links, function(m) { return !this.linkDestinationExists(m, story.sections) }, this);
         this.showBadLinksWarning(badLinks, "section", "[[", "]]", section, passage);
-	}
+    }
 
-	this.checkPassageLinks = function(story, links, section, passage) {
-	    if (!story) return;
-	    var badLinks = _.filter(links, function(m) { return !this.linkDestinationExists(m, section.passages) }, this);
+    this.checkPassageLinks = function(story, links, section, passage) {
+        if (!story) return;
+        var badLinks = _.filter(links, function(m) { return !this.linkDestinationExists(m, section.passages) }, this);
         this.showBadLinksWarning(badLinks, "passage", "[", "]", section, passage);
-	}
+    }
 
-	this.linkDestinationExists = function(link, keys) {
-	    // Link destination data may look like:
-	    //   passageName
-	    //   passageName, my_attribute=2
-	    //   passageName, @replace 1=new text, some_attribute=5
-	    //   @replace 2=some words
-	    // We're only interested in checking if the named passage or section exists.
+    this.linkDestinationExists = function(link, keys) {
+        // Link destination data may look like:
+        //   passageName
+        //   passageName, my_attribute=2
+        //   passageName, @replace 1=new text, some_attribute=5
+        //   @replace 2=some words
+        // We're only interested in checking if the named passage or section exists.
 
-	    var linkDestination = link.split(",")[0];
-	    if (linkDestination.substr(0, 1) == "@") {
-	        return true;
-	    }
-	    return _.contains(Object.keys(keys), linkDestination);
-	}
+        var linkDestination = link.split(",")[0];
+        if (linkDestination.substr(0, 1) == "@") {
+            return true;
+        }
+        return _.contains(Object.keys(keys), linkDestination);
+    }
 
-	this.showBadLinksWarning = function(badLinks, linkTo, before, after, section, passage) {
-		badLinks.forEach(function(badLink) {
-			var warning;
-	        if (!passage) {
-	            warning = "{0} line {1}: In section \"{2}\"".format(section.filename, section.line, section.name);
-	        }
-	        else {
-	            warning = "{0} line {1}: In section \"{2}\", passage \"{3}\"".format(
-	                section.filename, passage.line, section.name, passage.name);
-	        }
-	        console.log("WARNING: {0} there is a link to a {1} called {2}{3}{4}, which doesn't exist".format(warning, linkTo, before, badLink, after));
-		});
-	}
+    this.showBadLinksWarning = function(badLinks, linkTo, before, after, section, passage) {
+        badLinks.forEach(function(badLink) {
+            var warning;
+            if (!passage) {
+                warning = "{0} line {1}: In section \"{2}\"".format(section.filename, section.line, section.name);
+            }
+            else {
+                warning = "{0} line {1}: In section \"{2}\", passage \"{3}\"".format(
+                    section.filename, passage.line, section.name, passage.name);
+            }
+            console.log("WARNING: {0} there is a link to a {1} called {2}{3}{4}, which doesn't exist".format(warning, linkTo, before, badLink, after));
+        });
+    }
 
-	this.writeJs = function(outputJsFile, tabCount, js) {
-	    var tabs = new Array(tabCount + 1).join("\t");
-	    outputJsFile.push("{0}\"js\": function() {\n".format(tabs));
-	    js.forEach(function(jsLine) {
-	    	outputJsFile.push("{0}\t{1}\n".format(tabs, jsLine));
-	    });
-	    outputJsFile.push("{0}},\n".format(tabs));
-	}
+    this.writeJs = function(outputJsFile, tabCount, js) {
+        var tabs = new Array(tabCount + 1).join("\t");
+        outputJsFile.push("{0}\"js\": function() {\n".format(tabs));
+        js.forEach(function(jsLine) {
+            outputJsFile.push("{0}\t{1}\n".format(tabs, jsLine));
+        });
+        outputJsFile.push("{0}},\n".format(tabs));
+    }
 }
 
 function Story() {
@@ -426,8 +424,8 @@ function Story() {
     }
 
     this.set_id = function(filename) {
-    	var shasum = crypto.createHash("sha1");
-    	shasum.update(filename);
+        var shasum = crypto.createHash("sha1");
+        shasum.update(filename);
         this.id = shasum.digest("hex").substr(0, 10);
     }
 }
@@ -462,12 +460,12 @@ function Section(name, filename, line) {
 }
 
 function Passage(name, line) {
-	this.name = name;
-	this.line = line;
-	this.text = [];
-	this.js = [];
-	this.clear = false;
-	this.attributes = [];
+    this.name = name;
+    this.line = line;
+    this.text = [];
+    this.js = [];
+    this.clear = false;
+    this.attributes = [];
 
     this.addText = function(text) {
         this.text.push(text);
@@ -483,20 +481,21 @@ function Passage(name, line) {
 }
 
 function getOptions() {
-	return {
-		useCdn: _.contains(process.argv, "-c"),
-	};
+    return {
+        useCdn: _.contains(process.argv, "-c"),
+    };
 }
 
 console.log("Squiffy " + squiffyVersion);
 
 if (process.argv.length < 3) {
-	console.log("Syntax: input.squiffy [-c]");
+    console.log("Syntax: input.squiffy [-c]");
     console.log("Options:");
     console.log("   -c     Use CDN for jQuery");
+    console.log("\nFor help, see http://docs.textadventures.co.uk/squiffy/")
 }
 else {
-	var options = getOptions();
-	var compiler = new Compiler();
-	compiler.process(process.argv[2], __dirname, options);
+    var options = getOptions();
+    var compiler = new Compiler();
+    compiler.process(process.argv[2], __dirname, options);
 }
