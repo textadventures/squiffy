@@ -122,6 +122,8 @@ function Compiler() {
         fs.writeFileSync(path.join(outputPath, "style.css"), cssData);
 
         console.log("Done.");
+
+        return outputPath;
     }
 
     this.findFile = function(filename, outputPath, sourcePath) {
@@ -480,9 +482,25 @@ function Passage(name, line) {
     }
 }
 
+function startServer(dir) {
+    var finalhandler = require("finalhandler");
+    var http = require("http");
+    var serveStatic = require("serve-static");
+
+    var serve = serveStatic(dir, { index: ["index.html"] });
+
+    var server = http.createServer(function(req, res){
+        var done = finalhandler(req, res);
+        serve(req, res, done);
+    });
+
+    server.listen(8282);
+}
+
 function getOptions() {
     return {
         useCdn: _.contains(process.argv, "-c"),
+        serve: _.contains(process.argv, "-s"),
     };
 }
 
@@ -492,10 +510,16 @@ if (process.argv.length < 3) {
     console.log("Syntax: input.squiffy [-c]");
     console.log("Options:");
     console.log("   -c     Use CDN for jQuery");
+    console.log("   -s     Start HTTP server after compiling")
     console.log("\nFor help, see http://docs.textadventures.co.uk/squiffy/")
 }
 else {
     var options = getOptions();
     var compiler = new Compiler();
-    compiler.process(process.argv[2], __dirname, options);
+    var result = compiler.process(process.argv[2], __dirname, options);
+
+    if (result && options.serve) {
+        startServer(result);
+        console.log("Started http://localhost:8282/");
+    }
 }
