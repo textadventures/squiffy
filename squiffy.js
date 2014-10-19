@@ -482,7 +482,7 @@ function Passage(name, line) {
     }
 }
 
-function startServer(dir) {
+function startServer(dir, port) {
     var finalhandler = require("finalhandler");
     var http = require("http");
     var serveStatic = require("serve-static");
@@ -494,7 +494,7 @@ function startServer(dir) {
         serve(req, res, done);
     });
 
-    server.listen(8282);
+    server.listen(port);
 }
 
 console.log("Squiffy " + squiffyVersion);
@@ -504,8 +504,10 @@ var argv = require('yargs')
     .demand(1)
     .alias("c", "cdn")
     .alias("s", "serve")
+    .alias("p", "port")
     .describe("c", "Use CDN for jQuery")
     .describe("s", "Start HTTP server after compiling")
+    .describe("p", "Port for HTTP server (only with --serve)")
     .argv;
 
 var options = {
@@ -517,6 +519,7 @@ var compiler = new Compiler();
 var result = compiler.process(argv._[0], __dirname, options);
 
 if (result && options.serve) {
+    var port = argv.p || 8282;
     startServer(result);
-    console.log("Started http://localhost:8282/");
+    console.log("Started http://localhost:" + port + "/");
 }
