@@ -21,7 +21,7 @@ String.prototype.endsWith = function(suffix) {
     return this.indexOf(suffix, this.length - suffix.length) !== -1;
 };
 
-var squiffyVersion = "2.0";
+var squiffyVersion = "2.1";
 
 function Compiler() {
     this.process = function(inputFilename, sourcePath, options) {
@@ -497,29 +497,26 @@ function startServer(dir) {
     server.listen(8282);
 }
 
-function getOptions() {
-    return {
-        useCdn: _.contains(process.argv, "-c"),
-        serve: _.contains(process.argv, "-s"),
-    };
-}
-
 console.log("Squiffy " + squiffyVersion);
 
-if (process.argv.length < 3) {
-    console.log("Syntax: input.squiffy [-c]");
-    console.log("Options:");
-    console.log("   -c     Use CDN for jQuery");
-    console.log("   -s     Start HTTP server after compiling")
-    console.log("\nFor help, see http://docs.textadventures.co.uk/squiffy/")
-}
-else {
-    var options = getOptions();
-    var compiler = new Compiler();
-    var result = compiler.process(process.argv[2], __dirname, options);
+var argv = require('yargs')
+    .usage("Compiles a Squiffy script file into HTML and JavaScript.\nFor help, see http://docs.textadventures.co.uk/squiffy/\nUsage: $0 filename.squiffy [options]")
+    .demand(1)
+    .alias("c", "cdn")
+    .alias("s", "serve")
+    .describe("c", "Use CDN for jQuery")
+    .describe("s", "Start HTTP server after compiling")
+    .argv;
 
-    if (result && options.serve) {
-        startServer(result);
-        console.log("Started http://localhost:8282/");
-    }
+var options = {
+    useCdn: argv.c,
+    serve: argv.s,
+};
+
+var compiler = new Compiler();
+var result = compiler.process(argv._[0], __dirname, options);
+
+if (result && options.serve) {
+    startServer(result);
+    console.log("Started http://localhost:8282/");
 }
