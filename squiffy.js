@@ -520,6 +520,6 @@ var result = compiler.process(argv._[0], __dirname, options);
 
 if (result && options.serve) {
     var port = argv.p || 8282;
-    startServer(result);
+    startServer(result, port);
     console.log("Started http://localhost:" + port + "/");
 }
