@@ -21,7 +21,7 @@ String.prototype.endsWith = function(suffix) {
     return this.indexOf(suffix, this.length - suffix.length) !== -1;
 };
 
-var squiffyVersion = "2.1";
+var squiffyVersion = "2.2";
 
 function Compiler() {
     this.process = function(inputFilename, sourcePath, options) {
