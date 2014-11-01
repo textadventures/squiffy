@@ -305,7 +305,7 @@ function Compiler() {
         //   open bracket
         //   any text - the name of the section
         //   closing bracket
-        var namedSectionLinkRegex = /\[\[(.*?)\]\]\((.*?)\)/g;
+        var namedSectionLinkRegex = /\[\[([^\]]*?)\]\]\((.*?)\)/g;
 
         var links = this.allMatchesForGroup(input, namedSectionLinkRegex, 2);
         this.checkSectionLinks(story, links, section, passage);
@@ -319,7 +319,7 @@ function Compiler() {
         //   open bracket, but not http(s):// after it
         //   any text - the name of the passage
         //   closing bracket
-        var namedPassageLinkRegex = /\[(.*?)\]\(((?!https?:\/\/).*?)\)/g;
+        var namedPassageLinkRegex = /\[([^\]]*?)\]\(((?!https?:\/\/).*?)\)/g;
 
         links = this.allMatchesForGroup(input, namedPassageLinkRegex, 2);
         this.checkPassageLinks(story, links, section, passage);

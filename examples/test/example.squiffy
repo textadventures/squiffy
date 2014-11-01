@@ -10,6 +10,10 @@ You don't need to specify a name - for example, this [link] and this [[section]]
 
 And this goes to the [[next section]](section2).
 
+This line has links to [[section 3]] and [[section 4]](section four).
+
+This line has links to [passage 3] and [passage 4](passage four).
+
 [passage]:
 Here's some text for the passage.
 
@@ -17,6 +21,12 @@ Here's some text for the passage.
 	alert ("This passage has some JavaScript");
 
 This is the text for the second passage.
+
+[passage 3]:
+Another passage.
+
+[passage four]:
+Yet another passage.
 
 [link]:
 Here is the text for the simple link.
@@ -29,3 +39,9 @@ This is the next section.
 
 [[section]]:
 This is another section.
+
+[[section 3]]:
+Another section is here.
+
+[[section four]]:
+Some other section.
