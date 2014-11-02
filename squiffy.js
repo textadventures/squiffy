@@ -21,7 +21,7 @@ String.prototype.endsWith = function(suffix) {
     return this.indexOf(suffix, this.length - suffix.length) !== -1;
 };
 
-var squiffyVersion = "2.2";
+var squiffyVersion = "2.2.1";
 
 function Compiler() {
     this.process = function(inputFilename, sourcePath, options) {
@@ -158,7 +158,7 @@ function Compiler() {
         console.log("Loading " + inputFilename);
 
         var inputFile = fs.readFileSync(inputFilename);
-        var inputLines = inputFile.toString().split("\n");
+        var inputLines = inputFile.toString().replace(/\r/g, "").split("\n");
 
         var compiler = this;
         var lineCount = 0;
