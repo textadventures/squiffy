@@ -41,9 +41,14 @@ function Compiler() {
         console.log('Writing story.js');
 
         var jsTemplateFile = fs.readFileSync(path.join(sourcePath, 'squiffy.template.js'));
-        var jsData = '// Created with Squiffy {0}\n// https://github.com/textadventures/squiffy\n\n'.format(squiffyVersion)
-            + '(function(){\n'
-            + jsTemplateFile.toString();
+        var jsData = '// Created with Squiffy {0}\n// https://github.com/textadventures/squiffy\n\n'
+            .format(squiffyVersion) +
+            '(function(){\n' +
+            jsTemplateFile.toString();
+
+        if (options.scriptOnly && options.pluginName) {
+            jsData = jsData.replace('$.fn.squiffy =', '$.fn.' + options.pluginName + ' =');
+        }
 
         var outputJsFile = [];
         outputJsFile.push(jsData);
@@ -93,34 +98,36 @@ function Compiler() {
         
         fs.writeFileSync(path.join(outputPath, 'story.js'), outputJsFile.join(''));
 
-        console.log('Writing index.html');
+        if (!options.scriptOnly) {
+            console.log('Writing index.html');
 
-        var htmlTemplateFile = fs.readFileSync(this.findFile('index.template.html', outputPath, sourcePath));
-        var htmlData = htmlTemplateFile.toString();
-        htmlData = htmlData.replace('<!-- INFO -->', '<!--\n\nCreated with Squiffy {0}\n\n\nhttps://github.com/textadventures/squiffy\n\n-->'.format(squiffyVersion));
-        htmlData = htmlData.replace('<!-- TITLE -->', story.title);
-        var jqueryJs = 'jquery.min.js';
+            var htmlTemplateFile = fs.readFileSync(this.findFile('index.template.html', outputPath, sourcePath));
+            var htmlData = htmlTemplateFile.toString();
+            htmlData = htmlData.replace('<!-- INFO -->', '<!--\n\nCreated with Squiffy {0}\n\n\nhttps://github.com/textadventures/squiffy\n\n-->'.format(squiffyVersion));
+            htmlData = htmlData.replace('<!-- TITLE -->', story.title);
+            var jqueryJs = 'jquery.min.js';
 
-        if (options.useCdn) {
-            jqueryJs = 'http://ajax.aspnetcdn.com/ajax/jquery/jquery-2.1.3.min.js';
-        }
-        else {
-            fs.createReadStream(path.join(sourcePath, 'node_modules', 'jquery', 'dist', 'jquery.min.js')).pipe(fs.createWriteStream(path.join(outputPath, 'jquery.min.js')));
+            if (options.useCdn) {
+                jqueryJs = 'http://ajax.aspnetcdn.com/ajax/jquery/jquery-2.1.3.min.js';
+            }
+            else {
+                fs.createReadStream(path.join(sourcePath, 'node_modules', 'jquery', 'dist', 'jquery.min.js')).pipe(fs.createWriteStream(path.join(outputPath, 'jquery.min.js')));
+            }
+            
+            htmlData = htmlData.replace('<!-- JQUERY -->', jqueryJs);
+
+            var scriptData = _.map(story.scripts, function (script) { return '<script src=\'{0}\'></script>'.format(script); }).join('\n');
+            htmlData = htmlData.replace('<!-- SCRIPTS -->', scriptData);
+
+            fs.writeFileSync(path.join(outputPath, 'index.html'), htmlData);
+
+            console.log('Writing style.css');
+
+            var cssTemplateFile = fs.readFileSync(this.findFile('style.template.css', outputPath, sourcePath));
+            var cssData = cssTemplateFile.toString();
+            fs.writeFileSync(path.join(outputPath, 'style.css'), cssData);
         }
         
-        htmlData = htmlData.replace('<!-- JQUERY -->', jqueryJs);
-
-        var scriptData = _.map(story.scripts, function (script) { return '<script src=\'{0}\'></script>'.format(script); }).join('\n');
-        htmlData = htmlData.replace('<!-- SCRIPTS -->', scriptData);
-
-        fs.writeFileSync(path.join(outputPath, 'index.html'), htmlData);
-
-        console.log('Writing style.css');
-
-        var cssTemplateFile = fs.readFileSync(this.findFile('style.template.css', outputPath, sourcePath));
-        var cssData = cssTemplateFile.toString();
-        fs.writeFileSync(path.join(outputPath, 'style.css'), cssData);
-
         console.log('Done.');
 
         return outputPath;
@@ -508,11 +515,15 @@ var argv = require('yargs')
     .describe('c', 'Use CDN for jQuery')
     .describe('s', 'Start HTTP server after compiling')
     .describe('p', 'Port for HTTP server (only with --serve)')
+    .describe('scriptonly', 'Only generate JavaScript file (and optionally specify a name)')
+    .describe('pluginname', 'Specify the jQuery plugin name instead of .questkit (only with --scriptonly)')
     .argv;
 
 var options = {
     useCdn: argv.c,
     serve: argv.s,
+    scriptOnly: argv.scriptonly,
+    pluginName: argv.pluginname,
 };
 
 var compiler = new Compiler();
