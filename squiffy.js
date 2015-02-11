@@ -21,7 +21,8 @@ String.prototype.endsWith = function(suffix) {
     return this.indexOf(suffix, this.length - suffix.length) !== -1;
 };
 
-var squiffyVersion = "2.2.1";
+var packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json')).toString());
+var squiffyVersion = packageJson.version;
 
 function Compiler() {
     this.process = function(inputFilename, sourcePath, options) {
