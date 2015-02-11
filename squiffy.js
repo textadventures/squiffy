@@ -96,19 +96,15 @@ function Compiler() {
         htmlData = htmlData.replace("<!-- INFO -->", "<!--\n\nCreated with Squiffy {0}\n\n\nhttps://github.com/textadventures/squiffy\n\n-->".format(squiffyVersion));
         htmlData = htmlData.replace("<!-- TITLE -->", story.title);
         var jqueryJs = "jquery.min.js";
-        var jqueryuiJs = "jquery-ui.min.js";
 
         if (options.useCdn) {
-            jqueryJs = "http://ajax.aspnetcdn.com/ajax/jquery/jquery-1.10.2.min.js";
-            jqueryuiJs = "http://ajax.aspnetcdn.com/ajax/jquery.ui/1.10.3/jquery-ui.min.js";
+            jqueryJs = "http://ajax.aspnetcdn.com/ajax/jquery/jquery-2.1.3.min.js";
         }
         else {
-            fs.createReadStream(path.join(sourcePath, "jquery.min.js")).pipe(fs.createWriteStream(path.join(outputPath, "jquery.min.js")));
-            fs.createReadStream(path.join(sourcePath, "jquery-ui.min.js")).pipe(fs.createWriteStream(path.join(outputPath, "jquery-ui.min.js")));
+            fs.createReadStream(path.join(sourcePath, "node_modules", "jquery", "dist", "jquery.min.js")).pipe(fs.createWriteStream(path.join(outputPath, "jquery.min.js")));
         }
         
         htmlData = htmlData.replace("<!-- JQUERY -->", jqueryJs)
-        htmlData = htmlData.replace("<!-- JQUERYUI -->", jqueryuiJs)
 
         var scriptData = _.map(story.scripts, function (script) { return "<script src=\"{0}\"></script>".format(script); }).join("\n");
         htmlData = htmlData.replace("<!-- SCRIPTS -->", scriptData);
