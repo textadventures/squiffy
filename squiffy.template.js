@@ -1,50 +1,52 @@
+/* jshint quotmark: single */
+
 var squiffy = {
 	story: {
 		begin: function () {
-			$(document).on("click", "a.squiffy-link", function (event) {
-				if ($(this).hasClass("disabled")) return;
-				var passage = $(this).data("passage");
-				var section = $(this).data("section");
-				var rotate = $(this).attr("data-rotate");
-				var sequence = $(this).attr("data-sequence");
+			$(document).on('click', 'a.squiffy-link', function (event) {
+				if ($(this).hasClass('disabled')) return;
+				var passage = $(this).data('passage');
+				var section = $(this).data('section');
+				var rotate = $(this).attr('data-rotate');
+				var sequence = $(this).attr('data-sequence');
 				if (passage) {
-					$(this).addClass("disabled");
-					squiffy.set("_turncount", squiffy.get("_turncount") + 1);
+					$(this).addClass('disabled');
+					squiffy.set('_turncount', squiffy.get('_turncount') + 1);
 					passage = squiffy.story.processLink(passage);
 					if (passage) {
-						squiffy.ui.currentSection.append("<hr/>");
+						squiffy.ui.currentSection.append('<hr/>');
 						squiffy.story.passage(passage);
 					}
-					var turnPassage = "@" + squiffy.get("_turncount");
+					var turnPassage = '@' + squiffy.get('_turncount');
 					if (turnPassage in squiffy.story.section.passages) {
 						squiffy.story.passage(turnPassage);
 					}
 				}
 				else if (section) {
-					squiffy.ui.currentSection.append("<hr/>");
-					$(this).addClass("disabled");
+					squiffy.ui.currentSection.append('<hr/>');
+					$(this).addClass('disabled');
 					section = squiffy.story.processLink(section);
 					squiffy.story.go(section);
 				}
 				else if (rotate || sequence) {
-					var result = squiffy.util.rotate(rotate || sequence, rotate ? $(this).text() : "");
-					$(this).html(result[0].replace(/&quot;/g, '"').replace(/&#39;/g, "'"));
-					var dataAttribute = rotate ? "data-rotate" : "data-sequence";
+					var result = squiffy.util.rotate(rotate || sequence, rotate ? $(this).text() : '');
+					$(this).html(result[0].replace(/&quot;/g, '"').replace(/&#39;/g, '\''));
+					var dataAttribute = rotate ? 'data-rotate' : 'data-sequence';
 					$(this).attr(dataAttribute, result[1]);
 					if (!result[1]) {
-						$(this).addClass("disabled");
+						$(this).addClass('disabled');
 					}
-					if ($(this).attr("data-attribute")) {
-						squiffy.set($(this).attr("data-attribute"), result[0]);
+					if ($(this).attr('data-attribute')) {
+						squiffy.set($(this).attr('data-attribute'), result[0]);
 					}
 					squiffy.story.save();
 				}
 			});
-			$(document).on("mousedown", "a.squiffy-link", function (event) {
+			$(document).on('mousedown', 'a.squiffy-link', function (event) {
 				event.preventDefault();
 			});
-			$("#squiffy-restart").click(function (){
-				if (confirm("Are you sure you want to restart?")) {
+			$('#squiffy-restart').click(function (){
+				if (confirm('Are you sure you want to restart?')) {
 					squiffy.story.restart();
 				}
 			});
@@ -53,12 +55,12 @@ var squiffy = {
 			}
 		},
 		processLink: function(link) {
-			var sections = link.split(",");
+			var sections = link.split(',');
 			var first = true;
 			var target = null;
 			sections.forEach(function (section) {
 				section = section.trim();
-				if (squiffy.util.startsWith(section, "@replace ")) {
+				if (squiffy.util.startsWith(section, '@replace ')) {
 					squiffy.story.replaceLabel(section.substring(9));
 				}
 				else {
@@ -95,17 +97,17 @@ var squiffy = {
 					var rhs = parseFloat(incDecMatch[3]);
 					var value = squiffy.get(lhs);
 					if (value == null) value = 0;
-					if (op == "+") {
+					if (op == '+') {
 						value += rhs;
 					}
-					if (op == "-") {
+					if (op == '-') {
 						value -= rhs;
 					}
 					squiffy.set(lhs, value);
 				}
 				else {
 					var value = true;
-					if (squiffy.util.startsWith(expr, "not ")) {
+					if (squiffy.util.startsWith(expr, 'not ')) {
 						expr = expr.substring(4);
 						value = false;
 					}
@@ -130,7 +132,7 @@ var squiffy = {
 			if (stripParagsMatch) {
 				text = stripParagsMatch[1];
 			}
-			var $labels = $(".squiffy-label-" + label);
+			var $labels = $('.squiffy-label-' + label);
 			$labels.fadeOut(1000, function() {
 				$labels.html(squiffy.ui.processText(text));
 				$labels.fadeIn(1000, function() {
@@ -139,21 +141,21 @@ var squiffy = {
 			});
 		},
 		go: function(section) {
-			squiffy.set("_transition", null);
+			squiffy.set('_transition', null);
 			squiffy.ui.newSection();
 			squiffy.story.section = squiffy.story.sections[section];
 			if (!squiffy.story.section) return;
-			squiffy.set("_section", section);
+			squiffy.set('_section', section);
 			squiffy.story.setSeen(section);
-			var master = squiffy.story.sections[""];
+			var master = squiffy.story.sections[''];
 			if (master) {
 				squiffy.story.run(master);
 				squiffy.ui.write(master.text);
 			}
 			squiffy.story.run(squiffy.story.section);
 			// The JS might have changed which section we're in
-			if (squiffy.get("_section") == section) {
-				squiffy.set("_turncount", 0);
+			if (squiffy.get('_section') == section) {
+				squiffy.set('_turncount', 0);
 				squiffy.ui.write(squiffy.story.section.text);
 				squiffy.story.save();
 			}
@@ -173,15 +175,15 @@ var squiffy = {
 			var passage = squiffy.story.section.passages[passageName];
 			if (!passage) return;
 			squiffy.story.setSeen(passageName);
-			var masterSection = squiffy.story.sections[""];
+			var masterSection = squiffy.story.sections[''];
 			if (masterSection) {
-				var masterPassage = masterSection.passages[""];
+				var masterPassage = masterSection.passages[''];
 				if (masterPassage) {
 					squiffy.story.run(masterPassage);
 					squiffy.ui.write(masterPassage.text);
 				}
 			}
-			var master = squiffy.story.section.passages[""];
+			var master = squiffy.story.section.passages[''];
 			if (master) {
 				squiffy.story.run(master);
 				squiffy.ui.write(master.text);
@@ -192,7 +194,7 @@ var squiffy = {
 		},
 		processAttributes: function(attributes) {
 			attributes.forEach(function (attribute) {
-				if (squiffy.util.startsWith(attribute, "@replace ")) {
+				if (squiffy.util.startsWith(attribute, '@replace ')) {
 					squiffy.story.replaceLabel(attribute.substring(9));
 				}
 				else {
@@ -212,30 +214,30 @@ var squiffy = {
 			location.reload();
 		},
 		save: function() {
-			squiffy.set("_output", $("#squiffy-output").html());
+			squiffy.set('_output', $('#squiffy-output').html());
 		},
 		load: function() {
-			var output = squiffy.get("_output");
+			var output = squiffy.get('_output');
 			if (!output) return false;
-			$("#squiffy-output").html(output);
-			squiffy.ui.currentSection = $("#" + squiffy.get("_output-section"));
-			squiffy.story.section = squiffy.story.sections[squiffy.get("_section")];
-			var transition = squiffy.get("_transition");
+			$('#squiffy-output').html(output);
+			squiffy.ui.currentSection = $('#' + squiffy.get('_output-section'));
+			squiffy.story.section = squiffy.story.sections[squiffy.get('_section')];
+			var transition = squiffy.get('_transition');
 			if (transition) {
-				eval("(" + transition + ")()");
+				eval('(' + transition + ')()');
 			}
 			return true;
 		},
 		setSeen: function(sectionName) {
-			var seenSections = squiffy.get("_seen_sections");
+			var seenSections = squiffy.get('_seen_sections');
 			if (!seenSections) seenSections = [];
 			if (seenSections.indexOf(sectionName) == -1) {
 				seenSections.push(sectionName);
-				squiffy.set("_seen_sections", seenSections);
+				squiffy.set('_seen_sections', seenSections);
 			}
 		},
 		seen: function(sectionName) {
-			var seenSections = squiffy.get("_seen_sections");
+			var seenSections = squiffy.get('_seen_sections');
 			if (!seenSections) return false;
 			return (seenSections.indexOf(sectionName) > -1);
 		}
@@ -247,42 +249,42 @@ var squiffy = {
 		scrollPosition: 0,
 		newSection: function() {
 			if (squiffy.ui.currentSection) {
-				$(".squiffy-link", squiffy.ui.currentSection).addClass("disabled");
+				$('.squiffy-link', squiffy.ui.currentSection).addClass('disabled');
 			}
-			var sectionCount = squiffy.get("_section-count") + 1;
-			squiffy.set("_section-count", sectionCount);
-			var id = "squiffy-section-" + sectionCount;
-			squiffy.ui.currentSection = $("<div/>", {
+			var sectionCount = squiffy.get('_section-count') + 1;
+			squiffy.set('_section-count', sectionCount);
+			var id = 'squiffy-section-' + sectionCount;
+			squiffy.ui.currentSection = $('<div/>', {
 				id: id,
-			}).appendTo("#squiffy-output");
-			squiffy.set("_output-section", id);
+			}).appendTo('#squiffy-output');
+			squiffy.set('_output-section', id);
 		},
 		write: function(text) {
 			squiffy.ui.screenIsClear = false;
-			squiffy.ui.scrollPosition = $("#squiffy-output").height();
-			squiffy.ui.currentSection.append($("<div/>").html(squiffy.ui.processText(text)));
+			squiffy.ui.scrollPosition = $('#squiffy-output').height();
+			squiffy.ui.currentSection.append($('<div/>').html(squiffy.ui.processText(text)));
 			squiffy.ui.scrollToEnd();
 		},
 		clearScreen: function() {
-			$("#squiffy-output").html("");
+			$('#squiffy-output').html('');
 			squiffy.ui.screenIsClear = true;
 			squiffy.ui.newSection();
 		},
 		scrollToEnd: function() {
 			var scrollTo = squiffy.ui.scrollPosition;
-			var currentScrollTop = Math.max($("body").scrollTop(), $("html").scrollTop());
+			var currentScrollTop = Math.max($('body').scrollTop(), $('html').scrollTop());
 			if (scrollTo > currentScrollTop) {
 				var maxScrollTop = $(document).height() - $(window).height();
 				if (scrollTo > maxScrollTop) scrollTo = maxScrollTop;
 				var distance = scrollTo - currentScrollTop;
 				var duration = distance / 0.5;
-				$("body,html").stop().animate({ scrollTop: scrollTo }, duration);
+				$('body,html').stop().animate({ scrollTop: scrollTo }, duration);
 			}
 		},
 		processText: function(text) {
 			function process(text, data) {
 				var containsUnprocessedSection = false;
-				var open = text.indexOf("{");
+				var open = text.indexOf('{');
 				var close;
 				
 				if (open > -1) {
@@ -291,8 +293,8 @@ var squiffy = {
 				 	var finished = false;
 				 
 				 	while (!finished) {
-						var nextOpen = text.indexOf("{", searchStart);
-						var nextClose = text.indexOf("}", searchStart);
+						var nextOpen = text.indexOf('{', searchStart);
+						var nextClose = text.indexOf('}', searchStart);
 			 
 						if (nextClose > -1) {
 					 		if (nextOpen > -1 && nextOpen < nextClose) {
@@ -325,20 +327,20 @@ var squiffy = {
 			}
 
 			function processTextCommand(text, data) {
-				if (squiffy.util.startsWith(text, "if ")) {
+				if (squiffy.util.startsWith(text, 'if ')) {
 					return processTextCommand_If(text, data);
 				}
-				else if (squiffy.util.startsWith(text, "else:")) {
+				else if (squiffy.util.startsWith(text, 'else:')) {
 					return processTextCommand_Else(text, data);
 				}
-				else if (squiffy.util.startsWith(text, "label:")) {
+				else if (squiffy.util.startsWith(text, 'label:')) {
 					return processTextCommand_Label(text, data);
 				}
 				else if (/^rotate[: ]/.test(text)) {
-					return processTextCommand_Rotate("rotate", text, data);
+					return processTextCommand_Rotate('rotate', text, data);
 				}
 				else if (/^sequence[: ]/.test(text)) {
-					return processTextCommand_Rotate("sequence", text, data);	
+					return processTextCommand_Rotate('sequence', text, data);	
 				}
 				else if (text in squiffy.story.section.passages) {
 					return process(squiffy.story.section.passages[text].text, data);
@@ -351,9 +353,9 @@ var squiffy = {
 
 			function processTextCommand_If(section, data) {
 				var command = section.substring(3);
-				var colon = command.indexOf(":");
+				var colon = command.indexOf(':');
 				if (colon == -1) {
-					return ("{if " + command + "}");
+					return ('{if ' + command + '}');
 				}
 
 				var text = command.substring(colon + 1);
@@ -369,21 +371,21 @@ var squiffy = {
 					var op = match[2];
 					var rhs = match[3];
 
-					if (op == "=" && lhs == rhs) result = true;
-					if (op == "&lt;&gt;" && lhs != rhs) result = true;
-					if (op == "&gt;" && lhs > rhs) result = true;
-					if (op == "&lt;" && lhs < rhs) result = true;
-					if (op == "&gt;=" && lhs >= rhs) result = true;
-					if (op == "&lt;=" && lhs <= rhs) result = true;
+					if (op == '=' && lhs == rhs) result = true;
+					if (op == '&lt;&gt;' && lhs != rhs) result = true;
+					if (op == '&gt;' && lhs > rhs) result = true;
+					if (op == '&lt;' && lhs < rhs) result = true;
+					if (op == '&gt;=' && lhs >= rhs) result = true;
+					if (op == '&lt;=' && lhs <= rhs) result = true;
 				}
 				else {
 					var checkValue = true;
-					if (squiffy.util.startsWith(condition, "not ")) {
+					if (squiffy.util.startsWith(condition, 'not ')) {
 						condition = condition.substring(4);
 						checkValue = false;
 					}
 
-					if (squiffy.util.startsWith(condition, "seen ")) {
+					if (squiffy.util.startsWith(condition, 'seen ')) {
 						result = (squiffy.story.seen(condition.substring(5)) == checkValue);
 					}
 					else {
@@ -393,38 +395,38 @@ var squiffy = {
 					}
 				}
 
-				var textResult = result ? process(text, data) : "";
+				var textResult = result ? process(text, data) : '';
 
 				data.lastIf = result;
 				return textResult;
 			}
 
 			function processTextCommand_Else(section, data) {
-				if (!('lastIf' in data) || data.lastIf) return "";
+				if (!('lastIf' in data) || data.lastIf) return '';
 				var text = section.substring(5);
 				return process(text, data);
 			}
 
 			function processTextCommand_Label(section, data) {
 				var command = section.substring(6);
-				var eq = command.indexOf("=");
+				var eq = command.indexOf('=');
 				if (eq == -1) {
-					return ("{label:" + command + "}");
+					return ('{label:' + command + '}');
 				}
 
 				var text = command.substring(eq + 1);
 				var label = command.substring(0, eq);
 
-				return "<span class='squiffy-label-" + label + "'>" + process(text, data) + "</span>";
+				return '<span class="squiffy-label-' + label + '">' + process(text, data) + '</span>';
 			}
 
 			function processTextCommand_Rotate(type, section, data) {
 				var options;
-				var attribute = "";
-				if (section.substring(type.length, type.length + 1) == " ") {
-					var colon = section.indexOf(":");
+				var attribute = '';
+				if (section.substring(type.length, type.length + 1) == ' ') {
+					var colon = section.indexOf(':');
 					if (colon == -1) {
-						return "{" + section + "}";
+						return '{' + section + '}';
 					}
 					options = section.substring(colon + 1);
 					attribute = section.substring(type.length + 1, colon);
@@ -432,11 +434,11 @@ var squiffy = {
 				else {
 					options = section.substring(type.length + 1);
 				}
-				var rotate = squiffy.util.rotate(options.replace(/"/g, "&quot;").replace(/'/g, "&#39;"));
+				var rotate = squiffy.util.rotate(options.replace(/"/g, '&quot;').replace(/'/g, '&#39;'));
 				if (attribute) {
 					squiffy.set(attribute, rotate[0]);
 				}
-				return "<a class='squiffy-link' data-" + type + "='" + rotate[1] + "' data-attribute='" + attribute + "'>" + rotate[0] + "</a>";
+				return '<a class="squiffy-link" data-' + type + '="' + rotate[1] + '" data-attribute="' + attribute + '">' + rotate[0] + '</a>';
 			}
 
 			var data = {
@@ -445,7 +447,7 @@ var squiffy = {
 			return process(text, data);
 		},
 		transition: function(f) {
-			squiffy.set("_transition", f.toString());
+			squiffy.set('_transition', f.toString());
 			f();
 		},
 	},
@@ -475,13 +477,13 @@ var squiffy = {
 			return string.substring(0, prefix.length) === prefix;
 		},
 		rotate: function(options, current) {
-			var colon = options.indexOf(":");
+			var colon = options.indexOf(':');
 			if (colon == -1) {
 				return [options, current];
 			}
 			var next = options.substring(0, colon);
 			var remaining = options.substring(colon + 1);
-			if (current) remaining += ":" + current;
+			if (current) remaining += ':' + current;
 			return [next, remaining];
 		}
 	}
