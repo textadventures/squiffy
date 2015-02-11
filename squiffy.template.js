@@ -1,8 +1,12 @@
 /* jshint quotmark: single */
 /* jshint evil: true */
 
-var squiffy = {
-    story: {
+var squiffy = {};
+
+(function () {
+    'use strict';
+
+    squiffy.story = {
         begin: function () {
             $(document).on('click', 'a.squiffy-link', function (event) {
                 if ($(this).hasClass('disabled')) return;
@@ -243,8 +247,9 @@ var squiffy = {
             if (!seenSections) return false;
             return (seenSections.indexOf(sectionName) > -1);
         }
-    },
-    ui: {
+    };
+    
+    squiffy.ui = {
         sectionCount: 0,
         currentSection: null,
         screenIsClear: true,
@@ -452,9 +457,11 @@ var squiffy = {
             squiffy.set('_transition', f.toString());
             f();
         },
-    },
-    storageFallback: {},
-    set: function(attribute, value) {
+    };
+
+    squiffy.storageFallback = {};
+
+    squiffy.set = function(attribute, value) {
         if (typeof value === 'undefined') value = true;
         if (window.localStorage) {
             localStorage[squiffy.story.id + '-' + attribute] = JSON.stringify(value);
@@ -462,8 +469,9 @@ var squiffy = {
         else {
             squiffy.storageFallback[attribute] = JSON.stringify(value);
         }
-    },
-    get: function(attribute) {
+    };
+
+    squiffy.get = function(attribute) {
         var result;
         if (window.localStorage) {
             result = localStorage[squiffy.story.id + '-' + attribute];
@@ -473,8 +481,9 @@ var squiffy = {
         }
         if (!result) return null;
         return JSON.parse(result);
-    },
-    util: {
+    };
+
+    squiffy.util = {
         startsWith: function(string, prefix) {
             return string.substring(0, prefix.length) === prefix;
         },
@@ -488,9 +497,9 @@ var squiffy = {
             if (current) remaining += ':' + current;
             return [next, remaining];
         }
-    }
-};
+    };
 
-$(function(){
-    squiffy.story.begin();
-});
+    $(function(){
+        squiffy.story.begin();
+    });
+})();

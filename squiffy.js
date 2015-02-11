@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 /* jshint quotmark: single */
 
+'use strict';
+
 var _ = require('underscore');
 var path = require('path');
 var fs = require('fs');
@@ -415,7 +417,7 @@ function Story() {
     this.start = '';
 
     this.addSection = function(name, filename, line) {
-        section = new Section(name, filename, line);
+        var section = new Section(name, filename, line);
         this.sections[name] = section;
         return section;
     };
@@ -438,7 +440,7 @@ function Section(name, filename, line) {
     this.attributes = [];
 
     this.addPassage = function(name, line) {
-        passage = new Passage(name, line);
+        var passage = new Passage(name, line);
         this.passages[name] = passage;
         return passage;
     };
