@@ -41,7 +41,9 @@ function Compiler() {
         console.log('Writing story.js');
 
         var jsTemplateFile = fs.readFileSync(path.join(sourcePath, 'squiffy.template.js'));
-        var jsData = '// Created with Squiffy {0}\n// https://github.com/textadventures/squiffy\n\n'.format(squiffyVersion) + jsTemplateFile.toString();
+        var jsData = '// Created with Squiffy {0}\n// https://github.com/textadventures/squiffy\n\n'.format(squiffyVersion)
+            + '(function(){\n'
+            + jsTemplateFile.toString();
 
         var outputJsFile = [];
         outputJsFile.push(jsData);
@@ -87,6 +89,7 @@ function Compiler() {
         }, this);
 
         outputJsFile.push('}\n');
+        outputJsFile.push('})();');
         
         fs.writeFileSync(path.join(outputPath, 'story.js'), outputJsFile.join(''));
 

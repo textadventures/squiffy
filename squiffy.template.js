@@ -50,7 +50,7 @@ var squiffy = {};
             $(document).on('mousedown', 'a.squiffy-link', function (event) {
                 event.preventDefault();
             });
-            $('#squiffy-restart').click(function (){
+            squiffy.ui.restart.click(function (){
                 if (confirm('Are you sure you want to restart?')) {
                     squiffy.story.restart();
                 }
@@ -220,12 +220,12 @@ var squiffy = {};
             location.reload();
         },
         save: function() {
-            squiffy.set('_output', $('#squiffy-output').html());
+            squiffy.set('_output', squiffy.ui.output.html());
         },
         load: function() {
             var output = squiffy.get('_output');
             if (!output) return false;
-            $('#squiffy-output').html(output);
+            squiffy.ui.output.html(output);
             squiffy.ui.currentSection = $('#' + squiffy.get('_output-section'));
             squiffy.story.section = squiffy.story.sections[squiffy.get('_section')];
             var transition = squiffy.get('_transition');
@@ -263,17 +263,17 @@ var squiffy = {};
             var id = 'squiffy-section-' + sectionCount;
             squiffy.ui.currentSection = $('<div/>', {
                 id: id,
-            }).appendTo('#squiffy-output');
+            }).appendTo(squiffy.ui.output);
             squiffy.set('_output-section', id);
         },
         write: function(text) {
             squiffy.ui.screenIsClear = false;
-            squiffy.ui.scrollPosition = $('#squiffy-output').height();
+            squiffy.ui.scrollPosition = squiffy.ui.output.height();
             squiffy.ui.currentSection.append($('<div/>').html(squiffy.ui.processText(text)));
             squiffy.ui.scrollToEnd();
         },
         clearScreen: function() {
-            $('#squiffy-output').html('');
+            squiffy.ui.output.html('');
             squiffy.ui.screenIsClear = true;
             squiffy.ui.newSection();
         },
@@ -498,8 +498,22 @@ var squiffy = {};
             return [next, remaining];
         }
     };
-
-    $(function(){
-        squiffy.story.begin();
-    });
 })();
+
+$.fn.squiffy = function (options) {
+    var settings = $.extend({
+        scroll: 'body'
+    }, options);
+
+    squiffy.ui.output = this;
+    squiffy.ui.restart = $(settings.restart);
+    squiffy.ui.settings = settings;
+
+    if (settings.scroll === 'element') {
+        squiffy.ui.output.css('overflow-y', 'auto');
+    }
+
+    squiffy.story.begin();
+    
+    return this;
+};
