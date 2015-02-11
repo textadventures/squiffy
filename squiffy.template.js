@@ -1,4 +1,5 @@
 /* jshint quotmark: single */
+/* jshint evil: true */
 
 var squiffy = {
 	story: {
@@ -76,11 +77,12 @@ var squiffy = {
 			return target;
 		},
 		setAttribute: function(expr) {
+			var lhs, rhs, op, value;
 			var setRegex = /^([\w]*)\s*=\s*(.*)$/;
 			var setMatch = setRegex.exec(expr);
 			if (setMatch) {
-				var lhs = setMatch[1];
-				var rhs = setMatch[2];
+				lhs = setMatch[1];
+				rhs = setMatch[2];
 				if (isNaN(rhs)) {
 					squiffy.set(lhs, rhs);
 				}
@@ -92,11 +94,11 @@ var squiffy = {
 				var incDecRegex = /^([\w]*)\s*([\+\-])=\s*(.*)$/;
 				var incDecMatch = incDecRegex.exec(expr);
 				if (incDecMatch) {
-					var lhs = incDecMatch[1];
-					var op = incDecMatch[2];
-					var rhs = parseFloat(incDecMatch[3]);
-					var value = squiffy.get(lhs);
-					if (value == null) value = 0;
+					lhs = incDecMatch[1];
+					op = incDecMatch[2];
+					rhs = parseFloat(incDecMatch[3]);
+					value = squiffy.get(lhs);
+					if (value === null) value = 0;
 					if (op == '+') {
 						value += rhs;
 					}
@@ -106,7 +108,7 @@ var squiffy = {
 					squiffy.set(lhs, value);
 				}
 				else {
-					var value = true;
+					value = true;
 					if (squiffy.util.startsWith(expr, 'not ')) {
 						expr = expr.substring(4);
 						value = false;
@@ -127,7 +129,7 @@ var squiffy = {
 			else if (text in squiffy.story.sections) {
 				text = squiffy.story.sections[text].text;
 			}
-			var stripParags = /^\<p\>(.*)\<\/p\>$/
+			var stripParags = /^<p>(.*)<\/p>$/;
 			var stripParagsMatch = stripParags.exec(text);
 			if (stripParagsMatch) {
 				text = stripParagsMatch[1];
@@ -304,7 +306,7 @@ var squiffy = {
 					 		else {
 								nestCount--;
 								searchStart = nextClose + 1;
-								if (nestCount == 0) {
+								if (nestCount === 0) {
 						 			close = nextClose;
 						 			containsUnprocessedSection = true;
 						 			finished = true;
@@ -323,7 +325,7 @@ var squiffy = {
 					text = text.substring(0, open) + value + process(text.substring(close + 1), data);
 				}
 				
-				return (text)
+				return (text);
 			}
 
 			function processTextCommand(text, data) {

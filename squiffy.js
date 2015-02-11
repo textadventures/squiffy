@@ -11,10 +11,7 @@ var crypto = require('crypto');
 String.prototype.format = function() {
     var args = arguments;
     return this.replace(/{(\d+)}/g, function(match, number) { 
-      return typeof args[number] != 'undefined'
-        ? args[number]
-        : match
-      ;
+      return typeof args[number] != 'undefined' ? args[number] : match;
     });
 };
 
@@ -39,7 +36,7 @@ function Compiler() {
             return;
         }
 
-        console.log('Writing story.js')
+        console.log('Writing story.js');
 
         var jsTemplateFile = fs.readFileSync(path.join(sourcePath, 'squiffy.template.js'));
         var jsData = '// Created with Squiffy {0}\n// https://github.com/textadventures/squiffy\n\n'.format(squiffyVersion) + jsTemplateFile.toString();
@@ -67,7 +64,7 @@ function Compiler() {
                 this.writeJs(outputJsFile, 2, section.js);
             }
 
-            outputJsFile.push('\t\t\'passages\': {\n')
+            outputJsFile.push('\t\t\'passages\': {\n');
             _.each(section.passages, function(passage, passageName) {
                 outputJsFile.push('\t\t\t\'{0}\': {\n'.format(passageName));
                 if (passage.clear) {
@@ -106,7 +103,7 @@ function Compiler() {
             fs.createReadStream(path.join(sourcePath, 'node_modules', 'jquery', 'dist', 'jquery.min.js')).pipe(fs.createWriteStream(path.join(outputPath, 'jquery.min.js')));
         }
         
-        htmlData = htmlData.replace('<!-- JQUERY -->', jqueryJs)
+        htmlData = htmlData.replace('<!-- JQUERY -->', jqueryJs);
 
         var scriptData = _.map(story.scripts, function (script) { return '<script src=\'{0}\'></script>'.format(script); }).join('\n');
         htmlData = htmlData.replace('<!-- SCRIPTS -->', scriptData);
@@ -122,7 +119,7 @@ function Compiler() {
         console.log('Done.');
 
         return outputPath;
-    }
+    };
 
     this.findFile = function(filename, outputPath, sourcePath) {
         var outputPathFile = path.join(outputPath, filename);
@@ -130,7 +127,7 @@ function Compiler() {
             return outputPathFile;
         }
         return path.join(sourcePath, filename);
-    }
+    };
 
     this.regex = {
         section: /^\[\[(.*)\]\]:$/,
@@ -152,7 +149,7 @@ function Compiler() {
             return true;
         }
 
-        story.files.push(inputFilename)
+        story.files.push(inputFilename);
         console.log('Loading ' + inputFilename);
 
         var inputFile = fs.readFileSync(inputFilename);
@@ -353,7 +350,7 @@ function Compiler() {
     this.allMatchesForGroup = function(input, regex, groupNumber) {
         var result = [];
         var match;
-        while (match = regex.exec(input)) {
+        while (!!(match = regex.exec(input))) {
             result.push(match[groupNumber]);
         }
         return result;
@@ -361,15 +358,15 @@ function Compiler() {
 
     this.checkSectionLinks = function(story, links, section, passage) {
         if (!story) return;
-        var badLinks = _.filter(links, function(m) { return !this.linkDestinationExists(m, story.sections) }, this);
+        var badLinks = _.filter(links, function(m) { return !this.linkDestinationExists(m, story.sections); }, this);
         this.showBadLinksWarning(badLinks, 'section', '[[', ']]', section, passage);
-    }
+    };
 
     this.checkPassageLinks = function(story, links, section, passage) {
         if (!story) return;
-        var badLinks = _.filter(links, function(m) { return !this.linkDestinationExists(m, section.passages) }, this);
+        var badLinks = _.filter(links, function(m) { return !this.linkDestinationExists(m, section.passages); }, this);
         this.showBadLinksWarning(badLinks, 'passage', '[', ']', section, passage);
-    }
+    };
 
     this.linkDestinationExists = function(link, keys) {
         // Link destination data may look like:
@@ -384,7 +381,7 @@ function Compiler() {
             return true;
         }
         return _.contains(Object.keys(keys), linkDestination);
-    }
+    };
 
     this.showBadLinksWarning = function(badLinks, linkTo, before, after, section, passage) {
         badLinks.forEach(function(badLink) {
@@ -398,7 +395,7 @@ function Compiler() {
             }
             console.log('WARNING: {0} there is a link to a {1} called {2}{3}{4}, which doesn\'t exist'.format(warning, linkTo, before, badLink, after));
         });
-    }
+    };
 
     this.writeJs = function(outputJsFile, tabCount, js) {
         var tabs = new Array(tabCount + 1).join('\t');
@@ -407,7 +404,7 @@ function Compiler() {
             outputJsFile.push('{0}\t{1}\n'.format(tabs, jsLine));
         });
         outputJsFile.push('{0}},\n'.format(tabs));
-    }
+    };
 }
 
 function Story() {
@@ -421,13 +418,13 @@ function Story() {
         section = new Section(name, filename, line);
         this.sections[name] = section;
         return section;
-    }
+    };
 
     this.set_id = function(filename) {
         var shasum = crypto.createHash('sha1');
         shasum.update(filename);
         this.id = shasum.digest('hex').substr(0, 10);
-    }
+    };
 }
 
 function Section(name, filename, line) {
@@ -444,19 +441,19 @@ function Section(name, filename, line) {
         passage = new Passage(name, line);
         this.passages[name] = passage;
         return passage;
-    }
+    };
 
     this.addText = function(text) {
         this.text.push(text);
-    }
+    };
 
     this.addJS = function(text) {
         this.js.push(text);
-    }
+    };
 
     this.addAttribute = function(text) {
         this.attributes.push(text);
-    }
+    };
 }
 
 function Passage(name, line) {
@@ -469,15 +466,15 @@ function Passage(name, line) {
 
     this.addText = function(text) {
         this.text.push(text);
-    }
+    };
 
     this.addJS = function(text) {
         this.js.push(text);
-    }
+    };
 
     this.addAttribute = function(text) {
         this.attributes.push(text);
-    }
+    };
 }
 
 function startServer(dir, port) {
