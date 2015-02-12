@@ -50,11 +50,6 @@ var squiffy = {};
             $(document).on('mousedown', 'a.squiffy-link', function (event) {
                 event.preventDefault();
             });
-            squiffy.ui.restart.click(function (){
-                if (confirm('Are you sure you want to restart?')) {
-                    squiffy.story.restart();
-                }
-            });
             if (!squiffy.story.load()) {
                 squiffy.story.go(squiffy.story.start);
             }
@@ -209,7 +204,7 @@ var squiffy = {};
             });
         },
         restart: function() {
-            if (window.localStorage) {
+            if (squiffy.ui.settings.persist && window.localStorage) {
                 var keys = Object.keys(localStorage);
                 $.each(keys, function (idx, key) {
                     if (squiffy.util.startsWith(key, squiffy.story.id)) {
@@ -217,7 +212,16 @@ var squiffy = {};
                     }
                 });
             }
-            location.reload();
+            else {
+                squiffy.storageFallback = {};
+            }
+            if (squiffy.ui.settings.scroll === 'element') {
+                squiffy.ui.output.html('');
+                squiffy.story.begin();
+            }
+            else {
+                location.reload();
+            }
         },
         save: function() {
             squiffy.set('_output', squiffy.ui.output.html());
@@ -278,14 +282,26 @@ var squiffy = {};
             squiffy.ui.newSection();
         },
         scrollToEnd: function() {
-            var scrollTo = squiffy.ui.scrollPosition;
-            var currentScrollTop = Math.max($('body').scrollTop(), $('html').scrollTop());
-            if (scrollTo > currentScrollTop) {
-                var maxScrollTop = $(document).height() - $(window).height();
-                if (scrollTo > maxScrollTop) scrollTo = maxScrollTop;
-                var distance = scrollTo - currentScrollTop;
-                var duration = distance / 0.5;
-                $('body,html').stop().animate({ scrollTop: scrollTo }, duration);
+            var scrollTo, currentScrollTop, distance, duration;
+            if (squiffy.ui.settings.scroll === 'element') {
+                scrollTo = squiffy.ui.output[0].scrollHeight - squiffy.ui.output.height();
+                currentScrollTop = squiffy.ui.output.scrollTop();
+                if (scrollTo > currentScrollTop) {
+                    distance = scrollTo - currentScrollTop;
+                    duration = distance / 0.4;
+                    squiffy.ui.output.stop().animate({ scrollTop: scrollTo }, duration);
+                }
+            }
+            else {
+                scrollTo = squiffy.ui.scrollPosition;
+                currentScrollTop = Math.max($('body').scrollTop(), $('html').scrollTop());
+                if (scrollTo > currentScrollTop) {
+                    var maxScrollTop = $(document).height() - $(window).height();
+                    if (scrollTo > maxScrollTop) scrollTo = maxScrollTop;
+                    distance = scrollTo - currentScrollTop;
+                    duration = distance / 0.5;
+                    $('body,html').stop().animate({ scrollTop: scrollTo }, duration);
+                }
             }
         },
         processText: function(text) {
@@ -463,7 +479,7 @@ var squiffy = {};
 
     squiffy.set = function(attribute, value) {
         if (typeof value === 'undefined') value = true;
-        if (window.localStorage) {
+        if (squiffy.ui.settings.persist && window.localStorage) {
             localStorage[squiffy.story.id + '-' + attribute] = JSON.stringify(value);
         }
         else {
@@ -473,7 +489,7 @@ var squiffy = {};
 
     squiffy.get = function(attribute) {
         var result;
-        if (window.localStorage) {
+        if (squiffy.ui.settings.persist && window.localStorage) {
             result = localStorage[squiffy.story.id + '-' + attribute];
         }
         else {
@@ -502,7 +518,9 @@ var squiffy = {};
 
 $.fn.squiffy = function (options) {
     var settings = $.extend({
-        scroll: 'body'
+        scroll: 'body',
+        persist: true,
+        restartPrompt: true,
     }, options);
 
     squiffy.ui.output = this;
@@ -514,6 +532,12 @@ $.fn.squiffy = function (options) {
     }
 
     squiffy.story.begin();
+
+    squiffy.ui.restart.click(function (){
+        if (!settings.restartPrompt || confirm('Are you sure you want to restart?')) {
+            squiffy.story.restart();
+        }
+    });
     
     return this;
 };
