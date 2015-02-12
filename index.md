@@ -7,6 +7,38 @@ Squiffy is a tool for creating interactive fiction.
 
 The Squiffy compiler reads in a Squiffy script file, and outputs HTML, CSS and JavaScript. A player's game state is saved automatically to Local Storage.
 
+Example
+-------
+
+<div class="row">
+	<div class="col-md-6">
+<pre>
+{% include_relative samples/example.squiffy %}
+</pre>
+	</div>
+	<div class="col-md-6">
+		<div id="sample-output" style="max-height: 500px"></div>
+		<hr/>
+		<button id="sample-restart" class="btn btn-primary btn-sm">Restart</button>
+	</div>
+</div>
+
+<script src="samples/story.js"></script>
+<script>
+	$(function(){
+		$("#sample-output").squiffy({
+			input: "#sample-input",
+			restart: "#sample-restart",
+			scroll: "element",
+			persist: false,
+			restartPrompt: false,
+		});
+	});
+</script>
+
+Documentation
+-------------
+
 - [Installing Squiffy](install.html)
 - [Using Squiffy](usage.html)
 - [Sections and Passages](sections-passages.html)
