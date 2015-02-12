@@ -1,0 +1,1 @@
+squiffy samples/example.squiffy --scriptonly
