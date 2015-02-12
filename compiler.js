@@ -5,7 +5,12 @@
 
     exports.generate = function (inputFilename, sourcePath, options) {
         var compiler = new Compiler();
-        return compiler.process(inputFilename, sourcePath, options);
+        return compiler.generate(inputFilename, sourcePath, options);
+    };
+
+    exports.getJs = function (input, sourcePath) {
+        var compiler = new Compiler();
+        return compiler.process(input, sourcePath);
     };
 
     var _ = require('underscore');
@@ -30,7 +35,14 @@
     };
 
     function Compiler() {
-        this.process = function(inputFilename, sourcePath, options) {
+        this.process = function(input, sourcePath) {
+            var story = new Story();
+            var success = this.processFileText(story, input, null, true);
+            if (!success) return 'Failed';
+            return this.getJs(story, sourcePath, {});
+        };
+
+        this.generate = function(inputFilename, sourcePath, options) {
             var outputPath = path.resolve(path.dirname(inputFilename));
 
             var story = new Story();
@@ -45,6 +57,46 @@
 
             console.log('Writing story.js');
 
+            var storyJs = this.getJs(story, sourcePath, options);
+            
+            fs.writeFileSync(path.join(outputPath, 'story.js'), storyJs);
+
+            if (!options.scriptOnly) {
+                console.log('Writing index.html');
+
+                var htmlTemplateFile = fs.readFileSync(this.findFile('index.template.html', outputPath, sourcePath));
+                var htmlData = htmlTemplateFile.toString();
+                htmlData = htmlData.replace('<!-- INFO -->', '<!--\n\nCreated with Squiffy {0}\n\n\nhttps://github.com/textadventures/squiffy\n\n-->'.format(squiffyVersion));
+                htmlData = htmlData.replace('<!-- TITLE -->', story.title);
+                var jqueryJs = 'jquery.min.js';
+
+                if (options.useCdn) {
+                    jqueryJs = 'http://ajax.aspnetcdn.com/ajax/jquery/jquery-2.1.3.min.js';
+                }
+                else {
+                    fs.createReadStream(path.join(sourcePath, 'node_modules', 'jquery', 'dist', 'jquery.min.js')).pipe(fs.createWriteStream(path.join(outputPath, 'jquery.min.js')));
+                }
+                
+                htmlData = htmlData.replace('<!-- JQUERY -->', jqueryJs);
+
+                var scriptData = _.map(story.scripts, function (script) { return '<script src=\'{0}\'></script>'.format(script); }).join('\n');
+                htmlData = htmlData.replace('<!-- SCRIPTS -->', scriptData);
+
+                fs.writeFileSync(path.join(outputPath, 'index.html'), htmlData);
+
+                console.log('Writing style.css');
+
+                var cssTemplateFile = fs.readFileSync(this.findFile('style.template.css', outputPath, sourcePath));
+                var cssData = cssTemplateFile.toString();
+                fs.writeFileSync(path.join(outputPath, 'style.css'), cssData);
+            }
+            
+            console.log('Done.');
+
+            return outputPath;
+        };
+
+        this.getJs = function(story, sourcePath, options) {
             var jsTemplateFile = fs.readFileSync(path.join(sourcePath, 'squiffy.template.js'));
             var jsData = '// Created with Squiffy {0}\n// https://github.com/textadventures/squiffy\n\n'
                 .format(squiffyVersion) +
@@ -62,7 +114,9 @@
                 story.start = Object.keys(story.sections)[0];
             }
             outputJsFile.push('squiffy.story.start = \'' + story.start + '\';\n');
-            outputJsFile.push('squiffy.story.id = \'{0}\';\n'.format(story.id));
+            if (story.id) {
+                outputJsFile.push('squiffy.story.id = \'{0}\';\n'.format(story.id));
+            }
             outputJsFile.push('squiffy.story.sections = {\n');
 
             _.each(story.sections, function(section, sectionName) {
@@ -100,42 +154,8 @@
 
             outputJsFile.push('}\n');
             outputJsFile.push('})();');
-            
-            fs.writeFileSync(path.join(outputPath, 'story.js'), outputJsFile.join(''));
 
-            if (!options.scriptOnly) {
-                console.log('Writing index.html');
-
-                var htmlTemplateFile = fs.readFileSync(this.findFile('index.template.html', outputPath, sourcePath));
-                var htmlData = htmlTemplateFile.toString();
-                htmlData = htmlData.replace('<!-- INFO -->', '<!--\n\nCreated with Squiffy {0}\n\n\nhttps://github.com/textadventures/squiffy\n\n-->'.format(squiffyVersion));
-                htmlData = htmlData.replace('<!-- TITLE -->', story.title);
-                var jqueryJs = 'jquery.min.js';
-
-                if (options.useCdn) {
-                    jqueryJs = 'http://ajax.aspnetcdn.com/ajax/jquery/jquery-2.1.3.min.js';
-                }
-                else {
-                    fs.createReadStream(path.join(sourcePath, 'node_modules', 'jquery', 'dist', 'jquery.min.js')).pipe(fs.createWriteStream(path.join(outputPath, 'jquery.min.js')));
-                }
-                
-                htmlData = htmlData.replace('<!-- JQUERY -->', jqueryJs);
-
-                var scriptData = _.map(story.scripts, function (script) { return '<script src=\'{0}\'></script>'.format(script); }).join('\n');
-                htmlData = htmlData.replace('<!-- SCRIPTS -->', scriptData);
-
-                fs.writeFileSync(path.join(outputPath, 'index.html'), htmlData);
-
-                console.log('Writing style.css');
-
-                var cssTemplateFile = fs.readFileSync(this.findFile('style.template.css', outputPath, sourcePath));
-                var cssData = cssTemplateFile.toString();
-                fs.writeFileSync(path.join(outputPath, 'style.css'), cssData);
-            }
-            
-            console.log('Done.');
-
-            return outputPath;
+            return outputJsFile.join('');
         };
 
         this.findFile = function(filename, outputPath, sourcePath) {
@@ -170,7 +190,13 @@
             console.log('Loading ' + inputFilename);
 
             var inputFile = fs.readFileSync(inputFilename);
-            var inputLines = inputFile.toString().replace(/\r/g, '').split('\n');
+            var inputText = inputFile.toString();
+            
+            return this.processFileText(story, inputText, inputFilename, isFirst);
+        };
+
+        this.processFileText = function(story, inputText, inputFilename, isFirst) {
+            var inputLines = inputText.replace(/\r/g, '').split('\n');
 
             var compiler = this;
             var lineCount = 0;
@@ -228,7 +254,7 @@
                 else if (match.start) {
                     story.start = match.start[1];
                 }
-                else if (match.import) {
+                else if (match.import && importFilename) {
                     var basePath = path.resolve(path.dirname(inputFilename));
                     var newFilenames = path.join(basePath, match.import[1]);
                     var importFilenames = glob.sync(newFilenames);
