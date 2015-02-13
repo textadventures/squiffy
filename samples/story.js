@@ -520,7 +520,7 @@ var squiffy = {};
     };
 })();
 
-$.fn.squiffy = function (options) {
+$.fn.example = function (options) {
     var settings = $.extend({
         scroll: 'body',
         persist: true,

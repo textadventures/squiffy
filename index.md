@@ -10,30 +10,7 @@ The Squiffy compiler reads in a Squiffy script file, and outputs HTML, CSS and J
 Example
 -------
 
-<div class="row">
-	<div class="col-md-6">
-<pre>
-{% include_relative samples/example.squiffy %}
-</pre>
-	</div>
-	<div class="col-md-6">
-		<div id="sample-output" style="max-height: 500px"></div>
-		<hr/>
-		<button id="sample-restart" class="btn btn-primary btn-sm">Restart</button>
-	</div>
-</div>
-
-<script src="samples/story.js"></script>
-<script>
-	$(function(){
-		$("#sample-output").squiffy({
-			restart: "#sample-restart",
-			scroll: "element",
-			persist: false,
-			restartPrompt: false,
-		});
-	});
-</script>
+{% include sample.html file="example" %}
 
 Documentation
 -------------
