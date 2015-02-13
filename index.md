@@ -27,7 +27,6 @@ Example
 <script>
 	$(function(){
 		$("#sample-output").squiffy({
-			input: "#sample-input",
 			restart: "#sample-restart",
 			scroll: "element",
 			persist: false,

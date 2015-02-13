@@ -19,13 +19,25 @@
     <div class="navbar navbar-inverse" role="navigation">
       <div class="container">
         <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
           <a class="navbar-brand" href="{{site.baseurl}}/">Squiffy Documentation</a>
+        </div>
+        <div class="collapse navbar-collapse">
+          <ul class="nav navbar-nav">
+            <li {% if page.url == '/index.html' %}class="active"{% endif %}><a href="{{site.baseurl}}/">Home</a></li>
+            <li {% if page.url contains '/scratchpad' %}class="active"{% endif %}><a href="{{site.baseurl}}/scratchpad/">ScratchPad</a></li>
+          </ul>
         </div>
       </div>
     </div>
 
     <div class="container">
-      <h1>{{page.title}}</h1>
+      {% unless page.url contains '/scratchpad' %}<h1>{{page.title}}</h1>{% endunless %}
       {{content}}
 
       <div class="footer">
