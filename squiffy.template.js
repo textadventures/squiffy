@@ -8,7 +8,7 @@ var squiffy = {};
 
     squiffy.story = {
         begin: function () {
-            $(document).on('click', 'a.squiffy-link', function (event) {
+            squiffy.ui.output.on('click', 'a.squiffy-link', function (event) {
                 if ($(this).hasClass('disabled')) return;
                 var passage = $(this).data('passage');
                 var section = $(this).data('section');
@@ -47,7 +47,7 @@ var squiffy = {};
                     squiffy.story.save();
                 }
             });
-            $(document).on('mousedown', 'a.squiffy-link', function (event) {
+            squiffy.ui.output.on('mousedown', 'a.squiffy-link', function (event) {
                 event.preventDefault();
             });
             if (!squiffy.story.load()) {
