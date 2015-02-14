@@ -19,27 +19,33 @@
 
             $('#run').click(function () {
                 $('#output-container').html('');
-                $.post('http://squiffy.textadventures.co.uk', editor.getValue(), function (data) {
-                    $('<div/>', { id: 'output', style: 'max-height: 400px' })
+                var result = options.compile({
+                    data: editor.getValue(),
+                    success: function (data) {
+                        $('<div/>', { id: 'output', style: 'max-height: 400px' })
                         .appendTo('#output-container');
 
-                    $('<hr/>').appendTo('#output-container');
-                    $('<button/>', { id: 'sample-restart', 'class': 'btn btn-primary btn-sm' })
-                        .html('Restart')
-                        .appendTo('#output-container');
+                        $('<hr/>').appendTo('#output-container');
+                        $('<button/>', { id: 'sample-restart', 'class': 'btn btn-primary btn-sm' })
+                            .html('Restart')
+                            .appendTo('#output-container');
 
-                    if (data.indexOf('Failed') === 0) {
-                        $('#output').html(data);
-                        return;
+                        if (data.indexOf('Failed') === 0) {
+                            $('#output').html(data);
+                            return;
+                        }
+
+                        eval(data);
+                        $('#output').squiffy({
+                            restart: '#sample-restart',
+                            scroll: 'element',
+                            persist: false,
+                            restartPrompt: false
+                        });
+                    },
+                    fail: function (data) {
+                        $('#output').html(result.message);
                     }
-
-                    eval(data);
-                    $('#output').squiffy({
-                        restart: '#sample-restart',
-                        scroll: 'element',
-                        persist: false,
-                        restartPrompt: false
-                    });
                 });
             });
         });

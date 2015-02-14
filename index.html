@@ -21,9 +21,20 @@
     <script src="squiffy-editor.js"></script>
     <script>
       $(function () {
+        var compile = function (input) {
+          $.post('http://squiffy.textadventures.co.uk', input.data, function (data) {
+            if (data.indexOf('Failed') === 0) {
+                input.fail(data);
+                return;
+            }
+            input.success(data);
+          });
+        };
+
         $.get('example.squiffy', function (data) {
           $('#squiffy-editor-test').squiffyEditor({
-            data: data
+            data: data,
+            compile: compile
           });
         });
       });
