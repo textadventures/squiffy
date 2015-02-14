@@ -1,0 +1,21 @@
+a.squiffy-link
+{
+    text-decoration: underline;
+    color: Blue;
+    cursor: pointer;
+}
+
+a.squiffy-link.disabled
+{
+    text-decoration: inherit;
+    color: inherit !important;
+    cursor: inherit;
+}
+
+#editor { 
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}

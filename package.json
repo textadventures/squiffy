@@ -1,0 +1,23 @@
+{
+  "name": "squiffy-editor",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/textadventures/squiffy-editor.git"
+  },
+  "author": "Alex Warren <alex@textadventures.co.uk>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/textadventures/squiffy-editor/issues"
+  },
+  "homepage": "https://github.com/textadventures/squiffy-editor",
+  "dependencies": {
+    "finalhandler": "^0.3.3",
+    "serve-static": "^1.8.1"
+  }
+}
