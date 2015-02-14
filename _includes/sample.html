@@ -1,25 +1,33 @@
 <div class="row">
-	<div class="col-md-6">
-<pre>
-{% include_relative samples/{{include.file}}.squiffy %}
-</pre>
-		<p style="text-align: right; font-size: 80%"><a href="{{site.baseurl}}/scratchpad/?src={{site.baseurl}}/samples/{{include.file}}.squiffy">Edit example in ScratchPad &rarr;</a></p>
-	</div>
-	<div class="col-md-6">
-		<div id="{{include.file}}-output" style="max-height: 500px"></div>
-		<hr/>
-		<button id="{{include.file}}-restart" class="btn btn-primary btn-sm">Restart</button>
-	</div>
+    <div class="col-md-6">
+        <div id="editor-{{include.file}}">{% include_relative samples/{{include.file}}.squiffy %}</div>
+        <p style="text-align: right; font-size: 80%"><a href="{{site.baseurl}}/scratchpad/?src={{site.baseurl}}/samples/{{include.file}}.squiffy">Edit example in ScratchPad &rarr;</a></p>
+    </div>
+    <div class="col-md-6">
+        <div id="{{include.file}}-output" style="max-height: 500px"></div>
+        <hr/>
+        <button id="{{include.file}}-restart" class="btn btn-primary btn-sm">Restart</button>
+    </div>
 </div>
 
 <script src="samples/story.js"></script>
 <script>
-	$(function(){
-		$("#{{include.file}}-output").{{include.file}}({
-			restart: "#{{include.file}}-restart",
-			scroll: "element",
-			persist: false,
-			restartPrompt: false,
-		});
-	});
+    $(function(){
+        $("#{{include.file}}-output").{{include.file}}({
+            restart: "#{{include.file}}-restart",
+            scroll: "element",
+            persist: false,
+            restartPrompt: false,
+        });
+
+        var editor = ace.edit("editor-{{include.file}}");
+        editor.setTheme("ace/theme/eclipse");
+        editor.getSession().setMode("ace/mode/markdown");
+        editor.getSession().setUseWrapMode(true);
+        editor.setReadOnly(true);
+        editor.setHighlightActiveLine(false);
+        editor.setOptions({
+            maxLines: Infinity
+        });
+    });
 </script>

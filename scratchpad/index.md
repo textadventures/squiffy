@@ -3,16 +3,6 @@ layout: index
 title: Squiffy ScratchPad
 ---
 
-<style type="text/css" media="screen">
-    #editor { 
-        position: absolute;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        left: 0;
-    }
-</style>
-
 <div class="row" style="margin-bottom: 10px">
     <button id="run" class="btn btn-success">Run</button>
     <button class="btn btn-primary" data-toggle="modal" data-target="#loadgist">Load Gist</button>
@@ -20,7 +10,7 @@ title: Squiffy ScratchPad
 
 <div class="row">
     <div class="col-md-6" style="height: 500px">
-        <div id="editor"></div>
+        <div id="editor" class="editor"></div>
     </div>
     <div class="col-md-6">
         <div id="output-container"></div>
@@ -57,7 +47,6 @@ title: Squiffy ScratchPad
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.1.3/ace.js"></script>
 <script>
     var $_GET = {};
     document.location.search.replace(/\??(?:([^=]+)=([^&]*)&?)/g, function () {
