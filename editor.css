@@ -21,7 +21,12 @@ a.squiffy-link.disabled
 }
 
 #debugger {
-    max-height: 100px;
     overflow-y: scroll;
     font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+}
+
+#squiffy-editor-test {
+    width: 100%;
+    height: 100%;
+    position: fixed;
 }

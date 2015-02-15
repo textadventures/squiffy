@@ -15,6 +15,17 @@
         var editorHtml = this;
         $.get('squiffy-editor.html', function (data) {
             editorHtml.html(data);
+            editorHtml.layout({
+                applyDefaultStyles: true,
+                onresize: function () {
+                    if (editor) editor.resize();
+                },
+                north__resizable: false,
+                north__closable: false,
+                north__spacing_open: 0,
+                east__size: editorHtml.width() / 2 - 50,
+                south__size: 80,
+            });
             
             var editor = ace.edit('editor');
             editor.setTheme('ace/theme/eclipse');
