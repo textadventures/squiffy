@@ -4,7 +4,8 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "nw": "\"node_modules/.bin/nw\" nw"
   },
   "repository": {
     "type": "git",
@@ -18,6 +19,7 @@
   "homepage": "https://github.com/textadventures/squiffy-editor",
   "dependencies": {
     "finalhandler": "^0.3.3",
+    "nw": "^0.12.0-alpha2",
     "serve-static": "^1.8.1"
   }
 }
