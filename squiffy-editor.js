@@ -74,6 +74,18 @@
                     }
                 });
             });
+
+            $('#open').click(function () {
+                $('#inputfile').click();
+            });
+
+            $('#inputfile').on('change', function () {
+                var objectUrl = window.URL.createObjectURL(this.files[0]);
+                if (!objectUrl) return;
+                $.get(objectUrl, function (data) {
+                    editor.setValue(data, -1);
+                });
+            });
         });
     };
 
