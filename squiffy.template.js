@@ -33,7 +33,7 @@ var squiffy = {};
                 squiffy.story.go(section);
             }
             else if (rotate || sequence) {
-                var result = .rotate(rotate || sequence, rotate ? $(this).text() : '');
+                var result = rotate(rotate || sequence, rotate ? $(this).text() : '');
                 $(this).html(result[0].replace(/&quot;/g, '"').replace(/&#39;/g, '\''));
                 var dataAttribute = rotate ? 'data-rotate' : 'data-sequence';
                 $(this).attr(dataAttribute, result[1]);
@@ -60,7 +60,7 @@ var squiffy = {};
         var target = null;
         sections.forEach(function (section) {
             section = section.trim();
-            if (.startsWith(section, '@replace ')) {
+            if (startsWith(section, '@replace ')) {
                 replaceLabel(section.substring(9));
             }
             else {
@@ -109,7 +109,7 @@ var squiffy = {};
             }
             else {
                 value = true;
-                if (.startsWith(expr, 'not ')) {
+                if (startsWith(expr, 'not ')) {
                     expr = expr.substring(4);
                     value = false;
                 }
@@ -201,7 +201,7 @@ var squiffy = {};
 
     var processAttributes = function(attributes) {
         attributes.forEach(function (attribute) {
-            if (.startsWith(attribute, '@replace ')) {
+            if (startsWith(attribute, '@replace ')) {
                 replaceLabel(attribute.substring(9));
             }
             else {
@@ -214,7 +214,7 @@ var squiffy = {};
         if (squiffy.ui.settings.persist && window.localStorage) {
             var keys = Object.keys(localStorage);
             $.each(keys, function (idx, key) {
-                if (.startsWith(key, squiffy.story.id)) {
+                if (startsWith(key, squiffy.story.id)) {
                     localStorage.removeItem(key);
                 }
             });
@@ -363,13 +363,13 @@ var squiffy = {};
         }
 
         function processTextCommand(text, data) {
-            if (.startsWith(text, 'if ')) {
+            if (startsWith(text, 'if ')) {
                 return processTextCommand_If(text, data);
             }
-            else if (.startsWith(text, 'else:')) {
+            else if (startsWith(text, 'else:')) {
                 return processTextCommand_Else(text, data);
             }
-            else if (.startsWith(text, 'label:')) {
+            else if (startsWith(text, 'label:')) {
                 return processTextCommand_Label(text, data);
             }
             else if (/^rotate[: ]/.test(text)) {
@@ -416,12 +416,12 @@ var squiffy = {};
             }
             else {
                 var checkValue = true;
-                if (.startsWith(condition, 'not ')) {
+                if (startsWith(condition, 'not ')) {
                     condition = condition.substring(4);
                     checkValue = false;
                 }
 
-                if (.startsWith(condition, 'seen ')) {
+                if (startsWith(condition, 'seen ')) {
                     result = (squiffy.story.seen(condition.substring(5)) == checkValue);
                 }
                 else {
@@ -470,7 +470,7 @@ var squiffy = {};
             else {
                 options = section.substring(type.length + 1);
             }
-            var rotate = .rotate(options.replace(/"/g, '&quot;').replace(/'/g, '&#39;'));
+            var rotate = rotate(options.replace(/"/g, '&quot;').replace(/'/g, '&#39;'));
             if (attribute) {
                 squiffy.set(attribute, rotate[0]);
             }
@@ -512,11 +512,11 @@ var squiffy = {};
         return JSON.parse(result);
     };
 
-    var startsWith: function(string, prefix) {
+    var startsWith = function(string, prefix) {
         return string.substring(0, prefix.length) === prefix;
     };
 
-    var rotate: function(options, current) {
+    var rotate = function(options, current) {
         var colon = options.indexOf(':');
         if (colon == -1) {
             return [options, current];
