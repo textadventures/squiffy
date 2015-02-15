@@ -1,6 +1,6 @@
 {
   "name": "squiffy",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "description": "A tool for creating multiple-choice interactive stories",
   "dependencies": {
     "finalhandler": "^0.3.1",
