@@ -70,13 +70,14 @@
                 var htmlData = htmlTemplateFile.toString();
                 htmlData = htmlData.replace('<!-- INFO -->', '<!--\n\nCreated with Squiffy {0}\n\n\nhttps://github.com/textadventures/squiffy\n\n-->'.format(squiffyVersion));
                 htmlData = htmlData.replace('<!-- TITLE -->', story.title);
+                var jQueryPath = path.join(sourcePath, 'node_modules', 'jquery', 'dist', 'jquery.min.js');
                 var jqueryJs = 'jquery.min.js';
 
                 if (options.useCdn) {
                     jqueryJs = 'http://ajax.aspnetcdn.com/ajax/jquery/jquery-2.1.3.min.js';
                 }
                 else {
-                    fs.createReadStream(path.join(sourcePath, 'node_modules', 'jquery', 'dist', 'jquery.min.js')).pipe(fs.createWriteStream(path.join(outputPath, 'jquery.min.js')));
+                    fs.createReadStream(jQueryPath).pipe(fs.createWriteStream(path.join(outputPath, 'jquery.min.js')));
                 }
                 
                 htmlData = htmlData.replace('<!-- JQUERY -->', jqueryJs);
@@ -91,6 +92,23 @@
                 var cssTemplateFile = fs.readFileSync(this.findFile('style.template.css', outputPath, sourcePath));
                 var cssData = cssTemplateFile.toString();
                 fs.writeFileSync(path.join(outputPath, 'style.css'), cssData);
+
+                if (options.zip) {
+                    console.log('Creating zip file');
+                    var JSZip = require('jszip');
+                    var zip = new JSZip();
+                    zip.file(storyJsName, storyJs);
+                    zip.file('index.html', htmlData);
+                    zip.file('style.css', cssData);
+                    if (!options.useCdn) {
+                        var jquery = fs.readFileSync(jQueryPath);
+                        zip.file(jqueryJs, jquery);
+                    }
+                    var buffer = zip.generate({
+                        type: 'nodebuffer'
+                    });
+                    fs.writeFileSync(path.join(outputPath, 'output.zip'), buffer);
+                }
             }
             
             console.log('Done.');

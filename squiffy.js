@@ -38,6 +38,7 @@ var argv = require('yargs')
     .describe('p', 'Port for HTTP server (only with --serve)')
     .describe('scriptonly', 'Only generate JavaScript file (and optionally specify a name)')
     .describe('pluginname', 'Specify the jQuery plugin name instead of .questkit (only with --scriptonly)')
+    .describe('zip', 'Create zip file')
     .argv;
 
 var options = {
@@ -45,6 +46,7 @@ var options = {
     serve: argv.s,
     scriptOnly: argv.scriptonly,
     pluginName: argv.pluginname,
+    zip: argv.zip,
 };
 
 var result = compiler.generate(argv._[0], __dirname, options);
