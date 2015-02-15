@@ -11,12 +11,4 @@ You can tell if the player has seen a passage or section using JavaScript:
 
 You can also conditionally display text:
 
-```
-You can see a [cupboard]. Maybe you should [open] it?
-
-[open]:
-You open the cupboard.
-
-[cupboard]:
-The cupboard is {if seen open:open, and there are empty bottles inside}{else:closed}.
-```
+{% include sample.html file="seen" %}
