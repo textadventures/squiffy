@@ -6,6 +6,7 @@ var squiffy = {};
 (function () {
     'use strict';
 
+    squiffy.story = {};
     squiffy.story.begin = function () {
         squiffy.ui.output.on('click', 'a.squiffy-link', function (event) {
             if ($(this).hasClass('disabled')) return;
@@ -263,6 +264,8 @@ var squiffy = {};
         return (seenSections.indexOf(sectionName) > -1);
     };
     
+    squiffy.ui = {};
+
     var currentSection = null;
     var screenIsClear = true;
     var scrollPosition = 0;
@@ -527,9 +530,6 @@ var squiffy = {};
         return [next, remaining];
     };
 
-    var get = squiffy.get;
-    var set = squiffy.set;
-
     var methods = {
         init: function (options) {
             var settings = $.extend({
@@ -569,3 +569,6 @@ var squiffy = {};
         }
     };
 })();
+
+var get = squiffy.get;
+var set = squiffy.set;

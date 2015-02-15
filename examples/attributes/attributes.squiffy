@@ -15,7 +15,10 @@ OK. Three it is.
 [[two]]:
 @set my_attribute = 2
 
-Maybe you'd like it to be [4](four) instead? Or you could just [[continue...]](next)
+Maybe you'd like it to be [4](four) instead? You could try [javascript]. Or you could just [[continue...]](next)
+
+[javascript]:
+	alert("my_attribute " + get("my_attribute"));
 
 [four]:
 @set my_attribute = 4
