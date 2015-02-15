@@ -55,11 +55,13 @@
                 return;
             }
 
-            console.log('Writing story.js');
+            var storyJsName = typeof options.scriptOnly === 'string' ? options.scriptOnly : 'story.js';
+
+            console.log('Writing ' + storyJsName);
 
             var storyJs = this.getJs(story, sourcePath, options);
             
-            fs.writeFileSync(path.join(outputPath, 'story.js'), storyJs);
+            fs.writeFileSync(path.join(outputPath, storyJsName), storyJs);
 
             if (!options.scriptOnly) {
                 console.log('Writing index.html');
