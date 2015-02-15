@@ -1,0 +1,4 @@
+{sequence:Click me:Click me again:[[And once more]](next)}
+
+[[next]]:
+Done!
