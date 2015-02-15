@@ -1,4 +1,4 @@
-// Created with Squiffy 2.3.0
+// Created with Squiffy 2.4.0
 // https://github.com/textadventures/squiffy
 
 (function(){
