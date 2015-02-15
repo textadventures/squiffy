@@ -23,7 +23,7 @@
                 north__resizable: false,
                 north__closable: false,
                 north__spacing_open: 0,
-                east__size: editorHtml.width() / 2 - 50,
+                east__size: 0.5,
                 south__size: 80,
             });
             
