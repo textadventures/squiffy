@@ -4,6 +4,13 @@
 (function () {
     'use strict';
 
+    String.prototype.format = function() {
+        var args = arguments;
+        return this.replace(/{(\d+)}/g, function(match, number) { 
+            return typeof args[number] != 'undefined' ? args[number] : match;
+        });
+    };
+
     $.fn.squiffyEditor = function (options) {
         var editorHtml = this;
         $.get('squiffy-editor.html', function (data) {
@@ -19,6 +26,7 @@
 
             $('#run').click(function () {
                 $('#output-container').html('');
+                $('#debugger').html('');
                 var result = options.compile({
                     data: editor.getValue(),
                     success: function (data) {
@@ -37,10 +45,17 @@
 
                         eval(data);
                         $('#output').squiffy({
-                            restart: '#sample-restart',
                             scroll: 'element',
                             persist: false,
-                            restartPrompt: false
+                            restartPrompt: false,
+                            onSet: function (attribute, value) {
+                                onSet(attribute, value);
+                            }
+                        });
+
+                        $('#sample-restart').click(function () {
+                            $('#debugger').html('');
+                            $('#output').squiffy('restart');
                         });
                     },
                     fail: function (data) {
@@ -49,5 +64,12 @@
                 });
             });
         });
+    };
+
+    var onSet = function (attribute, value) {
+        // don't log internal attribute changes
+        if (attribute.indexOf('_') === 0) return;
+
+        $('<p/>').html('{0} = {1}'.format(attribute, value)).appendTo('#debugger');
     };
 })();
