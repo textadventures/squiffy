@@ -21,21 +21,9 @@ Within a section, you can link to passages. After the player clicks a link to a 
 Sections
 --------
 
-To link to a section, use double square brackets.
+Section names must be unique within a story. Set up a section using double square brackets, followed by a colon. To link to a section, use double square brackets.
 
-    Do you want to have the [[roast chicken]] or skip straight to [[dessert]]?
-    
-Set up a section using double square brackets, followed by a colon.
-
-```
-[[roast chicken]]:
-This plate of roast chicken looks delicious.
-
-[[dessert]]:
-Three different flavours of ice cream - yum!
-```
-
-Section names must be unique within a story.
+{% include sample.html file="sections" %}
 
 To use different link text, put the name of the section in brackets afterwards.
 
@@ -44,28 +32,9 @@ To use different link text, put the name of the section in brackets afterwards.
 Passages
 --------
 
-To link to a passage, use single square brackets.
+Set up a passage using single square brackets, followed by a colon. Passages can link to further passages. After the player clicks a link to a passage, that link is deactivated, so the player can only click it once. To link to a passage, use single square brackets.
 
-```
-Looking around the room, you can see a [TV], a [book] and a piece
-of [paper] with some handwriting scribbled on it.
-```
-    
-Set up a passage using single square brackets, followed by a colon. Passages can link to further passages. After the player clicks a link to a passage, that link is deactivated, so the player can only click it once.
-
-```
-[TV]:
-Covered in dust and the plug is missing.
-
-[book]:
-It's a book of magic tricks. Maybe you should [open] it?
-
-[open]:
-The cover opens up to reveal the pages all glued together, with an empty key-shaped hole cut out.
-
-[paper]:
-"Gone out for a walk. May be a while."
-```
+{% include sample.html file="passages" %}
 
 Passage links can be explored in any order - in the example above, the player might look at the book first, then look at the TV, then open the book. Only after clicking a link to another section will any remaining passage links be deactivated.
 

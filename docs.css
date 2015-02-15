@@ -31,3 +31,18 @@ a.squiffy-link.disabled
     bottom: 0;
     left: 0;
 }
+
+.sample {
+    border-top: 1px solid #cccccc;
+    border-bottom: 1px solid #cccccc;
+    margin: 10px 0;
+    padding: 10px 0;
+}
+
+.output {
+    border-left: 1px solid #dddddd;
+}
+
+.restart {
+    margin-top: 10px;
+}
