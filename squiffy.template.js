@@ -501,6 +501,7 @@ var squiffy = {};
         else {
             squiffy.storageFallback[attribute] = JSON.stringify(value);
         }
+        squiffy.ui.settings.onSet(attribute, value);
     };
 
     squiffy.get = function(attribute) {
@@ -536,6 +537,7 @@ var squiffy = {};
                 scroll: 'body',
                 persist: true,
                 restartPrompt: true,
+                onSet: function (attribute, value) {}
             }, options);
 
             squiffy.ui.output = this;
@@ -549,6 +551,12 @@ var squiffy = {};
             squiffy.story.begin();
             
             return this;
+        },
+        get: function (attribute) {
+            return squiffy.get(attribute);
+        },
+        set: function (attribute, value) {
+            squiffy.set(attribute, value);
         },
         restart: function () {
             if (!squiffy.ui.settings.restartPrompt || confirm('Are you sure you want to restart?')) {
