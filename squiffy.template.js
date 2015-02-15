@@ -12,8 +12,8 @@ var squiffy = {};
             if ($(this).hasClass('disabled')) return;
             var passage = $(this).data('passage');
             var section = $(this).data('section');
-            var rotate = $(this).attr('data-rotate');
-            var sequence = $(this).attr('data-sequence');
+            var rotateAttr = $(this).attr('data-rotate');
+            var sequenceAttr = $(this).attr('data-sequence');
             if (passage) {
                 $(this).addClass('disabled');
                 squiffy.set('_turncount', squiffy.get('_turncount') + 1);
@@ -33,10 +33,10 @@ var squiffy = {};
                 section = processLink(section);
                 squiffy.story.go(section);
             }
-            else if (rotate || sequence) {
-                var result = rotate(rotate || sequence, rotate ? $(this).text() : '');
+            else if (rotateAttr || sequenceAttr) {
+                var result = rotate(rotateAttr || sequenceAttr, rotateAttr ? $(this).text() : '');
                 $(this).html(result[0].replace(/&quot;/g, '"').replace(/&#39;/g, '\''));
-                var dataAttribute = rotate ? 'data-rotate' : 'data-sequence';
+                var dataAttribute = rotateAttr ? 'data-rotate' : 'data-sequence';
                 $(this).attr(dataAttribute, result[1]);
                 if (!result[1]) {
                     $(this).addClass('disabled');
@@ -473,11 +473,11 @@ var squiffy = {};
             else {
                 options = section.substring(type.length + 1);
             }
-            var rotate = rotate(options.replace(/"/g, '&quot;').replace(/'/g, '&#39;'));
+            var rotation = rotate(options.replace(/"/g, '&quot;').replace(/'/g, '&#39;'));
             if (attribute) {
-                squiffy.set(attribute, rotate[0]);
+                squiffy.set(attribute, rotation[0]);
             }
-            return '<a class="squiffy-link" data-' + type + '="' + rotate[1] + '" data-attribute="' + attribute + '">' + rotate[0] + '</a>';
+            return '<a class="squiffy-link" data-' + type + '="' + rotation[1] + '" data-attribute="' + attribute + '">' + rotation[0] + '</a>';
         }
 
         var data = {
