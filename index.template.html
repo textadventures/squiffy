@@ -8,8 +8,9 @@
 		<!-- SCRIPTS -->
 		<script>
 			$(function(){
-				$('#squiffy-output').squiffy({
-					restart: '#squiffy-restart'
+				$('#squiffy').squiffy();
+				$('#restart').click(function () {
+					$('#squiffy').squiffy('restart');
 				});
 			});
 		</script>
@@ -18,9 +19,9 @@
 	<body>
 		<div id="squiffy-container">
 			<div id="squiffy-header">
-				<a class="squiffy-header-link" id="squiffy-restart">Restart</a>
+				<a class="squiffy-header-link" id="restart">Restart</a>
 			</div>
-			<div id="squiffy-output">
+			<div id="squiffy">
 			</div>
 		</div>
 	</body>
