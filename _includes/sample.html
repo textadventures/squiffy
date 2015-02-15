@@ -14,10 +14,13 @@
 <script>
     $(function(){
         $("#{{include.file}}-output").{{include.file}}({
-            restart: "#{{include.file}}-restart",
             scroll: "element",
             persist: false,
             restartPrompt: false,
+        });
+
+        $("#{{include.file}}-restart").click(function () {
+            $("#{{include.file}}-output").{{include.file}}("restart");
         });
 
         var editor = ace.edit("editor-{{include.file}}");

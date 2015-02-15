@@ -12,7 +12,7 @@ var squiffy = {};
 
     squiffy.story = {
         begin: function () {
-            $(document).on('click', 'a.squiffy-link', function (event) {
+            squiffy.ui.output.on('click', 'a.squiffy-link', function (event) {
                 if ($(this).hasClass('disabled')) return;
                 var passage = $(this).data('passage');
                 var section = $(this).data('section');
@@ -51,7 +51,7 @@ var squiffy = {};
                     squiffy.story.save();
                 }
             });
-            $(document).on('mousedown', 'a.squiffy-link', function (event) {
+            squiffy.ui.output.on('mousedown', 'a.squiffy-link', function (event) {
                 event.preventDefault();
             });
             if (!squiffy.story.load()) {
@@ -518,33 +518,46 @@ var squiffy = {};
             return [next, remaining];
         }
     };
-})();
 
-$.fn.example = function (options) {
-    var settings = $.extend({
-        scroll: 'body',
-        persist: true,
-        restartPrompt: true,
-    }, options);
+    var methods = {
+        init: function (options) {
+            var settings = $.extend({
+                scroll: 'body',
+                persist: true,
+                restartPrompt: true,
+            }, options);
 
-    squiffy.ui.output = this;
-    squiffy.ui.restart = $(settings.restart);
-    squiffy.ui.settings = settings;
+            squiffy.ui.output = this;
+            squiffy.ui.restart = $(settings.restart);
+            squiffy.ui.settings = settings;
 
-    if (settings.scroll === 'element') {
-        squiffy.ui.output.css('overflow-y', 'auto');
-    }
+            if (settings.scroll === 'element') {
+                squiffy.ui.output.css('overflow-y', 'auto');
+            }
 
-    squiffy.story.begin();
-
-    squiffy.ui.restart.click(function (){
-        if (!settings.restartPrompt || confirm('Are you sure you want to restart?')) {
-            squiffy.story.restart();
+            squiffy.story.begin();
+            
+            return this;
+        },
+        restart: function () {
+            if (!squiffy.ui.settings.restartPrompt || confirm('Are you sure you want to restart?')) {
+                squiffy.story.restart();
+            }
         }
-    });
-    
-    return this;
-};
+    };
+
+    $.fn.example = function (methodOrOptions) {
+        if (methods[methodOrOptions]) {
+            return methods[methodOrOptions]
+                .apply(this, Array.prototype.slice.call(arguments, 1));
+        }
+        else if (typeof methodOrOptions === 'object' || ! methodOrOptions) {
+            return methods.init.apply(this, arguments);
+        } else {
+            $.error('Method ' +  methodOrOptions + ' does not exist');
+        }
+    };
+})();
 
 squiffy.story.start = '_default';
 squiffy.story.id = 'ad2b81bea5';

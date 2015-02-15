@@ -101,10 +101,13 @@ title: Squiffy ScratchPad
 
             eval(data);
             $("#output").squiffy({
-                restart: "#sample-restart",
                 scroll: "element",
                 persist: false,
                 restartPrompt: false
+            });
+
+            $("#sample-restart").click(function () {
+                $("#output").squiffy("restart");
             });
         });
     });
