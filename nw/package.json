@@ -1,4 +1,9 @@
 {
-  "name": "squiffy-editor",
-  "main": "index.html"
+    "name": "squiffy-editor",
+    "main": "index.html",
+    "window": {
+        "toolbar": false,
+        "width": 900,
+        "height": 700
+    }
 }
