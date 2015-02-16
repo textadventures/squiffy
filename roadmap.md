@@ -3,9 +3,7 @@ layout: index
 title: Roadmap
 ---
 
-Instead of "big bang" releases, the roadmap for Squiffy consists of a sequence of [Minimum Viable Products](http://en.wikipedia.org/wiki/Minimum_viable_product). Ideally there should only be one major new feature per release, and releases should be frequent.
-
-The current plan is below - all of it is subject to change of course!
+Ideally there should only be one major new feature per release, and releases should be frequent. The current plan is below - all of it is subject to change of course!
 
 You can get involved by contributing [on GitHub](https://github.com/textadventures/squiffy), or discussing Squiffy at [the forum](http://forum.textadventures.co.uk/viewforum.php?f=24).
 
@@ -23,16 +21,14 @@ This release is a re-write of the Squiffy compiler to use [Node.js](http://nodej
 
 ## Squiffy 3
 
-This will be the first release of Squiffy that runs over the web, so people can use it without downloading or installing anything. For this version, the "editor" will simply allow a file to be uploaded. This will call the compiler, and a ZIP file of the generated HTML, CSS and JS can be downloaded.
+**Status:** In development.
+
+This will be the first release of Squiffy to feature a web-based editor, so you'll be able to use it without downloading anything. To start with, it will be a very simple editor - just a text editor to edit the raw script file. The output will be able to be downloaded, or published directly to [textadventures.co.uk](http://textadventures.co.uk/).
 
 ## Squiffy 4
 
-This release will feature a simple JavaScript text editor, packaged as a desktop app using node-webkit.
+This will be the first downloadable version of the Squiffy editor. It will be the same web-based editor as first created for Squiffy 3, but packaged using [NW.js](http://nwjs.io/) (formerly node-webkit).
 
 ## Squiffy 5
 
-The JavaScript text editor introduced in Squiffy 4 will be implemented in the web version of Squiffy. Users will be able to log in at textadventures.co.uk to access this, with their files stored in the cloud.
-
-## Squiffy 6
-
-With both web and desktop editors now in sync, we can start to flesh out the features of the editor. The most important feature for the first editor iteration is probably a graphical view of a game's sections and passages, so the overall structure of a game can be visualised.
+We can start to flesh out the features of the editor. The most important feature for the first editor iteration is probably a graphical view of a game's sections and passages, so the overall structure of a game can be visualised.

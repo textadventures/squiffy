@@ -3,7 +3,7 @@ layout: index
 title: Sections and Passages
 ---
 
-We can write Hello World with no markup at all:
+You can write Hello World with no markup at all:
 
     Hello, World!
     

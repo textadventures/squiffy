@@ -3,9 +3,16 @@ layout: index
 title: Squiffy - Documentation
 ---
 
-Squiffy is a tool for creating interactive fiction.
+Squiffy is a tool for creating interactive fiction - that is, multiple choice games that focus on text and story. Players navigate through the game or story by clicking links. Sometimes these kinds of games or stories are known as [gamebooks](http://en.wikipedia.org/wiki/Gamebook).
 
-The Squiffy compiler reads in a Squiffy script file, and outputs HTML, CSS and JavaScript. A player's game state is saved automatically to Local Storage.
+Squiffy's output is HTML and JavaScript, so you can:
+
+- upload it to a website, or embed it within an existing page
+- turn it into an app using [PhoneGap](http://phonegap.com/)
+
+A player's state is automatically saved to their browser's local storage, so they can always pick up from where they left off just by going back to the same web page.
+
+Squiffy works by reading in a script file, which you can create using a text editor.
 
 Example
 -------

@@ -4,14 +4,14 @@
         <p style="text-align: right; font-size: 80%"><a href="{{site.baseurl}}/scratchpad/?src={{site.baseurl}}/samples/{{include.file}}.squiffy">Edit example in ScratchPad &rarr;</a></p>
     </div>
     <div class="col-md-6 output">
-        <div id="{{include.file}}-output" style="max-height: 500px"></div>
+        <div id="{{include.file}}-output"></div>
         <button id="{{include.file}}-restart" class="btn btn-primary btn-sm restart">Restart</button>
     </div>
 </div>
 
 <script src="samples/{{include.file}}.js"></script>
 <script>
-    $(function(){
+    $(function () {
         $("#{{include.file}}-output").{{include.file}}({
             scroll: "element",
             persist: false,
@@ -31,5 +31,12 @@
         editor.setOptions({
             maxLines: Infinity
         });
+        editor.resize(true);
+
+        {% if page.url == '/index.html' %}
+        var maxHeight = $("#editor-{{include.file}}").height() -
+            $("#{{include.file}}-restart").height();
+        $("#{{include.file}}-output").css("max-height", maxHeight + "px");
+        {% endif %}
     });
 </script>
