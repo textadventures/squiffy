@@ -85,30 +85,34 @@ title: Squiffy ScratchPad
 
     $("#run").click(function () {
         $("#output-container").html("");
-        $.post("http://squiffy.textadventures.co.uk", editor.getValue(), function (data) {
-            $("<div/>", { id: "output", style: "max-height: 400px" })
-                .appendTo("#output-container");
+        $("<div/>", { id: "output", style: "max-height: 400px" })
+            .appendTo("#output-container");
 
-            $("<hr/>").appendTo("#output-container");
-            $("<button/>", { id: "sample-restart", "class": "btn btn-primary btn-sm" })
-                .html("Restart")
-                .appendTo("#output-container");
+        $.ajax({
+            url: "http://squiffy.textadventures.co.uk",
+            data: editor.getValue(),
+            type: "POST",
+            success: function (data) {
+                $("<hr/>").appendTo("#output-container");
+                $("<button/>", { id: "sample-restart", "class": "btn btn-primary btn-sm" })
+                    .html("Restart")
+                    .appendTo("#output-container");
 
-            if (data.indexOf("Failed") === 0) {
-                $("#output").html(data);
+                eval(data);
+                $("#output").squiffy({
+                    scroll: "element",
+                    persist: false,
+                    restartPrompt: false
+                });
+
+                $("#sample-restart").click(function () {
+                    $("#output").squiffy("restart");
+                });
+            },
+            error: function (xhr) {
+                $("#output").html(xhr.responseText);
                 return;
             }
-
-            eval(data);
-            $("#output").squiffy({
-                scroll: "element",
-                persist: false,
-                restartPrompt: false
-            });
-
-            $("#sample-restart").click(function () {
-                $("#output").squiffy("restart");
-            });
         });
     });
 
