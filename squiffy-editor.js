@@ -46,16 +46,16 @@
                 $('#run').click(function () {
                     $('#output-container').html('');
                     $('#debugger').html('');
+                    $('#restart').hide();
                     var result = options.compile({
                         data: editor.getValue(),
                         success: function (data) {
-                            $('<div/>', { id: 'output', style: 'max-height: 400px' })
+                            $('#restart').show();
+
+                            $('<div/>', { id: 'output' })
                             .appendTo('#output-container');
 
                             $('<hr/>').appendTo('#output-container');
-                            $('<button/>', { id: 'sample-restart', 'class': 'btn btn-primary btn-sm' })
-                                .html('Restart')
-                                .appendTo('#output-container');
 
                             if (data.indexOf('Failed') === 0) {
                                 $('#output').html(data);
@@ -71,16 +71,16 @@
                                     onSet(attribute, value);
                                 }
                             });
-
-                            $('#sample-restart').click(function () {
-                                $('#debugger').html('');
-                                $('#output').squiffy('restart');
-                            });
                         },
                         fail: function (data) {
                             $('#output').html(result.message);
                         }
                     });
+                });
+
+                $('#restart').click(function () {
+                    $('#debugger').html('');
+                    $('#output').squiffy('restart');
                 });
             });
         },
