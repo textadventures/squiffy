@@ -92,7 +92,7 @@
                 editor.getSession().on('change', editorChange);
                 editor.focus();
 
-                editor.setValue(options.data, -1);
+                editor.getSession().setValue(options.data, -1);
 
                 if (options.open) {
                     $('#open').show();
@@ -109,7 +109,7 @@
             });
         },
         load: function (data) {
-            editor.setValue(data, -1);
+            editor.getSession().setValue(data, -1);
         },
         setStorageKey: function (key) {
             settings.storageKey = key
