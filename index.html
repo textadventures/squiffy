@@ -41,15 +41,24 @@
             });
         });
 
-        $.get('example.squiffy', function (data) {
+        var init = function (data) {
           $('#squiffy-editor').squiffyEditor({
             data: data,
             compile: compile,
             open: function () {
               $('#inputfile').click();
             },
+            storageKey: 'squiffy',
           });
-        });
+        };
+
+        var saved = localStorage['squiffy'];
+        if (saved) {
+          init(localStorage['squiffy']);
+        }
+        else {
+          $.get('example.squiffy', init);
+        }
       });
     </script>
   </head>

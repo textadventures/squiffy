@@ -11,11 +11,66 @@
         });
     };
 
-    var editor;
+    var editor, settings;
+
+    var run = function () {
+        $('#output-container').html('');
+        $('#debugger').html('');
+        $('#restart').hide();
+        var result = settings.compile({
+            data: editor.getValue(),
+            success: function (data) {
+                $('#restart').show();
+
+                $('<div/>', { id: 'output' })
+                .appendTo('#output-container');
+
+                $('<hr/>').appendTo('#output-container');
+
+                if (data.indexOf('Failed') === 0) {
+                    $('#output').html(data);
+                    return;
+                }
+
+                eval(data);
+                $('#output').squiffy({
+                    scroll: 'element',
+                    persist: false,
+                    restartPrompt: false,
+                    onSet: function (attribute, value) {
+                        onSet(attribute, value);
+                    }
+                });
+            },
+            fail: function (data) {
+                $('#output').html(result.message);
+            }
+        });
+    };
+
+    var restart = function () {
+        $('#debugger').html('');
+        $('#output').squiffy('restart');
+    };
+
+    var localSaveTimeout;
+
+    var editorChange = function () {
+        if (localSaveTimeout) clearTimeout(localSaveTimeout);
+        localSaveTimeout = setTimeout(localSave, 1000);
+    };
+
+    var localSave = function () {
+        if (settings.storageKey) {
+            localStorage[settings.storageKey] = editor.getValue();
+        }
+    };
 
     var methods = {
         init: function (options) {
             var editorHtml = this;
+            settings = options;
+            
             $.get('squiffy-editor.html', function (data) {
                 editorHtml.html(data);
                 editorHtml.layout({
@@ -34,6 +89,7 @@
                 editor.setTheme('ace/theme/eclipse');
                 editor.getSession().setMode('ace/mode/markdown');
                 editor.getSession().setUseWrapMode(true);
+                editor.getSession().on('change', editorChange);
                 editor.focus();
 
                 editor.setValue(options.data, -1);
@@ -43,45 +99,8 @@
                     $('#open').click(options.open);
                 }
 
-                $('#run').click(function () {
-                    $('#output-container').html('');
-                    $('#debugger').html('');
-                    $('#restart').hide();
-                    var result = options.compile({
-                        data: editor.getValue(),
-                        success: function (data) {
-                            $('#restart').show();
-
-                            $('<div/>', { id: 'output' })
-                            .appendTo('#output-container');
-
-                            $('<hr/>').appendTo('#output-container');
-
-                            if (data.indexOf('Failed') === 0) {
-                                $('#output').html(data);
-                                return;
-                            }
-
-                            eval(data);
-                            $('#output').squiffy({
-                                scroll: 'element',
-                                persist: false,
-                                restartPrompt: false,
-                                onSet: function (attribute, value) {
-                                    onSet(attribute, value);
-                                }
-                            });
-                        },
-                        fail: function (data) {
-                            $('#output').html(result.message);
-                        }
-                    });
-                });
-
-                $('#restart').click(function () {
-                    $('#debugger').html('');
-                    $('#output').squiffy('restart');
-                });
+                $('#run').click(run);
+                $('#restart').click(restart);
             });
         },
         load: function (data) {
