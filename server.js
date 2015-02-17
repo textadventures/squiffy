@@ -3,8 +3,13 @@
 var http = require('http');
 var qs = require('querystring');
 var compiler = require('./compiler.js');
+var path = require('path');
+var fs = require('fs');
 
 var port = process.env.PORT || 1337;
+
+var packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json')).toString());
+var squiffyVersion = packageJson.version;
 
 http.createServer(function(request, response) {
 	if (request.method == 'POST') {
@@ -26,16 +31,16 @@ http.createServer(function(request, response) {
 				response.end(result);
 			}
 			catch(err) {
-				response.writeHead(200, {
+				response.writeHead(400, {
 					'Content-Type': 'text/html',
 					'Access-Control-Allow-Origin': '*'
 				});
-				response.end('Failed ' + err);
+				response.end(err);
 			}
 		});
 	}
 	else {
 		response.writeHead(200, { 'Content-Type': 'text/html' });   
-		response.end('Running');
+		response.end('Running Squiffy ' + squiffyVersion);
 	}
 }).listen(port);
