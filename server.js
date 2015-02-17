@@ -35,7 +35,7 @@ http.createServer(function(request, response) {
 					'Content-Type': 'text/html',
 					'Access-Control-Allow-Origin': '*'
 				});
-				response.end(err);
+				response.end(err.toString());
 			}
 		});
 	}
