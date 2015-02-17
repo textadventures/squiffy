@@ -99,12 +99,20 @@
                     $('#open').click(options.open);
                 }
 
+                if (options.save) {
+                    $('#save').show();
+                    $('#save').click(options.save);
+                }
+
                 $('#run').click(run);
                 $('#restart').click(restart);
             });
         },
         load: function (data) {
             editor.setValue(data, -1);
+        },
+        setStorageKey: function (key) {
+            settings.storageKey = key
         },
     };
 
