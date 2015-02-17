@@ -40,3 +40,8 @@ a.squiffy-link.disabled
     padding: 20px;
     background: #fff;
 }
+
+.ui-layout-north {
+   z-index: 50 !important;
+   overflow: visible !important;
+}
