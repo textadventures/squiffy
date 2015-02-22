@@ -109,6 +109,9 @@
         load: function (data) {
             editor.getSession().setValue(data, -1);
         },
+        save: function () {
+            return editor.getValue();
+        },
         setStorageKey: function (key) {
             settings.storageKey = key;
         },
