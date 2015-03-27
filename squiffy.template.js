@@ -136,7 +136,7 @@ var squiffy = {};
         if (stripParagsMatch) {
             text = stripParagsMatch[1];
         }
-        var $labels = currentSection.find('.squiffy-label-' + label);
+        var $labels = $('.squiffy-label-' + label);
         $labels.fadeOut(1000, function() {
             $labels.html(squiffy.ui.processText(text));
             $labels.fadeIn(1000, function() {
