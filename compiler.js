@@ -194,8 +194,8 @@
             start: /^@start (.*)$/,
             attributes: /^@set (.*)$/,
             unset: /^@unset (.*)$/,
-            inc: /^@inc (.*)$/,
-            dec: /^@dec (.*)$/,
+            inc: /^@inc (.*)( )(.\d+?)$/,
+            dec: /^@dec (.*)( )(.\d+?)$/,
             replace: /^@replace (.*$)/,
             js: /^(\t| {4})(.*)$/,
             continue: /^\+\+\+(.*)$/,
@@ -297,10 +297,10 @@
                     section = this.addAttribute('not ' + match.unset[1], story, section, passage, isFirst, inputFilename, lineCount);
                 }
                 else if (match.inc) {
-                    section = this.addAttribute(match.inc[1] + '+=1', story, section, passage, isFirst, inputFilename, lineCount);
+                    section = this.addAttribute(match.inc[1] + '+=' + match.inc[3], story, section, passage, isFirst, inputFilename, lineCount);
                 }
                 else if (match.dec) {
-                    section = this.addAttribute(match.dec[1] + '-=1', story, section, passage, isFirst, inputFilename, lineCount);
+                    section = this.addAttribute(match.dec[1] + '-=' + match.dec[3], story, section, passage, isFirst, inputFilename, lineCount);
                 }
                 else if (match.replace) {
                     var replaceAttribute = match.replace[1];
