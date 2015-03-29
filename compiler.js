@@ -274,7 +274,7 @@
                 else if (match.start) {
                     story.start = match.start[1];
                 }
-                else if (match.import && importFilename) {
+                else if (match.import && inputFilename) {
                     var basePath = path.resolve(path.dirname(inputFilename));
                     var newFilenames = path.join(basePath, match.import[1]);
                     var importFilenames = glob.sync(newFilenames);
