@@ -194,8 +194,8 @@
             start: /^@start (.*)$/,
             attributes: /^@set (.*)$/,
             unset: /^@unset (.*)$/,
-            inc: /^@inc (.*)$/,
-            dec: /^@dec (.*)$/,
+            inc: /^@inc (.*)( )(.\d*)$/,
+            dec: /^@dec (.*)( )(.\d*)$/,
             replace: /^@replace (.*$)/,
             js: /^(\t| {4})(.*)$/,
             continue: /^\+\+\+(.*)$/,
@@ -297,10 +297,10 @@
                     section = this.addAttribute('not ' + match.unset[1], story, section, passage, isFirst, inputFilename, lineCount);
                 }
                 else if (match.inc) {
-                    section = this.addAttribute(match.inc[1] + '+=1', story, section, passage, isFirst, inputFilename, lineCount);
+                    section = this.addAttribute(match.inc[1] + '+=' + match.inc[3], story, section, passage, isFirst, inputFilename, lineCount);
                 }
                 else if (match.dec) {
-                    section = this.addAttribute(match.dec[1] + '-=1', story, section, passage, isFirst, inputFilename, lineCount);
+                    section = this.addAttribute(match.dec[1] + '-=' + match.dec[3], story, section, passage, isFirst, inputFilename, lineCount);
                 }
                 else if (match.replace) {
                     var replaceAttribute = match.replace[1];
@@ -368,7 +368,7 @@
             var links = this.allMatchesForGroup(input, namedSectionLinkRegex, 2);
             this.checkSectionLinks(story, links, section, passage);
 
-            input = input.replace(namedSectionLinkRegex, '<a class="squiffy-link" data-section="$2">$1</a>');
+            input = input.replace(namedSectionLinkRegex, '<a class="squiffy-link link-section" data-section="$2">$1</a>');
 
             // namedPassageLinkRegex matches:
             //   open [
@@ -382,7 +382,7 @@
             links = this.allMatchesForGroup(input, namedPassageLinkRegex, 2);
             this.checkPassageLinks(story, links, section, passage);
 
-            input = input.replace(namedPassageLinkRegex, '<a class="squiffy-link" data-passage="$2">$1</a>');
+            input = input.replace(namedPassageLinkRegex, '<a class="squiffy-link link-passage" data-passage="$2">$1</a>');
 
             // unnamedSectionLinkRegex matches:
             //   open [[
@@ -393,7 +393,7 @@
             links = this.allMatchesForGroup(input, unnamedSectionLinkRegex, 1);
             this.checkSectionLinks(story, links, section, passage);
 
-            input = input.replace(unnamedSectionLinkRegex, '<a class="squiffy-link" data-section="$1">$1</a>');
+            input = input.replace(unnamedSectionLinkRegex, '<a class="squiffy-link link-section" data-section="$1">$1</a>');
 
             // unnamedPassageLinkRegex matches:
             //   open [
@@ -405,7 +405,7 @@
             links = this.allMatchesForGroup(input, unnamedPassageLinkRegex, 1);
             this.checkPassageLinks(story, links, section, passage);
 
-            input = input.replace(unnamedPassageLinkRegex, '<a class="squiffy-link" data-passage="$1">$1</a>$2');
+            input = input.replace(unnamedPassageLinkRegex, '<a class="squiffy-link link-passage" data-passage="$1">$1</a>$2');
 
             return marked(input).trim();
         };
