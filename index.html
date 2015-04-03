@@ -48,10 +48,13 @@
             open: function () {
               $('#inputfile').click();
             },
-            save: function () {
+            save: function (title) {
               alert('Not implemented in demo');
             },
             storageKey: 'squiffy',
+            updateTitle: function (title) {
+              document.title = title + ' - Squiffy Editor Test';
+            },
           });
         };
 

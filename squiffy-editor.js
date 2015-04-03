@@ -11,7 +11,7 @@
         });
     };
 
-    var editor, settings;
+    var editor, settings, title;
 
     var run = function () {
         $('#output-container').html('');
@@ -61,9 +61,28 @@
     };
 
     var localSave = function () {
+        var data = editor.getValue();
         if (settings.storageKey) {
-            localStorage[settings.storageKey] = editor.getValue();
+            localStorage[settings.storageKey] = data;
         }
+        processFile(data);
+    };
+
+    var processFile = function (data) {
+        var titleRegex = /^@title (.*)$/;
+
+        var lines = data.replace(/\r/g, '').split('\n');
+        lines.forEach(function (line) {
+            var stripLine = line.trim();
+            var match = titleRegex.exec(stripLine);
+
+            if (match && title !== match[1]) {
+                title = match[1];
+                if (settings.updateTitle) {
+                    settings.updateTitle(title);
+                }
+            }
+        });
     };
 
     var methods = {
@@ -100,7 +119,11 @@
 
             if (options.save) {
                 $('#save').show();
-                $('#save').click(options.save);
+                $('#save').click(function () {
+                    clearTimeout(localSaveTimeout);
+                    localSave();
+                    options.save(title);
+                });
             }
 
             $('#run').click(run);
