@@ -56,6 +56,7 @@
     var localSaveTimeout;
 
     var editorChange = function () {
+        setInfo('');
         if (localSaveTimeout) clearTimeout(localSaveTimeout);
         localSaveTimeout = setTimeout(localSave, 1000);
     };
@@ -64,8 +65,13 @@
         var data = editor.getValue();
         if (settings.storageKey) {
             localStorage[settings.storageKey] = data;
+            setInfo('All changes saved locally');
         }
         processFile(data);
+    };
+
+    var setInfo = function (text) {
+        $('#info').html(text);
     };
 
     var processFile = function (data) {
@@ -143,6 +149,9 @@
         setStorageKey: function (key) {
             settings.storageKey = key;
         },
+        setInfo: function (text) {
+            setInfo(text);
+        },
     };
 
     $.fn.squiffyEditor = function (methodOrOptions) {
@@ -169,6 +178,7 @@
             '<button id="save" class="btn btn-primary" style="display: none"><span class="glyphicon glyphicon-save"></span> Save</button>\n' +
             '<button id="run" class="btn btn-success"><span class="glyphicon glyphicon-play"></span> Run</button>\n' +
             '<button id="restart" class="btn btn-success" style="display: none"><span class="glyphicon glyphicon-refresh"></span> Restart</button>\n' +
+            '<span id="info"></span>\n' +
             '<div style="float: right">\n' +
                 '<div class="btn-group">\n' +
                         '<button class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="false">\n' +

@@ -45,3 +45,8 @@ a.squiffy-link.disabled
    z-index: 50 !important;
    overflow: visible !important;
 }
+
+#info {
+    margin-left: 20px;
+    font-size: 90%;
+}
