@@ -53,12 +53,16 @@
         $('#output').squiffy('restart');
     };
 
-    var localSaveTimeout;
+    var localSaveTimeout, autoSaveTimeout;
 
     var editorChange = function () {
         setInfo('');
         if (localSaveTimeout) clearTimeout(localSaveTimeout);
         localSaveTimeout = setTimeout(localSave, 1000);
+        if (settings.autoSave) {
+            if (autoSaveTimeout) clearTimeout(autoSaveTimeout);
+            autoSaveTimeout = setTimeout(autoSave, 5000);
+        }
     };
 
     var localSave = function () {
@@ -68,6 +72,10 @@
             setInfo('All changes saved locally');
         }
         processFile(data);
+    };
+
+    var autoSave = function () {
+        settings.autoSave(title);
     };
 
     var setInfo = function (text) {

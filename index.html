@@ -53,6 +53,9 @@
               bootbox.alert('Not implemented in demo');
               $('#squiffy-editor').squiffyEditor('setInfo', 'Not saved');
             },
+            autoSave: function (title) {
+              console.log('Auto save');
+            },
             storageKey: 'squiffy',
             updateTitle: function (title) {
               document.title = title + ' - Squiffy Editor Test';
