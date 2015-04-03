@@ -11,7 +11,7 @@
         });
     };
 
-    var editor, settings, title;
+    var editor, settings, title, loading;
 
     var run = function () {
         $('#output-container').html('');
@@ -56,6 +56,7 @@
     var localSaveTimeout, autoSaveTimeout;
 
     var editorChange = function () {
+        if (loading) return;
         setInfo('');
         if (localSaveTimeout) clearTimeout(localSaveTimeout);
         localSaveTimeout = setTimeout(localSave, 1000);
@@ -104,6 +105,12 @@
         }
     };
 
+    var editorLoad = function (data) {
+        loading = true;
+        editor.getSession().setValue(data, -1);
+        loading = false;
+    };
+
     var methods = {
         init: function (options) {
             var element = this;
@@ -129,7 +136,7 @@
             editor.getSession().on('change', editorChange);
             editor.focus();
 
-            editor.getSession().setValue(options.data, -1);
+            editorLoad(options.data);
 
             if (options.open) {
                 $('#open').show();
@@ -149,7 +156,8 @@
             $('#restart').click(restart);
         },
         load: function (data) {
-            editor.getSession().setValue(data, -1);
+            editorLoad(data);
+            localSave();
         },
         save: function () {
             return editor.getValue();
