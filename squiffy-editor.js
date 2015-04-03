@@ -70,19 +70,24 @@
 
     var processFile = function (data) {
         var titleRegex = /^@title (.*)$/;
+        var newTitle;
 
         var lines = data.replace(/\r/g, '').split('\n');
         lines.forEach(function (line) {
             var stripLine = line.trim();
             var match = titleRegex.exec(stripLine);
 
-            if (match && title !== match[1]) {
-                title = match[1];
-                if (settings.updateTitle) {
-                    settings.updateTitle(title);
-                }
+            if (match) {
+                newTitle = match[1]
             }
         });
+
+        if (!title || title !== newTitle) {
+            title = newTitle || 'Untitled';
+            if (settings.updateTitle) {
+                settings.updateTitle(title);
+            }
+        }
     };
 
     var methods = {
