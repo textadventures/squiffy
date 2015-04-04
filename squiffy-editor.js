@@ -17,7 +17,7 @@
         $('#output-container').html('');
         $('#debugger').html('');
         $('#restart').hide();
-        var result = settings.compile({
+        settings.compile({
             data: editor.getValue(),
             success: function (data) {
                 $('#restart').show();
@@ -43,7 +43,7 @@
                 });
             },
             fail: function (data) {
-                $('#output').html(result.message);
+                $('#output').html(data.message);
             }
         });
     };
@@ -55,9 +55,24 @@
 
     var downloadSquiffyScript = function () {
         localSave();
-        var blob = new Blob([editor.getValue()], {type: 'text/plain'});
-        var filename = title + '.squiffy';
+        download(editor.getValue(), title + '.squiffy');
+    };
 
+    var downloadJavascript = function () {
+        localSave();
+        settings.compile({
+            data: editor.getValue(),
+            success: function (data) {
+                download(data, title + '.js');
+            },
+            fail: function (data) {
+                $('#output').html(data.message);
+            }
+        });
+    };
+
+    var download = function (data, filename) {
+        var blob = new Blob([data], {type: 'text/plain'});
         var downloadLink = document.createElement('a');
         downloadLink.download = filename;
         downloadLink.href = window.URL.createObjectURL(blob);
@@ -172,6 +187,7 @@
             $('#run').click(run);
             $('#restart').click(restart);
             $('#download-squiffy-script').click(downloadSquiffyScript);
+            $('#export-js').click(downloadJavascript);
         },
         load: function (data) {
             editorLoad(data);
