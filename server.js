@@ -23,8 +23,9 @@ http.createServer(function(request, response) {
 		});
 		request.on('end', function () {
 			try {
+				var result;
 				if (request.url.indexOf('/zip') === 0) {
-					var result = compiler.generate(null, __dirname, {
+					result = compiler.generate(null, __dirname, {
 						input: body,
 						write: false,
 						zip: true,
@@ -33,10 +34,10 @@ http.createServer(function(request, response) {
 						'Content-Type': 'application/octet-stream',
 						'Access-Control-Allow-Origin': '*'
 					});
-					response.end(result);
+					response.end(result, 'binary');
 				}
 				else {
-					var result = compiler.getJs(body, __dirname);
+					result = compiler.getJs(body, __dirname);
 					response.writeHead(200, {
 						'Content-Type': 'application/javascript',
 						'Access-Control-Allow-Origin': '*'

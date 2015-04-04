@@ -132,7 +132,7 @@
                         fs.writeFileSync(path.join(outputPath, 'output.zip'), buffer);
                     }
                     else {
-                        return buffer.toString();
+                        return buffer;
                     }
                 }
             }
