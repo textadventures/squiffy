@@ -53,6 +53,22 @@
         $('#output').squiffy('restart');
     };
 
+    var downloadSquiffyScript = function () {
+        localSave();
+        var blob = new Blob([editor.getValue()], {type: 'text/plain'});
+        var filename = title + '.squiffy';
+
+        var downloadLink = document.createElement('a');
+        downloadLink.download = filename;
+        downloadLink.href = window.URL.createObjectURL(blob);
+        downloadLink.onclick = function (e) {
+            document.body.removeChild(e.target);
+        };
+        downloadLink.style.display = 'none';
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+    };
+
     var localSaveTimeout, autoSaveTimeout;
 
     var editorChange = function () {
@@ -93,7 +109,7 @@
             var match = titleRegex.exec(stripLine);
 
             if (match) {
-                newTitle = match[1]
+                newTitle = match[1];
             }
         });
 
@@ -109,6 +125,7 @@
         loading = true;
         editor.getSession().setValue(data, -1);
         loading = false;
+        processFile(data);
     };
 
     var methods = {
@@ -154,6 +171,7 @@
 
             $('#run').click(run);
             $('#restart').click(restart);
+            $('#download-squiffy-script').click(downloadSquiffyScript);
         },
         load: function (data) {
             editorLoad(data);
@@ -203,9 +221,9 @@
                                 '<span class="caret"></span>\n' +
                         '</button>\n' +
                         '<ul class="dropdown-menu" role="menu">\n' +
-                                '<li><a href="#">Squiffy script</a></li>\n' +
-                                '<li><a href="#">Export HTML and JavaScript</a></li>\n' +
-                                '<li><a href="#">Export JavaScript only</a></li>\n' +
+                                '<li><a id="download-squiffy-script">Squiffy script</a></li>\n' +
+                                '<li><a id="export-html-js">Export HTML and JavaScript</a></li>\n' +
+                                '<li><a id="export-js">Export JavaScript only</a></li>\n' +
                         '</ul>\n' +
                 '</div>\n' +
                 '<button id="preview" class="btn btn-primary"><span class="glyphicon glyphicon-eye-open"></span> Preview</button>\n' +

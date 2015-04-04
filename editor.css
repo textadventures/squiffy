@@ -50,3 +50,7 @@ a.squiffy-link.disabled
     margin-left: 20px;
     font-size: 90%;
 }
+
+ul.dropdown-menu a {
+    cursor: pointer;
+}
