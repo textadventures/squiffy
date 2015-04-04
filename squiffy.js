@@ -47,6 +47,7 @@ var options = {
     scriptOnly: argv.scriptonly,
     pluginName: argv.pluginname,
     zip: argv.zip,
+    write: true,
 };
 
 var result = compiler.generate(argv._[0], __dirname, options);

@@ -43,12 +43,26 @@
         };
 
         this.generate = function(inputFilename, sourcePath, options) {
-            var outputPath = path.resolve(path.dirname(inputFilename));
+            var outputPath;
+            if (options.write) {
+                outputPath = path.resolve(path.dirname(inputFilename));
+            }
 
             var story = new Story();
-            story.set_id(path.resolve(inputFilename));
+            if (inputFilename) {
+                story.set_id(path.resolve(inputFilename));
+            }
+            else {
+                story.set_id(options.input);
+            }
 
-            var success = this.processFile(story, path.resolve(inputFilename), true);
+            var success;
+            if (inputFilename) {
+                success = this.processFile(story, path.resolve(inputFilename), true);
+            }
+            else {
+                success = this.processFileText(story, options.input, null, true);   
+            }
 
             if (!success) {
                 console.log('Failed.');
@@ -61,7 +75,9 @@
 
             var storyJs = this.getJs(story, sourcePath, options);
             
-            fs.writeFileSync(path.join(outputPath, storyJsName), storyJs);
+            if (options.write) {
+                fs.writeFileSync(path.join(outputPath, storyJsName), storyJs);
+            }
 
             if (!options.scriptOnly) {
                 console.log('Writing index.html');
@@ -76,7 +92,7 @@
                 if (options.useCdn) {
                     jqueryJs = 'http://ajax.aspnetcdn.com/ajax/jquery/jquery-2.1.3.min.js';
                 }
-                else {
+                else if (options.write) {
                     fs.createReadStream(jQueryPath).pipe(fs.createWriteStream(path.join(outputPath, 'jquery.min.js')));
                 }
                 
@@ -85,13 +101,18 @@
                 var scriptData = _.map(story.scripts, function (script) { return '<script src=\'{0}\'></script>'.format(script); }).join('\n');
                 htmlData = htmlData.replace('<!-- SCRIPTS -->', scriptData);
 
-                fs.writeFileSync(path.join(outputPath, 'index.html'), htmlData);
+                if (options.write) {
+                    fs.writeFileSync(path.join(outputPath, 'index.html'), htmlData);
+                }
 
                 console.log('Writing style.css');
 
                 var cssTemplateFile = fs.readFileSync(this.findFile('style.template.css', outputPath, sourcePath));
                 var cssData = cssTemplateFile.toString();
-                fs.writeFileSync(path.join(outputPath, 'style.css'), cssData);
+
+                if (options.write) {
+                    fs.writeFileSync(path.join(outputPath, 'style.css'), cssData);
+                }
 
                 if (options.zip) {
                     console.log('Creating zip file');
@@ -107,7 +128,12 @@
                     var buffer = zip.generate({
                         type: 'nodebuffer'
                     });
-                    fs.writeFileSync(path.join(outputPath, 'output.zip'), buffer);
+                    if (options.write) {
+                        fs.writeFileSync(path.join(outputPath, 'output.zip'), buffer);
+                    }
+                    else {
+                        return buffer.toString();
+                    }
                 }
             }
             
@@ -179,9 +205,11 @@
         };
 
         this.findFile = function(filename, outputPath, sourcePath) {
-            var outputPathFile = path.join(outputPath, filename);
-            if (fs.existsSync(outputPathFile)) {
-                return outputPathFile;
+            if (outputPath) {
+                var outputPathFile = path.join(outputPath, filename);
+                if (fs.existsSync(outputPathFile)) {
+                    return outputPathFile;
+                }
             }
             return path.join(sourcePath, filename);
         };

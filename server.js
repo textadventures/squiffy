@@ -23,12 +23,26 @@ http.createServer(function(request, response) {
 		});
 		request.on('end', function () {
 			try {
-				var result = compiler.getJs(body, __dirname);
-				response.writeHead(200, {
-					'Content-Type': 'application/javascript',
-					'Access-Control-Allow-Origin': '*'
-				});
-				response.end(result);
+				if (request.url.indexOf('/zip') === 0) {
+					var result = compiler.generate(null, __dirname, {
+						input: body,
+						write: false,
+						zip: true,
+					});
+					response.writeHead(200, {
+						'Content-Type': 'application/octet-stream',
+						'Access-Control-Allow-Origin': '*'
+					});
+					response.end(result);
+				}
+				else {
+					var result = compiler.getJs(body, __dirname);
+					response.writeHead(200, {
+						'Content-Type': 'application/javascript',
+						'Access-Control-Allow-Origin': '*'
+					});
+					response.end(result);
+				}
 			}
 			catch(err) {
 				response.writeHead(400, {
