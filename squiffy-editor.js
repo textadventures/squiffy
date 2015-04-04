@@ -58,6 +58,20 @@
         download(editor.getValue(), title + '.squiffy');
     };
 
+    var downloadZip = function () {
+        localSave();
+        settings.compile({
+            data: editor.getValue(),
+            success: function (data) {
+                download(data, title + '.zip', 'application/octet-stream');
+            },
+            fail: function (data) {
+                $('#output').html(data.message);
+            },
+            zip: true
+        });
+    };
+
     var downloadJavascript = function () {
         localSave();
         settings.compile({
@@ -71,8 +85,8 @@
         });
     };
 
-    var download = function (data, filename) {
-        var blob = new Blob([data], {type: 'text/plain'});
+    var download = function (data, filename, type) {
+        var blob = new Blob([data], {type: type || 'text/plain'});
         var downloadLink = document.createElement('a');
         downloadLink.download = filename;
         downloadLink.href = window.URL.createObjectURL(blob);
@@ -187,6 +201,7 @@
             $('#run').click(run);
             $('#restart').click(restart);
             $('#download-squiffy-script').click(downloadSquiffyScript);
+            $('#export-html-js').click(downloadZip);
             $('#export-js').click(downloadJavascript);
         },
         load: function (data) {

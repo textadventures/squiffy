@@ -25,7 +25,29 @@
     <script>
       $(function () {
         var compile = function (input) {
-          $.post('http://squiffy.textadventures.co.uk', input.data, function (data) {
+          var url = 'http://squiffy.textadventures.co.uk';
+
+          if (input.zip) {
+            // Using XMLHttpRequest here as jQuery doesn't support blob downloads
+            url += '/zip';
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', url, true);
+            xhr.responseType = 'blob';
+             
+            xhr.onload = function(e) {
+              if (this.status == 200) {
+                input.success(this.response);
+              }
+              else {
+                input.fail(this.response);
+              }
+            };
+             
+            xhr.send(input.data);
+            return;
+          }
+
+          $.post(url, input.data, function (data) {
             if (data.indexOf('Failed') === 0) {
                 input.fail(data);
                 return;
