@@ -198,6 +198,16 @@
                 });
             }
 
+            if (options.preview) {
+                $('#preview').show();
+                $('#preview').click(options.preview);
+            }
+
+            if (options.publish) {
+                $('#publish').show();
+                $('#publish').click(options.publish);
+            }
+
             $('#run').click(run);
             $('#restart').click(restart);
             $('#download-squiffy-script').click(downloadSquiffyScript);
@@ -257,8 +267,8 @@
                                 '<li><a id="export-js">Export JavaScript only</a></li>\n' +
                         '</ul>\n' +
                 '</div>\n' +
-                '<button id="preview" class="btn btn-primary"><span class="glyphicon glyphicon-eye-open"></span> Preview</button>\n' +
-                '<button id="publish" class="btn btn-primary"><span class="glyphicon glyphicon-circle-arrow-up"></span> Publish</button>\n' +
+                '<button id="preview" class="btn btn-primary" style="display: none"><span class="glyphicon glyphicon-eye-open"></span> Preview</button>\n' +
+                '<button id="publish" class="btn btn-primary" style="display: none"><span class="glyphicon glyphicon-circle-arrow-up"></span> Publish</button>\n' +
             '</div>\n' +
         '</div>\n' +
         '<div class="ui-layout-center">\n' +
