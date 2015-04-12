@@ -293,7 +293,11 @@
                     <a href="http://docs.textadventures.co.uk/squiffy/" target="_blank">Full documentation</a>\
                 </div>\
                 <div role="tabpanel" class="tab-pane" id="tab-output">\
-                    <div id="output-container"></div>\
+                    <div id="output-container">\
+                        <div id="output">\
+                            Click the Run button to start the game.\
+                        </div>\
+                    </div>\
                 </div>\
             </div>\
         </div>\
