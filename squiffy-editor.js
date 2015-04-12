@@ -249,47 +249,47 @@
     };
 
     var editorHtml = 
-        '<div class="ui-layout-north">\n' +
-            '<button id="open" class="btn btn-primary" style="display: none"><span class="glyphicon glyphicon-open-file"></span> Open</button>\n' +
-            '<button id="save" class="btn btn-primary" style="display: none"><span class="glyphicon glyphicon-cloud-upload"></span> Save</button>\n' +
-            '<button id="run" class="btn btn-success"><span class="glyphicon glyphicon-play"></span> Run</button>\n' +
-            '<button id="restart" class="btn btn-success" style="display: none"><span class="glyphicon glyphicon-refresh"></span> Restart</button>\n' +
-            '<span id="info"></span>\n' +
-            '<div style="float: right">\n' +
-                '<div class="btn-group">\n' +
-                        '<button class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="false">\n' +
-                                '<span class="glyphicon glyphicon-cloud-download"></span>\n' +
-                                'Download\n' +
-                                '<span class="caret"></span>\n' +
-                        '</button>\n' +
-                        '<ul class="dropdown-menu" role="menu">\n' +
-                                '<li><a id="download-squiffy-script">Squiffy script</a></li>\n' +
-                                '<li><a id="export-html-js">Export HTML and JavaScript</a></li>\n' +
-                                '<li><a id="export-js">Export JavaScript only</a></li>\n' +
-                        '</ul>\n' +
-                '</div>\n' +
-                '<button id="preview" class="btn btn-primary" style="display: none"><span class="glyphicon glyphicon-eye-open"></span> Preview</button>\n' +
-                '<button id="publish" class="btn btn-primary" style="display: none"><span class="glyphicon glyphicon-circle-arrow-up"></span> Publish</button>\n' +
-            '</div>\n' +
-        '</div>\n' +
-        '<div class="ui-layout-center">\n' +
-            '<div id="editor"></div>\n' +
-        '</div>\n' +
-        '<div class="ui-layout-east">\n' +
-            '<ul class="nav nav-tabs">\n' +
-                '<li class="active"><a href="#tab-help" role="tab" data-toggle="tab">Help</a></li>\n' +
-                '<li><a href="#tab-output" role="tab" data-toggle="tab">Output</a></li>\n' +
-            '</ul>\n' +
-            '<div class="tab-content">\n' +
-                '<div role="tabpanel" class="tab-pane active" id="tab-help">\n' +
-                    'Help...\n' +
-                '</div>\n' +
-                '<div role="tabpanel" class="tab-pane" id="tab-output">\n' +
-                    '<div id="output-container"></div>\n' +
-                '</div>\n' +
-            '</div>\n' +
-        '</div>\n' +
-        '<div class="ui-layout-south">\n' +
-            '<div id="debugger"></div>\n' +
-        '</div>\n';
+        '<div class="ui-layout-north">\
+            <button id="open" class="btn btn-primary" style="display: none"><span class="glyphicon glyphicon-open-file"></span> Open</button>\
+            <button id="save" class="btn btn-primary" style="display: none"><span class="glyphicon glyphicon-cloud-upload"></span> Save</button>\
+            <button id="run" class="btn btn-success"><span class="glyphicon glyphicon-play"></span> Run</button>\
+            <button id="restart" class="btn btn-success" style="display: none"><span class="glyphicon glyphicon-refresh"></span> Restart</button>\
+            <span id="info"></span>\
+            <div style="float: right">\
+                <div class="btn-group">\
+                        <button class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="false">\
+                            <span class="glyphicon glyphicon-cloud-download"></span>\
+                            Download\
+                            <span class="caret"></span>\
+                        </button>\
+                        <ul class="dropdown-menu" role="menu">\
+                            <li><a id="download-squiffy-script">Squiffy script</a></li>\
+                            <li><a id="export-html-js">Export HTML and JavaScript</a></li>\
+                            <li><a id="export-js">Export JavaScript only</a></li>\
+                        </ul>\
+                </div>\
+                <button id="preview" class="btn btn-primary" style="display: none"><span class="glyphicon glyphicon-eye-open"></span> Preview</button>\
+                <button id="publish" class="btn btn-primary" style="display: none"><span class="glyphicon glyphicon-circle-arrow-up"></span> Publish</button>\
+            </div>\
+        </div>\
+        <div class="ui-layout-center">\
+            <div id="editor"></div>\
+        </div>\
+        <div class="ui-layout-east">\
+            <ul class="nav nav-tabs">\
+                <li class="active"><a href="#tab-help" role="tab" data-toggle="tab">Help</a></li>\
+                <li><a href="#tab-output" role="tab" data-toggle="tab">Output</a></li>\
+            </ul>\
+            <div class="tab-content">\
+                <div role="tabpanel" class="tab-pane active" id="tab-help">\
+                    Help...\
+                </div>\
+                <div role="tabpanel" class="tab-pane" id="tab-output">\
+                    <div id="output-container"></div>\
+                </div>\
+            </div>\
+        </div>\
+        <div class="ui-layout-south">\
+            <div id="debugger"></div>\
+        </div>\n';
 })();
