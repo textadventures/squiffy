@@ -282,6 +282,9 @@
             </ul>\
             <div class="tab-content">\
                 <div role="tabpanel" class="tab-pane active" id="tab-help">\
+                    You can format your text using HTML and\
+                    <a href="http://daringfireball.net/projects/markdown/syntax" target="_blank">\
+                    Markdown</a>.<br/><br/>\
                     To create a new section:\
                     <pre>[[new section]]:</pre>\
                     To link to a section:\
