@@ -17,6 +17,7 @@
         $('#output-container').html('');
         $('#debugger').html('');
         $('#restart').hide();
+        $('a[href="#tab-output"]').tab('show');
         settings.compile({
             data: editor.getValue(),
             success: function (data) {
@@ -275,7 +276,18 @@
             '<div id="editor"></div>\n' +
         '</div>\n' +
         '<div class="ui-layout-east">\n' +
-            '<div id="output-container"></div>\n' +
+            '<ul class="nav nav-tabs">\n' +
+                '<li class="active"><a href="#tab-help" role="tab" data-toggle="tab">Help</a></li>\n' +
+                '<li><a href="#tab-output" role="tab" data-toggle="tab">Output</a></li>\n' +
+            '</ul>\n' +
+            '<div class="tab-content">\n' +
+                '<div role="tabpanel" class="tab-pane active" id="tab-help">\n' +
+                    'Help...\n' +
+                '</div>\n' +
+                '<div role="tabpanel" class="tab-pane" id="tab-output">\n' +
+                    '<div id="output-container"></div>\n' +
+                '</div>\n' +
+            '</div>\n' +
         '</div>\n' +
         '<div class="ui-layout-south">\n' +
             '<div id="debugger"></div>\n' +

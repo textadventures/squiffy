@@ -31,9 +31,9 @@ a.squiffy-link.disabled
     position: fixed;
 }
 
-#output {
+#output, #tab-help {
     position: absolute;
-    top: 0;
+    top: 54px;
     right: 0;
     bottom: 0;
     left: 0;
