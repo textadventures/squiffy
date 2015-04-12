@@ -1,5 +1,6 @@
 /* jshint quotmark: single */
 /* jshint evil: true */
+/* jshint multistr: true */
 
 (function () {
     'use strict';
@@ -11,7 +12,7 @@
         });
     };
 
-    var editor, settings, title, loading;
+    var editor, settings, title, loading, layout;
 
     var run = function () {
         $('#output-container').html('');
@@ -164,7 +165,7 @@
             settings = options;
 
             element.html(editorHtml);
-            element.layout({
+            layout = element.layout({
                 applyDefaultStyles: true,
                 onresize: function () {
                     if (editor) editor.resize();
@@ -174,6 +175,7 @@
                 north__spacing_open: 0,
                 east__size: 0.5,
                 south__size: 80,
+                south__initClosed: true,
             });
             
             editor = ace.edit('editor');
@@ -245,7 +247,13 @@
         // don't log internal attribute changes
         if (attribute.indexOf('_') === 0) return;
 
-        $('<p/>').html('{0} = {1}'.format(attribute, value)).appendTo('#debugger');
+        logToDebugger('{0} = {1}'.format(attribute, value));
+    };
+
+    var logToDebugger = function (text) {
+        layout.open('south');
+        $('#debugger').append(text + '<br/>');
+        $('#debugger').scrollTop($('#debugger').height());
     };
 
     var editorHtml = 
