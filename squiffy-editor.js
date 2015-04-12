@@ -282,7 +282,15 @@
             </ul>\
             <div class="tab-content">\
                 <div role="tabpanel" class="tab-pane active" id="tab-help">\
-                    Help...\
+                    To create a new section:\
+                    <pre>[[new section]]:</pre>\
+                    To link to a section:\
+                    <pre>Link [[like this]] or [[use different link text]](new section)</pre>\
+                    To create a new passage:\
+                    <pre>[new passage]:</pre>\
+                    To link to a passage:\
+                    <pre>Link [like this] or [use different link text](new passage)</pre>\
+                    <a href="http://docs.textadventures.co.uk/squiffy/" target="_blank">Full documentation</a>\
                 </div>\
                 <div role="tabpanel" class="tab-pane" id="tab-output">\
                     <div id="output-container"></div>\
