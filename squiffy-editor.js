@@ -182,6 +182,7 @@
             editor.setTheme('ace/theme/eclipse');
             editor.getSession().setMode('ace/mode/markdown');
             editor.getSession().setUseWrapMode(true);
+            editor.setShowPrintMargin(false);
             editor.getSession().on('change', editorChange);
             editor.focus();
 
