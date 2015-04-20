@@ -12,7 +12,7 @@
         });
     };
 
-    var editor, settings, title, loading, layout;
+    var editor, settings, title, loading, layout, sourceMap, currentRow;
 
     var run = function () {
         $('#output-container').html('');
@@ -132,15 +132,70 @@
 
     var processFile = function (data) {
         var titleRegex = /^@title (.*)$/;
+        var sectionRegex = /^\[\[(.*)\]\]:$/;
+        var passageRegex = /^\[(.*)\]:$/;
         var newTitle;
 
-        var lines = data.replace(/\r/g, '').split('\n');
-        lines.forEach(function (line) {
-            var stripLine = line.trim();
-            var match = titleRegex.exec(stripLine);
+        sourceMap = [
+            {
+                name: '(Default)',
+                start: 0,
+                passages: [
+                    {
+                        name: '(Default)',
+                        start: 0,
+                    }
+                ]
+            }
+        ];
 
-            if (match) {
-                newTitle = match[1];
+        var lines = data.replace(/\r/g, '').split('\n');
+        var lineCount = 0;
+
+        var currentSection = function () {
+            return sourceMap.slice(-1)[0];
+        };
+
+        var endPassage = function (index) {
+            var previousPassage = currentSection().passages.slice(-1)[0];
+            if (!previousPassage) return;
+            previousPassage.end = index;
+        };
+
+        lines.forEach(function (line, index) {
+            var stripLine = line.trim();
+            var titleMatch = titleRegex.exec(stripLine);
+            var sectionMatch = sectionRegex.exec(stripLine);
+            var passageMatch = passageRegex.exec(stripLine);
+
+            if (titleMatch) {
+                newTitle = titleMatch[1];
+            }
+
+            if (sectionMatch) {
+                console.log('section: ' + sectionMatch[1] + ' @ ' + index);
+                endPassage(index);
+                currentSection().end = index;
+                var newSection = {
+                    name: sectionMatch[1],
+                    start: index,
+                    passages: [
+                        {
+                            name: '(Default)',
+                            start: index
+                        }
+                    ]
+                };
+                sourceMap.push(newSection);
+            }
+            else if (passageMatch) {
+                console.log('passage: ' + passageMatch[1] + ' @ ' + index);
+                endPassage(index);
+                var newPassage = {
+                    name: passageMatch[1],
+                    start: index
+                };
+                currentSection().passages.push(newPassage);
             }
         });
 
@@ -157,6 +212,14 @@
         editor.getSession().setValue(data, -1);
         loading = false;
         processFile(data);
+    };
+
+    var cursorMoved = function (row) {
+        if (row == currentRow) return;
+        if (!sourceMap) return;
+        console.log('row ' + row);
+        console.log(sourceMap);
+        currentRow = row;
     };
 
     var methods = {
@@ -184,9 +247,13 @@
             editor.getSession().setUseWrapMode(true);
             editor.setShowPrintMargin(false);
             editor.getSession().on('change', editorChange);
+            editor.on('changeSelection', function () {
+                cursorMoved(editor.selection.getCursor().row);
+            });
             editor.focus();
 
             editorLoad(options.data);
+            cursorMoved(editor.selection.getCursor().row);
 
             if (options.open) {
                 $('#open').show();
