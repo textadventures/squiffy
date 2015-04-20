@@ -217,9 +217,23 @@
     var cursorMoved = function (row) {
         if (row == currentRow) return;
         if (!sourceMap) return;
-        console.log('row ' + row);
-        console.log(sourceMap);
         currentRow = row;
+
+        var currentSection, currentPassage;
+
+        sourceMap.forEach(function (section) {
+            if (row >= section.start && (!section.end || row < section.end)) {
+                currentSection = section;
+
+                section.passages.forEach(function (passage) {
+                    if (row >= passage.start && (!passage.end || row < passage.end)) {
+                        currentPassage = passage;
+                    }
+                });
+            }
+        });
+
+        console.log(currentSection.name + ', ' + currentPassage.name);
     };
 
     var methods = {
