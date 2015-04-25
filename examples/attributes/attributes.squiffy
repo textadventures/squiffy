@@ -70,4 +70,12 @@ You clicked {count} links. What about calling [dec]?
 
 [dec]:
 @dec count
+Now count is {count}. You can also [increase] or [decrease] by values other than 1.
+
+[increase]:
+@inc count 10
+Now count is {count}.
+
+[decrease]:
+@dec count 5
 Now count is {count}.
