@@ -295,15 +295,16 @@
                 east__size: 0.5,
                 south__size: 80,
                 south__initClosed: true,
-                center__spacing_open: 0,
-                childOptions: {
-                    onresize: function () {
-                        if (editor) editor.resize();
-                    },
-                    north__resizable: false,
-                    north__closable: false,
-                    center__spacing_open: 0,
+                center__spacing_open: 0, 
+            });
+
+            $('#inner-layout').layout({
+                onresize: function () {
+                    if (editor) editor.resize();
                 },
+                north__resizable: false,
+                north__closable: false,
+                center__spacing_open: 0,
             });
             
             editor = ace.edit('editor');
@@ -415,7 +416,7 @@
                 <button id="publish" class="btn btn-primary" style="display: none"><span class="glyphicon glyphicon-circle-arrow-up"></span> Publish</button>\
             </div>\
         </div>\
-        <div class="ui-layout-center">\
+        <div class="ui-layout-center" id="inner-layout">\
             <div class="ui-layout-north">\
                 <div class="row">\
                     <div class="col-xs-6">\
