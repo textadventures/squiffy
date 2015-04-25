@@ -51,6 +51,10 @@ a.squiffy-link.disabled
    overflow: visible !important;
 }
 
+.ui-layout-center {
+  padding: 0px !important;
+}
+
 #info {
     margin-left: 20px;
     font-size: 90%;

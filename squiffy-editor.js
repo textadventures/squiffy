@@ -205,6 +205,12 @@
                 settings.updateTitle(title);
             }
         }
+
+        var selectSection = $('#sections');
+        selectSection.html('');
+        sourceMap.forEach(function (section) {
+            selectSection.append($('<option />').val(section.name).text(section.name));
+        });
     };
 
     var editorLoad = function (data) {
@@ -244,15 +250,21 @@
             element.html(editorHtml);
             layout = element.layout({
                 applyDefaultStyles: true,
-                onresize: function () {
-                    if (editor) editor.resize();
-                },
                 north__resizable: false,
                 north__closable: false,
                 north__spacing_open: 0,
                 east__size: 0.5,
                 south__size: 80,
                 south__initClosed: true,
+                center__spacing_open: 0,
+                childOptions: {
+                    onresize: function () {
+                        if (editor) editor.resize();
+                    },
+                    north__resizable: false,
+                    north__closable: false,
+                    center__spacing_open: 0,
+                },
             });
             
             editor = ace.edit('editor');
@@ -363,7 +375,19 @@
             </div>\
         </div>\
         <div class="ui-layout-center">\
-            <div id="editor"></div>\
+            <div class="ui-layout-north">\
+                <div class="row">\
+                    <div class="col-xs-6">\
+                        <select id="sections" class="form-control input-sm" />\
+                    </div>\
+                    <div class="col-xs-6">\
+                        <select id="passages" class="form-control input-sm" />\
+                    </div>\
+                </div>\
+            </div>\
+            <div class="ui-layout-center">\
+                <div id="editor"></div>\
+            </div>\
         </div>\
         <div class="ui-layout-east">\
             <ul class="nav nav-tabs">\
