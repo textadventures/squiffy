@@ -12,7 +12,8 @@
         });
     };
 
-    var editor, settings, title, loading, layout, sourceMap, currentRow;
+    var editor, settings, title, loading, layout, sourceMap,
+        currentRow, currentSection, currentPassage;
 
     var run = function () {
         $('#output-container').html('');
@@ -173,7 +174,6 @@
             }
 
             if (sectionMatch) {
-                console.log('section: ' + sectionMatch[1] + ' @ ' + index);
                 endPassage(index);
                 currentSection().end = index;
                 var newSection = {
@@ -189,7 +189,6 @@
                 sourceMap.push(newSection);
             }
             else if (passageMatch) {
-                console.log('passage: ' + passageMatch[1] + ' @ ' + index);
                 endPassage(index);
                 var newPassage = {
                     name: passageMatch[1],
@@ -211,6 +210,8 @@
         sourceMap.forEach(function (section) {
             selectSection.append($('<option />').val(section.name).text(section.name));
         });
+
+        cursorMoved(true);
     };
 
     var editorLoad = function (data) {
@@ -220,26 +221,40 @@
         processFile(data);
     };
 
-    var cursorMoved = function (row) {
-        if (row == currentRow) return;
+    var cursorMoved = function (force) {
+        var row = editor.selection.getCursor().row;
+        if (!force && row == currentRow) return;
         if (!sourceMap) return;
         currentRow = row;
 
-        var currentSection, currentPassage;
+        var newCurrentSection, newCurrentPassage;
 
         sourceMap.forEach(function (section) {
             if (row >= section.start && (!section.end || row < section.end)) {
-                currentSection = section;
+                newCurrentSection = section;
 
                 section.passages.forEach(function (passage) {
                     if (row >= passage.start && (!passage.end || row < passage.end)) {
-                        currentPassage = passage;
+                        newCurrentPassage = passage;
                     }
                 });
             }
         });
 
-        console.log(currentSection.name + ', ' + currentPassage.name);
+        if (newCurrentSection !== currentSection) {
+            currentSection = newCurrentSection;
+            $('#sections').val(currentSection.name);
+            var selectPassage = $('#passages');
+            selectPassage.html('');
+            currentSection.passages.forEach(function (passage) {
+                selectPassage.append($('<option />').val(passage.name).text(passage.name));
+            });
+        }
+
+        if (newCurrentPassage !== currentPassage) {
+            currentPassage = newCurrentPassage;
+            $('#passages').val(currentPassage.name);
+        }
     };
 
     var methods = {
@@ -274,12 +289,12 @@
             editor.setShowPrintMargin(false);
             editor.getSession().on('change', editorChange);
             editor.on('changeSelection', function () {
-                cursorMoved(editor.selection.getCursor().row);
+                cursorMoved();
             });
             editor.focus();
 
             editorLoad(options.data);
-            cursorMoved(editor.selection.getCursor().row);
+            cursorMoved();
 
             if (options.open) {
                 $('#open').show();
