@@ -3,6 +3,8 @@ layout: index
 title: Importing Files
 ---
 
+*Importing files only works in the command-line version of Squiffy*
+
 You can split your script up into multiple files and import them:
 
     @import other_file.squiffy

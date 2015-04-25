@@ -1,6 +1,6 @@
 ---
 layout: index
-title: Using Squiffy
+title: Using Squiffy from the command line
 ---
 
 You can create a Squiffy file in any text editor - Notepad, [Sublime Text](http://www.sublimetext.com/), TextEdit etc.
