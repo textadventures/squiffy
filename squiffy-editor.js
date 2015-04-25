@@ -140,6 +140,7 @@
             {
                 name: '(Default)',
                 start: 0,
+                isDefault: true,
                 passages: [
                     {
                         name: '(Default)',
@@ -256,6 +257,30 @@
         }
     };
 
+    var sectionChanged = function () {
+        var selectedSection = $('#sections').val();
+        sourceMap.forEach(function (section) {
+            if (section.name === selectedSection) {
+                moveTo(section.start + (section.isDefault ? 0 : 1));
+            }
+        });
+    };
+
+    var passageChanged = function () {
+        var selectedPassage = $('#passages').val();
+        currentSection.passages.forEach(function (passage) {
+            if (passage.name === selectedPassage) {
+                moveTo(passage.start + 1);
+            }
+        });
+    };
+
+    var moveTo = function (row) {
+        var Range = ace.require('ace/range').Range;
+        editor.selection.setRange(new Range(row, 0, row, 0));
+        editor.focus();
+    };
+
     var methods = {
         init: function (options) {
             var element = this;
@@ -324,6 +349,8 @@
             $('#download-squiffy-script').click(downloadSquiffyScript);
             $('#export-html-js').click(downloadZip);
             $('#export-js').click(downloadJavascript);
+            $('#sections').on('change', sectionChanged);
+            $('#passages').on('change', passageChanged);
         },
         load: function (data) {
             editorLoad(data);
