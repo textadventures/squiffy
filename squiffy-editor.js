@@ -107,7 +107,7 @@
         if (loading) return;
         setInfo('');
         if (localSaveTimeout) clearTimeout(localSaveTimeout);
-        localSaveTimeout = setTimeout(localSave, 1000);
+        localSaveTimeout = setTimeout(localSave, 50);
         if (settings.autoSave) {
             if (autoSaveTimeout) clearTimeout(autoSaveTimeout);
             autoSaveTimeout = setTimeout(autoSave, 5000);
@@ -118,7 +118,6 @@
         var data = editor.getValue();
         if (settings.storageKey) {
             localStorage[settings.storageKey] = data;
-            setInfo('All changes saved locally');
         }
         processFile(data);
     };
