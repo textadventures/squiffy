@@ -30,6 +30,11 @@ For number values, you can increase or decrease the value by 1:
     @inc score
     @dec health
 
+Or to increase or decrease by other amounts:
+
+	@inc score 100
+	@dec health 5
+
 You can also set an attribute value from a link:
 
 ```
