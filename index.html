@@ -16,47 +16,6 @@
 
       var template = [
         {
-          label: 'Squiffy',
-          submenu: [
-            {
-              label: 'About Squiffy',
-              selector: 'orderFrontStandardAboutPanel:'
-            },
-            {
-              type: 'separator'
-            },
-            {
-              label: 'Services',
-              submenu: []
-            },
-            {
-              type: 'separator'
-            },
-            {
-              label: 'Hide Squiffy',
-              accelerator: 'Command+H',
-              selector: 'hide:'
-            },
-            {
-              label: 'Hide Others',
-              accelerator: 'Command+Shift+H',
-              selector: 'hideOtherApplications:'
-            },
-            {
-              label: 'Show All',
-              selector: 'unhideAllApplications:'
-            },
-            {
-              type: 'separator'
-            },
-            {
-              label: 'Quit',
-              accelerator: 'Command+Q',
-              selector: 'terminate:'
-            },
-          ]
-        },
-        {
           label: 'File',
           submenu: [
             {
@@ -131,6 +90,59 @@
           ]
         },
         {
+          label: 'Help',
+          submenu: [
+            {
+              label: 'Documentation'
+            }
+          ]
+        },
+      ];
+
+      if (process.platform === 'darwin') {
+        template.splice(0, 0, {
+          label: 'Squiffy',
+          submenu: [
+            {
+              label: 'About Squiffy',
+              selector: 'orderFrontStandardAboutPanel:'
+            },
+            {
+              type: 'separator'
+            },
+            {
+              label: 'Services',
+              submenu: []
+            },
+            {
+              type: 'separator'
+            },
+            {
+              label: 'Hide Squiffy',
+              accelerator: 'Command+H',
+              selector: 'hide:'
+            },
+            {
+              label: 'Hide Others',
+              accelerator: 'Command+Shift+H',
+              selector: 'hideOtherApplications:'
+            },
+            {
+              label: 'Show All',
+              selector: 'unhideAllApplications:'
+            },
+            {
+              type: 'separator'
+            },
+            {
+              label: 'Quit',
+              accelerator: 'Command+Q',
+              selector: 'terminate:'
+            },
+          ]
+        });
+
+        template.splice(4, 0, {
           label: 'Window',
           submenu: [
             {
@@ -151,16 +163,8 @@
               selector: 'arrangeInFront:'
             },
           ]
-        },
-        {
-          label: 'Help',
-          submenu: [
-            {
-              label: 'Documentation'
-            }
-          ]
-        },
-      ];
+        });
+      }
 
       var remote = require('remote');
       var Menu = remote.require('menu');
