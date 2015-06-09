@@ -2,25 +2,8 @@
   "name": "squiffy-editor",
   "version": "1.0.0",
   "description": "",
-  "main": "server.js",
-  "scripts": {
-    "start": "node server.js",
-    "nw": "\"node_modules/.bin/nw\" nw",
-    "nwwin": "node_modules\\nw\\nwjs\\nw.exe nw"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/textadventures/squiffy-editor.git"
-  },
-  "author": "Alex Warren <alex@textadventures.co.uk>",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/textadventures/squiffy-editor/issues"
-  },
-  "homepage": "https://github.com/textadventures/squiffy-editor",
-  "dependencies": {
-    "finalhandler": "^0.3.3",
-    "nw": "^0.12.0-alpha2",
-    "serve-static": "^1.8.1"
+  "main": "main.js",
+  "devDependencies": {
+    "electron-prebuilt": "^0.27.3"
   }
 }
