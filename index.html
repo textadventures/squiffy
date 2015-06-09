@@ -12,6 +12,8 @@
     <script>
       window.$ = window.jQuery = require(__dirname + "/bower_components/jquery/dist/jquery.min.js");
 
+      var remote = require('remote');
+
       var template = [
         {
           label: 'Squiffy',
@@ -119,12 +121,12 @@
             {
               label: 'Reload',
               accelerator: 'Command+R',
-              click: function() { BrowserWindow.getFocusedWindow().reloadIgnoringCache(); }
+              click: function() { remote.getCurrentWindow().reloadIgnoringCache(); }
             },
             {
               label: 'Toggle DevTools',
               accelerator: 'Alt+Command+I',
-              click: function() { BrowserWindow.getFocusedWindow().toggleDevTools(); }
+              click: function() { remote.getCurrentWindow().toggleDevTools(); }
             },
           ]
         },
