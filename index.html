@@ -2,21 +2,171 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>Squiffy Editor Test</title>
+    <title>Squiffy</title>
 
     <link href="bower_components/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="editor.css" rel="stylesheet">
 
-    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
-    <!--[if lt IE 9]>
-      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
-      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-    <![endif]-->
     <script>
       window.$ = window.jQuery = require(__dirname + "/bower_components/jquery/dist/jquery.min.js");
+
+      var template = [
+        {
+          label: 'Squiffy',
+          submenu: [
+            {
+              label: 'About Squiffy',
+              selector: 'orderFrontStandardAboutPanel:'
+            },
+            {
+              type: 'separator'
+            },
+            {
+              label: 'Services',
+              submenu: []
+            },
+            {
+              type: 'separator'
+            },
+            {
+              label: 'Hide Squiffy',
+              accelerator: 'Command+H',
+              selector: 'hide:'
+            },
+            {
+              label: 'Hide Others',
+              accelerator: 'Command+Shift+H',
+              selector: 'hideOtherApplications:'
+            },
+            {
+              label: 'Show All',
+              selector: 'unhideAllApplications:'
+            },
+            {
+              type: 'separator'
+            },
+            {
+              label: 'Quit',
+              accelerator: 'Command+Q',
+              selector: 'terminate:'
+            },
+          ]
+        },
+        {
+          label: 'File',
+          submenu: [
+            {
+              label: 'New',
+              accelerator: 'Command+N'
+            },
+            {
+              label: 'Open...',
+              accelerator: 'Command+S'
+            },
+            {
+              label: 'Save',
+              accelerator: 'Command+S'
+            },
+            {
+              label: 'Save As...',
+              accelerator: 'Command+Shift+S'
+            },
+          ]
+        },
+        {
+          label: 'Edit',
+          submenu: [
+            {
+              label: 'Undo',
+              accelerator: 'Command+Z',
+              selector: 'undo:'
+            },
+            {
+              label: 'Redo',
+              accelerator: 'Shift+Command+Z',
+              selector: 'redo:'
+            },
+            {
+              type: 'separator'
+            },
+            {
+              label: 'Cut',
+              accelerator: 'Command+X',
+              selector: 'cut:'
+            },
+            {
+              label: 'Copy',
+              accelerator: 'Command+C',
+              selector: 'copy:'
+            },
+            {
+              label: 'Paste',
+              accelerator: 'Command+V',
+              selector: 'paste:'
+            },
+            {
+              label: 'Select All',
+              accelerator: 'Command+A',
+              selector: 'selectAll:'
+            },
+          ]
+        },
+        {
+          label: 'View',
+          submenu: [
+            {
+              label: 'Reload',
+              accelerator: 'Command+R',
+              click: function() { BrowserWindow.getFocusedWindow().reloadIgnoringCache(); }
+            },
+            {
+              label: 'Toggle DevTools',
+              accelerator: 'Alt+Command+I',
+              click: function() { BrowserWindow.getFocusedWindow().toggleDevTools(); }
+            },
+          ]
+        },
+        {
+          label: 'Window',
+          submenu: [
+            {
+              label: 'Minimize',
+              accelerator: 'Command+M',
+              selector: 'performMiniaturize:'
+            },
+            {
+              label: 'Close',
+              accelerator: 'Command+W',
+              selector: 'performClose:'
+            },
+            {
+              type: 'separator'
+            },
+            {
+              label: 'Bring All to Front',
+              selector: 'arrangeInFront:'
+            },
+          ]
+        },
+        {
+          label: 'Help',
+          submenu: [
+            {
+              label: 'Documentation'
+            }
+          ]
+        },
+      ];
+
+      var remote = require('remote');
+      var Menu = remote.require('menu');
+
+      menu = Menu.buildFromTemplate(template);
+
+      Menu.setApplicationMenu(menu);
+
     </script>
     <script src="bower_components/jquery-ui/jquery-ui.min.js"></script>
     <script src="bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
@@ -88,7 +238,7 @@
             },
             storageKey: 'squiffy',
             updateTitle: function (title) {
-              document.title = title + ' - Squiffy Editor Test';
+              document.title = title;
             },
           });
         };
