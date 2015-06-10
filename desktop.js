@@ -64,7 +64,12 @@ $(function () {
       },
       storageKey: 'squiffy',
       updateTitle: function (title) {
-        document.title = title;
+        if (process.platform === 'darwin') {
+          document.title = title;
+        }
+        else{
+          document.title = title + ' - Squiffy';
+        }
       },
     });
   };
