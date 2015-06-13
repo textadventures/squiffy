@@ -66,6 +66,11 @@ $(function () {
     return data; 
   }
 
+  var saveFile = function () {
+    fs.writeFileSync(filename, $('#squiffy-editor').squiffyEditor('save'));
+    $('#squiffy-editor').squiffyEditor('setInfo', 'Saved');
+  }
+
   window.menuClick.openFile = function () {
     var result = dialog.showOpenDialog({
       filters: [
@@ -84,17 +89,31 @@ $(function () {
     $('#squiffy-editor').squiffyEditor('load', data);
   };
 
+  window.menuClick.saveFile = function () {
+    if (!filename) {
+      window.menuClick.saveFileAs();
+      return;
+    }
+    saveFile();
+  };
+
+  window.menuClick.saveFileAs = function () {
+    var result = dialog.showSaveDialog({
+      filters: [
+        { name: 'Squiffy scripts', extensions: ['squiffy'] }
+      ]
+    });
+    if (!result) return;
+    setFilename(result);
+    saveFile();
+  };
+
   var init = function (data) {
     $('#squiffy-editor').squiffyEditor({
       data: data,
       compile: compile,
-      open: function () {
-        window.menuClick.openFile();
-      },
-      save: function (title) {
-        bootbox.alert('Save not implemented in demo');
-        $('#squiffy-editor').squiffyEditor('setInfo', 'Not saved');
-      },
+      open: window.menuClick.openFile,
+      save: window.menuClick.saveFile,
       autoSave: function () {},
       preview: function () {
         bootbox.alert('Preview not implemented in demo');

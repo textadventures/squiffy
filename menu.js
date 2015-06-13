@@ -7,6 +7,14 @@
     window.menuClick.openFile();
   };
 
+  var fileSave = function () {
+    window.menuClick.saveFile();
+  };
+
+  var fileSaveAs = function () {
+    window.menuClick.saveFileAs();
+  }
+
   var template;
 
   if (process.platform === 'darwin') {
@@ -66,11 +74,13 @@
           },
           {
             label: 'Save',
-            accelerator: 'Command+S'
+            accelerator: 'Command+S',
+            click: fileSave
           },
           {
             label: 'Save As...',
-            accelerator: 'Command+Shift+S'
+            accelerator: 'Command+Shift+S',
+            click: fileSaveAs
           },
         ]
       },
@@ -175,11 +185,13 @@
           },
           {
             label: '&Save',
-            accelerator: 'Ctrl+S'
+            accelerator: 'Ctrl+S',
+            click: fileSave
           },
           {
             label: 'Save &As...',
-            accelerator: 'Ctrl+Shift+S'
+            accelerator: 'Ctrl+Shift+S',
+            click: fileSaveAs
           },
           {
             type: 'separator'
