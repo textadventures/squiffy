@@ -25,7 +25,7 @@ http.createServer(function(request, response) {
 			try {
 				var result;
 				if (request.url.indexOf('/zip') === 0) {
-					result = compiler.generate(null, __dirname, {
+					result = compiler.generate(null, {
 						input: body,
 						write: false,
 						zip: true,
@@ -37,7 +37,7 @@ http.createServer(function(request, response) {
 					response.end(result, 'binary');
 				}
 				else {
-					result = compiler.getJs(body, __dirname);
+					result = compiler.getJs(body);
 					response.writeHead(200, {
 						'Content-Type': 'application/javascript',
 						'Access-Control-Allow-Origin': '*'

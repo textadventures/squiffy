@@ -50,7 +50,7 @@ var options = {
     write: true,
 };
 
-var result = compiler.generate(argv._[0], __dirname, options);
+var result = compiler.generate(argv._[0], options);
 
 if (result && options.serve) {
     var port = argv.p || 8282;

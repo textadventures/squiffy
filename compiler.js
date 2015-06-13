@@ -3,14 +3,14 @@
 (function () {
     'use strict';
 
-    exports.generate = function (inputFilename, sourcePath, options) {
+    exports.generate = function (inputFilename, options) {
         var compiler = new Compiler();
-        return compiler.generate(inputFilename, sourcePath, options);
+        return compiler.generate(inputFilename, __dirname, options);
     };
 
-    exports.getJs = function (input, sourcePath) {
+    exports.getJs = function (input) {
         var compiler = new Compiler();
-        return compiler.process(input, sourcePath);
+        return compiler.process(input, __dirname);
     };
 
     var _ = require('underscore');
