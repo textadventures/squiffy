@@ -1,13 +1,12 @@
 $(function () {
-  // TODO: Use this local compiler instead of web service
   var compiler = require('squiffy/compiler.js');
 
   var compile = function (input) {
-    var url = 'http://squiffy.textadventures.co.uk';
-
     if (input.zip) {
+      // TODO: Generate zip files using local compiler.js
+
+      var url = 'http://squiffy.textadventures.co.uk/zip';
       // Using XMLHttpRequest here as jQuery doesn't support blob downloads
-      url += '/zip';
       var xhr = new XMLHttpRequest();
       xhr.open('POST', url, true);
       xhr.responseType = 'blob';
@@ -25,13 +24,12 @@ $(function () {
       return;
     }
 
-    $.post(url, input.data, function (data) {
-      if (data.indexOf('Failed') === 0) {
-          input.fail(data);
-          return;
-      }
-      input.success(data);
-    });
+    var js = compiler.getJs(input.data);
+    if (js.indexOf('Failed') === 0) {
+        input.fail(js);
+        return;
+    }
+    input.success(js);
   };
 
   $('#inputfile').on('change', function () {
