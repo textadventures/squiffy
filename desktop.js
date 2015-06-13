@@ -41,7 +41,9 @@ $(function () {
     input.success(js);
   };
 
-  var updateTitle = function () {
+  var setFilename = function (newFilename, noStore) {
+    filename = newFilename;
+    if (!noStore) localStorage['filename'] = filename;
     if (!filename) {
       document.title = 'New file';
     }
@@ -50,6 +52,20 @@ $(function () {
     }
   };
 
+  setFilename(null, true);
+
+  var loadFile = function (file) {
+    var data;
+    try {
+      data = fs.readFileSync(file).toString();
+    }
+    catch (e) {
+      return null;
+    }
+    setFilename(file);
+    return data; 
+  }
+
   window.menuClick.openFile = function () {
     var result = dialog.showOpenDialog({
       filters: [
@@ -57,9 +73,14 @@ $(function () {
       ]
     });
     if (!result) return;
-    filename = result[0];
-    var data = fs.readFileSync(filename).toString();
-    updateTitle();
+    var data = loadFile(result[0]);
+    if (data === null) {
+      dialog.showMessageBox({
+        type: 'warning',
+        message: 'Failed to load file',
+        buttons: ['OK']
+      });
+    }
     $('#squiffy-editor').squiffyEditor('load', data);
   };
 
@@ -74,25 +95,30 @@ $(function () {
         bootbox.alert('Save not implemented in demo');
         $('#squiffy-editor').squiffyEditor('setInfo', 'Not saved');
       },
-      autoSave: function (title) {
-        console.log('Auto save');
-      },
+      autoSave: function () {},
       preview: function () {
         bootbox.alert('Preview not implemented in demo');
       },
       publish: function () {
         bootbox.alert('Publish not implemented in demo');
       },
-      storageKey: 'squiffy',
       updateTitle: function () {},
     });
   };
 
-  var saved = localStorage['squiffy'];
-  if (saved) {
-    init(localStorage['squiffy']);
+  var previousFilename = localStorage['filename'];
+  if (previousFilename) {
+    var data = loadFile(previousFilename);
+    if (data) {
+      init(data);
+    }
+    else {
+      previousFilename = null;
+      localStorage['filename'] = null;
+    }
   }
-  else {
+  
+  if (!previousFilename) {
     $.get('example.squiffy', init);
   }
 
