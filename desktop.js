@@ -49,6 +49,7 @@ $(function () {
     }
     else {
       document.title = path.basename(filename);
+      remote.getCurrentWindow().setRepresentedFilename(filename);
     }
     if (process.platform != 'darwin') {
       document.title = document.title + ' - Squiffy';
@@ -72,6 +73,7 @@ $(function () {
   var saveFile = function () {
     fs.writeFileSync(filename, $('#squiffy-editor').squiffyEditor('save'));
     $('#squiffy-editor').squiffyEditor('setInfo', 'Saved');
+    remote.getCurrentWindow().setDocumentEdited(false);
   }
 
   window.menuClick.openFile = function () {
@@ -125,6 +127,9 @@ $(function () {
         bootbox.alert('Publish not implemented in demo');
       },
       updateTitle: function () {},
+      setDirty: function () {
+        remote.getCurrentWindow().setDocumentEdited(true);
+      }
     });
   };
 

@@ -112,6 +112,7 @@
             if (autoSaveTimeout) clearTimeout(autoSaveTimeout);
             autoSaveTimeout = setTimeout(autoSave, 5000);
         }
+        if (settings.setDirty) settings.setDirty();
     };
 
     var localSave = function () {
