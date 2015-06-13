@@ -1,6 +1,8 @@
 $(function () {
   var compiler = require('squiffy/compiler.js');
   var shell = require('shell');
+  var path = require('path');
+  var filename = null;
 
   var compile = function (input) {
     if (input.zip) {
@@ -33,10 +35,21 @@ $(function () {
     input.success(js);
   };
 
+  var updateTitle = function () {
+    if (!filename) {
+      document.title = 'New file';
+    }
+    else{
+      document.title = path.basename(filename);
+    }
+  };
+
   $('#inputfile').on('change', function () {
+      filename = this.files[0].path;
       var objectUrl = window.URL.createObjectURL(this.files[0]);
       if (!objectUrl) return;
       $.get(objectUrl, function (data) {
+          updateTitle();
           $('#squiffy-editor').squiffyEditor('load', data);
       });
   });
@@ -62,14 +75,7 @@ $(function () {
         bootbox.alert('Publish not implemented in demo');
       },
       storageKey: 'squiffy',
-      updateTitle: function (title) {
-        if (process.platform === 'darwin') {
-          document.title = title;
-        }
-        else{
-          document.title = title + ' - Squiffy';
-        }
-      },
+      updateTitle: function () {},
     });
   };
 
