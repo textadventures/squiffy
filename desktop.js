@@ -81,7 +81,7 @@ $(function () {
     $.get('example.squiffy', init);
   }
 
-  $('#squiffy-editor').on('click', 'a.external-link', function (e) {
+  $('#squiffy-editor').on('click', 'a.external-link, #output-container a[href]', function (e) {
     shell.openExternal($(this).attr('href'));
     e.preventDefault();
   });
