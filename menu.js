@@ -3,6 +3,10 @@
   var app = remote.require('app');
   window.menuClick = window.menuClick || {};
   
+  var fileNew = function () {
+    window.menuClick.newFile();
+  };
+
   var fileOpen = function () {
     window.menuClick.openFile();
   };
@@ -65,7 +69,8 @@
         submenu: [
           {
             label: 'New',
-            accelerator: 'Command+N'          
+            accelerator: 'Command+N',
+            click: fileNew
           },
           {
             label: 'Open...',
@@ -176,7 +181,8 @@
         submenu: [
           {
             label: '&New',
-            accelerator: 'Ctrl+N'
+            accelerator: 'Ctrl+N',
+            click: fileNew
           },
           {
             label: '&Open...',

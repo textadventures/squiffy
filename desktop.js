@@ -56,6 +56,10 @@ $(function () {
     }
   };
 
+  var setDirty = function (isDirty) {
+    remote.getCurrentWindow().setDocumentEdited(isDirty);
+  };
+
   setFilename(null, true);
 
   var loadFile = function (file) {
@@ -73,8 +77,14 @@ $(function () {
   var saveFile = function () {
     fs.writeFileSync(filename, $('#squiffy-editor').squiffyEditor('save'));
     $('#squiffy-editor').squiffyEditor('setInfo', 'Saved');
-    remote.getCurrentWindow().setDocumentEdited(false);
+    setDirty(false);
   }
+
+  window.menuClick.newFile = function () {
+    $('#squiffy-editor').squiffyEditor('load', '');
+    setFilename(null);
+    setDirty(false);
+  };
 
   window.menuClick.openFile = function () {
     var result = dialog.showOpenDialog({
@@ -91,6 +101,7 @@ $(function () {
         buttons: ['OK']
       });
     }
+    setDirty(false);
     $('#squiffy-editor').squiffyEditor('load', data);
   };
 
@@ -128,7 +139,7 @@ $(function () {
       },
       updateTitle: function () {},
       setDirty: function () {
-        remote.getCurrentWindow().setDocumentEdited(true);
+        setDirty(true);
       }
     });
   };
