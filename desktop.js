@@ -62,12 +62,13 @@ $(function () {
     dirty = isDirty;
   };
 
-  window.onbeforeunload = function (e) {
+  var checkForUnsavedChanges = function () {
     if (!dirty) return true;
+
     var result = dialog.showMessageBox({
       type: 'warning',
       buttons: ['Yes', 'No', 'Cancel'],
-      message: 'Do you wish to save your changes before closing?'
+      message: 'Do you wish to save your changes to ' + (filename ? path.basename(filename) : 'this file') + '?'
     });
 
     if (result === 0) {
@@ -76,6 +77,10 @@ $(function () {
     }
 
     return (result !== 2);
+  };
+
+  window.onbeforeunload = function (e) {
+    return checkForUnsavedChanges();
   }
 
   setFilename(null, true);
@@ -99,12 +104,14 @@ $(function () {
   }
 
   window.menuClick.newFile = function () {
+    if (!checkForUnsavedChanges()) return;
     $('#squiffy-editor').squiffyEditor('load', '');
     setFilename(null);
     setDirty(false);
   };
 
   window.menuClick.openFile = function () {
+    if (!checkForUnsavedChanges()) return;
     var result = dialog.showOpenDialog({
       filters: [
         { name: 'Squiffy scripts', extensions: ['squiffy'] }
