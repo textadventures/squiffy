@@ -9,6 +9,7 @@ $(function () {
   window.menuClick = window.menuClick || {};
 
   var filename = null;
+  var dirty = false;
 
   var compile = function (input) {
     if (input.zip) {
@@ -58,7 +59,24 @@ $(function () {
 
   var setDirty = function (isDirty) {
     remote.getCurrentWindow().setDocumentEdited(isDirty);
+    dirty = isDirty;
   };
+
+  window.onbeforeunload = function (e) {
+    if (!dirty) return true;
+    var result = dialog.showMessageBox({
+      type: 'warning',
+      buttons: ['Yes', 'No', 'Cancel'],
+      message: 'Do you wish to save your changes before closing?'
+    });
+
+    if (result === 0) {
+      window.menuClick.saveFile();
+      return !dirty;
+    }
+
+    return (result !== 2);
+  }
 
   setFilename(null, true);
 
