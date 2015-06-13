@@ -2,6 +2,12 @@ $(function () {
   var compiler = require('squiffy/compiler.js');
   var shell = require('shell');
   var path = require('path');
+  var remote = require('remote');
+  var dialog = remote.require('dialog');
+  var fs = require('fs');
+
+  window.menuClick = window.menuClick || {};
+
   var filename = null;
 
   var compile = function (input) {
@@ -44,22 +50,25 @@ $(function () {
     }
   };
 
-  $('#inputfile').on('change', function () {
-      filename = this.files[0].path;
-      var objectUrl = window.URL.createObjectURL(this.files[0]);
-      if (!objectUrl) return;
-      $.get(objectUrl, function (data) {
-          updateTitle();
-          $('#squiffy-editor').squiffyEditor('load', data);
-      });
-  });
+  window.menuClick.openFile = function () {
+    var result = dialog.showOpenDialog({
+      filters: [
+        { name: 'Squiffy scripts', extensions: ['squiffy'] }
+      ]
+    });
+    if (!result) return;
+    filename = result[0];
+    var data = fs.readFileSync(filename).toString();
+    updateTitle();
+    $('#squiffy-editor').squiffyEditor('load', data);
+  };
 
   var init = function (data) {
     $('#squiffy-editor').squiffyEditor({
       data: data,
       compile: compile,
       open: function () {
-        $('#inputfile').click();
+        window.menuClick.openFile();
       },
       save: function (title) {
         bootbox.alert('Save not implemented in demo');
