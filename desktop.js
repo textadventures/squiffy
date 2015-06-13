@@ -47,8 +47,11 @@ $(function () {
     if (!filename) {
       document.title = 'New file';
     }
-    else{
+    else {
       document.title = path.basename(filename);
+    }
+    if (process.platform != 'darwin') {
+      document.title = document.title + ' - Squiffy';
     }
   };
 
