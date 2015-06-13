@@ -1,5 +1,6 @@
 $(function () {
   var compiler = require('squiffy/compiler.js');
+  var shell = require('shell');
 
   var compile = function (input) {
     if (input.zip) {
@@ -79,4 +80,9 @@ $(function () {
   else {
     $.get('example.squiffy', init);
   }
+
+  $('#squiffy-editor').on('click', 'a.external-link', function (e) {
+    shell.openExternal($(this).attr('href'));
+    e.preventDefault();
+  });
 });

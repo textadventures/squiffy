@@ -439,7 +439,7 @@
             <div class="tab-content">\
                 <div role="tabpanel" class="tab-pane active" id="tab-help">\
                     You can format your text using HTML and\
-                    <a href="http://daringfireball.net/projects/markdown/syntax" target="_blank">\
+                    <a href="http://daringfireball.net/projects/markdown/syntax" class="external-link" target="_blank">\
                     Markdown</a>.<br/><br/>\
                     To create a new section:\
                     <pre>[[new section]]:</pre>\
@@ -449,7 +449,7 @@
                     <pre>[new passage]:</pre>\
                     To link to a passage:\
                     <pre>Link [like this] or [use different link text](new passage)</pre>\
-                    <a href="http://docs.textadventures.co.uk/squiffy/" target="_blank">Full documentation</a>\
+                    <a href="http://docs.textadventures.co.uk/squiffy/" class="external-link" target="_blank">Full documentation</a>\
                 </div>\
                 <div role="tabpanel" class="tab-pane" id="tab-output">\
                     <div id="output-container">\
