@@ -19,6 +19,10 @@
     window.menuClick.saveFileAs();
   }
 
+  var documentation = function () {
+    window.menuClick.documentation();
+  };
+
   var template;
 
   if (process.platform === 'darwin') {
@@ -93,19 +97,6 @@
         label: 'Edit',
         submenu: [
           {
-            label: 'Undo',
-            accelerator: 'Command+Z',
-            selector: 'undo:'
-          },
-          {
-            label: 'Redo',
-            accelerator: 'Shift+Command+Z',
-            selector: 'redo:'
-          },
-          {
-            type: 'separator'
-          },
-          {
             label: 'Cut',
             accelerator: 'Command+X',
             selector: 'cut:'
@@ -168,7 +159,8 @@
         label: 'Help',
         submenu: [
           {
-            label: 'Documentation'
+            label: 'Documentation',
+            click: documentation
           }
         ]
       },
@@ -212,17 +204,6 @@
         label: '&Edit',
         submenu: [
           {
-            label: '&Undo',
-            accelerator: 'Ctrl+Z',
-          },
-          {
-            label: '&Redo',
-            accelerator: 'Ctrl+Y',
-          },
-          {
-            type: 'separator'
-          },
-          {
             label: 'Cu&t',
             accelerator: 'Ctrl+X',
           },
@@ -259,7 +240,8 @@
         label: '&Help',
         submenu: [
           {
-            label: '&Documentation'
+            label: '&Documentation',
+            click: documentation
           }
         ]
       },

@@ -287,6 +287,10 @@
             var element = this;
             settings = options;
 
+            if (options.desktop) {
+                editorHtml = editorHtml.replace('glyphicon-cloud-upload', 'glyphicon-floppy-disk');
+            }
+
             element.html(editorHtml);
             layout = element.layout({
                 applyDefaultStyles: true,
@@ -404,7 +408,7 @@
 
     var editorHtml = 
         '<div class="ui-layout-north">\
-            <button id="open" class="btn btn-primary" style="display: none"><span class="glyphicon glyphicon-open-file"></span> Open</button>\
+            <button id="open" class="btn btn-primary" style="display: none"><span class="glyphicon glyphicon-folder-open"></span> Open</button>\
             <button id="save" class="btn btn-primary" style="display: none"><span class="glyphicon glyphicon-cloud-upload"></span> Save</button>\
             <button id="run" class="btn btn-success"><span class="glyphicon glyphicon-play"></span> Run</button>\
             <button id="restart" class="btn btn-success" style="display: none"><span class="glyphicon glyphicon-refresh"></span> Restart</button>\
