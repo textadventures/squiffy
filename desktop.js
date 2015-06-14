@@ -12,34 +12,34 @@ $(function () {
   var dirty = false;
 
   var compile = function (input) {
-    if (input.zip) {
-      // TODO: Generate zip files using local compiler.js
-
-      var url = 'http://squiffy.textadventures.co.uk/zip';
-      // Using XMLHttpRequest here as jQuery doesn't support blob downloads
-      var xhr = new XMLHttpRequest();
-      xhr.open('POST', url, true);
-      xhr.responseType = 'blob';
-       
-      xhr.onload = function(e) {
-        if (this.status == 200) {
-          input.success(this.response);
-        }
-        else {
-          input.fail(this.response);
-        }
-      };
-       
-      xhr.send(input.data);
-      return;
-    }
-
     var js = compiler.getJs(input.data);
     if (js.indexOf('Failed') === 0) {
         input.fail(js);
         return;
     }
     input.success(js);
+  };
+
+  var build = function () {
+    window.menuClick.saveFile();
+    if (dirty) return;
+    
+    var options = {
+      write: true,
+    };
+
+    var result = compiler.generate(filename, options);
+
+    if (result) {
+      shell.openItem(path.join(result, 'index.html'));
+    }
+    else {
+      dialog.showMessageBox({
+        type: 'warning',
+        message: 'Failed to build script',
+        buttons: ['OK']
+      });
+    }
   };
 
   var setFilename = function (newFilename, noStore) {
@@ -156,15 +156,12 @@ $(function () {
       open: window.menuClick.openFile,
       save: window.menuClick.saveFile,
       autoSave: function () {},
-      preview: function () {
-        bootbox.alert('Preview not implemented in demo');
-      },
-      publish: function () {
-        bootbox.alert('Publish not implemented in demo');
-      },
       updateTitle: function () {},
       setDirty: function () {
         setDirty(true);
+      },
+      build: function () {
+        build();
       }
     });
   };

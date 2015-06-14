@@ -346,6 +346,15 @@
                 $('#publish').click(options.publish);
             }
 
+            if (options.download) {
+                $('#download').show();
+            }
+
+            if (options.build) {
+                $('#build').show();
+                $('#build').click(options.build);
+            }
+
             $('#run').click(run);
             $('#restart').click(restart);
             $('#download-squiffy-script').click(downloadSquiffyScript);
@@ -402,7 +411,7 @@
             <span id="info"></span>\
             <div style="float: right">\
                 <div class="btn-group">\
-                        <button class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="false">\
+                        <button id="download" class="btn btn-primary dropdown-toggle" style="display: none" data-toggle="dropdown" aria-expanded="false">\
                             <span class="glyphicon glyphicon-cloud-download"></span>\
                             Download\
                             <span class="caret"></span>\
@@ -415,6 +424,7 @@
                 </div>\
                 <button id="preview" class="btn btn-primary" style="display: none"><span class="glyphicon glyphicon-eye-open"></span> Preview</button>\
                 <button id="publish" class="btn btn-primary" style="display: none"><span class="glyphicon glyphicon-circle-arrow-up"></span> Publish</button>\
+                <button id="build" class="btn btn-primary" style="display: none"><span class="glyphicon glyphicon-flash"></span> Build</button>\
             </div>\
         </div>\
         <div class="ui-layout-center" id="inner-layout">\
