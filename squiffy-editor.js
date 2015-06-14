@@ -380,6 +380,7 @@
         setInfo: function (text) {
             setInfo(text);
         },
+        run: run
     };
 
     $.fn.squiffyEditor = function (methodOrOptions) {

@@ -149,6 +149,18 @@ $(function () {
     saveFile();
   };
 
+  window.menuClick.run = function () {
+    $('#squiffy-editor').squiffyEditor('run');
+  };
+
+  window.menuClick.build = function () {
+    build();
+  };
+
+  window.menuClick.openFolder = function () {
+    shell.showItemInFolder(filename);
+  };
+
   window.menuClick.documentation = function() {
     shell.openExternal('http://docs.textadventures.co.uk/squiffy/');
   };

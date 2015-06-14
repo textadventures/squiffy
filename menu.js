@@ -23,6 +23,18 @@
     window.menuClick.documentation();
   };
 
+  var buildRun = function () {
+    window.menuClick.run();
+  };
+
+  var buildBuild = function () {
+    window.menuClick.build();
+  };
+
+  var buildOpenFolder = function () {
+    window.menuClick.openFolder();
+  };
+
   var template;
 
   if (process.platform === 'darwin') {
@@ -123,7 +135,7 @@
         submenu: [
           {
             label: 'Reload',
-            accelerator: 'Command+R',
+            accelerator: 'Alt+Command+R',
             click: function() { remote.getCurrentWindow().reloadIgnoringCache(); }
           },
           {
@@ -131,6 +143,25 @@
             accelerator: 'Alt+Command+I',
             click: function() { remote.getCurrentWindow().toggleDevTools(); }
           },
+        ]
+      },
+      {
+        label: 'Build',
+        submenu: [
+          {
+            label: 'Run',
+            accelerator: 'Command+R',
+            click: buildRun
+          },
+          {
+            label: 'Build',
+            accelerator: 'Command+B',
+            click: buildBuild
+          },
+          {
+            label: 'Open Folder',
+            click: buildOpenFolder
+          }
         ]
       },
       {
@@ -226,7 +257,7 @@
         submenu: [
           {
             label: '&Reload',
-            accelerator: 'Ctrl+R',
+            accelerator: 'Ctrl+Shift+R',
             click: function() { remote.getCurrentWindow().reloadIgnoringCache(); }
           },
           {
@@ -234,6 +265,25 @@
             accelerator: 'F12',
             click: function() { remote.getCurrentWindow().toggleDevTools(); }
           },
+        ]
+      },
+      {
+        label: '&Build',
+        submenu: [
+          {
+            label: '&Run',
+            accelerator: 'Ctrl+R',
+            click: buildRun
+          },
+          {
+            label: '&Build',
+            accelerator: 'Ctrl+B',
+            click: buildBuild
+          },
+          {
+            label: '&Open Folder',
+            click: buildOpenFolder
+          }
         ]
       },
       {
