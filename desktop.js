@@ -85,7 +85,7 @@ $(function () {
 
   setFilename(null, true);
 
-  var loadFile = function (file) {
+  var loadFileData = function (file) {
     var data;
     try {
       data = fs.readFileSync(file).toString();
@@ -118,7 +118,11 @@ $(function () {
       ]
     });
     if (!result) return;
-    var data = loadFile(result[0]);
+    window.loadFile(result[0]);
+  };
+
+  window.loadFile = function (file) {
+    var data = loadFileData(file);
     if (data === null) {
       dialog.showMessageBox({
         type: 'warning',
@@ -190,7 +194,7 @@ $(function () {
   }
 
   if (openFile) {
-    var data = loadFile(openFile);
+    var data = loadFileData(openFile);
     if (data) {
       init(data);
     }

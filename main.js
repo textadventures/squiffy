@@ -9,6 +9,9 @@ var openFile;
 app.on('open-file', function (event, path) {
     event.preventDefault();
     openFile = path;
+    if (mainWindow) {
+      mainWindow.webContents.executeJavaScript('loadFile(' + JSON.stringify(path) + ')');
+    }
 });
 
 // Keep a global reference of the window object, if you don't, the window will
