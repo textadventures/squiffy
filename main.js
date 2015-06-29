@@ -4,6 +4,13 @@ var BrowserWindow = require('browser-window');  // Module to create native brows
 // Report crashes to our server.
 require('crash-reporter').start();
 
+var openFile;
+
+app.on('open-file', function (event, path) {
+    event.preventDefault();
+    openFile = path;
+});
+
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the javascript object is GCed.
 var mainWindow = null;
@@ -11,6 +18,8 @@ var mainWindow = null;
 var init = function() {
   // Create the browser window.
   mainWindow = new BrowserWindow({width: 1200, height: 600});
+
+  mainWindow.openFile = openFile;
 
   // and load the index.html of the app.
   mainWindow.loadUrl('file://' + __dirname + '/index.html');

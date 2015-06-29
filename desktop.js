@@ -183,19 +183,23 @@ $(function () {
     });
   };
 
-  var previousFilename = localStorage['filename'];
-  if (previousFilename) {
-    var data = loadFile(previousFilename);
+  var openFile = remote.getCurrentWindow().openFile;
+
+  if (!openFile) {
+    openFile = localStorage['filename'];
+  }
+
+  if (openFile) {
+    var data = loadFile(openFile);
     if (data) {
       init(data);
     }
     else {
-      previousFilename = null;
-      localStorage['filename'] = null;
+      openFile = null;
     }
   }
   
-  if (!previousFilename) {
+  if (!openFile) {
     $.get('example.squiffy', init);
   }
 
