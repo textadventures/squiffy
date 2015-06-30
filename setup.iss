@@ -20,7 +20,7 @@ SourceDir=Squiffy-win32
 AllowNoIcons=yes
 SolidCompression=yes
 PrivilegesRequired=admin
-ChangesAssociations=no
+ChangesAssociations=yes
 MinVersion=5.1sp3
 UsePreviousSetupType=no
 
@@ -36,3 +36,10 @@ Name: "{commondesktop}\Squiffy"; Filename: "{app}\Squiffy.exe"; Tasks: desktopic
 
 [Run]
 Filename: "{app}\Squiffy.exe"; Description: "Launch Squiffy"; Flags: nowait postinstall skipifsilent
+
+[Registry]
+; File association: .squiffy
+Root: HKCR; Subkey: ".squiffy"; ValueType: string; ValueName: ""; ValueData: "Squiffy"; Flags: uninsdeletevalue
+Root: HKCR; Subkey: "Squiffy"; ValueType: string; ValueName: ""; ValueData: "Squiffy Script"; Flags: uninsdeletekey
+Root: HKCR; Subkey: "Squiffy\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\Squiffy.exe,0"
+Root: HKCR; Subkey: "Squiffy\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\Squiffy.exe"" ""%1"""

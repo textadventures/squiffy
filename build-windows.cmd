@@ -1,1 +1,1 @@
-electron-packager .\ Squiffy --platform=win32 --arch=ia32 --version=0.27.3 --app-bundle-id=uk.co.textadventures.squiffy --icon=squiffy.ico --app-version=3.9.0
+electron-packager .\ Squiffy --platform=win32 --arch=ia32 --version=0.27.3 --app-bundle-id=uk.co.textadventures.squiffy --icon=squiffy.ico --app-version=3.9.0 --ignore=Output
