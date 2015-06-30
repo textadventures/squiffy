@@ -4,7 +4,13 @@ var BrowserWindow = require('browser-window');  // Module to create native brows
 // Report crashes to our server.
 require('crash-reporter').start();
 
+var argv = process.argv;
+
 var openFile;
+
+if (process.platform !== 'darwin') {
+  openFile = process.argv[1];
+}
 
 app.on('open-file', function (event, path) {
     event.preventDefault();
