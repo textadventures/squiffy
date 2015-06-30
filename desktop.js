@@ -122,6 +122,7 @@ $(function () {
   };
 
   window.loadFile = function (file) {
+    if (!checkForUnsavedChanges()) return;
     var data = loadFileData(file);
     if (data === null) {
       dialog.showMessageBox({
