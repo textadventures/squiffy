@@ -8,6 +8,7 @@
 
     <link href="bower_components/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="editor.css" rel="stylesheet">
+    <link href="desktop.css" rel="stylesheet">
 
     <script>
       window.$ = window.jQuery = require(__dirname + "/bower_components/jquery/dist/jquery.min.js");
@@ -26,4 +27,29 @@
     <div id="squiffy-editor">
     </div>
   </body>
+
+  <div class="modal fade" id="about" tabindex="-1" role="dialog" aria-labelledby="aboutLabel">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <h4 class="modal-title" id="aboutLabel">About Squiffy</h4>
+        </div>
+        <div class="modal-body">
+          <div class="media">
+            <div class="media-left">
+              <img id="squiffy-logo" class="media-object" src="squiffy.png" alt="Squiffy logo" />
+            </div>
+            <div class="media-body">
+              <h4 class="media-heading">Squiffy 4.0 Beta</h4>
+              <p>Copyright &copy; 2015 Alex Warren</p>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </html>

@@ -170,6 +170,10 @@ $(function () {
     shell.openExternal('http://docs.textadventures.co.uk/squiffy/');
   };
 
+  window.menuClick.about = function () {
+    $('#about').modal();
+  };
+
   var init = function (data) {
     $('#squiffy-editor').squiffyEditor({
       data: data,

@@ -35,6 +35,10 @@
     window.menuClick.openFolder();
   };
 
+  var about = function () {
+    window.menuClick.about();
+  };
+
   var template;
 
   if (process.platform === 'darwin') {
@@ -44,7 +48,7 @@
         submenu: [
           {
             label: 'About Squiffy',
-            selector: 'orderFrontStandardAboutPanel:'
+            click: about
           },
           {
             type: 'separator'
@@ -292,6 +296,13 @@
           {
             label: '&Documentation',
             click: documentation
+          },
+          {
+            type: 'separator'
+          },
+          {
+            label: '&About Squiffy',
+            click: about
           }
         ]
       },
