@@ -220,4 +220,19 @@ $(function () {
     shell.openExternal($(this).attr('href'));
     e.preventDefault();
   });
+
+  $('#update-check').click(function () {
+    $('#about-update').text('Checking for updates...');
+    $.get('http://textadventures.co.uk/squiffy/versioncheck/?version=' + editorVersion, function (result) {
+      if (result.Latest === editorVersion) {
+        $('#about-update').text('You are running the latest version of Squiffy.');
+      }
+      else {
+        $('#about-update').html('<b><a id="update-link" href="#">New version! Update to ' + result.Name + '</a></b>');
+        $('#update-link').click(function () {
+          shell.openExternal(result.Url);
+        });
+      }
+    });
+  });
 });
