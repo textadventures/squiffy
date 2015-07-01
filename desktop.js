@@ -6,6 +6,9 @@ $(function () {
   var dialog = remote.require('dialog');
   var fs = require('fs');
 
+  var packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json')).toString());
+  var editorVersion = packageJson.version;
+
   window.menuClick = window.menuClick || {};
 
   var filename = null;
@@ -171,6 +174,7 @@ $(function () {
   };
 
   window.menuClick.about = function () {
+    $('#about-build').text(editorVersion);
     $('#about').modal();
   };
 
