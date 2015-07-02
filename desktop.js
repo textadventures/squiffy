@@ -47,7 +47,7 @@ $(function () {
 
   var setFilename = function (newFilename, noStore) {
     filename = newFilename;
-    if (!noStore) localStorage['filename'] = filename;
+    if (!noStore) localStorage['squiffy-filename'] = filename;
     if (!filename) {
       document.title = 'New file';
     }
@@ -199,7 +199,7 @@ $(function () {
   var openFile = remote.getCurrentWindow().openFile;
 
   if (!openFile) {
-    openFile = localStorage['filename'];
+    openFile = localStorage['squiffy-filename'];
   }
 
   if (openFile) {
