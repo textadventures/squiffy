@@ -1,4 +1,3 @@
-rm -r Squiffy.app
 rm -r build
 
 mkdir -p build/bower_components/bootstrap
@@ -29,7 +28,3 @@ cp *.js build
 cp -r node_modules build
 cp package.json build
 cp squiffy.png build
-
-electron-packager ./build Squiffy --platform=darwin --arch=x64 --version=0.27.3 --app-bundle-id=uk.co.textadventures.squiffy --helper-bundle-id=uk.co.textadventures.squiffy.helper --icon=squiffy.icns --app-version=3.9.0
-cp file\ association\ -\ Info.plist Squiffy.app/Contents/Info.plist
-/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister -lint -f Squiffy.app
