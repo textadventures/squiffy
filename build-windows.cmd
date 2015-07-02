@@ -22,6 +22,7 @@ copy bower_components\bootbox\bootbox.js build\bower_components\bootbox
 
 copy desktop.* build
 copy editor.css build
+copy example.squiffy build
 copy index.html build
 copy *.js build
 md build\node_modules
