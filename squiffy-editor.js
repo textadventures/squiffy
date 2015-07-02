@@ -35,7 +35,14 @@
                     return;
                 }
 
-                eval(data);
+                try {
+                    eval(data);
+                }
+                catch (e) {
+                    $('#output').html(e);
+                    return;
+                }
+                
                 $('#output').squiffy({
                     scroll: 'element',
                     persist: false,
