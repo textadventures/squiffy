@@ -23,6 +23,7 @@ cp bower_components/bootbox/bootbox.js build/bower_components/bootbox
 
 cp desktop.* build
 cp editor.css build
+cp example.squiffy build
 cp index.html build
 cp *.js build
 cp -r node_modules build
