@@ -313,6 +313,10 @@
             });
             
             editor = ace.edit('editor');
+            
+            // get rid of an annoying warning
+            editor.$blockScrolling = Infinity;
+            
             editor.setTheme('ace/theme/eclipse');
             editor.getSession().setMode('ace/mode/markdown');
             editor.getSession().setUseWrapMode(true);
