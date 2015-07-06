@@ -329,7 +329,6 @@
     ];
   }
 
-  var remote = require('remote');
   var Menu = remote.require('menu');
 
   menu = Menu.buildFromTemplate(template);

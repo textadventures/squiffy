@@ -85,7 +85,7 @@ $(function () {
 
   window.onbeforeunload = function (e) {
     return checkForUnsavedChanges();
-  }
+  };
 
   setFilename(null, true);
 
@@ -99,13 +99,13 @@ $(function () {
     }
     setFilename(file);
     return data; 
-  }
+  };
 
   var saveFile = function () {
     fs.writeFileSync(filename, $('#squiffy-editor').squiffyEditor('save'));
     $('#squiffy-editor').squiffyEditor('setInfo', 'Saved');
     setDirty(false);
-  }
+  };
 
   window.menuClick.newFile = function () {
     if (!checkForUnsavedChanges()) return;
