@@ -43,6 +43,14 @@
     window.menuClick.selectAll();
   };
 
+  var editFind = function () {
+    window.menuClick.find();
+  };
+
+  var editReplace = function () {
+    window.menuClick.replace();
+  };
+
   var documentation = function () {
     window.menuClick.documentation();
   };
@@ -169,6 +177,19 @@
             accelerator: 'Command+A',
             click: editSelectAll
           },
+          {
+            type: 'separator'
+          },
+          {
+            label: 'Find',
+            accelerator: 'Command+F',
+            click: editFind
+          },
+          {
+            label: 'Replace',
+            accelerator: 'Alt+Command+F',
+            click: editReplace
+          }
         ]
       },
       {
@@ -308,6 +329,19 @@
             accelerator: 'Ctrl+A',
             click: editSelectAll
           },
+          {
+            type: 'separator'
+          },
+          {
+            label: '&Find',
+            accelerator: 'Ctrl+F',
+            click: editFind
+          },
+          {
+            label: '&Replace',
+            accelerator: 'Ctrl+H',
+            click: editReplace
+          }
         ]
       },
       {

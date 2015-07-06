@@ -411,6 +411,12 @@
         },
         paste: function (text) {
             editor.session.replace(editor.selection.getRange(), text);
+        },
+        find: function () {
+            editor.execCommand('find');
+        },
+        replace: function () {
+            editor.execCommand('replace');
         }
     };
 

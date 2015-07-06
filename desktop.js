@@ -159,11 +159,11 @@ $(function () {
   };
 
   window.menuClick.undo = function () {
-    $('#squiffy-editor').squiffyEditor('undo')
+    $('#squiffy-editor').squiffyEditor('undo');
   };
 
   window.menuClick.redo = function () {
-    $('#squiffy-editor').squiffyEditor('redo')
+    $('#squiffy-editor').squiffyEditor('redo');
   };  
 
   window.menuClick.cut = function () {
@@ -184,6 +184,14 @@ $(function () {
 
   window.menuClick.run = function () {
     $('#squiffy-editor').squiffyEditor('run');
+  };
+
+  window.menuClick.find = function () {
+    $('#squiffy-editor').squiffyEditor('find');
+  };
+
+  window.menuClick.replace = function () {
+    $('#squiffy-editor').squiffyEditor('replace');
   };
 
   window.menuClick.build = function () {
