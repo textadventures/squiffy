@@ -19,6 +19,14 @@
     window.menuClick.saveFileAs();
   };
 
+  var editUndo = function () {
+    window.menuClick.undo();
+  };
+
+  var editRedo = function () {
+    window.menuClick.redo();
+  };
+
   var editCut = function () {
     window.menuClick.cut();
   };
@@ -128,6 +136,19 @@
       {
         label: 'Edit',
         submenu: [
+          {
+            label: 'Undo',
+            accelerator: 'Command+Z',
+            click: editUndo
+          },
+          {
+            label: 'Redo',
+            accelerator: 'Command+Y',
+            click: editRedo
+          },
+          {
+            type: 'separator'
+          },
           {
             label: 'Cut',
             accelerator: 'Command+X',
@@ -254,6 +275,19 @@
       {
         label: '&Edit',
         submenu: [
+          {
+            label: '&Undo',
+            accelerator: 'Ctrl+Z',
+            click: editUndo
+          },
+          {
+            label: '&Redo',
+            accelerator: 'Ctrl+Y',
+            click: editRedo
+          },
+          {
+            type: 'separator'
+          },
           {
             label: 'Cu&t',
             accelerator: 'Ctrl+X',

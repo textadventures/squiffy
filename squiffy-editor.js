@@ -395,6 +395,12 @@
         selectAll: function () {
             editor.selection.selectAll();
         },
+        undo: function () {
+            editor.undo();
+        },
+        redo: function () {
+            editor.redo();
+        },
         cut: function () {
             var text = editor.getSelectedText();
             editor.session.replace(editor.selection.getRange(), '');

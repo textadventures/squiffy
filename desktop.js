@@ -158,6 +158,14 @@ $(function () {
     saveFile();
   };
 
+  window.menuClick.undo = function () {
+    $('#squiffy-editor').squiffyEditor('undo')
+  };
+
+  window.menuClick.redo = function () {
+    $('#squiffy-editor').squiffyEditor('redo')
+  };  
+
   window.menuClick.cut = function () {
     clipboard.writeText($('#squiffy-editor').squiffyEditor('cut'));
   };
