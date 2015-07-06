@@ -5,6 +5,7 @@ $(function () {
   var remote = require('remote');
   var dialog = remote.require('dialog');
   var fs = require('fs');
+  var clipboard = require('clipboard');
 
   var packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json')).toString());
   var editorVersion = packageJson.version;
@@ -155,6 +156,22 @@ $(function () {
     if (!result) return;
     setFilename(result);
     saveFile();
+  };
+
+  window.menuClick.cut = function () {
+    clipboard.writeText($('#squiffy-editor').squiffyEditor('cut'));
+  };
+
+  window.menuClick.copy = function () {
+    clipboard.writeText($('#squiffy-editor').squiffyEditor('copy'));
+  };
+
+  window.menuClick.paste = function () {
+    $('#squiffy-editor').squiffyEditor('paste', clipboard.readText());
+  };
+
+  window.menuClick.selectAll = function () {
+    $('#squiffy-editor').squiffyEditor('selectAll');
   };
 
   window.menuClick.run = function () {

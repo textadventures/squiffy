@@ -391,7 +391,21 @@
         setInfo: function (text) {
             setInfo(text);
         },
-        run: run
+        run: run,
+        selectAll: function () {
+            editor.selection.selectAll();
+        },
+        cut: function () {
+            var text = editor.getSelectedText();
+            editor.session.replace(editor.selection.getRange(), '');
+            return text;
+        },
+        copy: function () {
+            return editor.getSelectedText();
+        },
+        paste: function (text) {
+            editor.session.replace(editor.selection.getRange(), text);
+        }
     };
 
     $.fn.squiffyEditor = function (methodOrOptions) {

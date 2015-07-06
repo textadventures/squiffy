@@ -17,7 +17,23 @@
 
   var fileSaveAs = function () {
     window.menuClick.saveFileAs();
-  }
+  };
+
+  var editCut = function () {
+    window.menuClick.cut();
+  };
+
+  var editCopy = function () {
+    window.menuClick.copy();
+  };
+
+  var editPaste = function () {
+    window.menuClick.paste();
+  };
+
+  var editSelectAll = function () {
+    window.menuClick.selectAll();
+  };
 
   var documentation = function () {
     window.menuClick.documentation();
@@ -115,22 +131,22 @@
           {
             label: 'Cut',
             accelerator: 'Command+X',
-            selector: 'cut:'
+            click: editCut
           },
           {
             label: 'Copy',
             accelerator: 'Command+C',
-            selector: 'copy:'
+            click: editCopy
           },
           {
             label: 'Paste',
             accelerator: 'Command+V',
-            selector: 'paste:'
+            click: editPaste
           },
           {
             label: 'Select All',
             accelerator: 'Command+A',
-            selector: 'selectAll:'
+            click: editSelectAll
           },
         ]
       },
@@ -241,18 +257,22 @@
           {
             label: 'Cu&t',
             accelerator: 'Ctrl+X',
+            click: editCut
           },
           {
             label: '&Copy',
             accelerator: 'Ctrl+C',
+            click: editCopy
           },
           {
             label: '&Paste',
             accelerator: 'Ctrl+V',
+            click: editPaste
           },
           {
             label: 'Select &All',
             accelerator: 'Ctrl+A',
+            click: editSelectAll
           },
         ]
       },
