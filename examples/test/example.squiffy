@@ -14,6 +14,8 @@ This line has links to [[section 3]] and [[section 4]](section four).
 
 This line has links to [passage 3] and [passage 4](passage four).
 
+Oh look - [it's a passage with an apostrophe].
+
 [passage]:
 Here's some text for the passage.
 
@@ -30,6 +32,9 @@ Yet another passage.
 
 [link]:
 Here is the text for the simple link.
+
+[it's a passage with an apostrophe]:
+Nothing to worry about.
 
 [[section2]]:
 

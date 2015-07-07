@@ -166,7 +166,7 @@
             outputJsFile.push('squiffy.story.sections = {\n');
 
             _.each(story.sections, function(section, sectionName) {
-                outputJsFile.push('\t\'{0}\': {\n'.format(sectionName));
+                outputJsFile.push('\t\'{0}\': {\n'.format(sectionName.replace(/\'/g, "\\'")));
                 if (section.clear) {
                     outputJsFile.push('\t\t\'clear\': true,\n');
                 }
@@ -180,7 +180,7 @@
 
                 outputJsFile.push('\t\t\'passages\': {\n');
                 _.each(section.passages, function(passage, passageName) {
-                    outputJsFile.push('\t\t\t\'{0}\': {\n'.format(passageName));
+                    outputJsFile.push('\t\t\t\'{0}\': {\n'.format(passageName.replace(/\'/g, "\\'")));
                     if (passage.clear) {
                         outputJsFile.push('\t\t\t\t\'clear\': true,\n');
                     }
