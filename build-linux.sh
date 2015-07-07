@@ -1,2 +1,2 @@
 ./build-common.sh
-electron-packager build Squiffy --platform=linux --arch=x64 --version=0.29.2 --app-bundle-id=uk.co.textadventures.squiffy --helper-bundle-id=uk.co.textadventures.squiffy.helper --app-version=4.0.0
+electron-packager build Squiffy --platform=linux --arch=x64 --version=0.28.3 --app-bundle-id=uk.co.textadventures.squiffy --helper-bundle-id=uk.co.textadventures.squiffy.helper --app-version=4.0.0
