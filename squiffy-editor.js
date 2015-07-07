@@ -332,6 +332,8 @@
             editor.on('changeSelection', function () {
                 cursorMoved();
             });
+            editor.commands.removeCommand('goToNextError');
+            editor.commands.removeCommand('goToPreviousError');
             editor.focus();
 
             editorLoad(options.data);
