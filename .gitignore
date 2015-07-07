@@ -3,6 +3,7 @@ Squiffy-win32
 Squiffy-linux
 Output
 build
+*.dmg
 
 # Logs
 logs
