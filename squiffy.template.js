@@ -477,7 +477,7 @@ var squiffy = {};
             if (attribute) {
                 squiffy.set(attribute, rotation[0]);
             }
-            return '<a class="squiffy-link" data-' + type + '="' + rotation[1] + '" data-attribute="' + attribute + '">' + rotation[0] + '</a>';
+            return '<a class="squiffy-link" data-' + type + '="' + rotation[1] + '" data-attribute="' + attribute + '" role="link">' + rotation[0] + '</a>';
         }
 
         var data = {
