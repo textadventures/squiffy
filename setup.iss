@@ -1,5 +1,5 @@
-#define SquiffyVersion '3.9.0'
-#define SetupVersion '390'
+#define SquiffyVersion '4.0.0'
+#define SetupVersion '400'
 
 [Setup]
 AppName=Squiffy

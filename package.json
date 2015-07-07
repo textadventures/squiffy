@@ -1,12 +1,12 @@
 {
   "name": "squiffy-editor",
-  "version": "3.9.0",
+  "version": "4.0.0",
   "description": "",
   "main": "main.js",
   "devDependencies": {
-    "electron-prebuilt": "^0.27.3"
+    "electron-prebuilt": "^0.29.2"
   },
   "dependencies": {
-    "squiffy": "^3.0.0"
+    "squiffy": "^4.0.0"
   }
 }

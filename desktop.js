@@ -257,7 +257,7 @@ $(function () {
   $('#update-check').click(function () {
     $('#about-update').text('Checking for updates...');
     $.get('http://textadventures.co.uk/squiffy/versioncheck/?version=' + editorVersion, function (result) {
-      if (result.Latest === editorVersion) {
+      if (result.Latest <= editorVersion) {
         $('#about-update').text('You are running the latest version of Squiffy.');
       }
       else {
