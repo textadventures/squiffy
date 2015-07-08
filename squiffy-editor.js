@@ -25,8 +25,7 @@
             success: function (data) {
                 $('#restart').show();
 
-                $('<div/>', { id: 'output' })
-                .appendTo('#output-container');
+                $('<div/>', { id: 'output' }).appendTo('#output-container');
 
                 $('<hr/>').appendTo('#output-container');
 
@@ -53,6 +52,7 @@
                 });
             },
             fail: function (data) {
+                $('<div/>', { id: 'output' }).appendTo('#output-container');
                 $('#output').html(data.message);
             }
         });
