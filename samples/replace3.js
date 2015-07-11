@@ -1,4 +1,4 @@
-// Created with Squiffy 3.0.2
+// Created with Squiffy 4.0.1
 // https://github.com/textadventures/squiffy
 
 (function(){
@@ -11,7 +11,8 @@ var squiffy = {};
     'use strict';
 
     squiffy.story = {};
-    squiffy.story.begin = function () {
+
+    var initLinkHandler = function () {
         squiffy.ui.output.on('click', 'a.squiffy-link', function (event) {
             if ($(this).hasClass('disabled')) return;
             var passage = $(this).data('passage');
@@ -51,9 +52,13 @@ var squiffy = {};
                 squiffy.story.save();
             }
         });
+
         squiffy.ui.output.on('mousedown', 'a.squiffy-link', function (event) {
             event.preventDefault();
         });
+    };
+    
+    squiffy.story.begin = function () {
         if (!squiffy.story.load()) {
             squiffy.story.go(squiffy.story.start);
         }
@@ -552,6 +557,7 @@ var squiffy = {};
                 squiffy.ui.output.css('overflow-y', 'auto');
             }
 
+            initLinkHandler();
             squiffy.story.begin();
             
             return this;
@@ -584,6 +590,7 @@ var squiffy = {};
 
 var get = squiffy.get;
 var set = squiffy.set;
+
 
 squiffy.story.start = '_default';
 squiffy.story.id = '1d6503c9e9';
