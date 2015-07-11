@@ -7,53 +7,54 @@ var squiffy = {};
     'use strict';
 
     squiffy.story = {};
-    squiffy.hook_once = false;
-    squiffy.story.begin = function () {
-        if (!squiffy.hook_once) {
-            squiffy.ui.output.on('click', 'a.squiffy-link', function (event) {
-                if ($(this).hasClass('disabled')) return;
-                var passage = $(this).data('passage');
-                var section = $(this).data('section');
-                var rotateAttr = $(this).attr('data-rotate');
-                var sequenceAttr = $(this).attr('data-sequence');
+
+    var initLinkHandler = function () {
+        squiffy.ui.output.on('click', 'a.squiffy-link', function (event) {
+            if ($(this).hasClass('disabled')) return;
+            var passage = $(this).data('passage');
+            var section = $(this).data('section');
+            var rotateAttr = $(this).attr('data-rotate');
+            var sequenceAttr = $(this).attr('data-sequence');
+            if (passage) {
+                $(this).addClass('disabled');
+                squiffy.set('_turncount', squiffy.get('_turncount') + 1);
+                passage = processLink(passage);
                 if (passage) {
-                    $(this).addClass('disabled');
-                    squiffy.set('_turncount', squiffy.get('_turncount') + 1);
-                    passage = processLink(passage);
-                    if (passage) {
-                        currentSection.append('<hr/>');
-                        squiffy.story.passage(passage);
-                    }
-                    var turnPassage = '@' + squiffy.get('_turncount');
-                    if (turnPassage in squiffy.story.section.passages) {
-                        squiffy.story.passage(turnPassage);
-                    }
-                }
-                else if (section) {
                     currentSection.append('<hr/>');
+                    squiffy.story.passage(passage);
+                }
+                var turnPassage = '@' + squiffy.get('_turncount');
+                if (turnPassage in squiffy.story.section.passages) {
+                    squiffy.story.passage(turnPassage);
+                }
+            }
+            else if (section) {
+                currentSection.append('<hr/>');
+                $(this).addClass('disabled');
+                section = processLink(section);
+                squiffy.story.go(section);
+            }
+            else if (rotateAttr || sequenceAttr) {
+                var result = rotate(rotateAttr || sequenceAttr, rotateAttr ? $(this).text() : '');
+                $(this).html(result[0].replace(/&quot;/g, '"').replace(/&#39;/g, '\''));
+                var dataAttribute = rotateAttr ? 'data-rotate' : 'data-sequence';
+                $(this).attr(dataAttribute, result[1]);
+                if (!result[1]) {
                     $(this).addClass('disabled');
-                    section = processLink(section);
-                    squiffy.story.go(section);
                 }
-                else if (rotateAttr || sequenceAttr) {
-                    var result = rotate(rotateAttr || sequenceAttr, rotateAttr ? $(this).text() : '');
-                    $(this).html(result[0].replace(/&quot;/g, '"').replace(/&#39;/g, '\''));
-                    var dataAttribute = rotateAttr ? 'data-rotate' : 'data-sequence';
-                    $(this).attr(dataAttribute, result[1]);
-                    if (!result[1]) {
-                        $(this).addClass('disabled');
-                    }
-                    if ($(this).attr('data-attribute')) {
-                        squiffy.set($(this).attr('data-attribute'), result[0]);
-                    }
-                    squiffy.story.save();
+                if ($(this).attr('data-attribute')) {
+                    squiffy.set($(this).attr('data-attribute'), result[0]);
                 }
-            });
-        squiffy.hook_once = true;
-        }
+                squiffy.story.save();
+            }
+        });
+
         squiffy.ui.output.on('mousedown', 'a.squiffy-link', function (event) {
             event.preventDefault();
         });
+    };
+    
+    squiffy.story.begin = function () {
         if (!squiffy.story.load()) {
             squiffy.story.go(squiffy.story.start);
         }
@@ -552,6 +553,7 @@ var squiffy = {};
                 squiffy.ui.output.css('overflow-y', 'auto');
             }
 
+            initLinkHandler();
             squiffy.story.begin();
             
             return this;
