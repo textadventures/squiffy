@@ -9,7 +9,7 @@ You can write Hello World with no markup at all:
     
 You can format text using [Markdown](http://daringfireball.net/projects/markdown/syntax), and also use HTML.
 
-To create interactive stories, we'll need to add some links. There are two types of text block you can use in Squiffy:
+To create interactive stories, you'll need to add some links. There are two types of text block you can use in Squiffy:
 
 - **Sections** are the main units of text.
 - **Passages** are smaller units which exist within sections.

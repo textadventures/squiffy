@@ -27,10 +27,12 @@ This is the first release of Squiffy to have a web-based editor, so you can now 
 
 ## Squiffy 4
 
-**Status:** In development
+**Status:** Released 11 July 2015.
 
-This will be the first downloadable version of the Squiffy editor. It will be the same web-based editor as first created for Squiffy 3, but packaged using [Electron](http://electron.atom.io/) or possibly [NW.js](http://nwjs.io/) (formerly node-webkit).
+This is the first downloadable version of the Squiffy editor. It is based on the same web-based editor as first created for Squiffy 3, but packaged using [Electron](http://electron.atom.io/).
 
 ## Squiffy 5
 
-We can start to flesh out the features of the editor. The most important feature for the first editor iteration is probably a graphical view of a game's sections and passages, so the overall structure of a game can be visualised.
+**Status:** In development
+
+The next step is to flesh out the features of the editor. Once nice feature would be a graphical view of a game's sections and passages, so the overall structure of a game can be visualised. Also, more tools can be provided to make it easier to add sections and passages, and to detect missing or empty ones.

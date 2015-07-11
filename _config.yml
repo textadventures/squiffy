@@ -1,2 +1,5 @@
 markdown: redcarpet
 baseurl: /squiffy
+
+gems:
+  - jekyll-redirect-from
