@@ -396,7 +396,7 @@
             var links = this.allMatchesForGroup(input, namedSectionLinkRegex, 2);
             this.checkSectionLinks(story, links, section, passage);
 
-            input = input.replace(namedSectionLinkRegex, '<a class="squiffy-link link-section" data-section="$2" role="link">$1</a>');
+            input = input.replace(namedSectionLinkRegex, '<a class="squiffy-link link-section" data-section="$2" role="link" tabindex="0">$1</a>');
 
             // namedPassageLinkRegex matches:
             //   open [
@@ -410,7 +410,7 @@
             links = this.allMatchesForGroup(input, namedPassageLinkRegex, 2);
             this.checkPassageLinks(story, links, section, passage);
 
-            input = input.replace(namedPassageLinkRegex, '<a class="squiffy-link link-passage" data-passage="$2" role="link">$1</a>');
+            input = input.replace(namedPassageLinkRegex, '<a class="squiffy-link link-passage" data-passage="$2" role="link" tabindex="0">$1</a>');
 
             // unnamedSectionLinkRegex matches:
             //   open [[
@@ -421,7 +421,7 @@
             links = this.allMatchesForGroup(input, unnamedSectionLinkRegex, 1);
             this.checkSectionLinks(story, links, section, passage);
 
-            input = input.replace(unnamedSectionLinkRegex, '<a class="squiffy-link link-section" data-section="$1" role="link">$1</a>');
+            input = input.replace(unnamedSectionLinkRegex, '<a class="squiffy-link link-section" data-section="$1" role="link" tabindex="0">$1</a>');
 
             // unnamedPassageLinkRegex matches:
             //   open [
@@ -433,7 +433,7 @@
             links = this.allMatchesForGroup(input, unnamedPassageLinkRegex, 1);
             this.checkPassageLinks(story, links, section, passage);
 
-            input = input.replace(unnamedPassageLinkRegex, '<a class="squiffy-link link-passage" data-passage="$1" role="link">$1</a>$2');
+            input = input.replace(unnamedPassageLinkRegex, '<a class="squiffy-link link-passage" data-passage="$1" role="link" tabindex="0">$1</a>$2');
 
             return marked(input).trim();
         };

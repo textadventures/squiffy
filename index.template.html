@@ -10,8 +10,13 @@
 		<script>
 			$(function(){
 				$('#squiffy').squiffy();
-				$('#restart').click(function () {
+				var restart = function () {
 					$('#squiffy').squiffy('restart');
+				};
+				$('#restart').click(restart);
+				$('#restart').keypress(function (e) {
+					if (e.which !== 13) return;
+					restart();
 				});
 			});
 		</script>
@@ -20,7 +25,7 @@
 	<body>
 		<div id="squiffy-container">
 			<div id="squiffy-header">
-				<a class="squiffy-header-link" id="restart">Restart</a>
+				<a class="squiffy-header-link" id="restart" tabindex="0">Restart</a>
 			</div>
 			<div id="squiffy">
 			</div>

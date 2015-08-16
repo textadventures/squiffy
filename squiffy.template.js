@@ -9,14 +9,14 @@ var squiffy = {};
     squiffy.story = {};
 
     var initLinkHandler = function () {
-        squiffy.ui.output.on('click', 'a.squiffy-link', function (event) {
-            if ($(this).hasClass('disabled')) return;
-            var passage = $(this).data('passage');
-            var section = $(this).data('section');
-            var rotateAttr = $(this).attr('data-rotate');
-            var sequenceAttr = $(this).attr('data-sequence');
+        var handleLink = function (link) {
+            if (link.hasClass('disabled')) return;
+            var passage = link.data('passage');
+            var section = link.data('section');
+            var rotateAttr = link.attr('data-rotate');
+            var sequenceAttr = link.attr('data-sequence');
             if (passage) {
-                $(this).addClass('disabled');
+                disableLink(link);
                 squiffy.set('_turncount', squiffy.get('_turncount') + 1);
                 passage = processLink(passage);
                 if (passage) {
@@ -30,29 +30,43 @@ var squiffy = {};
             }
             else if (section) {
                 currentSection.append('<hr/>');
-                $(this).addClass('disabled');
+                disableLink(link);
                 section = processLink(section);
                 squiffy.story.go(section);
             }
             else if (rotateAttr || sequenceAttr) {
-                var result = rotate(rotateAttr || sequenceAttr, rotateAttr ? $(this).text() : '');
-                $(this).html(result[0].replace(/&quot;/g, '"').replace(/&#39;/g, '\''));
+                var result = rotate(rotateAttr || sequenceAttr, rotateAttr ? link.text() : '');
+                link.html(result[0].replace(/&quot;/g, '"').replace(/&#39;/g, '\''));
                 var dataAttribute = rotateAttr ? 'data-rotate' : 'data-sequence';
-                $(this).attr(dataAttribute, result[1]);
+                link.attr(dataAttribute, result[1]);
                 if (!result[1]) {
-                    $(this).addClass('disabled');
+                    disableLink(link);
                 }
-                if ($(this).attr('data-attribute')) {
-                    squiffy.set($(this).attr('data-attribute'), result[0]);
+                if (link.attr('data-attribute')) {
+                    squiffy.set(link.attr('data-attribute'), result[0]);
                 }
                 squiffy.story.save();
             }
+        };
+
+        squiffy.ui.output.on('click', 'a.squiffy-link', function () {
+            handleLink($(this));
+        });
+
+        squiffy.ui.output.on('keypress', 'a.squiffy-link', function (e) {
+            if (e.which !== 13) return;
+            handleLink($(this));
         });
 
         squiffy.ui.output.on('mousedown', 'a.squiffy-link', function (event) {
             event.preventDefault();
         });
     };
+
+    var disableLink = function (link) {
+        link.addClass('disabled');
+        link.attr('tabindex', -1);
+    }
     
     squiffy.story.begin = function () {
         if (!squiffy.story.load()) {
@@ -277,7 +291,7 @@ var squiffy = {};
 
     var newSection = function() {
         if (currentSection) {
-            $('.squiffy-link', currentSection).addClass('disabled');
+            disableLink($('.squiffy-link', currentSection));
         }
         var sectionCount = squiffy.get('_section-count') + 1;
         squiffy.set('_section-count', sectionCount);
