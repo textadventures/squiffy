@@ -50,12 +50,12 @@ var squiffy = {};
         };
 
         squiffy.ui.output.on('click', 'a.squiffy-link', function () {
-            handleLink($(this));
+            handleLink(jQuery(this));
         });
 
         squiffy.ui.output.on('keypress', 'a.squiffy-link', function (e) {
             if (e.which !== 13) return;
-            handleLink($(this));
+            handleLink(jQuery(this));
         });
 
         squiffy.ui.output.on('mousedown', 'a.squiffy-link', function (event) {
@@ -233,7 +233,7 @@ var squiffy = {};
     squiffy.story.restart = function() {
         if (squiffy.ui.settings.persist && window.localStorage) {
             var keys = Object.keys(localStorage);
-            $.each(keys, function (idx, key) {
+            jQuery.each(keys, function (idx, key) {
                 if (startsWith(key, squiffy.story.id)) {
                     localStorage.removeItem(key);
                 }
@@ -259,7 +259,7 @@ var squiffy = {};
         var output = squiffy.get('_output');
         if (!output) return false;
         squiffy.ui.output.html(output);
-        currentSection = $('#' + squiffy.get('_output-section'));
+        currentSection = jQuery('#' + squiffy.get('_output-section'));
         squiffy.story.section = squiffy.story.sections[squiffy.get('_section')];
         var transition = squiffy.get('_transition');
         if (transition) {
@@ -291,12 +291,12 @@ var squiffy = {};
 
     var newSection = function() {
         if (currentSection) {
-            disableLink($('.squiffy-link', currentSection));
+            disableLink(jQuery('.squiffy-link', currentSection));
         }
         var sectionCount = squiffy.get('_section-count') + 1;
         squiffy.set('_section-count', sectionCount);
         var id = 'squiffy-section-' + sectionCount;
-        currentSection = $('<div/>', {
+        currentSection = jQuery('<div/>', {
             id: id,
         }).appendTo(squiffy.ui.output);
         squiffy.set('_output-section', id);
@@ -305,7 +305,7 @@ var squiffy = {};
     squiffy.ui.write = function(text) {
         screenIsClear = false;
         scrollPosition = squiffy.ui.output.height();
-        currentSection.append($('<div/>').html(squiffy.ui.processText(text)));
+        currentSection.append(jQuery('<div/>').html(squiffy.ui.processText(text)));
         squiffy.ui.scrollToEnd();
     };
 
@@ -328,13 +328,13 @@ var squiffy = {};
         }
         else {
             scrollTo = scrollPosition;
-            currentScrollTop = Math.max($('body').scrollTop(), $('html').scrollTop());
+            currentScrollTop = Math.max(jQuery('body').scrollTop(), jQuery('html').scrollTop());
             if (scrollTo > currentScrollTop) {
-                var maxScrollTop = $(document).height() - $(window).height();
+                var maxScrollTop = jQuery(document).height() - jQuery(window).height();
                 if (scrollTo > maxScrollTop) scrollTo = maxScrollTop;
                 distance = scrollTo - currentScrollTop;
                 duration = distance / 0.5;
-                $('body,html').stop().animate({ scrollTop: scrollTo }, duration);
+                jQuery('body,html').stop().animate({ scrollTop: scrollTo }, duration);
             }
         }
     };
@@ -552,7 +552,7 @@ var squiffy = {};
 
     var methods = {
         init: function (options) {
-            var settings = $.extend({
+            var settings = jQuery.extend({
                 scroll: 'body',
                 persist: true,
                 restartPrompt: true,
@@ -560,7 +560,7 @@ var squiffy = {};
             }, options);
 
             squiffy.ui.output = this;
-            squiffy.ui.restart = $(settings.restart);
+            squiffy.ui.restart = jQuery(settings.restart);
             squiffy.ui.settings = settings;
 
             if (settings.scroll === 'element') {
@@ -585,7 +585,7 @@ var squiffy = {};
         }
     };
 
-    $.fn.squiffy = function (methodOrOptions) {
+    jQuery.fn.squiffy = function (methodOrOptions) {
         if (methods[methodOrOptions]) {
             return methods[methodOrOptions]
                 .apply(this, Array.prototype.slice.call(arguments, 1));
@@ -593,7 +593,7 @@ var squiffy = {};
         else if (typeof methodOrOptions === 'object' || ! methodOrOptions) {
             return methods.init.apply(this, arguments);
         } else {
-            $.error('Method ' +  methodOrOptions + ' does not exist');
+            jQuery.error('Method ' +  methodOrOptions + ' does not exist');
         }
     };
 })();
