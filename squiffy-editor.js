@@ -288,6 +288,7 @@
     var moveTo = function (row) {
         var Range = ace.require('ace/range').Range;
         editor.selection.setRange(new Range(row, 0, row, 0));
+        editor.renderer.scrollCursorIntoView();
         editor.focus();
     };
 
