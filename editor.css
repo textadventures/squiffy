@@ -63,6 +63,7 @@ a.squiffy-link.disabled
 .ui-layout-north {
    z-index: 50 !important;
    overflow: visible !important;
+   -webkit-user-select: none;
 }
 
 .ui-layout-center {
