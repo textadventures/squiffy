@@ -18,6 +18,7 @@
     "jquery-ui-layout-bower": "~1.4.4",
     "jquery-ui": "~1.11.3",
     "bootbox": "~4.4.0",
-    "ace-builds": "~1.1.9"
+    "ace-builds": "~1.1.9",
+    "chosen": "~1.4.2"
   }
 }

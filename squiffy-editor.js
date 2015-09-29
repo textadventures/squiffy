@@ -252,6 +252,7 @@
         if (newCurrentSection !== currentSection) {
             currentSection = newCurrentSection;
             $('#sections').val(currentSection.name);
+            $('#sections').trigger('chosen:updated');
             var selectPassage = $('#passages');
             selectPassage.html('');
             currentSection.passages.forEach(function (passage) {
@@ -262,6 +263,7 @@
         if (newCurrentPassage !== currentPassage) {
             currentPassage = newCurrentPassage;
             $('#passages').val(currentPassage.name);
+            $('#passages').trigger('chosen:updated');
         }
     };
 
@@ -379,6 +381,7 @@
             $('#export-js').click(downloadJavascript);
             $('#sections').on('change', sectionChanged);
             $('#passages').on('change', passageChanged);
+            $('#sections, #passages').chosen();
         },
         load: function (data) {
             editorLoad(data);
