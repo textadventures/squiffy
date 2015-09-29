@@ -1,6 +1,7 @@
 Squiffy.app
 Squiffy-win32
 Squiffy-linux
+Squiffy-darwin-x64
 Output
 build
 *.dmg
