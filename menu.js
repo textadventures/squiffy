@@ -70,6 +70,10 @@
   var about = function () {
     window.menuClick.about();
   };
+  
+  var settings = function () {
+    window.menuClick.settings();
+  };
 
   var template;
 
@@ -81,6 +85,14 @@
           {
             label: 'About Squiffy',
             click: about
+          },
+          {
+            type: 'separator'
+          },
+          {
+            label: 'Preferences...',
+            accelerator: 'Command+,',
+            click: settings
           },
           {
             type: 'separator'

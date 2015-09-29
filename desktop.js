@@ -212,6 +212,10 @@ $(function () {
     $('#about').modal();
   };
   
+  window.menuClick.settings = function () {
+    $('#settings-dialog').modal();
+  };
+  
   var userSettings = {
     get: function (setting) {
       return storage.get(setting);

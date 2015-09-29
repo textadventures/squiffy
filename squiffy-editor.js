@@ -360,6 +360,7 @@
             });
             editor.commands.removeCommand('goToNextError');
             editor.commands.removeCommand('goToPreviousError');
+            editor.commands.removeCommand('showSettingsMenu');
             
             editor.setFontSize(options.userSettings.get('fontSize'));
             editor.focus();
