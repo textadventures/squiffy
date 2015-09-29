@@ -4,7 +4,7 @@
   "description": "",
   "main": "main.js",
   "devDependencies": {
-    "electron-prebuilt": "^0.29.2"
+    "electron-prebuilt": "^0.33.3"
   },
   "dependencies": {
     "squiffy": "^4.0.0"

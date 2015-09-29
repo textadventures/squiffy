@@ -30,4 +30,4 @@ robocopy node_modules build\node_modules /s
 copy package.json build
 copy squiffy.png build
 
-electron-packager build Squiffy --platform=win32 --arch=ia32 --version=0.28.3 --app-bundle-id=uk.co.textadventures.squiffy --icon=squiffy.ico --app-version=4.0.0 --ignore=Output --version-string.ProductName=Squiffy --version-string.FileDescription=Squiffy --version-string.LegalCopyright="Copyright (c) 2015 Alex Warren" --version-string.OriginalFilename=Squiffy.exe --version-string.FileVersion=4.0.0 --version-string.ProductVersion=4.0.0 --version-string.InternalName=Squiffy --version-string.CompanyName="Alex Warren"
+electron-packager build Squiffy --platform=win32 --arch=ia32 --version=0.33.3 --app-bundle-id=uk.co.textadventures.squiffy --icon=squiffy.ico --app-version=4.0.0 --ignore=Output --version-string.ProductName=Squiffy --version-string.FileDescription=Squiffy --version-string.LegalCopyright="Copyright (c) 2015 Alex Warren" --version-string.OriginalFilename=Squiffy.exe --version-string.FileVersion=4.0.0 --version-string.ProductVersion=4.0.0 --version-string.InternalName=Squiffy --version-string.CompanyName="Alex Warren"
