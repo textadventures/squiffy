@@ -7,6 +7,6 @@
     "electron-prebuilt": "^0.33.3"
   },
   "dependencies": {
-    "squiffy": "^4.0.0"
+    "squiffy": "^4.0.3"
   }
 }
