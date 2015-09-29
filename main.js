@@ -1,5 +1,6 @@
 var app = require('app');  // Module to control application life.
 var BrowserWindow = require('browser-window');  // Module to create native browser window.
+var storage = require('./storage');
 
 // Report crashes to our server.
 require('crash-reporter').start();
@@ -25,17 +26,42 @@ app.on('open-file', function (event, path) {
 var mainWindow = null;
 
 var init = function() {
-  // Create the browser window.
+  var lastWindowState = storage.get("lastWindowState");
+  if (lastWindowState === null) {
+    lastWindowState = {
+      width: 1200,
+      height: 600,
+      maximized: false 
+    } 
+  };
+  
   mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 600,
+    x: lastWindowState.x,
+    y: lastWindowState.y,
+    width: lastWindowState.width, 
+    height: lastWindowState.height,
     icon: __dirname + '/squiffy.png'
   });
+  
+  if (lastWindowState.maximized) {
+    mainWindow.maximize();
+  }
 
   mainWindow.openFile = openFile;
 
   // and load the index.html of the app.
   mainWindow.loadUrl('file://' + __dirname + '/index.html');
+  
+  mainWindow.on('close', function () {
+    var bounds = mainWindow.getBounds(); 
+    storage.set('lastWindowState', {
+      x: bounds.x,
+      y: bounds.y,
+      width: bounds.width,
+      height: bounds.height,
+      maximized: mainWindow.isMaximized()
+    });
+  });
 
   // Emitted when the window is closed.
   mainWindow.on('closed', function() {
