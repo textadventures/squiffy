@@ -14,6 +14,14 @@
 
     var editor, settings, title, loading, layout, sourceMap,
         currentRow, currentSection, currentPassage;
+        
+    var initUserSettings = function () {
+      var us = settings.userSettings;
+      var fontSize = us.get('fontSize');
+      if (!fontSize) {
+        us.set('fontSize', 12);
+      }
+    };
 
     var run = function () {
         $('#output-container').html('');
@@ -106,6 +114,10 @@
         downloadLink.style.display = 'none';
         document.body.appendChild(downloadLink);
         downloadLink.click();
+    };
+    
+    var showSettings = function () {
+      $('#settings-dialog').modal();
     };
 
     var localSaveTimeout, autoSaveTimeout;
@@ -303,12 +315,16 @@
         init: function (options) {
             var element = this;
             settings = options;
+            
+            initUserSettings();
 
             if (options.desktop) {
                 editorHtml = editorHtml.replace('glyphicon-cloud-upload', 'glyphicon-floppy-disk');
             }
 
             element.html(editorHtml);
+            $('body').append(appendHtml);
+            
             layout = element.layout({
                 applyDefaultStyles: true,
                 north__resizable: false,
@@ -345,10 +361,7 @@
             editor.commands.removeCommand('goToNextError');
             editor.commands.removeCommand('goToPreviousError');
             
-            var fontSize = options.userSettings.get('fontSize');
-            if (fontSize) {
-              editor.setFontSize(fontSize);
-            }
+            editor.setFontSize(options.userSettings.get('fontSize'));
             editor.focus();
 
             editorLoad(options.data);
@@ -392,9 +405,11 @@
             $('#download-squiffy-script').click(downloadSquiffyScript);
             $('#export-html-js').click(downloadZip);
             $('#export-js').click(downloadJavascript);
+            $('#settings').click(showSettings);
             $('#sections').on('change', sectionChanged);
             $('#passages').on('change', passageChanged);
             $('#sections, #passages').chosen();
+            $('[data-toggle="tooltip"]').tooltip();
         },
         load: function (data) {
             editorLoad(data);
@@ -482,6 +497,7 @@
                             <li><a id="export-js">Export JavaScript only</a></li>\
                         </ul>\
                 </div>\
+                <button id="settings" class="btn btn-default" data-toggle="tooltip" data-placement="bottom" title="Settings"><span class="glyphicon glyphicon-cog"></span></button>\
                 <button id="preview" class="btn btn-primary" style="display: none"><span class="glyphicon glyphicon-eye-open"></span> Preview</button>\
                 <button id="publish" class="btn btn-primary" style="display: none"><span class="glyphicon glyphicon-circle-arrow-up"></span> Publish</button>\
                 <button id="build" class="btn btn-primary" style="display: none"><span class="glyphicon glyphicon-flash"></span> Build</button>\
@@ -533,5 +549,23 @@
         </div>\
         <div class="ui-layout-south">\
             <div id="debugger"></div>\
-        </div>\n';
+        </div>\
+        ';
+      var appendHtml =
+        '<div class="modal fade" id="settings-dialog" tabindex="-1" role="dialog" aria-labelledby="settingsLabel">\
+          <div class="modal-dialog" role="document">\
+            <div class="modal-content">\
+              <div class="modal-header">\
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>\
+                <h4 class="modal-title" id="settingsLabel">Settings</h4>\
+              </div>\
+              <div class="modal-body">\
+                <p>Settings go here...</p>\
+              </div>\
+              <div class="modal-footer">\
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>\
+              </div>\
+            </div>\
+          </div>\
+        </div>';
 })();

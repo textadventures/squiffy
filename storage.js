@@ -16,10 +16,6 @@ var data = null;
 var dataFilePath = path.join(app.getPath('userData'), 'settings.json'); 
 
 function load() {
-  if (data !== null) {
-    return;
-  } 
-
   if (!fs.existsSync(dataFilePath)) {
     data = {};
     return;
