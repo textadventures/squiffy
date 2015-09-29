@@ -6,6 +6,7 @@ $(function () {
   var dialog = remote.require('dialog');
   var fs = require('fs');
   var clipboard = require('clipboard');
+  var storage = require('./storage.js');
 
   var packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json')).toString());
   var editorVersion = packageJson.version;
@@ -210,6 +211,15 @@ $(function () {
     $('#about-build').text(editorVersion);
     $('#about').modal();
   };
+  
+  var userSettings = {
+    get: function (setting) {
+      return storage.get(setting);
+    },
+    set: function (setting, value) {
+      storage.set(setting, value);
+    }
+  };
 
   var init = function (data) {
     $('#squiffy-editor').squiffyEditor({
@@ -225,7 +235,8 @@ $(function () {
       },
       build: function () {
         build();
-      }
+      },
+      userSettings: userSettings
     });
   };
 

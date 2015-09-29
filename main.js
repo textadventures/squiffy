@@ -26,7 +26,7 @@ app.on('open-file', function (event, path) {
 var mainWindow = null;
 
 var init = function() {
-  var lastWindowState = storage.get("lastWindowState");
+  var lastWindowState = storage.get('lastWindowState');
   if (lastWindowState === null) {
     lastWindowState = {
       width: 1200,

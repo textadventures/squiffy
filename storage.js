@@ -1,6 +1,15 @@
 // based on http://www.mylifeforthecode.com/saving-and-restoring-window-state-in-electron/
 
-var app = require('app');
+var app;
+
+try {
+  app = require('app'); 
+}
+catch (e) {
+  var remote = require('remote');
+  app = remote.require('app');
+}
+ 
 var fs = require('fs');
 var path = require('path');
 var data = null;

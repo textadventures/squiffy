@@ -344,6 +344,11 @@
             });
             editor.commands.removeCommand('goToNextError');
             editor.commands.removeCommand('goToPreviousError');
+            
+            var fontSize = options.userSettings.get('fontSize');
+            if (fontSize) {
+              editor.setFontSize(fontSize);
+            }
             editor.focus();
 
             editorLoad(options.data);
