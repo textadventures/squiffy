@@ -32,8 +32,8 @@ var init = function() {
       width: 1200,
       height: 600,
       maximized: false 
-    } 
-  };
+    }; 
+  }
   
   mainWindow = new BrowserWindow({
     x: lastWindowState.x,

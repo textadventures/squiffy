@@ -272,7 +272,7 @@
     var dropdownName = function (name) {
         if (name.length === 0) return '(Master)';
         return name;
-    }
+    };
 
     var sectionChanged = function () {
         var selectedSection = $('#sections').val();

@@ -27,7 +27,7 @@ exports.set = function (key, value) {
   load();
   data[key] = value; 
   save();
-}
+};
 
 exports.get = function (key) { 
   load();
@@ -36,7 +36,7 @@ exports.get = function (key) {
     value = data[key];
   } 
   return value;
-}
+};
 
 exports.unset = function (key) { 
   load();
@@ -44,4 +44,4 @@ exports.unset = function (key) {
     delete data[key];
     save();
   } 
-}
+};
