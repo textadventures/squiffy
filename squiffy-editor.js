@@ -216,7 +216,8 @@
         var selectSection = $('#sections');
         selectSection.html('');
         sourceMap.forEach(function (section) {
-            selectSection.append($('<option />').val(section.name).text(section.name));
+            var name = dropdownName(section.name);
+            selectSection.append($('<option />').val(name).text(name));
         });
 
         cursorMoved(true);
@@ -251,26 +252,32 @@
 
         if (newCurrentSection !== currentSection) {
             currentSection = newCurrentSection;
-            $('#sections').val(currentSection.name);
+            $('#sections').val(dropdownName(currentSection.name));
             $('#sections').trigger('chosen:updated');
             var selectPassage = $('#passages');
             selectPassage.html('');
             currentSection.passages.forEach(function (passage) {
-                selectPassage.append($('<option />').val(passage.name).text(passage.name));
+                var name = dropdownName(passage.name);
+                selectPassage.append($('<option />').val(name).text(name));
             });
         }
 
         if (newCurrentPassage !== currentPassage) {
             currentPassage = newCurrentPassage;
-            $('#passages').val(currentPassage.name);
+            $('#passages').val(dropdownName(currentPassage.name));
             $('#passages').trigger('chosen:updated');
         }
     };
 
+    var dropdownName = function (name) {
+        if (name.length === 0) return '(Master)';
+        return name;
+    }
+
     var sectionChanged = function () {
         var selectedSection = $('#sections').val();
         sourceMap.forEach(function (section) {
-            if (section.name === selectedSection) {
+            if (dropdownName(section.name) === selectedSection) {
                 moveTo(section.start + (section.isDefault ? 0 : 1));
             }
         });
@@ -279,7 +286,7 @@
     var passageChanged = function () {
         var selectedPassage = $('#passages').val();
         currentSection.passages.forEach(function (passage) {
-            if (passage.name === selectedPassage) {
+            if (dropdownName(passage.name) === selectedPassage) {
                 moveTo(passage.start + 1);
             }
         });
@@ -326,7 +333,7 @@
             
             // get rid of an annoying warning
             editor.$blockScrolling = Infinity;
-            
+
             editor.setTheme('ace/theme/eclipse');
             editor.getSession().setMode('ace/mode/markdown');
             editor.getSession().setUseWrapMode(true);
