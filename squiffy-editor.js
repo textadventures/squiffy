@@ -368,7 +368,27 @@
             editor.$blockScrolling = Infinity;
 
             editor.setTheme('ace/theme/eclipse');
-            editor.getSession().setMode('ace/mode/markdown');
+            
+            define('ace/mode/squiffy', [], function(require, exports, module) {             
+              var oop = require("ace/lib/oop");
+              var MarkdownMode = require("ace/mode/markdown").Mode;
+              var MarkdownHighlightRules = require("ace/mode/markdown_highlight_rules").MarkdownHighlightRules;
+              
+              var Mode = function() {
+                this.HighlightRules = SquiffyHighlightRules;
+              };
+              oop.inherits(Mode, MarkdownMode);
+              exports.Mode = Mode;
+              
+              var SquiffyHighlightRules = function () {
+                this.$rules = new MarkdownHighlightRules().getRules();
+                console.log(this.$rules);
+              };
+              oop.inherits(SquiffyHighlightRules, MarkdownHighlightRules);
+              exports.SquiffyHighlightRules = SquiffyHighlightRules;
+            });
+            
+            editor.getSession().setMode('ace/mode/squiffy');
             editor.getSession().setUseWrapMode(true);
             editor.setShowPrintMargin(false);
             editor.getSession().on('change', editorChange);
