@@ -14,13 +14,29 @@
 
     var editor, settings, title, loading, layout, sourceMap,
         currentRow, currentSection, currentPassage;
-        
+    
+    var defaultSettings = {
+      fontSize: 12
+    };
+    
     var initUserSettings = function () {
       var us = settings.userSettings;
       var fontSize = us.get('fontSize');
       if (!fontSize) {
-        us.set('fontSize', 12);
+        us.set('fontSize', defaultSettings.fontSize);
       }
+    };
+    
+    var populateSettingsDialog = function () {
+      var us = settings.userSettings;
+      $('#font-size').val(us.get('fontSize'));
+      $('#font-size').change(function () {
+        var val = parseInt($('#font-size').val());
+        if (!val) val = defaultSettings.fontSize;
+        editor.setFontSize(val);
+        us.set('fontSize', val);
+        $('#font-size').val(val);
+      });
     };
 
     var run = function () {
@@ -315,8 +331,6 @@
         init: function (options) {
             var element = this;
             settings = options;
-            
-            initUserSettings();
 
             if (options.desktop) {
                 editorHtml = editorHtml.replace('glyphicon-cloud-upload', 'glyphicon-floppy-disk');
@@ -324,6 +338,9 @@
 
             element.html(editorHtml);
             $('body').append(appendHtml);
+            
+            initUserSettings();
+            populateSettingsDialog();
             
             layout = element.layout({
                 applyDefaultStyles: true,
@@ -411,6 +428,11 @@
             $('#passages').on('change', passageChanged);
             $('#sections, #passages').chosen();
             $('[data-toggle="tooltip"]').tooltip();
+            $('#settings-dialog').keypress(function (e) {
+              if (e.which === 13) {
+                $('#settings-dialog').modal('hide');
+              }
+            });
         },
         load: function (data) {
             editorLoad(data);
@@ -561,7 +583,14 @@
                 <h4 class="modal-title" id="settingsLabel">Settings</h4>\
               </div>\
               <div class="modal-body">\
-                <p>Settings go here...</p>\
+                <div class="form-horizontal">\
+                  <div class="form-group">\
+                    <label for="font-size" class="col-sm-2 control-label">Font Size</label>\
+                    <div class="col-sm-10">\
+                      <input type="number" class="form-control" id="font-size" />\
+                    </div>\
+                  </div>\
+                </div>\
               </div>\
               <div class="modal-footer">\
                 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>\
