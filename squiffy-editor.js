@@ -373,19 +373,33 @@
               var oop = require("ace/lib/oop");
               var MarkdownMode = require("ace/mode/markdown").Mode;
               var MarkdownHighlightRules = require("ace/mode/markdown_highlight_rules").MarkdownHighlightRules;
+              var SquiffyFoldMode = require('ace/folding/squiffy').FoldMode;
               
               var Mode = function() {
                 this.HighlightRules = SquiffyHighlightRules;
+                this.foldingRules = new SquiffyFoldMode();
+                console.log(this.foldingRules);
               };
               oop.inherits(Mode, MarkdownMode);
               exports.Mode = Mode;
               
               var SquiffyHighlightRules = function () {
                 this.$rules = new MarkdownHighlightRules().getRules();
-                console.log(this.$rules);
               };
               oop.inherits(SquiffyHighlightRules, MarkdownHighlightRules);
               exports.SquiffyHighlightRules = SquiffyHighlightRules;
+            });
+            
+            define('ace/folding/squiffy', [], function(require, exports, module) { 
+              var oop = require("ace/lib/oop");
+              var BaseFoldMode = require("ace/mode/folding/markdown").FoldMode;
+              var FoldMode = function () {};
+              oop.inherits(FoldMode, BaseFoldMode);
+              exports.FoldMode = FoldMode;
+              
+              (function() {
+                  this.foldingStartMarker = /^(?:\[\[(.*)\]\]:|\[(.*)\]:)$/;
+              }).call(FoldMode.prototype);
             });
             
             editor.getSession().setMode('ace/mode/squiffy');
