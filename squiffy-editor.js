@@ -367,7 +367,7 @@
             // get rid of an annoying warning
             editor.$blockScrolling = Infinity;
 
-            editor.setTheme('ace/theme/eclipse');
+            editor.setTheme('ace/theme/sqlserver');
             
             define('ace/mode/squiffy', [], function(require, exports, module) {             
               var oop = require("ace/lib/oop");
@@ -387,21 +387,12 @@
                 //this.$rules = new MarkdownHighlightRules().getRules();
                 
                 this.$rules = {
-                  "start": [
+                  'start': [
                     {
-                      token : "text",
-                      regex : "<\\!\\[CDATA\\[",
-                      next : "cdata"
+                      token: 'keyword',
+                      regex: /^(?:\[\[(.*)\]\]:|\[(.*)\]:)$/
                     }
-                  ],
-                  "cdata" : [
-                    {
-                      token : "text",
-                      regex : "\\]\\]>",
-                      next : "start"
-                    }, {
-                      defaultToken : "comment"
-                  } ]
+                  ]
                 };
               };
               oop.inherits(SquiffyHighlightRules, MarkdownHighlightRules);
