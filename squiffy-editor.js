@@ -366,13 +366,19 @@
             
             // get rid of an annoying warning
             editor.$blockScrolling = Infinity;
-
-            editor.setTheme('ace/theme/sqlserver');
+            
+            define('ace/theme/squiffy', [], function(require, exports, module) {
+              exports.isDark = false;
+              exports.cssClass = 'ace-squiffy';
+            });
+            
+            editor.setTheme('ace/theme/squiffy');
             
             define('ace/mode/squiffy', [], function(require, exports, module) {             
               var oop = require("ace/lib/oop");
               var MarkdownMode = require("ace/mode/markdown").Mode;
-              var MarkdownHighlightRules = require("ace/mode/markdown_highlight_rules").MarkdownHighlightRules;
+              var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
+              var JsHighlightRules = require("ace/mode/javascript_highlight_rules").JavaScriptHighlightRules;
               var SquiffyFoldMode = require('ace/folding/squiffy').FoldMode;
               
               var Mode = function() {
@@ -384,18 +390,27 @@
               exports.Mode = Mode;
               
               var SquiffyHighlightRules = function () {
-                //this.$rules = new MarkdownHighlightRules().getRules();
-                
                 this.$rules = {
                   'start': [
                     {
-                      token: 'keyword',
+                      token: 'markup.heading.1',
                       regex: /^(?:\[\[(.*)\]\]:|\[(.*)\]:)$/
+                    },
+                    {
+                      token: 'keyword',
+                      regex: /^(\t| {4})/,
+                      next: 'js-start'
                     }
                   ]
                 };
+                
+                this.embedRules(JsHighlightRules, 'js-', [{
+                  token: 'keyword',
+                  regex: '$',
+                  next: 'start'
+                }]);
               };
-              oop.inherits(SquiffyHighlightRules, MarkdownHighlightRules);
+              oop.inherits(SquiffyHighlightRules, TextHighlightRules);
               exports.SquiffyHighlightRules = SquiffyHighlightRules;
             });
             
