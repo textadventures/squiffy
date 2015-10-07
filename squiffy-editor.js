@@ -375,10 +375,10 @@
             editor.setTheme('ace/theme/squiffy');
             
             define('ace/mode/squiffy', [], function(require, exports, module) {             
-              var oop = require("ace/lib/oop");
-              var MarkdownMode = require("ace/mode/markdown").Mode;
-              var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
-              var JsHighlightRules = require("ace/mode/javascript_highlight_rules").JavaScriptHighlightRules;
+              var oop = require('ace/lib/oop');
+              var MarkdownMode = require('ace/mode/markdown').Mode;
+              var TextHighlightRules = require('ace/mode/text_highlight_rules').TextHighlightRules;
+              var JsHighlightRules = require('ace/mode/javascript_highlight_rules').JavaScriptHighlightRules;
               var SquiffyFoldMode = require('ace/folding/squiffy').FoldMode;
               
               var Mode = function() {
@@ -420,8 +420,8 @@
             
             // TODO...
             define('ace/folding/squiffy', [], function(require, exports, module) { 
-              var oop = require("ace/lib/oop");
-              var BaseFoldMode = require("ace/mode/folding/markdown").FoldMode;
+              var oop = require('ace/lib/oop');
+              var BaseFoldMode = require('ace/mode/folding/markdown').FoldMode;
               var FoldMode = function () {};
               oop.inherits(FoldMode, BaseFoldMode);
               exports.FoldMode = FoldMode;
