@@ -393,8 +393,12 @@
                 this.$rules = {
                   'start': [
                     {
-                      token: 'markup.heading.1',
-                      regex: /^(?:\[\[(.*)\]\]:|\[(.*)\]:)$/
+                      token: 'markup.heading.section',
+                      regex: /^\[\[(.*)\]\]:$/
+                    },
+                    {
+                      token: 'markup.heading.passage',
+                      regex: /^\[(.*)\]:$/
                     },
                     {
                       token: 'keyword',

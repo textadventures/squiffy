@@ -193,6 +193,10 @@ ul.dropdown-menu a {
     color: rgb(6, 150, 14);
 }
 
+.ace-squiffy .ace_heading.ace_section {
+    font-weight: bold;
+}
+
 .ace-squiffy .ace_list {
     color: rgb(185, 6, 144);
 }
