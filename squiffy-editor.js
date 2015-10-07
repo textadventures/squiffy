@@ -470,7 +470,7 @@
             $('#settings').click(showSettings);
             $('#sections').on('change', sectionChanged);
             $('#passages').on('change', passageChanged);
-            $('#sections, #passages').chosen();
+            $('#sections, #passages').chosen({ width: '100%' });
             $('[data-toggle="tooltip"]').tooltip();
             $('#settings-dialog').keypress(function (e) {
               if (e.which === 13) {
