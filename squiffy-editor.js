@@ -1,3 +1,6 @@
+/* global ace */
+/* global $ */
+/* global define */
 /* jshint quotmark: single */
 /* jshint evil: true */
 /* jshint multistr: true */
@@ -187,7 +190,6 @@
         ];
 
         var lines = data.replace(/\r/g, '').split('\n');
-        var lineCount = 0;
 
         var currentSection = function () {
             return sourceMap.slice(-1)[0];
