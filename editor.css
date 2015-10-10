@@ -50,7 +50,7 @@ a.squiffy-link.disabled
     position: fixed;
 }
 
-#output, #tab-help {
+#output, #tab-help, #tab-tools {
     position: absolute;
     top: 54px;
     right: 0;

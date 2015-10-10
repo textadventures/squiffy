@@ -135,6 +135,37 @@
         downloadLink.click();
     };
     
+    var addSection = function () {
+      addSectionOrPassage(true);
+    };
+    
+    var addPassage = function () {
+      addSectionOrPassage(false);
+    };
+    
+    var addSectionOrPassage = function (isSection) {
+      var selection = editor.getSelectedText();
+      var text;
+      if (isSection) {
+        text = '[[' + selection + ']]';
+      }
+      else {
+        text = '[' + selection + ']';
+      }
+      text = text + ':\n\n';
+      var insertLine = currentSection.end;
+      if (!insertLine) {
+        insertLine = editor.session.doc.$lines.length;
+        text = '\n\n' + text;
+      }
+      var Range = ace.require('ace/range').Range;
+      var range = new Range(insertLine, 0, insertLine, 0);
+      editor.session.replace(range, text);
+      
+      // TODO: set new cursor position
+      // TODO: if selection is empty, set cursor position to middle of [[ and ]]
+    };
+    
     var showSettings = function () {
       $('#settings-dialog').modal();
     };
@@ -489,6 +520,9 @@
             $('#export-html-js').click(downloadZip);
             $('#export-js').click(downloadJavascript);
             $('#settings').click(showSettings);
+            $('#add-section').click(addSection);
+            $('#add-passage').click(addPassage);
+            
             $('#sections').on('change', sectionChanged);
             $('#passages').on('change', passageChanged);
             $('#sections, #passages').chosen({ width: '100%' });
@@ -609,6 +643,7 @@
         <div class="ui-layout-east">\
             <ul class="nav nav-tabs">\
                 <li class="active"><a href="#tab-help" role="tab" data-toggle="tab">Help</a></li>\
+                <li><a href="#tab-tools" role="tab" data-toggle="tab">Tools</a></li>\
                 <li><a href="#tab-output" role="tab" data-toggle="tab">Output</a></li>\
             </ul>\
             <div class="tab-content">\
@@ -625,6 +660,10 @@
                     To link to a passage:\
                     <pre>Link [like this] or [use different link text](new passage)</pre>\
                     <a href="http://docs.textadventures.co.uk/squiffy/" class="external-link" target="_blank">Full documentation</a>\
+                </div>\
+                <div role="tabpanel" class="tab-pane" id="tab-tools">\
+                    <button id="add-section" class="btn btn-primary">Add section</button>\
+                    <button id="add-passage" class="btn btn-primary">Add passage</button>\
                 </div>\
                 <div role="tabpanel" class="tab-pane" id="tab-output">\
                     <div id="output-container">\
