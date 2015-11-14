@@ -1,11 +1,11 @@
-#define SquiffyVersion '4.0.0'
-#define SetupVersion '400'
+#define SquiffyVersion '5.0.0'
+#define SetupVersion '500'
 
 [Setup]
 AppName=Squiffy
 AppVersion={#SquiffyVersion}
 AppVerName=Squiffy {#SquiffyVersion}
-AppCopyright=Copyright © 2015 Alex Warren
+AppCopyright=Copyright ï¿½ 2015 Alex Warren
 VersionInfoVersion={#SquiffyVersion}
 AppPublisher=Alex Warren
 AppPublisherURL=http://textadventures.co.uk/
