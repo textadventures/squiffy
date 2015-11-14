@@ -186,6 +186,14 @@
       }
     };
     
+    var collapseAll = function () {
+      editor.session.foldAll();
+    };
+    
+    var uncollapseAll = function () {
+      editor.session.unfold();
+    };
+    
     var showSettings = function () {
       $('#settings-dialog').modal();
     };
@@ -541,6 +549,8 @@
             $('#settings').click(showSettings);
             $('#add-section').click(addSection);
             $('#add-passage').click(addPassage);
+            $('#collapse-all').click(collapseAll);
+            $('#uncollapse-all').click(uncollapseAll);
             
             $('#sections').on('change', sectionChanged);
             $('#passages').on('change', passageChanged);
@@ -681,8 +691,17 @@
                     <a href="http://docs.textadventures.co.uk/squiffy/" class="external-link" target="_blank">Full documentation</a>\
                 </div>\
                 <div role="tabpanel" class="tab-pane" id="tab-tools">\
-                    <button id="add-section" class="btn btn-primary">Add section</button>\
-                    <button id="add-passage" class="btn btn-primary">Add passage</button>\
+                    <h3>Add a new section or passage</h3>\
+                    Select some text first to automatically create a link to the new section or passage.\
+                    <div class="toolbar">\
+                      <button id="add-section" class="btn btn-primary">Add section</button>\
+                      <button id="add-passage" class="btn btn-primary">Add passage</button>\
+                    </div>\
+                    <h3>View</h3>\
+                    <div class="toolbar">\
+                      <button id="collapse-all" class="btn btn-primary">Collapse all</button>\
+                      <button id="uncollapse-all" class="btn btn-primary">Uncollapse all</button>\
+                    </div>\
                 </div>\
                 <div role="tabpanel" class="tab-pane" id="tab-output">\
                     <div id="output-container">\

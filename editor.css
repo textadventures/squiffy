@@ -79,6 +79,18 @@ ul.dropdown-menu a {
     cursor: pointer;
 }
 
+.toolbar {
+  margin-top: 10px;
+}
+
+.tab-pane h3:first-of-type {
+  margin-top: 0;
+}
+
+.tab-pane h3:not(:first-of-type) {
+  margin-top: 30px;
+}
+
 .ace-squiffy .ace_gutter {
     background: #ebebeb;
     color: #333;
