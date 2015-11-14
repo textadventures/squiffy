@@ -414,6 +414,18 @@
             
             editor.setTheme('ace/theme/squiffy');
             
+            define('ace/folding/squiffy', [], function(require, exports, module) { 
+              var oop = require('ace/lib/oop');
+              var BaseFoldMode = require('ace/mode/folding/markdown').FoldMode;
+              var FoldMode = function () {};
+              oop.inherits(FoldMode, BaseFoldMode);
+              exports.FoldMode = FoldMode;
+              
+              (function() {
+                  this.foldingStartMarker = /^(?:\[\[(.*)\]\]:|\[(.*)\]:)$/;
+              }).call(FoldMode.prototype);
+            });
+            
             define('ace/mode/squiffy', [], function(require, exports, module) {             
               var oop = require('ace/lib/oop');
               var MarkdownMode = require('ace/mode/markdown').Mode;
@@ -423,8 +435,7 @@
               
               var Mode = function() {
                 this.HighlightRules = SquiffyHighlightRules;
-                // TODO...
-                //this.foldingRules = new SquiffyFoldMode();
+                this.foldingRules = new SquiffyFoldMode();
               };
               oop.inherits(Mode, MarkdownMode);
               exports.Mode = Mode;
@@ -456,19 +467,6 @@
               };
               oop.inherits(SquiffyHighlightRules, TextHighlightRules);
               exports.SquiffyHighlightRules = SquiffyHighlightRules;
-            });
-            
-            // TODO...
-            define('ace/folding/squiffy', [], function(require, exports, module) { 
-              var oop = require('ace/lib/oop');
-              var BaseFoldMode = require('ace/mode/folding/markdown').FoldMode;
-              var FoldMode = function () {};
-              oop.inherits(FoldMode, BaseFoldMode);
-              exports.FoldMode = FoldMode;
-              
-              (function() {
-                  this.foldingStartMarker = /^(?:\[\[(.*)\]\]:|\[(.*)\]:)$/;
-              }).call(FoldMode.prototype);
             });
             
             editor.getSession().setMode('ace/mode/squiffy');
