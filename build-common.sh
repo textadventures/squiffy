@@ -23,6 +23,7 @@ cp bower_components/bootbox/bootbox.js build/bower_components/bootbox
 mkdir -p build/bower_components/chosen
 cp bower_components/chosen/chosen.jquery.min.js build/bower_components/chosen
 cp bower_components/chosen/chosen.min.css build/bower_components/chosen
+cp bower_components/chosen/*.png build/bower_components/chosen
 
 cp desktop.* build
 cp editor.css build
