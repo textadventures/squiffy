@@ -1,3 +1,6 @@
+/* global __dirname */
+/* global process */
+
 var app = require('app');  // Module to control application life.
 var BrowserWindow = require('browser-window');  // Module to create native browser window.
 var storage = require('./storage');

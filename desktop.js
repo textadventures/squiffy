@@ -1,3 +1,7 @@
+/* global __dirname */
+/* global $ */
+/* global process */
+
 $(function () {
   var compiler = require('squiffy/compiler.js');
   var shell = require('shell');
