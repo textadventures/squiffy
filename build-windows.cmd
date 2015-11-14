@@ -20,6 +20,11 @@ copy bower_components\jquery-ui-layout-bower\source\stable\jquery.layout.min.js 
 md build\bower_components\bootbox
 copy bower_components\bootbox\bootbox.js build\bower_components\bootbox
 
+md build\bower_components\chosen
+copy bower_components\chosen\chosen.jquery.min.js build\bower_components\chosen
+copy bower_components\chosen\chosen.min.css build\bower_components\chosen
+copy bower_components\chosen\*.png build\bower_components\chosen
+
 copy desktop.* build
 copy editor.css build
 copy example.squiffy build
