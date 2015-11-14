@@ -1,12 +1,17 @@
 {
   "name": "squiffy-editor",
-  "version": "4.0.0",
+  "version": "5.0.0",
   "description": "",
   "main": "main.js",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/textadventures/squiffy-editor.git"
+  },
   "devDependencies": {
     "electron-prebuilt": "^0.34.3"
   },
   "dependencies": {
-    "squiffy": "^4.0.3"
+    "squiffy": "^5.0.0"
   }
 }
