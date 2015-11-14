@@ -162,8 +162,15 @@
       var range = new Range(insertLine, 0, insertLine, 0);
       editor.session.replace(range, text);
       
-      // TODO: set new cursor position
-      // TODO: if selection is empty, set cursor position to middle of [[ and ]]
+      if (selection) {
+        // move cursor to new section/passage
+        moveTo(insertLine + 1);
+      }
+      else {
+        // no name was specified, so set cursor position to middle of [[ and ]]
+        var column = isSection ? 2 : 1;
+        moveTo(insertLine, column);
+      }
     };
     
     var showSettings = function () {
@@ -353,9 +360,9 @@
         });
     };
 
-    var moveTo = function (row) {
+    var moveTo = function (row, column) {
         var Range = ace.require('ace/range').Range;
-        editor.selection.setRange(new Range(row, 0, row, 0));
+        editor.selection.setRange(new Range(row, column, row, column));
         editor.renderer.scrollCursorIntoView();
         editor.focus();
     };
