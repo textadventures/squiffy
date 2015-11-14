@@ -152,11 +152,24 @@
       else {
         text = '[' + selection + ']';
       }
-      text = text + ':\n\n';
+      
+      if (selection) {
+        // replace the selected text with a link to new section/passage
+        editor.session.replace(editor.selection.getRange(), text);
+      }
+      
+      text = text + ':\n';
       var insertLine = currentSection.end;
+      var moveToLine = insertLine;
       if (!insertLine) {
+        // adding new section/passage to the end of the document
         insertLine = editor.session.doc.$lines.length;
         text = '\n\n' + text;
+        moveToLine = insertLine + 1;
+      }
+      else {
+        // adding new section/passage in the middle of the document
+        text = text + '\n\n';
       }
       var Range = ace.require('ace/range').Range;
       var range = new Range(insertLine, 0, insertLine, 0);
@@ -164,12 +177,12 @@
       
       if (selection) {
         // move cursor to new section/passage
-        moveTo(insertLine + 1);
+        moveTo(moveToLine + 1);
       }
       else {
         // no name was specified, so set cursor position to middle of [[ and ]]
         var column = isSection ? 2 : 1;
-        moveTo(insertLine, column);
+        moveTo(moveToLine, column);
       }
     };
     
@@ -361,6 +374,7 @@
     };
 
     var moveTo = function (row, column) {
+        column = column || 0;
         var Range = ace.require('ace/range').Range;
         editor.selection.setRange(new Range(row, column, row, column));
         editor.renderer.scrollCursorIntoView();
