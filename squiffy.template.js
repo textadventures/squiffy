@@ -15,6 +15,7 @@ var squiffy = {};
             var section = link.data('section');
             var rotateAttr = link.attr('data-rotate');
             var sequenceAttr = link.attr('data-sequence');
+            var lastPass = 0
             if (passage) {
                 disableLink(link);
                 squiffy.set('_turncount', squiffy.get('_turncount') + 1);
