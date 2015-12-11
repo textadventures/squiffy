@@ -24,8 +24,17 @@ var squiffy = {};
                     squiffy.story.passage(passage);
                 }
                 var turnPassage = '@' + squiffy.get('_turncount');
+                for (var i = 0; i < Object.keys(squiffy.story.section.passages).length; i++)
+                    {if ((((Object.keys(squiffy.story.section.passages)[i]).substring(0,1)!= '') && ((Object.keys(squiffy.story.section.passages)[i]).substring(0,1)!='@')))
+                        {lastPass += 1;};}
                 if (turnPassage in squiffy.story.section.passages) {
                     squiffy.story.passage(turnPassage);
+                    
+                }
+                if (squiffy.get('_turncount')>= lastPass) {
+                        if ("@last" in squiffy.story.section.passages) {
+                        squiffy.story.passage("@last");
+                    };
                 }
             }
             else if (section) {
