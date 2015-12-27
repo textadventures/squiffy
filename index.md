@@ -61,6 +61,6 @@ Squiffy lives in two different GitHub repositories:
 
 If you find a bug, please log a [Squiffy compiler issue](https://github.com/textadventures/squiffy/issues) or a [Squiffy editor issue](https://github.com/textadventures/squiffy-editor/issues).
 
-You can also discuss Squiffy at [the forum](http://forum.textadventures.co.uk/viewforum.php?f=24), or get technical help at [IF Answers](http://ifanswers.com).
+You can also discuss Squiffy at [the forum](http://forum.textadventures.co.uk/viewforum.php?f=24).
 
 Squiffy is completely open source, including this documentation! The source code and documentation both live [on GitHub](https://github.com/textadventures/squiffy) (documentation is in the `gh-pages` branch).
