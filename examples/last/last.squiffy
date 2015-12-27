@@ -1,0 +1,32 @@
+Test section with some passages. [a], [b], [c].
+
+[a]:
+Passage A.
+
+[b]:
+Passage B.
+
+[c]:
+Passage C.
+
+[@last]:
+You saw all passages! Now go to the [[next section]](section2).
+
+[[section2]]:
+
+Second test. [a], [b], [c].
+
+[]:
+Master passage.
+
+[a]:
+Passage A.
+
+[b]:
+Passage B.
+
+[c]:
+Passage C.
+
+[@last]:
+You saw all passages!

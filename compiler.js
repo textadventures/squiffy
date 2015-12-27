@@ -177,6 +177,15 @@
                 if (section.js.length > 0) {
                     this.writeJs(outputJsFile, 2, section.js);
                 }
+                if ('@last' in section.passages) {
+                    var passageCount = 0;
+                    _.each(section.passages, function(passage, passageName) {
+                        if (passageName && passageName.substr(0, 1) !== '@') {
+                            passageCount++;
+                        }
+                    });
+                    outputJsFile.push('\t\t\'passageCount\': ' + passageCount + ',\n');
+                }
 
                 outputJsFile.push('\t\t\'passages\': {\n');
                 _.each(section.passages, function(passage, passageName) {

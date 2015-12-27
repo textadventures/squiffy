@@ -15,7 +15,6 @@ var squiffy = {};
             var section = link.data('section');
             var rotateAttr = link.attr('data-rotate');
             var sequenceAttr = link.attr('data-sequence');
-            var lastPass = 0
             if (passage) {
                 disableLink(link);
                 squiffy.set('_turncount', squiffy.get('_turncount') + 1);
@@ -25,17 +24,11 @@ var squiffy = {};
                     squiffy.story.passage(passage);
                 }
                 var turnPassage = '@' + squiffy.get('_turncount');
-                for (var i = 0; i < Object.keys(squiffy.story.section.passages).length; i++)
-                    {if ((((Object.keys(squiffy.story.section.passages)[i]).substring(0,1)!= '') && ((Object.keys(squiffy.story.section.passages)[i]).substring(0,1)!='@')))
-                        {lastPass += 1;};}
                 if (turnPassage in squiffy.story.section.passages) {
                     squiffy.story.passage(turnPassage);
-                    
                 }
-                if (squiffy.get('_turncount')>= lastPass) {
-                        if ("@last" in squiffy.story.section.passages) {
-                        squiffy.story.passage("@last");
-                    };
+                if ('@last' in squiffy.story.section.passages && squiffy.get('_turncount')>= squiffy.story.section.passageCount) {
+                    squiffy.story.passage('@last');
                 }
             }
             else if (section) {
