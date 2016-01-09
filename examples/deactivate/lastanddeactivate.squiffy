@@ -1,0 +1,40 @@
+Test section with some passages. [a], [b], [c], [d].
+
+[a]:
+@deactivate b
+Passage A.
+
+[b]:
+Passage B.
+
+[c]:
+Passage C.
+
+[d]:
+Passage D.
+
+[@last]:
+You saw all passages! Now go to the [[next section]](section2).
+
+[[section2]]:
+
+Second test. [a], [b], [c], [d].
+
+[]:
+Master passage.
+
+[a]:
+@deactivate b
+Passage A.
+
+[b]:
+Passage B.
+
+[c]:
+Passage C.
+
+[d]:
+Passage D.
+
+[@last]:
+You saw all passages!

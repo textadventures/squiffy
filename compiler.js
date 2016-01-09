@@ -239,6 +239,7 @@
             replace: /^@replace (.*$)/,
             js: /^(\t| {4})(.*)$/,
             continue: /^\+\+\+(.*)$/,
+            deactivate: /^@deactivate (.*$)/,
         };
 
         this.processFile = function(story, inputFilename, isFirst) {
@@ -342,6 +343,10 @@
                 else if (match.dec) {
                     section = this.addAttribute(match.dec[1] + '-=' + (match.dec[2] === undefined ? '1' : match.dec[2]), story, section, passage, isFirst, inputFilename, lineCount);
                 }
+                else if (match.deactivate) {
+                    section = this.addJS('$("[data-passage|=' + match.deactivate[1] + ']").addClass("disabled"); $("[data-passage|=' + match.deactivate[1] + ']").attr("tabindex", -1); squiffy.set("_turncount", squiffy.get("_turncount") + 1)', 
+                        story, section, passage, isFirst, inputFilename, lineCount);
+                }
                 else if (match.replace) {
                     var replaceAttribute = match.replace[1];
                     var attributeMatch = /^(.*?)=(.*)$/.exec(replaceAttribute);
@@ -394,6 +399,17 @@
             }
             return section;
         };
+
+        this.addJS = function (js, story, section, passage, isFirst, inputFilename, lineCount) {
+            if (!passage) {
+                section = this.ensureSectionExists(story, section, isFirst, inputFilename, lineCount);
+                section.addJS(js);
+            }
+            else {
+                passage.addJS(js);
+            }
+            return section;
+        };        
 
         this.processText = function(input, story, section, passage) {
             // namedSectionLinkRegex matches:
