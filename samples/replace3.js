@@ -1,4 +1,4 @@
-// Created with Squiffy 4.0.1
+// Created with Squiffy 5.1.0
 // https://github.com/textadventures/squiffy
 
 (function(){
@@ -13,14 +13,14 @@ var squiffy = {};
     squiffy.story = {};
 
     var initLinkHandler = function () {
-        squiffy.ui.output.on('click', 'a.squiffy-link', function (event) {
-            if ($(this).hasClass('disabled')) return;
-            var passage = $(this).data('passage');
-            var section = $(this).data('section');
-            var rotateAttr = $(this).attr('data-rotate');
-            var sequenceAttr = $(this).attr('data-sequence');
+        var handleLink = function (link) {
+            if (link.hasClass('disabled')) return;
+            var passage = link.data('passage');
+            var section = link.data('section');
+            var rotateAttr = link.attr('data-rotate');
+            var sequenceAttr = link.attr('data-sequence');
             if (passage) {
-                $(this).addClass('disabled');
+                disableLink(link);
                 squiffy.set('_turncount', squiffy.get('_turncount') + 1);
                 passage = processLink(passage);
                 if (passage) {
@@ -31,32 +31,49 @@ var squiffy = {};
                 if (turnPassage in squiffy.story.section.passages) {
                     squiffy.story.passage(turnPassage);
                 }
+                if ('@last' in squiffy.story.section.passages && squiffy.get('_turncount')>= squiffy.story.section.passageCount) {
+                    squiffy.story.passage('@last');
+                }
             }
             else if (section) {
                 currentSection.append('<hr/>');
-                $(this).addClass('disabled');
+                disableLink(link);
                 section = processLink(section);
                 squiffy.story.go(section);
             }
             else if (rotateAttr || sequenceAttr) {
-                var result = rotate(rotateAttr || sequenceAttr, rotateAttr ? $(this).text() : '');
-                $(this).html(result[0].replace(/&quot;/g, '"').replace(/&#39;/g, '\''));
+                var result = rotate(rotateAttr || sequenceAttr, rotateAttr ? link.text() : '');
+                link.html(result[0].replace(/&quot;/g, '"').replace(/&#39;/g, '\''));
                 var dataAttribute = rotateAttr ? 'data-rotate' : 'data-sequence';
-                $(this).attr(dataAttribute, result[1]);
+                link.attr(dataAttribute, result[1]);
                 if (!result[1]) {
-                    $(this).addClass('disabled');
+                    disableLink(link);
                 }
-                if ($(this).attr('data-attribute')) {
-                    squiffy.set($(this).attr('data-attribute'), result[0]);
+                if (link.attr('data-attribute')) {
+                    squiffy.set(link.attr('data-attribute'), result[0]);
                 }
                 squiffy.story.save();
             }
+        };
+
+        squiffy.ui.output.on('click', 'a.squiffy-link', function () {
+            handleLink(jQuery(this));
+        });
+
+        squiffy.ui.output.on('keypress', 'a.squiffy-link', function (e) {
+            if (e.which !== 13) return;
+            handleLink(jQuery(this));
         });
 
         squiffy.ui.output.on('mousedown', 'a.squiffy-link', function (event) {
             event.preventDefault();
         });
     };
+
+    var disableLink = function (link) {
+        link.addClass('disabled');
+        link.attr('tabindex', -1);
+    }
     
     squiffy.story.begin = function () {
         if (!squiffy.story.load()) {
@@ -223,7 +240,7 @@ var squiffy = {};
     squiffy.story.restart = function() {
         if (squiffy.ui.settings.persist && window.localStorage) {
             var keys = Object.keys(localStorage);
-            $.each(keys, function (idx, key) {
+            jQuery.each(keys, function (idx, key) {
                 if (startsWith(key, squiffy.story.id)) {
                     localStorage.removeItem(key);
                 }
@@ -249,7 +266,7 @@ var squiffy = {};
         var output = squiffy.get('_output');
         if (!output) return false;
         squiffy.ui.output.html(output);
-        currentSection = $('#' + squiffy.get('_output-section'));
+        currentSection = jQuery('#' + squiffy.get('_output-section'));
         squiffy.story.section = squiffy.story.sections[squiffy.get('_section')];
         var transition = squiffy.get('_transition');
         if (transition) {
@@ -281,12 +298,12 @@ var squiffy = {};
 
     var newSection = function() {
         if (currentSection) {
-            $('.squiffy-link', currentSection).addClass('disabled');
+            disableLink(jQuery('.squiffy-link', currentSection));
         }
         var sectionCount = squiffy.get('_section-count') + 1;
         squiffy.set('_section-count', sectionCount);
         var id = 'squiffy-section-' + sectionCount;
-        currentSection = $('<div/>', {
+        currentSection = jQuery('<div/>', {
             id: id,
         }).appendTo(squiffy.ui.output);
         squiffy.set('_output-section', id);
@@ -295,7 +312,7 @@ var squiffy = {};
     squiffy.ui.write = function(text) {
         screenIsClear = false;
         scrollPosition = squiffy.ui.output.height();
-        currentSection.append($('<div/>').html(squiffy.ui.processText(text)));
+        currentSection.append(jQuery('<div/>').html(squiffy.ui.processText(text)));
         squiffy.ui.scrollToEnd();
     };
 
@@ -318,13 +335,13 @@ var squiffy = {};
         }
         else {
             scrollTo = scrollPosition;
-            currentScrollTop = Math.max($('body').scrollTop(), $('html').scrollTop());
+            currentScrollTop = Math.max(jQuery('body').scrollTop(), jQuery('html').scrollTop());
             if (scrollTo > currentScrollTop) {
-                var maxScrollTop = $(document).height() - $(window).height();
+                var maxScrollTop = jQuery(document).height() - jQuery(window).height();
                 if (scrollTo > maxScrollTop) scrollTo = maxScrollTop;
                 distance = scrollTo - currentScrollTop;
                 duration = distance / 0.5;
-                $('body,html').stop().animate({ scrollTop: scrollTo }, duration);
+                jQuery('body,html').stop().animate({ scrollTop: scrollTo }, duration);
             }
         }
     };
@@ -542,7 +559,7 @@ var squiffy = {};
 
     var methods = {
         init: function (options) {
-            var settings = $.extend({
+            var settings = jQuery.extend({
                 scroll: 'body',
                 persist: true,
                 restartPrompt: true,
@@ -550,7 +567,7 @@ var squiffy = {};
             }, options);
 
             squiffy.ui.output = this;
-            squiffy.ui.restart = $(settings.restart);
+            squiffy.ui.restart = jQuery(settings.restart);
             squiffy.ui.settings = settings;
 
             if (settings.scroll === 'element') {
@@ -575,7 +592,7 @@ var squiffy = {};
         }
     };
 
-    $.fn.replace3 = function (methodOrOptions) {
+    jQuery.fn.replace3 = function (methodOrOptions) {
         if (methods[methodOrOptions]) {
             return methods[methodOrOptions]
                 .apply(this, Array.prototype.slice.call(arguments, 1));
@@ -583,7 +600,7 @@ var squiffy = {};
         else if (typeof methodOrOptions === 'object' || ! methodOrOptions) {
             return methods.init.apply(this, arguments);
         } else {
-            $.error('Method ' +  methodOrOptions + ' does not exist');
+            jQuery.error('Method ' +  methodOrOptions + ' does not exist');
         }
     };
 })();
@@ -596,10 +613,10 @@ squiffy.story.start = '_default';
 squiffy.story.id = '1d6503c9e9';
 squiffy.story.sections = {
 	'_default': {
-		'text': "<p>I walked to the shops and I {label:1=bought a pint of milk}.</p>\n<p>But I was <a class=\"squiffy-link link-passage\" data-passage=\"@replace 1=thoughts\" role=\"link\">thinking</a>...</p>",
+		'text': "<p>I walked to the shops and I {label:1=bought a pint of milk}.</p>\n<p>But I was <a class=\"squiffy-link link-passage\" data-passage=\"@replace 1=thoughts\" role=\"link\" tabindex=\"0\">thinking</a>...</p>",
 		'passages': {
 			'thoughts': {
-				'text': "<p>suddenly thought, hang on, I could <a class=\"squiffy-link link-section\" data-section=\"go to the funfair\" role=\"link\">go to the funfair</a> or <a class=\"squiffy-link link-section\" data-section=\"join the circus\" role=\"link\">join the circus</a> instead.</p>",
+				'text': "<p>suddenly thought, hang on, I could <a class=\"squiffy-link link-section\" data-section=\"go to the funfair\" role=\"link\" tabindex=\"0\">go to the funfair</a> or <a class=\"squiffy-link link-section\" data-section=\"join the circus\" role=\"link\" tabindex=\"0\">join the circus</a> instead.</p>",
 			},
 		},
 	},

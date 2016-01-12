@@ -592,7 +592,7 @@ var squiffy = {};
         }
     };
 
-    jQuery.fn.sections = function (methodOrOptions) {
+    jQuery.fn.lastturn = function (methodOrOptions) {
         if (methods[methodOrOptions]) {
             return methods[methodOrOptions]
                 .apply(this, Array.prototype.slice.call(arguments, 1));
@@ -610,21 +610,24 @@ var set = squiffy.set;
 
 
 squiffy.story.start = '_default';
-squiffy.story.id = '471fc45394';
+squiffy.story.id = '9914ec6a58';
 squiffy.story.sections = {
 	'_default': {
-		'text': "<p>Do you want to have the <a class=\"squiffy-link link-section\" data-section=\"roast chicken\" role=\"link\" tabindex=\"0\">roast chicken</a> or skip straight to <a class=\"squiffy-link link-section\" data-section=\"dessert\" role=\"link\" tabindex=\"0\">dessert</a>?</p>",
+		'text': "<p>Looking at the detective&#39;s desk you can see the following items to examine; a <a class=\"squiffy-link link-passage\" data-passage=\"photograph\" role=\"link\" tabindex=\"0\">photograph</a>, a <a class=\"squiffy-link link-passage\" data-passage=\"file\" role=\"link\" tabindex=\"0\">file</a> and a <a class=\"squiffy-link link-passage\" data-passage=\"coffee mug\" role=\"link\" tabindex=\"0\">coffee mug</a>.</p>",
+		'passageCount': 3,
 		'passages': {
-		},
-	},
-	'roast chicken': {
-		'text': "<p>This plate of roast chicken looks delicious.</p>",
-		'passages': {
-		},
-	},
-	'dessert': {
-		'text': "<p>Three different flavours of ice cream - yum!</p>",
-		'passages': {
+			'photograph': {
+				'text': "<p>Looks like some kind of work celebration. The detective is in the middle of the picture holding a basket of fruit and other officers are toasting him.</p>",
+			},
+			'file': {
+				'text': "<p>The file is empty. You notice though that the tab has your brother&#39;s name on it!</p>",
+			},
+			'coffee mug': {
+				'text': "<p>It is just a coffee mug.</p>",
+			},
+			'@last': {
+				'text': "<p>You have examined every item.</p>",
+			},
 		},
 	},
 }
