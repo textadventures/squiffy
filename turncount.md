@@ -8,3 +8,9 @@ You can trigger a passage after the player has made a certain number of clicks w
 In the example below, the text "We're nearly here. The train is pulling into the platform." is always written after the first passage click. After the second passage click, we are moved into the next section.
 
 {% include sample.html file="turncount" %}
+
+You can also trigger a passage to be written only after all the passages in that section have been clicked on.
+
+See the example below where after all passage links have been clicked the text "You have examined every item." will display.
+
+{% include sample.html file="lastturn" %}
