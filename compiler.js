@@ -150,7 +150,7 @@
                 jsTemplateFile.toString();
 
             if (options.scriptOnly && options.pluginName) {
-                jsData = jsData.replace('$.fn.squiffy =', '$.fn.' + options.pluginName + ' =');
+                jsData = jsData.replace('jQuery.fn.squiffy =', 'jQuery.fn.' + options.pluginName + ' =');
             }
 
             var outputJsFile = [];
