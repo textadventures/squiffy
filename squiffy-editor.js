@@ -636,6 +636,7 @@
             <button id="restart" class="btn btn-success" style="display: none"><span class="glyphicon glyphicon-refresh"></span> Restart</button>\
             <span id="info"></span>\
             <div style="float: right">\
+                <button id="settings" class="btn btn-default" data-toggle="tooltip" data-placement="bottom" title="Settings"><span class="glyphicon glyphicon-cog"></span></button>\
                 <div class="btn-group">\
                         <button id="download" class="btn btn-primary dropdown-toggle" style="display: none" data-toggle="dropdown" aria-expanded="false">\
                             <span class="glyphicon glyphicon-cloud-download"></span>\
@@ -648,7 +649,6 @@
                             <li><a id="export-js">Export JavaScript only</a></li>\
                         </ul>\
                 </div>\
-                <button id="settings" class="btn btn-default" data-toggle="tooltip" data-placement="bottom" title="Settings"><span class="glyphicon glyphicon-cog"></span></button>\
                 <button id="preview" class="btn btn-primary" style="display: none"><span class="glyphicon glyphicon-eye-open"></span> Preview</button>\
                 <button id="publish" class="btn btn-primary" style="display: none"><span class="glyphicon glyphicon-circle-arrow-up"></span> Publish</button>\
                 <button id="build" class="btn btn-primary" style="display: none"><span class="glyphicon glyphicon-flash"></span> Build</button>\
