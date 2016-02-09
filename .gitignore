@@ -4,6 +4,7 @@ Squiffy-linux-x64
 Squiffy-darwin-x64
 Output
 build
+dist
 *.dmg
 
 # Logs
