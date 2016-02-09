@@ -53,7 +53,7 @@ var init = function() {
   mainWindow.openFile = openFile;
 
   // and load the index.html of the app.
-  mainWindow.loadUrl('file://' + __dirname + '/index.html');
+  mainWindow.loadUrl('file://' + __dirname + '/desktop.html');
   
   mainWindow.on('close', function () {
     var bounds = mainWindow.getBounds(); 

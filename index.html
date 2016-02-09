@@ -11,10 +11,7 @@
     <link href="editor.css" rel="stylesheet">
     <link href="desktop.css" rel="stylesheet">
 
-    <script>
-      window.$ = window.jQuery = require(__dirname + "/bower_components/jquery/dist/jquery.min.js");
-    </script>
-    <script src="menu.js"></script>
+    <script src="bower_components/jquery/dist/jquery.min.js"></script>
     <script src="bower_components/jquery-ui/jquery-ui.min.js"></script>
     <script src="bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
     <script src="bower_components/ace-builds/src-min/ace.js"></script>
@@ -23,39 +20,12 @@
     <script src="bower_components/bootbox/bootbox.js"></script>
     <script src="bower_components/chosen/chosen.jquery.min.js"></script>
     <script src="squiffy-editor.js"></script>
-    <script src="desktop.js"></script>
+    <script src="browser.js"></script>
   </head>
 
   <body>
     <div id="squiffy-editor">
     </div>
     
-    <div class="modal fade" id="about" tabindex="-1" role="dialog" aria-labelledby="aboutLabel">
-      <div class="modal-dialog" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-            <h4 class="modal-title" id="aboutLabel">About Squiffy</h4>
-          </div>
-          <div class="modal-body">
-            <div class="media">
-              <div class="media-left">
-                <img id="squiffy-logo" class="media-object" src="squiffy.png" alt="Squiffy logo" />
-              </div>
-              <div class="media-body">
-                <h4 class="media-heading">Squiffy 5.0</h4>
-                <p>Build <span id="about-build"></span></p>
-                <p id="about-versions"></p>
-                <p>Copyright &copy; 2015 Alex Warren</p>
-                <p id="about-update"><a href="#" id="update-check">Check for updates</a></p>
-              </div>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-          </div>
-        </div>
-      </div>
-    </div>    
   </body>
 </html>

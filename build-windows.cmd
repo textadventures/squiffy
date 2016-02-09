@@ -28,7 +28,7 @@ copy bower_components\chosen\*.png build\bower_components\chosen
 copy desktop.* build
 copy editor.css build
 copy example.squiffy build
-copy index.html build
+copy desktop.html build
 copy *.js build
 md build\node_modules
 robocopy node_modules build\node_modules /s

@@ -28,7 +28,7 @@ cp bower_components/chosen/*.png build/bower_components/chosen
 cp desktop.* build
 cp editor.css build
 cp example.squiffy build
-cp index.html build
+cp desktop.html build
 cp *.js build
 cp -r node_modules build
 cp package.json build
