@@ -1,13 +1,20 @@
 var gulp = require('gulp');
-var gnf = require('gulp-npm-files');
 var del = require('del');
+var install = require('gulp-install');
+var packager = require('electron-packager');
 
 gulp.task('clean', function() {
-  return del(['dist']);
+  return del(['dist', 'Squiffy-darwin-x64']);
 });
 
-gulp.task('modules', ['clean'], function () {
-  gulp.src(gnf(), {base:'./'}).pipe(gulp.dest('./dist'));
+gulp.task('package.json', ['clean'], function () {
+  return gulp.src('package.json')
+    .pipe(gulp.dest('dist'))
+});
+
+gulp.task('modules', ['clean', 'package.json'], function () {
+  return gulp.src(['dist/package.json'])
+    .pipe(install({production: true}));
 });
 
 gulp.task('bootstrap', ['clean'], function () {
@@ -52,8 +59,26 @@ gulp.task('build-common', ['modules', 'bootstrap', 'jquery', 'ace', 'jquery-ui',
       'example.squiffy',
       'desktop.html',
       '*.js',
-      'package.json',
       'squiffy.png',
     ])
     .pipe(gulp.dest('dist'));
+});
+
+gulp.task('osx', ['build-common'], function (callback) {
+  var options = {
+    dir: './dist',
+    name: 'Squiffy',
+    platform: 'darwin',
+    arch: 'x64',
+    version: '0.36.2',
+    'app-bundle-id': 'uk.co.textadventures.squiffy',
+    'helper-bundle-id': 'uk.co.textadventures.squiffy.helper',
+    icon: 'squiffy.icns',
+    'app-version': '5.0.0'
+  };
+  
+  packager(options, function (err, appPath) {
+    if (err) return console.log(err);
+    callback();
+  });
 });
