@@ -10,7 +10,7 @@ gulp.task('clean', function() {
 });
 
 gulp.task('clean-osx', function() {
-  return del(['Squiffy-darwin-x64']);
+  return del(['Squiffy-darwin-x64', 'Squiffy.dmg']);
 });
 
 gulp.task('clean-linux', function() {
@@ -185,6 +185,14 @@ gulp.task('osx-sign', ['osx-sign-clean'], shell.task([
   'codesign -s "Developer ID Application: Alex Warren (6RPC48SJ57)" Squiffy-darwin-x64/Squiffy.app',
   'spctl --verbose=4 --assess --type execute Squiffy-darwin-x64/Squiffy.app'
 ]));
+
+gulp.task('osx-dmg', ['osx-sign'], function () {
+   var appdmg = require('appdmg');
+   appdmg({
+     source: 'appdmg.json',
+     target: 'Squiffy.dmg'
+   });
+});
 
 gulp.task('windows-setup', ['windows'], function () {
   var innosetup = require('innosetup-compiler');

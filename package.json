@@ -12,6 +12,7 @@
     "url": "https://github.com/textadventures/squiffy-editor.git"
   },
   "devDependencies": {
+    "appdmg": "^0.3.5",
     "del": "^2.2.0",
     "electron-packager": "^5.2.1",
     "electron-prebuilt": "^0.34.3",
