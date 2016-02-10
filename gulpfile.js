@@ -18,7 +18,7 @@ gulp.task('clean-linux', function() {
 });
 
 gulp.task('clean-windows', function() {
-  return del(['Squiffy-win32-ia32']);
+  return del(['Squiffy-win32-ia32', 'Output']);
 });
 
 gulp.task('package.json', ['clean'], function () {
@@ -163,3 +163,10 @@ gulp.task('osx-file-assoc', ['osx'], function () {
 gulp.task('osx-verify-file-assoc', ['osx-file-assoc'], shell.task([
   '/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister -lint -f Squiffy-darwin-x64/Squiffy.app'
 ]));
+
+gulp.task('windows-setup', ['windows'], function () {
+  var innosetup = require('innosetup-compiler');
+  innosetup('setup.iss', {
+    verbose: true
+  });
+});

@@ -20,6 +20,7 @@
     "gulp-install": "^0.6.0",
     "gulp-rename": "^1.2.2",
     "gulp-shell": "^0.5.2",
+    "innosetup-compiler": "^5.5.8",
     "serve-static": "^1.10.0"
   },
   "dependencies": {
