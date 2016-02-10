@@ -2,6 +2,7 @@ var gulp = require('gulp');
 var del = require('del');
 var install = require('gulp-install');
 var packager = require('electron-packager');
+var rename = require('gulp-rename');
 
 gulp.task('clean', function() {
   return del(['dist', 'Squiffy-darwin-x64']);
@@ -81,4 +82,12 @@ gulp.task('osx', ['build-common'], function (callback) {
     if (err) return console.log(err);
     callback();
   });
+});
+
+gulp.task('osx-file-assoc', ['osx'], function () {
+  del(['Squiffy-darwin-x64/Squiffy.app/Contents/Info.plist']);
+  
+  return gulp.src('file association - Info.plist')
+    .pipe(rename('Info.plist'))
+    .pipe(gulp.dest('Squiffy-darwin-x64/Squiffy.app/Contents', {overwrite: true}));
 });
