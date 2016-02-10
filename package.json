@@ -12,7 +12,6 @@
     "url": "https://github.com/textadventures/squiffy-editor.git"
   },
   "devDependencies": {
-    "appdmg": "^0.3.5",
     "del": "^2.2.0",
     "electron-packager": "^5.2.1",
     "electron-prebuilt": "^0.34.3",
@@ -23,6 +22,9 @@
     "gulp-shell": "^0.5.2",
     "innosetup-compiler": "^5.5.8",
     "serve-static": "^1.10.0"
+  },
+  "optionalDependencies": {
+    "appdmg": "^0.3.5"
   },
   "dependencies": {
     "squiffy": "^5.0.0"
