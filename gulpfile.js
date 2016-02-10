@@ -164,6 +164,28 @@ gulp.task('osx-verify-file-assoc', ['osx-file-assoc'], shell.task([
   '/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister -lint -f Squiffy-darwin-x64/Squiffy.app'
 ]));
 
+gulp.task('osx-sign-clean', ['osx-verify-file-assoc'], function () {
+  return del([
+    'Squiffy-darwin-x64/Squiffy.app/Contents/Frameworks/Squiffy Helper.app/Contents/MacOS/Squiffy Helper.cstemp',
+    'Squiffy-darwin-x64/Squiffy.app/Contents/Frameworks/Squiffy Helper EH.app/Contents/MacOS/Squiffy Helper EH.cstemp',
+    'Squiffy-darwin-x64/Squiffy.app/Contents/Frameworks/Squiffy Helper NP.app/Contents/MacOS/Squiffy Helper NP.cstemp'
+  ]);
+});
+
+gulp.task('osx-sign', ['osx-sign-clean'], shell.task([
+  'codesign -s "Developer ID Application: Alex Warren (6RPC48SJ57)" Squiffy-darwin-x64/Squiffy.app/Contents/Frameworks/Squiffy\\ Helper.app',
+  'codesign -s "Developer ID Application: Alex Warren (6RPC48SJ57)" Squiffy-darwin-x64/Squiffy.app/Contents/Frameworks/Squiffy\\ Helper\\ EH.app/Contents/MacOS/Squiffy\\ Helper\\ EH',
+  'codesign -s "Developer ID Application: Alex Warren (6RPC48SJ57)" Squiffy-darwin-x64/Squiffy.app/Contents/Frameworks/Squiffy\\ Helper\\ EH.app',
+  'codesign -s "Developer ID Application: Alex Warren (6RPC48SJ57)" Squiffy-darwin-x64/Squiffy.app/Contents/Frameworks/Squiffy\\ Helper\\ NP.app/Contents/MacOS/Squiffy\\ Helper\\ NP',
+  'codesign -s "Developer ID Application: Alex Warren (6RPC48SJ57)" Squiffy-darwin-x64/Squiffy.app/Contents/Frameworks/Squiffy\\ Helper\\ NP.app',
+  'codesign -s "Developer ID Application: Alex Warren (6RPC48SJ57)" Squiffy-darwin-x64/Squiffy.app/Contents/Frameworks/Electron\\ Framework.framework/Versions/Current/Electron\\ Framework',
+  'codesign -s "Developer ID Application: Alex Warren (6RPC48SJ57)" Squiffy-darwin-x64/Squiffy.app/Contents/Frameworks/Mantle.framework',
+  'codesign -s "Developer ID Application: Alex Warren (6RPC48SJ57)" Squiffy-darwin-x64/Squiffy.app/Contents/Frameworks/ReactiveCocoa.framework',
+  'codesign -s "Developer ID Application: Alex Warren (6RPC48SJ57)" Squiffy-darwin-x64/Squiffy.app/Contents/Frameworks/Squirrel.framework',
+  'codesign -s "Developer ID Application: Alex Warren (6RPC48SJ57)" Squiffy-darwin-x64/Squiffy.app',
+  'spctl --verbose=4 --assess --type execute Squiffy-darwin-x64/Squiffy.app'
+]));
+
 gulp.task('windows-setup', ['windows'], function () {
   var innosetup = require('innosetup-compiler');
   innosetup('setup.iss', {
