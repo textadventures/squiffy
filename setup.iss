@@ -5,7 +5,7 @@
 AppName=Squiffy
 AppVersion={#SquiffyVersion}
 AppVerName=Squiffy {#SquiffyVersion}
-AppCopyright=Copyright ï¿½ 2015 Alex Warren
+AppCopyright=Copyright © 2016 Alex Warren
 VersionInfoVersion={#SquiffyVersion}
 AppPublisher=Alex Warren
 AppPublisherURL=http://textadventures.co.uk/
@@ -16,7 +16,7 @@ DefaultGroupName=Squiffy
 DefaultDirName={pf}\Squiffy
 UninstallDisplayIcon={app}\Squiffy.exe
 OutputDir=..\Output
-SourceDir=Squiffy-win32
+SourceDir=Squiffy-win32-ia32
 AllowNoIcons=yes
 SolidCompression=yes
 PrivilegesRequired=admin
