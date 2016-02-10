@@ -6,7 +6,15 @@ var rename = require('gulp-rename');
 var shell = require('gulp-shell');
 
 gulp.task('clean', function() {
-  return del(['dist', 'Squiffy-darwin-x64']);
+  return del(['dist']);
+});
+
+gulp.task('clean-osx', function() {
+  return del(['Squiffy-darwin-x64']);
+});
+
+gulp.task('clean-linux', function() {
+  return del(['Squiffy-linux-x64']);
 });
 
 gulp.task('package.json', ['clean'], function () {
@@ -72,7 +80,7 @@ electron-packager supports this option:
 but we're hacking in a custom Info.plist so we sign afterwards
 */
 
-gulp.task('osx', ['build-common'], function (callback) {
+gulp.task('osx', ['build-common', 'clean-osx'], function (callback) {
   var options = {
     dir: './dist',
     name: 'Squiffy',
@@ -90,6 +98,26 @@ gulp.task('osx', ['build-common'], function (callback) {
     callback();
   });
 });
+
+
+gulp.task('linux', ['build-common', 'clean-linux'], function (callback) {
+  var options = {
+    dir: './dist',
+    name: 'Squiffy',
+    platform: 'linux',
+    arch: 'x64',
+    version: '0.36.2',
+    'app-bundle-id': 'uk.co.textadventures.squiffy',
+    'helper-bundle-id': 'uk.co.textadventures.squiffy.helper',
+    'app-version': '5.0.0'
+  };
+  
+  packager(options, function (err, appPath) {
+    if (err) return console.log(err);
+    callback();
+  });
+});
+
 
 gulp.task('osx-file-assoc', ['osx'], function () {
   del(['Squiffy-darwin-x64/Squiffy.app/Contents/Info.plist']);
