@@ -17,6 +17,10 @@ gulp.task('clean-linux', function() {
   return del(['Squiffy-linux-x64']);
 });
 
+gulp.task('clean-windows', function() {
+  return del(['Squiffy-win32-ia32']);
+});
+
 gulp.task('package.json', ['clean'], function () {
   return gulp.src('package.json')
     .pipe(gulp.dest('dist'))
@@ -118,6 +122,35 @@ gulp.task('linux', ['build-common', 'clean-linux'], function (callback) {
   });
 });
 
+gulp.task('windows', ['build-common', 'clean-windows'], function (callback) {
+  var options = {
+    dir: './dist',
+    name: 'Squiffy',
+    platform: 'win32',
+    arch: 'ia32',
+    version: '0.36.2',
+    'app-bundle-id': 'uk.co.textadventures.squiffy',
+    'helper-bundle-id': 'uk.co.textadventures.squiffy.helper',
+    icon: 'squiffy.ico',
+    'app-version': '5.0.0',
+    ignore: 'Output',
+    'version-string': {
+      'ProductName': 'Squiffy',
+      'FileDescription': 'Squiffy',
+      'LegalCopyright': 'Copyright (c) 2016 Alex Warren',
+      'OriginalFilename': 'Squiffy.exe',
+      'FileVersion': '5.0.0',
+      'ProductVersion': '5.0.0',
+      'InternalName': 'Squiffy',
+      'CompanyName': 'Alex Warren'
+    }
+  };
+  
+  packager(options, function (err, appPath) {
+    if (err) return console.log(err);
+    callback();
+  });
+});
 
 gulp.task('osx-file-assoc', ['osx'], function () {
   del(['Squiffy-darwin-x64/Squiffy.app/Contents/Info.plist']);
