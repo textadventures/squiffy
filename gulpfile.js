@@ -3,6 +3,7 @@ var del = require('del');
 var install = require('gulp-install');
 var packager = require('electron-packager');
 var rename = require('gulp-rename');
+var shell = require('gulp-shell');
 
 gulp.task('clean', function() {
   return del(['dist', 'Squiffy-darwin-x64']);
@@ -65,6 +66,12 @@ gulp.task('build-common', ['modules', 'bootstrap', 'jquery', 'ace', 'jquery-ui',
     .pipe(gulp.dest('dist'));
 });
 
+/*
+electron-packager supports this option:
+  --sign="Developer ID Application: Alex Warren (6RPC48SJ57)"
+but we're hacking in a custom Info.plist so we sign afterwards
+*/
+
 gulp.task('osx', ['build-common'], function (callback) {
   var options = {
     dir: './dist',
@@ -91,3 +98,7 @@ gulp.task('osx-file-assoc', ['osx'], function () {
     .pipe(rename('Info.plist'))
     .pipe(gulp.dest('Squiffy-darwin-x64/Squiffy.app/Contents', {overwrite: true}));
 });
+
+gulp.task('osx-verify-file-assoc', ['osx-file-assoc'], shell.task([
+  '/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister -lint -f Squiffy-darwin-x64/Squiffy.app'
+]));
