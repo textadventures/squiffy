@@ -1,14 +1,24 @@
+/* jshint esversion: 6 */
+
 var gulp = require('gulp');
 var del = require('del');
 var install = require('gulp-install');
 var packager = require('electron-packager');
 var rename = require('gulp-rename');
 var shell = require('gulp-shell');
+var jshint = require('gulp-jshint');
 
 var electronVersion = '0.36.2';
 var squiffyVersion = '5.0.0';
 
-gulp.task('clean', function() {
+gulp.task('lint', function() {
+  return gulp.src('./*.js')
+    .pipe(jshint())
+    .pipe(jshint.reporter('jshint-stylish'))
+    .pipe(jshint.reporter('fail'));
+});
+
+gulp.task('clean', ['lint'], function() {
   return del(['dist']);
 });
 
@@ -26,7 +36,7 @@ gulp.task('clean-windows', function() {
 
 gulp.task('package.json', ['clean'], function () {
   return gulp.src('package.json')
-    .pipe(gulp.dest('dist'))
+    .pipe(gulp.dest('dist'));
 });
 
 gulp.task('modules', ['clean', 'package.json'], function () {
@@ -36,37 +46,37 @@ gulp.task('modules', ['clean', 'package.json'], function () {
 
 gulp.task('bootstrap', ['clean'], function () {
   return gulp.src('bower_components/bootstrap/dist/**/*')
-    .pipe(gulp.dest('dist/bower_components/bootstrap/dist'))
+    .pipe(gulp.dest('dist/bower_components/bootstrap/dist'));
 });
 
 gulp.task('jquery', ['clean'], function () {
   return gulp.src('bower_components/jquery/dist/**/*')
-    .pipe(gulp.dest('dist/bower_components/jquery/dist'))
+    .pipe(gulp.dest('dist/bower_components/jquery/dist'));
 });
 
 gulp.task('ace', ['clean'], function () {
   return gulp.src('bower_components/ace-builds/src-min/**/*')
-    .pipe(gulp.dest('dist/bower_components/ace-builds/src-min'))
+    .pipe(gulp.dest('dist/bower_components/ace-builds/src-min'));
 });
 
 gulp.task('jquery-ui', ['clean'], function () {
   return gulp.src('bower_components/jquery-ui/jquery-ui.min.js')
-    .pipe(gulp.dest('dist/bower_components/jquery-ui'))
+    .pipe(gulp.dest('dist/bower_components/jquery-ui'));
 });
 
 gulp.task('jquery-ui-layout', ['clean'], function () {
   return gulp.src('bower_components/jquery-ui-layout-bower/source/stable/jquery.layout.min.js')
-    .pipe(gulp.dest('dist/bower_components/jquery-ui-layout-bower/source/stable'))
+    .pipe(gulp.dest('dist/bower_components/jquery-ui-layout-bower/source/stable'));
 });
 
 gulp.task('bootbox', ['clean'], function () {
   return gulp.src('bower_components/bootbox/bootbox.js')
-    .pipe(gulp.dest('dist/bower_components/bootbox'))
+    .pipe(gulp.dest('dist/bower_components/bootbox'));
 });
 
 gulp.task('chosen', ['clean'], function () {
   return gulp.src('bower_components/chosen/**/*')
-    .pipe(gulp.dest('dist/bower_components/chosen'))
+    .pipe(gulp.dest('dist/bower_components/chosen'));
 });
 
 gulp.task('build-common', ['modules', 'bootstrap', 'jquery', 'ace', 'jquery-ui', 'jquery-ui-layout', 'bootbox', 'chosen'], function () {

@@ -215,7 +215,7 @@ $(function () {
     $('#about-build').text(editorVersion);
     var versions = [];
     for (var key in process.versions) {
-      versions.push(key + ' ' + process.versions[key])
+      versions.push(key + ' ' + process.versions[key]);
     }
     $('#about-versions').text(versions.join(', '));
     $('#about').modal();

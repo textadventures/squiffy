@@ -69,9 +69,9 @@ $(function() {
         }, 1);
     };
 
-    var saved = localStorage['squiffy'];
+    var saved = localStorage.squiffy;
     if (saved) {
-        init(localStorage['squiffy']);
+        init(localStorage.squiffy);
     } else {
         init('@title New Game\n\n' +
             'Start writing! You can delete all of this text, or play around with it if you\'re new to Squiffy.\n\n' +
