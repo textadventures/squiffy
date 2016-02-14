@@ -5,6 +5,9 @@ var packager = require('electron-packager');
 var rename = require('gulp-rename');
 var shell = require('gulp-shell');
 
+var electronVersion = '0.36.2';
+var squiffyVersion = '5.0.0';
+
 gulp.task('clean', function() {
   return del(['dist']);
 });
@@ -90,11 +93,11 @@ gulp.task('osx', ['build-common', 'clean-osx'], function (callback) {
     name: 'Squiffy',
     platform: 'darwin',
     arch: 'x64',
-    version: '0.36.2',
+    version: electronVersion,
     'app-bundle-id': 'uk.co.textadventures.squiffy',
     'helper-bundle-id': 'uk.co.textadventures.squiffy.helper',
     icon: 'squiffy.icns',
-    'app-version': '5.0.0'
+    'app-version': squiffyVersion
   };
   
   packager(options, function (err, appPath) {
@@ -110,10 +113,10 @@ gulp.task('linux', ['build-common', 'clean-linux'], function (callback) {
     name: 'Squiffy',
     platform: 'linux',
     arch: 'x64',
-    version: '0.36.2',
+    version: electronVersion,
     'app-bundle-id': 'uk.co.textadventures.squiffy',
     'helper-bundle-id': 'uk.co.textadventures.squiffy.helper',
-    'app-version': '5.0.0'
+    'app-version': squiffyVersion
   };
   
   packager(options, function (err, appPath) {
@@ -128,19 +131,19 @@ gulp.task('windows', ['build-common', 'clean-windows'], function (callback) {
     name: 'Squiffy',
     platform: 'win32',
     arch: 'ia32',
-    version: '0.36.2',
+    version: electronVersion,
     'app-bundle-id': 'uk.co.textadventures.squiffy',
     'helper-bundle-id': 'uk.co.textadventures.squiffy.helper',
     icon: 'squiffy.ico',
-    'app-version': '5.0.0',
+    'app-version': squiffyVersion,
     ignore: 'Output',
     'version-string': {
       'ProductName': 'Squiffy',
       'FileDescription': 'Squiffy',
       'LegalCopyright': 'Copyright (c) 2016 Alex Warren',
       'OriginalFilename': 'Squiffy.exe',
-      'FileVersion': '5.0.0',
-      'ProductVersion': '5.0.0',
+      'FileVersion': squiffyVersion,
+      'ProductVersion': squiffyVersion,
       'InternalName': 'Squiffy',
       'CompanyName': 'Alex Warren'
     }

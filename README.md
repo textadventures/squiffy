@@ -11,15 +11,16 @@ To build the desktop version:
 
 - install Node
 - install Bower: `npm install bower -g`
-- install Electron: `npm install electron-prebuilt -g`
+- install Gulp: `npm install gulp-cli -g`
 - clone this repository
 - run `npm install` to get the Node packages
 - run `bower install` to get the Bower packages
 
-You can now run the Squiffy Editor using `electron .`
+You can now run the Squiffy Editor using `npm start`. (You can also run it in a web browser using `npm run-script web`
+and going to `http://localhost:8282`)
 
 To package the desktop app, a script is provided for each platform:
 
-- `build-windows.cmd`
-- `build-osx.sh`
-- `build-linux.sh`
+- `gulp osx` creates `Squiffy-darwin-x64\Squiffy.app`
+- `gulp linux` creates `Squiffy-linux-x64\Squiffy`
+- `gulp windows` creates `Squiffy-win32-ia32\Squiffy.exe`
