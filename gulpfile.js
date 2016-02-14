@@ -190,16 +190,16 @@ gulp.task('osx-sign', ['osx-sign-clean'], shell.task([
 ]));
 
 gulp.task('osx-dmg', ['osx-sign'], function () {
-   var appdmg = require('appdmg');
-   appdmg({
-     source: 'appdmg.json',
-     target: 'Squiffy.dmg'
-   });
+  var appdmg = require('appdmg');
+  appdmg({
+    source: 'appdmg.json',
+    target: `Squiffy.${squiffyVersion}.OSX.dmg`
+  });
 });
-
+   
 gulp.task('windows-setup', ['windows'], function () {
   var innosetup = require('innosetup-compiler');
-  innosetup('setup.iss', {
-    verbose: true
+    innosetup('setup.iss', {
+      verbose: true
   });
 });
