@@ -166,11 +166,22 @@ gulp.task('windows', ['build-common', 'clean-windows'], function (callback) {
 });
 
 gulp.task('osx-file-assoc', ['osx'], function () {
-  del(['Squiffy-darwin-x64/Squiffy.app/Contents/Info.plist']);
+  var plist = require('plist');
+  var fs = require('fs');
+  var obj = plist.parse(fs.readFileSync('Squiffy-darwin-x64/Squiffy.app/Contents/Info.plist', 'utf8'));
   
-  return gulp.src('file association - Info.plist')
-    .pipe(rename('Info.plist'))
-    .pipe(gulp.dest('Squiffy-darwin-x64/Squiffy.app/Contents', {overwrite: true}));
+  obj.CFBundleDocumentTypes = [{
+    'CFBundleTypeExtensions':['squiffy'],
+    'CFBundleTypeIconFile':'atom',
+    'CFBundleTypeName':'Squiffy project',
+    'CFBundleTypeRole':'Editor',
+    'CFBundleTypeOSTypes':[
+      'TEXT','utxt','TUTX','****'
+    ]}];
+  
+  fs.writeFileSync('Squiffy-darwin-x64/Squiffy.app/Contents/Info.plist',
+    plist.build(obj),
+    'utf8');
 });
 
 gulp.task('osx-verify-file-assoc', ['osx-file-assoc'], shell.task([
