@@ -13,7 +13,7 @@ Using Squiffy
 -------------
 
 - You can [use Squiffy in your web browser](http://textadventures.co.uk/squiffy/editor)
-- Or you can download Squiffy for [Windows](https://github.com/textadventures/squiffy-editor/releases/download/v4.0/Squiffy.4.0.Windows.exe), [OSX](https://github.com/textadventures/squiffy-editor/releases/download/v4.0/Squiffy.4.0.OS.X.dmg) or [Linux](https://github.com/textadventures/squiffy-editor/releases/download/v4.0/Squiffy.4.0.Linux.tar.gz)
+- Or you can [download Squiffy for Windows, OS X or Linux](https://github.com/textadventures/squiffy-editor/releases)
 - Or you can use any text editor and compile games using the [command-line version](cli.html)
 
 Example
