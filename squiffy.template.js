@@ -421,7 +421,7 @@ var squiffy = {};
 
             var text = command.substring(colon + 1);
             var condition = command.substring(0, colon);
-
+			condition = condition.replace("<", "&lt;");
             var operatorRegex = /([\w ]*)(=|&lt;=|&gt;=|&lt;&gt;|&lt;|&gt;)(.*)/;
             var match = operatorRegex.exec(condition);
 
