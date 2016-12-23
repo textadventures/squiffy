@@ -78,6 +78,7 @@ var squiffy = {};
     };
 
     var processLink = function(link) {
+		link = String(link);
         var sections = link.split(',');
         var first = true;
         var target = null;
