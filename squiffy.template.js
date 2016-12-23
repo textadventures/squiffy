@@ -422,7 +422,7 @@ var squiffy = {};
             var text = command.substring(colon + 1);
             var condition = command.substring(0, colon);
 
-            var operatorRegex = /([\w ]*)(=|&lt;=|&gt;=|&lt;&gt;|&lt;|&gt;)(.*)/;
+            var operatorRegex = /([\w ]*)(=<|=|&lt;=|&gt;=|&lt;&gt;|&lt;|&gt;)(.*)/;
             var match = operatorRegex.exec(condition);
 
             var result = false;
