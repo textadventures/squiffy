@@ -296,7 +296,7 @@ var squiffy = {};
 				//console.log("sfx["+valores[0]+"].stop();");
 				sfx[valores[0]].stop();
 			}
-			else
+			//else
 				//console.log("Es undefined.");
 		}
     };
