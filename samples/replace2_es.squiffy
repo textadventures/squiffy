@@ -1,0 +1,8 @@
+He ido de compras y he comprado {label:1=un poco de leche}.
+
+O quiz&aacute;s [He comprado algo diferente?](next passage)
+
+[next passage]:
+@replace 1=una botella de whisky
+
+Cambi&eacute; de idea.

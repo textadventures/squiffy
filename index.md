@@ -9,18 +9,6 @@ Squiffy is free and open source. It creates HTML and JavaScript, so you can uplo
 
 A player's state is automatically saved to their browser's local storage, so they can always pick up from where they left off just by going back to the same web page.
 
-Using Squiffy
--------------
-
-- You can [use Squiffy in your web browser](http://textadventures.co.uk/squiffy/editor)
-- Or you can [download Squiffy for Windows, OS X or Linux](https://github.com/textadventures/squiffy-editor/releases)
-- Or you can use any text editor and compile games using the [command-line version](cli.html)
-
-Example
--------
-
-{% include sample.html file="example" %}
-
 Documentation
 -------------
 
@@ -39,6 +27,18 @@ Documentation
 - [Master sections and passages](master.html)
 - [Importing Files](import.html) (command-line version only)
 - [Customising HTML and CSS](customise.html) (command-line version only)
+
+Using Squiffy
+-------------
+
+- You can [use Squiffy in your web browser](http://textadventures.co.uk/squiffy/editor)
+- Or you can [download Squiffy for Windows, OS X or Linux](https://github.com/textadventures/squiffy-editor/releases)
+- Or you can use any text editor and compile games using the [command-line version](cli.html)
+
+Example
+-------
+
+{% include sample.html file="example" %}
 
 Publishing your game
 --------------------

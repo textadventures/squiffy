@@ -1,0 +1,7 @@
+Puedes ver una [nevera]. Quieres [abrirla]?
+
+[abrirla]:
+Has abierto la nevera.
+
+[nevera]:
+La nevera est&aacute; {if seen abrirla:abierta, y hay botellas vac&iacute;as en su interior}{else:cerrada}.

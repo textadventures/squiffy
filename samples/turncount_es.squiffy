@@ -1,0 +1,20 @@
+En el tren puedes ver una [chica cantando], un [hombre leyendo un libro] y una [anciana].
+
+[chica cantando]:
+Ella mueve su cabeza al son de la m&uacute;sica mientras desentona.
+
+[hombre leyendo un libro]:
+Lleva un rato largo leyendo la misma p&aacute;gina del libro *Guerra y Paz*.
+
+[anciana]:
+Te mira de forma sospechosa, como si te conociese.
+
+[@1]:
+Estamos llegando, el tren est&aacute; entrando en la v&iacute;a.
+
+[@2]:
+
+    squiffy.story.go("estacion");
+
+[[estacion]]:
+Hemos llegado a la estaci&oacute;n.

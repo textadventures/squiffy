@@ -1,0 +1,10 @@
+[[section1]]:
+Aqu&iacute; tienes algo de texto de la pr&oacute;xima secci&oacute;n: {section2}
+
+Aqu&iacute; tienes algo de texto de un pasaje de esta secci&oacute;n: {passage}
+
+[passage]:
+Texto del pasaje.
+
+[[section2]]:
+Texto de la pr&oacute;xima secci&oacute;n.
