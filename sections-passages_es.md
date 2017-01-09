@@ -3,9 +3,9 @@ layout: index_es
 title: Secciones y Pasajes
 ---
 
-Puedes escribir Hola Mundo tal cual:
+Puedes escribir &iexcl;Hola, Mundo! tal cual:
 
-    Hola, Mundo!
+    ¡Hola, Mundo!
     
 Puedes formatear el texto usando [Markdown](http://daringfireball.net/projects/markdown/syntax), y tambi&eacute;n usar HTML.
 
@@ -27,7 +27,7 @@ Los nombres de secci&oacute;n deben ser &uacute;nicos dentro de una misma histor
 
 Para usar un texto diferente en el enlace, coloca el nombre de la secci&oacute;n justo despu&eacute;s entre par&eacute;ntesis.
 
-    As&iacute; es [c&oacute;mo se usa un texto personalizado](section2).
+    Así es [cómo se usa un texto personalizado](section2).
 
 Pasaje
 ------
@@ -42,4 +42,4 @@ Los nombres de pasajes deben ser &uacute;nicos dentro de su secci&oacute;n.
 
 Para usar diferentes enlaces de texto, coloca el nombre del pasaje entre par&eacute;ntesis despu&eacute;s del mismo.
 
-    As&iacute; es [c&oacute;mo se usa un texto personalizado](passage1).
+    Así es [cómo se usa un texto personalizado](passage1).
