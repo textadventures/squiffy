@@ -108,6 +108,7 @@ var squiffy = {};
             lhs = setMatch[1];
             rhs = setMatch[2];
             if (isNaN(rhs)) {
+				if(startsWith(rhs,"@")) rhs=squiffy.get(rhs.substring(1));
                 squiffy.set(lhs, rhs);
             }
             else {
@@ -115,12 +116,14 @@ var squiffy = {};
             }
         }
         else {
-            var incDecRegex = /^([\w]*)\s*([\+\-])=\s*(.*)$/;
+			var incDecRegex = /^([\w]*)\s*([\+\-\*\/])=\s*(.*)$/;
             var incDecMatch = incDecRegex.exec(expr);
             if (incDecMatch) {
                 lhs = incDecMatch[1];
                 op = incDecMatch[2];
-                rhs = parseFloat(incDecMatch[3]);
+				rhs = incDecMatch[3];
+				if(startsWith(rhs,"@")) rhs=squiffy.get(rhs.substring(1));
+				rhs = parseFloat(rhs);
                 value = squiffy.get(lhs);
                 if (value === null) value = 0;
                 if (op == '+') {
@@ -129,6 +132,12 @@ var squiffy = {};
                 if (op == '-') {
                     value -= rhs;
                 }
+				if (op == '*') {
+					value *= rhs;
+				}
+				if (op == '/') {
+					value /= rhs;
+				}
                 squiffy.set(lhs, value);
             }
             else {
@@ -410,6 +419,10 @@ var squiffy = {};
             else if (text in squiffy.story.sections) {
                 return process(squiffy.story.sections[text].text, data);
             }
+			else if (startsWith(text,'@') && !startsWith(text,'@replace')) {
+				processAttributes(text.substring(1).split(","));
+				return "";
+			}
             return squiffy.get(text);
         }
 
@@ -433,6 +446,8 @@ var squiffy = {};
                 var op = match[2];
                 var rhs = match[3];
 
+				if(startsWith(rhs,'@')) rhs=squiffy.get(rhs.substring(1));
+				
                 if (op == '=' && lhs == rhs) result = true;
                 if (op == '&lt;&gt;' && lhs != rhs) result = true;
                 if (op == '&gt;' && lhs > rhs) result = true;
