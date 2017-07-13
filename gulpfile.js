@@ -93,7 +93,7 @@ gulp.task('build-common', ['modules', 'bootstrap', 'jquery', 'ace', 'jquery-ui',
 
 /*
 electron-packager supports this option:
-  --sign="Developer ID Application: Alex Warren (6RPC48SJ57)"
+  --sign="Developer ID Application: Luis Felipe Morales (2PZ4BV3S43)"
 but we're hacking in a custom Info.plist so we sign afterwards
 */
 
@@ -150,12 +150,12 @@ gulp.task('windows', ['build-common', 'clean-windows'], function (callback) {
     'version-string': {
       'ProductName': 'Squiffy',
       'FileDescription': 'Squiffy',
-      'LegalCopyright': 'Copyright (c) 2016 Alex Warren',
+      'LegalCopyright': 'Copyright (c) 2017 Luis Felipe Morales',
       'OriginalFilename': 'Squiffy.exe',
       'FileVersion': squiffyVersion,
       'ProductVersion': squiffyVersion,
       'InternalName': 'Squiffy',
-      'CompanyName': 'Alex Warren'
+      'CompanyName': 'Luis Felipe Morales'
     }
   };
   
@@ -197,16 +197,16 @@ gulp.task('osx-sign-clean', ['osx-verify-file-assoc'], function () {
 });
 
 gulp.task('osx-sign', ['osx-sign-clean'], shell.task([
-  'codesign -s "Developer ID Application: Alex Warren (6RPC48SJ57)" Squiffy-darwin-x64/Squiffy.app/Contents/Frameworks/Squiffy\\ Helper.app',
-  'codesign -s "Developer ID Application: Alex Warren (6RPC48SJ57)" Squiffy-darwin-x64/Squiffy.app/Contents/Frameworks/Squiffy\\ Helper\\ EH.app/Contents/MacOS/Squiffy\\ Helper\\ EH',
-  'codesign -s "Developer ID Application: Alex Warren (6RPC48SJ57)" Squiffy-darwin-x64/Squiffy.app/Contents/Frameworks/Squiffy\\ Helper\\ EH.app',
-  'codesign -s "Developer ID Application: Alex Warren (6RPC48SJ57)" Squiffy-darwin-x64/Squiffy.app/Contents/Frameworks/Squiffy\\ Helper\\ NP.app/Contents/MacOS/Squiffy\\ Helper\\ NP',
-  'codesign -s "Developer ID Application: Alex Warren (6RPC48SJ57)" Squiffy-darwin-x64/Squiffy.app/Contents/Frameworks/Squiffy\\ Helper\\ NP.app',
-  'codesign -s "Developer ID Application: Alex Warren (6RPC48SJ57)" Squiffy-darwin-x64/Squiffy.app/Contents/Frameworks/Electron\\ Framework.framework/Versions/Current/Electron\\ Framework',
-  'codesign -s "Developer ID Application: Alex Warren (6RPC48SJ57)" Squiffy-darwin-x64/Squiffy.app/Contents/Frameworks/Mantle.framework',
-  'codesign -s "Developer ID Application: Alex Warren (6RPC48SJ57)" Squiffy-darwin-x64/Squiffy.app/Contents/Frameworks/ReactiveCocoa.framework',
-  'codesign -s "Developer ID Application: Alex Warren (6RPC48SJ57)" Squiffy-darwin-x64/Squiffy.app/Contents/Frameworks/Squirrel.framework',
-  'codesign -s "Developer ID Application: Alex Warren (6RPC48SJ57)" Squiffy-darwin-x64/Squiffy.app',
+  'codesign -s "Developer ID Application: Luis Felipe Morales (2PZ4BV3S43)" Squiffy-darwin-x64/Squiffy.app/Contents/Frameworks/Squiffy\\ Helper.app',
+  'codesign -s "Developer ID Application: Luis Felipe Morales (2PZ4BV3S43)" Squiffy-darwin-x64/Squiffy.app/Contents/Frameworks/Squiffy\\ Helper\\ EH.app/Contents/MacOS/Squiffy\\ Helper\\ EH',
+  'codesign -s "Developer ID Application: Luis Felipe Morales (2PZ4BV3S43)" Squiffy-darwin-x64/Squiffy.app/Contents/Frameworks/Squiffy\\ Helper\\ EH.app',
+  'codesign -s "Developer ID Application: Luis Felipe Morales (2PZ4BV3S43)" Squiffy-darwin-x64/Squiffy.app/Contents/Frameworks/Squiffy\\ Helper\\ NP.app/Contents/MacOS/Squiffy\\ Helper\\ NP',
+  'codesign -s "Developer ID Application: Luis Felipe Morales (2PZ4BV3S43)" Squiffy-darwin-x64/Squiffy.app/Contents/Frameworks/Squiffy\\ Helper\\ NP.app',
+  'codesign -s "Developer ID Application: Luis Felipe Morales (2PZ4BV3S43)" Squiffy-darwin-x64/Squiffy.app/Contents/Frameworks/Electron\\ Framework.framework/Versions/Current/Electron\\ Framework',
+  'codesign -s "Developer ID Application: Luis Felipe Morales (2PZ4BV3S43)" Squiffy-darwin-x64/Squiffy.app/Contents/Frameworks/Mantle.framework',
+  'codesign -s "Developer ID Application: Luis Felipe Morales (2PZ4BV3S43)" Squiffy-darwin-x64/Squiffy.app/Contents/Frameworks/ReactiveCocoa.framework',
+  'codesign -s "Developer ID Application: Luis Felipe Morales (2PZ4BV3S43)" Squiffy-darwin-x64/Squiffy.app/Contents/Frameworks/Squirrel.framework',
+  'codesign -s "Developer ID Application: Luis Felipe Morales (2PZ4BV3S43)" Squiffy-darwin-x64/Squiffy.app',
   'spctl --verbose=4 --assess --type execute Squiffy-darwin-x64/Squiffy.app'
 ]));
 

@@ -15,6 +15,7 @@
   ],
   "dependencies": {
     "bootstrap": "~3.3.5",
+	"jquery": "~2.1.4",
     "jquery-ui-layout-bower": "~1.4.4",
     "jquery-ui": "~1.11.3",
     "bootbox": "~4.4.0",
