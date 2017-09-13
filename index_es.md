@@ -27,6 +27,7 @@ Documentaci&oacute;n
 - [Secciones y Pasajes maestros](master_es.html)
 - [Importando ficheros](import_es.html) (solo versi&oacute;n l&iacute;nea de comandos)
 - [Personalizando HTML y CSS](customise_es.html) (solo versi&oacute;n l&iacute;nea de comandos)
+- [Tutorial en castellano](http://pacificaciones.blogspot.com.es/search/label/squiffy)
 
 Usando Squiffy
 -------------
