@@ -9,7 +9,7 @@ var shell = require('gulp-shell');
 var jshint = require('gulp-jshint');
 
 var electronVersion = '0.36.2';
-var squiffyVersion = '5.0.0';
+var squiffyVersion = '5.1.0';
 
 gulp.task('lint', function() {
   return gulp.src('./*.js')
