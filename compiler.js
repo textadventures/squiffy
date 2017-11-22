@@ -86,9 +86,12 @@
                 var htmlData = htmlTemplateFile.toString();
                 htmlData = htmlData.replace('<!-- INFO -->', '<!--\n\nCreated with Squiffy {0}\n\n\nhttps://github.com/textadventures/squiffy\n\n-->'.format(squiffyVersion));
                 htmlData = htmlData.replace('<!-- TITLE -->', story.title);
-                var jQueryPath = path.join(sourcePath, 'node_modules', 'jquery', 'dist', 'jquery.min.js');
+                var jQueryPath = "";
+				if(typeof options.escritorio!=="undefined")
+					jQueryPath = path.join(sourcePath, '..', 'jquery', 'dist', 'jquery.min.js');
+				else
+					jQueryPath = path.join(sourcePath, 'node_modules', 'jquery', 'dist', 'jquery.min.js');
                 var jqueryJs = 'jquery.min.js';
-
                 if (options.useCdn) {
                     jqueryJs = 'http://ajax.aspnetcdn.com/ajax/jquery/jquery-2.1.3.min.js';
                 }
