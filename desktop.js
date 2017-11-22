@@ -35,6 +35,7 @@ $(function () {
     
     var options = {
       write: true,
+	  escritorio: true,
     };
 
     var result = compiler.generate(filename, options);

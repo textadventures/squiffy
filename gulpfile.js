@@ -50,8 +50,8 @@ gulp.task('bootstrap', ['clean'], function () {
 });
 
 gulp.task('jquery', ['clean'], function () {
-  return gulp.src('bower_components/jquery/dist/**/*')
-    .pipe(gulp.dest('dist/bower_components/jquery/dist'));
+  return gulp.src('node_modules/jquery/dist/*')
+    .pipe(gulp.dest('node_modules/jquery/dist'));
 });
 
 gulp.task('ace', ['clean'], function () {
