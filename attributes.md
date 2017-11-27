@@ -50,6 +50,12 @@ And you can also set a value in JavaScript:
     squiffy.set("gender", "female");
 ```
 
+You can also set an attributes values in if clause, add "{@ operations}" after condition colon(:), like this:
+
+```
+    {if a=1:{@b+=1,c-=1,d=2,not e}}{else:{@b+=2,c+=2,d=3,e}}
+```
+
 Reading attributes
 ------------------
 
@@ -69,4 +75,10 @@ You can conditionally display text depending on the value of an attribute using 
 
 ```
 {if gender=male:You are a man.}{else:You are a woman.}
+```
+
+Or you can compare two attributes, add @ before second attribute, it is treated as a squiffy attribute not value:
+
+```
+{if a=@b:attribute value a and attribute value b are equals.}{else:Are differtents.}
 ```

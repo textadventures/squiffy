@@ -50,6 +50,12 @@ Y por &uacute;ltimo tambi&eacute;n puedes establecer un atributo desde JavaScrip
     squiffy.set("genero", "mujer");
 ```
 
+Tambi&eacute;n se pueden establecer los valores de atributos dentro de la clausula if, a&ntilde;ade "{@ operaciones}" despues de los (:) de la condici&oacute;n, tal que as&iacute;:
+
+```
+    {if a=1:{@b+=1,c-=1,d=2,not e}}{else:{@b+=2,c+=2,d=3,e}}
+```
+
 Leyendo atributos
 ------------------
 
@@ -69,4 +75,10 @@ Puedes visualizar texto condicionalmente dependiendo del valor de un atributo us
 
 ```
 {if genero=hombre:Eres un hombre.}{else:Eres una mujer.}
+```
+
+Tamb&iacute;en puedes comparar el valor de dos atributos a&ntilde;adiendo antes del nombre del segundo atributo una @ de la siguiente forma:
+
+```
+{if a=@b:El valor del atributo a y el valor del atributo b son iguales.}{else:Son diferentes.}
 ```
