@@ -3,11 +3,10 @@
 var app;
 
 try {
-  app = require('app'); 
+  app = require('electron').remote.app; 
 }
 catch (e) {
-  var remote = require('remote');
-  app = remote.require('app');
+  app = require('electron').app; 
 }
  
 var fs = require('fs');

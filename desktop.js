@@ -4,12 +4,12 @@
 
 $(function () {
   var compiler = require('squiffy/compiler.js');
-  var shell = require('shell');
+  var remote = require('electron').remote;
+  var shell = remote.shell;
   var path = require('path');
-  var remote = require('remote');
-  var dialog = remote.require('dialog');
+  var dialog = remote.dialog;
   var fs = require('fs');
-  var clipboard = require('clipboard');
+  var clipboard = remote.clipboard;
   var storage = require('./storage.js');
 
   var packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json')).toString());
