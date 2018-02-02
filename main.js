@@ -1,12 +1,16 @@
 /* global __dirname */
 /* global process */
 
-var app = require('app');  // Module to control application life.
-var BrowserWindow = require('browser-window');  // Module to create native browser window.
+var electron = require('electron');
+var app = electron.app;  // Module to control application life.
+var BrowserWindow = electron.BrowserWindow;  // Module to create native browser window.
 var storage = require('./storage');
 
 // Report crashes to our server.
-require('crash-reporter').start();
+electron.crashReporter.start({
+    companyName: "textadventure.co.uk",
+    submitURL: "https://github.com/textadventures/squiffy-editor/issues",
+});
 
 var argv = process.argv;
 
@@ -53,9 +57,9 @@ var init = function() {
   mainWindow.openFile = openFile;
 
   // and load the index.html of the app.
-  mainWindow.loadUrl('file://' + __dirname + '/desktop.html');
+  mainWindow.loadURL('file://' + __dirname + '/desktop.html');
   
-  mainWindow.on('close', function () {
+  mainWindow.on('close', function() {
     var bounds = mainWindow.getBounds(); 
     storage.set('lastWindowState', {
       x: bounds.x,
@@ -64,6 +68,7 @@ var init = function() {
       height: bounds.height,
       maximized: mainWindow.isMaximized()
     });
+    mainWindow.destroy();
   });
 
   // Emitted when the window is closed.

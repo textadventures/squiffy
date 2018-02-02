@@ -1,6 +1,6 @@
 (function () {
-  var remote = require('remote');
-  var app = remote.require('app');
+  var remote = require('electron').remote;
+  var app = remote.app;
   window.menuClick = window.menuClick || {};
   
   var fileNew = function () {
@@ -201,6 +201,14 @@
             label: 'Replace',
             accelerator: 'Alt+Command+F',
             click: editReplace
+          },
+          {
+            type: 'separator'
+          },
+          {
+            label: 'Settings',
+            accelerator: null,
+            click: settings
           }
         ]
       },
@@ -353,6 +361,14 @@
             label: '&Replace',
             accelerator: 'Ctrl+H',
             click: editReplace
+          },
+          {
+            type: 'separator'
+          },
+          {
+            label: 'Settings',
+            accelerator: null,
+            click: settings
           }
         ]
       },
@@ -409,7 +425,7 @@
     ];
   }
 
-  var Menu = remote.require('menu');
+  var Menu = remote.Menu;
 
   menu = Menu.buildFromTemplate(template);
 
