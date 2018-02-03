@@ -10,18 +10,18 @@
 
     String.prototype.format = function() {
         var args = arguments;
-        return this.replace(/{(\d+)}/g, function(match, number) { 
+        return this.replace(/{(\d+)}/g, function(match, number) {
             return typeof args[number] != 'undefined' ? args[number] : match;
         });
     };
 
     var editor, settings, title, loading, layout, sourceMap,
         currentRow, currentSection, currentPassage;
-    
+
     var defaultSettings = {
       fontSize: 12
     };
-    
+
     var initUserSettings = function () {
       var us = settings.userSettings;
       var fontSize = us.get('fontSize');
@@ -29,7 +29,7 @@
         us.set('fontSize', defaultSettings.fontSize);
       }
     };
-    
+
     var populateSettingsDialog = function () {
       var us = settings.userSettings;
       $('#font-size').val(us.get('fontSize'));
@@ -48,14 +48,19 @@
         $('#restart').hide();
         $('a[href="#tab-output"]').tab('show');
         settings.compile({
+            warningStyle: "'color: gold; background-color: gray'",
             data: editor.getValue(),
-            success: function (data) {
+            success: function (data, msgs) {
                 $('#restart').show();
 
                 $('<div/>', { id: 'output' }).appendTo('#output-container');
 
                 $('<hr/>').appendTo('#output-container');
 
+                // Show compiler warnings
+                $('#output').html("<p style=" + this.warningStyle + ">" + msgs + "</p>");
+
+                // Show output
                 if (data.indexOf('Failed') === 0) {
                     $('#output').html(data);
                     return;
@@ -68,7 +73,7 @@
                     $('#output').html(e);
                     return;
                 }
-                
+
                 $('#output').squiffy({
                     scroll: 'element',
                     persist: false,
@@ -78,9 +83,14 @@
                     }
                 });
             },
-            fail: function (data) {
+            fail: function (data,msgs) {
                 $('<div/>', { id: 'output' }).appendTo('#output-container');
+
+                // Show fail message
                 $('#output').html(data.message);
+
+                // Show detailed info
+                $('#output').html("<p" + this.warningStyle + ">" + msgs + "</p>");
             }
         });
     };
@@ -134,15 +144,15 @@
         document.body.appendChild(downloadLink);
         downloadLink.click();
     };
-    
+
     var addSection = function () {
       addSectionOrPassage(true);
     };
-    
+
     var addPassage = function () {
       addSectionOrPassage(false);
     };
-    
+
     var addSectionOrPassage = function (isSection) {
       var selection = editor.getSelectedText();
       var text;
@@ -152,12 +162,12 @@
       else {
         text = '[' + selection + ']';
       }
-      
+
       if (selection) {
         // replace the selected text with a link to new section/passage
         editor.session.replace(editor.selection.getRange(), text);
       }
-      
+
       text = text + ':\n';
       var insertLine = currentSection.end;
       var moveToLine = insertLine;
@@ -174,7 +184,7 @@
       var Range = ace.require('ace/range').Range;
       var range = new Range(insertLine, 0, insertLine, 0);
       editor.session.replace(range, text);
-      
+
       if (selection) {
         // move cursor to new section/passage
         moveTo(moveToLine + 1);
@@ -185,15 +195,15 @@
         moveTo(moveToLine, column);
       }
     };
-    
+
     var collapseAll = function () {
       editor.session.foldAll();
     };
-    
+
     var uncollapseAll = function () {
       editor.session.unfold();
     };
-    
+
     var showSettings = function () {
       $('#settings-dialog').modal();
     };
@@ -400,10 +410,10 @@
 
             element.html(editorHtml);
             $('body').append(appendHtml);
-            
+
             initUserSettings();
             populateSettingsDialog();
-            
+
             layout = element.layout({
                 applyDefaultStyles: true,
                 north__resizable: false,
@@ -412,7 +422,7 @@
                 east__size: 0.5,
                 south__size: 80,
                 south__initClosed: true,
-                center__spacing_open: 0, 
+                center__spacing_open: 0,
             });
 
             $('#inner-layout').layout({
@@ -423,45 +433,45 @@
                 north__closable: false,
                 center__spacing_open: 0,
             });
-            
+
             editor = ace.edit('editor');
-            
+
             // get rid of an annoying warning
             editor.$blockScrolling = Infinity;
-            
+
             define('ace/theme/squiffy', [], function(require, exports, module) {
               exports.isDark = false;
               exports.cssClass = 'ace-squiffy';
             });
-            
+
             editor.setTheme('ace/theme/squiffy');
-            
-            define('ace/folding/squiffy', [], function(require, exports, module) { 
+
+            define('ace/folding/squiffy', [], function(require, exports, module) {
               var oop = require('ace/lib/oop');
               var BaseFoldMode = require('ace/mode/folding/markdown').FoldMode;
               var FoldMode = function () {};
               oop.inherits(FoldMode, BaseFoldMode);
               exports.FoldMode = FoldMode;
-              
+
               (function() {
                   this.foldingStartMarker = /^(?:\[\[(.*)\]\]:|\[(.*)\]:)$/;
               }).call(FoldMode.prototype);
             });
-            
-            define('ace/mode/squiffy', [], function(require, exports, module) {             
+
+            define('ace/mode/squiffy', [], function(require, exports, module) {
               var oop = require('ace/lib/oop');
               var MarkdownMode = require('ace/mode/markdown').Mode;
               var TextHighlightRules = require('ace/mode/text_highlight_rules').TextHighlightRules;
               var JsHighlightRules = require('ace/mode/javascript_highlight_rules').JavaScriptHighlightRules;
               var SquiffyFoldMode = require('ace/folding/squiffy').FoldMode;
-              
+
               var Mode = function() {
                 this.HighlightRules = SquiffyHighlightRules;
                 this.foldingRules = new SquiffyFoldMode();
               };
               oop.inherits(Mode, MarkdownMode);
               exports.Mode = Mode;
-              
+
               var SquiffyHighlightRules = function () {
                 this.$rules = {
                   'start': [
@@ -480,7 +490,7 @@
                     }
                   ]
                 };
-                
+
                 this.embedRules(JsHighlightRules, 'js-', [{
                   token: 'keyword',
                   regex: '$',
@@ -490,7 +500,7 @@
               oop.inherits(SquiffyHighlightRules, TextHighlightRules);
               exports.SquiffyHighlightRules = SquiffyHighlightRules;
             });
-            
+
             editor.getSession().setMode('ace/mode/squiffy');
             editor.getSession().setUseWrapMode(true);
             editor.setShowPrintMargin(false);
@@ -501,7 +511,7 @@
             editor.commands.removeCommand('goToNextError');
             editor.commands.removeCommand('goToPreviousError');
             editor.commands.removeCommand('showSettingsMenu');
-            
+
             editor.setFontSize(options.userSettings.get('fontSize'));
             editor.focus();
 
@@ -551,7 +561,7 @@
             $('#add-passage').click(addPassage);
             $('#collapse-all').click(collapseAll);
             $('#uncollapse-all').click(uncollapseAll);
-            
+
             $('#sections').on('change', sectionChanged);
             $('#passages').on('change', passageChanged);
             $('#sections, #passages').chosen({ width: '100%' });
@@ -628,7 +638,7 @@
         $('#debugger').scrollTop($('#debugger').height());
     };
 
-    var editorHtml = 
+    var editorHtml =
         '<div class="ui-layout-north">\
             <button id="open" class="btn btn-primary" style="display: none"><span class="glyphicon glyphicon-folder-open"></span> Open</button>\
             <button id="save" class="btn btn-primary" style="display: none"><span class="glyphicon glyphicon-cloud-upload"></span> Save</button>\
