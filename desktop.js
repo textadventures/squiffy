@@ -21,18 +21,28 @@ $(function () {
   var dirty = false;
 
   var compile = function (input) {
-    var js = compiler.getJs(input.data);
+    var msgs = "";
+
+    console._log = console.log;
+    console.log = function(msg) {
+        msgs += msg;
+        console._log(msg);
+    }
+
+    const js = compiler.getJs(input.data);
+    console.log = console._log
+
     if (js.indexOf('Failed') === 0) {
-        input.fail(js);
+        input.fail(js, msgs);
         return;
     }
-    input.success(js);
+    input.success(js, msgs);
   };
 
   var build = function () {
     window.menuClick.saveFile();
     if (dirty) return;
-    
+
     var options = {
       write: true,
 	  escritorio: true,
@@ -104,7 +114,7 @@ $(function () {
       return null;
     }
     setFilename(file);
-    return data; 
+    return data;
   };
 
   var saveFile = function () {
@@ -170,7 +180,7 @@ $(function () {
 
   window.menuClick.redo = function () {
     $('#squiffy-editor').squiffyEditor('redo');
-  };  
+  };
 
   window.menuClick.cut = function () {
     clipboard.writeText($('#squiffy-editor').squiffyEditor('cut'));
@@ -221,11 +231,11 @@ $(function () {
     $('#about-versions').text(versions.join(', '));
     $('#about').modal();
   };
-  
+
   window.menuClick.settings = function () {
     $('#settings-dialog').modal();
   };
-  
+
   var userSettings = {
     get: function (setting) {
       return storage.get(setting);
@@ -269,7 +279,7 @@ $(function () {
       openFile = null;
     }
   }
-  
+
   if (!openFile) {
     $.get('example.squiffy', init);
   }
