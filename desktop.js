@@ -134,7 +134,7 @@ $(function () {
     if (!checkForUnsavedChanges()) return;
     var result = dialog.showOpenDialog({
       filters: [
-        { name: 'Squiffy scripts', extensions: ['squiffy'] }
+        { name: 'Squiffy scripts', extensions: ['sq', 'squiffy'] }
       ]
     });
     if (!result) return;
@@ -142,6 +142,7 @@ $(function () {
   };
 
   window.loadFile = function (file) {
+    console.log("Loading file: " + file);
     if (!checkForUnsavedChanges()) return;
     var data = loadFileData(file);
     if (data === null) {
@@ -152,6 +153,7 @@ $(function () {
       });
     }
     setDirty(false);
+    console.log("Data loaded: " + data);
     $('#squiffy-editor').squiffyEditor('load', data);
   };
 
@@ -166,7 +168,7 @@ $(function () {
   window.menuClick.saveFileAs = function () {
     var result = dialog.showSaveDialog({
       filters: [
-        { name: 'Squiffy scripts', extensions: ['squiffy'] }
+        { name: 'Squiffy scripts', extensions: ['sq', 'squiffy'] }
       ]
     });
     if (!result) return;
