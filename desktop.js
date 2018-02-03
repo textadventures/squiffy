@@ -32,7 +32,7 @@ $(function () {
   var build = function () {
     window.menuClick.saveFile();
     if (dirty) return;
-    
+
     var options = {
       write: true,
 	  escritorio: true,
@@ -104,7 +104,7 @@ $(function () {
       return null;
     }
     setFilename(file);
-    return data; 
+    return data;
   };
 
   var saveFile = function () {
@@ -124,7 +124,7 @@ $(function () {
     if (!checkForUnsavedChanges()) return;
     var result = dialog.showOpenDialog({
       filters: [
-        { name: 'Squiffy scripts', extensions: ['squiffy'] }
+        { name: 'Squiffy scripts', extensions: ['sq', 'squiffy'] }
       ]
     });
     if (!result) return;
@@ -132,6 +132,7 @@ $(function () {
   };
 
   window.loadFile = function (file) {
+    console.log("Loading file: " + file);
     if (!checkForUnsavedChanges()) return;
     var data = loadFileData(file);
     if (data === null) {
@@ -142,6 +143,7 @@ $(function () {
       });
     }
     setDirty(false);
+    console.log("Data loaded: " + data);
     $('#squiffy-editor').squiffyEditor('load', data);
   };
 
@@ -156,7 +158,7 @@ $(function () {
   window.menuClick.saveFileAs = function () {
     var result = dialog.showSaveDialog({
       filters: [
-        { name: 'Squiffy scripts', extensions: ['squiffy'] }
+        { name: 'Squiffy scripts', extensions: ['sq', 'squiffy'] }
       ]
     });
     if (!result) return;
@@ -170,7 +172,7 @@ $(function () {
 
   window.menuClick.redo = function () {
     $('#squiffy-editor').squiffyEditor('redo');
-  };  
+  };
 
   window.menuClick.cut = function () {
     clipboard.writeText($('#squiffy-editor').squiffyEditor('cut'));
@@ -221,11 +223,11 @@ $(function () {
     $('#about-versions').text(versions.join(', '));
     $('#about').modal();
   };
-  
+
   window.menuClick.settings = function () {
     $('#settings-dialog').modal();
   };
-  
+
   var userSettings = {
     get: function (setting) {
       return storage.get(setting);
@@ -269,7 +271,7 @@ $(function () {
       openFile = null;
     }
   }
-  
+
   if (!openFile) {
     $.get('example.squiffy', init);
   }
