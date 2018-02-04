@@ -48,7 +48,7 @@
         $('#restart').hide();
         $('a[href="#tab-output"]').tab('show');
         settings.compile({
-            warningStyle: "'color: gold; background-color: gray'",
+            warningStyle: '"color: gold; background-color: gray"',
             data: editor.getValue(),
             success: function (data, msgs) {
                 $('#restart').show();
@@ -58,7 +58,7 @@
                 $('<hr/>').appendTo('#output-container');
 
                 // Show compiler warnings
-                $('#output').html("<p style=" + this.warningStyle + ">" + msgs + "</p>");
+                $('#output').html('<p style=' + this.warningStyle + '>' + msgs + '</p>');
 
                 // Show output
                 if (data.indexOf('Failed') === 0) {
@@ -90,7 +90,7 @@
                 $('#output').html(data.message);
 
                 // Show detailed info
-                $('#output').html("<p" + this.warningStyle + ">" + msgs + "</p>");
+                $('#output').html('<p' + this.warningStyle + '>' + msgs + '</p>');
             }
         });
     };

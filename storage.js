@@ -10,7 +10,7 @@ try {
   app = require('electron').app;
 }
 
-const {dialog} = require('electron')
+const {dialog} = require('electron');
 const fs = require('fs');
 const path = require('path');
 const dataFilePath = path.join(app.getPath('userData'), 'settings.json');
@@ -27,7 +27,7 @@ function load() {
       data = JSON.parse(fs.readFileSync(dataFilePath, 'utf-8'));
   } catch(exc) {
       const msg = 'Error loading settings. Back to defaults.';
-      data = {}
+      data = {};
       save();
 
       console.log(msg + "\n\t" + exc);
