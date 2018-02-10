@@ -27,7 +27,7 @@ function load() {
       data = JSON.parse(fs.readFileSync(dataFilePath, 'utf-8'));
   } catch(exc) {
       const msg = 'Error loading settings. Back to defaults.';
-      data = {}
+      data = {};
       save();
 
       console.log(msg + "\n\t" + exc);

@@ -8,8 +8,8 @@ var rename = require('gulp-rename');
 var shell = require('gulp-shell');
 var jshint = require('gulp-jshint');
 
-var electronVersion = '0.36.2';
-var squiffyVersion = '5.1.0';
+var electronVersion = '1.8.1';
+var squiffyVersion = '5.1.2';
 
 gulp.task('lint', function() {
   return gulp.src('./*.js')

@@ -1,5 +1,5 @@
-#define SquiffyVersion '5.0.1'
-#define SetupVersion '501'
+#define SquiffyVersion '5.1.2'
+#define SetupVersion '512'
 
 [Setup]
 AppName=Squiffy
@@ -8,9 +8,9 @@ AppVerName=Squiffy {#SquiffyVersion}
 AppCopyright=Copyright © 2017 Luis Felipe Morales
 VersionInfoVersion={#SquiffyVersion}
 AppPublisher=Luis Felipe Morales
-AppPublisherURL=http://textadventures.co.uk/
-AppSupportURL=http://textadventures.co.uk/help
-AppUpdatesURL=http://textadventures.co.uk/squiffy
+AppPublisherURL=https://textadventures.co.uk/
+AppSupportURL=https://textadventures.co.uk/help
+AppUpdatesURL=https://textadventures.co.uk/squiffy
 OutputBaseFilename=squiffy{#SetupVersion}
 DefaultGroupName=Squiffy
 DefaultDirName={pf}\Squiffy
@@ -40,6 +40,7 @@ Filename: "{app}\Squiffy.exe"; Description: "Launch Squiffy"; Flags: nowait post
 [Registry]
 ; File association: .squiffy
 Root: HKCR; Subkey: ".squiffy"; ValueType: string; ValueName: ""; ValueData: "Squiffy"; Flags: uninsdeletevalue
+Root: HKCR; Subkey: ".sq"; ValueType: string; ValueName: ""; ValueData: "Squiffy"; Flags: uninsdeletevalue
 Root: HKCR; Subkey: "Squiffy"; ValueType: string; ValueName: ""; ValueData: "Squiffy Script"; Flags: uninsdeletekey
 Root: HKCR; Subkey: "Squiffy\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\Squiffy.exe,0"
 Root: HKCR; Subkey: "Squiffy\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\Squiffy.exe"" ""%1"""

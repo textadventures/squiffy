@@ -67,7 +67,6 @@
                 $('<hr/>').appendTo('#output-container');
 
                 this.showWarnings(msgs);
-
                 // Show output
                 if (data.indexOf('Failed') === 0) {
                     $('#output').html(data);
