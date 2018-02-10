@@ -27,10 +27,10 @@ $(function () {
     console.log = function(msg) {
         msgs += "<p>" + msg + "</p>";
         console._log(msg);
-    }
+    };
 
     const js = compiler.getJs(input.data);
-    console.log = console._log
+    console.log = console._log;
 
     if (js.indexOf('Failed') === 0) {
         input.fail(js, msgs);

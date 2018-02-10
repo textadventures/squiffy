@@ -49,11 +49,10 @@
         $('a[href="#tab-output"]').tab('show');
         settings.compile({
             showWarnings: function(msgs) {
-                const WarningStyle = "'color: gold; background-color: gray'";
+                const WarningStyle = '"color: gold; background-color: gray"';
 
                 if ( msgs.length > 0 ) {
-                    $('#output').html("<div style=" + WarningStyle
-                                                    + ">" + msgs + "</div>");
+                    $('#output').html('<div style=' + WarningStyle + '>' + msgs + '</div>');
                 }
 
                 return;
