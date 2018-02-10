@@ -3,34 +3,34 @@
 /* global process */
 
 $(function () {
-  var compiler = require('squiffy/compiler.js');
-  var remote = require('electron').remote;
-  var shell = remote.shell;
-  var path = require('path');
-  var dialog = remote.dialog;
-  var fs = require('fs');
-  var clipboard = remote.clipboard;
-  var storage = require('./storage.js');
+  const compiler = require('squiffy/compiler.js');
+  const remote = require('electron').remote;
+  const shell = remote.shell;
+  const path = require('path');
+  const dialog = remote.dialog;
+  const fs = require('fs');
+  const clipboard = remote.clipboard;
+  const storage = require('./storage.js');
 
-  var packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json')).toString());
-  var editorVersion = packageJson.version;
+  const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json')).toString());
+  const editorVersion = packageJson.version;
 
   window.menuClick = window.menuClick || {};
 
   var filename = null;
   var dirty = false;
 
-  var compile = function (input) {
+  const compile = function (input) {
     var msgs = "";
 
     console._log = console.log;
     console.log = function(msg) {
-        msgs += msg;
+        msgs += "<p>" + msg + "</p>";
         console._log(msg);
-    };
+    }
 
     const js = compiler.getJs(input.data);
-    console.log = console._log;
+    console.log = console._log
 
     if (js.indexOf('Failed') === 0) {
         input.fail(js, msgs);
@@ -39,7 +39,7 @@ $(function () {
     input.success(js, msgs);
   };
 
-  var build = function () {
+  const build = function () {
     window.menuClick.saveFile();
     if (dirty) return;
 
@@ -62,7 +62,7 @@ $(function () {
     }
   };
 
-  var setFilename = function (newFilename, noStore) {
+  const setFilename = function (newFilename, noStore) {
     filename = newFilename;
     if (!noStore) localStorage['squiffy-filename'] = filename;
     if (!filename) {
@@ -77,12 +77,12 @@ $(function () {
     }
   };
 
-  var setDirty = function (isDirty) {
+  const setDirty = function (isDirty) {
     remote.getCurrentWindow().setDocumentEdited(isDirty);
     dirty = isDirty;
   };
 
-  var checkForUnsavedChanges = function () {
+  const checkForUnsavedChanges = function () {
     if (!dirty) return true;
 
     var result = dialog.showMessageBox({
@@ -105,7 +105,7 @@ $(function () {
 
   setFilename(null, true);
 
-  var loadFileData = function (file) {
+  const loadFileData = function (file) {
     var data;
     try {
       data = fs.readFileSync(file).toString();
@@ -117,7 +117,7 @@ $(function () {
     return data;
   };
 
-  var saveFile = function () {
+  const saveFile = function () {
     fs.writeFileSync(filename, $('#squiffy-editor').squiffyEditor('save'));
     $('#squiffy-editor').squiffyEditor('setInfo', 'Saved');
     setDirty(false);
@@ -132,7 +132,7 @@ $(function () {
 
   window.menuClick.openFile = function () {
     if (!checkForUnsavedChanges()) return;
-    var result = dialog.showOpenDialog({
+      const result = dialog.showOpenDialog({
       filters: [
         { name: 'Squiffy scripts', extensions: ['sq', 'squiffy'] }
       ]
@@ -142,9 +142,8 @@ $(function () {
   };
 
   window.loadFile = function (file) {
-    console.log("Loading file: " + file);
     if (!checkForUnsavedChanges()) return;
-    var data = loadFileData(file);
+    const data = loadFileData(file);
     if (data === null) {
       dialog.showMessageBox({
         type: 'warning',
@@ -153,7 +152,6 @@ $(function () {
       });
     }
     setDirty(false);
-    console.log("Data loaded: " + data);
     $('#squiffy-editor').squiffyEditor('load', data);
   };
 
@@ -166,7 +164,7 @@ $(function () {
   };
 
   window.menuClick.saveFileAs = function () {
-    var result = dialog.showSaveDialog({
+    const result = dialog.showSaveDialog({
       filters: [
         { name: 'Squiffy scripts', extensions: ['sq', 'squiffy'] }
       ]

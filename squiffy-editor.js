@@ -18,11 +18,11 @@
     var editor, settings, title, loading, layout, sourceMap,
         currentRow, currentSection, currentPassage;
 
-    var defaultSettings = {
+    const defaultSettings = {
       fontSize: 12
     };
 
-    var initUserSettings = function () {
+    const initUserSettings = function () {
       var us = settings.userSettings;
       var fontSize = us.get('fontSize');
       if (!fontSize) {
@@ -30,7 +30,7 @@
       }
     };
 
-    var populateSettingsDialog = function () {
+    const populateSettingsDialog = function () {
       var us = settings.userSettings;
       $('#font-size').val(us.get('fontSize'));
       $('#font-size').change(function () {
@@ -42,13 +42,22 @@
       });
     };
 
-    var run = function () {
+    const run = function () {
         $('#output-container').html('');
         $('#debugger').html('');
         $('#restart').hide();
         $('a[href="#tab-output"]').tab('show');
         settings.compile({
-            warningStyle: '"color: gold; background-color: gray"',
+            showWarnings: function(msgs) {
+                const WarningStyle = "'color: gold; background-color: gray'";
+
+                if ( msgs.length > 0 ) {
+                    $('#output').html("<div style=" + WarningStyle
+                                                    + ">" + msgs + "</div>");
+                }
+
+                return;
+            },
             data: editor.getValue(),
             success: function (data, msgs) {
                 $('#restart').show();
@@ -57,9 +66,7 @@
 
                 $('<hr/>').appendTo('#output-container');
 
-                // Show compiler warnings
-                $('#output').html('<p style=' + this.warningStyle + '>' + msgs + '</p>');
-
+                this.showWarnings(msgs);
                 // Show output
                 if (data.indexOf('Failed') === 0) {
                     $('#output').html(data);
@@ -90,22 +97,22 @@
                 $('#output').html(data.message);
 
                 // Show detailed info
-                $('#output').html('<p' + this.warningStyle + '>' + msgs + '</p>');
+                this.showWarnings(msgs);
             }
         });
     };
 
-    var restart = function () {
+    const restart = function () {
         $('#debugger').html('');
         $('#output').squiffy('restart');
     };
 
-    var downloadSquiffyScript = function () {
+    const downloadSquiffyScript = function () {
         localSave();
         download(editor.getValue(), title + '.squiffy');
     };
 
-    var downloadZip = function () {
+    const downloadZip = function () {
         localSave();
         settings.compile({
             data: editor.getValue(),
@@ -119,7 +126,7 @@
         });
     };
 
-    var downloadJavascript = function () {
+    const downloadJavascript = function () {
         localSave();
         settings.compile({
             data: editor.getValue(),
@@ -132,7 +139,7 @@
         });
     };
 
-    var download = function (data, filename, type) {
+    const download = function (data, filename, type) {
         var blob = new Blob([data], {type: type || 'text/plain'});
         var downloadLink = document.createElement('a');
         downloadLink.download = filename;
@@ -145,17 +152,18 @@
         downloadLink.click();
     };
 
-    var addSection = function () {
+    const addSection = function () {
       addSectionOrPassage(true);
     };
 
-    var addPassage = function () {
+    const addPassage = function () {
       addSectionOrPassage(false);
     };
 
-    var addSectionOrPassage = function (isSection) {
-      var selection = editor.getSelectedText();
+    const addSectionOrPassage = function (isSection) {
+      const selection = editor.getSelectedText();
       var text;
+
       if (isSection) {
         text = '[[' + selection + ']]';
       }
@@ -196,21 +204,21 @@
       }
     };
 
-    var collapseAll = function () {
+    const collapseAll = function () {
       editor.session.foldAll();
     };
 
-    var uncollapseAll = function () {
+    const uncollapseAll = function () {
       editor.session.unfold();
     };
 
-    var showSettings = function () {
+    const showSettings = function () {
       $('#settings-dialog').modal();
     };
 
     var localSaveTimeout, autoSaveTimeout;
 
-    var editorChange = function () {
+    const editorChange = function () {
         if (loading) return;
         setInfo('');
         if (localSaveTimeout) clearTimeout(localSaveTimeout);
@@ -222,7 +230,7 @@
         if (settings.setDirty) settings.setDirty();
     };
 
-    var localSave = function () {
+    const localSave = function () {
         var data = editor.getValue();
         if (settings.storageKey) {
             localStorage[settings.storageKey] = data;
@@ -230,15 +238,15 @@
         processFile(data);
     };
 
-    var autoSave = function () {
+    const autoSave = function () {
         settings.autoSave(title);
     };
 
-    var setInfo = function (text) {
+    const setInfo = function (text) {
         $('#info').html(text);
     };
 
-    var processFile = function (data) {
+    const processFile = function (data) {
         var titleRegex = /^@title (.*)$/;
         var sectionRegex = /^\[\[(.*)\]\]:$/;
         var passageRegex = /^\[(.*)\]:$/;
@@ -260,11 +268,11 @@
 
         var lines = data.replace(/\r/g, '').split('\n');
 
-        var currentSection = function () {
+        const currentSection = function () {
             return sourceMap.slice(-1)[0];
         };
 
-        var endPassage = function (index) {
+        const endPassage = function (index) {
             var previousPassage = currentSection().passages.slice(-1)[0];
             if (!previousPassage) return;
             previousPassage.end = index;
@@ -322,14 +330,14 @@
         cursorMoved(true);
     };
 
-    var editorLoad = function (data) {
+    const editorLoad = function (data) {
         loading = true;
         editor.getSession().setValue(data, -1);
         loading = false;
         processFile(data);
     };
 
-    var cursorMoved = function (force) {
+    const cursorMoved = function (force) {
         var row = editor.selection.getCursor().row;
         if (!force && row == currentRow) return;
         if (!sourceMap) return;
@@ -368,12 +376,12 @@
         }
     };
 
-    var dropdownName = function (name) {
+    const dropdownName = function (name) {
         if (name.length === 0) return '(Master)';
         return name;
     };
 
-    var sectionChanged = function () {
+    const sectionChanged = function () {
         var selectedSection = $('#sections').val();
         sourceMap.forEach(function (section) {
             if (dropdownName(section.name) === selectedSection) {
@@ -382,7 +390,7 @@
         });
     };
 
-    var passageChanged = function () {
+    const passageChanged = function () {
         var selectedPassage = $('#passages').val();
         currentSection.passages.forEach(function (passage) {
             if (dropdownName(passage.name) === selectedPassage) {
@@ -391,7 +399,7 @@
         });
     };
 
-    var moveTo = function (row, column) {
+    const moveTo = function (row, column) {
         column = column || 0;
         var Range = ace.require('ace/range').Range;
         editor.selection.setRange(new Range(row, column, row, column));
@@ -399,7 +407,7 @@
         editor.focus();
     };
 
-    var methods = {
+    const methods = {
         init: function (options) {
             var element = this;
             settings = options;
@@ -625,14 +633,14 @@
         }
     };
 
-    var onSet = function (attribute, value) {
+    const onSet = function (attribute, value) {
         // don't log internal attribute changes
         if (attribute.indexOf('_') === 0) return;
 
         logToDebugger('{0} = {1}'.format(attribute, value));
     };
 
-    var logToDebugger = function (text) {
+    const logToDebugger = function (text) {
         layout.open('south');
         $('#debugger').append(text + '<br/>');
         $('#debugger').scrollTop($('#debugger').height());
@@ -726,7 +734,7 @@
             <div id="debugger"></div>\
         </div>\
         ';
-      var appendHtml =
+      const appendHtml =
         '<div class="modal fade" id="settings-dialog" tabindex="-1" role="dialog" aria-labelledby="settingsLabel">\
           <div class="modal-dialog" role="document">\
             <div class="modal-content">\

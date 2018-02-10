@@ -10,7 +10,7 @@ try {
   app = require('electron').app;
 }
 
-const {dialog} = require('electron');
+const {dialog} = require('electron')
 const fs = require('fs');
 const path = require('path');
 const dataFilePath = path.join(app.getPath('userData'), 'settings.json');
