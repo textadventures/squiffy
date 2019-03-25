@@ -487,14 +487,43 @@
                       regex: /^\[\[(.*)\]\]:$/
                     },
                     {
-                      token: 'markup.heading.passage',
+                      token: 'markup.bold',
                       regex: /^\[(.*)\]:$/
                     },
                     {
                       token: 'keyword',
                       regex: /^(\t| {4})/,
                       next: 'js-start'
-                    }
+                    },
+                    {
+                      token: 'markup.heading.passage',
+					  regex: /(\[\[[\s\S]*?\]\](\,|\.|\s|\:|\;)|\[\[[\s\S]*?\]\]\([\s\S]*?\))/
+					},
+					{
+					  token: 'constant.language',
+					  regex: /(\[[\s\S]*?\](\,|\.|\s|\:|\;)|\[[\s\S]*?\]\([\s\S]*?\))/
+					},
+					{
+					  token: 'support.other',
+					  regex: /<\!\-\-[\s\S]*?\-\->/
+					},
+					{
+					  token: 'support.variable',
+					  regex: /^\@(clear|set|start|replace|title|import|unset|inc|dec)(.*)$/
+					},
+					{
+					  token: 'string',
+					  regex: /\{(.*)(\}|\}\})/
+					},
+					{
+					  token: 'support.other',
+					  regex: /^\+\+\+(.*)$/
+					},
+					{
+					  token: 'storage.type',
+					  regex: /<(.*)>/
+					}
+
                   ]
                 };
 
