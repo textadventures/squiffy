@@ -1,7 +1,7 @@
 Squiffy
 =======
 
-Squiffy is a tool for creating multiple choice interactive fiction. Squiffy is written entirely in JavaScript - the compiler uses [Node.js](http://nodejs.org/) and the games it generates run in a web browser.
+Squiffy is a tool for creating multiple-choice interactive fiction. Squiffy is written entirely in JavaScript - the compiler uses [Node.js](http://nodejs.org/) and the games it generates run in a web browser.
 
 For installation and usage instructions, [see the documentation](http://docs.textadventures.co.uk/squiffy/).
 
@@ -9,7 +9,7 @@ The plans for forthcoming releases are on the [development roadmap](http://docs.
 
 For discussion and help, see [the forums](http://forum.textadventures.co.uk/viewforum.php?f=24).
 
-##Contributing
+## Contributing
 Contributions are welcome! Fork this repo, fix a bug or add a feature, and then create a pull request.
 
 You can run your local copy of Squiffy instead of the globally-installed version from npm by using `node squiffy.js` in place of the `squiffy` command. If you're using Windows and want to replace the global `squiffy` command with your local development version:
