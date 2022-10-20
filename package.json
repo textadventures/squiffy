@@ -1,5 +1,5 @@
 {
-  "name": "squiffy",
+  "name": "squiffy-community",
   "version": "5.1.4",
   "description": "A tool for creating multiple-choice interactive stories",
   "dependencies": {
@@ -12,10 +12,14 @@
     "underscore": "^1.7.0",
     "yargs": "^1.3.3"
   },
-  "author": "Luis Felipe Morales <papadasoft@gmail.com>",
+  "author": "CrisisSDK <crisissdknpm@gmail.com>",
+  "contributors": [
+    "Luis Felipe Morales <papadasoft@gmail.com>",
+    "mrangel"
+  ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/textadventures/squiffy.git"
+    "url": "https://github.com/CrisisSDK/squiffy.git"
   },
   "license": "MIT",
   "bin": "./squiffy.js",

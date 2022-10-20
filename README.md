@@ -1,6 +1,8 @@
 Squiffy
 =======
 
+This is the community edition of Squiffy.
+
 Squiffy is a tool for creating multiple choice interactive fiction. Squiffy is written entirely in JavaScript - the compiler uses [Node.js](http://nodejs.org/) and the games it generates run in a web browser.
 
 For installation and usage instructions, [see the documentation](http://docs.textadventures.co.uk/squiffy/).
@@ -18,7 +20,7 @@ You can run your local copy of Squiffy instead of the globally-installed version
 2. Install Nodejs if you haven't already
 3. From your squiffy directory, run `npm install`
 4. Next run `npm install squiffy -g`
-5. Delete the new `squiffy` folder in your global `node_modules` folder: `    C:\Users\[yourUser]\AppData\Roaming\npm\node_modules\squiffy`
+5. Delete the new `squiffy` folder in your global `node_modules` folder: `C:\Users\[yourUser]\AppData\Roaming\npm\node_modules\squiffy`
 4. Open a new command prompt as Administrator.
 5. Create a symlink between your npm and development squiffy folders by running `mklink /D C:\Users\[yourUser]\AppData\Roaming\npm\node_modules\squiffy C:\projects\squiffy`
 
