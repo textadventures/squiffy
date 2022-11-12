@@ -93,7 +93,7 @@
 					jQueryPath = path.join(sourcePath, 'node_modules', 'jquery', 'dist', 'jquery.min.js');
                 var jqueryJs = 'jquery.min.js';
                 if (options.useCdn) {
-                    var jqueryVersion = packageJson.dependencies.jquery.match(/[0-9.]/)[0];
+                    var jqueryVersion = packageJson.dependencies.jquery.match(/[0-9.]+/)[0];
                     jqueryJs = `https://ajax.aspnetcdn.com/ajax/jquery/jquery-${jqueryVersion}.min.js`;
                 }
                 else if (options.write) {
