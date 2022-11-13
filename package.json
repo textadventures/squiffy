@@ -1,6 +1,6 @@
 {
-  "name": "squiffy-community",
-  "version": "5.1.4",
+  "name": "squiffy",
+  "version": "5.1.5",
   "description": "A tool for creating multiple-choice interactive stories",
   "dependencies": {
     "finalhandler": "^1.2.0",
@@ -12,9 +12,9 @@
     "underscore": "^1.7.0",
     "yargs": "^1.3.3"
   },
-  "author": "CrisisSDK <crisissdknpm@gmail.com>",
+  "author": "Luis Felipe Morales <papadasoft@gmail.com>",
   "contributors": [
-    "Luis Felipe Morales <papadasoft@gmail.com>",
+    "CrisisSDK <crisissdknpm@gmail.com>",
     "mrangel"
   ],
   "repository": {
