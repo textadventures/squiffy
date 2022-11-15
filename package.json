@@ -1,21 +1,25 @@
 {
   "name": "squiffy",
-  "version": "5.1.3",
+  "version": "5.1.5",
   "description": "A tool for creating multiple-choice interactive stories",
   "dependencies": {
-    "finalhandler": "^0.3.1",
-    "glob": "^4.0.6",
-    "jquery": "^2.1.3",
-    "jszip": "^2.4.0",
-    "marked": "^0.3.2",
+    "finalhandler": "^1.2.0",
+    "glob": "^8.0.1",
+    "jquery": "^3.6.0",
+    "jszip": "^3.9.1",
+    "marked": "^4.0.14",
     "serve-static": "^1.7.0",
     "underscore": "^1.7.0",
     "yargs": "^1.3.3"
   },
   "author": "Luis Felipe Morales <papadasoft@gmail.com>",
+  "contributors": [
+    "CrisisSDK <crisissdknpm@gmail.com>",
+    "mrangel"
+  ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/textadventures/squiffy.git"
+    "url": "https://github.com/CrisisSDK/squiffy.git"
   },
   "license": "MIT",
   "bin": "./squiffy.js",

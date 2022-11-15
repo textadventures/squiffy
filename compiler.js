@@ -93,7 +93,8 @@
 					jQueryPath = path.join(sourcePath, 'node_modules', 'jquery', 'dist', 'jquery.min.js');
                 var jqueryJs = 'jquery.min.js';
                 if (options.useCdn) {
-                    jqueryJs = 'http://ajax.aspnetcdn.com/ajax/jquery/jquery-2.1.3.min.js';
+                    var jqueryVersion = packageJson.dependencies.jquery.match(/[0-9.]+/)[0];
+                    jqueryJs = `https://ajax.aspnetcdn.com/ajax/jquery/jquery-${jqueryVersion}.min.js`;
                 }
                 else if (options.write) {
                     fs.createReadStream(jQueryPath).pipe(fs.createWriteStream(path.join(outputPath, 'jquery.min.js')));
@@ -101,8 +102,11 @@
                 
                 htmlData = htmlData.replace('<!-- JQUERY -->', jqueryJs);
 
-                var scriptData = _.map(story.scripts, function (script) { return '<script src=\'{0}\'></script>'.format(script); }).join('\n');
+                var scriptData = _.map(story.scripts, function (script) { return '<script src="{0}"></script>'.format(script); }).join('\n');
                 htmlData = htmlData.replace('<!-- SCRIPTS -->', scriptData);
+
+                var stylesheetData = _.map(story.stylesheets, function (sheet) { return '<link rel="stylesheet" href="{0}"/>'.format(sheet); }).join('\n');
+                htmlData = htmlData.replace('<!-- STYLESHEETS -->', stylesheetData);
 
                 if (options.write) {
                     fs.writeFileSync(path.join(outputPath, 'index.html'), htmlData);
@@ -326,6 +330,9 @@
                         else if (importFilename.endsWith('.js')) {
                             story.scripts.push(path.relative(basePath, importFilename));
                         }
+                        else if (importFilename.endsWith('.css')) {
+                            story.stylesheets.push(path.relative(basePath, importFilename));
+                        }
 
                         return true;
                     }, this);
@@ -447,7 +454,7 @@
 
             input = input.replace(unnamedPassageLinkRegex, '<a class="squiffy-link link-passage" data-passage="$1" role="link" tabindex="0">$1</a>$2');
 
-            return marked(input).trim();
+            return marked.parse(input).trim();
         };
 
         this.allMatchesForGroup = function(input, regex, groupNumber) {
@@ -514,6 +521,7 @@
         this.sections = {};
         this.title = '';
         this.scripts = [];
+        this.stylesheets = [];
         this.files = [];
         this.start = '';
 

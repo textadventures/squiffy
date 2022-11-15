@@ -9,7 +9,7 @@ The plans for forthcoming releases are on the [development roadmap](http://docs.
 
 For discussion and help, see [the forums](http://forum.textadventures.co.uk/viewforum.php?f=24).
 
-##Contributing
+## Contributing
 Contributions are welcome! Fork this repo, fix a bug or add a feature, and then create a pull request.
 
 You can run your local copy of Squiffy instead of the globally-installed version from npm by using `node squiffy.js` in place of the `squiffy` command. If you're using Windows and want to replace the global `squiffy` command with your local development version:
@@ -18,7 +18,7 @@ You can run your local copy of Squiffy instead of the globally-installed version
 2. Install Nodejs if you haven't already
 3. From your squiffy directory, run `npm install`
 4. Next run `npm install squiffy -g`
-5. Delete the new `squiffy` folder in your global `node_modules` folder: `    C:\Users\[yourUser]\AppData\Roaming\npm\node_modules\squiffy`
+5. Delete the new `squiffy` folder in your global `node_modules` folder: `C:\Users\[yourUser]\AppData\Roaming\npm\node_modules\squiffy`
 4. Open a new command prompt as Administrator.
 5. Create a symlink between your npm and development squiffy folders by running `mklink /D C:\Users\[yourUser]\AppData\Roaming\npm\node_modules\squiffy C:\projects\squiffy`
 

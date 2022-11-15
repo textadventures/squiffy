@@ -78,7 +78,7 @@ var squiffy = {};
     };
 
     var processLink = function(link) {
-		link = String(link);
+        link = String(link);
         var sections = link.split(',');
         var first = true;
         var target = null;
@@ -101,6 +101,7 @@ var squiffy = {};
     };
 
     var setAttribute = function(expr) {
+    expr = expr.replace(/^(\w*\s*):=(.*)$/, (match,name,value) => (name + "=" + squiffy.ui.processText(value)));
         var lhs, rhs, op, value;
         var setRegex = /^([\w]*)\s*=\s*(.*)$/;
         var setMatch = setRegex.exec(expr);
@@ -108,7 +109,7 @@ var squiffy = {};
             lhs = setMatch[1];
             rhs = setMatch[2];
             if (isNaN(rhs)) {
-				if(startsWith(rhs,"@")) rhs=squiffy.get(rhs.substring(1));
+                if(startsWith(rhs,"@")) rhs=squiffy.get(rhs.substring(1));
                 squiffy.set(lhs, rhs);
             }
             else {
@@ -116,14 +117,14 @@ var squiffy = {};
             }
         }
         else {
-			var incDecRegex = /^([\w]*)\s*([\+\-\*\/])=\s*(.*)$/;
+            var incDecRegex = /^([\w]*)\s*([\+\-\*\/])=\s*(.*)$/;
             var incDecMatch = incDecRegex.exec(expr);
             if (incDecMatch) {
                 lhs = incDecMatch[1];
                 op = incDecMatch[2];
-				rhs = incDecMatch[3];
-				if(startsWith(rhs,"@")) rhs=squiffy.get(rhs.substring(1));
-				rhs = parseFloat(rhs);
+                rhs = incDecMatch[3];
+                if(startsWith(rhs,"@")) rhs=squiffy.get(rhs.substring(1));
+                rhs = parseFloat(rhs);
                 value = squiffy.get(lhs);
                 if (value === null) value = 0;
                 if (op == '+') {
@@ -132,12 +133,12 @@ var squiffy = {};
                 if (op == '-') {
                     value -= rhs;
                 }
-				if (op == '*') {
-					value *= rhs;
-				}
-				if (op == '/') {
-					value /= rhs;
-				}
+                if (op == '*') {
+                    value *= rhs;
+                }
+                if (op == '/') {
+                    value /= rhs;
+                }
                 squiffy.set(lhs, value);
             }
             else {
@@ -203,7 +204,7 @@ var squiffy = {};
             squiffy.ui.clearScreen();
         }
         if (section.attributes) {
-            processAttributes(section.attributes);
+            processAttributes(section.attributes.map(line => line.replace(/^random\s*:\s*(\w+)\s*=\s*(.+)/i, (line, attr, options) => (options = options.split("|")) ? attr + " = " + options[Math.floor(Math.random() * options.length)] : line)));
         }
         if (section.js) {
             section.js();
@@ -212,9 +213,10 @@ var squiffy = {};
 
     squiffy.story.passage = function(passageName) {
         var passage = squiffy.story.section.passages[passageName];
+        var masterSection = squiffy.story.sections[''];
+        if (!passage && masterSection) passage = masterSection.passages[passageName];
         if (!passage) return;
         setSeen(passageName);
-        var masterSection = squiffy.story.sections[''];
         if (masterSection) {
             var masterPassage = masterSection.passages[''];
             if (masterPassage) {
@@ -305,7 +307,21 @@ var squiffy = {};
     var newSection = function() {
         if (currentSection) {
             disableLink(jQuery('.squiffy-link', currentSection));
+        currentSection.find('input').each(function () {
+                set ($(this).data('attribute') || this.id, this.value);
+                this.disabled = true;
+        });
+        currentSection.find("[contenteditable]").each(function () {
+                set ($(this).data('attribute') || this.id, this.innerHTML);
+                this.disabled = true;
+        });
+                currentSection.find('textarea').each(function () {
+                set ($(this).data('attribute') || this.id, this.value);
+                this.disabled = true;
+        });
+
         }
+
         var sectionCount = squiffy.get('_section-count') + 1;
         squiffy.set('_section-count', sectionCount);
         var id = 'squiffy-section-' + sectionCount;
@@ -419,10 +435,10 @@ var squiffy = {};
             else if (text in squiffy.story.sections) {
                 return process(squiffy.story.sections[text].text, data);
             }
-			else if (startsWith(text,'@') && !startsWith(text,'@replace')) {
-				processAttributes(text.substring(1).split(","));
-				return "";
-			}
+            else if (startsWith(text,'@') && !startsWith(text,'@replace')) {
+                processAttributes(text.substring(1).split(","));
+                return "";
+            }
             return squiffy.get(text);
         }
 
@@ -435,7 +451,7 @@ var squiffy = {};
 
             var text = command.substring(colon + 1);
             var condition = command.substring(0, colon);
-			condition = condition.replace("<", "&lt;");
+            condition = condition.replace("<", "&lt;");
             var operatorRegex = /([\w ]*)(=|&lt;=|&gt;=|&lt;&gt;|&lt;|&gt;)(.*)/;
             var match = operatorRegex.exec(condition);
 
@@ -446,8 +462,8 @@ var squiffy = {};
                 var op = match[2];
                 var rhs = match[3];
 
-				if(startsWith(rhs,'@')) rhs=squiffy.get(rhs.substring(1));
-				
+                if(startsWith(rhs,'@')) rhs=squiffy.get(rhs.substring(1));
+                
                 if (op == '=' && lhs == rhs) result = true;
                 if (op == '&lt;&gt;' && lhs != rhs) result = true;
                 if (op == '&gt;' && lhs > rhs) result = true;
