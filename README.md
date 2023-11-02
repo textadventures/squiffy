@@ -14,7 +14,7 @@ Contributions are welcome! Fork this repo, fix a bug or add a feature, and then 
 
 You can run your local copy of Squiffy instead of the globally-installed version from npm by using `node squiffy.js` in place of the `squiffy` command. If you're using Windows and want to replace the global `squiffy` command with your local development version:
 
-1. Clone master of your fork to your local machine (e.g., `C:\projects\squiffy\`). 
+1. Clone master of your fork to your local machine (e.g., `C:\projects\squiffy\`).
 2. Install Nodejs if you haven't already
 3. From your squiffy directory, run `npm install`
 4. Next run `npm install squiffy -g`
