@@ -20,6 +20,8 @@
     var marked = require('marked');
     var crypto = require('crypto');
 
+    var autoSectionCount = 0;
+
     var packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json')).toString());
     var squiffyVersion = packageJson.version;
 
@@ -264,7 +266,6 @@
 
             var compiler = this;
             var lineCount = 0;
-            var autoSectionCount = 0;
             var section = null;
             var passage = null;
             var textStarted = false;
