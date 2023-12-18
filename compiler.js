@@ -23,26 +23,26 @@
     var packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json')).toString());
     var squiffyVersion = packageJson.version;
 
-    String.prototype.format = function() {
+    String.prototype.format = function () {
         var args = arguments;
-        return this.replace(/{(\d+)}/g, function(match, number) { 
+        return this.replace(/{(\d+)}/g, function (match, number) {
             return typeof args[number] != 'undefined' ? args[number] : match;
         });
     };
 
-    String.prototype.endsWith = function(suffix) {
+    String.prototype.endsWith = function (suffix) {
         return this.indexOf(suffix, this.length - suffix.length) !== -1;
     };
 
     function Compiler() {
-        this.process = function(input, sourcePath) {
+        this.process = function (input, sourcePath) {
             var story = new Story();
             var success = this.processFileText(story, input, null, true);
             if (!success) return 'Failed';
             return this.getJs(story, sourcePath, {});
         };
 
-        this.generate = function(inputFilename, sourcePath, options) {
+        this.generate = function (inputFilename, sourcePath, options) {
             var outputPath;
             if (options.write) {
                 outputPath = path.resolve(path.dirname(inputFilename));
@@ -61,7 +61,7 @@
                 success = this.processFile(story, path.resolve(inputFilename), true);
             }
             else {
-                success = this.processFileText(story, options.input, null, true);   
+                success = this.processFileText(story, options.input, null, true);
             }
 
             if (!success) {
@@ -74,7 +74,7 @@
             console.log('Writing ' + storyJsName);
 
             var storyJs = this.getJs(story, sourcePath, options);
-            
+
             if (options.write) {
                 fs.writeFileSync(path.join(outputPath, storyJsName), storyJs);
             }
@@ -87,10 +87,10 @@
                 htmlData = htmlData.replace('<!-- INFO -->', '<!--\n\nCreated with Squiffy {0}\n\n\nhttps://github.com/textadventures/squiffy\n\n-->'.format(squiffyVersion));
                 htmlData = htmlData.replace('<!-- TITLE -->', story.title);
                 var jQueryPath = "";
-				if(typeof options.escritorio!=="undefined")
-					jQueryPath = path.join(sourcePath, '..', 'jquery', 'dist', 'jquery.min.js');
-				else
-					jQueryPath = path.join(sourcePath, 'node_modules', 'jquery', 'dist', 'jquery.min.js');
+                if (typeof options.escritorio !== "undefined")
+                    jQueryPath = path.join(sourcePath, '..', 'jquery', 'dist', 'jquery.min.js');
+                else
+                    jQueryPath = path.join(sourcePath, 'node_modules', 'jquery', 'dist', 'jquery.min.js');
                 var jqueryJs = 'jquery.min.js';
                 if (options.useCdn) {
                     var jqueryVersion = packageJson.dependencies.jquery.match(/[0-9.]+/)[0];
@@ -99,7 +99,7 @@
                 else if (options.write) {
                     fs.createReadStream(jQueryPath).pipe(fs.createWriteStream(path.join(outputPath, 'jquery.min.js')));
                 }
-                
+
                 htmlData = htmlData.replace('<!-- JQUERY -->', jqueryJs);
 
                 var scriptData = _.map(story.scripts, function (script) { return '<script src="{0}"></script>'.format(script); }).join('\n');
@@ -143,13 +143,13 @@
                     }
                 }
             }
-            
+
             console.log('Done.');
 
             return outputPath;
         };
 
-        this.getJs = function(story, sourcePath, options) {
+        this.getJs = function (story, sourcePath, options) {
             var jsTemplateFile = fs.readFileSync(path.join(sourcePath, 'squiffy.template.js'));
             var jsData = '// Created with Squiffy {0}\n// https://github.com/textadventures/squiffy\n\n'
                 .format(squiffyVersion) +
@@ -172,7 +172,7 @@
             }
             outputJsFile.push('squiffy.story.sections = {\n');
 
-            _.each(story.sections, function(section, sectionName) {
+            _.each(story.sections, function (section, sectionName) {
                 outputJsFile.push('\t\'{0}\': {\n'.format(sectionName.replace(/\'/g, "\\'")));
                 if (section.clear) {
                     outputJsFile.push('\t\t\'clear\': true,\n');
@@ -186,7 +186,7 @@
                 }
                 if ('@last' in section.passages) {
                     var passageCount = 0;
-                    _.each(section.passages, function(passage, passageName) {
+                    _.each(section.passages, function (passage, passageName) {
                         if (passageName && passageName.substr(0, 1) !== '@') {
                             passageCount++;
                         }
@@ -195,7 +195,7 @@
                 }
 
                 outputJsFile.push('\t\t\'passages\': {\n');
-                _.each(section.passages, function(passage, passageName) {
+                _.each(section.passages, function (passage, passageName) {
                     outputJsFile.push('\t\t\t\'{0}\': {\n'.format(passageName.replace(/\'/g, "\\'")));
                     if (passage.clear) {
                         outputJsFile.push('\t\t\t\t\'clear\': true,\n');
@@ -220,7 +220,7 @@
             return outputJsFile.join('');
         };
 
-        this.findFile = function(filename, outputPath, sourcePath) {
+        this.findFile = function (filename, outputPath, sourcePath) {
             if (outputPath) {
                 var outputPathFile = path.join(outputPath, filename);
                 if (fs.existsSync(outputPathFile)) {
@@ -245,7 +245,7 @@
             continue: /^\+\+\+(.*)$/,
         };
 
-        this.processFile = function(story, inputFilename, isFirst) {
+        this.processFile = function (story, inputFilename, isFirst) {
             if (_.contains(story.files, inputFilename)) {
                 return true;
             }
@@ -255,11 +255,11 @@
 
             var inputFile = fs.readFileSync(inputFilename);
             var inputText = inputFile.toString();
-            
+
             return this.processFileText(story, inputText, inputFilename, isFirst);
         };
 
-        this.processFileText = function(story, inputText, inputFilename, isFirst) {
+        this.processFileText = function (story, inputText, inputFilename, isFirst) {
             var inputLines = inputText.replace(/\r/g, '').split('\n');
 
             var compiler = this;
@@ -268,13 +268,17 @@
             var section = null;
             var passage = null;
             var textStarted = false;
-            var ensureSectionExists = function() {
+            var ensureSectionExists = function () {
                 section = compiler.ensureSectionExists(story, section, isFirst, inputFilename, lineCount);
             };
 
-            return inputLines.every(function(line) {
+            //console.log('INFO: processing file {0}'.format(inputFilename));
+
+            return inputLines.every(function (line) {
                 var stripLine = line.trim();
                 lineCount++;
+
+                //console.log('TRACE: processing line {0}'.format(stripLine));
 
                 var match = _.object(_.map(this.regex, function (regex, key) {
                     return [key, key == 'js' ? regex.exec(line) : regex.exec(stripLine)];
@@ -319,10 +323,16 @@
                     story.start = match.start[1];
                 }
                 else if (match.import && inputFilename) {
+                    //console.log('TRACE: processing import statement in file {0}'.format(inputFilename));
                     var basePath = path.resolve(path.dirname(inputFilename));
                     var newFilenames = path.join(basePath, match.import[1]);
+                    newFilenames = newFilenames.split(path.sep).join(path.posix.sep);
+                    //console.log('TRACE: import filenames (unresolved) {0}'.format(newFilenames));
                     var importFilenames = glob.sync(newFilenames);
-                    importFilenames.every(function(importFilename) {
+                    //console.log('TRACE: import filenames (resolved) {0}'.format(importFilenames));
+                    //console.log(importFilenames);
+                    importFilenames.every(function (importFilename) {
+                        //console.log('INFO: importing file {0}'.format(importFilename));
                         if (importFilename.endsWith('.squiffy')) {
                             var success = this.processFile(story, importFilename, false);
                             if (!success) return false;
@@ -384,7 +394,7 @@
             }, this);
         };
 
-        this.ensureSectionExists = function(story, section, isFirst, inputFilename, lineCount) {
+        this.ensureSectionExists = function (story, section, isFirst, inputFilename, lineCount) {
             if (!section && isFirst) {
                 section = story.addSection('_default', inputFilename, lineCount);
             }
@@ -402,7 +412,7 @@
             return section;
         };
 
-        this.processText = function(input, story, section, passage) {
+        this.processText = function (input, story, section, passage) {
             // namedSectionLinkRegex matches:
             //   open [[
             //   any text - the link text
@@ -457,7 +467,7 @@
             return marked.parse(input).trim();
         };
 
-        this.allMatchesForGroup = function(input, regex, groupNumber) {
+        this.allMatchesForGroup = function (input, regex, groupNumber) {
             var result = [];
             var match;
             while (!!(match = regex.exec(input))) {
@@ -466,19 +476,19 @@
             return result;
         };
 
-        this.checkSectionLinks = function(story, links, section, passage) {
+        this.checkSectionLinks = function (story, links, section, passage) {
             if (!story) return;
-            var badLinks = _.filter(links, function(m) { return !this.linkDestinationExists(m, story.sections); }, this);
+            var badLinks = _.filter(links, function (m) { return !this.linkDestinationExists(m, story.sections); }, this);
             this.showBadLinksWarning(badLinks, 'section', '[[', ']]', section, passage);
         };
 
-        this.checkPassageLinks = function(story, links, section, passage) {
+        this.checkPassageLinks = function (story, links, section, passage) {
             if (!story) return;
-            var badLinks = _.filter(links, function(m) { return !this.linkDestinationExists(m, section.passages); }, this);
+            var badLinks = _.filter(links, function (m) { return !this.linkDestinationExists(m, section.passages); }, this);
             this.showBadLinksWarning(badLinks, 'passage', '[', ']', section, passage);
         };
 
-        this.linkDestinationExists = function(link, keys) {
+        this.linkDestinationExists = function (link, keys) {
             // Link destination data may look like:
             //   passageName
             //   passageName, my_attribute=2
@@ -493,8 +503,8 @@
             return _.contains(Object.keys(keys), linkDestination);
         };
 
-        this.showBadLinksWarning = function(badLinks, linkTo, before, after, section, passage) {
-            badLinks.forEach(function(badLink) {
+        this.showBadLinksWarning = function (badLinks, linkTo, before, after, section, passage) {
+            badLinks.forEach(function (badLink) {
                 var warning;
                 if (!passage) {
                     warning = '{0} line {1}: In section \'{2}\''.format(section.filename, section.line, section.name);
@@ -507,10 +517,10 @@
             });
         };
 
-        this.writeJs = function(outputJsFile, tabCount, js) {
+        this.writeJs = function (outputJsFile, tabCount, js) {
             var tabs = new Array(tabCount + 1).join('\t');
             outputJsFile.push('{0}\'js\': function() {\n'.format(tabs));
-            js.forEach(function(jsLine) {
+            js.forEach(function (jsLine) {
                 outputJsFile.push('{0}\t{1}\n'.format(tabs, jsLine));
             });
             outputJsFile.push('{0}},\n'.format(tabs));
@@ -525,13 +535,17 @@
         this.files = [];
         this.start = '';
 
-        this.addSection = function(name, filename, line) {
+        this.addSection = function (name, filename, line) {
+            if (name in this.sections) {
+                console.log('WARNING: {0} line {1}: Section [[{2}]] was declared already'.format(filename, line, name));
+            }
+
             var section = new Section(name, filename, line);
             this.sections[name] = section;
             return section;
         };
 
-        this.set_id = function(filename) {
+        this.set_id = function (filename) {
             var shasum = crypto.createHash('sha1');
             shasum.update(filename);
             this.id = shasum.digest('hex').substr(0, 10);
@@ -548,21 +562,21 @@
         this.clear = false;
         this.attributes = [];
 
-        this.addPassage = function(name, line) {
+        this.addPassage = function (name, line) {
             var passage = new Passage(name, line);
             this.passages[name] = passage;
             return passage;
         };
 
-        this.addText = function(text) {
+        this.addText = function (text) {
             this.text.push(text);
         };
 
-        this.addJS = function(text) {
+        this.addJS = function (text) {
             this.js.push(text);
         };
 
-        this.addAttribute = function(text) {
+        this.addAttribute = function (text) {
             this.attributes.push(text);
         };
     }
@@ -575,15 +589,15 @@
         this.clear = false;
         this.attributes = [];
 
-        this.addText = function(text) {
+        this.addText = function (text) {
             this.text.push(text);
         };
 
-        this.addJS = function(text) {
+        this.addJS = function (text) {
             this.js.push(text);
         };
 
-        this.addAttribute = function(text) {
+        this.addAttribute = function (text) {
             this.attributes.push(text);
         };
     }
