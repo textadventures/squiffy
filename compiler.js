@@ -39,7 +39,7 @@
     function Compiler() {
         this.process = function (input, sourcePath) {
             var story = new Story();
-            var success = this.processFileText(story, input, null, true);
+            var success = this.processFileText(story, input, null, null, null, true);
             if (!success) return 'Failed';
             return this.getJs(story, sourcePath, {});
         };
@@ -60,10 +60,10 @@
 
             var success;
             if (inputFilename) {
-                success = this.processFile(story, path.resolve(inputFilename), true);
+                success = this.processFile(story, path.resolve(inputFilename), outputPath, true);
             }
             else {
-                success = this.processFileText(story, options.input, null, true);
+                success = this.processFileText(story, options.input, null, null, null, true);
             }
 
             if (!success) {
@@ -247,21 +247,39 @@
             continue: /^\+\+\+(.*)$/,
         };
 
-        this.processFile = function (story, inputFilename, isFirst) {
+        this.processFile = function (story, inputFilename, basePath, isFirst) {
             if (_.contains(story.files, inputFilename)) {
                 return true;
             }
 
             story.files.push(inputFilename);
-            console.log('Loading ' + inputFilename);
+            //console.log('Loading ' + inputFilename);
 
             var inputFile = fs.readFileSync(inputFilename);
             var inputText = inputFile.toString();
 
-            return this.processFileText(story, inputText, inputFilename, isFirst);
+            //console.log('basePath: {0}'.format(basePath));
+            var localPackage = inputFilename.split(path.sep).join(path.posix.sep);
+            //console.log('localPackage: {0}'.format(localPackage));
+            if (localPackage.startsWith(basePath.split(path.sep).join(path.posix.sep))) {
+                //console.log('localPackage startsWith');
+                localPackage = localPackage.slice(basePath.split(path.sep).join(path.posix.sep).length);
+            }
+            //console.log('localPackage: {0}'.format(localPackage));
+            localPackage = localPackage.replace(/\.squiffy$/, '');
+            //console.log('localPackage: {0}'.format(localPackage));
+            if (!localPackage.startsWith('/')) {
+                localPackage = '/' + localPackage;
+            }
+            if (!localPackage.endsWith('/')) {
+                localPackage = localPackage + '/';
+            }
+            //console.log('localPackage: {0}'.format(localPackage));
+
+            return this.processFileText(story, inputText, inputFilename, basePath, localPackage, isFirst);
         };
 
-        this.processFileText = function (story, inputText, inputFilename, isFirst) {
+        this.processFileText = function (story, inputText, inputFilename, globalBasePath, localPackage, isFirst) {
             var inputLines = inputText.replace(/\r/g, '').split('\n');
 
             var compiler = this;
@@ -273,7 +291,7 @@
                 section = compiler.ensureSectionExists(story, section, isFirst, inputFilename, lineCount);
             };
 
-            //console.log('INFO: processing file {0}'.format(inputFilename));
+            console.log('INFO: processing file {0}; package: {1}'.format(inputFilename, localPackage));
 
             return inputLines.every(function (line) {
                 var stripLine = line.trim();
@@ -286,7 +304,13 @@
                 }));
 
                 if (match.section) {
-                    section = story.addSection(match.section[1], inputFilename, lineCount);
+                    var section_id = match.section[1];
+                    //console.log(section_id);
+                    if (!section_id.startsWith('/')) {
+                        section_id = localPackage + section_id;
+                    }
+
+                    section = story.addSection(section_id, inputFilename, lineCount, localPackage);
                     passage = null;
                     textStarted = false;
                 }
@@ -296,15 +320,22 @@
                             inputFilename, lineCount, match.passage[1]));
                         return false;
                     }
-                    passage = section.addPassage(match.passage[1], lineCount);
+
+                    var passage_id = match.passage[1];
+                    //console.log(passage_id);
+                    if (!passage_id.startsWith('/')) {
+                        passage_id = localPackage + passage_id;
+                    }
+
+                    passage = section.addPassage(passage_id, lineCount);
                     textStarted = false;
                 }
                 else if (match.continue) {
                     ensureSectionExists();
                     autoSectionCount++;
-                    var autoSectionName = '_continue{0}'.format(autoSectionCount);
+                    var autoSectionName = localPackage + '_continue{0}'.format(autoSectionCount);
                     section.addText('[[{0}]]({1})'.format(match.continue[1], autoSectionName));
-                    section = story.addSection(autoSectionName, inputFilename, lineCount);
+                    section = story.addSection(autoSectionName, inputFilename, lineCount, localPackage);
                     passage = null;
                     textStarted = false;
                 }
@@ -321,7 +352,13 @@
                     story.title = match.title[1];
                 }
                 else if (match.start) {
-                    story.start = match.start[1];
+                    var start_id = match.start[1];
+                    //console.log(start_id);
+                    if (!start_id.startsWith('/')) {
+                        start_id = localPackage + start_id;
+                    }
+
+                    story.start = start_id;
                 }
                 else if (match.import && inputFilename) {
                     //console.log('TRACE: processing import statement in file {0}'.format(inputFilename));
@@ -335,7 +372,7 @@
                     importFilenames.every(function (importFilename) {
                         //console.log('INFO: importing file {0}'.format(importFilename));
                         if (importFilename.endsWith('.squiffy')) {
-                            var success = this.processFile(story, importFilename, false);
+                            var success = this.processFile(story, importFilename, globalBasePath, localPackage, false);
                             if (!success) return false;
                         }
                         else if (importFilename.endsWith('.js')) {
@@ -414,6 +451,25 @@
         };
 
         this.processText = function (input, story, section, passage) {
+            //console.log('input: {0}'.format(input));
+
+            // fix local links first
+            var namedSectionLocalLinkRegex = /\[\[([^\]]*?)\]\]\(([^\/].*?)\)/g;
+            input = input.replace(namedSectionLocalLinkRegex, '[[$1]](' + section.localPackage + '$2)');
+
+            var namedPassageLocalLinkRegex = /\[([^\]]*?)\]\(((?!https?:\/\/)[^\/].*?)\)/g;
+            input = input.replace(namedPassageLocalLinkRegex, '[$1](' + section.localPackage + '$2)');
+
+            var unnamedSectionLocalLinkRegex = /\[\[([^\/].*?)\]\]([^\(]|$)/g;
+            input = input.replace(unnamedSectionLocalLinkRegex, '[[' + section.localPackage + '$1]]$2');
+
+            //console.log('half fixed input: {0}'.format(input));
+
+            var unnamedPassageLocalLinkRegex = /(^|[^\[])\[([^\/\[\]][^\[\]]*?)\]([^\(\]]|$)/g;
+            input = input.replace(unnamedPassageLocalLinkRegex, '$1[' + section.localPackage + '$2]$3');
+
+            //console.log('fixed input: {0}'.format(input));
+
             // namedSectionLinkRegex matches:
             //   open [[
             //   any text - the link text
@@ -536,12 +592,12 @@
         this.files = [];
         this.start = '';
 
-        this.addSection = function (name, filename, line) {
+        this.addSection = function (name, filename, line, localPackage) {
             if (name in this.sections) {
                 console.log('WARNING: {0} line {1}: Section [[{2}]] was declared already'.format(filename, line, name));
             }
 
-            var section = new Section(name, filename, line);
+            var section = new Section(name, filename, line, localPackage);
             this.sections[name] = section;
             return section;
         };
@@ -553,7 +609,7 @@
         };
     }
 
-    function Section(name, filename, line) {
+    function Section(name, filename, line, localPackage) {
         this.name = name;
         this.filename = filename;
         this.line = line;
@@ -562,9 +618,10 @@
         this.js = [];
         this.clear = false;
         this.attributes = [];
+        this.localPackage = localPackage;
 
         this.addPassage = function (name, line) {
-            var passage = new Passage(name, line);
+            var passage = new Passage(name, line, this.localPackage);
             this.passages[name] = passage;
             return passage;
         };
@@ -582,13 +639,14 @@
         };
     }
 
-    function Passage(name, line) {
+    function Passage(name, line, localPackage) {
         this.name = name;
         this.line = line;
         this.text = [];
         this.js = [];
         this.clear = false;
         this.attributes = [];
+        this.localPackage = this.localPackage;
 
         this.addText = function (text) {
             this.text.push(text);
