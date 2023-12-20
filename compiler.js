@@ -321,13 +321,7 @@
                         return false;
                     }
 
-                    var passage_id = match.passage[1];
-                    //console.log(passage_id);
-                    if (!passage_id.startsWith('/')) {
-                        passage_id = localPackage + passage_id;
-                    }
-
-                    passage = section.addPassage(passage_id, lineCount);
+                    passage = section.addPassage(match.passage[1], lineCount);
                     textStarted = false;
                 }
                 else if (match.continue) {
@@ -457,16 +451,8 @@
             var namedSectionLocalLinkRegex = /\[\[([^\]]*?)\]\]\(([^\/].*?)\)/g;
             input = input.replace(namedSectionLocalLinkRegex, '[[$1]](' + section.localPackage + '$2)');
 
-            var namedPassageLocalLinkRegex = /\[([^\]]*?)\]\(((?!https?:\/\/)[^\/].*?)\)/g;
-            input = input.replace(namedPassageLocalLinkRegex, '[$1](' + section.localPackage + '$2)');
-
             var unnamedSectionLocalLinkRegex = /\[\[([^\/].*?)\]\]([^\(]|$)/g;
-            input = input.replace(unnamedSectionLocalLinkRegex, '[[' + section.localPackage + '$1]]$2');
-
-            //console.log('half fixed input: {0}'.format(input));
-
-            var unnamedPassageLocalLinkRegex = /(^|[^\[])\[([^\/\[\]][^\[\]]*?)\]([^\(\]]|$)/g;
-            input = input.replace(unnamedPassageLocalLinkRegex, '$1[' + section.localPackage + '$2]$3');
+            input = input.replace(unnamedSectionLocalLinkRegex, '[[$1]](' + section.localPackage + '$1)$2');
 
             //console.log('fixed input: {0}'.format(input));
 
