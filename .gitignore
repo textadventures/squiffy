@@ -3,6 +3,8 @@ story.js
 style.css
 examples/*/jquery*.js
 _site
+/jquery*.js
+/test*.squiffy
 
 
 ### .gitgnore for node.js ##################################################################################
