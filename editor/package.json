@@ -4,8 +4,7 @@
   "description": "",
   "main": "main.js",
   "scripts": {
-    "start": "electron .",
-    "web": "node server.js"
+    "start": "node server.js"
   },
   "license": "MIT",
   "repository": {
