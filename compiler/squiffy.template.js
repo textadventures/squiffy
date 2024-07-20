@@ -27,7 +27,7 @@ var squiffy = {};
                 if (turnPassage in squiffy.story.section.passages) {
                     squiffy.story.passage(turnPassage);
                 }
-                if ('@last' in squiffy.story.section.passages && squiffy.get('_turncount')>= squiffy.story.section.passageCount) {
+                if ('@last' in squiffy.story.section.passages && squiffy.get('_turncount') >= squiffy.story.section.passageCount) {
                     squiffy.story.passage('@last');
                 }
             }
@@ -70,14 +70,14 @@ var squiffy = {};
         link.addClass('disabled');
         link.attr('tabindex', -1);
     }
-    
+
     squiffy.story.begin = function () {
         if (!squiffy.story.load()) {
             squiffy.story.go(squiffy.story.start);
         }
     };
 
-    var processLink = function(link) {
+    var processLink = function (link) {
         link = String(link);
         var sections = link.split(',');
         var first = true;
@@ -100,8 +100,8 @@ var squiffy = {};
         return target;
     };
 
-    var setAttribute = function(expr) {
-    expr = expr.replace(/^(\w*\s*):=(.*)$/, (match,name,value) => (name + "=" + squiffy.ui.processText(value)));
+    var setAttribute = function (expr) {
+        expr = expr.replace(/^(\w*\s*):=(.*)$/, (match, name, value) => (name + "=" + squiffy.ui.processText(value)));
         var lhs, rhs, op, value;
         var setRegex = /^([\w]*)\s*=\s*(.*)$/;
         var setMatch = setRegex.exec(expr);
@@ -109,7 +109,7 @@ var squiffy = {};
             lhs = setMatch[1];
             rhs = setMatch[2];
             if (isNaN(rhs)) {
-                if(startsWith(rhs,"@")) rhs=squiffy.get(rhs.substring(1));
+                if (startsWith(rhs, "@")) rhs = squiffy.get(rhs.substring(1));
                 squiffy.set(lhs, rhs);
             }
             else {
@@ -123,7 +123,7 @@ var squiffy = {};
                 lhs = incDecMatch[1];
                 op = incDecMatch[2];
                 rhs = incDecMatch[3];
-                if(startsWith(rhs,"@")) rhs=squiffy.get(rhs.substring(1));
+                if (startsWith(rhs, "@")) rhs = squiffy.get(rhs.substring(1));
                 rhs = parseFloat(rhs);
                 value = squiffy.get(lhs);
                 if (value === null) value = 0;
@@ -152,7 +152,7 @@ var squiffy = {};
         }
     };
 
-    var replaceLabel = function(expr) {
+    var replaceLabel = function (expr) {
         var regex = /^([\w]*)\s*=\s*(.*)$/;
         var match = regex.exec(expr);
         if (!match) return;
@@ -170,15 +170,15 @@ var squiffy = {};
             text = stripParagsMatch[1];
         }
         var $labels = squiffy.ui.output.find('.squiffy-label-' + label);
-        $labels.fadeOut(1000, function() {
+        $labels.fadeOut(1000, function () {
             $labels.html(squiffy.ui.processText(text));
-            $labels.fadeIn(1000, function() {
+            $labels.fadeIn(1000, function () {
                 squiffy.story.save();
             });
         });
     };
 
-    squiffy.story.go = function(section) {
+    squiffy.story.go = function (section) {
         squiffy.set('_transition', null);
         newSection();
         squiffy.story.section = squiffy.story.sections[section];
@@ -199,7 +199,7 @@ var squiffy = {};
         }
     };
 
-    squiffy.story.run = function(section) {
+    squiffy.story.run = function (section) {
         if (section.clear) {
             squiffy.ui.clearScreen();
         }
@@ -211,7 +211,7 @@ var squiffy = {};
         }
     };
 
-    squiffy.story.passage = function(passageName) {
+    squiffy.story.passage = function (passageName) {
         var passage = squiffy.story.section.passages[passageName];
         var masterSection = squiffy.story.sections[''];
         if (!passage && masterSection) passage = masterSection.passages[passageName];
@@ -234,7 +234,7 @@ var squiffy = {};
         squiffy.story.save();
     };
 
-    var processAttributes = function(attributes) {
+    var processAttributes = function (attributes) {
         attributes.forEach(function (attribute) {
             if (startsWith(attribute, '@replace ')) {
                 replaceLabel(attribute.substring(9));
@@ -245,7 +245,7 @@ var squiffy = {};
         });
     };
 
-    squiffy.story.restart = function() {
+    squiffy.story.restart = function () {
         if (squiffy.ui.settings.persist && window.localStorage) {
             var keys = Object.keys(localStorage);
             jQuery.each(keys, function (idx, key) {
@@ -266,11 +266,11 @@ var squiffy = {};
         }
     };
 
-    squiffy.story.save = function() {
+    squiffy.story.save = function () {
         squiffy.set('_output', squiffy.ui.output.html());
     };
 
-    squiffy.story.load = function() {
+    squiffy.story.load = function () {
         var output = squiffy.get('_output');
         if (!output) return false;
         squiffy.ui.output.html(output);
@@ -283,7 +283,7 @@ var squiffy = {};
         return true;
     };
 
-    var setSeen = function(sectionName) {
+    var setSeen = function (sectionName) {
         var seenSections = squiffy.get('_seen_sections');
         if (!seenSections) seenSections = [];
         if (seenSections.indexOf(sectionName) == -1) {
@@ -292,33 +292,33 @@ var squiffy = {};
         }
     };
 
-    squiffy.story.seen = function(sectionName) {
+    squiffy.story.seen = function (sectionName) {
         var seenSections = squiffy.get('_seen_sections');
         if (!seenSections) return false;
         return (seenSections.indexOf(sectionName) > -1);
     };
-    
+
     squiffy.ui = {};
 
     var currentSection = null;
     var screenIsClear = true;
     var scrollPosition = 0;
 
-    var newSection = function() {
+    var newSection = function () {
         if (currentSection) {
             disableLink(jQuery('.squiffy-link', currentSection));
-        currentSection.find('input').each(function () {
-                set ($(this).data('attribute') || this.id, this.value);
+            currentSection.find('input').each(function () {
+                set($(this).data('attribute') || this.id, this.value);
                 this.disabled = true;
-        });
-        currentSection.find("[contenteditable]").each(function () {
-                set ($(this).data('attribute') || this.id, this.innerHTML);
+            });
+            currentSection.find("[contenteditable]").each(function () {
+                set($(this).data('attribute') || this.id, this.innerHTML);
                 this.disabled = true;
-        });
-                currentSection.find('textarea').each(function () {
-                set ($(this).data('attribute') || this.id, this.value);
+            });
+            currentSection.find('textarea').each(function () {
+                set($(this).data('attribute') || this.id, this.value);
                 this.disabled = true;
-        });
+            });
 
         }
 
@@ -331,20 +331,20 @@ var squiffy = {};
         squiffy.set('_output-section', id);
     };
 
-    squiffy.ui.write = function(text) {
+    squiffy.ui.write = function (text) {
         screenIsClear = false;
         scrollPosition = squiffy.ui.output.height();
         currentSection.append(jQuery('<div/>').html(squiffy.ui.processText(text)));
         squiffy.ui.scrollToEnd();
     };
 
-    squiffy.ui.clearScreen = function() {
+    squiffy.ui.clearScreen = function () {
         squiffy.ui.output.html('');
         screenIsClear = true;
         newSection();
     };
 
-    squiffy.ui.scrollToEnd = function() {
+    squiffy.ui.scrollToEnd = function () {
         var scrollTo, currentScrollTop, distance, duration;
         if (squiffy.ui.settings.scroll === 'element') {
             scrollTo = squiffy.ui.output[0].scrollHeight - squiffy.ui.output.height();
@@ -368,21 +368,21 @@ var squiffy = {};
         }
     };
 
-    squiffy.ui.processText = function(text) {
+    squiffy.ui.processText = function (text) {
         function process(text, data) {
             var containsUnprocessedSection = false;
             var open = text.indexOf('{');
             var close;
-            
+
             if (open > -1) {
                 var nestCount = 1;
                 var searchStart = open + 1;
                 var finished = false;
-             
+
                 while (!finished) {
                     var nextOpen = text.indexOf('{', searchStart);
                     var nextClose = text.indexOf('}', searchStart);
-         
+
                     if (nextClose > -1) {
                         if (nextOpen > -1 && nextOpen < nextClose) {
                             nestCount++;
@@ -403,13 +403,13 @@ var squiffy = {};
                     }
                 }
             }
-            
+
             if (containsUnprocessedSection) {
                 var section = text.substring(open + 1, close);
                 var value = processTextCommand(section, data);
                 text = text.substring(0, open) + value + process(text.substring(close + 1), data);
             }
-            
+
             return (text);
         }
 
@@ -427,7 +427,7 @@ var squiffy = {};
                 return processTextCommand_Rotate('rotate', text, data);
             }
             else if (/^sequence[: ]/.test(text)) {
-                return processTextCommand_Rotate('sequence', text, data);   
+                return processTextCommand_Rotate('sequence', text, data);
             }
             else if (text in squiffy.story.section.passages) {
                 return process(squiffy.story.section.passages[text].text, data);
@@ -435,7 +435,7 @@ var squiffy = {};
             else if (text in squiffy.story.sections) {
                 return process(squiffy.story.sections[text].text, data);
             }
-            else if (startsWith(text,'@') && !startsWith(text,'@replace')) {
+            else if (startsWith(text, '@') && !startsWith(text, '@replace')) {
                 processAttributes(text.substring(1).split(","));
                 return "";
             }
@@ -462,8 +462,8 @@ var squiffy = {};
                 var op = match[2];
                 var rhs = match[3];
 
-                if(startsWith(rhs,'@')) rhs=squiffy.get(rhs.substring(1));
-                
+                if (startsWith(rhs, '@')) rhs = squiffy.get(rhs.substring(1));
+
                 if (op == '=' && lhs == rhs) result = true;
                 if (op == '&lt;&gt;' && lhs != rhs) result = true;
                 if (op == '&gt;' && lhs > rhs) result = true;
@@ -540,14 +540,14 @@ var squiffy = {};
         return process(text, data);
     };
 
-    squiffy.ui.transition = function(f) {
+    squiffy.ui.transition = function (f) {
         squiffy.set('_transition', f.toString());
         f();
     };
 
     squiffy.storageFallback = {};
 
-    squiffy.set = function(attribute, value) {
+    squiffy.set = function (attribute, value) {
         if (typeof value === 'undefined') value = true;
         if (squiffy.ui.settings.persist && window.localStorage) {
             localStorage[squiffy.story.id + '-' + attribute] = JSON.stringify(value);
@@ -558,7 +558,7 @@ var squiffy = {};
         squiffy.ui.settings.onSet(attribute, value);
     };
 
-    squiffy.get = function(attribute) {
+    squiffy.get = function (attribute) {
         var result;
         if (squiffy.ui.settings.persist && window.localStorage) {
             result = localStorage[squiffy.story.id + '-' + attribute];
@@ -570,11 +570,11 @@ var squiffy = {};
         return JSON.parse(result);
     };
 
-    var startsWith = function(string, prefix) {
+    var startsWith = function (string, prefix) {
         return string.substring(0, prefix.length) === prefix;
     };
 
-    var rotate = function(options, current) {
+    var rotate = function (options, current) {
         var colon = options.indexOf(':');
         if (colon == -1) {
             return [options, current];
@@ -591,7 +591,7 @@ var squiffy = {};
                 scroll: 'body',
                 persist: true,
                 restartPrompt: true,
-                onSet: function (attribute, value) {}
+                onSet: function (attribute, value) { }
             }, options);
 
             squiffy.ui.output = this;
@@ -604,7 +604,7 @@ var squiffy = {};
 
             initLinkHandler();
             squiffy.story.begin();
-            
+
             return this;
         },
         get: function (attribute) {
@@ -625,10 +625,10 @@ var squiffy = {};
             return methods[methodOrOptions]
                 .apply(this, Array.prototype.slice.call(arguments, 1));
         }
-        else if (typeof methodOrOptions === 'object' || ! methodOrOptions) {
+        else if (typeof methodOrOptions === 'object' || !methodOrOptions) {
             return methods.init.apply(this, arguments);
         } else {
-            jQuery.error('Method ' +  methodOrOptions + ' does not exist');
+            jQuery.error('Method ' + methodOrOptions + ' does not exist');
         }
     };
 })();
