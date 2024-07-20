@@ -1,5 +1,7 @@
 /* jshint quotmark: single */
 
+import * as marked from 'marked';
+
 'use strict';
 
 const COMPILER_VERSION = '6.0';
@@ -9,16 +11,15 @@ export const generate = function (inputFilename, options) {
     return compiler.generate(inputFilename, __dirname, options);
 };
 
-export const getJs = function (input) {
+export const getJs = function (input, template) {
     var compiler = new Compiler();
-    return compiler.process(input, __dirname);
+    return compiler.process(input, template);
 };
 
 var _ = require('underscore');
 var path = require('path');
 var fs = require('fs');
 var glob = require('glob');
-var marked = require('marked');
 var crypto = require('crypto');
 
 var squiffyVersion = COMPILER_VERSION;
@@ -35,11 +36,11 @@ String.prototype.endsWith = function (suffix) {
 };
 
 function Compiler() {
-    this.process = function (input, sourcePath) {
+    this.process = function (input, template) {
         var story = new Story();
         var success = this.processFileText(story, input, null, true);
         if (!success) return 'Failed';
-        return this.getJs(story, sourcePath, {});
+        return this.getJs(story, template, {});
     };
 
     this.generate = function (inputFilename, sourcePath, options) {
@@ -149,8 +150,7 @@ function Compiler() {
         return outputPath;
     };
 
-    this.getJs = function (story, sourcePath, options) {
-        var jsTemplateFile = fs.readFileSync(path.join(sourcePath, 'squiffy.template.js'));
+    this.getJs = function (story, jsTemplateFile, options) {
         var jsData = '// Created with Squiffy {0}\n// https://github.com/textadventures/squiffy\n\n'
             .format(squiffyVersion) +
             '(function(){\n' +
@@ -172,7 +172,8 @@ function Compiler() {
         }
         outputJsFile.push('squiffy.story.sections = {\n');
 
-        _.each(story.sections, function (section, sectionName) {
+        Object.keys(story.sections).forEach(sectionName => {
+            const section = story.sections[sectionName];
             outputJsFile.push('\t\'{0}\': {\n'.format(sectionName.replace(/\'/g, "\\'")));
             if (section.clear) {
                 outputJsFile.push('\t\t\'clear\': true,\n');
@@ -186,7 +187,7 @@ function Compiler() {
             }
             if ('@last' in section.passages) {
                 var passageCount = 0;
-                _.each(section.passages, function (passage, passageName) {
+                Object.keys(section.passages).forEach(passageName => {
                     if (passageName && passageName.substr(0, 1) !== '@') {
                         passageCount++;
                     }
@@ -195,7 +196,8 @@ function Compiler() {
             }
 
             outputJsFile.push('\t\t\'passages\': {\n');
-            _.each(section.passages, function (passage, passageName) {
+            Object.keys(section.passages).forEach(passageName => {
+                const passage = section.passages[passageName];
                 outputJsFile.push('\t\t\t\'{0}\': {\n'.format(passageName.replace(/\'/g, "\\'")));
                 if (passage.clear) {
                     outputJsFile.push('\t\t\t\t\'clear\': true,\n');
@@ -276,9 +278,12 @@ function Compiler() {
             var stripLine = line.trim();
             lineCount++;
 
-            var match = _.object(_.map(this.regex, function (regex, key) {
-                return [key, key == 'js' ? regex.exec(line) : regex.exec(stripLine)];
-            }));
+            var match = {};
+            
+            Object.keys(this.regex).forEach(key => {
+                const regex = this.regex[key];
+                match[key] = key == 'js' ? regex.exec(line) : regex.exec(stripLine);
+            });
 
             if (match.section) {
                 section = story.addSection(match.section[1], inputFilename, lineCount);
@@ -468,13 +473,13 @@ function Compiler() {
 
     this.checkSectionLinks = function (story, links, section, passage) {
         if (!story) return;
-        var badLinks = _.filter(links, function (m) { return !this.linkDestinationExists(m, story.sections); }, this);
+        var badLinks = links.filter(m => this.linkDestinationExists(m, story.sections));
         this.showBadLinksWarning(badLinks, 'section', '[[', ']]', section, passage);
     };
 
     this.checkPassageLinks = function (story, links, section, passage) {
         if (!story) return;
-        var badLinks = _.filter(links, function (m) { return !this.linkDestinationExists(m, section.passages); }, this);
+        var badLinks = links.filter(m => !this.linkDestinationExists(m, section.passages));
         this.showBadLinksWarning(badLinks, 'passage', '[', ']', section, passage);
     };
 
@@ -490,7 +495,7 @@ function Compiler() {
         if (linkDestination.substr(0, 1) == '@') {
             return true;
         }
-        return _.contains(Object.keys(keys), linkDestination);
+        return Object.keys(keys).indexOf(linkDestination > -1);
     };
 
     this.showBadLinksWarning = function (badLinks, linkTo, before, after, section, passage) {
