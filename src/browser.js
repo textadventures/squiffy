@@ -5,7 +5,7 @@ $(function() {
     var compile = function (input) {
         console.log("compile", input);
 
-        const result = getJs(input.data);
+        const result = getJs(input.data, input.template);
         console.log(result);
 
         // var url = 'http://squiffy.textadventures.co.uk';

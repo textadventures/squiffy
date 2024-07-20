@@ -5,6 +5,15 @@
 /* jshint evil: true */
 /* jshint multistr: true */
 
+let squiffyTemplateJs = "";
+
+async function getSquiffyTemplate() {
+    var response = await fetch("squiffy.template.js");
+    squiffyTemplateJs = await response.text();
+}
+
+getSquiffyTemplate();
+
 (function () {
     'use strict';
 
@@ -48,6 +57,7 @@
         $('#restart').hide();
         $('a[href="#tab-output"]').tab('show');
         settings.compile({
+            template: squiffyTemplateJs,
             showWarnings: function (msgs) {
                 const WarningStyle = '"color: gold; background-color: gray"';
 
