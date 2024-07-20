@@ -5,8 +5,6 @@
 /* jshint evil: true */
 /* jshint multistr: true */
 
-console.log("module...");
-
 (function () {
     'use strict';
 
