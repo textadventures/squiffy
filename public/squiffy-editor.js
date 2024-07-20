@@ -8,9 +8,9 @@
 (function () {
     'use strict';
 
-    String.prototype.format = function() {
+    String.prototype.format = function () {
         var args = arguments;
-        return this.replace(/{(\d+)}/g, function(match, number) {
+        return this.replace(/{(\d+)}/g, function (match, number) {
             return typeof args[number] != 'undefined' ? args[number] : match;
         });
     };
@@ -19,27 +19,27 @@
         currentRow, currentSection, currentPassage;
 
     const defaultSettings = {
-      fontSize: 12
+        fontSize: 12
     };
 
     const initUserSettings = function () {
-      var us = settings.userSettings;
-      var fontSize = us.get('fontSize');
-      if (!fontSize) {
-        us.set('fontSize', defaultSettings.fontSize);
-      }
+        var us = settings.userSettings;
+        var fontSize = us.get('fontSize');
+        if (!fontSize) {
+            us.set('fontSize', defaultSettings.fontSize);
+        }
     };
 
     const populateSettingsDialog = function () {
-      var us = settings.userSettings;
-      $('#font-size').val(us.get('fontSize'));
-      $('#font-size').change(function () {
-        var val = parseInt($('#font-size').val());
-        if (!val) val = defaultSettings.fontSize;
-        editor.setFontSize(val);
-        us.set('fontSize', val);
-        $('#font-size').val(val);
-      });
+        var us = settings.userSettings;
+        $('#font-size').val(us.get('fontSize'));
+        $('#font-size').change(function () {
+            var val = parseInt($('#font-size').val());
+            if (!val) val = defaultSettings.fontSize;
+            editor.setFontSize(val);
+            us.set('fontSize', val);
+            $('#font-size').val(val);
+        });
     };
 
     const run = function () {
@@ -48,10 +48,10 @@
         $('#restart').hide();
         $('a[href="#tab-output"]').tab('show');
         settings.compile({
-            showWarnings: function(msgs) {
+            showWarnings: function (msgs) {
                 const WarningStyle = '"color: gold; background-color: gray"';
 
-                if ( msgs.length > 0 ) {
+                if (msgs.length > 0) {
                     $('#output').html('<div style=' + WarningStyle + '>' + msgs + '</div>');
                 }
 
@@ -89,7 +89,7 @@
                     }
                 });
             },
-            fail: function (data,msgs) {
+            fail: function (data, msgs) {
                 $('<div/>', { id: 'output' }).appendTo('#output-container');
 
                 // Show fail message
@@ -139,7 +139,7 @@
     };
 
     const download = function (data, filename, type) {
-        var blob = new Blob([data], {type: type || 'text/plain'});
+        var blob = new Blob([data], { type: type || 'text/plain' });
         var downloadLink = document.createElement('a');
         downloadLink.download = filename;
         downloadLink.href = window.URL.createObjectURL(blob);
@@ -152,67 +152,67 @@
     };
 
     const addSection = function () {
-      addSectionOrPassage(true);
+        addSectionOrPassage(true);
     };
 
     const addPassage = function () {
-      addSectionOrPassage(false);
+        addSectionOrPassage(false);
     };
 
     const addSectionOrPassage = function (isSection) {
-      const selection = editor.getSelectedText();
-      var text;
+        const selection = editor.getSelectedText();
+        var text;
 
-      if (isSection) {
-        text = '[[' + selection + ']]';
-      }
-      else {
-        text = '[' + selection + ']';
-      }
+        if (isSection) {
+            text = '[[' + selection + ']]';
+        }
+        else {
+            text = '[' + selection + ']';
+        }
 
-      if (selection) {
-        // replace the selected text with a link to new section/passage
-        editor.session.replace(editor.selection.getRange(), text);
-      }
+        if (selection) {
+            // replace the selected text with a link to new section/passage
+            editor.session.replace(editor.selection.getRange(), text);
+        }
 
-      text = text + ':\n';
-      var insertLine = currentSection.end;
-      var moveToLine = insertLine;
-      if (!insertLine) {
-        // adding new section/passage to the end of the document
-        insertLine = editor.session.doc.$lines.length;
-        text = '\n\n' + text;
-        moveToLine = insertLine + 1;
-      }
-      else {
-        // adding new section/passage in the middle of the document
-        text = text + '\n\n';
-      }
-      var Range = ace.require('ace/range').Range;
-      var range = new Range(insertLine, 0, insertLine, 0);
-      editor.session.replace(range, text);
+        text = text + ':\n';
+        var insertLine = currentSection.end;
+        var moveToLine = insertLine;
+        if (!insertLine) {
+            // adding new section/passage to the end of the document
+            insertLine = editor.session.doc.$lines.length;
+            text = '\n\n' + text;
+            moveToLine = insertLine + 1;
+        }
+        else {
+            // adding new section/passage in the middle of the document
+            text = text + '\n\n';
+        }
+        var Range = ace.require('ace/range').Range;
+        var range = new Range(insertLine, 0, insertLine, 0);
+        editor.session.replace(range, text);
 
-      if (selection) {
-        // move cursor to new section/passage
-        moveTo(moveToLine + 1);
-      }
-      else {
-        // no name was specified, so set cursor position to middle of [[ and ]]
-        var column = isSection ? 2 : 1;
-        moveTo(moveToLine, column);
-      }
+        if (selection) {
+            // move cursor to new section/passage
+            moveTo(moveToLine + 1);
+        }
+        else {
+            // no name was specified, so set cursor position to middle of [[ and ]]
+            var column = isSection ? 2 : 1;
+            moveTo(moveToLine, column);
+        }
     };
 
     const collapseAll = function () {
-      editor.session.foldAll();
+        editor.session.foldAll();
     };
 
     const uncollapseAll = function () {
-      editor.session.unfold();
+        editor.session.unfold();
     };
 
     const showSettings = function () {
-      $('#settings-dialog').modal();
+        $('#settings-dialog').modal();
     };
 
     var localSaveTimeout, autoSaveTimeout;
@@ -446,95 +446,95 @@
             // get rid of an annoying warning
             editor.$blockScrolling = Infinity;
 
-            define('ace/theme/squiffy', [], function(require, exports, module) {
-              exports.isDark = false;
-              exports.cssClass = 'ace-squiffy';
+            define('ace/theme/squiffy', [], function (require, exports, module) {
+                exports.isDark = false;
+                exports.cssClass = 'ace-squiffy';
             });
 
             editor.setTheme('ace/theme/squiffy');
 
-            define('ace/folding/squiffy', [], function(require, exports, module) {
-              var oop = require('ace/lib/oop');
-              var BaseFoldMode = require('ace/mode/folding/markdown').FoldMode;
-              var FoldMode = function () {};
-              oop.inherits(FoldMode, BaseFoldMode);
-              exports.FoldMode = FoldMode;
+            define('ace/folding/squiffy', [], function (require, exports, module) {
+                var oop = require('ace/lib/oop');
+                var BaseFoldMode = require('ace/mode/folding/markdown').FoldMode;
+                var FoldMode = function () { };
+                oop.inherits(FoldMode, BaseFoldMode);
+                exports.FoldMode = FoldMode;
 
-              (function() {
-                  this.foldingStartMarker = /^(?:\[\[(.*)\]\]:|\[(.*)\]:)$/;
-              }).call(FoldMode.prototype);
+                (function () {
+                    this.foldingStartMarker = /^(?:\[\[(.*)\]\]:|\[(.*)\]:)$/;
+                }).call(FoldMode.prototype);
             });
 
-            define('ace/mode/squiffy', [], function(require, exports, module) {
-              var oop = require('ace/lib/oop');
-              var MarkdownMode = require('ace/mode/markdown').Mode;
-              var TextHighlightRules = require('ace/mode/text_highlight_rules').TextHighlightRules;
-              var JsHighlightRules = require('ace/mode/javascript_highlight_rules').JavaScriptHighlightRules;
-              var SquiffyFoldMode = require('ace/folding/squiffy').FoldMode;
+            define('ace/mode/squiffy', [], function (require, exports, module) {
+                var oop = require('ace/lib/oop');
+                var MarkdownMode = require('ace/mode/markdown').Mode;
+                var TextHighlightRules = require('ace/mode/text_highlight_rules').TextHighlightRules;
+                var JsHighlightRules = require('ace/mode/javascript_highlight_rules').JavaScriptHighlightRules;
+                var SquiffyFoldMode = require('ace/folding/squiffy').FoldMode;
 
-              var Mode = function() {
-                this.HighlightRules = SquiffyHighlightRules;
-                this.foldingRules = new SquiffyFoldMode();
-              };
-              oop.inherits(Mode, MarkdownMode);
-              exports.Mode = Mode;
-
-              var SquiffyHighlightRules = function () {
-                this.$rules = {
-                  'start': [
-                    {
-                      token: 'markup.heading.section',
-                      regex: /^\[\[(.*)\]\]:$/
-                    },
-                    {
-                      token: 'markup.bold',
-                      regex: /^\[(.*)\]:$/
-                    },
-                    {
-                      token: 'keyword',
-                      regex: /^(\t| {4})/,
-                      next: 'js-start'
-                    },
-                    {
-                      token: 'markup.heading.passage',
-					  regex: /(\[\[[\s\S]*?\]\](\,|\.|\s|\:|\;)|\[\[[\s\S]*?\]\]\([\s\S]*?\))/
-					},
-					{
-					  token: 'constant.language',
-					  regex: /(\[[\s\S]*?\](\,|\.|\s|\:|\;)|\[[\s\S]*?\]\([\s\S]*?\))/
-					},
-					{
-					  token: 'support.other',
-					  regex: /<\!\-\-[\s\S]*?\-\->/
-					},
-					{
-					  token: 'support.variable',
-					  regex: /^\@(clear|set|start|replace|title|import|unset|inc|dec)(.*)$/
-					},
-					{
-					  token: 'string',
-					  regex: /\{(.*)(\}|\}\})/
-					},
-					{
-					  token: 'support.other',
-					  regex: /^\+\+\+(.*)$/
-					},
-					{
-					  token: 'storage.type',
-					  regex: /<(.*)>/
-					}
-
-                  ]
+                var Mode = function () {
+                    this.HighlightRules = SquiffyHighlightRules;
+                    this.foldingRules = new SquiffyFoldMode();
                 };
+                oop.inherits(Mode, MarkdownMode);
+                exports.Mode = Mode;
 
-                this.embedRules(JsHighlightRules, 'js-', [{
-                  token: 'keyword',
-                  regex: '$',
-                  next: 'start'
-                }]);
-              };
-              oop.inherits(SquiffyHighlightRules, TextHighlightRules);
-              exports.SquiffyHighlightRules = SquiffyHighlightRules;
+                var SquiffyHighlightRules = function () {
+                    this.$rules = {
+                        'start': [
+                            {
+                                token: 'markup.heading.section',
+                                regex: /^\[\[(.*)\]\]:$/
+                            },
+                            {
+                                token: 'markup.heading.passage',
+                                regex: /^\[(.*)\]:$/
+                            },
+                            {
+                                token: 'keyword',
+                                regex: /^(\t| {4})/,
+                                next: 'js-start'
+                            },
+                            {
+                                token: 'markup.heading.passage',
+                                regex: /(\[\[[\s\S]*?\]\](\,|\.|\s|\:|\;)|\[\[[\s\S]*?\]\]\([\s\S]*?\))/
+                            },
+                            {
+                                token: 'constant.language',
+                                regex: /(\[[\s\S]*?\](\,|\.|\s|\:|\;)|\[[\s\S]*?\]\([\s\S]*?\))/
+                            },
+                            {
+                                token: 'support.other',
+                                regex: /<\!\-\-[\s\S]*?\-\->/
+                            },
+                            {
+                                token: 'support.variable',
+                                regex: /^\@(clear|set|start|replace|title|import|unset|inc|dec)(.*)$/
+                            },
+                            {
+                                token: 'string',
+                                regex: /\{(.*)(\}|\}\})/
+                            },
+                            {
+                                token: 'support.other',
+                                regex: /^\+\+\+(.*)$/
+                            },
+                            {
+                                token: 'storage.type',
+                                regex: /<(.*)>/
+                            }
+
+                        ]
+                    };
+
+                    this.embedRules(JsHighlightRules, 'js-', [{
+                        token: 'keyword',
+                        regex: '$',
+                        next: 'start'
+                    }]);
+                };
+                oop.inherits(SquiffyHighlightRules, TextHighlightRules);
+                exports.SquiffyHighlightRules = SquiffyHighlightRules;
             });
 
             editor.getSession().setMode('ace/mode/squiffy');
@@ -603,9 +603,9 @@
             $('#sections, #passages').chosen({ width: '100%' });
             $('[data-toggle="tooltip"]').tooltip();
             $('#settings-dialog').keypress(function (e) {
-              if (e.which === 13) {
-                $('#settings-dialog').modal('hide');
-              }
+                if (e.which === 13) {
+                    $('#settings-dialog').modal('hide');
+                }
             });
         },
         load: function (data) {
@@ -654,10 +654,10 @@
         if (methods[methodOrOptions]) {
             return methods[methodOrOptions].apply(this, Array.prototype.slice.call(arguments, 1));
         }
-        else if (typeof methodOrOptions === 'object' || ! methodOrOptions) {
+        else if (typeof methodOrOptions === 'object' || !methodOrOptions) {
             return methods.init.apply(this, arguments);
         } else {
-            $.error('Method ' +  methodOrOptions + ' does not exist');
+            $.error('Method ' + methodOrOptions + ' does not exist');
         }
     };
 
@@ -762,7 +762,7 @@
             <div id="debugger"></div>\
         </div>\
         ';
-      const appendHtml =
+    const appendHtml =
         '<div class="modal fade" id="settings-dialog" tabindex="-1" role="dialog" aria-labelledby="settingsLabel">\
           <div class="modal-dialog" role="document">\
             <div class="modal-content">\
