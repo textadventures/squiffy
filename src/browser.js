@@ -1,44 +1,52 @@
+import { getJs } from "./compiler/compiler";
+
 $(function() {
+
     var compile = function (input) {
-        var url = 'http://squiffy.textadventures.co.uk';
+        console.log("compile", input);
 
-        if (input.zip) {
-            // Using XMLHttpRequest here as jQuery doesn't support blob downloads
-            url += '/zip';
-            var xhr = new XMLHttpRequest();
-            xhr.open('POST', url, true);
-            xhr.responseType = 'blob';
+        const result = getJs(input.data);
+        console.log(result);
 
-            xhr.onload = function (e) {
-                if (this.status == 200) {
-                    input.success(this.response);
-                }
-                else {
-                    input.fail(this.response);
-                }
-            };
+        // var url = 'http://squiffy.textadventures.co.uk';
 
-            xhr.send(input.data);
-            return;
-        }
+        // if (input.zip) {
+        //     // Using XMLHttpRequest here as jQuery doesn't support blob downloads
+        //     url += '/zip';
+        //     var xhr = new XMLHttpRequest();
+        //     xhr.open('POST', url, true);
+        //     xhr.responseType = 'blob';
 
-        $.ajax({
-            url: url,
-            data: input.data,
-            type: "POST",
-            success: function (data) {
-                if (data.indexOf('Failed') === 0) {
-                    input.fail(data);
-                    return;
-                }
-                input.success(data);
-            },
-            error: function (xhr, status, err) {
-                input.fail({
-                    message: err
-                });
-            }
-        });
+        //     xhr.onload = function (e) {
+        //         if (this.status == 200) {
+        //             input.success(this.response);
+        //         }
+        //         else {
+        //             input.fail(this.response);
+        //         }
+        //     };
+
+        //     xhr.send(input.data);
+        //     return;
+        // }
+
+        // $.ajax({
+        //     url: url,
+        //     data: input.data,
+        //     type: "POST",
+        //     success: function (data) {
+        //         if (data.indexOf('Failed') === 0) {
+        //             input.fail(data);
+        //             return;
+        //         }
+        //         input.success(data);
+        //     },
+        //     error: function (xhr, status, err) {
+        //         input.fail({
+        //             message: err
+        //         });
+        //     }
+        // });
     };
 
     var userSettings = {
