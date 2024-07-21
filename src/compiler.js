@@ -4,6 +4,8 @@ import * as marked from 'marked';
 
 'use strict';
 
+const template = (await import('./squiffy.template.js?raw')).default;
+
 const COMPILER_VERSION = '6.0';
 
 export const generate = function (inputFilename, options) {
@@ -11,9 +13,9 @@ export const generate = function (inputFilename, options) {
     return compiler.generate(inputFilename, __dirname, options);
 };
 
-export const getJs = function (input, template) {
+export const getJs = function (input) {
     var compiler = new Compiler();
-    return compiler.process(input, template);
+    return compiler.process(input);
 };
 
 var path = require('path');
@@ -35,11 +37,11 @@ String.prototype.endsWith = function (suffix) {
 };
 
 function Compiler() {
-    this.process = function (input, template) {
+    this.process = function (input) {
         var story = new Story();
         var success = this.processFileText(story, input, null, true);
         if (!success) return 'Failed';
-        return this.getJs(story, template, {});
+        return this.getJs(story, {});
     };
 
     this.generate = function (inputFilename, sourcePath, options) {
@@ -149,11 +151,11 @@ function Compiler() {
         return outputPath;
     };
 
-    this.getJs = function (story, jsTemplateFile, options) {
+    this.getJs = function (story, options) {
         var jsData = '// Created with Squiffy {0}\n// https://github.com/textadventures/squiffy\n\n'
             .format(squiffyVersion) +
             '(function(){\n' +
-            jsTemplateFile.toString();
+            template;
 
         if (options.scriptOnly && options.pluginName) {
             jsData = jsData.replace('jQuery.fn.squiffy =', 'jQuery.fn.' + options.pluginName + ' =');
