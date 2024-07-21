@@ -1,44 +1,43 @@
 import { getJs } from "./compiler";
 
+var compile = async function (input) {
+    const result = await getJs(input.data);
+
+    // TODO: Pass array of errors/warnings as the second parameter
+    input.success(result, []);
+
+    // TODO: Handle zip request (input.zip previously called "/zip" on server version)
+};
+
+var userSettings = {
+    get: function (setting) {
+        var value = localStorage.getItem(setting);
+        if (value === null) return null;
+        return JSON.parse(value);
+    },
+    set: function (setting, value) {
+        localStorage.setItem(setting, JSON.stringify(value));
+    }
+};
+
+var init = function (data, storageKey) {
+    setTimeout(function () {
+        $('#squiffy-editor').squiffyEditor({
+            data: data,
+            compile: compile,
+            autoSave: function () {
+            },
+            storageKey: storageKey || 'squiffy',
+            updateTitle: function (title) {
+                document.title = title + ' - Squiffy Editor';
+            },
+            download: true,
+            userSettings: userSettings
+        });
+    }, 1);
+};
+
 $(function() {
-
-    var compile = async function (input) {
-        const result = await getJs(input.data);
-
-        // TODO: Pass array of errors/warnings as the second parameter
-        input.success(result, []);
-
-        // TODO: Handle zip request (input.zip previously called "/zip" on server version)
-    };
-
-    var userSettings = {
-        get: function (setting) {
-            var value = localStorage.getItem(setting);
-            if (value === null) return null;
-            return JSON.parse(value);
-        },
-        set: function (setting, value) {
-            localStorage.setItem(setting, JSON.stringify(value));
-        }
-    };
-
-    var init = function (data, storageKey) {
-        setTimeout(function () {
-            $('#squiffy-editor').squiffyEditor({
-                data: data,
-                compile: compile,
-                autoSave: function () {
-                },
-                storageKey: storageKey || 'squiffy',
-                updateTitle: function (title) {
-                    document.title = title + ' - Squiffy Editor';
-                },
-                download: true,
-                userSettings: userSettings
-            });
-        }, 1);
-    };
-
     var saved = localStorage.squiffy;
     if (saved) {
         init(localStorage.squiffy);
@@ -54,5 +53,4 @@ $(function() {
             '[other passage link]:\n\nThis is the text for the second passage link.\n\n' +
             '[[section link]]:\n\nWhen a new section appears, any unclicked passage links from the previous section are disabled.');
     }
-    
 });
