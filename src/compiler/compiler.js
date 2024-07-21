@@ -473,7 +473,7 @@ function Compiler() {
 
     this.checkSectionLinks = function (story, links, section, passage) {
         if (!story) return;
-        var badLinks = links.filter(m => this.linkDestinationExists(m, story.sections));
+        var badLinks = links.filter(m => !this.linkDestinationExists(m, story.sections));
         this.showBadLinksWarning(badLinks, 'section', '[[', ']]', section, passage);
     };
 
@@ -495,7 +495,7 @@ function Compiler() {
         if (linkDestination.substr(0, 1) == '@') {
             return true;
         }
-        return Object.keys(keys).indexOf(linkDestination > -1);
+        return Object.keys(keys).includes(linkDestination);
     };
 
     this.showBadLinksWarning = function (badLinks, linkTo, before, after, section, passage) {
