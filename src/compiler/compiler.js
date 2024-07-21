@@ -16,7 +16,6 @@ export const getJs = function (input, template) {
     return compiler.process(input, template);
 };
 
-var _ = require('underscore');
 var path = require('path');
 var fs = require('fs');
 var glob = require('glob');
@@ -103,10 +102,10 @@ function Compiler() {
 
             htmlData = htmlData.replace('<!-- JQUERY -->', jqueryJs);
 
-            var scriptData = _.map(story.scripts, function (script) { return '<script src="{0}"></script>'.format(script); }).join('\n');
+            var scriptData = story.scripts.map(script => '<script src="{0}"></script>'.format(script)).join('\n');
             htmlData = htmlData.replace('<!-- SCRIPTS -->', scriptData);
 
-            var stylesheetData = _.map(story.stylesheets, function (sheet) { return '<link rel="stylesheet" href="{0}"/>'.format(sheet); }).join('\n');
+            var stylesheetData = story.stylesheets.map(sheet => '<link rel="stylesheet" href="{0}"/>'.format(sheet)).join('\n');
             htmlData = htmlData.replace('<!-- STYLESHEETS -->', stylesheetData);
 
             if (options.write) {
@@ -247,19 +246,19 @@ function Compiler() {
         continue: /^\+\+\+(.*)$/,
     };
 
-    this.processFile = function (story, inputFilename, isFirst) {
-        if (_.contains(story.files, inputFilename)) {
-            return true;
-        }
+    // this.processFile = function (story, inputFilename, isFirst) {
+    //     if (_.contains(story.files, inputFilename)) {
+    //         return true;
+    //     }
 
-        story.files.push(inputFilename);
-        console.log('Loading ' + inputFilename);
+    //     story.files.push(inputFilename);
+    //     console.log('Loading ' + inputFilename);
 
-        var inputFile = fs.readFileSync(inputFilename);
-        var inputText = inputFile.toString();
+    //     var inputFile = fs.readFileSync(inputFilename);
+    //     var inputText = inputFile.toString();
 
-        return this.processFileText(story, inputText, inputFilename, isFirst);
-    };
+    //     return this.processFileText(story, inputText, inputFilename, isFirst);
+    // };
 
     this.processFileText = function (story, inputText, inputFilename, isFirst) {
         var inputLines = inputText.replace(/\r/g, '').split('\n');
