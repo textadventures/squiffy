@@ -1,4 +1,4 @@
-import { getJs } from "./compiler/compiler";
+import { getJs } from "./compiler";
 
 $(function() {
 
