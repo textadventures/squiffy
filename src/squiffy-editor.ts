@@ -5,8 +5,6 @@
 /* jshint evil: true */
 /* jshint multistr: true */
 
-'use strict';
-
 import { getJs } from "./compiler";
 
 String.prototype.format = function () {
@@ -85,7 +83,7 @@ const run = async function () {
                 scroll: 'element',
                 persist: false,
                 restartPrompt: false,
-                onSet: function (attribute, value) {
+                onSet: function (attribute: string, value: string) {
                     onSet(attribute, value);
                 }
             });
