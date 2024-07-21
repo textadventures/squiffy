@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "devDependencies": {
+    "@types/jquery": "^3.5.30",
     "@vite-pwa/assets-generator": "^0.2.4",
     "typescript": "^5.2.2",
     "vite": "^5.2.10",
