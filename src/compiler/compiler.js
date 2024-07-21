@@ -121,27 +121,27 @@ function Compiler() {
                 fs.writeFileSync(path.join(outputPath, 'style.css'), cssData);
             }
 
-            if (options.zip) {
-                console.log('Creating zip file');
-                var JSZip = require('jszip');
-                var zip = new JSZip();
-                zip.file(storyJsName, storyJs);
-                zip.file('index.html', htmlData);
-                zip.file('style.css', cssData);
-                if (!options.useCdn) {
-                    var jquery = fs.readFileSync(jQueryPath);
-                    zip.file(jqueryJs, jquery);
-                }
-                var buffer = zip.generate({
-                    type: 'nodebuffer'
-                });
-                if (options.write) {
-                    fs.writeFileSync(path.join(outputPath, 'output.zip'), buffer);
-                }
-                else {
-                    return buffer;
-                }
-            }
+            // if (options.zip) {
+            //     console.log('Creating zip file');
+            //     var JSZip = require('jszip');
+            //     var zip = new JSZip();
+            //     zip.file(storyJsName, storyJs);
+            //     zip.file('index.html', htmlData);
+            //     zip.file('style.css', cssData);
+            //     if (!options.useCdn) {
+            //         var jquery = fs.readFileSync(jQueryPath);
+            //         zip.file(jqueryJs, jquery);
+            //     }
+            //     var buffer = zip.generate({
+            //         type: 'nodebuffer'
+            //     });
+            //     if (options.write) {
+            //         fs.writeFileSync(path.join(outputPath, 'output.zip'), buffer);
+            //     }
+            //     else {
+            //         return buffer;
+            //     }
+            // }
         }
 
         console.log('Done.');
