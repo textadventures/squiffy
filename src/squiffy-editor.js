@@ -42,12 +42,12 @@
         });
     };
 
-    const run = function () {
+    const run = async function () {
         $('#output-container').html('');
         $('#debugger').html('');
         $('#restart').hide();
         $('a[href="#tab-output"]').tab('show');
-        settings.compile({
+        await settings.compile({
             showWarnings: function (msgs) {
                 const WarningStyle = '"color: gold; background-color: gray"';
 
@@ -111,9 +111,9 @@
         download(editor.getValue(), title + '.squiffy');
     };
 
-    const downloadZip = function () {
+    const downloadZip = async function () {
         localSave();
-        settings.compile({
+        await settings.compile({
             data: editor.getValue(),
             success: function (data) {
                 download(data, title + '.zip', 'application/octet-stream');
@@ -125,9 +125,9 @@
         });
     };
 
-    const downloadJavascript = function () {
+    const downloadJavascript = async function () {
         localSave();
-        settings.compile({
+        await settings.compile({
             data: editor.getValue(),
             success: function (data) {
                 download(data, title + '.js');
