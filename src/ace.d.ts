@@ -3,7 +3,8 @@ interface Window {
 }
 
 interface Ace {
-    edit(input: string): void;
+    require(string): any;
+    edit(input: string): Ace;
     setFontSize(size: number): void;
     getValue(): string;
     getSelectedText(): string;
