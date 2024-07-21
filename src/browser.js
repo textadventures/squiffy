@@ -2,8 +2,8 @@ import { getJs } from "./compiler";
 
 $(function() {
 
-    var compile = function (input) {
-        const result = getJs(input.data);
+    var compile = async function (input) {
+        const result = await getJs(input.data);
 
         // TODO: Pass array of errors/warnings as the second parameter
         input.success(result, []);

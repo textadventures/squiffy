@@ -4,18 +4,16 @@ import * as marked from 'marked';
 
 'use strict';
 
-const template = (await import('./squiffy.template.js?raw')).default;
-
 const COMPILER_VERSION = '6.0';
 
-export const generate = function (inputFilename, options) {
+export const generate = async function (inputFilename, options) {
     var compiler = new Compiler();
-    return compiler.generate(inputFilename, __dirname, options);
+    return await compiler.generate(inputFilename, __dirname, options);
 };
 
-export const getJs = function (input) {
+export const getJs = async function (input) {
     var compiler = new Compiler();
-    return compiler.process(input);
+    return await compiler.process(input);
 };
 
 var path = require('path');
@@ -37,14 +35,14 @@ String.prototype.endsWith = function (suffix) {
 };
 
 function Compiler() {
-    this.process = function (input) {
+    this.process = async function (input) {
         var story = new Story();
         var success = this.processFileText(story, input, null, true);
         if (!success) return 'Failed';
-        return this.getJs(story, {});
+        return await this.getJs(story, {});
     };
 
-    this.generate = function (inputFilename, sourcePath, options) {
+    this.generate = async function (inputFilename, sourcePath, options) {
         var outputPath;
         if (options.write) {
             outputPath = path.resolve(path.dirname(inputFilename));
@@ -75,7 +73,7 @@ function Compiler() {
 
         console.log('Writing ' + storyJsName);
 
-        var storyJs = this.getJs(story, sourcePath, options);
+        var storyJs = await this.getJs(story, sourcePath, options);
 
         if (options.write) {
             fs.writeFileSync(path.join(outputPath, storyJsName), storyJs);
@@ -151,7 +149,9 @@ function Compiler() {
         return outputPath;
     };
 
-    this.getJs = function (story, options) {
+    this.getJs = async function (story, options) {
+        const template = (await import('./squiffy.template.js?raw')).default;
+
         var jsData = '// Created with Squiffy {0}\n// https://github.com/textadventures/squiffy\n\n'
             .format(squiffyVersion) +
             '(function(){\n' +
