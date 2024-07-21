@@ -14,7 +14,7 @@ String.prototype.format = function () {
     });
 };
 
-var editor, settings, title, loading, layout, sourceMap,
+var editor: Ace, settings, title, loading, layout, sourceMap,
     currentRow, currentSection, currentPassage;
 
 const defaultSettings = {
@@ -440,7 +440,7 @@ const methods = {
             center__spacing_open: 0,
         });
 
-        editor = ace.edit('editor');
+        editor = window.ace.edit('editor');
 
         // get rid of an annoying warning
         editor.$blockScrolling = Infinity;
