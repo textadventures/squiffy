@@ -20,6 +20,6 @@
     "sharp-ico": "0.1.5"
   },
   "dependencies": {
-    "marked": "^4.0.14"
+    "marked": "^13.0.2"
   }
 }
