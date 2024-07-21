@@ -3,7 +3,7 @@ import { getJs } from "./compiler";
 $(function() {
 
     var compile = function (input) {
-        const result = getJs(input.data, input.template);
+        const result = getJs(input.data);
 
         // TODO: Pass array of errors/warnings as the second parameter
         input.success(result, []);
