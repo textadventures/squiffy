@@ -4,47 +4,11 @@ $(function() {
 
     var compile = function (input) {
         const result = getJs(input.data, input.template);
-        console.log(result);
 
-        // var url = 'http://squiffy.textadventures.co.uk';
+        // TODO: Pass array of errors/warnings as the second parameter
+        input.success(result, []);
 
-        // if (input.zip) {
-        //     // Using XMLHttpRequest here as jQuery doesn't support blob downloads
-        //     url += '/zip';
-        //     var xhr = new XMLHttpRequest();
-        //     xhr.open('POST', url, true);
-        //     xhr.responseType = 'blob';
-
-        //     xhr.onload = function (e) {
-        //         if (this.status == 200) {
-        //             input.success(this.response);
-        //         }
-        //         else {
-        //             input.fail(this.response);
-        //         }
-        //     };
-
-        //     xhr.send(input.data);
-        //     return;
-        // }
-
-        // $.ajax({
-        //     url: url,
-        //     data: input.data,
-        //     type: "POST",
-        //     success: function (data) {
-        //         if (data.indexOf('Failed') === 0) {
-        //             input.fail(data);
-        //             return;
-        //         }
-        //         input.success(data);
-        //     },
-        //     error: function (xhr, status, err) {
-        //         input.fail({
-        //             message: err
-        //         });
-        //     }
-        // });
+        // TODO: Handle zip request (input.zip previously called "/zip" on server version)
     };
 
     var userSettings = {
