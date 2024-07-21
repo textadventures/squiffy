@@ -6,16 +6,46 @@
 /* jshint multistr: true */
 
 import { getJs } from "./compiler";
+import { init as initAce } from "./squiffy-ace";
 
-String.prototype.format = function () {
-    var args = arguments;
-    return this.replace(/{(\d+)}/g, function (match, number) {
-        return typeof args[number] != 'undefined' ? args[number] : match;
-    });
-};
+interface Section {
+    name: string;
+    start: number;
+    end?: number;
+    isDefault?: boolean;
+    passages: Passage[]
+}
 
-var editor: Ace, settings, title, loading, layout, sourceMap,
-    currentRow, currentSection, currentPassage;
+interface Passage {
+    name: string;
+    start: number;
+    end?: number;
+}
+
+interface Settings {
+    desktop?: boolean;
+    userSettings: any;
+    autoSave: (arg0: any) => void;
+    setDirty?: () => void; storageKey: string | number;
+    updateTitle: (arg0: string) => void;
+    data: string;
+    open?: () => void;
+    save?: (name: string) => void;
+    preview?: () => void;
+    publish?: () => void;
+    download?: boolean;
+    build?: () => void;
+}
+
+var editor: Ace;
+var settings: Settings;
+var title: string | undefined;
+var loading: boolean;
+var layout: any;
+var sourceMap: Section[];
+var currentRow: any;
+var currentSection: Section | null;
+var currentPassage: Passage | null;
 
 const defaultSettings = {
     fontSize: 12
@@ -32,8 +62,8 @@ const initUserSettings = function () {
 const populateSettingsDialog = function () {
     var us = settings.userSettings;
     $('#font-size').val(us.get('fontSize'));
-    $('#font-size').change(function () {
-        var val = parseInt($('#font-size').val());
+    $('#font-size').on('change', () => {
+        var val = parseInt($('#font-size').val() as string);
         if (!val) val = defaultSettings.fontSize;
         editor.setFontSize(val);
         us.set('fontSize', val);
@@ -46,58 +76,7 @@ const run = async function () {
     $('#debugger').html('');
     $('#restart').hide();
     $('a[href="#tab-output"]').tab('show');
-    await settings.compile({
-        showWarnings: function (msgs) {
-            const WarningStyle = '"color: gold; background-color: gray"';
-
-            if (msgs.length > 0) {
-                $('#output').html('<div style=' + WarningStyle + '>' + msgs + '</div>');
-            }
-
-            return;
-        },
-        data: editor.getValue(),
-        success: function (data, msgs) {
-            $('#restart').show();
-
-            $('<div/>', { id: 'output' }).appendTo('#output-container');
-
-            $('<hr/>').appendTo('#output-container');
-
-            this.showWarnings(msgs);
-            // Show output
-            if (data.indexOf('Failed') === 0) {
-                $('#output').html(data);
-                return;
-            }
-
-            try {
-                eval(data);
-            }
-            catch (e) {
-                $('#output').html(e);
-                return;
-            }
-
-            $('#output').squiffy({
-                scroll: 'element',
-                persist: false,
-                restartPrompt: false,
-                onSet: function (attribute: string, value: string) {
-                    onSet(attribute, value);
-                }
-            });
-        },
-        fail: function (data, msgs) {
-            $('<div/>', { id: 'output' }).appendTo('#output-container');
-
-            // Show fail message
-            $('#output').html(data.message);
-
-            // Show detailed info
-            this.showWarnings(msgs);
-        }
-    });
+    await compile();
 };
 
 const restart = function () {
@@ -105,50 +84,50 @@ const restart = function () {
     $('#output').squiffy('restart');
 };
 
-const downloadSquiffyScript = function () {
-    localSave();
-    download(editor.getValue(), title + '.squiffy');
-};
+// const downloadSquiffyScript = function () {
+//     localSave();
+//     download(editor.getValue(), title + '.squiffy');
+// };
 
-const downloadZip = async function () {
-    localSave();
-    await settings.compile({
-        data: editor.getValue(),
-        success: function (data) {
-            download(data, title + '.zip', 'application/octet-stream');
-        },
-        fail: function (data) {
-            $('#output').html(data.message);
-        },
-        zip: true
-    });
-};
+// const downloadZip = async function () {
+//     localSave();
+//     await settings.compile({
+//         data: editor.getValue(),
+//         success: function (data) {
+//             download(data, title + '.zip', 'application/octet-stream');
+//         },
+//         fail: function (data) {
+//             $('#output').html(data.message);
+//         },
+//         zip: true
+//     });
+// };
 
-const downloadJavascript = async function () {
-    localSave();
-    await settings.compile({
-        data: editor.getValue(),
-        success: function (data) {
-            download(data, title + '.js');
-        },
-        fail: function (data) {
-            $('#output').html(data.message);
-        }
-    });
-};
+// const downloadJavascript = async function () {
+//     localSave();
+//     await settings.compile({
+//         data: editor.getValue(),
+//         success: function (data) {
+//             download(data, title + '.js');
+//         },
+//         fail: function (data) {
+//             $('#output').html(data.message);
+//         }
+//     });
+// };
 
-const download = function (data, filename, type) {
-    var blob = new Blob([data], { type: type || 'text/plain' });
-    var downloadLink = document.createElement('a');
-    downloadLink.download = filename;
-    downloadLink.href = window.URL.createObjectURL(blob);
-    downloadLink.onclick = function (e) {
-        document.body.removeChild(e.target);
-    };
-    downloadLink.style.display = 'none';
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
-};
+// const download = function (data, filename, type) {
+//     var blob = new Blob([data], { type: type || 'text/plain' });
+//     var downloadLink = document.createm('a');
+//     downloadLink.download = filename;
+//     downloadLink.href = window.URL.createObjectURL(blob);
+//     downloadLink.onclick = function (e) {
+//         document.body.removeChild(e.target);
+//     };
+//     downloadLink.style.display = 'none';
+//     document.body.appendChild(downloadLink);
+//     downloadLink.click();
+// };
 
 const addSection = function () {
     addSectionOrPassage(true);
@@ -158,7 +137,7 @@ const addPassage = function () {
     addSectionOrPassage(false);
 };
 
-const addSectionOrPassage = function (isSection) {
+const addSectionOrPassage = function (isSection: boolean) {
     const selection = editor.getSelectedText();
     var text;
 
@@ -175,7 +154,8 @@ const addSectionOrPassage = function (isSection) {
     }
 
     text = text + ':\n';
-    var insertLine = currentSection.end;
+    
+    var insertLine = currentSection!.end!;
     var moveToLine = insertLine;
     if (!insertLine) {
         // adding new section/passage to the end of the document
@@ -187,7 +167,8 @@ const addSectionOrPassage = function (isSection) {
         // adding new section/passage in the middle of the document
         text = text + '\n\n';
     }
-    var Range = ace.require('ace/range').Range;
+    
+    var Range = window.ace.require('ace/range').Range;
     var range = new Range(insertLine, 0, insertLine, 0);
     editor.session.replace(range, text);
 
@@ -214,17 +195,15 @@ const showSettings = function () {
     $('#settings-dialog').modal();
 };
 
-var localSaveTimeout, autoSaveTimeout;
+var localSaveTimeout: number | undefined, autoSaveTimeout: number | undefined;
 
 const editorChange = function () {
     if (loading) return;
     setInfo('');
     if (localSaveTimeout) clearTimeout(localSaveTimeout);
     localSaveTimeout = setTimeout(localSave, 50);
-    if (settings.autoSave) {
-        if (autoSaveTimeout) clearTimeout(autoSaveTimeout);
-        autoSaveTimeout = setTimeout(autoSave, 5000);
-    }
+    if (autoSaveTimeout) clearTimeout(autoSaveTimeout);
+    autoSaveTimeout = setTimeout(autoSave, 5000);
     if (settings.setDirty) settings.setDirty();
 };
 
@@ -240,11 +219,11 @@ const autoSave = function () {
     settings.autoSave(title);
 };
 
-const setInfo = function (text) {
+const setInfo = function (text: string) {
     $('#info').html(text);
 };
 
-const processFile = function (data) {
+const processFile = function (data: string) {
     var titleRegex = /^@title (.*)$/;
     var sectionRegex = /^\[\[(.*)\]\]:$/;
     var passageRegex = /^\[(.*)\]:$/;
@@ -270,7 +249,7 @@ const processFile = function (data) {
         return sourceMap.slice(-1)[0];
     };
 
-    const endPassage = function (index) {
+    const endPassage = function (index: number) {
         var previousPassage = currentSection().passages.slice(-1)[0];
         if (!previousPassage) return;
         previousPassage.end = index;
@@ -328,20 +307,20 @@ const processFile = function (data) {
     cursorMoved(true);
 };
 
-const editorLoad = function (data) {
+const editorLoad = function (data: string) {
     loading = true;
     editor.getSession().setValue(data, -1);
     loading = false;
     processFile(data);
 };
 
-const cursorMoved = function (force) {
+const cursorMoved = function (force?: boolean) {
     var row = editor.selection.getCursor().row;
     if (!force && row == currentRow) return;
     if (!sourceMap) return;
     currentRow = row;
 
-    var newCurrentSection, newCurrentPassage;
+    var newCurrentSection: Section, newCurrentPassage: Passage;
 
     sourceMap.forEach(function (section) {
         if (row >= section.start && (!section.end || row < section.end)) {
@@ -355,8 +334,8 @@ const cursorMoved = function (force) {
         }
     });
 
-    if (newCurrentSection !== currentSection) {
-        currentSection = newCurrentSection;
+    if (newCurrentSection! !== currentSection) {
+        currentSection = newCurrentSection!;
         $('#sections').val(dropdownName(currentSection.name));
         $('#sections').trigger('chosen:updated');
         var selectPassage = $('#passages');
@@ -367,14 +346,14 @@ const cursorMoved = function (force) {
         });
     }
 
-    if (newCurrentPassage !== currentPassage) {
-        currentPassage = newCurrentPassage;
+    if (newCurrentPassage! !== currentPassage) {
+        currentPassage = newCurrentPassage!;
         $('#passages').val(dropdownName(currentPassage.name));
         $('#passages').trigger('chosen:updated');
     }
 };
 
-const dropdownName = function (name) {
+const dropdownName = function (name: string) {
     if (name.length === 0) return '(Master)';
     return name;
 };
@@ -390,24 +369,24 @@ const sectionChanged = function () {
 
 const passageChanged = function () {
     var selectedPassage = $('#passages').val();
-    currentSection.passages.forEach(function (passage) {
+    currentSection!.passages.forEach(function (passage) {
         if (dropdownName(passage.name) === selectedPassage) {
             moveTo(passage.start + 1);
         }
     });
 };
 
-const moveTo = function (row, column) {
+const moveTo = function (row: number, column?: number) {
     column = column || 0;
-    var Range = ace.require('ace/range').Range;
+    var Range = window.ace.require('ace/range').Range;
     editor.selection.setRange(new Range(row, column, row, column));
     editor.renderer.scrollCursorIntoView();
     editor.focus();
 };
 
 const methods = {
-    init: function (options) {
-        var element = this;
+    init: function (options: Settings) {
+        var element = $('#squiffy-editor');
         settings = options;
 
         if (options.desktop) {
@@ -445,97 +424,9 @@ const methods = {
         // get rid of an annoying warning
         editor.$blockScrolling = Infinity;
 
-        define('ace/theme/squiffy', [], function (require, exports, module) {
-            exports.isDark = false;
-            exports.cssClass = 'ace-squiffy';
-        });
+        initAce();
 
         editor.setTheme('ace/theme/squiffy');
-
-        define('ace/folding/squiffy', [], function (require, exports, module) {
-            var oop = require('ace/lib/oop');
-            var BaseFoldMode = require('ace/mode/folding/markdown').FoldMode;
-            var FoldMode = function () { };
-            oop.inherits(FoldMode, BaseFoldMode);
-            exports.FoldMode = FoldMode;
-
-            (function () {
-                this.foldingStartMarker = /^(?:\[\[(.*)\]\]:|\[(.*)\]:)$/;
-            }).call(FoldMode.prototype);
-        });
-
-        define('ace/mode/squiffy', [], function (require, exports, module) {
-            var oop = require('ace/lib/oop');
-            var MarkdownMode = require('ace/mode/markdown').Mode;
-            var TextHighlightRules = require('ace/mode/text_highlight_rules').TextHighlightRules;
-            var JsHighlightRules = require('ace/mode/javascript_highlight_rules').JavaScriptHighlightRules;
-            var SquiffyFoldMode = require('ace/folding/squiffy').FoldMode;
-
-            var Mode = function () {
-                this.HighlightRules = SquiffyHighlightRules;
-                this.foldingRules = new SquiffyFoldMode();
-            };
-            oop.inherits(Mode, MarkdownMode);
-            exports.Mode = Mode;
-
-            var SquiffyHighlightRules = function () {
-                this.$rules = {
-                    'start': [
-                        {
-                            token: 'markup.heading.section',
-                            regex: /^\[\[(.*)\]\]:$/
-                        },
-                        {
-                            token: 'markup.heading.passage',
-                            regex: /^\[(.*)\]:$/
-                        },
-                        {
-                            token: 'keyword',
-                            regex: /^(\t| {4})/,
-                            next: 'js-start'
-                        },
-                        {
-                            token: 'markup.heading.passage',
-                            regex: /(\[\[[\s\S]*?\]\](\,|\.|\s|\:|\;)|\[\[[\s\S]*?\]\]\([\s\S]*?\))/
-                        },
-                        {
-                            token: 'constant.language',
-                            regex: /(\[[\s\S]*?\](\,|\.|\s|\:|\;)|\[[\s\S]*?\]\([\s\S]*?\))/
-                        },
-                        {
-                            token: 'support.other',
-                            regex: /<\!\-\-[\s\S]*?\-\->/
-                        },
-                        {
-                            token: 'support.variable',
-                            regex: /^\@(clear|set|start|replace|title|import|unset|inc|dec)(.*)$/
-                        },
-                        {
-                            token: 'string',
-                            regex: /\{(.*)(\}|\}\})/
-                        },
-                        {
-                            token: 'support.other',
-                            regex: /^\+\+\+(.*)$/
-                        },
-                        {
-                            token: 'storage.type',
-                            regex: /<(.*)>/
-                        }
-
-                    ]
-                };
-
-                this.embedRules(JsHighlightRules, 'js-', [{
-                    token: 'keyword',
-                    regex: '$',
-                    next: 'start'
-                }]);
-            };
-            oop.inherits(SquiffyHighlightRules, TextHighlightRules);
-            exports.SquiffyHighlightRules = SquiffyHighlightRules;
-        });
-
         editor.getSession().setMode('ace/mode/squiffy');
         editor.getSession().setUseWrapMode(true);
         editor.setShowPrintMargin(false);
@@ -560,10 +451,10 @@ const methods = {
 
         if (options.save) {
             $('#save').show();
-            $('#save').click(function () {
+            $('#save').click(() => {
                 clearTimeout(localSaveTimeout);
                 localSave();
-                options.save(title);
+                options.save!(title!);
             });
         }
 
@@ -588,9 +479,9 @@ const methods = {
 
         $('#run').click(run);
         $('#restart').click(restart);
-        $('#download-squiffy-script').click(downloadSquiffyScript);
-        $('#export-html-js').click(downloadZip);
-        $('#export-js').click(downloadJavascript);
+        // $('#download-squiffy-script').click(downloadSquiffyScript);
+        // $('#export-html-js').click(downloadZip);
+        // $('#export-js').click(downloadJavascript);
         $('#settings').click(showSettings);
         $('#add-section').click(addSection);
         $('#add-passage').click(addPassage);
@@ -607,17 +498,17 @@ const methods = {
             }
         });
     },
-    load: function (data) {
+    load: function (data: string) {
         editorLoad(data);
         localSave();
     },
     save: function () {
         return editor.getValue();
     },
-    setStorageKey: function (key) {
+    setStorageKey: function (key: string) {
         settings.storageKey = key;
     },
-    setInfo: function (text) {
+    setInfo: function (text: string) {
         setInfo(text);
     },
     run: run,
@@ -638,7 +529,7 @@ const methods = {
     copy: function () {
         return editor.getSelectedText();
     },
-    paste: function (text) {
+    paste: function (text: string) {
         editor.session.replace(editor.selection.getRange(), text);
     },
     find: function () {
@@ -649,28 +540,17 @@ const methods = {
     }
 };
 
-$.fn.squiffyEditor = function (methodOrOptions) {
-    if (methods[methodOrOptions]) {
-        return methods[methodOrOptions].apply(this, Array.prototype.slice.call(arguments, 1));
-    }
-    else if (typeof methodOrOptions === 'object' || !methodOrOptions) {
-        return methods.init.apply(this, arguments);
-    } else {
-        $.error('Method ' + methodOrOptions + ' does not exist');
-    }
-};
-
-const onSet = function (attribute, value) {
+const onSet = function (attribute: string, value: string) {
     // don't log internal attribute changes
     if (attribute.indexOf('_') === 0) return;
 
-    logToDebugger('{0} = {1}'.format(attribute, value));
+    logToDebugger(`${attribute} = ${value}`);
 };
 
-const logToDebugger = function (text) {
+const logToDebugger = function (text: string) {
     layout.open('south');
     $('#debugger').append(text + '<br/>');
-    $('#debugger').scrollTop($('#debugger').height());
+    $('#debugger').scrollTop($('#debugger').height() as number);
 };
 
 var editorHtml =
@@ -786,31 +666,82 @@ const appendHtml =
         </div>\
     </div>';
 
-var compile = async function (input) {
-    const result = await getJs(input.data);
+const compile = async function () {
+    const result = await getJs(editor.getValue());
 
     // TODO: Pass array of errors/warnings as the second parameter
-    input.success(result, []);
+    onCompileSuccess(result, []);
 
     // TODO: Handle zip request (input.zip previously called "/zip" on server version)
 };
 
+const onCompileSuccess = function (data: string, msgs: string[]) {
+    $('#restart').show();
+
+    $('<div/>', { id: 'output' }).appendTo('#output-container');
+
+    $('<hr/>').appendTo('#output-container');
+
+    showWarnings(msgs);
+    // Show output
+    if (data.indexOf('Failed') === 0) {
+        $('#output').html(data);
+        return;
+    }
+
+    try {
+        eval(data);
+    }
+    catch (e) {
+        $('#output').html(e as string);
+        return;
+    }
+
+    $('#output').squiffy({
+        scroll: 'element',
+        persist: false,
+        restartPrompt: false,
+        onSet: function (attribute: string, value: string) {
+            onSet(attribute, value);
+        }
+    });
+};
+
+// fail: function (data: string, msgs: string[]) {
+//     $('<div/>', { id: 'output' }).appendTo('#output-container');
+
+//     // Show fail message
+//     $('#output').html(data.message);
+
+//     // Show detailed info
+//     this.showWarnings(msgs);
+// }
+
+const showWarnings = function (msgs: string[]) {
+    const WarningStyle = '"color: gold; background-color: gray"';
+
+    if (msgs.length > 0) {
+        $('#output').html('<div style=' + WarningStyle + '>' + msgs + '</div>');
+    }
+
+    return;
+};
+
 var userSettings = {
-    get: function (setting) {
+    get: function (setting: string) {
         var value = localStorage.getItem(setting);
         if (value === null) return null;
         return JSON.parse(value);
     },
-    set: function (setting, value) {
+    set: function (setting: string, value: object) {
         localStorage.setItem(setting, JSON.stringify(value));
     }
 };
 
-var init = function (data, storageKey) {
+var init = function (data: string, storageKey?: string) {
     setTimeout(function () {
-        $('#squiffy-editor').squiffyEditor({
+        methods.init({
             data: data,
-            compile: compile,
             autoSave: function () {
             },
             storageKey: storageKey || 'squiffy',
@@ -823,7 +754,7 @@ var init = function (data, storageKey) {
     }, 1);
 };
 
-$(function() {
+$(function () {
     var saved = localStorage.squiffy;
     if (saved) {
         init(localStorage.squiffy);
