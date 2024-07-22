@@ -19,7 +19,7 @@ interface Settings {
     desktop?: boolean;
     userSettings: any;
     autoSave: (arg0: any) => void;
-    setDirty?: () => void; storageKey: string | number;
+    setDirty?: () => void;
     updateTitle: (arg0: string) => void;
     data: string;
     open?: () => void;
@@ -202,9 +202,7 @@ const editorChange = function () {
 
 const localSave = function () {
     var data = editor.getValue();
-    if (settings.storageKey) {
-        localStorage[settings.storageKey] = data;
-    }
+    localStorage.squiffy = data;
     processFile(data);
 };
 
@@ -377,161 +375,168 @@ const moveTo = function (row: number, column?: number) {
     editor.focus();
 };
 
-const methods = {
-    init: function (options: Settings) {
-        var element = $('#squiffy-editor');
-        settings = options;
+const init = function (data: string) {
+    const options: Settings = {
+        data: data,
+        autoSave: function () {
+        },
+        updateTitle: function (title: string) {
+            document.title = title + ' - Squiffy Editor';
+        },
+        download: true,
+        userSettings: userSettings
+    };
 
-        if (options.desktop) {
-            editorHtml = editorHtml.replace('glyphicon-cloud-upload', 'glyphicon-floppy-disk');
-        }
+    var element = $('#squiffy-editor');
+    settings = options;
 
-        element.html(editorHtml);
-        $('body').append(appendHtml);
-
-        initUserSettings();
-        populateSettingsDialog();
-
-        layout = element.layout({
-            applyDefaultStyles: true,
-            north__resizable: false,
-            north__closable: false,
-            north__spacing_open: 0,
-            east__size: 0.5,
-            south__size: 80,
-            south__initClosed: true,
-            center__spacing_open: 0,
-        });
-
-        $('#inner-layout').layout({
-            onresize: function () {
-                if (editor) editor.resize();
-            },
-            north__resizable: false,
-            north__closable: false,
-            center__spacing_open: 0,
-        });
-
-        editor = ace.edit('editor');
-
-        // get rid of an annoying warning
-        editor.$blockScrolling = Infinity;
-
-        initAce();
-
-        editor.setTheme('ace/theme/squiffy');
-        editor.getSession().setMode('ace/mode/squiffy');
-        editor.getSession().setUseWrapMode(true);
-        editor.setShowPrintMargin(false);
-        editor.getSession().on('change', editorChange);
-        editor.on('changeSelection', function () {
-            cursorMoved();
-        });
-        editor.commands.removeCommand('goToNextError');
-        editor.commands.removeCommand('goToPreviousError');
-        editor.commands.removeCommand('showSettingsMenu');
-
-        editor.setFontSize(options.userSettings.get('fontSize'));
-        editor.focus();
-
-        editorLoad(options.data);
-        cursorMoved();
-
-        if (options.open) {
-            $('#open').show();
-            $('#open').click(options.open);
-        }
-
-        if (options.save) {
-            $('#save').show();
-            $('#save').click(() => {
-                clearTimeout(localSaveTimeout);
-                localSave();
-                options.save!(title!);
-            });
-        }
-
-        if (options.preview) {
-            $('#preview').show();
-            $('#preview').click(options.preview);
-        }
-
-        if (options.publish) {
-            $('#publish').show();
-            $('#publish').click(options.publish);
-        }
-
-        if (options.download) {
-            $('#download').show();
-        }
-
-        if (options.build) {
-            $('#build').show();
-            $('#build').click(options.build);
-        }
-
-        $('#run').click(run);
-        $('#restart').click(restart);
-        // $('#download-squiffy-script').click(downloadSquiffyScript);
-        // $('#export-html-js').click(downloadZip);
-        // $('#export-js').click(downloadJavascript);
-        $('#settings').click(showSettings);
-        $('#add-section').click(addSection);
-        $('#add-passage').click(addPassage);
-        $('#collapse-all').click(collapseAll);
-        $('#uncollapse-all').click(uncollapseAll);
-
-        $('#sections').on('change', sectionChanged);
-        $('#passages').on('change', passageChanged);
-        $('#sections, #passages').chosen({ width: '100%' });
-        $('[data-toggle="tooltip"]').tooltip();
-        $('#settings-dialog').keypress(function (e) {
-            if (e.which === 13) {
-                $('#settings-dialog').modal('hide');
-            }
-        });
-    },
-    load: function (data: string) {
-        editorLoad(data);
-        localSave();
-    },
-    save: function () {
-        return editor.getValue();
-    },
-    setStorageKey: function (key: string) {
-        settings.storageKey = key;
-    },
-    setInfo: function (text: string) {
-        setInfo(text);
-    },
-    run: run,
-    selectAll: function () {
-        editor.selection.selectAll();
-    },
-    undo: function () {
-        editor.undo();
-    },
-    redo: function () {
-        editor.redo();
-    },
-    cut: function () {
-        var text = editor.getCopyText();
-        editor.session.replace(editor.selection.getRange(), '');
-        return text;
-    },
-    copy: function () {
-        return editor.getCopyText();
-    },
-    paste: function (text: string) {
-        editor.session.replace(editor.selection.getRange(), text);
-    },
-    find: function () {
-        editor.execCommand('find');
-    },
-    replace: function () {
-        editor.execCommand('replace');
+    if (options.desktop) {
+        editorHtml = editorHtml.replace('glyphicon-cloud-upload', 'glyphicon-floppy-disk');
     }
+
+    element.html(editorHtml);
+    $('body').append(appendHtml);
+
+    initUserSettings();
+    populateSettingsDialog();
+
+    layout = element.layout({
+        applyDefaultStyles: true,
+        north__resizable: false,
+        north__closable: false,
+        north__spacing_open: 0,
+        east__size: 0.5,
+        south__size: 80,
+        south__initClosed: true,
+        center__spacing_open: 0,
+    });
+
+    $('#inner-layout').layout({
+        onresize: function () {
+            if (editor) editor.resize();
+        },
+        north__resizable: false,
+        north__closable: false,
+        center__spacing_open: 0,
+    });
+
+    editor = ace.edit('editor');
+
+    // get rid of an annoying warning
+    editor.$blockScrolling = Infinity;
+
+    initAce();
+
+    editor.setTheme('ace/theme/squiffy');
+    editor.getSession().setMode('ace/mode/squiffy');
+    editor.getSession().setUseWrapMode(true);
+    editor.setShowPrintMargin(false);
+    editor.getSession().on('change', editorChange);
+    editor.on('changeSelection', function () {
+        cursorMoved();
+    });
+    editor.commands.removeCommand('goToNextError');
+    editor.commands.removeCommand('goToPreviousError');
+    editor.commands.removeCommand('showSettingsMenu');
+
+    editor.setFontSize(options.userSettings.get('fontSize'));
+    editor.focus();
+
+    editorLoad(options.data);
+    cursorMoved();
+
+    if (options.open) {
+        $('#open').show();
+        $('#open').click(options.open);
+    }
+
+    if (options.save) {
+        $('#save').show();
+        $('#save').click(() => {
+            clearTimeout(localSaveTimeout);
+            localSave();
+            options.save!(title!);
+        });
+    }
+
+    if (options.preview) {
+        $('#preview').show();
+        $('#preview').click(options.preview);
+    }
+
+    if (options.publish) {
+        $('#publish').show();
+        $('#publish').click(options.publish);
+    }
+
+    if (options.download) {
+        $('#download').show();
+    }
+
+    if (options.build) {
+        $('#build').show();
+        $('#build').click(options.build);
+    }
+
+    $('#run').click(run);
+    $('#restart').click(restart);
+    // $('#download-squiffy-script').click(downloadSquiffyScript);
+    // $('#export-html-js').click(downloadZip);
+    // $('#export-js').click(downloadJavascript);
+    $('#settings').click(showSettings);
+    $('#add-section').click(addSection);
+    $('#add-passage').click(addPassage);
+    $('#collapse-all').click(collapseAll);
+    $('#uncollapse-all').click(uncollapseAll);
+
+    $('#sections').on('change', sectionChanged);
+    $('#passages').on('change', passageChanged);
+    $('#sections, #passages').chosen({ width: '100%' });
+    $('[data-toggle="tooltip"]').tooltip();
+    $('#settings-dialog').keypress(function (e) {
+        if (e.which === 13) {
+            $('#settings-dialog').modal('hide');
+        }
+    });
 };
+
+// load: function (data: string) {
+//     editorLoad(data);
+//     localSave();
+// },
+// save: function () {
+//     return editor.getValue();
+// },
+// setInfo: function (text: string) {
+//     setInfo(text);
+// },
+// run: run,
+// selectAll: function () {
+//     editor.selection.selectAll();
+// },
+// undo: function () {
+//     editor.undo();
+// },
+// redo: function () {
+//     editor.redo();
+// },
+// cut: function () {
+//     var text = editor.getCopyText();
+//     editor.session.replace(editor.selection.getRange(), '');
+//     return text;
+// },
+// copy: function () {
+//     return editor.getCopyText();
+// },
+// paste: function (text: string) {
+//     editor.session.replace(editor.selection.getRange(), text);
+// },
+// find: function () {
+//     editor.execCommand('find');
+// },
+// replace: function () {
+//     editor.execCommand('replace');
+// }
 
 const onSet = function (attribute: string, value: string) {
     // don't log internal attribute changes
@@ -729,22 +734,6 @@ var userSettings = {
     set: function (setting: string, value: object) {
         localStorage.setItem(setting, JSON.stringify(value));
     }
-};
-
-var init = function (data: string, storageKey?: string) {
-    setTimeout(function () {
-        methods.init({
-            data: data,
-            autoSave: function () {
-            },
-            storageKey: storageKey || 'squiffy',
-            updateTitle: function (title) {
-                document.title = title + ' - Squiffy Editor';
-            },
-            download: true,
-            userSettings: userSettings
-        });
-    }, 1);
 };
 
 $(function () {
