@@ -10,8 +10,10 @@
   },
   "devDependencies": {
     "@types/ace": "^0.0.52",
+    "@types/bootstrap": "^5.2.10",
     "@types/jquery": "^3.5.30",
     "@vite-pwa/assets-generator": "^0.2.4",
+    "sass": "^1.77.8",
     "typescript": "^5.2.2",
     "vite": "^5.2.10",
     "vite-plugin-pwa": "^0.20.0",
@@ -22,7 +24,9 @@
     "sharp-ico": "0.1.5"
   },
   "dependencies": {
+    "@popperjs/core": "^2.11.8",
     "ace-builds": "^1.35.4",
+    "bootstrap": "^5.3.3",
     "marked": "^13.0.2"
   }
 }
