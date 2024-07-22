@@ -5,13 +5,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Squiffy</title>
-    <link href="lib/bootstrap.min.css" rel="stylesheet">
     <link href="lib/chosen.min.css" rel="stylesheet">
     <link href="src/editor.css" rel="stylesheet">
 
     <script src="lib/jquery.min.js"></script>
     <script src="lib/jquery-ui.min.js"></script>
-    <script src="lib/bootstrap.min.js"></script>
     <script src="lib/jquery.layout.min.js"></script>
     <script src="lib/bootbox.js"></script>
     <script src="lib/chosen.jquery.min.js"></script>
@@ -57,11 +55,11 @@
         <div class="ui-layout-center" id="inner-layout">
             <div class="ui-layout-north">
                 <div class="row">
-                    <div class="col-xs-6">
-                        <select id="sections" class="form-control input-sm" />
+                    <div class="col">
+                        <select id="sections" class="form-control input-sm"></select>
                     </div>
-                    <div class="col-xs-6">
-                        <select id="passages" class="form-control input-sm" />
+                    <div class="col">
+                        <select id="passages" class="form-control input-sm"></select>
                     </div>
                 </div>
             </div>
@@ -70,13 +68,13 @@
             </div>
         </div>
         <div class="ui-layout-east">
-            <ul class="nav nav-tabs">
-                <li class="active"><a href="#tab-help" role="tab" data-toggle="tab">Help</a></li>
-                <li><a href="#tab-tools" role="tab" data-toggle="tab">Tools</a></li>
-                <li><a href="#tab-output" role="tab" data-toggle="tab">Output</a></li>
+            <ul class="nav nav-tabs" id="tabs">
+                <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-help">Help</a></li>
+                <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-tools">Tools</a></li>
+                <li class="nav-item"><button class="nav-link" id="tab-output-button" data-bs-toggle="tab" data-bs-target="#tab-output">Output</a></li>
             </ul>
             <div class="tab-content">
-                <div role="tabpanel" class="tab-pane active" id="tab-help">
+                <div role="tabpanel" class="tab-pane fade show active" id="tab-help">
                     You can format your text using HTML and
                     <a href="http://daringfireball.net/projects/markdown/syntax" class="external-link" target="_blank">
                         Markdown</a>.<br /><br />
@@ -91,7 +89,7 @@
                     <a href="http://docs.textadventures.co.uk/squiffy/" class="external-link" target="_blank">Full
                         documentation</a>
                 </div>
-                <div role="tabpanel" class="tab-pane" id="tab-tools">
+                <div role="tabpanel" class="tab-pane fade" id="tab-tools">
                     <h3>Add a new section or passage</h3>
                     Select some text first to automatically create a link to the new section or passage.
                     <div class="toolbar">
@@ -104,7 +102,7 @@
                         <button id="uncollapse-all" class="btn btn-primary">Uncollapse all</button>
                     </div>
                 </div>
-                <div role="tabpanel" class="tab-pane" id="tab-output">
+                <div role="tabpanel" class="tab-pane fade" id="tab-output">
                     <div id="output-container">
                         <div id="output">
                             Click the Run button to start the game.

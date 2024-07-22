@@ -1,3 +1,9 @@
+// Import our custom CSS
+import './scss/styles.scss'
+
+// Import all of Bootstrap's JS
+import { Tab } from 'bootstrap'
+
 import { getJs } from "./compiler";
 import { init as initAce } from "./squiffy-ace";
 
@@ -67,7 +73,10 @@ const run = async function () {
     $('#output-container').html('');
     $('#debugger').html('');
     $('#restart').hide();
-    $('a[href="#tab-output"]').tab('show');
+
+    const tabOutputButton = document.querySelector('#tab-output-button');
+    Tab.getInstance(tabOutputButton!)!.show();
+
     await compile();
 };
 
@@ -146,7 +155,7 @@ const addSectionOrPassage = function (isSection: boolean) {
     }
 
     text = text + ':\n';
-    
+
     var insertLine = currentSection!.end!;
     var moveToLine = insertLine;
     if (!insertLine) {
@@ -159,7 +168,7 @@ const addSectionOrPassage = function (isSection: boolean) {
         // adding new section/passage in the middle of the document
         text = text + '\n\n';
     }
-    
+
     var Range = ace.require('ace/range').Range;
     var range = new Range(insertLine, 0, insertLine, 0);
     editor.session.replace(range, text);
@@ -616,6 +625,16 @@ var userSettings = {
 };
 
 $(function () {
+    const triggerTabList = document.querySelectorAll('#tabs button');
+    triggerTabList.forEach(triggerEl => {
+        const tabTrigger = new Tab(triggerEl);
+
+        triggerEl.addEventListener('click', event => {
+            event.preventDefault();
+            tabTrigger.show();
+        });
+    });
+
     var saved = localStorage.squiffy;
     if (saved) {
         init(localStorage.squiffy);
