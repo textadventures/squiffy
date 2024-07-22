@@ -73,9 +73,12 @@
         </div>
         <div class="ui-layout-east">
             <ul class="nav nav-tabs" id="tabs">
-                <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-help">Help</a></li>
-                <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-tools">Tools</a></li>
-                <li class="nav-item"><button class="nav-link" id="tab-output-button" data-bs-toggle="tab" data-bs-target="#tab-output">Output</a></li>
+                <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab"
+                        data-bs-target="#tab-help">Help</a></li>
+                <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-tools">Tools</a>
+                </li>
+                <li class="nav-item"><button class="nav-link" id="tab-output-button" data-bs-toggle="tab"
+                        data-bs-target="#tab-output">Output</a></li>
             </ul>
             <div class="tab-content">
                 <div role="tabpanel" class="tab-pane fade show active" id="tab-help">
@@ -120,13 +123,12 @@
         </div>
     </div>
 
-    <div class="modal fade" id="settings-dialog" tabindex="-1" role="dialog" aria-labelledby="settingsLabel">
-        <div class="modal-dialog" role="document">
+    <div class="modal" id="settings-dialog" tabindex="-1">
+        <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-                            aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title" id="settingsLabel">Settings</h4>
+                    <h5 class="modal-title">Settings</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="form-horizontal">
@@ -139,11 +141,12 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
     </div>
+
 </body>
 
 </html>
