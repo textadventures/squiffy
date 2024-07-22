@@ -16,7 +16,6 @@ interface Passage {
 }
 
 interface Settings {
-    desktop?: boolean;
     userSettings: any;
     autoSave: (arg0: any) => void;
     setDirty?: () => void;
@@ -390,13 +389,6 @@ const init = function (data: string) {
     var element = $('#squiffy-editor');
     settings = options;
 
-    if (options.desktop) {
-        editorHtml = editorHtml.replace('glyphicon-cloud-upload', 'glyphicon-floppy-disk');
-    }
-
-    element.html(editorHtml);
-    $('body').append(appendHtml);
-
     initUserSettings();
     populateSettingsDialog();
 
@@ -550,119 +542,6 @@ const logToDebugger = function (text: string) {
     $('#debugger').append(text + '<br/>');
     $('#debugger').scrollTop($('#debugger').height() as number);
 };
-
-var editorHtml =
-    '<div class="ui-layout-north">\
-        <button id="open" class="btn btn-primary" style="display: none"><span class="glyphicon glyphicon-folder-open"></span> Open</button>\
-        <button id="save" class="btn btn-primary" style="display: none"><span class="glyphicon glyphicon-cloud-upload"></span> Save</button>\
-        <button id="run" class="btn btn-success"><span class="glyphicon glyphicon-play"></span> Run</button>\
-        <button id="restart" class="btn btn-success" style="display: none"><span class="glyphicon glyphicon-refresh"></span> Restart</button>\
-        <span id="info"></span>\
-        <div style="float: right">\
-            <button id="settings" class="btn btn-default" data-toggle="tooltip" data-placement="bottom" title="Settings"><span class="glyphicon glyphicon-cog"></span></button>\
-            <div class="btn-group">\
-                    <button id="download" class="btn btn-primary dropdown-toggle" style="display: none" data-toggle="dropdown" aria-expanded="false">\
-                        <span class="glyphicon glyphicon-cloud-download"></span>\
-                        Download\
-                        <span class="caret"></span>\
-                    </button>\
-                    <ul class="dropdown-menu" role="menu">\
-                        <li><a id="download-squiffy-script">Squiffy script</a></li>\
-                        <li><a id="export-html-js">Export HTML and JavaScript</a></li>\
-                        <li><a id="export-js">Export JavaScript only</a></li>\
-                    </ul>\
-            </div>\
-            <button id="preview" class="btn btn-primary" style="display: none"><span class="glyphicon glyphicon-eye-open"></span> Preview</button>\
-            <button id="publish" class="btn btn-primary" style="display: none"><span class="glyphicon glyphicon-circle-arrow-up"></span> Publish</button>\
-            <button id="build" class="btn btn-primary" style="display: none"><span class="glyphicon glyphicon-flash"></span> Build</button>\
-        </div>\
-    </div>\
-    <div class="ui-layout-center" id="inner-layout">\
-        <div class="ui-layout-north">\
-            <div class="row">\
-                <div class="col-xs-6">\
-                    <select id="sections" class="form-control input-sm" />\
-                </div>\
-                <div class="col-xs-6">\
-                    <select id="passages" class="form-control input-sm" />\
-                </div>\
-            </div>\
-        </div>\
-        <div class="ui-layout-center">\
-            <div id="editor"></div>\
-        </div>\
-    </div>\
-    <div class="ui-layout-east">\
-        <ul class="nav nav-tabs">\
-            <li class="active"><a href="#tab-help" role="tab" data-toggle="tab">Help</a></li>\
-            <li><a href="#tab-tools" role="tab" data-toggle="tab">Tools</a></li>\
-            <li><a href="#tab-output" role="tab" data-toggle="tab">Output</a></li>\
-        </ul>\
-        <div class="tab-content">\
-            <div role="tabpanel" class="tab-pane active" id="tab-help">\
-                You can format your text using HTML and\
-                <a href="http://daringfireball.net/projects/markdown/syntax" class="external-link" target="_blank">\
-                Markdown</a>.<br/><br/>\
-                To create a new section:\
-                <pre>[[new section]]:</pre>\
-                To link to a section:\
-                <pre>Link [[like this]] or [[use different link text]](new section)</pre>\
-                To create a new passage:\
-                <pre>[new passage]:</pre>\
-                To link to a passage:\
-                <pre>Link [like this] or [use different link text](new passage)</pre>\
-                <a href="http://docs.textadventures.co.uk/squiffy/" class="external-link" target="_blank">Full documentation</a>\
-            </div>\
-            <div role="tabpanel" class="tab-pane" id="tab-tools">\
-                <h3>Add a new section or passage</h3>\
-                Select some text first to automatically create a link to the new section or passage.\
-                <div class="toolbar">\
-                    <button id="add-section" class="btn btn-primary">Add section</button>\
-                    <button id="add-passage" class="btn btn-primary">Add passage</button>\
-                </div>\
-                <h3>View</h3>\
-                <div class="toolbar">\
-                    <button id="collapse-all" class="btn btn-primary">Collapse all</button>\
-                    <button id="uncollapse-all" class="btn btn-primary">Uncollapse all</button>\
-                </div>\
-            </div>\
-            <div role="tabpanel" class="tab-pane" id="tab-output">\
-                <div id="output-container">\
-                    <div id="output">\
-                        Click the Run button to start the game.\
-                    </div>\
-                </div>\
-            </div>\
-        </div>\
-    </div>\
-    <div class="ui-layout-south">\
-        <div id="debugger"></div>\
-    </div>\
-    ';
-const appendHtml =
-    '<div class="modal fade" id="settings-dialog" tabindex="-1" role="dialog" aria-labelledby="settingsLabel">\
-        <div class="modal-dialog" role="document">\
-        <div class="modal-content">\
-            <div class="modal-header">\
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>\
-            <h4 class="modal-title" id="settingsLabel">Settings</h4>\
-            </div>\
-            <div class="modal-body">\
-            <div class="form-horizontal">\
-                <div class="form-group">\
-                <label for="font-size" class="col-sm-2 control-label">Font Size</label>\
-                <div class="col-sm-10">\
-                    <input type="number" class="form-control" id="font-size" />\
-                </div>\
-                </div>\
-            </div>\
-            </div>\
-            <div class="modal-footer">\
-            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>\
-            </div>\
-        </div>\
-        </div>\
-    </div>';
 
 const compile = async function () {
     const result = await getJs(editor.getValue());
