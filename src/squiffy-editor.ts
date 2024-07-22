@@ -1,11 +1,7 @@
-// Import our custom CSS
 import './scss/styles.scss'
-
 import 'bootstrap-icons/font/bootstrap-icons.css'
 
-// Import all of Bootstrap's JS
-import { Tab } from 'bootstrap'
-
+import { Modal, Tab } from 'bootstrap'
 import { getJs } from "./compiler";
 import { init as initAce } from "./squiffy-ace";
 
@@ -195,7 +191,7 @@ const uncollapseAll = function () {
 };
 
 const showSettings = function () {
-    $('#settings-dialog').modal();
+    new Modal('#settings-dialog').show();
 };
 
 var localSaveTimeout: number | undefined, autoSaveTimeout: number | undefined;
