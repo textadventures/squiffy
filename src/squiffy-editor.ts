@@ -61,7 +61,7 @@ const populateSettingsDialog = function () {
     $('#font-size').on('change', () => {
         var val = $('#font-size').val() as string;
         if (!val) val = defaultSettings.fontSize;
-        editor.setFontSize(val);
+        editor.setFontSize(`${val}px`);
         us.set('fontSize', val);
         $('#font-size').val(val);
     });
