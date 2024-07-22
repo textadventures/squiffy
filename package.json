@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "devDependencies": {
+    "@types/ace": "^0.0.52",
     "@types/jquery": "^3.5.30",
     "@vite-pwa/assets-generator": "^0.2.4",
     "typescript": "^5.2.2",
@@ -21,6 +22,7 @@
     "sharp-ico": "0.1.5"
   },
   "dependencies": {
+    "ace-builds": "^1.35.4",
     "marked": "^13.0.2"
   }
 }

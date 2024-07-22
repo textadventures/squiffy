@@ -1,10 +1,3 @@
-/* global ace */
-/* global $ */
-/* global define */
-/* jshint quotmark: single */
-/* jshint evil: true */
-/* jshint multistr: true */
-
 import { getJs } from "./compiler";
 import { init as initAce } from "./squiffy-ace";
 
@@ -37,7 +30,7 @@ interface Settings {
     build?: () => void;
 }
 
-var editor: Ace;
+var editor: AceAjax.Editor;
 var settings: Settings;
 var title: string | undefined;
 var loading: boolean;
@@ -48,7 +41,7 @@ var currentSection: Section | null;
 var currentPassage: Passage | null;
 
 const defaultSettings = {
-    fontSize: 12
+    fontSize: "12"
 };
 
 const initUserSettings = function () {
@@ -63,7 +56,7 @@ const populateSettingsDialog = function () {
     var us = settings.userSettings;
     $('#font-size').val(us.get('fontSize'));
     $('#font-size').on('change', () => {
-        var val = parseInt($('#font-size').val() as string);
+        var val = $('#font-size').val() as string;
         if (!val) val = defaultSettings.fontSize;
         editor.setFontSize(val);
         us.set('fontSize', val);
@@ -138,7 +131,7 @@ const addPassage = function () {
 };
 
 const addSectionOrPassage = function (isSection: boolean) {
-    const selection = editor.getSelectedText();
+    const selection = editor.getCopyText();
     var text;
 
     if (isSection) {
@@ -159,7 +152,7 @@ const addSectionOrPassage = function (isSection: boolean) {
     var moveToLine = insertLine;
     if (!insertLine) {
         // adding new section/passage to the end of the document
-        insertLine = editor.session.doc.$lines.length;
+        insertLine = editor.session.doc.getAllLines().length;
         text = '\n\n' + text;
         moveToLine = insertLine + 1;
     }
@@ -168,7 +161,7 @@ const addSectionOrPassage = function (isSection: boolean) {
         text = text + '\n\n';
     }
     
-    var Range = window.ace.require('ace/range').Range;
+    var Range = ace.require('ace/range').Range;
     var range = new Range(insertLine, 0, insertLine, 0);
     editor.session.replace(range, text);
 
@@ -188,7 +181,7 @@ const collapseAll = function () {
 };
 
 const uncollapseAll = function () {
-    editor.session.unfold();
+    editor.session.unfold(null, true);
 };
 
 const showSettings = function () {
@@ -309,7 +302,7 @@ const processFile = function (data: string) {
 
 const editorLoad = function (data: string) {
     loading = true;
-    editor.getSession().setValue(data, -1);
+    editor.getSession().setValue(data);
     loading = false;
     processFile(data);
 };
@@ -378,8 +371,8 @@ const passageChanged = function () {
 
 const moveTo = function (row: number, column?: number) {
     column = column || 0;
-    var Range = window.ace.require('ace/range').Range;
-    editor.selection.setRange(new Range(row, column, row, column));
+    var Range = ace.require('ace/range').Range;
+    editor.selection.setRange(new Range(row, column, row, column), false);
     editor.renderer.scrollCursorIntoView();
     editor.focus();
 };
@@ -419,7 +412,7 @@ const methods = {
             center__spacing_open: 0,
         });
 
-        editor = window.ace.edit('editor');
+        editor = ace.edit('editor');
 
         // get rid of an annoying warning
         editor.$blockScrolling = Infinity;
@@ -522,12 +515,12 @@ const methods = {
         editor.redo();
     },
     cut: function () {
-        var text = editor.getSelectedText();
+        var text = editor.getCopyText();
         editor.session.replace(editor.selection.getRange(), '');
         return text;
     },
     copy: function () {
-        return editor.getSelectedText();
+        return editor.getCopyText();
     },
     paste: function (text: string) {
         editor.session.replace(editor.selection.getRange(), text);

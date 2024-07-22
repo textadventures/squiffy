@@ -1,10 +1,13 @@
+import * as ace from 'ace-builds/src-noconflict/ace';
+import 'ace-builds/src-noconflict/mode-markdown';
+
 export const init = () => {
-    define('ace/theme/squiffy', [], function (require, exports, module) {
+    ace.define('ace/theme/squiffy', [], function (require, exports, module) {
         exports.isDark = false;
         exports.cssClass = 'ace-squiffy';
     });
 
-    define('ace/folding/squiffy', [], function (require, exports, module) {
+    ace.define('ace/folding/squiffy', [], function (require, exports, module) {
         var oop = require('ace/lib/oop');
         var BaseFoldMode = require('ace/mode/folding/markdown').FoldMode;
         var FoldMode = function () { };
@@ -16,7 +19,7 @@ export const init = () => {
         }).call(FoldMode.prototype);
     });
 
-    define('ace/mode/squiffy', [], function (require, exports, module) {
+    ace.define('ace/mode/squiffy', [], function (require, exports, module) {
         var oop = require('ace/lib/oop');
         var MarkdownMode = require('ace/mode/markdown').Mode;
         var TextHighlightRules = require('ace/mode/text_highlight_rules').TextHighlightRules;
