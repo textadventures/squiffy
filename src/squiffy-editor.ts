@@ -1,5 +1,6 @@
 import './scss/styles.scss'
 import 'bootstrap-icons/font/bootstrap-icons.css'
+import 'chosen-js/chosen.min.css'
 
 import { Modal, Tab } from 'bootstrap'
 import { getJs } from "./compiler";
