@@ -8,14 +8,13 @@
     <link href="src/editor.css" rel="stylesheet">
 
     <script src="lib/jquery.min.js"></script>
-    <script src="lib/jquery.layout.min.js"></script>
     <script type="module" src="/src/squiffy-editor.ts"></script>
     <script type="module" src="node_modules/chosen-js/chosen.jquery.min.js"></script>
 </head>
 
 <body>
-    <div id="squiffy-editor">
-        <div class="ui-layout-north">
+    <div id="squiffy-editor" class="d-flex flex-column">
+        <div class="p-1 border-bottom">
             <button id="open" class="btn btn-primary" style="display: none"><span
                     class="glyphicon glyphicon-folder-open"></span> Open</button>
             <button id="save" class="btn btn-primary" style="display: none"><span
@@ -53,9 +52,9 @@
                     Build</button>
             </div>
         </div>
-        <div class="ui-layout-center" id="inner-layout">
-            <div class="ui-layout-north">
-                <div class="row">
+        <div class="d-flex flex-row flex-grow-1">
+            <div class="d-flex flex-column w-50 p-1 border-end">
+                <div class="row pb-1">
                     <div class="col">
                         <select id="sections" class="form-control input-sm"></select>
                     </div>
@@ -63,61 +62,59 @@
                         <select id="passages" class="form-control input-sm"></select>
                     </div>
                 </div>
-            </div>
-            <div class="ui-layout-center">
-                <div id="editor"></div>
-            </div>
-        </div>
-        <div class="ui-layout-east">
-            <ul class="nav nav-tabs" id="tabs">
-                <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab"
-                        data-bs-target="#tab-help">Help</a></li>
-                <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-tools">Tools</a>
-                </li>
-                <li class="nav-item"><button class="nav-link" id="tab-output-button" data-bs-toggle="tab"
-                        data-bs-target="#tab-output">Output</a></li>
-            </ul>
-            <div class="tab-content">
-                <div role="tabpanel" class="tab-pane show active" id="tab-help">
-                    You can format your text using HTML and
-                    <a href="http://daringfireball.net/projects/markdown/syntax" class="external-link" target="_blank">
-                        Markdown</a>.<br /><br />
-                    To create a new section:
-                    <pre>[[new section]]:</pre>
-                    To link to a section:
-                    <pre>Link [[like this]] or [[use different link text]](new section)</pre>
-                    To create a new passage:
-                    <pre>[new passage]:</pre>
-                    To link to a passage:
-                    <pre>Link [like this] or [use different link text](new passage)</pre>
-                    <a href="http://docs.textadventures.co.uk/squiffy/" class="external-link" target="_blank">Full
-                        documentation</a>
+                <div class="position-relative flex-grow-1">
+                    <div id="editor"></div>
                 </div>
-                <div role="tabpanel" class="tab-pane" id="tab-tools">
-                    <h3>Add a new section or passage</h3>
-                    Select some text first to automatically create a link to the new section or passage.
-                    <div class="toolbar">
-                        <button id="add-section" class="btn btn-primary">Add section</button>
-                        <button id="add-passage" class="btn btn-primary">Add passage</button>
+            </div>
+            <div class="position-relative w-50 p-1">
+                <ul class="nav nav-tabs" id="tabs">
+                    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab"
+                            data-bs-target="#tab-help">Help</a></li>
+                    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-tools">Tools</a>
+                    </li>
+                    <li class="nav-item"><button class="nav-link" id="tab-output-button" data-bs-toggle="tab"
+                            data-bs-target="#tab-output">Output</a></li>
+                </ul>
+                <div class="tab-content">
+                    <div role="tabpanel" class="tab-pane show active" id="tab-help">
+                        You can format your text using HTML and
+                        <a href="http://daringfireball.net/projects/markdown/syntax" class="external-link" target="_blank">
+                            Markdown</a>.<br /><br />
+                        To create a new section:
+                        <pre>[[new section]]:</pre>
+                        To link to a section:
+                        <pre>Link [[like this]] or [[use different link text]](new section)</pre>
+                        To create a new passage:
+                        <pre>[new passage]:</pre>
+                        To link to a passage:
+                        <pre>Link [like this] or [use different link text](new passage)</pre>
+                        <a href="http://docs.textadventures.co.uk/squiffy/" class="external-link" target="_blank">Full
+                            documentation</a>
                     </div>
-                    <h3>View</h3>
-                    <div class="toolbar">
-                        <button id="collapse-all" class="btn btn-primary">Collapse all</button>
-                        <button id="uncollapse-all" class="btn btn-primary">Uncollapse all</button>
+                    <div role="tabpanel" class="tab-pane" id="tab-tools">
+                        <h3>Add a new section or passage</h3>
+                        Select some text first to automatically create a link to the new section or passage.
+                        <div class="toolbar">
+                            <button id="add-section" class="btn btn-primary">Add section</button>
+                            <button id="add-passage" class="btn btn-primary">Add passage</button>
+                        </div>
+                        <h3>View</h3>
+                        <div class="toolbar">
+                            <button id="collapse-all" class="btn btn-primary">Collapse all</button>
+                            <button id="uncollapse-all" class="btn btn-primary">Uncollapse all</button>
+                        </div>
                     </div>
-                </div>
-                <div role="tabpanel" class="tab-pane" id="tab-output">
-                    <div id="output-container">
-                        <div id="output">
-                            Click the Run button to start the game.
+                    <div role="tabpanel" class="tab-pane" id="tab-output">
+                        <div id="output-container">
+                            <div id="output">
+                                Click the Run button to start the game.
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="ui-layout-south">
-            <div id="debugger"></div>
-        </div>
+        <!-- <div id="debugger"></div> -->
     </div>
 
     <div class="modal" id="settings-dialog" tabindex="-1">

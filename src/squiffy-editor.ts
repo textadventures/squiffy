@@ -38,7 +38,6 @@ var editor: AceAjax.Editor;
 var settings: Settings;
 var title: string | undefined;
 var loading: boolean;
-var layout: any;
 var sourceMap: Section[];
 var currentRow: any;
 var currentSection: Section | null;
@@ -394,31 +393,10 @@ const init = function (data: string) {
         userSettings: userSettings
     };
 
-    var element = $('#squiffy-editor');
     settings = options;
 
     initUserSettings();
     populateSettingsDialog();
-
-    layout = element.layout({
-        applyDefaultStyles: true,
-        north__resizable: false,
-        north__closable: false,
-        north__spacing_open: 0,
-        east__size: 0.5,
-        south__size: 80,
-        south__initClosed: true,
-        center__spacing_open: 0,
-    });
-
-    $('#inner-layout').layout({
-        onresize: function () {
-            if (editor) editor.resize();
-        },
-        north__resizable: false,
-        north__closable: false,
-        center__spacing_open: 0,
-    });
 
     editor = ace.edit('editor');
 
@@ -546,7 +524,7 @@ const onSet = function (attribute: string, value: string) {
 };
 
 const logToDebugger = function (text: string) {
-    layout.open('south');
+    // TODO: Add debugger to a new tab (was previously in the bottom pane)
     $('#debugger').append(text + '<br/>');
     $('#debugger').scrollTop($('#debugger').height() as number);
 };
