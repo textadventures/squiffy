@@ -2,9 +2,12 @@ import './scss/styles.scss'
 import 'bootstrap-icons/font/bootstrap-icons.css'
 import 'chosen-js/chosen.min.css'
 
+import $ from 'jquery';
 import { Modal, Tab, Tooltip } from 'bootstrap'
 import { getJs } from "./compiler";
 import { init as initAce } from "./squiffy-ace";
+
+Object.assign(window, { $: $, jQuery: $ });
 
 interface Section {
     name: string;
@@ -470,7 +473,6 @@ const init = function (data: string) {
     $('#sections').on('change', sectionChanged);
     $('#passages').on('change', passageChanged);
     $('#sections, #passages').chosen({ width: '100%' });
-    $('[data-toggle="tooltip"]').tooltip();
     $('#settings-dialog').keypress(function (e) {
         if (e.which === 13) {
             $('#settings-dialog').modal('hide');
