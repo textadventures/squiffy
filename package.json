@@ -28,6 +28,7 @@
     "ace-builds": "^1.35.4",
     "bootstrap": "^5.3.3",
     "bootstrap-icons": "^1.11.3",
+    "chosen-js": "^1.8.7",
     "marked": "^13.0.2"
   }
 }
