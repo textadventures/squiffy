@@ -2,7 +2,7 @@ import './scss/styles.scss'
 import 'bootstrap-icons/font/bootstrap-icons.css'
 import 'chosen-js/chosen.min.css'
 
-import { Modal, Tab } from 'bootstrap'
+import { Modal, Tab, Tooltip } from 'bootstrap'
 import { getJs } from "./compiler";
 import { init as initAce } from "./squiffy-ace";
 
@@ -633,6 +633,9 @@ $(function () {
             tabTrigger.show();
         });
     });
+
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    [...tooltipTriggerList].map(tooltipTriggerEl => new Tooltip(tooltipTriggerEl));
 
     var saved = localStorage.squiffy;
     if (saved) {
