@@ -26,15 +26,8 @@ interface Passage {
 interface Settings {
     userSettings: any;
     autoSave: (arg0: any) => void;
-    setDirty?: () => void;
     updateTitle: (arg0: string) => void;
     data: string;
-    open?: () => void;
-    save?: (name: string) => void;
-    preview?: () => void;
-    publish?: () => void;
-    download?: boolean;
-    build?: () => void;
 }
 
 var editor: AceAjax.Editor;
@@ -58,22 +51,34 @@ const initUserSettings = function () {
     }
 };
 
+function el<T>(id: string) {
+    return document.getElementById(id) as T;
+}
+
+function onClick(id: string, fn: () => void) {
+    const element = el<HTMLElement>(id);
+    element.addEventListener("click", fn);
+}
+
 const populateSettingsDialog = function () {
-    var us = settings.userSettings;
-    $('#font-size').val(us.get('fontSize'));
-    $('#font-size').on('change', () => {
-        var val = $('#font-size').val() as string;
+    const us = settings.userSettings;
+    const fontSizeElement = el<HTMLFormElement>('font-size');
+    if (!fontSizeElement) return;
+    
+    fontSizeElement.value = us.get('fontSize');
+    fontSizeElement.addEventListener('change', () => {
+        let val = fontSizeElement.value;
         if (!val) val = defaultSettings.fontSize;
         editor.setFontSize(`${val}px`);
         us.set('fontSize', val);
-        $('#font-size').val(val);
+        fontSizeElement.value = val;
     });
 };
 
 const run = async function () {
-    $('#output-container').html('');
-    $('#debugger').html('');
-    $('#restart').hide();
+    el<HTMLElement>('output').innerHTML = '';
+    el<HTMLElement>('debugger').innerHTML = '';
+    el<HTMLButtonElement>('restart').hidden = true;
 
     const tabOutputButton = document.querySelector('#tab-output-button');
     Tab.getInstance(tabOutputButton!)!.show();
@@ -82,7 +87,7 @@ const run = async function () {
 };
 
 const restart = function () {
-    $('#debugger').html('');
+    el<HTMLElement>('debugger').innerHTML = '';
     $('#output').squiffy('restart');
 };
 
@@ -206,7 +211,7 @@ const editorChange = function () {
     localSaveTimeout = setTimeout(localSave, 50);
     if (autoSaveTimeout) clearTimeout(autoSaveTimeout);
     autoSaveTimeout = setTimeout(autoSave, 5000);
-    if (settings.setDirty) settings.setDirty();
+    // TODO: Show some indicator that the current file has not been saved
 };
 
 const localSave = function () {
@@ -220,7 +225,7 @@ const autoSave = function () {
 };
 
 const setInfo = function (text: string) {
-    $('#info').html(text);
+    el<HTMLElement>('info').innerHTML = text;
 };
 
 const processFile = function (data: string) {
@@ -392,7 +397,6 @@ const init = function (data: string) {
         updateTitle: function (title: string) {
             document.title = title + ' - Squiffy Editor';
         },
-        download: true,
         userSettings: userSettings
     };
 
@@ -426,58 +430,51 @@ const init = function (data: string) {
     editorLoad(options.data);
     cursorMoved();
 
-    if (options.open) {
-        $('#open').show();
-        $('#open').click(options.open);
-    }
+    // if (options.open) {
+    //     $('#open').show();
+    //     $('#open').click(options.open);
+    // }
 
-    if (options.save) {
-        $('#save').show();
-        $('#save').click(() => {
-            clearTimeout(localSaveTimeout);
-            localSave();
-            options.save!(title!);
-        });
-    }
+    // if (options.save) {
+    //     $('#save').show();
+    //     $('#save').click(() => {
+    //         clearTimeout(localSaveTimeout);
+    //         localSave();
+    //         options.save!(title!);
+    //     });
+    // }
 
-    if (options.preview) {
-        $('#preview').show();
-        $('#preview').click(options.preview);
-    }
+    // if (options.preview) {
+    //     $('#preview').show();
+    //     $('#preview').click(options.preview);
+    // }
 
-    if (options.publish) {
-        $('#publish').show();
-        $('#publish').click(options.publish);
-    }
+    // if (options.publish) {
+    //     $('#publish').show();
+    //     $('#publish').click(options.publish);
+    // }
 
-    if (options.download) {
-        $('#download').show();
-    }
+    // if (options.build) {
+    //     $('#build').show();
+    //     $('#build').click(options.build);
+    // }
 
-    if (options.build) {
-        $('#build').show();
-        $('#build').click(options.build);
-    }
+    onClick('run', run);
+    onClick('restart', restart);
 
-    $('#run').click(run);
-    $('#restart').click(restart);
     // $('#download-squiffy-script').click(downloadSquiffyScript);
     // $('#export-html-js').click(downloadZip);
     // $('#export-js').click(downloadJavascript);
-    $('#settings').click(showSettings);
-    $('#add-section').click(addSection);
-    $('#add-passage').click(addPassage);
-    $('#collapse-all').click(collapseAll);
-    $('#uncollapse-all').click(uncollapseAll);
+
+    onClick('settings', showSettings);
+    onClick('add-section', addSection);
+    onClick('add-passage', addPassage);
+    onClick('collapse-all', collapseAll);
+    onClick('uncollapse-all', uncollapseAll);
 
     $('#sections').on('change', sectionChanged);
     $('#passages').on('change', passageChanged);
     $('#sections, #passages').chosen({ width: '100%' });
-    $('#settings-dialog').keypress(function (e) {
-        if (e.which === 13) {
-            $('#settings-dialog').modal('hide');
-        }
-    });
 };
 
 // load: function (data: string) {
@@ -526,9 +523,7 @@ const onSet = function (attribute: string, value: string) {
 };
 
 const logToDebugger = function (text: string) {
-    // TODO: Add debugger to a new tab (was previously in the bottom pane)
-    $('#debugger').append(text + '<br/>');
-    $('#debugger').scrollTop($('#debugger').height() as number);
+    el<HTMLElement>('debugger').innerHTML += `${text}<br>`;
 };
 
 const compile = async function () {
@@ -541,16 +536,14 @@ const compile = async function () {
 };
 
 const onCompileSuccess = function (data: string, msgs: string[]) {
-    $('#restart').show();
+    el<HTMLButtonElement>('restart').hidden = false;
 
-    $('<div/>', { id: 'output' }).appendTo('#output-container');
-
-    $('<hr/>').appendTo('#output-container');
+    const output = el<HTMLElement>('output');
 
     showWarnings(msgs);
     // Show output
     if (data.indexOf('Failed') === 0) {
-        $('#output').html(data);
+        output.innerHTML = data;
         return;
     }
 
@@ -558,7 +551,7 @@ const onCompileSuccess = function (data: string, msgs: string[]) {
         eval(data);
     }
     catch (e) {
-        $('#output').html(e as string);
+        output.innerHTML = e as string;
         return;
     }
 
@@ -586,7 +579,7 @@ const showWarnings = function (msgs: string[]) {
     const WarningStyle = '"color: gold; background-color: gray"';
 
     if (msgs.length > 0) {
-        $('#output').html('<div style=' + WarningStyle + '>' + msgs + '</div>');
+        el<HTMLElement>('output').innerHTML = '<div style=' + WarningStyle + '>' + msgs + '</div>';
     }
 
     return;
@@ -603,7 +596,7 @@ var userSettings = {
     }
 };
 
-$(function () {
+document.addEventListener("DOMContentLoaded", () => {
     const triggerTabList = document.querySelectorAll('#tabs button');
     triggerTabList.forEach(triggerEl => {
         const tabTrigger = new Tab(triggerEl);
