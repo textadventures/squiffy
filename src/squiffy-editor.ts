@@ -555,7 +555,13 @@ const onCompileSuccess = function (data: string, msgs: string[]) {
         return;
     }
 
-    $('#output').squiffy({
+    const outputContainer = el<HTMLElement>('output-container');
+    outputContainer.innerHTML = '';
+    const newOutput = document.createElement('div');
+    newOutput.id = 'output';
+    outputContainer.appendChild(newOutput);
+
+    $(newOutput).squiffy({
         scroll: 'element',
         persist: false,
         restartPrompt: false,
