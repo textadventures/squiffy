@@ -22,7 +22,7 @@
             <button id="run" class="btn btn-success">
                 <i class="bi bi-play-fill"></i> Run
             </button>
-            <button id="restart" class="btn btn-success" style="display: none">
+            <button id="restart" class="btn btn-success" hidden>
                 <i class="bi bi-arrow-clockwise"></i> Restart</button>
             <span id="info"></span>
             <div style="float: right">
@@ -31,7 +31,7 @@
                     <i class="bi bi-gear-fill"></i>
                 </button>
                 <div class="btn-group">
-                    <button id="download" class="btn btn-primary dropdown-toggle" style="display: none"
+                    <button id="download" class="btn btn-primary dropdown-toggle"
                         data-toggle="dropdown" aria-expanded="false">
                         <i class="bi bi-cloud-download-fill"></i>
                         Download
@@ -74,6 +74,8 @@
                     </li>
                     <li class="nav-item"><button class="nav-link" id="tab-output-button" data-bs-toggle="tab"
                             data-bs-target="#tab-output">Output</a></li>
+                    <li class="nav-item"><button class="nav-link" id="tab-debugger-button" data-bs-toggle="tab"
+                        data-bs-target="#tab-debugger">Debugger</a></li>
                 </ul>
                 <div class="tab-content">
                     <div role="tabpanel" class="tab-pane show active" id="tab-help">
@@ -111,10 +113,12 @@
                             </div>
                         </div>
                     </div>
+                    <div role="tabpanel" class="tab-pane" id="tab-debugger">
+                        <div id="debugger">Test</div>
+                    </div>
                 </div>
             </div>
         </div>
-        <!-- <div id="debugger"></div> -->
     </div>
 
     <div class="modal" id="settings-dialog" tabindex="-1">
