@@ -191,7 +191,7 @@ class Compiler {
                 if (passage.clear) {
                     outputJsFile.push('\t\t\t\t\'clear\': true,\n');
                 }
-                outputJsFile.push(`\t\t\t\t'text': ${JSON.stringify(this.processText(passage.text.join('\n'), story, section, passage))},\n`);
+                outputJsFile.push(`\t\t\t\t'text': ${JSON.stringify(await this.processText(passage.text.join('\n'), story, section, passage))},\n`);
                 if (passage.attributes.length > 0) {
                     outputJsFile.push(`\t\t\t\t'attributes': ${JSON.stringify(passage.attributes)},\n`);
                 }
