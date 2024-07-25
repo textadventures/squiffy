@@ -317,6 +317,7 @@ const editorLoad = function (data: string) {
     loading = true;
     editor.getSession().setValue(data);
     loading = false;
+    localStorage.squiffy = data;
     processFile(data);
 };
 
