@@ -6,6 +6,7 @@ import $ from 'jquery';
 import { Modal, Tab, Tooltip } from 'bootstrap'
 import { getJs } from "./compiler";
 import { init as initAce } from "./squiffy-ace";
+import { openFile } from './file-handler';
 
 Object.assign(window, { $: $, jQuery: $ });
 
@@ -461,6 +462,7 @@ const init = function (data: string) {
 
     onClick('run', run);
     onClick('restart', restart);
+    onClick('open', () => openFile(editorLoad));
 
     // $('#download-squiffy-script').click(downloadSquiffyScript);
     // $('#export-html-js').click(downloadZip);
