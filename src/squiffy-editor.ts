@@ -92,10 +92,10 @@ const restart = function () {
     $('#output').squiffy('restart');
 };
 
-// const downloadSquiffyScript = function () {
-//     localSave();
-//     download(editor.getValue(), title + '.squiffy');
-// };
+const downloadSquiffyScript = function () {
+    localSave();
+    download(editor.getValue(), title + '.squiffy');
+};
 
 // const downloadZip = async function () {
 //     localSave();
@@ -124,18 +124,18 @@ const restart = function () {
 //     });
 // };
 
-// const download = function (data, filename, type) {
-//     var blob = new Blob([data], { type: type || 'text/plain' });
-//     var downloadLink = document.createm('a');
-//     downloadLink.download = filename;
-//     downloadLink.href = window.URL.createObjectURL(blob);
-//     downloadLink.onclick = function (e) {
-//         document.body.removeChild(e.target);
-//     };
-//     downloadLink.style.display = 'none';
-//     document.body.appendChild(downloadLink);
-//     downloadLink.click();
-// };
+const download = function (data: string, filename: string, type?: string) {
+    var blob = new Blob([data], { type: type || 'text/plain' });
+    var downloadLink = document.createElement('a');
+    downloadLink.download = filename;
+    downloadLink.href = window.URL.createObjectURL(blob);
+    downloadLink.onclick = () => {
+        document.body.removeChild(downloadLink);
+    };
+    downloadLink.style.display = 'none';
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+};
 
 const addSection = function () {
     addSectionOrPassage(true);
@@ -463,7 +463,7 @@ const init = function (data: string) {
     // }
 
 
-    // $('#download-squiffy-script').click(downloadSquiffyScript);
+    onClick('download-squiffy-script', downloadSquiffyScript);
     // $('#export-html-js').click(downloadZip);
     // $('#export-js').click(downloadJavascript);
 
