@@ -15,10 +15,19 @@
 <body>
     <div id="squiffy-editor" class="d-flex flex-column">
         <div class="p-1 border-bottom">
-            <button id="open" class="btn btn-primary">
-                <i class="bi bi-folder2-open"></i> Open</button>
-            <button id="save" class="btn btn-primary">
-                <i class="bi bi-floppy2-fill"></i> Save</button>
+            <span class="dropdown">
+                <button id="download" class="btn btn-primary dropdown-toggle"
+                    data-bs-toggle="dropdown" aria-expanded="false">
+                    File
+                </button>
+                <ul class="dropdown-menu">
+                    <li><button class="dropdown-item" id="file-new">New</button></li>
+                    <li><button class="dropdown-item" id="open">Open...</button></li>
+                    <li><button class="dropdown-item" id="save">Save</button></li>
+                    <li><button class="dropdown-item" id="save-as">Save as...</button></li>
+                </ul>
+            </span>
+
             <button id="run" class="btn btn-success">
                 <i class="bi bi-play-fill"></i> Run
             </button>
@@ -30,26 +39,22 @@
                     data-bs-title="Settings">
                     <i class="bi bi-gear-fill"></i>
                 </button>
-                <div class="btn-group">
+                <span class="dropdown">
                     <button id="download" class="btn btn-primary dropdown-toggle"
-                        data-toggle="dropdown" aria-expanded="false">
+                        data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="bi bi-cloud-download-fill"></i>
                         Download
-                        <span class="caret"></span>
                     </button>
-                    <ul class="dropdown-menu" role="menu">
-                        <li><a id="download-squiffy-script">Squiffy script</a></li>
-                        <li><a id="export-html-js">Export HTML and JavaScript</a></li>
-                        <li><a id="export-js">Export JavaScript only</a></li>
+                    <ul class="dropdown-menu">
+                        <li><button class="dropdown-item" id="download-squiffy-script">Squiffy script</button></li>
+                        <li><button class="dropdown-item" id="export-html-js">Export HTML and JavaScript</button></li>
+                        <li><button class="dropdown-item" id="export-js">Export JavaScript only</button></li>
                     </ul>
-                </div>
-                <button id="preview" class="btn btn-primary" style="display: none"><span
-                        class="glyphicon glyphicon-eye-open"></span> Preview</button>
-                <button id="publish" class="btn btn-primary" style="display: none"><span
-                        class="glyphicon glyphicon-circle-arrow-up"></span> Publish</button>
-                <button id="build" class="btn btn-primary" style="display: none"><span
-                        class="glyphicon glyphicon-flash"></span>
-                    Build</button>
+                </span>
+                <button id="preview" class="btn btn-primary">
+                    <i class="bi bi-eye-fill"></i> Preview</button>
+                <button id="build" class="btn btn-primary">
+                    <i class="bi bi-lightning-fill"></i> Build</button>
             </div>
         </div>
         <div class="d-flex flex-row flex-grow-1">
