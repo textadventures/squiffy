@@ -6,7 +6,7 @@ import $ from 'jquery';
 import { Modal, Tab, Tooltip } from 'bootstrap'
 import { getJs } from "./compiler";
 import { init as initAce } from "./squiffy-ace";
-import { openFile } from './file-handler';
+import { openFile, saveFile } from './file-handler';
 
 Object.assign(window, { $: $, jQuery: $ });
 
@@ -432,20 +432,6 @@ const init = function (data: string) {
     editorLoad(options.data);
     cursorMoved();
 
-    // if (options.open) {
-    //     $('#open').show();
-    //     $('#open').click(options.open);
-    // }
-
-    // if (options.save) {
-    //     $('#save').show();
-    //     $('#save').click(() => {
-    //         clearTimeout(localSaveTimeout);
-    //         localSave();
-    //         options.save!(title!);
-    //     });
-    // }
-
     // if (options.preview) {
     //     $('#preview').show();
     //     $('#preview').click(options.preview);
@@ -464,6 +450,18 @@ const init = function (data: string) {
     onClick('run', run);
     onClick('restart', restart);
     onClick('open', () => openFile(editorLoad));
+    onClick('save', () => saveFile(editor.getValue()));
+
+    // TODO: Also do the clearTimeout thing?
+    // if (options.save) {
+    //     $('#save').show();
+    //     $('#save').click(() => {
+    //         clearTimeout(localSaveTimeout);
+    //         localSave();
+    //         options.save!(title!);
+    //     });
+    // }
+
 
     // $('#download-squiffy-script').click(downloadSquiffyScript);
     // $('#export-html-js').click(downloadZip);
