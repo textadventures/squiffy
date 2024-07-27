@@ -5,8 +5,9 @@ import 'chosen-js/chosen.min.css'
 import $ from 'jquery';
 import { Modal, Tab, Tooltip } from 'bootstrap'
 import { getJs } from "./compiler";
-import { init as initAce } from "./squiffy-ace";
 import { openFile, saveFile } from './file-handler';
+import { Settings } from './settings';
+import * as editor from './editor';
 
 Object.assign(window, { $: $, jQuery: $ });
 
@@ -24,14 +25,6 @@ interface Passage {
     end?: number;
 }
 
-interface Settings {
-    userSettings: any;
-    autoSave: (arg0: any) => void;
-    updateTitle: (arg0: string) => void;
-    data: string;
-}
-
-var editor: AceAjax.Editor;
 var settings: Settings;
 var title: string | undefined;
 var loading: boolean;
@@ -70,7 +63,7 @@ const populateSettingsDialog = function () {
     fontSizeElement.addEventListener('change', () => {
         let val = fontSizeElement.value;
         if (!val) val = defaultSettings.fontSize;
-        editor.setFontSize(`${val}px`);
+        editor.setFontSize(val);
         us.set('fontSize', val);
         fontSizeElement.value = val;
     });
@@ -158,7 +151,7 @@ const addSectionOrPassage = function (isSection: boolean) {
 
     if (selection) {
         // replace the selected text with a link to new section/passage
-        editor.session.replace(editor.selection.getRange(), text);
+        editor.replaceSelectedText(text);
     }
 
     text = text + ':\n';
@@ -167,7 +160,7 @@ const addSectionOrPassage = function (isSection: boolean) {
     var moveToLine = insertLine;
     if (!insertLine) {
         // adding new section/passage to the end of the document
-        insertLine = editor.session.doc.getAllLines().length;
+        insertLine = editor.getLineCount();
         text = '\n\n' + text;
         moveToLine = insertLine + 1;
     }
@@ -176,27 +169,17 @@ const addSectionOrPassage = function (isSection: boolean) {
         text = text + '\n\n';
     }
 
-    var Range = ace.require('ace/range').Range;
-    var range = new Range(insertLine, 0, insertLine, 0);
-    editor.session.replace(range, text);
+    editor.replaceLine(insertLine, text);
 
     if (selection) {
         // move cursor to new section/passage
-        moveTo(moveToLine + 1);
+        editor.moveTo(moveToLine + 1);
     }
     else {
         // no name was specified, so set cursor position to middle of [[ and ]]
         var column = isSection ? 2 : 1;
-        moveTo(moveToLine, column);
+        editor.moveTo(moveToLine, column);
     }
-};
-
-const collapseAll = function () {
-    editor.session.foldAll();
-};
-
-const uncollapseAll = function () {
-    editor.session.unfold(null, true);
 };
 
 const showSettings = function () {
@@ -315,14 +298,14 @@ const processFile = function (data: string) {
 
 const editorLoad = function (data: string) {
     loading = true;
-    editor.getSession().setValue(data);
+    editor.setValue(data);
     loading = false;
     localStorage.squiffy = data;
     processFile(data);
 };
 
 const cursorMoved = function (force?: boolean) {
-    var row = editor.selection.getCursor().row;
+    var row = editor.getCurrentRow();
     if (!force && row == currentRow) return;
     if (!sourceMap) return;
     currentRow = row;
@@ -369,7 +352,7 @@ const sectionChanged = function () {
     var selectedSection = $('#sections').val();
     sourceMap.forEach(function (section) {
         if (dropdownName(section.name) === selectedSection) {
-            moveTo(section.start + (section.isDefault ? 0 : 1));
+            editor.moveTo(section.start + (section.isDefault ? 0 : 1));
         }
     });
 };
@@ -378,17 +361,9 @@ const passageChanged = function () {
     var selectedPassage = $('#passages').val();
     currentSection!.passages.forEach(function (passage) {
         if (dropdownName(passage.name) === selectedPassage) {
-            moveTo(passage.start + 1);
+            editor.moveTo(passage.start + 1);
         }
     });
-};
-
-const moveTo = function (row: number, column?: number) {
-    column = column || 0;
-    var Range = ace.require('ace/range').Range;
-    editor.selection.setRange(new Range(row, column, row, column), false);
-    editor.renderer.scrollCursorIntoView();
-    editor.focus();
 };
 
 const init = function (data: string) {
@@ -407,27 +382,7 @@ const init = function (data: string) {
     initUserSettings();
     populateSettingsDialog();
 
-    editor = ace.edit('editor');
-
-    // get rid of an annoying warning
-    editor.$blockScrolling = Infinity;
-
-    initAce();
-
-    editor.setTheme('ace/theme/squiffy');
-    editor.getSession().setMode('ace/mode/squiffy');
-    editor.getSession().setUseWrapMode(true);
-    editor.setShowPrintMargin(false);
-    editor.getSession().on('change', editorChange);
-    editor.on('changeSelection', function () {
-        cursorMoved();
-    });
-    editor.commands.removeCommand('goToNextError');
-    editor.commands.removeCommand('goToPreviousError');
-    editor.commands.removeCommand('showSettingsMenu');
-
-    editor.setFontSize(options.userSettings.get('fontSize'));
-    editor.focus();
+    editor.init(options, editorChange, cursorMoved);
 
     editorLoad(options.data);
     cursorMoved();
@@ -470,8 +425,8 @@ const init = function (data: string) {
     onClick('settings', showSettings);
     onClick('add-section', addSection);
     onClick('add-passage', addPassage);
-    onClick('collapse-all', collapseAll);
-    onClick('uncollapse-all', uncollapseAll);
+    onClick('collapse-all', editor.collapseAll);
+    onClick('uncollapse-all', editor.uncollapseAll);
 
     $('#sections').on('change', sectionChanged);
     $('#passages').on('change', passageChanged);
