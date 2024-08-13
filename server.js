@@ -29,12 +29,14 @@ http.createServer(function(request, response) {
 						input: body,
 						write: false,
 						zip: true,
-					});
-					response.writeHead(200, {
-						'Content-Type': 'application/octet-stream',
-						'Access-Control-Allow-Origin': '*'
-					});
-					response.end(result, 'binary');
+						result: function(result) {
+							response.writeHead(200, {
+								'Content-Type': 'application/octet-stream',
+								'Access-Control-Allow-Origin': '*'
+							});
+							response.end(result, 'binary');
+						}
+					});	
 				}
 				else {
 					result = compiler.getJs(body);

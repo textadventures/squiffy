@@ -132,15 +132,16 @@
                         var jquery = fs.readFileSync(jQueryPath);
                         zip.file(jqueryJs, jquery);
                     }
-                    var buffer = zip.generate({
+                    zip.generateAsync({
                         type: 'nodebuffer'
+                    }).then(function (buffer) {
+                        if (options.write) {
+                            fs.writeFileSync(path.join(outputPath, 'output.zip'), buffer);
+                        }
+                        else {
+                            options.result(buffer);
+                        }
                     });
-                    if (options.write) {
-                        fs.writeFileSync(path.join(outputPath, 'output.zip'), buffer);
-                    }
-                    else {
-                        return buffer;
-                    }
                 }
             }
             
