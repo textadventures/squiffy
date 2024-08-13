@@ -89,7 +89,7 @@ title: Squiffy ScratchPad
             .appendTo("#output-container");
 
         $.ajax({
-            url: "http://squiffy.textadventures.co.uk",
+            url: "https://squiffycompiler.azurewebsites.net/",
             data: editor.getValue(),
             type: "POST",
             success: function (data) {
