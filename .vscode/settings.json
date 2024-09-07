@@ -1,0 +1,12 @@
+// Place your settings in this file to overwrite default and user settings.
+{
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "search.exclude": {
+    "build": true,
+    "Squiffy-darwin-x64": true,
+    "Squiffy-linux": true,
+    "node_modules": true,
+    "bower_components": true
+  }
+}
