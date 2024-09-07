@@ -36,8 +36,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          working-directory: ./compiler
-          path: release.zip
+          path: ./compiler/release.zip
 
   deploy:
     runs-on: ubuntu-latest
@@ -55,7 +54,8 @@ jobs:
           name: node-app
 
       - name: Unzip artifact for deployment
-        run: unzip ./compiler/release.zip
+        working-directory: ./compiler
+        run: unzip release.zip
       
       - name: Login to Azure
         uses: azure/login@v2
