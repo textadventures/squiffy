@@ -36,6 +36,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: node-app
+          working-directory: ./compiler
           path: release.zip
 
   deploy:
