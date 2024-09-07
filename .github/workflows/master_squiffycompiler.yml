@@ -55,8 +55,7 @@ jobs:
           name: node-app
 
       - name: Unzip artifact for deployment
-        working-directory: ./compiler
-        run: unzip release.zip
+        run: unzip ./compiler/release.zip
       
       - name: Login to Azure
         uses: azure/login@v2
