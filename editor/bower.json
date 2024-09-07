@@ -1,0 +1,25 @@
+{
+  "name": "squiffy-editor",
+  "version": "0.0.0",
+  "homepage": "https://github.com/textadventures/squiffy-editor",
+  "authors": [
+    "Alex Warren <alex@textadventures.co.uk>"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "bootstrap": "~3.3.5",
+	"jquery": "~2.1.4",
+    "jquery-ui-layout-bower": "~1.4.4",
+    "jquery-ui": "~1.11.3",
+    "bootbox": "~4.4.0",
+    "ace-builds": "~1.1.9",
+    "chosen": "~1.4.2"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "title": "Squiffy",
+  "icon": "squiffy.icns",
+  "background": "background.png",
+  "icon-size": 80,
+  "contents": [
+    { "x": 150, "y": 100, "type": "file", "path": "Squiffy-darwin-x64/Squiffy.app" },
+    { "x": 250, "y": 100, "type": "link", "path": "/Applications" }
+  ]
+}

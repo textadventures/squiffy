@@ -1,0 +1,19 @@
+Squiffy is a tool for creating interactive stories.
+
+You write your story in a text file. Each choice is represented by a [[new section]]. You can create links to new sections by surrounding them in double square brackets.
+
+[[new section]]:
+
+In addition to sections, Squiffy has the concept of passages. These are sections of text that don't advance the story. For example, you can click this [passage link], and this [other passage link], but the story won't advance until you click this [[section link]].
+
+[passage link]:
+
+This is the text for the first passage link.
+
+[other passage link]:
+
+This is the text for the second passage link.
+
+[[section link]]:
+
+When a new section appears, any unclicked passage links from the previous section are disabled.
