@@ -1,0 +1,42 @@
+<div class="row sample">
+    <div class="col-md-6">
+        <div id="editor-{{include.file}}">{% include_relative samples/{{include.file}}.squiffy %}</div>
+        <p style="text-align: right; font-size: 80%"><a href="{{site.baseurl}}/scratchpad/?src={{site.baseurl}}/samples/{{include.file}}.squiffy">Edit example in ScratchPad &rarr;</a></p>
+    </div>
+    <div class="col-md-6 output">
+        <div id="{{include.file}}-output"></div>
+        <button id="{{include.file}}-restart" class="btn btn-primary btn-sm restart">Restart</button>
+    </div>
+</div>
+
+<script src="samples/{{include.file}}.js"></script>
+<script>
+    $(function () {
+        $("#{{include.file}}-output").{{include.file}}({
+            scroll: "element",
+            persist: false,
+            restartPrompt: false,
+        });
+
+        $("#{{include.file}}-restart").click(function () {
+            $("#{{include.file}}-output").{{include.file}}("restart");
+        });
+
+        var editor = ace.edit("editor-{{include.file}}");
+        editor.setTheme("ace/theme/eclipse");
+        editor.getSession().setMode("ace/mode/markdown");
+        editor.getSession().setUseWrapMode(true);
+        editor.setReadOnly(true);
+        editor.setHighlightActiveLine(false);
+        editor.setOptions({
+            maxLines: Infinity
+        });
+        editor.resize(true);
+
+        {% if page.url == '/index.html' %}
+        var maxHeight = $("#editor-{{include.file}}").height() -
+            $("#{{include.file}}-restart").height();
+        $("#{{include.file}}-output").css("max-height", maxHeight + "px");
+        {% endif %}
+    });
+</script>

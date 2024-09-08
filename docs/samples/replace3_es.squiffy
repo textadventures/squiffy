@@ -1,0 +1,12 @@
+He ido de compras y he {label:1=comprado un poco de leche}.
+
+Pero [pienso](@replace 1=thoughts)...
+
+[thoughts]:
+de repente, par&eacute; y pens&eacute; en ir a la [[feria]] o al [[circo]] en vez de hacer eso.
+
+[[feria]]:
+Al final fui a la feria...
+
+[[circo]]:
+Al final fui al circo...

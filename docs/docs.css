@@ -1,0 +1,48 @@
+.footer {
+	margin-top: 40px;
+}
+
+.footer img {
+	width: 330px;
+}
+
+img {
+	max-width: 100%;
+}
+
+a.squiffy-link
+{
+    text-decoration: underline;
+    color: Blue;
+    cursor: pointer;
+}
+
+a.squiffy-link.disabled
+{
+    text-decoration: inherit;
+    color: inherit !important;
+    cursor: inherit;
+}
+
+.editor { 
+    position: absolute !important;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}
+
+.sample {
+    border-top: 1px solid #cccccc;
+    border-bottom: 1px solid #cccccc;
+    margin: 10px 0;
+    padding: 10px 0;
+}
+
+.output {
+    border-left: 1px solid #dddddd;
+}
+
+.restart {
+    margin-top: 10px;
+}

@@ -1,0 +1,8 @@
+I walked to the shops and I bought {label:1=a pint of milk}.
+
+Or maybe [I bought something different?](next passage)
+
+[next passage]:
+@replace 1=a bottle of whisky
+
+I changed my mind.

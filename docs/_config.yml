@@ -1,0 +1,5 @@
+markdown: kramdown
+baseurl: /squiffy
+
+gems:
+  - jekyll-redirect-from

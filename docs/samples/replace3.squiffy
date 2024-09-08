@@ -1,0 +1,12 @@
+I walked to the shops and I {label:1=bought a pint of milk}.
+
+But I was [thinking](@replace 1=thoughts)...
+
+[thoughts]:
+suddenly thought, hang on, I could [[go to the funfair]] or [[join the circus]] instead.
+
+[[go to the funfair]]:
+Off I went to the funfair...
+
+[[join the circus]]:
+Off I went to the circus...

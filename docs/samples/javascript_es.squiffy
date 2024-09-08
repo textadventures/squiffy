@@ -1,0 +1,6 @@
+Haciendo click en este [enlace] mostrar&eacute; un saludo.
+
+[enlace]:
+    alert ("Hola!");
+    
+Texto para el pasaje.

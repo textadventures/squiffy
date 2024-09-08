@@ -1,0 +1,10 @@
+[[section1]]:
+Here is some text from the next section: {section2}
+
+Here is some text from a passage in this section: {passage}
+
+[passage]:
+Text from passage.
+
+[[section2]]:
+Text from next section.

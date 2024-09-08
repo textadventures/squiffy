@@ -1,0 +1,3 @@
+I walked to the shops and I bought {label:1=a pint of milk}.
+
+Or maybe [I bought something different?](@replace 1=a loaf of bread)
