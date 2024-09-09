@@ -11,7 +11,7 @@ export default defineConfig({
   },
   plugins: [VitePWA({
     registerType: 'autoUpdate',
-    injectRegister: false,
+    injectRegister: 'auto',
 
     pwaAssets: {
       disabled: false,
@@ -32,7 +32,7 @@ export default defineConfig({
     },
 
     devOptions: {
-      enabled: false,
+      enabled: true,
       navigateFallback: 'index.html',
       suppressWarnings: true,
       type: 'module',
