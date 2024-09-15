@@ -2,21 +2,21 @@
 
 import * as marked from 'marked';
 
-const COMPILER_VERSION = '6.0';
+export const COMPILER_VERSION = '6.0.0-alpha.0';
 
 // export const generate = async function (inputFilename, options) {
 //     var compiler = new Compiler();
 //     return await compiler.generate(inputFilename, __dirname, options);
 // };
 
-export const getJs = async function (input: string) {
+export const getJs = async function (input: string, template: string) {
     const compiler = new Compiler();
-    return await compiler.process(input);
+    return await compiler.process(input, template);
 };
 
-export const generate = async function(inputFilename: string, sourcePath: string) {
+export const generate = async function(inputFilename: string, /* sourcePath: string, */ template: string) {
     const compiler = new Compiler();
-    return await compiler.generate(inputFilename, sourcePath);
+    return await compiler.generate(inputFilename, /* sourcePath, */ template);
 }
 
 import * as path from 'path';
@@ -27,14 +27,14 @@ import * as fs from 'fs';
 var squiffyVersion = COMPILER_VERSION;
 
 class Compiler {
-    async process(input: string) {
+    async process(input: string, template: string) {
         var story = new Story();
         var success = this.processFileText(story, input, /* null */ "filename.squiffy", true);
         if (!success) return 'Failed';
-        return await this.getJs(story /*, {} */);
+        return await this.getJs(story, template /*, {} */);
     };
 
-    async generate(inputFilename: string, sourcePath: string /* , options */) {
+    async generate(inputFilename: string, /* sourcePath: string, */ template: string /* , options */) {
         var outputPath;
         // if (options.write) {
             outputPath = path.resolve(path.dirname(inputFilename));
@@ -65,7 +65,7 @@ class Compiler {
 
         console.log('Writing ' + storyJsName);
 
-        var storyJs = await this.getJs(story /*, sourcePath, options */);
+        var storyJs = await this.getJs(story, template /*, sourcePath, options */);
 
         // if (options.write) {
             fs.writeFileSync(path.join(outputPath, storyJsName), storyJs);
@@ -74,7 +74,7 @@ class Compiler {
         // if (!options.scriptOnly) {
             console.log('Writing index.html');
 
-            var htmlTemplateFile = fs.readFileSync(this.findFile('index.template.html', outputPath, sourcePath));
+            var htmlTemplateFile = fs.readFileSync(this.findFile('index.template.html', outputPath /*, sourcePath */));
             var htmlData = htmlTemplateFile.toString();
             htmlData = htmlData.replace('<!-- INFO -->', `<!--\n\nCreated with Squiffy ${squiffyVersion}\n\n\nhttps://github.com/textadventures/squiffy\n\n-->`);
             htmlData = htmlData.replace('<!-- TITLE -->', story.title);
@@ -106,7 +106,7 @@ class Compiler {
 
             console.log('Writing style.css');
 
-            var cssTemplateFile = fs.readFileSync(this.findFile('style.template.css', outputPath, sourcePath));
+            var cssTemplateFile = fs.readFileSync(this.findFile('style.template.css', outputPath /*, sourcePath */));
             var cssData = cssTemplateFile.toString();
 
             // if (options.write) {
@@ -141,8 +141,9 @@ class Compiler {
         return outputPath;
     };
 
-    async getJs(story: Story /*, options */) {
-        const template = (await import('./squiffy.template.js?raw')).default;
+    async getJs(story: Story, template: string /*, options */) {
+        // When calling from Vite, can set template this way:
+        // const template = (await import('./squiffy.template.js?raw')).default;
 
         const jsData = `// Created with Squiffy ${squiffyVersion}
 // https://github.com/textadventures/squiffy
@@ -216,14 +217,14 @@ class Compiler {
         return outputJsFile.join('');
     };
 
-    findFile(filename: string, outputPath: string, sourcePath: string) {
+    findFile(filename: string, outputPath: string /*, sourcePath: string */) {
         if (outputPath) {
             var outputPathFile = path.join(outputPath, filename);
             if (fs.existsSync(outputPathFile)) {
                 return outputPathFile;
             }
         }
-        return path.join(sourcePath, filename);
+        return path.join(import.meta.dirname, filename);
     };
 
     regex: Record<string, RegExp> = {

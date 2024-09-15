@@ -5,10 +5,10 @@
 
 import * as path from 'path';
 import * as fs from 'fs';
-import * as compiler from './compiler';
+import * as compiler from './compiler.js';
 
-var packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json')).toString());
-var squiffyVersion = packageJson.version;
+// var packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json')).toString());
+// var squiffyVersion = packageJson.version;
 
 // function startServer(dir, port) {
 //     var finalhandler = require('finalhandler');
@@ -25,21 +25,21 @@ var squiffyVersion = packageJson.version;
 //     server.listen(port);
 // }
 
-console.log('Squiffy ' + squiffyVersion);
+console.log('Squiffy ' + compiler.COMPILER_VERSION);
 
-var argv = require('yargs')
-    .usage('Compiles a Squiffy script file into HTML and JavaScript.\nFor help, see http://docs.textadventures.co.uk/squiffy/\nUsage: $0 filename.squiffy [options]')
-    .demand(1)
-    .alias('c', 'cdn')
-    .alias('s', 'serve')
-    .alias('p', 'port')
-    .describe('c', 'Use CDN for jQuery')
-    .describe('s', 'Start HTTP server after compiling')
-    .describe('p', 'Port for HTTP server (only with --serve)')
-    .describe('scriptonly', 'Only generate JavaScript file (and optionally specify a name)')
-    .describe('pluginname', 'Specify the jQuery plugin name instead of .questkit (only with --scriptonly)')
-    .describe('zip', 'Create zip file')
-    .argv;
+// var argv = require('yargs')
+//     .usage('Compiles a Squiffy script file into HTML and JavaScript.\nFor help, see http://docs.textadventures.co.uk/squiffy/\nUsage: $0 filename.squiffy [options]')
+//     .demand(1)
+//     .alias('c', 'cdn')
+//     .alias('s', 'serve')
+//     .alias('p', 'port')
+//     .describe('c', 'Use CDN for jQuery')
+//     .describe('s', 'Start HTTP server after compiling')
+//     .describe('p', 'Port for HTTP server (only with --serve)')
+//     .describe('scriptonly', 'Only generate JavaScript file (and optionally specify a name)')
+//     .describe('pluginname', 'Specify the jQuery plugin name instead of .questkit (only with --scriptonly)')
+//     .describe('zip', 'Create zip file')
+//     .argv;
 
 // var options = {
 //     useCdn: argv.c,
@@ -50,7 +50,11 @@ var argv = require('yargs')
 //     write: true,
 // };
 
-/* var result = */ await compiler.generate(argv._[0], "", /*, options */);
+const inputFilename = "examples/helloworld/helloworld.squiffy";
+
+const template = fs.readFileSync(path.join(import.meta.dirname, "squiffy.template.js")).toString();
+
+/* var result = */ await compiler.generate(inputFilename, template /*, options */);
 
 // if (result && options.serve) {
 //     var port = argv.p || 8282;
