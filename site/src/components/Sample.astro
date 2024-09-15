@@ -1,13 +1,21 @@
+---
+import Squiffy from "@components/Squiffy.astro";
+
+interface Props {
+    script: string;
+}
+
+const { script } = Astro.props;
+---
+
 <div class="row sample">
     <div class="col-md-6">
         <pre>
-            <slot></slot>
+            {script}
         </pre>
     </div>
     <div class="col-md-6 output">
-        <div>
-            TODO: Output here...
-        </div>
+        <Squiffy script={script} />
         <button class="btn btn-primary btn-sm restart">Restart</button>
     </div>
 </div>

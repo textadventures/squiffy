@@ -1,0 +1,26 @@
+---
+interface Props {
+    script: string;
+}
+
+const { script } = Astro.props;
+---
+
+<div class="squiffy-output" data-squiffy-script={script}></button>
+
+<script>
+    const squiffyOutputs = document.querySelectorAll('.squiffy-output');
+
+    document.addEventListener("DOMContentLoaded", () => {
+        squiffyOutputs.forEach(squiffyOutput => {
+            const script = (squiffyOutput as HTMLElement).dataset.squiffyScript;
+            squiffyOutput.innerHTML = script || "";
+            // squiffy(squiffyOutput, {
+            //     script: script,
+            //     scroll: 'element',
+            //     debug: true
+            // });
+        });
+    });
+  
+</script>
