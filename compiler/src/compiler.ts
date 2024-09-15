@@ -29,7 +29,7 @@ var squiffyVersion = COMPILER_VERSION;
 class Compiler {
     async process(input: string, template: string) {
         var story = new Story();
-        var success = this.processFileText(story, input, /* null */ "filename.squiffy", true);
+        var success = await this.processFileText(story, input, /* null */ "filename.squiffy", true);
         if (!success) return 'Failed';
         return await this.getJs(story, template /*, {} */);
     };
@@ -50,10 +50,10 @@ class Compiler {
 
         var success;
         // if (inputFilename) {
-            success = this.processFile(story, path.resolve(inputFilename), true);
+            success = await this.processFile(story, path.resolve(inputFilename), true);
         // }
         // else {
-        //     success = this.processFileText(story, options.input, null, true);
+        //     success = await this.processFileText(story, options.input, null, true);
         // }
 
         if (!success) {
@@ -242,7 +242,7 @@ class Compiler {
         continue: /^\+\+\+(.*)$/,
     };
 
-    processFile(story: Story, inputFilename: string, isFirst: boolean) {
+    async processFile(story: Story, inputFilename: string, isFirst: boolean) {
         if (story.files.includes(inputFilename)) {
             return true;
         }
@@ -253,23 +253,25 @@ class Compiler {
         var inputFile = fs.readFileSync(inputFilename);
         var inputText = inputFile.toString();
 
-        return this.processFileText(story, inputText, inputFilename, isFirst);
+        return await this.processFileText(story, inputText, inputFilename, isFirst);
     };
 
-    processFileText(story: Story, inputText: string, inputFilename: string, isFirst: boolean) {
+    async processFileText(story: Story, inputText: string, inputFilename: string, isFirst: boolean) {
         var inputLines = inputText.replace(/\r/g, '').split('\n');
 
         var compiler = this;
         var lineCount = 0;
         var autoSectionCount = 0;
         var section: Section | null = null;
-        var passage: Passage | null = null;
+        var passage = null as Passage | null;   // annotated differently to section, as a workaround for TypeScript "Property does not exist on type never"
         var textStarted = false;
         var ensureSectionExists = function () {
-            section = compiler.ensureSectionExists(story, section, isFirst, inputFilename, lineCount);
+            return compiler.ensureSectionExists(story, section, isFirst, inputFilename, lineCount);
         };
 
-        return inputLines.every(line => {
+        let result = true;
+
+        for (const line of inputLines) {
             var stripLine = line.trim();
             lineCount++;
 
@@ -288,24 +290,26 @@ class Compiler {
             else if (match.passage) {
                 if (!section) {
                     console.log(`ERROR: ${inputFilename} line ${lineCount}: Can\'t add passage "${match.passage[1]}" as no section has been created.`);
-                    return false;
+                    result = false;
+                    continue;
                 }
+                section = ensureSectionExists();
                 passage = section.addPassage(match.passage[1], lineCount);
                 textStarted = false;
             }
             else if (match.continue) {
-                ensureSectionExists();
+                section = ensureSectionExists();
                 autoSectionCount++;
                 var autoSectionName = `_continue${autoSectionCount}`;
-                section!.addText(`[[${match.continue[1]}]](${autoSectionName})`);
+                section.addText(`[[${match.continue[1]}]](${autoSectionName})`);
                 section = story.addSection(autoSectionName, inputFilename, lineCount);
                 passage = null;
                 textStarted = false;
             }
             else if (stripLine == '@clear') {
                 if (!passage) {
-                    ensureSectionExists();
-                    section!.clear = true;
+                    section = ensureSectionExists();
+                    section.clear = true;
                 }
                 else {
                     passage.clear = true;
@@ -323,7 +327,7 @@ class Compiler {
             //     var importFilenames = glob.sync(newFilenames);
             //     importFilenames.every(function (importFilename) {
             //         if (importFilename.endsWith('.squiffy')) {
-            //             var success = this.processFile(story, importFilename, false);
+            //             var success = await this.processFile(story, importFilename, false);
             //             if (!success) return false;
             //         }
             //         else if (importFilename.endsWith('.js')) {
@@ -337,34 +341,34 @@ class Compiler {
             //     }, this);
             // }
             else if (match.attributes) {
-                ensureSectionExists();
+                section = ensureSectionExists();
                 section = this.addAttribute(match.attributes[1], story, section!, passage, isFirst, inputFilename, lineCount);
             }
             else if (match.unset) {
-                ensureSectionExists();
+                section = ensureSectionExists();
                 section = this.addAttribute('not ' + match.unset[1], story, section!, passage, isFirst, inputFilename, lineCount);
             }
             else if (match.inc) {
-                ensureSectionExists();
+                section = ensureSectionExists();
                 section = this.addAttribute(match.inc[1] + '+=' + (match.inc[2] === undefined ? '1' : match.inc[2]), story, section!, passage, isFirst, inputFilename, lineCount);
             }
             else if (match.dec) {
-                ensureSectionExists();
+                section = ensureSectionExists();
                 section = this.addAttribute(match.dec[1] + '-=' + (match.dec[2] === undefined ? '1' : match.dec[2]), story, section!, passage, isFirst, inputFilename, lineCount);
             }
-            // else if (match.replace) {
-            //     ensureSectionExists();
-            //     var replaceAttribute = match.replace[1];
-            //     var attributeMatch = /^(.*?)=(.*)$/.exec(replaceAttribute);
-            //     if (attributeMatch) {
-            //         replaceAttribute = attributeMatch[1] + '=' + this.processText(attributeMatch[2]);
-            //     }
-            //     section = this.addAttribute('@replace ' + replaceAttribute, story, section!, passage, isFirst, inputFilename, lineCount);
-            // }
+            else if (match.replace) {
+                section = ensureSectionExists();
+                var replaceAttribute = match.replace[1];
+                var attributeMatch = /^(.*?)=(.*)$/.exec(replaceAttribute);
+                if (attributeMatch) {
+                    replaceAttribute = attributeMatch[1] + '=' + await this.processText(attributeMatch[2], null!, null!, null!);
+                }
+                section = this.addAttribute('@replace ' + replaceAttribute, story, section!, passage, isFirst, inputFilename, lineCount);
+            }
             else if (!textStarted && match.js) {
                 if (!passage) {
-                    ensureSectionExists();
-                    section!.addJS(match.js[2]);
+                    section = ensureSectionExists();
+                    section.addJS(match.js[2]);
                 }
                 else {
                     passage.addJS(match.js[2]);
@@ -372,7 +376,7 @@ class Compiler {
             }
             else if (textStarted || stripLine.length > 0) {
                 if (!passage) {
-                    ensureSectionExists();
+                    section = ensureSectionExists();
                     if (section) {
                         section.addText(line);
                         textStarted = true;
@@ -383,9 +387,9 @@ class Compiler {
                     textStarted = true;
                 }
             }
-
-            return true;
-        }, this);
+        }
+        
+        return result;
     };
 
     ensureSectionExists(story: Story, section: Section | null, isFirst: boolean, inputFilename: string, lineCount: number) {
