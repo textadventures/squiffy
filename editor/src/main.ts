@@ -11,8 +11,6 @@ import * as editor from './editor';
 
 Object.assign(window, { $: $, jQuery: $ });
 
-console.log("test....");
-
 interface Section {
     name: string;
     start: number;

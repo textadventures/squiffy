@@ -1,27 +1,38 @@
 {
   "name": "squiffy",
-  "version": "5.1.5",
+  "version": "6.0.0-alpha.0",
   "description": "A tool for creating multiple-choice interactive stories",
   "dependencies": {
-    "finalhandler": "^1.2.0",
-    "glob": "^8.0.1",
-    "jquery": "^3.6.0",
+    "jquery": "^3.7.1",
     "jszip": "^3.9.1",
-    "marked": "^4.0.14",
-    "serve-static": "^1.7.0",
-    "underscore": "^1.7.0",
-    "yargs": "^1.3.3"
+    "marked": "^13.0.2"
   },
-  "author": "Luis Felipe Morales <papadasoft@gmail.com>",
+  "author": "Alex Warren",
   "contributors": [
-    "CrisisSDK <crisissdknpm@gmail.com>",
-    "mrangel"
+    "CrisisSDK",
+    "mrangel",
+    "Luis Felipe Morales"
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/CrisisSDK/squiffy.git"
+    "url": "https://github.com/textadventures/squiffy"
   },
   "license": "MIT",
   "bin": "./squiffy.js",
-  "preferGlobal": true
+  "preferGlobal": true,
+  "devDependencies": {
+    "@types/node": "^22.5.5",
+    "typescript": "^5.6.2",
+    "serve-static": "^1.7.0",
+    "yargs": "^1.3.3",
+    "finalhandler": "^1.2.0",
+    "glob": "^8.0.1"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
+    "start": "node server.js"
+  },
+  "main": "dist/compiler.js",
+  "types": "dist/compiler.d.ts"
 }
