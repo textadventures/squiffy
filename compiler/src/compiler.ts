@@ -22,7 +22,7 @@ export const generate = async function(inputFilename: string, /* sourcePath: str
 import * as path from 'path';
 import * as fs from 'fs';
 // var glob = require('glob');
-// var crypto = require('crypto');
+import * as crypto from 'crypto';
 
 var squiffyVersion = COMPILER_VERSION;
 
@@ -42,7 +42,7 @@ class Compiler {
 
         var story = new Story();
         // if (inputFilename) {
-        //     story.set_id(path.resolve(inputFilename));
+            story.set_id(path.resolve(inputFilename));
         // }
         // else {
         //     story.set_id(options.input);
@@ -535,11 +535,12 @@ class Story {
         return section;
     };
 
-    // set_id(filename: string) {
-    //     var shasum = crypto.createHash('sha1');
-    //     shasum.update(filename);
-    //     this.id = shasum.digest('hex').substr(0, 10);
-    // };
+    set_id(filename: string) {
+        var shasum = crypto.createHash('sha1');
+        shasum.update(filename);
+        this.id = shasum.digest('hex').substr(0, 10);
+        console.log("set id " + this.id);
+    };
 }
 
 class Section {

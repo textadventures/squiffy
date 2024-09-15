@@ -1,14 +1,8 @@
-#!/usr/bin/env node
-/* jshint quotmark: single */
-
 'use strict';
 
 import * as path from 'path';
 import * as fs from 'fs';
 import * as compiler from './compiler.js';
-
-// var packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json')).toString());
-// var squiffyVersion = packageJson.version;
 
 // function startServer(dir, port) {
 //     var finalhandler = require('finalhandler');
