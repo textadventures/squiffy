@@ -9,17 +9,25 @@ const { script } = Astro.props;
 <div class="squiffy-output" data-squiffy-script={script}></button>
 
 <script>
+    import $ from 'jquery';
+    import { getJs } from "../../../editor/src/compiler.ts";
+
+    Object.assign(window, { $: $, jQuery: $ });
+
     const squiffyOutputs = document.querySelectorAll('.squiffy-output');
 
     document.addEventListener("DOMContentLoaded", () => {
-        squiffyOutputs.forEach(squiffyOutput => {
+        squiffyOutputs.forEach(async squiffyOutput => {
             const script = (squiffyOutput as HTMLElement).dataset.squiffyScript;
-            squiffyOutput.innerHTML = script || "";
-            // squiffy(squiffyOutput, {
-            //     script: script,
-            //     scroll: 'element',
-            //     debug: true
-            // });
+
+            const result = await getJs(script || "");
+            eval(result);
+
+            $(squiffyOutput).squiffy({
+                scroll: 'element',
+                persist: false,
+                restartPrompt: false,
+            });
         });
     });
   
