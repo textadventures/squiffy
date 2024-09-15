@@ -63,7 +63,7 @@ class Compiler {
 
         var storyJsName = /* typeof options.scriptOnly === 'string' ? options.scriptOnly : */ 'story.js';
 
-        console.log('Writing ' + path.join(outputPath, storyJsName));
+        console.log('Writing ' + storyJsName);
 
         var storyJs = await this.getJs(story, template /*, sourcePath, options */);
 

@@ -25,21 +25,25 @@ import * as compiler from './compiler.js';
 //     server.listen(port);
 // }
 
-console.log('Squiffy ' + compiler.COMPILER_VERSION);
+import yargs from 'yargs';
+import { hideBin } from 'yargs/helpers';
 
-// var argv = require('yargs')
-//     .usage('Compiles a Squiffy script file into HTML and JavaScript.\nFor help, see http://docs.textadventures.co.uk/squiffy/\nUsage: $0 filename.squiffy [options]')
-//     .demand(1)
-//     .alias('c', 'cdn')
-//     .alias('s', 'serve')
-//     .alias('p', 'port')
-//     .describe('c', 'Use CDN for jQuery')
-//     .describe('s', 'Start HTTP server after compiling')
-//     .describe('p', 'Port for HTTP server (only with --serve)')
-//     .describe('scriptonly', 'Only generate JavaScript file (and optionally specify a name)')
-//     .describe('pluginname', 'Specify the jQuery plugin name instead of .questkit (only with --scriptonly)')
-//     .describe('zip', 'Create zip file')
-//     .argv;
+const argv = yargs(hideBin(process.argv))
+    .usage(
+        `Usage: $0 filename.squiffy [options]`)
+    .demand(1)
+    .alias('c', 'cdn')
+    .alias('s', 'serve')
+    .alias('p', 'port')
+    .describe('c', 'Use CDN for jQuery')
+    .describe('s', 'Start HTTP server after compiling')
+    .describe('p', 'Port for HTTP server (only with --serve)')
+    .describe('scriptonly', 'Only generate JavaScript file (and optionally specify a name)')
+    .describe('pluginname', 'Specify the jQuery plugin name instead of .squiffy (only with --scriptonly)')
+    .describe('zip', 'Create zip file')
+    .parseSync();
+
+console.log('Squiffy ' + compiler.COMPILER_VERSION);
 
 // var options = {
 //     useCdn: argv.c,
@@ -50,7 +54,8 @@ console.log('Squiffy ' + compiler.COMPILER_VERSION);
 //     write: true,
 // };
 
-const inputFilename = "examples/helloworld/helloworld.squiffy";
+
+const inputFilename = argv._[0] as string;
 
 const template = fs.readFileSync(path.join(import.meta.dirname, "squiffy.template.js")).toString();
 
