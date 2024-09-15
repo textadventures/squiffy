@@ -63,7 +63,7 @@ class Compiler {
 
         var storyJsName = /* typeof options.scriptOnly === 'string' ? options.scriptOnly : */ 'story.js';
 
-        console.log('Writing ' + storyJsName);
+        console.log('Writing ' + path.join(outputPath, storyJsName));
 
         var storyJs = await this.getJs(story, template /*, sourcePath, options */);
 
@@ -83,16 +83,16 @@ class Compiler {
             //     jQueryPath = path.join(sourcePath, '..', 'jquery', 'dist', 'jquery.min.js');
             // else
             //     jQueryPath = path.join(sourcePath, 'node_modules', 'jquery', 'dist', 'jquery.min.js');
-            // var jqueryJs = 'jquery.min.js';
+            var jqueryJs = 'jquery.min.js';
             // if (options.useCdn) {
             //     var jqueryVersion = packageJson.dependencies.jquery.match(/[0-9.]+/)[0];
             //     jqueryJs = `https://ajax.aspnetcdn.com/ajax/jquery/jquery-${jqueryVersion}.min.js`;
             // }
             // else if (options.write) {
-            //     fs.createReadStream(jQueryPath).pipe(fs.createWriteStream(path.join(outputPath, 'jquery.min.js')));
+                fs.createReadStream(path.join(import.meta.dirname, 'jquery.min.js')).pipe(fs.createWriteStream(path.join(outputPath, 'jquery.min.js')));
             // }
 
-            // htmlData = htmlData.replace('<!-- JQUERY -->', jqueryJs);
+            htmlData = htmlData.replace('<!-- JQUERY -->', jqueryJs);
 
             var scriptData = story.scripts.map(script => `<script src="${script}"></script>`).join('\n');
             htmlData = htmlData.replace('<!-- SCRIPTS -->', scriptData);
