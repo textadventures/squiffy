@@ -4,7 +4,8 @@
       "noImplicitAny": false,  
       "noUnusedLocals": true,
       "noUnusedParameters": true,
-      "noFallthroughCasesInSwitch": true
+      "noFallthroughCasesInSwitch": true,
+      "skipLibCheck": true
     },
     "include": ["src/squiffy.template.ts"]
 }

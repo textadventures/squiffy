@@ -1,14 +1,77 @@
 /// <reference path ="../node_modules/@types/jquery/jquery.d.ts"/>
 
-var squiffy = {};
+interface JQuery {
+    squiffy(obj: object): void;
+}
+
+interface Squiffy {
+    story: any;
+    ui: {
+        output: JQuery,
+        settings: any,
+        processText: (text: string) => string,
+        write: (text: string) => void,
+        clearScreen: () => void,
+        scrollToEnd: () => void,
+        transition: (f: any) => void,
+        restart: JQuery,
+    };
+    storageFallback: any;
+    set: (attribute: string, value: any) => void;
+    get: (attribute: string) => any;
+}
+
+interface Section {
+    clear: boolean;
+    attributes: string[],
+    jsIndex?: number;
+}
+
+interface Passage {
+
+}
+
+var squiffy: Squiffy = {
+    story: {},
+    set: function (attribute: string, value: any) {
+        if (typeof value === 'undefined') value = true;
+        if (squiffy.ui.settings.persist && window.localStorage) {
+            localStorage[squiffy.story.id + '-' + attribute] = JSON.stringify(value);
+        }
+        else {
+            squiffy.storageFallback[attribute] = JSON.stringify(value);
+        }
+        squiffy.ui.settings.onSet(attribute, value);
+    },
+    get: function (attribute): any {
+        var result;
+        if (squiffy.ui.settings.persist && window.localStorage) {
+            result = localStorage[squiffy.story.id + '-' + attribute];
+        }
+        else {
+            result = squiffy.storageFallback[attribute];
+        }
+        if (!result) return null;
+        return JSON.parse(result);
+    },
+    ui: {
+        output: null!,
+        settings: null!,
+        processText: null!,
+        write: null!,
+        clearScreen: null!,
+        scrollToEnd: null!,
+        transition: null!,
+        restart: null!
+    },
+    storageFallback: {}
+};
 
 (function () {
     'use strict';
 
-    squiffy.story = {};
-
     var initLinkHandler = function () {
-        var handleLink = function (link) {
+        var handleLink = function (link: JQuery) {
             if (link.hasClass('disabled')) return;
             var passage = link.data('passage');
             var section = link.data('section');
@@ -19,7 +82,7 @@ var squiffy = {};
                 squiffy.set('_turncount', squiffy.get('_turncount') + 1);
                 passage = processLink(passage);
                 if (passage) {
-                    currentSection.append('<hr/>');
+                    currentSection!.append('<hr/>');
                     squiffy.story.passage(passage);
                 }
                 var turnPassage = '@' + squiffy.get('_turncount');
@@ -31,7 +94,7 @@ var squiffy = {};
                 }
             }
             else if (section) {
-                currentSection.append('<hr/>');
+                currentSection!.append('<hr/>');
                 disableLink(link);
                 section = processLink(section);
                 squiffy.story.go(section);
@@ -44,8 +107,9 @@ var squiffy = {};
                 if (!result[1]) {
                     disableLink(link);
                 }
-                if (link.attr('data-attribute')) {
-                    squiffy.set(link.attr('data-attribute'), result[0]);
+                const attribute = link.attr('data-attribute');
+                if (attribute) {
+                    squiffy.set(attribute, result[0]);
                 }
                 squiffy.story.save();
             }
@@ -65,7 +129,7 @@ var squiffy = {};
         });
     };
 
-    var disableLink = function (link) {
+    var disableLink = function (link: JQuery) {
         link.addClass('disabled');
         link.attr('tabindex', -1);
     }
@@ -76,8 +140,7 @@ var squiffy = {};
         }
     };
 
-    var processLink = function (link) {
-        link = String(link);
+    var processLink = function (link: string) {
         var sections = link.split(',');
         var first = true;
         var target = null;
@@ -99,15 +162,15 @@ var squiffy = {};
         return target;
     };
 
-    var setAttribute = function (expr) {
-        expr = expr.replace(/^(\w*\s*):=(.*)$/, (match, name, value) => (name + "=" + squiffy.ui.processText(value)));
+    var setAttribute = function (expr: string) {
+        expr = expr.replace(/^(\w*\s*):=(.*)$/, (_, name, value) => (name + "=" + squiffy.ui.processText(value)));
         var lhs, rhs, op, value;
         var setRegex = /^([\w]*)\s*=\s*(.*)$/;
         var setMatch = setRegex.exec(expr);
         if (setMatch) {
             lhs = setMatch[1];
             rhs = setMatch[2];
-            if (isNaN(rhs)) {
+            if (isNaN(rhs as any)) {
                 if (startsWith(rhs, "@")) rhs = squiffy.get(rhs.substring(1));
                 squiffy.set(lhs, rhs);
             }
@@ -151,7 +214,7 @@ var squiffy = {};
         }
     };
 
-    var replaceLabel = function (expr) {
+    var replaceLabel = function (expr: string) {
         var regex = /^([\w]*)\s*=\s*(.*)$/;
         var match = regex.exec(expr);
         if (!match) return;
@@ -177,7 +240,7 @@ var squiffy = {};
         });
     };
 
-    squiffy.story.go = function (section) {
+    squiffy.story.go = function (section: string) {
         squiffy.set('_transition', null);
         newSection();
         squiffy.story.section = squiffy.story.sections[section];
@@ -198,7 +261,7 @@ var squiffy = {};
         }
     };
 
-    squiffy.story.run = function (section) {
+    squiffy.story.run = function (section: Section) {
         if (section.clear) {
             squiffy.ui.clearScreen();
         }
@@ -210,7 +273,7 @@ var squiffy = {};
         }
     };
 
-    squiffy.story.passage = function (passageName) {
+    squiffy.story.passage = function (passageName: string) {
         var passage = squiffy.story.section.passages[passageName];
         var masterSection = squiffy.story.sections[''];
         if (!passage && masterSection) passage = masterSection.passages[passageName];
@@ -233,7 +296,7 @@ var squiffy = {};
         squiffy.story.save();
     };
 
-    var processAttributes = function (attributes) {
+    var processAttributes = function (attributes: string[]) {
         attributes.forEach(function (attribute) {
             if (startsWith(attribute, '@replace ')) {
                 replaceLabel(attribute.substring(9));
@@ -247,7 +310,7 @@ var squiffy = {};
     squiffy.story.restart = function () {
         if (squiffy.ui.settings.persist && window.localStorage) {
             var keys = Object.keys(localStorage);
-            jQuery.each(keys, function (idx, key) {
+            jQuery.each(keys, function (_, key) {
                 if (startsWith(key, squiffy.story.id)) {
                     localStorage.removeItem(key);
                 }
@@ -282,7 +345,7 @@ var squiffy = {};
         return true;
     };
 
-    var setSeen = function (sectionName) {
+    var setSeen = function (sectionName: string) {
         var seenSections = squiffy.get('_seen_sections');
         if (!seenSections) seenSections = [];
         if (seenSections.indexOf(sectionName) == -1) {
@@ -291,16 +354,13 @@ var squiffy = {};
         }
     };
 
-    squiffy.story.seen = function (sectionName) {
+    squiffy.story.seen = function (sectionName: string) {
         var seenSections = squiffy.get('_seen_sections');
         if (!seenSections) return false;
         return (seenSections.indexOf(sectionName) > -1);
     };
 
-    squiffy.ui = {};
-
-    var currentSection = null;
-    var screenIsClear = true;
+    var currentSection: JQuery | null = null;
     var scrollPosition = 0;
 
     var newSection = function () {
@@ -312,13 +372,15 @@ var squiffy = {};
             });
             currentSection.find("[contenteditable]").each(function () {
                 set($(this).data('attribute') || this.id, this.innerHTML);
-                this.disabled = true;
+                // TODO: This doesn't compile in TypeScript...
+                // this.disabled = true;
+                // try...
+                // this.contentEditable = 'false' ??
             });
             currentSection.find('textarea').each(function () {
                 set($(this).data('attribute') || this.id, this.value);
                 this.disabled = true;
             });
-
         }
 
         var sectionCount = squiffy.get('_section-count') + 1;
@@ -331,34 +393,32 @@ var squiffy = {};
     };
 
     squiffy.ui.write = function (text) {
-        screenIsClear = false;
-        scrollPosition = squiffy.ui.output.height();
-        currentSection.append(jQuery('<div/>').html(squiffy.ui.processText(text)));
+        scrollPosition = squiffy.ui.output.height() || 0;
+        currentSection!.append(jQuery('<div/>').html(squiffy.ui.processText(text)));
         squiffy.ui.scrollToEnd();
     };
 
     squiffy.ui.clearScreen = function () {
         squiffy.ui.output.html('');
-        screenIsClear = true;
         newSection();
     };
 
     squiffy.ui.scrollToEnd = function () {
         var scrollTo, currentScrollTop, distance, duration;
         if (squiffy.ui.settings.scroll === 'element') {
-            scrollTo = squiffy.ui.output[0].scrollHeight - squiffy.ui.output.height();
+            scrollTo = squiffy.ui.output[0].scrollHeight - (squiffy.ui.output?.height() || 0);
             currentScrollTop = squiffy.ui.output.scrollTop();
-            if (scrollTo > currentScrollTop) {
-                distance = scrollTo - currentScrollTop;
+            if (scrollTo > (currentScrollTop || 0)) {
+                distance = scrollTo - (currentScrollTop || 0);
                 duration = distance / 0.4;
                 squiffy.ui.output.stop().animate({ scrollTop: scrollTo }, duration);
             }
         }
         else {
             scrollTo = scrollPosition;
-            currentScrollTop = Math.max(jQuery('body').scrollTop(), jQuery('html').scrollTop());
+            currentScrollTop = Math.max((jQuery('body').scrollTop() || 0), (jQuery('html').scrollTop() || 0));
             if (scrollTo > currentScrollTop) {
-                var maxScrollTop = jQuery(document).height() - jQuery(window).height();
+                var maxScrollTop = (jQuery(document).height() || 0) - (jQuery(window).height() || 0);
                 if (scrollTo > maxScrollTop) scrollTo = maxScrollTop;
                 distance = scrollTo - currentScrollTop;
                 duration = distance / 0.5;
@@ -368,7 +428,7 @@ var squiffy = {};
     };
 
     squiffy.ui.processText = function (text) {
-        function process(text, data) {
+        function process(text: string, data: any) {
             var containsUnprocessedSection = false;
             var open = text.indexOf('{');
             var close;
@@ -406,13 +466,13 @@ var squiffy = {};
             if (containsUnprocessedSection) {
                 var section = text.substring(open + 1, close);
                 var value = processTextCommand(section, data);
-                text = text.substring(0, open) + value + process(text.substring(close + 1), data);
+                text = text.substring(0, open) + value + process(text.substring(close! + 1), data);
             }
 
             return (text);
         }
 
-        function processTextCommand(text, data) {
+        function processTextCommand(text: string, data: any) {
             if (startsWith(text, 'if ')) {
                 return processTextCommand_If(text, data);
             }
@@ -423,10 +483,10 @@ var squiffy = {};
                 return processTextCommand_Label(text, data);
             }
             else if (/^rotate[: ]/.test(text)) {
-                return processTextCommand_Rotate('rotate', text, data);
+                return processTextCommand_Rotate('rotate', text);
             }
             else if (/^sequence[: ]/.test(text)) {
-                return processTextCommand_Rotate('sequence', text, data);
+                return processTextCommand_Rotate('sequence', text);
             }
             else if (text in squiffy.story.section.passages) {
                 return process(squiffy.story.section.passages[text].text, data);
@@ -441,7 +501,7 @@ var squiffy = {};
             return squiffy.get(text);
         }
 
-        function processTextCommand_If(section, data) {
+        function processTextCommand_If(section: string, data: any) {
             var command = section.substring(3);
             var colon = command.indexOf(':');
             if (colon == -1) {
@@ -493,13 +553,13 @@ var squiffy = {};
             return textResult;
         }
 
-        function processTextCommand_Else(section, data) {
+        function processTextCommand_Else(section: string, data: any) {
             if (!('lastIf' in data) || data.lastIf) return '';
             var text = section.substring(5);
             return process(text, data);
         }
 
-        function processTextCommand_Label(section, data) {
+        function processTextCommand_Label(section: string, data: any) {
             var command = section.substring(6);
             var eq = command.indexOf('=');
             if (eq == -1) {
@@ -512,7 +572,7 @@ var squiffy = {};
             return '<span class="squiffy-label-' + label + '">' + process(text, data) + '</span>';
         }
 
-        function processTextCommand_Rotate(type, section, data) {
+        function processTextCommand_Rotate(type: string, section: string) {
             var options;
             var attribute = '';
             if (section.substring(type.length, type.length + 1) == ' ') {
@@ -526,7 +586,8 @@ var squiffy = {};
             else {
                 options = section.substring(type.length + 1);
             }
-            var rotation = rotate(options.replace(/"/g, '&quot;').replace(/'/g, '&#39;'));
+            // TODO: Check - previously there was no second parameter here
+            var rotation = rotate(options.replace(/"/g, '&quot;').replace(/'/g, '&#39;'), null);
             if (attribute) {
                 squiffy.set(attribute, rotation[0]);
             }
@@ -539,35 +600,12 @@ var squiffy = {};
         return process(text, data);
     };
 
-    squiffy.ui.transition = function (f) {
+    squiffy.ui.transition = function (f: any) {
         squiffy.set('_transition', f.toString());
         f();
     };
 
     squiffy.storageFallback = {};
-
-    squiffy.set = function (attribute, value) {
-        if (typeof value === 'undefined') value = true;
-        if (squiffy.ui.settings.persist && window.localStorage) {
-            localStorage[squiffy.story.id + '-' + attribute] = JSON.stringify(value);
-        }
-        else {
-            squiffy.storageFallback[attribute] = JSON.stringify(value);
-        }
-        squiffy.ui.settings.onSet(attribute, value);
-    };
-
-    squiffy.get = function (attribute) {
-        var result;
-        if (squiffy.ui.settings.persist && window.localStorage) {
-            result = localStorage[squiffy.story.id + '-' + attribute];
-        }
-        else {
-            result = squiffy.storageFallback[attribute];
-        }
-        if (!result) return null;
-        return JSON.parse(result);
-    };
 
     var startsWith = function (string, prefix) {
         return string.substring(0, prefix.length) === prefix;
@@ -585,12 +623,12 @@ var squiffy = {};
     };
 
     var methods = {
-        init: function (options) {
+        init: function (options: any) {
             var settings = jQuery.extend({
                 scroll: 'body',
                 persist: true,
                 restartPrompt: true,
-                onSet: function (attribute, value) { }
+                onSet: function () { }
             }, options);
 
             squiffy.ui.output = this;
@@ -619,7 +657,7 @@ var squiffy = {};
         }
     };
 
-    jQuery.fn.squiffy = function (methodOrOptions) {
+    jQuery.fn.squiffy = function (methodOrOptions: any) {
         if (methods[methodOrOptions]) {
             return methods[methodOrOptions]
                 .apply(this, Array.prototype.slice.call(arguments, 1));

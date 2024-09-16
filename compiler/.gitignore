@@ -4,3 +4,4 @@ style.css
 examples/*/jquery*.js
 _site
 src/jquery.min.js
+src/squiffy.template.js
