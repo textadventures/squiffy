@@ -37,8 +37,8 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc && shx cp src/templates/*.* ./dist/ && shx cp node_modules/jquery/dist/jquery.min.js ./dist/",
-    "dev": "tsx src/squiffy.ts"
+    "build": "tsc && shx cp src/index.template.html ./dist/ && shx cp src/squiffy.template.js ./dist/ && shx cp src/style.template.css ./dist/ && shx cp node_modules/jquery/dist/jquery.min.js ./dist/",
+    "dev": "cp node_modules/jquery/dist/jquery.min.js ./src/ && tsx src/squiffy.ts"
   },
   "main": "dist/compiler.js",
   "types": "dist/compiler.d.ts",

@@ -541,7 +541,6 @@ class Story {
         var shasum = crypto.createHash('sha1');
         shasum.update(filename);
         this.id = shasum.digest('hex').substr(0, 10);
-        console.log("set id " + this.id);
     };
 }
 
