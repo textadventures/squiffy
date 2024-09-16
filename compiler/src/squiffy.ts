@@ -1,25 +1,8 @@
-'use strict';
-
-import * as path from 'path';
-import * as fs from 'fs';
-import * as compiler from './compiler.js';
-import finalhandler from 'finalhandler';
-import * as http from 'http';
-import serveStatic from 'serve-static';
-
-function startServer(dir: string, port: number) {    
-    var serve = serveStatic(dir, { index: ['index.html'] });
-
-    var server = http.createServer(function (req: any, res: any) {
-        var done = finalhandler(req, res);
-        serve(req, res, done);
-    });
-
-    server.listen(port);
-}
-
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
+import { SQUIFFY_VERSION } from './version.js';
+import { createPackage } from './packager.js';
+import { serve } from './server.js';
 
 const argv = yargs(hideBin(process.argv))
     .usage(
@@ -36,7 +19,7 @@ const argv = yargs(hideBin(process.argv))
     .describe('zip', 'Create zip file')
     .parseSync();
 
-console.log('Squiffy ' + compiler.COMPILER_VERSION);
+console.log('Squiffy ' + SQUIFFY_VERSION);
 
 var options = {
     useCdn: argv.c,
@@ -49,12 +32,9 @@ var options = {
 
 const inputFilename = argv._[0] as string;
 
-const template = fs.readFileSync(path.join(import.meta.dirname, "squiffy.template.js")).toString();
-
-var result = await compiler.generate(inputFilename, template /*, options */);
+var result = await createPackage(inputFilename);
 
 if (result && options.serve) {
     var port = (argv.p as number) || 8282;
-    startServer(result, port);
-    console.log('Started http://localhost:' + port + '/');
+    serve(result, port);
 }

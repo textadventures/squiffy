@@ -1,11 +1,5 @@
+import { SQUIFFY_VERSION } from './version.js';
 import * as marked from 'marked';
-
-export const COMPILER_VERSION = '6.0.0-alpha.0';
-
-// export const generate = async function (inputFilename, options) {
-//     var compiler = new Compiler();
-//     return await compiler.generate(inputFilename, __dirname, options);
-// };
 
 export const getJs = async function (input: string, template: string) {
     const compiler = new Compiler();
@@ -56,7 +50,7 @@ import * as fs from 'fs';
 // var glob = require('glob');
 import * as crypto from 'crypto';
 
-var squiffyVersion = COMPILER_VERSION;
+var squiffyVersion = SQUIFFY_VERSION;
 
 class Compiler {
     async process(input: string, template: string) {
