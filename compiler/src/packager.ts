@@ -10,17 +10,18 @@ export const createPackage = async (inputFilename: string) => {
 }
 
 async function generate(inputFilename: string, template: string) {
-    const compiler = new Compiler({
-        scriptBaseFilename: path.basename(inputFilename),
-        onWarning: console.warn
-    });
-
     console.log('Loading ' + inputFilename);
 
     var inputFile = fs.readFileSync(inputFilename);
     var inputText = inputFile.toString();
 
-    const success = await compiler.processFileText(inputText, inputFilename, true);
+    const compiler = new Compiler({
+        scriptBaseFilename: path.basename(inputFilename),
+        script: inputText,
+        onWarning: console.warn
+    });
+
+    const success = await compiler.load();
 
     if (!success) {
         console.log('Failed.');

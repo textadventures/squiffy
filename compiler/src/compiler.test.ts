@@ -5,9 +5,10 @@ import path from 'path';
 
 test('"Hello world" should compile', async () => {
     const compiler = new Compiler({
-        scriptBaseFilename: "filename.squiffy"
+        scriptBaseFilename: "filename.squiffy",
+        script: "hello world",
     });
-    await compiler.processFileText("hello world", "filename.squiffy", true);
+    await compiler.load();
     const result = await compiler.getStoryData();
     expect(result.story.start).toBe("_default");
     expect(Object.keys(result.story.sections).length).toBe(1);
@@ -38,9 +39,10 @@ for (const example of examples) {
         const filename = path.basename(example);
 
         const compiler = new Compiler({
-            scriptBaseFilename: filename
+            scriptBaseFilename: filename,
+            script: script,
         });
-        await compiler.processFileText(script, filename, true);
+        await compiler.load();
 
         const result = await compiler.getStoryData();
         expect(result).toMatchSnapshot();
@@ -61,11 +63,11 @@ for (const example of warningExamples) {
 
         const compiler = new Compiler({
             scriptBaseFilename: filename,
+            script: script,
             onWarning: (message) => warnings.push(message)
         });
         
-        await compiler.processFileText(script, filename, true);
-
+        await compiler.load();
         await compiler.getStoryData();
         expect(warnings).toMatchSnapshot();
     });

@@ -31,6 +31,7 @@ interface OutputPassage {
 
 interface CompilerSettings {
     scriptBaseFilename: string,
+    script: string,
     onWarning?: (message: string) => void;
 }
 
@@ -156,7 +157,11 @@ squiffy.story = {...squiffy.story, ...${JSON.stringify(storyData.story, null, 4)
         continue: /^\+\+\+(.*)$/,
     };
 
-    async processFileText(inputText: string, inputFilename: string, isFirst: boolean) {
+    async load() {
+        return await this.processFileText(this.settings.script, this.settings.scriptBaseFilename, true);
+    }
+
+    private async processFileText(inputText: string, inputFilename: string, isFirst: boolean) {
         var inputLines = inputText.replace(/\r/g, '').split('\n');
 
         var lineCount = 0;
