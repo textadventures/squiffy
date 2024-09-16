@@ -1,5 +1,6 @@
-import { SQUIFFY_VERSION } from './version.js';
 import * as marked from 'marked';
+import * as crypto from 'crypto';
+import { SQUIFFY_VERSION } from './version.js';
 
 export const getJs = async function (input: string, template: string) {
     const compiler = new Compiler();
@@ -39,10 +40,6 @@ interface OutputPassage {
     attributes?: string[];
     jsIndex?: number;
 }
-
-import * as fs from 'fs';
-// var glob = require('glob');
-import * as crypto from 'crypto';
 
 var squiffyVersion = SQUIFFY_VERSION;
 
@@ -165,20 +162,6 @@ squiffy.story = {...squiffy.story, ...${JSON.stringify(storyData.story, null, 4)
         replace: /^@replace (.*$)/,
         js: /^(\t| {4})(.*)$/,
         continue: /^\+\+\+(.*)$/,
-    };
-
-    async processFile(story: Story, inputFilename: string, isFirst: boolean) {
-        if (story.files.includes(inputFilename)) {
-            return true;
-        }
-
-        story.files.push(inputFilename);
-        console.log('Loading ' + inputFilename);
-
-        var inputFile = fs.readFileSync(inputFilename);
-        var inputText = inputFile.toString();
-
-        return await this.processFileText(story, inputText, inputFilename, isFirst);
     };
 
     async processFileText(story: Story, inputText: string, inputFilename: string, isFirst: boolean) {

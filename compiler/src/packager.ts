@@ -16,7 +16,7 @@ async function generate(inputFilename: string, template: string) {
 
     var story = new Story(path.resolve(inputFilename));
 
-    var success = await compiler.processFile(story, path.resolve(inputFilename), true);
+    var success = await processFile(compiler, story, path.resolve(inputFilename), true);
 
     if (!success) {
         console.log('Failed.');
@@ -105,4 +105,18 @@ function findFile(filename: string, outputPath: string /*, sourcePath: string */
         }
     }
     return path.join(import.meta.dirname, filename);
+};
+
+async function processFile(compiler: Compiler, story: Story, inputFilename: string, isFirst: boolean) {
+    if (story.files.includes(inputFilename)) {
+        return true;
+    }
+
+    story.files.push(inputFilename);
+    console.log('Loading ' + inputFilename);
+
+    var inputFile = fs.readFileSync(inputFilename);
+    var inputText = inputFile.toString();
+
+    return await compiler.processFileText(story, inputText, inputFilename, isFirst);
 };
