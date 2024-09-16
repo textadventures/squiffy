@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { Compiler, Story } from './compiler.js';
+import { Compiler } from './compiler.js';
 import { SQUIFFY_VERSION } from './version.js';
 
 export const createPackage = async (inputFilename: string) => {
@@ -11,14 +11,16 @@ export const createPackage = async (inputFilename: string) => {
 
 async function generate(inputFilename: string, template: string) {
     const compiler = new Compiler({
+        scriptBaseFilename: path.basename(inputFilename),
         onWarning: console.warn
     });
-    
-    var outputPath = path.resolve(path.dirname(inputFilename));
 
-    var story = new Story(path.basename(inputFilename));
+    console.log('Loading ' + inputFilename);
 
-    var success = await processFile(compiler, story, path.resolve(inputFilename), true);
+    var inputFile = fs.readFileSync(inputFilename);
+    var inputText = inputFile.toString();
+
+    const success = await compiler.processFileText(inputText, inputFilename, true);
 
     if (!success) {
         console.log('Failed.');
@@ -29,9 +31,12 @@ async function generate(inputFilename: string, template: string) {
 
     console.log('Writing ' + storyJsName);
 
-    var storyJs = await compiler.getJs(story, template /*, sourcePath, options */);
+    var storyJs = await compiler.getJs(template);
 
+    var outputPath = path.resolve(path.dirname(inputFilename));
     fs.writeFileSync(path.join(outputPath, storyJsName), storyJs);
+
+    const uiInfo = compiler.getUiInfo();
 
     // if (!options.scriptOnly) {
         console.log('Writing index.html');
@@ -39,7 +44,7 @@ async function generate(inputFilename: string, template: string) {
         var htmlTemplateFile = fs.readFileSync(findFile('index.template.html', outputPath /*, sourcePath */));
         var htmlData = htmlTemplateFile.toString();
         htmlData = htmlData.replace('<!-- INFO -->', `<!--\n\nCreated with Squiffy ${SQUIFFY_VERSION}\n\n\nhttps://github.com/textadventures/squiffy\n\n-->`);
-        htmlData = htmlData.replace('<!-- TITLE -->', story.title);
+        htmlData = htmlData.replace('<!-- TITLE -->', uiInfo.title);
         // var jQueryPath = "";
         // if (typeof options.escritorio !== "undefined")
         //     jQueryPath = path.join(sourcePath, '..', 'jquery', 'dist', 'jquery.min.js');
@@ -56,10 +61,10 @@ async function generate(inputFilename: string, template: string) {
 
         htmlData = htmlData.replace('<!-- JQUERY -->', jqueryJs);
 
-        var scriptData = story.scripts.map(script => `<script src="${script}"></script>`).join('\n');
+        var scriptData = uiInfo.externalScripts.map(script => `<script src="${script}"></script>`).join('\n');
         htmlData = htmlData.replace('<!-- SCRIPTS -->', scriptData);
 
-        var stylesheetData = story.stylesheets.map(sheet => `<link rel="stylesheet" href="${sheet}"/>`).join('\n');
+        var stylesheetData = uiInfo.externalStylesheets.map(sheet => `<link rel="stylesheet" href="${sheet}"/>`).join('\n');
         htmlData = htmlData.replace('<!-- STYLESHEETS -->', stylesheetData);
 
         fs.writeFileSync(path.join(outputPath, 'index.html'), htmlData);
@@ -107,14 +112,4 @@ function findFile(filename: string, outputPath: string /*, sourcePath: string */
         }
     }
     return path.join(import.meta.dirname, filename);
-};
-
-// TODO: When handling @import, keep track of which files have been included already. Don't include them again.
-async function processFile(compiler: Compiler, story: Story, inputFilename: string, isFirst: boolean) {
-    console.log('Loading ' + inputFilename);
-
-    var inputFile = fs.readFileSync(inputFilename);
-    var inputText = inputFile.toString();
-
-    return await compiler.processFileText(story, inputText, inputFilename, isFirst);
 };

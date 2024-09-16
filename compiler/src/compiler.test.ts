@@ -1,13 +1,14 @@
 import { expect, test } from 'vitest'
 import * as fs from 'fs';
-import { Compiler, Story } from './compiler.js';
+import { Compiler } from './compiler.js';
 import path from 'path';
 
 test('"Hello world" should compile', async () => {
-    const compiler = new Compiler({});
-    var story = new Story("filename.squiffy");
-    await compiler.processFileText(story, "hello world", "filename.squiffy", true);
-    const result = await compiler.getStoryData(story);
+    const compiler = new Compiler({
+        scriptBaseFilename: "filename.squiffy"
+    });
+    await compiler.processFileText("hello world", "filename.squiffy", true);
+    const result = await compiler.getStoryData();
     expect(result.story.start).toBe("_default");
     expect(Object.keys(result.story.sections).length).toBe(1);
     expect(result.story.sections._default.text).toBe("<p>hello world</p>");
@@ -36,11 +37,12 @@ for (const example of examples) {
         const script = fs.readFileSync(`examples/${example}`, 'utf8');
         const filename = path.basename(example);
 
-        const compiler = new Compiler({});
-        var story = new Story(filename);
-        await compiler.processFileText(story, script, filename, true);
+        const compiler = new Compiler({
+            scriptBaseFilename: filename
+        });
+        await compiler.processFileText(script, filename, true);
 
-        const result = await compiler.getStoryData(story);
+        const result = await compiler.getStoryData();
         expect(result).toMatchSnapshot();
     });
 }
@@ -58,13 +60,13 @@ for (const example of warningExamples) {
         const warnings: string[] = [];
 
         const compiler = new Compiler({
+            scriptBaseFilename: filename,
             onWarning: (message) => warnings.push(message)
         });
         
-        var story = new Story(filename);
-        await compiler.processFileText(story, script, filename, true);
+        await compiler.processFileText(script, filename, true);
 
-        await compiler.getStoryData(story);
+        await compiler.getStoryData();
         expect(warnings).toMatchSnapshot();
     });
 }

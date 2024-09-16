@@ -30,24 +30,20 @@ interface OutputPassage {
 }
 
 interface CompilerSettings {
+    scriptBaseFilename: string,
     onWarning?: (message: string) => void;
 }
 
 export class Compiler {
     settings: CompilerSettings;
+    story: Story;
 
     constructor(settings: CompilerSettings) {
         this.settings = settings;
+        this.story = new Story(settings.scriptBaseFilename);
     }
 
-    async process(input: string, template: string) {
-        var story = new Story("filename.squiffy");
-        var success = await this.processFileText(story, input, /* null */ "filename.squiffy", true);
-        if (!success) return 'Failed';
-        return await this.getJs(story, template /*, {} */);
-    };
-
-    async getJs(story: Story, template: string /*, options */) {
+    async getJs(template: string /*, options */) {
         // When calling from Vite, can set template this way:
         // const template = (await import('./squiffy.template.js?raw')).default;
 
@@ -56,7 +52,7 @@ export class Compiler {
         //     jsData = jsData.replace('jQuery.fn.squiffy =', 'jQuery.fn.' + options.pluginName + ' =');
         // }
 
-        const storyData = await this.getStoryData(story);
+        const storyData = await this.getStoryData();
         const outputJs: string[] = [];
         outputJs.push('squiffy.story.js = [');
         for (const js of storyData.js) {
@@ -75,22 +71,22 @@ squiffy.story = {...squiffy.story, ...${JSON.stringify(storyData.story, null, 4)
 `;
     }
 
-    async getStoryData(story: Story): Promise<Output> {
-        if (!story.start) {
-            story.start = Object.keys(story.sections)[0];
+    async getStoryData(): Promise<Output> {
+        if (!this.story.start) {
+            this.story.start = Object.keys(this.story.sections)[0];
         }
         
         const output: Output = {
             story: {
-                start: story.start,
-                id: story.id,
+                start: this.story.start,
+                id: this.story.id,
                 sections: {},
             },
             js: [],
         };
 
-        for (const sectionName of Object.keys(story.sections)) {
-            const section = story.sections[sectionName];
+        for (const sectionName of Object.keys(this.story.sections)) {
+            const section = this.story.sections[sectionName];
             const outputSection: OutputSection = {};
             output.story.sections[sectionName] = outputSection;
 
@@ -98,7 +94,7 @@ squiffy.story = {...squiffy.story, ...${JSON.stringify(storyData.story, null, 4)
                 outputSection.clear = true;
             }
 
-            outputSection.text = await this.processText(section.text.join('\n'), story, section, null);
+            outputSection.text = await this.processText(section.text.join('\n'), section, null);
 
             if (section.attributes.length > 0) {
                 outputSection.attributes = section.attributes;
@@ -130,7 +126,7 @@ squiffy.story = {...squiffy.story, ...${JSON.stringify(storyData.story, null, 4)
                     outputPassage.clear = true;
                 }
 
-                outputPassage.text = await this.processText(passage.text.join('\n'), story, section, passage);
+                outputPassage.text = await this.processText(passage.text.join('\n'), section, passage);
                 
                 if (passage.attributes.length > 0) {
                     outputPassage.attributes = passage.attributes;
@@ -160,17 +156,16 @@ squiffy.story = {...squiffy.story, ...${JSON.stringify(storyData.story, null, 4)
         continue: /^\+\+\+(.*)$/,
     };
 
-    async processFileText(story: Story, inputText: string, inputFilename: string, isFirst: boolean) {
+    async processFileText(inputText: string, inputFilename: string, isFirst: boolean) {
         var inputLines = inputText.replace(/\r/g, '').split('\n');
 
-        var compiler = this;
         var lineCount = 0;
         var autoSectionCount = 0;
         var section: Section | null = null;
         var passage = null as Passage | null;   // annotated differently to section, as a workaround for TypeScript "Property does not exist on type never"
         var textStarted = false;
-        var ensureSectionExists = function () {
-            return compiler.ensureSectionExists(story, section, isFirst, inputFilename, lineCount);
+        var ensureSectionExists = () => {
+            return this.ensureSectionExists(section, isFirst, inputFilename, lineCount);
         };
 
         let result = true;
@@ -187,7 +182,7 @@ squiffy.story = {...squiffy.story, ...${JSON.stringify(storyData.story, null, 4)
             }
 
             if (match.section) {
-                section = story.addSection(match.section[1], inputFilename, lineCount);
+                section = this.story.addSection(match.section[1], inputFilename, lineCount);
                 passage = null;
                 textStarted = false;
             }
@@ -206,7 +201,7 @@ squiffy.story = {...squiffy.story, ...${JSON.stringify(storyData.story, null, 4)
                 autoSectionCount++;
                 var autoSectionName = `_continue${autoSectionCount}`;
                 section.addText(`[[${match.continue[1]}]](${autoSectionName})`);
-                section = story.addSection(autoSectionName, inputFilename, lineCount);
+                section = this.story.addSection(autoSectionName, inputFilename, lineCount);
                 passage = null;
                 textStarted = false;
             }
@@ -220,11 +215,14 @@ squiffy.story = {...squiffy.story, ...${JSON.stringify(storyData.story, null, 4)
                 }
             }
             else if (match.title) {
-                story.title = match.title[1];
+                this.story.title = match.title[1];
             }
             else if (match.start) {
-                story.start = match.start[1];
+                this.story.start = match.start[1];
             }
+            
+            // TODO: When handling @import, keep track of which files have been included already. Don't include them again.
+
             // else if (match.import && inputFilename) {
             //     var basePath = path.resolve(path.dirname(inputFilename));
             //     var newFilenames = path.join(basePath, match.import[1]);
@@ -246,28 +244,28 @@ squiffy.story = {...squiffy.story, ...${JSON.stringify(storyData.story, null, 4)
             // }
             else if (match.attributes) {
                 section = ensureSectionExists();
-                section = this.addAttribute(match.attributes[1], story, section!, passage, isFirst, inputFilename, lineCount);
+                section = this.addAttribute(match.attributes[1], section!, passage, isFirst, inputFilename, lineCount);
             }
             else if (match.unset) {
                 section = ensureSectionExists();
-                section = this.addAttribute('not ' + match.unset[1], story, section!, passage, isFirst, inputFilename, lineCount);
+                section = this.addAttribute('not ' + match.unset[1], section!, passage, isFirst, inputFilename, lineCount);
             }
             else if (match.inc) {
                 section = ensureSectionExists();
-                section = this.addAttribute(match.inc[1] + '+=' + (match.inc[2] === undefined ? '1' : match.inc[2]), story, section!, passage, isFirst, inputFilename, lineCount);
+                section = this.addAttribute(match.inc[1] + '+=' + (match.inc[2] === undefined ? '1' : match.inc[2]), section, passage, isFirst, inputFilename, lineCount);
             }
             else if (match.dec) {
                 section = ensureSectionExists();
-                section = this.addAttribute(match.dec[1] + '-=' + (match.dec[2] === undefined ? '1' : match.dec[2]), story, section!, passage, isFirst, inputFilename, lineCount);
+                section = this.addAttribute(match.dec[1] + '-=' + (match.dec[2] === undefined ? '1' : match.dec[2]), section, passage, isFirst, inputFilename, lineCount);
             }
             else if (match.replace) {
                 section = ensureSectionExists();
                 var replaceAttribute = match.replace[1];
                 var attributeMatch = /^(.*?)=(.*)$/.exec(replaceAttribute);
                 if (attributeMatch) {
-                    replaceAttribute = attributeMatch[1] + '=' + await this.processText(attributeMatch[2], null!, null!, null!);
+                    replaceAttribute = attributeMatch[1] + '=' + await this.processText(attributeMatch[2], section, null);
                 }
-                section = this.addAttribute('@replace ' + replaceAttribute, story, section!, passage, isFirst, inputFilename, lineCount);
+                section = this.addAttribute('@replace ' + replaceAttribute, section!, passage, isFirst, inputFilename, lineCount);
             }
             else if (!textStarted && match.js) {
                 if (!passage) {
@@ -296,16 +294,16 @@ squiffy.story = {...squiffy.story, ...${JSON.stringify(storyData.story, null, 4)
         return result;
     };
 
-    ensureSectionExists(story: Story, section: Section | null, isFirst: boolean, inputFilename: string, lineCount: number) {
+    ensureSectionExists(section: Section | null, isFirst: boolean, inputFilename: string, lineCount: number) {
         if (!section && isFirst) {
-            section = story.addSection('_default', inputFilename, lineCount);
+            section = this.story.addSection('_default', inputFilename, lineCount);
         }
         return section!;
     };
 
-    addAttribute(attribute: string, story: Story, section: Section, passage: Passage | null, isFirst: boolean, inputFilename: string, lineCount: number) {
+    addAttribute(attribute: string, section: Section, passage: Passage | null, isFirst: boolean, inputFilename: string, lineCount: number) {
         if (!passage) {
-            section = this.ensureSectionExists(story, section, isFirst, inputFilename, lineCount);
+            section = this.ensureSectionExists(section, isFirst, inputFilename, lineCount);
             section.addAttribute(attribute);
         }
         else {
@@ -314,7 +312,7 @@ squiffy.story = {...squiffy.story, ...${JSON.stringify(storyData.story, null, 4)
         return section;
     };
 
-    async processText(input: string, story: Story, section: Section, passage: Passage | null) {
+    async processText(input: string, section: Section, passage: Passage | null) {
         // namedSectionLinkRegex matches:
         //   open [[
         //   any text - the link text
@@ -325,7 +323,7 @@ squiffy.story = {...squiffy.story, ...${JSON.stringify(storyData.story, null, 4)
         var namedSectionLinkRegex = /\[\[([^\]]*?)\]\]\((.*?)\)/g;
 
         var links = this.allMatchesForGroup(input, namedSectionLinkRegex, 2);
-        this.checkSectionLinks(story, links, section, passage);
+        this.checkSectionLinks(links, section, passage);
 
         input = input.replace(namedSectionLinkRegex, '<a class="squiffy-link link-section" data-section="$2" role="link" tabindex="0">$1</a>');
 
@@ -339,7 +337,7 @@ squiffy.story = {...squiffy.story, ...${JSON.stringify(storyData.story, null, 4)
         var namedPassageLinkRegex = /\[([^\]]*?)\]\(((?!https?:\/\/).*?)\)/g;
 
         links = this.allMatchesForGroup(input, namedPassageLinkRegex, 2);
-        this.checkPassageLinks(story, links, section, passage);
+        this.checkPassageLinks(links, section, passage);
 
         input = input.replace(namedPassageLinkRegex, '<a class="squiffy-link link-passage" data-passage="$2" role="link" tabindex="0">$1</a>');
 
@@ -350,7 +348,7 @@ squiffy.story = {...squiffy.story, ...${JSON.stringify(storyData.story, null, 4)
         var unnamedSectionLinkRegex = /\[\[(.*?)\]\]/g;
 
         links = this.allMatchesForGroup(input, unnamedSectionLinkRegex, 1);
-        this.checkSectionLinks(story, links, section, passage);
+        this.checkSectionLinks(links, section, passage);
 
         input = input.replace(unnamedSectionLinkRegex, '<a class="squiffy-link link-section" data-section="$1" role="link" tabindex="0">$1</a>');
 
@@ -362,7 +360,7 @@ squiffy.story = {...squiffy.story, ...${JSON.stringify(storyData.story, null, 4)
         var unnamedPassageLinkRegex = /\[(.*?)\]([^\(]|$)/g;
 
         links = this.allMatchesForGroup(input, unnamedPassageLinkRegex, 1);
-        this.checkPassageLinks(story, links, section, passage);
+        this.checkPassageLinks(links, section, passage);
 
         input = input.replace(unnamedPassageLinkRegex, '<a class="squiffy-link link-passage" data-passage="$1" role="link" tabindex="0">$1</a>$2');
 
@@ -378,14 +376,12 @@ squiffy.story = {...squiffy.story, ...${JSON.stringify(storyData.story, null, 4)
         return result;
     };
 
-    checkSectionLinks(story: Story, links: string[], section: Section, passage: Passage | null) {
-        if (!story) return;
-        var badLinks = links.filter(m => !this.linkDestinationExists(m, story.sections));
+    checkSectionLinks(links: string[], section: Section, passage: Passage | null) {
+        var badLinks = links.filter(m => !this.linkDestinationExists(m, this.story.sections));
         this.showBadLinksWarning(badLinks, 'section', '[[', ']]', section, passage);
     };
 
-    checkPassageLinks(story: Story, links: string[], section: Section, passage: Passage | null) {
-        if (!story) return;
+    checkPassageLinks(links: string[], section: Section, passage: Passage | null) {
         var badLinks = links.filter(m => !this.linkDestinationExists(m, section.passages));
         this.showBadLinksWarning(badLinks, 'passage', '[', ']', section, passage);
     };
@@ -428,9 +424,17 @@ squiffy.story = {...squiffy.story, ...${JSON.stringify(storyData.story, null, 4)
         }
         outputJsFile.push(`${tabs}},\n`);
     };
+
+    getUiInfo() {
+        return {
+            title: this.story.title,
+            externalScripts: this.story.scripts,
+            externalStylesheets: this.story.stylesheets,
+        }
+    };
 }
 
-export class Story {
+class Story {
     sections: Record<string, Section> = {};
     title = '';
     scripts = [];
