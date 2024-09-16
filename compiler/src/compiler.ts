@@ -64,11 +64,9 @@ export class Compiler {
         return `// Created with Squiffy ${SQUIFFY_VERSION}
 // https://github.com/textadventures/squiffy
 
-(function(){
 ${template}
 ${outputJs.join('\n')}
 squiffy.story = {...squiffy.story, ...${JSON.stringify(storyData.story, null, 4)}};
-})();
 `;
     }
 

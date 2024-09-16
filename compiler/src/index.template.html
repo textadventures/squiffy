@@ -3,14 +3,17 @@
 <!-- INFO -->
 	<head>
 		<title><!-- TITLE --></title>
-		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<script src="<!-- JQUERY -->"></script>
-		<script src="story.js" charset="UTF-8"></script>
 		<!-- SCRIPTS -->
-		<script>
-			jQuery(function($){
-				$('#squiffy').squiffy();
+		<script type="module">
+			import { squiffy } from './story.js';
+
+			document.addEventListener('DOMContentLoaded', function() {
+				squiffy.init({
+					element: document.getElementById('squiffy')
+				});
+
 				var restart = function () {
 					$('#squiffy').squiffy('restart');
 				};

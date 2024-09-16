@@ -1,7 +1,12 @@
 /// <reference path ="../node_modules/@types/jquery/jquery.d.ts"/>
 /// <reference path ="./jquery.squiffy.d.ts"/>
 
+interface SquiffyOptions {
+    element: HTMLElement;
+}
+
 interface Squiffy {
+    init: (options: SquiffyOptions) => void;
     story: any;
     ui: {
         output: JQuery,
@@ -24,11 +29,8 @@ interface Section {
     jsIndex?: number;
 }
 
-interface Passage {
-
-}
-
-var squiffy: Squiffy = {
+export const squiffy: Squiffy = {
+    init: null!,
     story: {},
     set: function (attribute: string, value: any) {
         if (typeof value === 'undefined') value = true;
@@ -64,8 +66,8 @@ var squiffy: Squiffy = {
     storageFallback: {}
 };
 
-(function () {
-    'use strict';
+//(function () {
+//    'use strict';
 
     var initLinkHandler = function () {
         var handleLink = function (link: JQuery) {
@@ -364,18 +366,18 @@ var squiffy: Squiffy = {
         if (currentSection) {
             disableLink(jQuery('.squiffy-link', currentSection));
             currentSection.find('input').each(function () {
-                set($(this).data('attribute') || this.id, this.value);
+                squiffy.set($(this).data('attribute') || this.id, this.value);
                 this.disabled = true;
             });
             currentSection.find("[contenteditable]").each(function () {
-                set($(this).data('attribute') || this.id, this.innerHTML);
+                squiffy.set($(this).data('attribute') || this.id, this.innerHTML);
                 // TODO: This doesn't compile in TypeScript...
                 // this.disabled = true;
                 // try...
                 // this.contentEditable = 'false' ??
             });
             currentSection.find('textarea').each(function () {
-                set($(this).data('attribute') || this.id, this.value);
+                squiffy.set($(this).data('attribute') || this.id, this.value);
                 this.disabled = true;
             });
         }
@@ -665,7 +667,11 @@ var squiffy: Squiffy = {
             jQuery.error('Method ' + methodOrOptions + ' does not exist');
         }
     };
-})();
 
-var get = squiffy.get;
-var set = squiffy.set;
+    squiffy.init = function (options: SquiffyOptions) {
+        jQuery(options.element).squiffy(options);
+    };
+//})();
+
+export const get = squiffy.get;
+export const set = squiffy.set;
