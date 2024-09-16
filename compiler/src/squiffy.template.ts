@@ -1,8 +1,5 @@
 /// <reference path ="../node_modules/@types/jquery/jquery.d.ts"/>
-
-interface JQuery {
-    squiffy(obj: object): void;
-}
+/// <reference path ="./jquery.squiffy.d.ts"/>
 
 interface Squiffy {
     story: any;
