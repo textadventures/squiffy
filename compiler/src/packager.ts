@@ -107,12 +107,8 @@ function findFile(filename: string, outputPath: string /*, sourcePath: string */
     return path.join(import.meta.dirname, filename);
 };
 
+// TODO: When handling @import, keep track of which files have been included already. Don't include them again.
 async function processFile(compiler: Compiler, story: Story, inputFilename: string, isFirst: boolean) {
-    if (story.files.includes(inputFilename)) {
-        return true;
-    }
-
-    story.files.push(inputFilename);
     console.log('Loading ' + inputFilename);
 
     var inputFile = fs.readFileSync(inputFilename);

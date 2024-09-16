@@ -437,7 +437,6 @@ export class Story {
     title = '';
     scripts = [];
     stylesheets = [];
-    files: string[] = [];
     start = '';
     id: string | null = null;
 
