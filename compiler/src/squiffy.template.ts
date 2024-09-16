@@ -1,5 +1,4 @@
-/* jshint quotmark: single */
-/* jshint evil: true */
+/// <reference path ="../node_modules/@types/jquery/jquery.d.ts"/>
 
 var squiffy = {};
 

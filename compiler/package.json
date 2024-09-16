@@ -27,6 +27,7 @@
   "preferGlobal": true,
   "devDependencies": {
     "@types/finalhandler": "^1.2.3",
+    "@types/jquery": "^3.5.30",
     "@types/node": "^22.5.5",
     "@types/serve-static": "^1.15.7",
     "@types/yargs": "^17.0.33",
