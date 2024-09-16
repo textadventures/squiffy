@@ -8,7 +8,7 @@ exports[`attributes/attributes.squiffy 1`] = `
     ],
   ],
   "story": {
-    "id": null,
+    "id": "9c73c72b66",
     "sections": {
       "_default": {
         "attributes": [
@@ -127,7 +127,7 @@ exports[`clearscreen/clearscreen.squiffy 1`] = `
 {
   "js": [],
   "story": {
-    "id": null,
+    "id": "9c73c72b66",
     "sections": {
       "_default": {
         "passages": {
@@ -162,7 +162,7 @@ exports[`continue/continue.squiffy 1`] = `
     ],
   ],
   "story": {
-    "id": null,
+    "id": "9c73c72b66",
     "sections": {
       "_continue1": {
         "text": "<p>More text.</p>
@@ -194,7 +194,7 @@ exports[`helloworld/helloworld.squiffy 1`] = `
 {
   "js": [],
   "story": {
-    "id": null,
+    "id": "9c73c72b66",
     "sections": {
       "_default": {
         "text": "<p>Hello, world!</p>",
@@ -209,7 +209,7 @@ exports[`last/last.squiffy 1`] = `
 {
   "js": [],
   "story": {
-    "id": null,
+    "id": "9c73c72b66",
     "sections": {
       "_default": {
         "passageCount": 3,
@@ -267,7 +267,7 @@ exports[`master/master.squiffy 1`] = `
     ],
   ],
   "story": {
-    "id": null,
+    "id": "9c73c72b66",
     "sections": {
       "": {
         "passages": {
@@ -318,7 +318,7 @@ exports[`replace/replace.squiffy 1`] = `
 {
   "js": [],
   "story": {
-    "id": null,
+    "id": "9c73c72b66",
     "sections": {
       "_default": {
         "passages": {
@@ -363,7 +363,7 @@ exports[`rotate/rotate.squiffy 1`] = `
 {
   "js": [],
   "story": {
-    "id": null,
+    "id": "9c73c72b66",
     "sections": {
       "Go!": {
         "text": "<p>That&#39;s all folks!</p>",
@@ -399,7 +399,7 @@ exports[`sectiontrack/sectiontrack.squiffy 1`] = `
 {
   "js": [],
   "story": {
-    "id": null,
+    "id": "9c73c72b66",
     "sections": {
       "_default": {
         "passages": {
@@ -430,7 +430,7 @@ exports[`start/start.squiffy 1`] = `
 {
   "js": [],
   "story": {
-    "id": null,
+    "id": "9c73c72b66",
     "sections": {
       "not the start section": {
         "text": "<p>This is page 2, although it was defined first.</p>",
@@ -455,7 +455,7 @@ exports[`test/example.squiffy 1`] = `
     ],
   ],
   "story": {
-    "id": null,
+    "id": "9c73c72b66",
     "sections": {
       "Introduction": {
         "passages": {
@@ -511,7 +511,7 @@ exports[`textprocessor/textprocessor.squiffy 1`] = `
 {
   "js": [],
   "story": {
-    "id": null,
+    "id": "9c73c72b66",
     "sections": {
       "_default": {
         "text": "<p>Choose a gender:</p>
@@ -583,7 +583,7 @@ exports[`transitions/transitions.squiffy 1`] = `
     ],
   ],
   "story": {
-    "id": null,
+    "id": "9c73c72b66",
     "sections": {
       "_default": {
         "passages": {
@@ -616,7 +616,7 @@ exports[`turncount/turncount.squiffy 1`] = `
     ],
   ],
   "story": {
-    "id": null,
+    "id": "9c73c72b66",
     "sections": {
       "_default": {
         "passages": {
@@ -674,7 +674,7 @@ exports[`warnings/warnings.squiffy 1`] = `
 {
   "js": [],
   "story": {
-    "id": null,
+    "id": "9c73c72b66",
     "sections": {
       "_default": {
         "text": "<p>This link exists: <a class="squiffy-link link-section" data-section="section" role="link" tabindex="0">section</a></p>
@@ -704,7 +704,7 @@ exports[`warnings/warnings2.squiffy 1`] = `
 {
   "js": [],
   "story": {
-    "id": null,
+    "id": "9c73c72b66",
     "sections": {
       "test": {
         "text": "<p>Another link that <a class="squiffy-link link-passage" data-passage="doesn't exist" role="link" tabindex="0">doesn&#39;t exist</a>.</p>",

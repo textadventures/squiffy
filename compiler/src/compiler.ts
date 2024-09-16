@@ -6,14 +6,9 @@ export const getJs = async function (input: string, template: string) {
     return await compiler.process(input, template);
 };
 
-export const generate = async function(inputFilename: string, /* sourcePath: string, */ template: string) {
-    const compiler = new Compiler();
-    return await compiler.generate(inputFilename, /* sourcePath, */ template);
-}
-
 export const getStoryData = async function(input: string) {
     const compiler = new Compiler();
-    var story = new Story();
+    var story = new Story("filename.squiffy");
     await compiler.processFileText(story, input, "filename.squiffy", true);
     return await compiler.getStoryData(story);
 }
@@ -45,126 +40,18 @@ interface OutputPassage {
     jsIndex?: number;
 }
 
-import * as path from 'path';
 import * as fs from 'fs';
 // var glob = require('glob');
 import * as crypto from 'crypto';
 
 var squiffyVersion = SQUIFFY_VERSION;
 
-class Compiler {
+export class Compiler {
     async process(input: string, template: string) {
-        var story = new Story();
+        var story = new Story("filename.squiffy");
         var success = await this.processFileText(story, input, /* null */ "filename.squiffy", true);
         if (!success) return 'Failed';
         return await this.getJs(story, template /*, {} */);
-    };
-
-    async generate(inputFilename: string, /* sourcePath: string, */ template: string /* , options */) {
-        var outputPath;
-        // if (options.write) {
-            outputPath = path.resolve(path.dirname(inputFilename));
-        // }
-
-        var story = new Story();
-        // if (inputFilename) {
-            story.set_id(path.resolve(inputFilename));
-        // }
-        // else {
-        //     story.set_id(options.input);
-        // }
-
-        var success;
-        // if (inputFilename) {
-            success = await this.processFile(story, path.resolve(inputFilename), true);
-        // }
-        // else {
-        //     success = await this.processFileText(story, options.input, null, true);
-        // }
-
-        if (!success) {
-            console.log('Failed.');
-            return;
-        }
-
-        var storyJsName = /* typeof options.scriptOnly === 'string' ? options.scriptOnly : */ 'story.js';
-
-        console.log('Writing ' + storyJsName);
-
-        var storyJs = await this.getJs(story, template /*, sourcePath, options */);
-
-        // if (options.write) {
-            fs.writeFileSync(path.join(outputPath, storyJsName), storyJs);
-        // }
-
-        // if (!options.scriptOnly) {
-            console.log('Writing index.html');
-
-            var htmlTemplateFile = fs.readFileSync(this.findFile('index.template.html', outputPath /*, sourcePath */));
-            var htmlData = htmlTemplateFile.toString();
-            htmlData = htmlData.replace('<!-- INFO -->', `<!--\n\nCreated with Squiffy ${squiffyVersion}\n\n\nhttps://github.com/textadventures/squiffy\n\n-->`);
-            htmlData = htmlData.replace('<!-- TITLE -->', story.title);
-            // var jQueryPath = "";
-            // if (typeof options.escritorio !== "undefined")
-            //     jQueryPath = path.join(sourcePath, '..', 'jquery', 'dist', 'jquery.min.js');
-            // else
-            //     jQueryPath = path.join(sourcePath, 'node_modules', 'jquery', 'dist', 'jquery.min.js');
-            var jqueryJs = 'jquery.min.js';
-            // if (options.useCdn) {
-            //     var jqueryVersion = packageJson.dependencies.jquery.match(/[0-9.]+/)[0];
-            //     jqueryJs = `https://ajax.aspnetcdn.com/ajax/jquery/jquery-${jqueryVersion}.min.js`;
-            // }
-            // else if (options.write) {
-                fs.createReadStream(path.join(import.meta.dirname, 'jquery.min.js')).pipe(fs.createWriteStream(path.join(outputPath, 'jquery.min.js')));
-            // }
-
-            htmlData = htmlData.replace('<!-- JQUERY -->', jqueryJs);
-
-            var scriptData = story.scripts.map(script => `<script src="${script}"></script>`).join('\n');
-            htmlData = htmlData.replace('<!-- SCRIPTS -->', scriptData);
-
-            var stylesheetData = story.stylesheets.map(sheet => `<link rel="stylesheet" href="${sheet}"/>`).join('\n');
-            htmlData = htmlData.replace('<!-- STYLESHEETS -->', stylesheetData);
-
-            // if (options.write) {
-                fs.writeFileSync(path.join(outputPath, 'index.html'), htmlData);
-            // }
-
-            console.log('Writing style.css');
-
-            var cssTemplateFile = fs.readFileSync(this.findFile('style.template.css', outputPath /*, sourcePath */));
-            var cssData = cssTemplateFile.toString();
-
-            // if (options.write) {
-                fs.writeFileSync(path.join(outputPath, 'style.css'), cssData);
-            // }
-
-            // if (options.zip) {
-            //     console.log('Creating zip file');
-            //     var JSZip = require('jszip');
-            //     var zip = new JSZip();
-            //     zip.file(storyJsName, storyJs);
-            //     zip.file('index.html', htmlData);
-            //     zip.file('style.css', cssData);
-            //     if (!options.useCdn) {
-            //         var jquery = fs.readFileSync(jQueryPath);
-            //         zip.file(jqueryJs, jquery);
-            //     }
-            //     var buffer = zip.generate({
-            //         type: 'nodebuffer'
-            //     });
-            //     if (options.write) {
-            //         fs.writeFileSync(path.join(outputPath, 'output.zip'), buffer);
-            //     }
-            //     else {
-            //         return buffer;
-            //     }
-            // }
-        // }
-
-        console.log('Done.');
-
-        return outputPath;
     };
 
     async getJs(story: Story, template: string /*, options */) {
@@ -263,16 +150,6 @@ squiffy.story = {...squiffy.story, ...${JSON.stringify(storyData.story, null, 4)
         }
 
         return output;
-    };
-
-    findFile(filename: string, outputPath: string /*, sourcePath: string */) {
-        if (outputPath) {
-            var outputPathFile = path.join(outputPath, filename);
-            if (fs.existsSync(outputPathFile)) {
-                return outputPathFile;
-            }
-        }
-        return path.join(import.meta.dirname, filename);
     };
 
     regex: Record<string, RegExp> = {
@@ -572,7 +449,7 @@ squiffy.story = {...squiffy.story, ...${JSON.stringify(storyData.story, null, 4)
     };
 }
 
-class Story {
+export class Story {
     sections: Record<string, Section> = {};
     title = '';
     scripts = [];
@@ -581,16 +458,16 @@ class Story {
     start = '';
     id: string | null = null;
 
+    constructor(inputFilename: string) {
+        var shasum = crypto.createHash('sha1');
+        shasum.update(inputFilename);
+        this.id = shasum.digest('hex').substring(0, 10);
+    }
+
     addSection(name: string, filename: string, line: number): Section {
         const section = new Section(name, filename, line);
         this.sections[name] = section;
         return section;
-    };
-
-    set_id(filename: string) {
-        var shasum = crypto.createHash('sha1');
-        shasum.update(filename);
-        this.id = shasum.digest('hex').substring(0, 10);
     };
 }
 
