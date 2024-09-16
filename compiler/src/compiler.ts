@@ -35,8 +35,8 @@ interface CompilerSettings {
 }
 
 export class Compiler {
-    settings: CompilerSettings;
-    story: Story;
+    private settings: CompilerSettings;
+    private story: Story;
 
     constructor(settings: CompilerSettings) {
         this.settings = settings;
@@ -141,7 +141,7 @@ squiffy.story = {...squiffy.story, ...${JSON.stringify(storyData.story, null, 4)
         return output;
     };
 
-    regex: Record<string, RegExp> = {
+    private regex: Record<string, RegExp> = {
         section: /^\[\[(.*)\]\]:$/,
         passage: /^\[(.*)\]:$/,
         title: /^@title (.*)$/,
@@ -294,14 +294,14 @@ squiffy.story = {...squiffy.story, ...${JSON.stringify(storyData.story, null, 4)
         return result;
     };
 
-    ensureSectionExists(section: Section | null, isFirst: boolean, inputFilename: string, lineCount: number) {
+    private ensureSectionExists(section: Section | null, isFirst: boolean, inputFilename: string, lineCount: number) {
         if (!section && isFirst) {
             section = this.story.addSection('_default', inputFilename, lineCount);
         }
         return section!;
     };
 
-    addAttribute(attribute: string, section: Section, passage: Passage | null, isFirst: boolean, inputFilename: string, lineCount: number) {
+    private addAttribute(attribute: string, section: Section, passage: Passage | null, isFirst: boolean, inputFilename: string, lineCount: number) {
         if (!passage) {
             section = this.ensureSectionExists(section, isFirst, inputFilename, lineCount);
             section.addAttribute(attribute);
@@ -312,7 +312,7 @@ squiffy.story = {...squiffy.story, ...${JSON.stringify(storyData.story, null, 4)
         return section;
     };
 
-    async processText(input: string, section: Section, passage: Passage | null) {
+    private async processText(input: string, section: Section, passage: Passage | null) {
         // namedSectionLinkRegex matches:
         //   open [[
         //   any text - the link text
@@ -367,7 +367,7 @@ squiffy.story = {...squiffy.story, ...${JSON.stringify(storyData.story, null, 4)
         return (await marked.parse(input)).trim();
     };
 
-    allMatchesForGroup(input: string, regex: RegExp, groupNumber: number) {
+    private allMatchesForGroup(input: string, regex: RegExp, groupNumber: number) {
         var result = [];
         var match;
         while (!!(match = regex.exec(input))) {
@@ -376,17 +376,17 @@ squiffy.story = {...squiffy.story, ...${JSON.stringify(storyData.story, null, 4)
         return result;
     };
 
-    checkSectionLinks(links: string[], section: Section, passage: Passage | null) {
+    private checkSectionLinks(links: string[], section: Section, passage: Passage | null) {
         var badLinks = links.filter(m => !this.linkDestinationExists(m, this.story.sections));
         this.showBadLinksWarning(badLinks, 'section', '[[', ']]', section, passage);
     };
 
-    checkPassageLinks(links: string[], section: Section, passage: Passage | null) {
+    private checkPassageLinks(links: string[], section: Section, passage: Passage | null) {
         var badLinks = links.filter(m => !this.linkDestinationExists(m, section.passages));
         this.showBadLinksWarning(badLinks, 'passage', '[', ']', section, passage);
     };
 
-    linkDestinationExists(link: string, keys: Record<string, any>) {
+    private linkDestinationExists(link: string, keys: Record<string, any>) {
         // Link destination data may look like:
         //   passageName
         //   passageName, my_attribute=2
@@ -401,7 +401,7 @@ squiffy.story = {...squiffy.story, ...${JSON.stringify(storyData.story, null, 4)
         return Object.keys(keys).includes(linkDestination);
     };
 
-    showBadLinksWarning(badLinks: string[], linkTo: string, before: string, after: string, section: Section, passage: Passage | null) {
+    private showBadLinksWarning(badLinks: string[], linkTo: string, before: string, after: string, section: Section, passage: Passage | null) {
         if (!this.settings.onWarning) return;
         
         for (const badLink of badLinks) {
@@ -416,7 +416,7 @@ squiffy.story = {...squiffy.story, ...${JSON.stringify(storyData.story, null, 4)
         }
     };
 
-    writeJs(outputJsFile: string[], tabCount: number, js: string[]) {
+    private writeJs(outputJsFile: string[], tabCount: number, js: string[]) {
         var tabs = new Array(tabCount + 1).join('\t');
         outputJsFile.push(`${tabs}function() {\n`);
         for (const jsLine of js) {
