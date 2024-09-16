@@ -17,6 +17,13 @@ export const generate = async function(inputFilename: string, /* sourcePath: str
     return await compiler.generate(inputFilename, /* sourcePath, */ template);
 }
 
+export const getStoryData = async function(input: string) {
+    const compiler = new Compiler();
+    var story = new Story();
+    await compiler.processFileText(story, input, "filename.squiffy", true);
+    return await compiler.getStoryData(story);
+}
+
 import * as path from 'path';
 import * as fs from 'fs';
 // var glob = require('glob');
