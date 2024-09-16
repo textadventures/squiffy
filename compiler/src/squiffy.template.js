@@ -206,8 +206,8 @@ var squiffy = {};
         if (section.attributes) {
             processAttributes(section.attributes.map(line => line.replace(/^random\s*:\s*(\w+)\s*=\s*(.+)/i, (line, attr, options) => (options = options.split("|")) ? attr + " = " + options[Math.floor(Math.random() * options.length)] : line)));
         }
-        if (section.js) {
-            section.js();
+        if (section.jsIndex !== undefined) {
+            squiffy.story.js[section.jsIndex]();
         }
     };
 

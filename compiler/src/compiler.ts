@@ -24,6 +24,33 @@ export const getStoryData = async function(input: string) {
     return await compiler.getStoryData(story);
 }
 
+interface Output {
+    story: OutputStory;
+    js: string[][];
+}
+
+interface OutputStory {
+    start?: string;
+    id?: string | null;
+    sections?: Record<string, OutputSection>;
+}
+
+interface OutputSection {
+    text?: string;
+    clear?: boolean;
+    attributes?: string[];
+    jsIndex?: number;
+    passages?: Record<string, OutputPassage>;
+    passageCount?: number;
+}
+
+interface OutputPassage {
+    text?: string;
+    clear?: boolean;
+    attributes?: string[];
+    jsIndex?: number;
+}
+
 import * as path from 'path';
 import * as fs from 'fs';
 // var glob = require('glob');
@@ -155,40 +182,57 @@ class Compiler {
         //     jsData = jsData.replace('jQuery.fn.squiffy =', 'jQuery.fn.' + options.pluginName + ' =');
         // }
 
+        const storyData = await this.getStoryData(story);
+        const outputJs: string[] = [];
+        outputJs.push('squiffy.story.js = [');
+        for (const js of storyData.js) {
+            this.writeJs(outputJs, 1, js);
+        }
+        outputJs.push('];');
+
         return `// Created with Squiffy ${squiffyVersion}
 // https://github.com/textadventures/squiffy
 
 (function(){
 ${template}
-squiffy.story = {...squiffy.story, ...${await this.getStoryData(story)}}
+${outputJs.join('\n')}
+squiffy.story = {...squiffy.story, ...${JSON.stringify(storyData.story, null, 4)}};
 })();
 `;
     }
 
-    async getStoryData(story: Story) {
-        const outputJsFile: string[] = [];
+    async getStoryData(story: Story): Promise<Output> {
+        const output: Output = {
+            story: {},
+            js: [],
+        };
+
         if (!story.start) {
             story.start = Object.keys(story.sections)[0];
         }
-        outputJsFile.push('{\n');
-        outputJsFile.push('start: \'' + story.start + '\',\n');
-        if (story.id) {
-            outputJsFile.push(`id: \'${story.id}\',\n`);
-        }
-        outputJsFile.push('sections: {\n');
+
+        output.story.start = story.start;
+        output.story.id = story.id;
+
+        output.story.sections = {};
 
         for (const sectionName of Object.keys(story.sections)) {
             const section = story.sections[sectionName];
-            outputJsFile.push(`\t'${sectionName.replace(/\'/g, "\\'")}': {\n`);
+            const outputSection: OutputSection = {};
+            output.story.sections[sectionName] = outputSection;
+
             if (section.clear) {
-                outputJsFile.push('\t\t\'clear\': true,\n');
+                outputSection.clear = true;
             }
-            outputJsFile.push(`\t\t'text': ${JSON.stringify(await this.processText(section.text.join('\n'), story, section, null))},\n`);
+
+            outputSection.text = await this.processText(section.text.join('\n'), story, section, null);
+
             if (section.attributes.length > 0) {
-                outputJsFile.push(`\t\t'attributes': ${JSON.stringify(section.attributes)},\n`);
+                outputSection.attributes = section.attributes;
             }
             if (section.js.length > 0) {
-                this.writeJs(outputJsFile, 2, section.js);
+                output.js.push(section.js);
+                outputSection.jsIndex = output.js.length - 1;
             }
             if ('@last' in section.passages) {
                 var passageCount = 0;
@@ -197,34 +241,33 @@ squiffy.story = {...squiffy.story, ...${await this.getStoryData(story)}}
                         passageCount++;
                     }
                 }
-                outputJsFile.push('\t\t\'passageCount\': ' + passageCount + ',\n');
+                outputSection.passageCount = passageCount;
             }
 
-            outputJsFile.push('\t\t\'passages\': {\n');
+            outputSection.passages = {};
+
             for (const passageName of Object.keys(section.passages)) {
                 const passage = section.passages[passageName];
-                outputJsFile.push(`\t\t\t'${passageName.replace(/\'/g, "\\'")}': {\n`);
+                const outputPassage: OutputPassage = {};
+                outputSection.passages[passageName] = outputPassage;
+;
                 if (passage.clear) {
-                    outputJsFile.push('\t\t\t\t\'clear\': true,\n');
+                    outputPassage.clear = true;
                 }
-                outputJsFile.push(`\t\t\t\t'text': ${JSON.stringify(await this.processText(passage.text.join('\n'), story, section, passage))},\n`);
+
+                outputPassage.text = await this.processText(passage.text.join('\n'), story, section, passage);
+                
                 if (passage.attributes.length > 0) {
-                    outputJsFile.push(`\t\t\t\t'attributes': ${JSON.stringify(passage.attributes)},\n`);
+                    outputPassage.attributes = passage.attributes;
                 }
                 if (passage.js.length > 0) {
-                    this.writeJs(outputJsFile, 4, passage.js);
+                    output.js.push(passage.js);
+                    outputPassage.jsIndex = output.js.length - 1;
                 }
-                outputJsFile.push('\t\t\t},\n');
             }
-
-            outputJsFile.push('\t\t},\n');
-            outputJsFile.push('\t},\n');
         }
 
-        outputJsFile.push('}\n');
-        outputJsFile.push('}\n');
-
-        return outputJsFile.join('');
+        return output;
     };
 
     findFile(filename: string, outputPath: string /*, sourcePath: string */) {
@@ -526,7 +569,7 @@ squiffy.story = {...squiffy.story, ...${await this.getStoryData(story)}}
 
     writeJs(outputJsFile: string[], tabCount: number, js: string[]) {
         var tabs = new Array(tabCount + 1).join('\t');
-        outputJsFile.push(`${tabs}'js': function() {\n`);
+        outputJsFile.push(`${tabs}function() {\n`);
         for (const jsLine of js) {
             outputJsFile.push(`${tabs}\t${jsLine}\n`);
         }
