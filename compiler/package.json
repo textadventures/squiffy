@@ -32,12 +32,13 @@
     "@types/yargs": "^17.0.33",
     "glob": "^8.0.1",
     "shx": "^0.3.4",
+    "tsx": "^4.19.1",
     "typescript": "^5.6.2"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc && shx cp src/templates/*.* ./dist/ && shx cp node_modules/jquery/dist/jquery.min.js ./dist/",
-    "start": "node server.js"
+    "dev": "tsx src/squiffy.ts"
   },
   "main": "dist/compiler.js",
   "types": "dist/compiler.d.ts",

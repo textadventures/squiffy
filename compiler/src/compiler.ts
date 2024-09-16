@@ -1,5 +1,3 @@
-/* jshint quotmark: single */
-
 import * as marked from 'marked';
 
 export const COMPILER_VERSION = '6.0.0-alpha.0';
