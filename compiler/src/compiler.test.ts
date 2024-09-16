@@ -4,7 +4,7 @@ import { Compiler, Story } from './compiler.js';
 import path from 'path';
 
 test('"Hello world" should compile', async () => {
-    const compiler = new Compiler();
+    const compiler = new Compiler({});
     var story = new Story("filename.squiffy");
     await compiler.processFileText(story, "hello world", "filename.squiffy", true);
     const result = await compiler.getStoryData(story);
@@ -29,8 +29,6 @@ const examples = [
     "textprocessor/textprocessor.squiffy",
     "transitions/transitions.squiffy",
     "turncount/turncount.squiffy",
-    "warnings/warnings.squiffy",
-    "warnings/warnings2.squiffy",
 ];
 
 for (const example of examples) {
@@ -38,11 +36,35 @@ for (const example of examples) {
         const script = fs.readFileSync(`examples/${example}`, 'utf8');
         const filename = path.basename(example);
 
-        const compiler = new Compiler();
+        const compiler = new Compiler({});
         var story = new Story(filename);
         await compiler.processFileText(story, script, filename, true);
 
         const result = await compiler.getStoryData(story);
         expect(result).toMatchSnapshot();
+    });
+}
+
+const warningExamples = [
+    "warnings/warnings.squiffy",
+    "warnings/warnings2.squiffy",
+];
+
+for (const example of warningExamples) {
+    test(example, async () => {
+        const script = fs.readFileSync(`examples/${example}`, 'utf8');
+        const filename = path.basename(example);
+
+        const warnings: string[] = [];
+
+        const compiler = new Compiler({
+            onWarning: (message) => warnings.push(message)
+        });
+        
+        var story = new Story(filename);
+        await compiler.processFileText(story, script, filename, true);
+
+        await compiler.getStoryData(story);
+        expect(warnings).toMatchSnapshot();
     });
 }

@@ -671,46 +671,17 @@ exports[`turncount/turncount.squiffy 1`] = `
 `;
 
 exports[`warnings/warnings.squiffy 1`] = `
-{
-  "js": [],
-  "story": {
-    "id": "6cc8448ca7",
-    "sections": {
-      "_default": {
-        "text": "<p>This link exists: <a class="squiffy-link link-section" data-section="section" role="link" tabindex="0">section</a></p>
-<p>This link doesn&#39;t exist: <a class="squiffy-link link-section" data-section="badsection" role="link" tabindex="0">badsection</a></p>
-<p>This <a class="squiffy-link link-section" data-section="section" role="link" tabindex="0">other link</a> does exist.</p>
-<p>This <a class="squiffy-link link-section" data-section="badsection2" role="link" tabindex="0">other link</a> doesn&#39;t exit.</p>",
-      },
-      "section": {
-        "passages": {
-          "passage": {
-            "text": "<p>This exists. But it has a link to a <a class="squiffy-link link-passage" data-passage="non-existent passage" role="link" tabindex="0">non-existent passage</a>.</p>
-<p>@import warnings2.squiffy</p>",
-          },
-        },
-        "text": "<p>This passage exists: <a class="squiffy-link link-passage" data-passage="passage" role="link" tabindex="0">passage</a></p>
-<p>This passage doesn&#39;t exist: <a class="squiffy-link link-passage" data-passage="badpassage" role="link" tabindex="0">badpassage</a></p>
-<p>This <a class="squiffy-link link-passage" data-passage="passage" role="link" tabindex="0">other link</a> does exist.</p>
-<p>This <a class="squiffy-link link-passage" data-passage="badpassage2" role="link" tabindex="0">other link</a> doesn&#39;t exist.</p>",
-      },
-    },
-    "start": "_default",
-  },
-}
+[
+  "WARNING: warnings.squiffy line 1: In section '_default' there is a link to a section called [[badsection2]], which doesn't exist",
+  "WARNING: warnings.squiffy line 1: In section '_default' there is a link to a section called [[badsection]], which doesn't exist",
+  "WARNING: warnings.squiffy line 9: In section 'section' there is a link to a passage called [badpassage2], which doesn't exist",
+  "WARNING: warnings.squiffy line 9: In section 'section' there is a link to a passage called [badpassage], which doesn't exist",
+  "WARNING: warnings.squiffy line 19: In section 'section', passage 'passage' there is a link to a passage called [non-existent passage], which doesn't exist",
+]
 `;
 
 exports[`warnings/warnings2.squiffy 1`] = `
-{
-  "js": [],
-  "story": {
-    "id": "ff9c717981",
-    "sections": {
-      "test": {
-        "text": "<p>Another link that <a class="squiffy-link link-passage" data-passage="doesn't exist" role="link" tabindex="0">doesn&#39;t exist</a>.</p>",
-      },
-    },
-    "start": "test",
-  },
-}
+[
+  "WARNING: warnings2.squiffy line 1: In section 'test' there is a link to a passage called [doesn't exist], which doesn't exist",
+]
 `;

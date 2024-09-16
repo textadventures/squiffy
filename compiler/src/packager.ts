@@ -10,7 +10,9 @@ export const createPackage = async (inputFilename: string) => {
 }
 
 async function generate(inputFilename: string, template: string) {
-    const compiler = new Compiler();
+    const compiler = new Compiler({
+        onWarning: console.warn
+    });
     
     var outputPath = path.resolve(path.dirname(inputFilename));
 

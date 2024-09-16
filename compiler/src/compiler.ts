@@ -29,9 +29,17 @@ interface OutputPassage {
     jsIndex?: number;
 }
 
-var squiffyVersion = SQUIFFY_VERSION;
+interface CompilerSettings {
+    onWarning?: (message: string) => void;
+}
 
 export class Compiler {
+    settings: CompilerSettings;
+
+    constructor(settings: CompilerSettings) {
+        this.settings = settings;
+    }
+
     async process(input: string, template: string) {
         var story = new Story("filename.squiffy");
         var success = await this.processFileText(story, input, /* null */ "filename.squiffy", true);
@@ -56,7 +64,7 @@ export class Compiler {
         }
         outputJs.push('];');
 
-        return `// Created with Squiffy ${squiffyVersion}
+        return `// Created with Squiffy ${SQUIFFY_VERSION}
 // https://github.com/textadventures/squiffy
 
 (function(){
@@ -398,6 +406,8 @@ squiffy.story = {...squiffy.story, ...${JSON.stringify(storyData.story, null, 4)
     };
 
     showBadLinksWarning(badLinks: string[], linkTo: string, before: string, after: string, section: Section, passage: Passage | null) {
+        if (!this.settings.onWarning) return;
+        
         for (const badLink of badLinks) {
             var warning;
             if (!passage) {
@@ -406,7 +416,7 @@ squiffy.story = {...squiffy.story, ...${JSON.stringify(storyData.story, null, 4)
             else {
                 warning = `${section.filename} line ${passage.line}: In section '${section.name}', passage '${passage.name}'`;
             }
-            console.log(`WARNING: ${warning} there is a link to a ${linkTo} called ${before}${badLink}${after}, which doesn't exist`);
+            this.settings.onWarning(`WARNING: ${warning} there is a link to a ${linkTo} called ${before}${badLink}${after}, which doesn't exist`);
         }
     };
 
