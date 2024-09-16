@@ -143,27 +143,32 @@ class Compiler {
         // When calling from Vite, can set template this way:
         // const template = (await import('./squiffy.template.js?raw')).default;
 
-        const jsData = `// Created with Squiffy ${squiffyVersion}
-// https://github.com/textadventures/squiffy
-
-(function(){
-` + template;
 
         // if (options.scriptOnly && options.pluginName) {
         //     jsData = jsData.replace('jQuery.fn.squiffy =', 'jQuery.fn.' + options.pluginName + ' =');
         // }
 
+        return `// Created with Squiffy ${squiffyVersion}
+// https://github.com/textadventures/squiffy
+
+(function(){
+${template}
+squiffy.story = {...squiffy.story, ...${await this.getStoryData(story)}}
+})();
+`;
+    }
+
+    async getStoryData(story: Story) {
         const outputJsFile: string[] = [];
-        outputJsFile.push(jsData);
-        outputJsFile.push('\n\n');
         if (!story.start) {
             story.start = Object.keys(story.sections)[0];
         }
-        outputJsFile.push('squiffy.story.start = \'' + story.start + '\';\n');
+        outputJsFile.push('{\n');
+        outputJsFile.push('start: \'' + story.start + '\',\n');
         if (story.id) {
-            outputJsFile.push(`squiffy.story.id = \'${story.id}\';\n`);
+            outputJsFile.push(`id: \'${story.id}\',\n`);
         }
-        outputJsFile.push('squiffy.story.sections = {\n');
+        outputJsFile.push('sections: {\n');
 
         for (const sectionName of Object.keys(story.sections)) {
             const section = story.sections[sectionName];
@@ -210,7 +215,7 @@ class Compiler {
         }
 
         outputJsFile.push('}\n');
-        outputJsFile.push('})();');
+        outputJsFile.push('}\n');
 
         return outputJsFile.join('');
     };
