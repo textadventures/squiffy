@@ -2,18 +2,6 @@ import * as marked from 'marked';
 import * as crypto from 'crypto';
 import { SQUIFFY_VERSION } from './version.js';
 
-export const getJs = async function (input: string, template: string) {
-    const compiler = new Compiler();
-    return await compiler.process(input, template);
-};
-
-export const getStoryData = async function(input: string) {
-    const compiler = new Compiler();
-    var story = new Story("filename.squiffy");
-    await compiler.processFileText(story, input, "filename.squiffy", true);
-    return await compiler.getStoryData(story);
-}
-
 interface Output {
     story: OutputStory;
     js: string[][];

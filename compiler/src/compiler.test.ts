@@ -1,9 +1,13 @@
 import { expect, test } from 'vitest'
-import * as compiler from './compiler.js';
 import * as fs from 'fs';
+import { Compiler, Story } from './compiler.js';
+import path from 'path';
 
 test('"Hello world" should compile', async () => {
-    const result = await compiler.getStoryData('hello world');
+    const compiler = new Compiler();
+    var story = new Story("filename.squiffy");
+    await compiler.processFileText(story, "hello world", "filename.squiffy", true);
+    const result = await compiler.getStoryData(story);
     expect(result.story.start).toBe("_default");
     expect(Object.keys(result.story.sections).length).toBe(1);
     expect(result.story.sections._default.text).toBe("<p>hello world</p>");
@@ -32,7 +36,13 @@ const examples = [
 for (const example of examples) {
     test(example, async () => {
         const script = fs.readFileSync(`examples/${example}`, 'utf8');
-        const result = await compiler.getStoryData(script);
+        const filename = path.basename(example);
+
+        const compiler = new Compiler();
+        var story = new Story(filename);
+        await compiler.processFileText(story, script, filename, true);
+
+        const result = await compiler.getStoryData(story);
         expect(result).toMatchSnapshot();
     });
 }

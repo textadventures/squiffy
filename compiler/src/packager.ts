@@ -14,7 +14,7 @@ async function generate(inputFilename: string, template: string) {
     
     var outputPath = path.resolve(path.dirname(inputFilename));
 
-    var story = new Story(path.resolve(inputFilename));
+    var story = new Story(path.basename(inputFilename));
 
     var success = await processFile(compiler, story, path.resolve(inputFilename), true);
 
