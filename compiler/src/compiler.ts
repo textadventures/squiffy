@@ -30,9 +30,9 @@ interface Output {
 }
 
 interface OutputStory {
-    start?: string;
-    id?: string | null;
-    sections?: Record<string, OutputSection>;
+    start: string;
+    id: string | null;
+    sections: Record<string, OutputSection>;
 }
 
 interface OutputSection {
@@ -202,19 +202,18 @@ squiffy.story = {...squiffy.story, ...${JSON.stringify(storyData.story, null, 4)
     }
 
     async getStoryData(story: Story): Promise<Output> {
-        const output: Output = {
-            story: {},
-            js: [],
-        };
-
         if (!story.start) {
             story.start = Object.keys(story.sections)[0];
         }
-
-        output.story.start = story.start;
-        output.story.id = story.id;
-
-        output.story.sections = {};
+        
+        const output: Output = {
+            story: {
+                start: story.start,
+                id: story.id,
+                sections: {},
+            },
+            js: [],
+        };
 
         for (const sectionName of Object.keys(story.sections)) {
             const section = story.sections[sectionName];
@@ -237,12 +236,14 @@ squiffy.story = {...squiffy.story, ...${JSON.stringify(storyData.story, null, 4)
             if ('@last' in section.passages) {
                 var passageCount = 0;
                 for (const passageName of Object.keys(section.passages)) {
-                    if (passageName && passageName.substr(0, 1) !== '@') {
+                    if (passageName?.substring(0, 1) !== '@') {
                         passageCount++;
                     }
                 }
                 outputSection.passageCount = passageCount;
             }
+
+            if (Object.keys(section.passages).length == 0) continue;
 
             outputSection.passages = {};
 
@@ -250,7 +251,7 @@ squiffy.story = {...squiffy.story, ...${JSON.stringify(storyData.story, null, 4)
                 const passage = section.passages[passageName];
                 const outputPassage: OutputPassage = {};
                 outputSection.passages[passageName] = outputPassage;
-;
+
                 if (passage.clear) {
                     outputPassage.clear = true;
                 }
@@ -548,7 +549,7 @@ squiffy.story = {...squiffy.story, ...${JSON.stringify(storyData.story, null, 4)
         // We're only interested in checking if the named passage or section exists.
 
         var linkDestination = link.split(',')[0];
-        if (linkDestination.substr(0, 1) == '@') {
+        if (linkDestination.substring(0, 1) == '@') {
             return true;
         }
         return Object.keys(keys).includes(linkDestination);
@@ -595,7 +596,7 @@ class Story {
     set_id(filename: string) {
         var shasum = crypto.createHash('sha1');
         shasum.update(filename);
-        this.id = shasum.digest('hex').substr(0, 10);
+        this.id = shasum.digest('hex').substring(0, 10);
     };
 }
 
