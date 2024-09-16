@@ -33,10 +33,11 @@
     "glob": "^8.0.1",
     "shx": "^0.3.4",
     "tsx": "^4.19.1",
-    "typescript": "^5.6.2"
+    "typescript": "^5.6.2",
+    "vitest": "^2.1.1"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "vitest",
     "build": "tsc && shx cp src/index.template.html ./dist/ && shx cp src/squiffy.template.js ./dist/ && shx cp src/style.template.css ./dist/ && shx cp node_modules/jquery/dist/jquery.min.js ./dist/",
     "dev": "cp node_modules/jquery/dist/jquery.min.js ./src/ && tsx src/squiffy.ts"
   },
