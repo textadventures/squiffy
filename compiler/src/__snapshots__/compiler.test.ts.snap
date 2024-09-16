@@ -1,0 +1,716 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`attributes/attributes.squiffy 1`] = `
+{
+  "js": [
+    [
+      "alert("my_attribute " + get("my_attribute"));",
+    ],
+  ],
+  "story": {
+    "id": null,
+    "sections": {
+      "_default": {
+        "attributes": [
+          "my_string = some text",
+        ],
+        "text": "<p>Set a start value: <a class="squiffy-link link-section" data-section="one" role="link" tabindex="0">1</a> or <a class="squiffy-link link-section" data-section="two" role="link" tabindex="0">2</a>.</p>",
+      },
+      "done": {
+        "passages": {
+          "dec": {
+            "attributes": [
+              "count-=1",
+            ],
+            "text": "<p>Now count is {count}. You can also <a class="squiffy-link link-passage" data-passage="increase" role="link" tabindex="0">increase</a> or <a class="squiffy-link link-passage" data-passage="decrease" role="link" tabindex="0">decrease</a> by values other than 1.</p>",
+          },
+          "decrease": {
+            "attributes": [
+              "count-=5",
+            ],
+            "text": "<p>Now count is {count}.</p>",
+          },
+          "increase": {
+            "attributes": [
+              "count+=10",
+            ],
+            "text": "<p>Now count is {count}.</p>",
+          },
+        },
+        "text": "<p>You clicked {count} links. What about calling <a class="squiffy-link link-passage" data-passage="dec" role="link" tabindex="0">dec</a>?</p>",
+      },
+      "next": {
+        "passages": {
+          "a": {
+            "attributes": [
+              "count+=1",
+            ],
+            "text": "<p>OK...</p>",
+          },
+          "b": {
+            "attributes": [
+              "count+=1",
+            ],
+            "text": "<p>OK...</p>",
+          },
+          "c": {
+            "attributes": [
+              "count+=1",
+            ],
+            "text": "<p>OK...</p>",
+          },
+          "d": {
+            "attributes": [
+              "count+=1",
+            ],
+            "text": "<p>OK...</p>",
+          },
+          "e": {
+            "attributes": [
+              "count+=1",
+            ],
+            "text": "<p>OK...</p>",
+          },
+          "unset": {
+            "attributes": [
+              "not chose_passage",
+            ],
+            "text": "<p>Now the value is: {if chose_passage:yes}{else:no}</p>",
+          },
+        },
+        "text": "<p>my_attribute = {my_attribute}</p>
+<p>Also, my_string = &quot;{my_string}&quot;</p>
+<p>Did you choose a passage link? {if chose_passage:yes}{else:no} <a class="squiffy-link link-passage" data-passage="unset" role="link" tabindex="0">unset</a></p>
+<p>Click some more links: <a class="squiffy-link link-passage" data-passage="a" role="link" tabindex="0">a</a>, <a class="squiffy-link link-passage" data-passage="b" role="link" tabindex="0">b</a>, <a class="squiffy-link link-passage" data-passage="c" role="link" tabindex="0">c</a>, <a class="squiffy-link link-passage" data-passage="d" role="link" tabindex="0">d</a>, <a class="squiffy-link link-passage" data-passage="e" role="link" tabindex="0">e</a> and then click <a class="squiffy-link link-section" data-section="done" role="link" tabindex="0">done</a>.</p>",
+      },
+      "one": {
+        "attributes": [
+          "my_attribute = 1",
+        ],
+        "passages": {
+          "three": {
+            "attributes": [
+              "my_attribute = 3",
+              "chose_passage",
+            ],
+            "text": "<p>OK. Three it is.</p>",
+          },
+        },
+        "text": "<p>Maybe you&#39;d like it to be <a class="squiffy-link link-passage" data-passage="three" role="link" tabindex="0">3</a> instead? Or you could just <a class="squiffy-link link-section" data-section="next" role="link" tabindex="0">continue...</a></p>",
+      },
+      "two": {
+        "attributes": [
+          "my_attribute = 2",
+        ],
+        "passages": {
+          "four": {
+            "attributes": [
+              "my_attribute = 4",
+              "chose_passage",
+            ],
+            "text": "<p>OK. Four it is.</p>",
+          },
+          "javascript": {
+            "jsIndex": 0,
+            "text": "",
+          },
+        },
+        "text": "<p>Maybe you&#39;d like it to be <a class="squiffy-link link-passage" data-passage="four" role="link" tabindex="0">4</a> instead? You could try <a class="squiffy-link link-passage" data-passage="javascript" role="link" tabindex="0">javascript</a>. Or you could just <a class="squiffy-link link-section" data-section="next" role="link" tabindex="0">continue...</a></p>",
+      },
+    },
+    "start": "_default",
+  },
+}
+`;
+
+exports[`clearscreen/clearscreen.squiffy 1`] = `
+{
+  "js": [],
+  "story": {
+    "id": null,
+    "sections": {
+      "_default": {
+        "passages": {
+          "one": {
+            "text": "<p>This text is on the same screen.</p>",
+          },
+          "two": {
+            "clear": true,
+            "text": "<p>This text is on a new screen. This <a class="squiffy-link link-section" data-section="same page" role="link" tabindex="0">section</a> will be on the same screen, and this <a class="squiffy-link link-section" data-section="clear section" role="link" tabindex="0">section</a> clears the screen.</p>",
+          },
+        },
+        "text": "<p><a class="squiffy-link link-passage" data-passage="one" role="link" tabindex="0">This link</a> doesn&#39;t clear the screen. But <a class="squiffy-link link-passage" data-passage="two" role="link" tabindex="0">this link</a> does.</p>",
+      },
+      "clear section": {
+        "clear": true,
+        "text": "<p>Another new page.</p>",
+      },
+      "same page": {
+        "text": "<p>This section is on the same screen.</p>",
+      },
+    },
+    "start": "_default",
+  },
+}
+`;
+
+exports[`continue/continue.squiffy 1`] = `
+{
+  "js": [
+    [
+      "alert("BOO!")",
+    ],
+  ],
+  "story": {
+    "id": null,
+    "sections": {
+      "_continue1": {
+        "text": "<p>More text.</p>
+<p><a class="squiffy-link link-section" data-section="_continue2" role="link" tabindex="0">Carry on further...</a></p>",
+      },
+      "_continue2": {
+        "text": "<p>There&#39;s some more text now.</p>
+<p><a class="squiffy-link link-section" data-section="_continue3" role="link" tabindex="0">Keep walking!</a></p>",
+      },
+      "_continue3": {
+        "text": "<p>Oh, even more text appeared!</p>
+<p><a class="squiffy-link link-section" data-section="_continue4" role="link" tabindex="0">A little closer...</a></p>",
+      },
+      "_continue4": {
+        "jsIndex": 0,
+        "text": "<p>Pretty scary.</p>",
+      },
+      "_default": {
+        "text": "<p>Here is some text.</p>
+<p><a class="squiffy-link link-section" data-section="_continue1" role="link" tabindex="0">Continue...</a></p>",
+      },
+    },
+    "start": "_default",
+  },
+}
+`;
+
+exports[`helloworld/helloworld.squiffy 1`] = `
+{
+  "js": [],
+  "story": {
+    "id": null,
+    "sections": {
+      "_default": {
+        "text": "<p>Hello, world!</p>",
+      },
+    },
+    "start": "_default",
+  },
+}
+`;
+
+exports[`last/last.squiffy 1`] = `
+{
+  "js": [],
+  "story": {
+    "id": null,
+    "sections": {
+      "_default": {
+        "passageCount": 3,
+        "passages": {
+          "@last": {
+            "text": "<p>You saw all passages! Now go to the <a class="squiffy-link link-section" data-section="section2" role="link" tabindex="0">next section</a>.</p>",
+          },
+          "a": {
+            "text": "<p>Passage A.</p>",
+          },
+          "b": {
+            "text": "<p>Passage B.</p>",
+          },
+          "c": {
+            "text": "<p>Passage C.</p>",
+          },
+        },
+        "text": "<p>Test section with some passages. <a class="squiffy-link link-passage" data-passage="a" role="link" tabindex="0">a</a>, <a class="squiffy-link link-passage" data-passage="b" role="link" tabindex="0">b</a>, <a class="squiffy-link link-passage" data-passage="c" role="link" tabindex="0">c</a>.</p>",
+      },
+      "section2": {
+        "passageCount": 4,
+        "passages": {
+          "": {
+            "text": "<p>Master passage.</p>",
+          },
+          "@last": {
+            "text": "<p>You saw all passages!</p>",
+          },
+          "a": {
+            "text": "<p>Passage A.</p>",
+          },
+          "b": {
+            "text": "<p>Passage B.</p>",
+          },
+          "c": {
+            "text": "<p>Passage C.</p>",
+          },
+        },
+        "text": "<p>Second test. <a class="squiffy-link link-passage" data-passage="a" role="link" tabindex="0">a</a>, <a class="squiffy-link link-passage" data-passage="b" role="link" tabindex="0">b</a>, <a class="squiffy-link link-passage" data-passage="c" role="link" tabindex="0">c</a>.</p>",
+      },
+    },
+    "start": "_default",
+  },
+}
+`;
+
+exports[`master/master.squiffy 1`] = `
+{
+  "js": [
+    [
+      "console.log("This JS runs for each passage in the entire game.")",
+    ],
+    [
+      "console.log("This JS runs for each passage in the second section.");",
+    ],
+  ],
+  "story": {
+    "id": null,
+    "sections": {
+      "": {
+        "passages": {
+          "": {
+            "jsIndex": 0,
+            "text": "",
+          },
+        },
+        "text": "<p>This text appears before each section in the game.</p>",
+      },
+      "Next!": {
+        "passages": {
+          "See": {
+            "text": "<p>The end...</p>",
+          },
+        },
+        "text": "<p>Final section, no master passages here. <a class="squiffy-link link-passage" data-passage="See" role="link" tabindex="0">See</a>.</p>",
+      },
+      "_continue1": {
+        "passages": {
+          "": {
+            "jsIndex": 1,
+            "text": "<p>This text appears before each passage in this section.</p>",
+          },
+          "One": {
+            "text": "<p>1...</p>",
+          },
+          "three": {
+            "text": "<p>3...</p>",
+          },
+          "two": {
+            "text": "<p>2...</p>",
+          },
+        },
+        "text": "<p>This is the second section. <a class="squiffy-link link-passage" data-passage="One" role="link" tabindex="0">One</a>, <a class="squiffy-link link-passage" data-passage="two" role="link" tabindex="0">two</a>, <a class="squiffy-link link-passage" data-passage="three" role="link" tabindex="0">three</a>. <a class="squiffy-link link-section" data-section="Next!" role="link" tabindex="0">Next!</a></p>",
+      },
+      "intro": {
+        "text": "<p>This is the first section.</p>
+<p><a class="squiffy-link link-section" data-section="_continue1" role="link" tabindex="0">Continue...</a></p>",
+      },
+    },
+    "start": "intro",
+  },
+}
+`;
+
+exports[`replace/replace.squiffy 1`] = `
+{
+  "js": [],
+  "story": {
+    "id": null,
+    "sections": {
+      "_default": {
+        "passages": {
+          "beer": {
+            "text": "<p>a <a class="squiffy-link link-passage" data-passage="crate of beer" role="link" tabindex="0">crate of beer</a></p>",
+          },
+          "crate of beer": {
+            "text": "<p>Yes, beer.</p>",
+          },
+          "love teleporting": {
+            "text": "<p>love teleporting, so much I might <a class="squiffy-link link-section" data-section="section2" role="link" tabindex="0">embark on a wild and crazy adventure</a></p>",
+          },
+          "next": {
+            "text": "<p>And then I thought, hang on, I {label:3=<a class="squiffy-link link-passage" data-passage="@replace 1=teleported, @replace 3=love teleporting" role="link" tabindex="0">hate walking</a>}.</p>",
+          },
+        },
+        "text": "<p>I {label:1=walked} to the shops and I bought {label:2=a pint of milk}.</p>
+<p>But then I thought, hang on, I <a class="squiffy-link link-passage" data-passage="next, @replace 2=beer" role="link" tabindex="0">don&#39;t really like milk</a>.</p>",
+      },
+      "section2": {
+        "text": "<p>And so it {label:4=began...}</p>
+<p><a class="squiffy-link link-section" data-section="section3" role="link" tabindex="0">Or did it?</a></p>",
+      },
+      "section3": {
+        "attributes": [
+          "@replace 4=<p>ended <a class="squiffy-link link-passage" data-passage="abruptly" role="link" tabindex="0">abruptly</a>.</p>",
+        ],
+        "passages": {
+          "abruptly": {
+            "text": "<p>That is all.</p>",
+          },
+        },
+        "text": "<p>Oh well.</p>",
+      },
+    },
+    "start": "_default",
+  },
+}
+`;
+
+exports[`rotate/rotate.squiffy 1`] = `
+{
+  "js": [],
+  "story": {
+    "id": null,
+    "sections": {
+      "Go!": {
+        "text": "<p>That&#39;s all folks!</p>",
+      },
+      "_continue1": {
+        "text": "<p>Now {rotate result:four:five:six}</p>
+<p><a class="squiffy-link link-section" data-section="_continue2" role="link" tabindex="0">OK...</a></p>",
+      },
+      "_continue2": {
+        "text": "<p>You chose {result}.</p>
+<p>Now for a sequence: {sequence:one:two:three:four:five}.</p>
+<p><a class="squiffy-link link-section" data-section="_continue3" role="link" tabindex="0">And another...</a></p>",
+      },
+      "_continue3": {
+        "text": "<p>Another sequence: {sequence seqresult:a:b:c:d:e:f:g}.</p>
+<p><a class="squiffy-link link-section" data-section="_continue4" role="link" tabindex="0">Finally...</a></p>",
+      },
+      "_continue4": {
+        "text": "<p>You chose {seqresult}.</p>
+<p>Here&#39;s a sequence that links to another section. {sequence:Ready...:Steady...:<a class="squiffy-link link-section" data-section="Go!" role="link" tabindex="0">Go!</a>}</p>",
+      },
+      "_default": {
+        "text": "<p>Choose a number: {rotate:one:two:three}</p>
+<p><a class="squiffy-link link-section" data-section="_continue1" role="link" tabindex="0">OK...</a></p>",
+      },
+    },
+    "start": "_default",
+  },
+}
+`;
+
+exports[`sectiontrack/sectiontrack.squiffy 1`] = `
+{
+  "js": [],
+  "story": {
+    "id": null,
+    "sections": {
+      "_default": {
+        "passages": {
+          "note": {
+            "text": "<p>This is a passage.</p>",
+          },
+        },
+        "text": "<p>Choose: <a class="squiffy-link link-section" data-section="a" role="link" tabindex="0">a</a>, <a class="squiffy-link link-section" data-section="b" role="link" tabindex="0">b</a>, <a class="squiffy-link link-section" data-section="c" role="link" tabindex="0">c</a>. Or read this <a class="squiffy-link link-passage" data-passage="note" role="link" tabindex="0">note</a>.</p>",
+      },
+      "a": {
+        "text": "<p>Now choose <a class="squiffy-link link-section" data-section="b" role="link" tabindex="0">b</a> or <a class="squiffy-link link-section" data-section="c" role="link" tabindex="0">c</a>.</p>",
+      },
+      "b": {
+        "text": "<p>Now go to <a class="squiffy-link link-section" data-section="c" role="link" tabindex="0">c</a>.</p>",
+      },
+      "c": {
+        "text": "<p>{if seen a:You saw A.}{else:You didn&#39;t see A.}
+{if not seen b:You didn&#39;t see B.}{else:You saw B.}</p>
+<p>{if seen note:You looked at the note.}{else:You didn&#39;t look at the note.}</p>",
+      },
+    },
+    "start": "_default",
+  },
+}
+`;
+
+exports[`start/start.squiffy 1`] = `
+{
+  "js": [],
+  "story": {
+    "id": null,
+    "sections": {
+      "not the start section": {
+        "text": "<p>This is page 2, although it was defined first.</p>",
+      },
+      "the start section": {
+        "text": "<p>This is the start section. We also defined a section called <a class="squiffy-link link-section" data-section="not the start section" role="link" tabindex="0">not the start section</a>.</p>",
+      },
+    },
+    "start": "the start section",
+  },
+}
+`;
+
+exports[`test/example.squiffy 1`] = `
+{
+  "js": [
+    [
+      "alert ("This passage has some JavaScript");",
+    ],
+    [
+      "alert ("This section has some JavaScript");",
+    ],
+  ],
+  "story": {
+    "id": null,
+    "sections": {
+      "Introduction": {
+        "passages": {
+          "it's a passage with an apostrophe": {
+            "text": "<p>Nothing to worry about.</p>",
+          },
+          "link": {
+            "text": "<p>Here is the text for the simple link.</p>",
+          },
+          "passage": {
+            "text": "<p>Here&#39;s some text for the passage.</p>",
+          },
+          "passage 3": {
+            "text": "<p>Another passage.</p>",
+          },
+          "passage four": {
+            "text": "<p>Yet another passage.</p>",
+          },
+          "passage2": {
+            "jsIndex": 0,
+            "text": "<p>This is the text for the second passage.</p>",
+          },
+        },
+        "text": "<h1>Squiffy Test</h1>
+<p>This is <a href="http://textadventures.co.uk">a website link</a>.</p>
+<p>This should be <a class="squiffy-link link-passage" data-passage="passage" role="link" tabindex="0">a link to a passage</a>. Here&#39;s <a class="squiffy-link link-passage" data-passage="passage2" role="link" tabindex="0">another one</a>.</p>
+<p>You don&#39;t need to specify a name - for example, this <a class="squiffy-link link-passage" data-passage="link" role="link" tabindex="0">link</a> and this <a class="squiffy-link link-section" data-section="section" role="link" tabindex="0">section</a>.</p>
+<p>And this goes to the <a class="squiffy-link link-section" data-section="section2" role="link" tabindex="0">next section</a>.</p>
+<p>This line has links to <a class="squiffy-link link-section" data-section="section 3" role="link" tabindex="0">section 3</a> and <a class="squiffy-link link-section" data-section="section four" role="link" tabindex="0">section 4</a>.</p>
+<p>This line has links to <a class="squiffy-link link-passage" data-passage="passage 3" role="link" tabindex="0">passage 3</a> and <a class="squiffy-link link-passage" data-passage="passage four" role="link" tabindex="0">passage 4</a>.</p>
+<p>Oh look - <a class="squiffy-link link-passage" data-passage="it's a passage with an apostrophe" role="link" tabindex="0">it&#39;s a passage with an apostrophe</a>.</p>",
+      },
+      "section": {
+        "text": "<p>This is another section.</p>",
+      },
+      "section 3": {
+        "text": "<p>Another section is here.</p>",
+      },
+      "section four": {
+        "text": "<p>Some other section.</p>",
+      },
+      "section2": {
+        "jsIndex": 1,
+        "text": "<p>This is the next section.</p>",
+      },
+    },
+    "start": "Introduction",
+  },
+}
+`;
+
+exports[`textprocessor/textprocessor.squiffy 1`] = `
+{
+  "js": [],
+  "story": {
+    "id": null,
+    "sections": {
+      "_default": {
+        "text": "<p>Choose a gender:</p>
+<ul>
+<li><a class="squiffy-link link-section" data-section="start, gender=male" role="link" tabindex="0">Male</a></li>
+<li><a class="squiffy-link link-section" data-section="start, gender=female" role="link" tabindex="0">Female</a></li>
+</ul>",
+      },
+      "section": {
+        "text": "<p>Text from section.</p>",
+      },
+      "start": {
+        "passages": {
+          "Next": {
+            "text": "<p>This is a test. {passage} {section}</p>",
+          },
+          "passage": {
+            "text": "<p>Text from passage.</p>",
+          },
+        },
+        "text": "<p>You chose {gender}.</p>
+<p>{if gender=male:You are a man.}
+{else:You are a woman.}</p>
+<p><a class="squiffy-link link-passage" data-passage="Next" role="link" tabindex="0">Next</a></p>",
+      },
+    },
+    "start": "_default",
+  },
+}
+`;
+
+exports[`transitions/transitions.squiffy 1`] = `
+{
+  "js": [
+    [
+      "squiffy.ui.transition(function(){",
+      "	// Create a blackout <div>...",
+      "	$("<div/>", {",
+      "		id: "blackout"",
+      "	}).css({",
+      "		position: "fixed",",
+      "		top: 0,",
+      "		left: 0,",
+      "		width: "100%",",
+      "		height: "100%",",
+      "		background: "black",",
+      "		display: "none"",
+      "	}).appendTo("body");",
+      "	// Fade it in over 6 seconds...",
+      "	$("#blackout").fadeIn({",
+      "		duration: 6000,",
+      "		easing: "easeInQuad",",
+      "	});",
+      "	// After fading it in...",
+      "	setTimeout(function () {",
+      "		// Move to the next section...",
+      "		squiffy.story.go("wake up");",
+      "		// Fade out the blackout and remove the <div>...",
+      "		$("#blackout").fadeOut({",
+      "			duration: 6000,",
+      "			easing: "easeInQuad",",
+      "			complete: function() {",
+      "				$(this).remove();",
+      "			}",
+      "		});",
+      "	}, 9000);",
+      "});",
+      "",
+    ],
+  ],
+  "story": {
+    "id": null,
+    "sections": {
+      "_default": {
+        "passages": {
+          "hammer": {
+            "text": "<p>It&#39;s nice and weighty. Perhaps you want to <a class="squiffy-link link-section" data-section="hit" role="link" tabindex="0">hit yourself in the face with it</a>?</p>",
+          },
+        },
+        "text": "<p>You are standing in a room. You can see a <a class="squiffy-link link-passage" data-passage="hammer" role="link" tabindex="0">hammer</a>.</p>",
+      },
+      "hit": {
+        "jsIndex": 0,
+        "text": "<p>Bang.</p>",
+      },
+      "wake up": {
+        "clear": true,
+        "text": "<p>Slowly your eyes open.</p>
+<p>That was a rather stupid thing to do.</p>",
+      },
+    },
+    "start": "_default",
+  },
+}
+`;
+
+exports[`turncount/turncount.squiffy 1`] = `
+{
+  "js": [
+    [
+      "squiffy.story.go("final section");",
+    ],
+  ],
+  "story": {
+    "id": null,
+    "sections": {
+      "_default": {
+        "passages": {
+          "@2": {
+            "text": "<p>This is some extra text to appear after the second click. The <a class="squiffy-link link-section" data-section="next section" role="link" tabindex="0">next section</a> is also good.</p>",
+          },
+          "One": {
+            "text": "<p>First passage.</p>",
+          },
+          "four": {
+            "text": "<p>Fourth passage.</p>",
+          },
+          "three": {
+            "text": "<p>Third passage.</p>",
+          },
+          "two": {
+            "text": "<p>Second passage.</p>",
+          },
+        },
+        "text": "<p>After clicking two links in this section, an additional passage will be displayed.</p>
+<p><a class="squiffy-link link-passage" data-passage="One" role="link" tabindex="0">One</a>, <a class="squiffy-link link-passage" data-passage="two" role="link" tabindex="0">two</a>, <a class="squiffy-link link-passage" data-passage="three" role="link" tabindex="0">three</a>, <a class="squiffy-link link-passage" data-passage="four" role="link" tabindex="0">four</a>.</p>",
+      },
+      "final section": {
+        "text": "<p><strong>THE END</strong></p>",
+      },
+      "next section": {
+        "passages": {
+          "@1": {
+            "jsIndex": 0,
+            "text": "",
+          },
+          "One": {
+            "text": "<p>First passage.</p>",
+          },
+          "four": {
+            "text": "<p>Fourth passage.</p>",
+          },
+          "three": {
+            "text": "<p>Third passage.</p>",
+          },
+          "two": {
+            "text": "<p>Second passage.</p>",
+          },
+        },
+        "text": "<p>In this section, you can only click one link, and then you&#39;ll be taken to the final section.</p>
+<p><a class="squiffy-link link-passage" data-passage="One" role="link" tabindex="0">One</a>, <a class="squiffy-link link-passage" data-passage="two" role="link" tabindex="0">two</a>, <a class="squiffy-link link-passage" data-passage="three" role="link" tabindex="0">three</a>, <a class="squiffy-link link-passage" data-passage="four" role="link" tabindex="0">four</a>.</p>",
+      },
+    },
+    "start": "_default",
+  },
+}
+`;
+
+exports[`warnings/warnings.squiffy 1`] = `
+{
+  "js": [],
+  "story": {
+    "id": null,
+    "sections": {
+      "_default": {
+        "text": "<p>This link exists: <a class="squiffy-link link-section" data-section="section" role="link" tabindex="0">section</a></p>
+<p>This link doesn&#39;t exist: <a class="squiffy-link link-section" data-section="badsection" role="link" tabindex="0">badsection</a></p>
+<p>This <a class="squiffy-link link-section" data-section="section" role="link" tabindex="0">other link</a> does exist.</p>
+<p>This <a class="squiffy-link link-section" data-section="badsection2" role="link" tabindex="0">other link</a> doesn&#39;t exit.</p>",
+      },
+      "section": {
+        "passages": {
+          "passage": {
+            "text": "<p>This exists. But it has a link to a <a class="squiffy-link link-passage" data-passage="non-existent passage" role="link" tabindex="0">non-existent passage</a>.</p>
+<p>@import warnings2.squiffy</p>",
+          },
+        },
+        "text": "<p>This passage exists: <a class="squiffy-link link-passage" data-passage="passage" role="link" tabindex="0">passage</a></p>
+<p>This passage doesn&#39;t exist: <a class="squiffy-link link-passage" data-passage="badpassage" role="link" tabindex="0">badpassage</a></p>
+<p>This <a class="squiffy-link link-passage" data-passage="passage" role="link" tabindex="0">other link</a> does exist.</p>
+<p>This <a class="squiffy-link link-passage" data-passage="badpassage2" role="link" tabindex="0">other link</a> doesn&#39;t exist.</p>",
+      },
+    },
+    "start": "_default",
+  },
+}
+`;
+
+exports[`warnings/warnings2.squiffy 1`] = `
+{
+  "js": [],
+  "story": {
+    "id": null,
+    "sections": {
+      "test": {
+        "text": "<p>Another link that <a class="squiffy-link link-passage" data-passage="doesn't exist" role="link" tabindex="0">doesn&#39;t exist</a>.</p>",
+      },
+    },
+    "start": "test",
+  },
+}
+`;
