@@ -29,7 +29,6 @@ interface Squiffy {
         scrollToEnd: () => void,
         transition: (f: any) => void,
     };
-    storageFallback: any;
     set: (attribute: string, value: any) => void;
     get: (attribute: string) => any;
 }
@@ -62,6 +61,7 @@ let currentSectionElement: HTMLElement | null = null;
 let scrollPosition = 0;
 let outputElement: HTMLElement = null!;
 let settings: SquiffySettings = null!;
+let storageFallback: Record<string, string> = {};
 
 export const squiffy: Squiffy = {
     init: null!,
@@ -72,7 +72,7 @@ export const squiffy: Squiffy = {
             localStorage[squiffy.story.id + '-' + attribute] = JSON.stringify(value);
         }
         else {
-            squiffy.storageFallback[attribute] = JSON.stringify(value);
+            storageFallback[attribute] = JSON.stringify(value);
         }
         settings.onSet(attribute, value);
     },
@@ -82,7 +82,7 @@ export const squiffy: Squiffy = {
             result = localStorage[squiffy.story.id + '-' + attribute];
         }
         else {
-            result = squiffy.storageFallback[attribute];
+            result = storageFallback[attribute];
         }
         if (!result) return null;
         return JSON.parse(result);
@@ -94,7 +94,6 @@ export const squiffy: Squiffy = {
         scrollToEnd: null!,
         transition: null!,
     },
-    storageFallback: {}
 };
 
 var initLinkHandler = function () {
@@ -362,7 +361,7 @@ const restart = function () {
         });
     }
     else {
-        squiffy.storageFallback = {};
+        storageFallback = {};
     }
     if (settings.scroll === 'element') {
         outputElement.innerHTML = '';
