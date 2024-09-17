@@ -10,11 +10,14 @@ a.squiffy-link.disabled
     color: inherit !important;
     cursor: inherit;
 }
-a.squiffy-header-link
+button.squiffy-header-button
 {
     text-decoration: underline;
     color: Blue;
     cursor: pointer;
+    background: none;
+    border: none;
+    font-family: inherit;
 }
 div#squiffy-container
 {

@@ -1,22 +1,32 @@
 /// <reference path ="../node_modules/@types/jquery/jquery.d.ts"/>
 /// <reference path ="./jquery.squiffy.d.ts"/>
 
-interface SquiffyOptions {
+interface SquiffyInitOptions {
     element: HTMLElement;
 }
 
+interface SquiffySettings {
+    scroll: string,
+    persist: boolean,
+    restartPrompt: boolean,
+    onSet: (attribute: string, value: any) => void,
+}
+
+interface SquiffyApi {
+    askRestart: () => void;
+}
+
 interface Squiffy {
-    init: (options: SquiffyOptions) => void;
+    init: (options: SquiffyInitOptions) => void;
     story: any;
     ui: {
         output: JQuery,
-        settings: any,
+        settings: SquiffySettings,
         processText: (text: string) => string,
         write: (text: string) => void,
         clearScreen: () => void,
         scrollToEnd: () => void,
         transition: (f: any) => void,
-        restart: JQuery,
     };
     storageFallback: any;
     set: (attribute: string, value: any) => void;
@@ -61,7 +71,6 @@ export const squiffy: Squiffy = {
         clearScreen: null!,
         scrollToEnd: null!,
         transition: null!,
-        restart: null!
     },
     storageFallback: {}
 };
@@ -76,6 +85,7 @@ export const squiffy: Squiffy = {
             var section = link.data('section');
             var rotateAttr = link.attr('data-rotate');
             var sequenceAttr = link.attr('data-sequence');
+            var rotateOrSequenceAttr = rotateAttr || sequenceAttr;
             if (passage) {
                 disableLink(link);
                 squiffy.set('_turncount', squiffy.get('_turncount') + 1);
@@ -98,9 +108,9 @@ export const squiffy: Squiffy = {
                 section = processLink(section);
                 squiffy.story.go(section);
             }
-            else if (rotateAttr || sequenceAttr) {
-                var result = rotate(rotateAttr || sequenceAttr, rotateAttr ? link.text() : '');
-                link.html(result[0].replace(/&quot;/g, '"').replace(/&#39;/g, '\''));
+            else if (rotateOrSequenceAttr) {
+                var result = rotate(rotateOrSequenceAttr, rotateAttr ? link.text() : '');
+                link.html(result[0]!.replace(/&quot;/g, '"').replace(/&#39;/g, '\''));
                 var dataAttribute = rotateAttr ? 'data-rotate' : 'data-sequence';
                 link.attr(dataAttribute, result[1]);
                 if (!result[1]) {
@@ -606,11 +616,11 @@ export const squiffy: Squiffy = {
 
     squiffy.storageFallback = {};
 
-    var startsWith = function (string, prefix) {
+    var startsWith = function (string: string, prefix: string) {
         return string.substring(0, prefix.length) === prefix;
     };
 
-    var rotate = function (options, current) {
+    var rotate = function (options: string, current: string | null) {
         var colon = options.indexOf(':');
         if (colon == -1) {
             return [options, current];
@@ -621,55 +631,31 @@ export const squiffy: Squiffy = {
         return [next, remaining];
     };
 
-    var methods = {
-        init: function (options: any) {
-            var settings = jQuery.extend({
-                scroll: 'body',
-                persist: true,
-                restartPrompt: true,
-                onSet: function () { }
-            }, options);
+    squiffy.init = function (options: SquiffyInitOptions): SquiffyApi {
+        const settings: SquiffySettings = {
+            scroll: 'body',
+            persist: true,
+            restartPrompt: true,
+            onSet: function () { }
+        };
 
-            squiffy.ui.output = this;
-            squiffy.ui.restart = jQuery(settings.restart);
-            squiffy.ui.settings = settings;
+        squiffy.ui.output = jQuery(options.element);
+        squiffy.ui.settings = settings;
 
-            if (settings.scroll === 'element') {
-                squiffy.ui.output.css('overflow-y', 'auto');
+        if (settings.scroll === 'element') {
+            squiffy.ui.output.css('overflow-y', 'auto');
+        }
+
+        initLinkHandler();
+        squiffy.story.begin();
+
+        return {
+            askRestart: function () {
+                if (!squiffy.ui.settings.restartPrompt || confirm('Are you sure you want to restart?')) {
+                    squiffy.story.restart();
+                }
             }
-
-            initLinkHandler();
-            squiffy.story.begin();
-
-            return this;
-        },
-        get: function (attribute) {
-            return squiffy.get(attribute);
-        },
-        set: function (attribute, value) {
-            squiffy.set(attribute, value);
-        },
-        restart: function () {
-            if (!squiffy.ui.settings.restartPrompt || confirm('Are you sure you want to restart?')) {
-                squiffy.story.restart();
-            }
-        }
-    };
-
-    jQuery.fn.squiffy = function (methodOrOptions: any) {
-        if (methods[methodOrOptions]) {
-            return methods[methodOrOptions]
-                .apply(this, Array.prototype.slice.call(arguments, 1));
-        }
-        else if (typeof methodOrOptions === 'object' || !methodOrOptions) {
-            return methods.init.apply(this, arguments);
-        } else {
-            jQuery.error('Method ' + methodOrOptions + ' does not exist');
-        }
-    };
-
-    squiffy.init = function (options: SquiffyOptions) {
-        jQuery(options.element).squiffy(options);
+        };
     };
 //})();
 

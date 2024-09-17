@@ -10,17 +10,13 @@
 			import { squiffy } from './story.js';
 
 			document.addEventListener('DOMContentLoaded', function() {
-				squiffy.init({
+				const squiffyApi = squiffy.init({
 					element: document.getElementById('squiffy')
 				});
 
-				var restart = function () {
-					$('#squiffy').squiffy('restart');
-				};
-				$('#restart').click(restart);
-				$('#restart').keypress(function (e) {
-					if (e.which !== 13) return;
-					restart();
+				const restartButton = document.getElementById('restart');
+				restartButton.addEventListener('click', function() {
+					squiffyApi.askRestart();
 				});
 			});
 		</script>
@@ -30,7 +26,7 @@
 	<body>
 		<div id="squiffy-container">
 			<div id="squiffy-header">
-				<a class="squiffy-header-link" id="restart" tabindex="0">Restart</a>
+				<button class="squiffy-header-button" id="restart" tabindex="0">Restart</button>
 			</div>
 			<div id="squiffy">
 			</div>
