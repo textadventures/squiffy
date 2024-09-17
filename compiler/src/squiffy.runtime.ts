@@ -147,7 +147,7 @@ function begin() {
     }
 }
 
-function processLink(link: string) {
+function processLink(link: string): string | null {
     const sections = link.split(',');
     let first = true;
     let target = null;
