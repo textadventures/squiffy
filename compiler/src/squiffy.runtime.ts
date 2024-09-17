@@ -1,11 +1,6 @@
 interface SquiffyInitOptions {
     element: HTMLElement;
-    story: {
-        js: [() => void];
-        start: string;
-        id: string;
-        sections: Record<string, Section>;
-    }
+    story: Story;
 }
 
 interface SquiffySettings {
@@ -61,8 +56,8 @@ export const set = function (attribute: string, value: any) {
     settings.onSet(attribute, value);
 };
 
-export const get = function (attribute: string): any {
-    var result;
+export const get = (attribute: string): any => {
+    let result;
     if (settings.persist && window.localStorage) {
         result = localStorage[story.id + '-' + attribute];
     }
@@ -73,14 +68,14 @@ export const get = function (attribute: string): any {
     return JSON.parse(result);
 };
 
-var initLinkHandler = function () {
-    var handleLink = function (link: HTMLElement) {
+function initLinkHandler() {
+    function handleLink(link: HTMLElement) {
         if (link.classList.contains('disabled')) return;
-        var passage = link.getAttribute('data-passage');
-        var section = link.getAttribute('data-section');
-        var rotateAttr = link.getAttribute('data-rotate');
-        var sequenceAttr = link.getAttribute('data-sequence');
-        var rotateOrSequenceAttr = rotateAttr || sequenceAttr;
+        let passage = link.getAttribute('data-passage');
+        let section = link.getAttribute('data-section');
+        const rotateAttr = link.getAttribute('data-rotate');
+        const sequenceAttr = link.getAttribute('data-sequence');
+        const rotateOrSequenceAttr = rotateAttr || sequenceAttr;
         if (passage) {
             disableLink(link);
             set('_turncount', get('_turncount') + 1);
@@ -89,7 +84,7 @@ var initLinkHandler = function () {
                 currentSectionElement?.appendChild(document.createElement('hr'));
                 showPassage(passage);
             }
-            var turnPassage = '@' + get('_turncount');
+            const turnPassage = '@' + get('_turncount');
             if (currentSection.passages) {
                 if (turnPassage in currentSection.passages) {
                     showPassage(turnPassage);
@@ -108,9 +103,9 @@ var initLinkHandler = function () {
             }
         }
         else if (rotateOrSequenceAttr) {
-            var result = rotate(rotateOrSequenceAttr, rotateAttr ? link.innerText : '');
+            const result = rotate(rotateOrSequenceAttr, rotateAttr ? link.innerText : '');
             link.innerHTML = result[0]!.replace(/&quot;/g, '"').replace(/&#39;/g, '\'');
-            var dataAttribute = rotateAttr ? 'data-rotate' : 'data-sequence';
+            const dataAttribute = rotateAttr ? 'data-rotate' : 'data-sequence';
             link.setAttribute(dataAttribute, result[1] || '');
             if (!result[1]) {
                 disableLink(link);
@@ -121,41 +116,41 @@ var initLinkHandler = function () {
             }
             save();
         }
-    };
+    }
 
-    const handleClick = (event: Event) => {
-        var target = event.target as HTMLElement;
+    function handleClick(event: Event) {
+        const target = event.target as HTMLElement;
         if (target.classList.contains('squiffy-link')) {
             handleLink(target);
         }
-    };
+    }
 
     document.addEventListener('click', handleClick);
     document.addEventListener('keypress', function (event) {
-        if (event.key !== "Enter") return
+        if (event.key !== "Enter") return;
         handleClick(event);
     });
-};
+}
 
-const disableLink = function (link: Element) {
+function disableLink(link: Element) {
     link.classList.add('disabled');
     link.setAttribute('tabindex', '-1');
 }
 
-const disableLinks = function (links: NodeListOf<Element>) {
+function disableLinks(links: NodeListOf<Element>) {
     links.forEach(disableLink);
 }
 
-const begin = function () {
+function begin() {
     if (!load()) {
         go(story.start);
     }
-};
+}
 
-var processLink = function (link: string) {
-    var sections = link.split(',');
-    var first = true;
-    var target = null;
+function processLink(link: string) {
+    const sections = link.split(',');
+    let first = true;
+    let target = null;
     sections.forEach(function (section) {
         section = section.trim();
         if (startsWith(section, '@replace ')) {
@@ -172,16 +167,15 @@ var processLink = function (link: string) {
         first = false;
     });
     return target;
-};
+}
 
-var setAttribute = function (expr: string) {
+function setAttribute(expr: string) {
     expr = expr.replace(/^(\w*\s*):=(.*)$/, (_, name, value) => (name + "=" + ui.processText(value)));
-    var lhs, rhs, op, value;
-    var setRegex = /^([\w]*)\s*=\s*(.*)$/;
-    var setMatch = setRegex.exec(expr);
+    const setRegex = /^([\w]*)\s*=\s*(.*)$/;
+    const setMatch = setRegex.exec(expr);
     if (setMatch) {
-        lhs = setMatch[1];
-        rhs = setMatch[2];
+        const lhs = setMatch[1];
+        let rhs = setMatch[2];
         if (isNaN(rhs as any)) {
             if (startsWith(rhs, "@")) rhs = get(rhs.substring(1));
             set(lhs, rhs);
@@ -191,32 +185,32 @@ var setAttribute = function (expr: string) {
         }
     }
     else {
-        var incDecRegex = /^([\w]*)\s*([\+\-\*\/])=\s*(.*)$/;
-        var incDecMatch = incDecRegex.exec(expr);
+        const incDecRegex = /^([\w]*)\s*([\+\-\*\/])=\s*(.*)$/;
+        const incDecMatch = incDecRegex.exec(expr);
         if (incDecMatch) {
-            lhs = incDecMatch[1];
-            op = incDecMatch[2];
-            rhs = incDecMatch[3];
+            const lhs = incDecMatch[1];
+            const op = incDecMatch[2];
+            let rhs = incDecMatch[3];
             if (startsWith(rhs, "@")) rhs = get(rhs.substring(1));
-            rhs = parseFloat(rhs);
-            value = get(lhs);
+            const rhsNumeric = parseFloat(rhs);
+            let value = get(lhs);
             if (value === null) value = 0;
             if (op == '+') {
-                value += rhs;
+                value += rhsNumeric;
             }
             if (op == '-') {
-                value -= rhs;
+                value -= rhsNumeric;
             }
             if (op == '*') {
-                value *= rhs;
+                value *= rhsNumeric;
             }
             if (op == '/') {
-                value /= rhs;
+                value /= rhsNumeric;
             }
             set(lhs, value);
         }
         else {
-            value = true;
+            let value = true;
             if (startsWith(expr, 'not ')) {
                 expr = expr.substring(4);
                 value = false;
@@ -224,22 +218,22 @@ var setAttribute = function (expr: string) {
             set(expr, value);
         }
     }
-};
+}
 
-var replaceLabel = function (expr: string) {
-    var regex = /^([\w]*)\s*=\s*(.*)$/;
-    var match = regex.exec(expr);
+function replaceLabel(expr: string) {
+    const regex = /^([\w]*)\s*=\s*(.*)$/;
+    const match = regex.exec(expr);
     if (!match) return;
-    var label = match[1];
-    var text = match[2];
+    const label = match[1];
+    let text = match[2];
     if (currentSection.passages && text in currentSection.passages) {
         text = currentSection.passages[text].text || '';
     }
     else if (text in story.sections) {
         text = story.sections[text].text || '';
     }
-    var stripParags = /^<p>(.*)<\/p>$/;
-    var stripParagsMatch = stripParags.exec(text);
+    const stripParags = /^<p>(.*)<\/p>$/;
+    const stripParagsMatch = stripParags.exec(text);
     if (stripParagsMatch) {
         text = stripParagsMatch[1];
     }
@@ -259,16 +253,16 @@ var replaceLabel = function (expr: string) {
     }, { once: true });
 
     labelElement.classList.add('fade-out');
-};
+}
 
-const go = function (section: string) {
+function go(section: string) {
     set('_transition', null);
     newSection();
     currentSection = story.sections[section];
     if (!currentSection) return;
     set('_section', section);
     setSeen(section);
-    var master = story.sections[''];
+    const master = story.sections[''];
     if (master) {
         run(master);
         ui.write(master.text || '');
@@ -280,9 +274,9 @@ const go = function (section: string) {
         ui.write(currentSection.text || '');
         save();
     }
-};
+}
 
-const run = function (section: Section) {
+function run(section: Section) {
     if (section.clear) {
         ui.clearScreen();
     }
@@ -292,22 +286,22 @@ const run = function (section: Section) {
     if (section.jsIndex !== undefined) {
         story.js[section.jsIndex]();
     }
-};
+}
 
-const showPassage = function (passageName: string) {
-    var passage = currentSection.passages && currentSection.passages[passageName];
-    var masterSection = story.sections[''];
+function showPassage(passageName: string) {
+    let passage = currentSection.passages && currentSection.passages[passageName];
+    const masterSection = story.sections[''];
     if (!passage && masterSection && masterSection.passages) passage = masterSection.passages[passageName];
     if (!passage) return;
     setSeen(passageName);
     if (masterSection && masterSection.passages) {
-        var masterPassage = masterSection.passages[''];
+        const masterPassage = masterSection.passages[''];
         if (masterPassage) {
             run(masterPassage);
             ui.write(masterPassage.text || '');
         }
     }
-    var master = currentSection.passages && currentSection.passages[''];
+    const master = currentSection.passages && currentSection.passages[''];
     if (master) {
         run(master);
         ui.write(master.text || '');
@@ -315,9 +309,9 @@ const showPassage = function (passageName: string) {
     run(passage);
     ui.write(passage.text || '');
     save();
-};
+}
 
-var processAttributes = function (attributes: string[]) {
+function processAttributes(attributes: string[]) {
     attributes.forEach(function (attribute) {
         if (startsWith(attribute, '@replace ')) {
             replaceLabel(attribute.substring(9));
@@ -326,11 +320,11 @@ var processAttributes = function (attributes: string[]) {
             setAttribute(attribute);
         }
     });
-};
+}
 
-const restart = function () {
+function restart() {
     if (settings.persist && window.localStorage) {
-        var keys = Object.keys(localStorage);
+        const keys = Object.keys(localStorage);
         keys.forEach(key => {
             if (startsWith(key, story.id)) {
                 localStorage.removeItem(key);
@@ -347,89 +341,89 @@ const restart = function () {
     else {
         location.reload();
     }
-};
+}
 
-const save = function () {
+function save() {
     set('_output', outputElement.innerHTML);
-};
+}
 
-const load = function () {
-    var output = get('_output');
+function load() {
+    const output = get('_output');
     if (!output) return false;
     outputElement.innerHTML = output;
     currentSectionElement = document.getElementById(get('_output-section'));
     currentSection = story.sections[get('_section')];
-    var transition = get('_transition');
+    const transition = get('_transition');
     if (transition) {
         eval('(' + transition + ')()');
     }
     return true;
-};
+}
 
-var setSeen = function (sectionName: string) {
-    var seenSections = get('_seen_sections');
+function setSeen(sectionName: string) {
+    let seenSections = get('_seen_sections');
     if (!seenSections) seenSections = [];
     if (seenSections.indexOf(sectionName) == -1) {
         seenSections.push(sectionName);
         set('_seen_sections', seenSections);
     }
-};
+}
 
-const seen = function (sectionName: string) {
-    var seenSections = get('_seen_sections');
+function seen(sectionName: string) {
+    const seenSections = get('_seen_sections');
     if (!seenSections) return false;
     return (seenSections.indexOf(sectionName) > -1);
-};
+}
 
-var newSection = function () {
+function newSection() {
     if (currentSectionElement) {
         disableLinks(currentSectionElement.querySelectorAll('.squiffy-link'));
         currentSectionElement.querySelectorAll('input').forEach(el => {
             const attribute = el.getAttribute('data-attribute') || el.id;
             if (attribute) set(attribute, el.value);
-            el.disabled = true
+            el.disabled = true;
         });
 
         currentSectionElement.querySelectorAll("[contenteditable]").forEach(el => {
             const attribute = el.getAttribute('data-attribute') || el.id;
             if (attribute) set(attribute, el.innerHTML);
-            (el as HTMLElement).contentEditable = 'false'
+            (el as HTMLElement).contentEditable = 'false';
         });
 
         currentSectionElement.querySelectorAll('textarea').forEach(el => {
             const attribute = el.getAttribute('data-attribute') || el.id;
             if (attribute) set(attribute, el.value);
-            el.disabled = true
+            el.disabled = true;
         });
     }
 
-    var sectionCount = get('_section-count') + 1;
+    const sectionCount = get('_section-count') + 1;
     set('_section-count', sectionCount);
-    var id = 'squiffy-section-' + sectionCount;
+    const id = 'squiffy-section-' + sectionCount;
 
     currentSectionElement = document.createElement('div');
     currentSectionElement.id = id;
     outputElement.appendChild(currentSectionElement);
 
     set('_output-section', id);
-};
+}
 
 const ui = {
-    write: function (text: string) {
+    write: (text: string) => {
         if (!currentSectionElement) return;
         scrollPosition = outputElement.scrollHeight;
-    
+
         const div = document.createElement('div');
         currentSectionElement.appendChild(div);
         div.innerHTML = ui.processText(text);
-        
+
         ui.scrollToEnd();
     },
-    clearScreen: function () {
+    clearScreen: () => {
         outputElement.innerHTML = '';
         newSection();
     },
-    scrollToEnd: function () {
+    scrollToEnd: () => {
         if (settings.scroll === 'element') {
             const scrollTo = outputElement.scrollHeight - outputElement.clientHeight;
             const currentScrollTop = outputElement.scrollTop;
@@ -441,27 +435,27 @@ const ui = {
             let scrollTo = scrollPosition;
             const currentScrollTop = Math.max(document.body.scrollTop, document.documentElement.scrollTop);
             if (scrollTo > currentScrollTop) {
-                var maxScrollTop = document.documentElement.scrollHeight - window.innerHeight;
+                const maxScrollTop = document.documentElement.scrollHeight - window.innerHeight;
                 if (scrollTo > maxScrollTop) scrollTo = maxScrollTop;
                 window.scrollTo({ top: scrollTo, behavior: 'smooth' });
             }
         }
     },
-    processText: function (text: string) {
+    processText: (text: string) => {
         function process(text: string, data: any) {
-            var containsUnprocessedSection = false;
-            var open = text.indexOf('{');
-            var close;
-    
+            let containsUnprocessedSection = false;
+            const open = text.indexOf('{');
+            let close;
+
             if (open > -1) {
-                var nestCount = 1;
-                var searchStart = open + 1;
-                var finished = false;
-    
+                let nestCount = 1;
+                let searchStart = open + 1;
+                let finished = false;
+
                 while (!finished) {
-                    var nextOpen = text.indexOf('{', searchStart);
-                    var nextClose = text.indexOf('}', searchStart);
-    
+                    const nextOpen = text.indexOf('{', searchStart);
+                    const nextClose = text.indexOf('}', searchStart);
+
                     if (nextClose > -1) {
                         if (nextOpen > -1 && nextOpen < nextClose) {
                             nestCount++;
@@ -482,16 +476,16 @@ const ui = {
                     }
                 }
             }
-    
+
             if (containsUnprocessedSection) {
-                var section = text.substring(open + 1, close);
-                var value = processTextCommand(section, data);
+                const section = text.substring(open + 1, close);
+                const value = processTextCommand(section, data);
                 text = text.substring(0, open) + value + process(text.substring(close! + 1), data);
             }
-    
+
             return (text);
         }
-    
+
         function processTextCommand(text: string, data: any) {
             if (startsWith(text, 'if ')) {
                 return processTextCommand_If(text, data);
@@ -520,29 +514,29 @@ const ui = {
             }
             return get(text);
         }
-    
+
         function processTextCommand_If(section: string, data: any) {
-            var command = section.substring(3);
-            var colon = command.indexOf(':');
+            const command = section.substring(3);
+            const colon = command.indexOf(':');
             if (colon == -1) {
                 return ('{if ' + command + '}');
             }
-    
-            var text = command.substring(colon + 1);
-            var condition = command.substring(0, colon);
+
+            const text = command.substring(colon + 1);
+            let condition = command.substring(0, colon);
             condition = condition.replace("<", "&lt;");
-            var operatorRegex = /([\w ]*)(=|&lt;=|&gt;=|&lt;&gt;|&lt;|&gt;)(.*)/;
-            var match = operatorRegex.exec(condition);
-    
-            var result = false;
-    
+            const operatorRegex = /([\w ]*)(=|&lt;=|&gt;=|&lt;&gt;|&lt;|&gt;)(.*)/;
+            const match = operatorRegex.exec(condition);
+
+            let result = false;
+
             if (match) {
-                var lhs = get(match[1]);
-                var op = match[2];
-                var rhs = match[3];
-    
+                const lhs = get(match[1]);
+                const op = match[2];
+                let rhs = match[3];
+
                 if (startsWith(rhs, '@')) rhs = get(rhs.substring(1));
-    
+
                 if (op == '=' && lhs == rhs) result = true;
                 if (op == '&lt;&gt;' && lhs != rhs) result = true;
                 if (op == '&gt;' && lhs > rhs) result = true;
@@ -551,52 +545,52 @@ const ui = {
                 if (op == '&lt;=' && lhs <= rhs) result = true;
             }
             else {
-                var checkValue = true;
+                let checkValue = true;
                 if (startsWith(condition, 'not ')) {
                     condition = condition.substring(4);
                     checkValue = false;
                 }
-    
+
                 if (startsWith(condition, 'seen ')) {
                     result = (seen(condition.substring(5)) == checkValue);
                 }
                 else {
-                    var value = get(condition);
+                    let value = get(condition);
                     if (value === null) value = false;
                     result = (value == checkValue);
                 }
             }
-    
-            var textResult = result ? process(text, data) : '';
-    
+
+            const textResult = result ? process(text, data) : '';
+
             data.lastIf = result;
             return textResult;
         }
-    
+
         function processTextCommand_Else(section: string, data: any) {
             if (!('lastIf' in data) || data.lastIf) return '';
-            var text = section.substring(5);
+            const text = section.substring(5);
             return process(text, data);
         }
-    
+
         function processTextCommand_Label(section: string, data: any) {
-            var command = section.substring(6);
-            var eq = command.indexOf('=');
+            const command = section.substring(6);
+            const eq = command.indexOf('=');
             if (eq == -1) {
                 return ('{label:' + command + '}');
             }
-    
-            var text = command.substring(eq + 1);
-            var label = command.substring(0, eq);
-    
+
+            const text = command.substring(eq + 1);
+            const label = command.substring(0, eq);
+
             return '<span class="squiffy-label-' + label + '">' + process(text, data) + '</span>';
         }
-    
+
         function processTextCommand_Rotate(type: string, section: string) {
-            var options;
-            var attribute = '';
+            let options;
+            let attribute = '';
             if (section.substring(type.length, type.length + 1) == ' ') {
-                var colon = section.indexOf(':');
+                const colon = section.indexOf(':');
                 if (colon == -1) {
                     return '{' + section + '}';
                 }
@@ -607,14 +601,14 @@ const ui = {
                 options = section.substring(type.length + 1);
             }
             // TODO: Check - previously there was no second parameter here
-            var rotation = rotate(options.replace(/"/g, '&quot;').replace(/'/g, '&#39;'), null);
+            const rotation = rotate(options.replace(/"/g, '&quot;').replace(/'/g, '&#39;'), null);
             if (attribute) {
                 set(attribute, rotation[0]);
             }
             return '<a class="squiffy-link" data-' + type + '="' + rotation[1] + '" data-attribute="' + attribute + '" role="link">' + rotation[0] + '</a>';
         }
-    
-        var data = {
+
+        const data = {
             fulltext: text
         };
         return process(text, data);
@@ -625,24 +619,22 @@ const ui = {
     },
 };
 
-storageFallback = {};
-
-var startsWith = function (string: string, prefix: string) {
+function startsWith(string: string, prefix: string) {
     return string.substring(0, prefix.length) === prefix;
-};
+}
 
-var rotate = function (options: string, current: string | null) {
-    var colon = options.indexOf(':');
+function rotate(options: string, current: string | null) {
+    const colon = options.indexOf(':');
     if (colon == -1) {
         return [options, current];
     }
-    var next = options.substring(0, colon);
-    var remaining = options.substring(colon + 1);
+    const next = options.substring(0, colon);
+    let remaining = options.substring(colon + 1);
     if (current) remaining += ':' + current;
     return [next, remaining];
-};
+}
 
-export const init = function (options: SquiffyInitOptions): SquiffyApi {
+export const init = (options: SquiffyInitOptions): SquiffyApi => {
     settings = {
         scroll: 'body',
         persist: true,
