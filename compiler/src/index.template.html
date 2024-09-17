@@ -6,11 +6,11 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<!-- SCRIPTS -->
 		<script type="module">
-			import { squiffy } from './squiffy.runtime.js';
+			import { init } from './squiffy.runtime.js';
 			import { story } from './story.js';
 
 			document.addEventListener('DOMContentLoaded', function() {
-				const squiffyApi = squiffy.init({
+				const squiffyApi = init({
 					element: document.getElementById('squiffy'),
 					story: story,
 				});
