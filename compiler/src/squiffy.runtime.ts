@@ -1,5 +1,13 @@
 interface SquiffyInitOptions {
     element: HTMLElement;
+    story: {
+        js: [() => void],
+        data: {
+            start: string;
+            id: string;
+            sections: Record<string, Section>;
+        }
+    }
 }
 
 interface SquiffySettings {
@@ -652,6 +660,9 @@ squiffy.init = function (options: SquiffyInitOptions): SquiffyApi {
 
     squiffy.ui.output = options.element;
     squiffy.ui.settings = settings;
+
+    squiffy.story.js = options.story.js;
+    squiffy.story = { ...squiffy.story, ...options.story.data };
 
     if (settings.scroll === 'element') {
         squiffy.ui.output.style.overflowY = 'auto';

@@ -38,7 +38,7 @@ async function generate(inputFilename: string) {
     const uiInfo = compiler.getUiInfo();
 
     console.log('Writing squiffy.runtime.js');
-    fs.copyFileSync(findFile('squiffy.runtime.js', outputPath), path.join(outputPath, 'squiffy.runtime.js'));
+    fs.copyFileSync(path.join(import.meta.dirname, 'squiffy.runtime.js'), path.join(outputPath, 'squiffy.runtime.js'));
 
     var cssTemplateFile = fs.readFileSync(findFile('style.template.css', outputPath /*, sourcePath */));
     var cssData = cssTemplateFile.toString();
