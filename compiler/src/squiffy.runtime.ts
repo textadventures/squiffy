@@ -22,13 +22,6 @@ interface SquiffyApi {
 interface Squiffy {
     init: (options: SquiffyInitOptions) => void;
     story: Story;
-    ui: {
-        processText: (text: string) => string,
-        write: (text: string) => void,
-        clearScreen: () => void,
-        scrollToEnd: () => void,
-        transition: (f: any) => void,
-    };
     set: (attribute: string, value: any) => void;
     get: (attribute: string) => any;
 }
@@ -86,13 +79,6 @@ export const squiffy: Squiffy = {
         }
         if (!result) return null;
         return JSON.parse(result);
-    },
-    ui: {
-        processText: null!,
-        write: null!,
-        clearScreen: null!,
-        scrollToEnd: null!,
-        transition: null!,
     },
 };
 
@@ -198,7 +184,7 @@ var processLink = function (link: string) {
 };
 
 var setAttribute = function (expr: string) {
-    expr = expr.replace(/^(\w*\s*):=(.*)$/, (_, name, value) => (name + "=" + squiffy.ui.processText(value)));
+    expr = expr.replace(/^(\w*\s*):=(.*)$/, (_, name, value) => (name + "=" + ui.processText(value)));
     var lhs, rhs, op, value;
     var setRegex = /^([\w]*)\s*=\s*(.*)$/;
     var setMatch = setRegex.exec(expr);
@@ -271,7 +257,7 @@ var replaceLabel = function (expr: string) {
     if (!labelElement) return;
 
     labelElement.addEventListener('transitionend', function () {
-        labelElement.innerHTML = squiffy.ui.processText(text);
+        labelElement.innerHTML = ui.processText(text);
 
         labelElement.addEventListener('transitionend', function () {
             save();
@@ -294,20 +280,20 @@ const go = function (section: string) {
     var master = squiffy.story.sections[''];
     if (master) {
         run(master);
-        squiffy.ui.write(master.text || '');
+        ui.write(master.text || '');
     }
     run(currentSection);
     // The JS might have changed which section we're in
     if (squiffy.get('_section') == section) {
         squiffy.set('_turncount', 0);
-        squiffy.ui.write(currentSection.text || '');
+        ui.write(currentSection.text || '');
         save();
     }
 };
 
 const run = function (section: Section) {
     if (section.clear) {
-        squiffy.ui.clearScreen();
+        ui.clearScreen();
     }
     if (section.attributes) {
         processAttributes(section.attributes.map(line => line.replace(/^random\s*:\s*(\w+)\s*=\s*(.+)/i, (line, attr, options) => (options = options.split("|")) ? attr + " = " + options[Math.floor(Math.random() * options.length)] : line)));
@@ -327,16 +313,16 @@ const showPassage = function (passageName: string) {
         var masterPassage = masterSection.passages[''];
         if (masterPassage) {
             run(masterPassage);
-            squiffy.ui.write(masterPassage.text || '');
+            ui.write(masterPassage.text || '');
         }
     }
     var master = currentSection.passages && currentSection.passages[''];
     if (master) {
         run(master);
-        squiffy.ui.write(master.text || '');
+        ui.write(master.text || '');
     }
     run(passage);
-    squiffy.ui.write(passage.text || '');
+    ui.write(passage.text || '');
     save();
 };
 
@@ -437,220 +423,218 @@ var newSection = function () {
     squiffy.set('_output-section', id);
 };
 
-squiffy.ui.write = function (text) {
-    if (!currentSectionElement) return;
-    scrollPosition = outputElement.scrollHeight;
-
-    const div = document.createElement('div');
-    currentSectionElement.appendChild(div);
-    div.innerHTML = squiffy.ui.processText(text);
+const ui = {
+    write: function (text: string) {
+        if (!currentSectionElement) return;
+        scrollPosition = outputElement.scrollHeight;
     
-    squiffy.ui.scrollToEnd();
-};
-
-squiffy.ui.clearScreen = function () {
-    outputElement.innerHTML = '';
-    newSection();
-};
-
-squiffy.ui.scrollToEnd = function () {
-    if (settings.scroll === 'element') {
-        const scrollTo = outputElement.scrollHeight - outputElement.clientHeight;
-        const currentScrollTop = outputElement.scrollTop;
-        if (scrollTo > (currentScrollTop || 0)) {
-            outputElement.scrollTo({ top: scrollTo, behavior: 'smooth' });
+        const div = document.createElement('div');
+        currentSectionElement.appendChild(div);
+        div.innerHTML = ui.processText(text);
+        
+        ui.scrollToEnd();
+    },
+    clearScreen: function () {
+        outputElement.innerHTML = '';
+        newSection();
+    },
+    scrollToEnd: function () {
+        if (settings.scroll === 'element') {
+            const scrollTo = outputElement.scrollHeight - outputElement.clientHeight;
+            const currentScrollTop = outputElement.scrollTop;
+            if (scrollTo > (currentScrollTop || 0)) {
+                outputElement.scrollTo({ top: scrollTo, behavior: 'smooth' });
+            }
         }
-    }
-    else {
-        let scrollTo = scrollPosition;
-        const currentScrollTop = Math.max(document.body.scrollTop, document.documentElement.scrollTop);
-        if (scrollTo > currentScrollTop) {
-            var maxScrollTop = document.documentElement.scrollHeight - window.innerHeight;
-            if (scrollTo > maxScrollTop) scrollTo = maxScrollTop;
-            window.scrollTo({ top: scrollTo, behavior: 'smooth' });
+        else {
+            let scrollTo = scrollPosition;
+            const currentScrollTop = Math.max(document.body.scrollTop, document.documentElement.scrollTop);
+            if (scrollTo > currentScrollTop) {
+                var maxScrollTop = document.documentElement.scrollHeight - window.innerHeight;
+                if (scrollTo > maxScrollTop) scrollTo = maxScrollTop;
+                window.scrollTo({ top: scrollTo, behavior: 'smooth' });
+            }
         }
-    }
-};
-
-squiffy.ui.processText = function (text) {
-    function process(text: string, data: any) {
-        var containsUnprocessedSection = false;
-        var open = text.indexOf('{');
-        var close;
-
-        if (open > -1) {
-            var nestCount = 1;
-            var searchStart = open + 1;
-            var finished = false;
-
-            while (!finished) {
-                var nextOpen = text.indexOf('{', searchStart);
-                var nextClose = text.indexOf('}', searchStart);
-
-                if (nextClose > -1) {
-                    if (nextOpen > -1 && nextOpen < nextClose) {
-                        nestCount++;
-                        searchStart = nextOpen + 1;
-                    }
-                    else {
-                        nestCount--;
-                        searchStart = nextClose + 1;
-                        if (nestCount === 0) {
-                            close = nextClose;
-                            containsUnprocessedSection = true;
-                            finished = true;
+    },
+    processText: function (text: string) {
+        function process(text: string, data: any) {
+            var containsUnprocessedSection = false;
+            var open = text.indexOf('{');
+            var close;
+    
+            if (open > -1) {
+                var nestCount = 1;
+                var searchStart = open + 1;
+                var finished = false;
+    
+                while (!finished) {
+                    var nextOpen = text.indexOf('{', searchStart);
+                    var nextClose = text.indexOf('}', searchStart);
+    
+                    if (nextClose > -1) {
+                        if (nextOpen > -1 && nextOpen < nextClose) {
+                            nestCount++;
+                            searchStart = nextOpen + 1;
+                        }
+                        else {
+                            nestCount--;
+                            searchStart = nextClose + 1;
+                            if (nestCount === 0) {
+                                close = nextClose;
+                                containsUnprocessedSection = true;
+                                finished = true;
+                            }
                         }
                     }
-                }
-                else {
-                    finished = true;
+                    else {
+                        finished = true;
+                    }
                 }
             }
-        }
-
-        if (containsUnprocessedSection) {
-            var section = text.substring(open + 1, close);
-            var value = processTextCommand(section, data);
-            text = text.substring(0, open) + value + process(text.substring(close! + 1), data);
-        }
-
-        return (text);
-    }
-
-    function processTextCommand(text: string, data: any) {
-        if (startsWith(text, 'if ')) {
-            return processTextCommand_If(text, data);
-        }
-        else if (startsWith(text, 'else:')) {
-            return processTextCommand_Else(text, data);
-        }
-        else if (startsWith(text, 'label:')) {
-            return processTextCommand_Label(text, data);
-        }
-        else if (/^rotate[: ]/.test(text)) {
-            return processTextCommand_Rotate('rotate', text);
-        }
-        else if (/^sequence[: ]/.test(text)) {
-            return processTextCommand_Rotate('sequence', text);
-        }
-        else if (currentSection.passages && text in currentSection.passages) {
-            return process(currentSection.passages[text].text || '', data);
-        }
-        else if (text in squiffy.story.sections) {
-            return process(squiffy.story.sections[text].text || '', data);
-        }
-        else if (startsWith(text, '@') && !startsWith(text, '@replace')) {
-            processAttributes(text.substring(1).split(","));
-            return "";
-        }
-        return squiffy.get(text);
-    }
-
-    function processTextCommand_If(section: string, data: any) {
-        var command = section.substring(3);
-        var colon = command.indexOf(':');
-        if (colon == -1) {
-            return ('{if ' + command + '}');
-        }
-
-        var text = command.substring(colon + 1);
-        var condition = command.substring(0, colon);
-        condition = condition.replace("<", "&lt;");
-        var operatorRegex = /([\w ]*)(=|&lt;=|&gt;=|&lt;&gt;|&lt;|&gt;)(.*)/;
-        var match = operatorRegex.exec(condition);
-
-        var result = false;
-
-        if (match) {
-            var lhs = squiffy.get(match[1]);
-            var op = match[2];
-            var rhs = match[3];
-
-            if (startsWith(rhs, '@')) rhs = squiffy.get(rhs.substring(1));
-
-            if (op == '=' && lhs == rhs) result = true;
-            if (op == '&lt;&gt;' && lhs != rhs) result = true;
-            if (op == '&gt;' && lhs > rhs) result = true;
-            if (op == '&lt;' && lhs < rhs) result = true;
-            if (op == '&gt;=' && lhs >= rhs) result = true;
-            if (op == '&lt;=' && lhs <= rhs) result = true;
-        }
-        else {
-            var checkValue = true;
-            if (startsWith(condition, 'not ')) {
-                condition = condition.substring(4);
-                checkValue = false;
+    
+            if (containsUnprocessedSection) {
+                var section = text.substring(open + 1, close);
+                var value = processTextCommand(section, data);
+                text = text.substring(0, open) + value + process(text.substring(close! + 1), data);
             }
-
-            if (startsWith(condition, 'seen ')) {
-                result = (seen(condition.substring(5)) == checkValue);
+    
+            return (text);
+        }
+    
+        function processTextCommand(text: string, data: any) {
+            if (startsWith(text, 'if ')) {
+                return processTextCommand_If(text, data);
+            }
+            else if (startsWith(text, 'else:')) {
+                return processTextCommand_Else(text, data);
+            }
+            else if (startsWith(text, 'label:')) {
+                return processTextCommand_Label(text, data);
+            }
+            else if (/^rotate[: ]/.test(text)) {
+                return processTextCommand_Rotate('rotate', text);
+            }
+            else if (/^sequence[: ]/.test(text)) {
+                return processTextCommand_Rotate('sequence', text);
+            }
+            else if (currentSection.passages && text in currentSection.passages) {
+                return process(currentSection.passages[text].text || '', data);
+            }
+            else if (text in squiffy.story.sections) {
+                return process(squiffy.story.sections[text].text || '', data);
+            }
+            else if (startsWith(text, '@') && !startsWith(text, '@replace')) {
+                processAttributes(text.substring(1).split(","));
+                return "";
+            }
+            return squiffy.get(text);
+        }
+    
+        function processTextCommand_If(section: string, data: any) {
+            var command = section.substring(3);
+            var colon = command.indexOf(':');
+            if (colon == -1) {
+                return ('{if ' + command + '}');
+            }
+    
+            var text = command.substring(colon + 1);
+            var condition = command.substring(0, colon);
+            condition = condition.replace("<", "&lt;");
+            var operatorRegex = /([\w ]*)(=|&lt;=|&gt;=|&lt;&gt;|&lt;|&gt;)(.*)/;
+            var match = operatorRegex.exec(condition);
+    
+            var result = false;
+    
+            if (match) {
+                var lhs = squiffy.get(match[1]);
+                var op = match[2];
+                var rhs = match[3];
+    
+                if (startsWith(rhs, '@')) rhs = squiffy.get(rhs.substring(1));
+    
+                if (op == '=' && lhs == rhs) result = true;
+                if (op == '&lt;&gt;' && lhs != rhs) result = true;
+                if (op == '&gt;' && lhs > rhs) result = true;
+                if (op == '&lt;' && lhs < rhs) result = true;
+                if (op == '&gt;=' && lhs >= rhs) result = true;
+                if (op == '&lt;=' && lhs <= rhs) result = true;
             }
             else {
-                var value = squiffy.get(condition);
-                if (value === null) value = false;
-                result = (value == checkValue);
+                var checkValue = true;
+                if (startsWith(condition, 'not ')) {
+                    condition = condition.substring(4);
+                    checkValue = false;
+                }
+    
+                if (startsWith(condition, 'seen ')) {
+                    result = (seen(condition.substring(5)) == checkValue);
+                }
+                else {
+                    var value = squiffy.get(condition);
+                    if (value === null) value = false;
+                    result = (value == checkValue);
+                }
             }
+    
+            var textResult = result ? process(text, data) : '';
+    
+            data.lastIf = result;
+            return textResult;
         }
-
-        var textResult = result ? process(text, data) : '';
-
-        data.lastIf = result;
-        return textResult;
-    }
-
-    function processTextCommand_Else(section: string, data: any) {
-        if (!('lastIf' in data) || data.lastIf) return '';
-        var text = section.substring(5);
+    
+        function processTextCommand_Else(section: string, data: any) {
+            if (!('lastIf' in data) || data.lastIf) return '';
+            var text = section.substring(5);
+            return process(text, data);
+        }
+    
+        function processTextCommand_Label(section: string, data: any) {
+            var command = section.substring(6);
+            var eq = command.indexOf('=');
+            if (eq == -1) {
+                return ('{label:' + command + '}');
+            }
+    
+            var text = command.substring(eq + 1);
+            var label = command.substring(0, eq);
+    
+            return '<span class="squiffy-label-' + label + '">' + process(text, data) + '</span>';
+        }
+    
+        function processTextCommand_Rotate(type: string, section: string) {
+            var options;
+            var attribute = '';
+            if (section.substring(type.length, type.length + 1) == ' ') {
+                var colon = section.indexOf(':');
+                if (colon == -1) {
+                    return '{' + section + '}';
+                }
+                options = section.substring(colon + 1);
+                attribute = section.substring(type.length + 1, colon);
+            }
+            else {
+                options = section.substring(type.length + 1);
+            }
+            // TODO: Check - previously there was no second parameter here
+            var rotation = rotate(options.replace(/"/g, '&quot;').replace(/'/g, '&#39;'), null);
+            if (attribute) {
+                squiffy.set(attribute, rotation[0]);
+            }
+            return '<a class="squiffy-link" data-' + type + '="' + rotation[1] + '" data-attribute="' + attribute + '" role="link">' + rotation[0] + '</a>';
+        }
+    
+        var data = {
+            fulltext: text
+        };
         return process(text, data);
-    }
-
-    function processTextCommand_Label(section: string, data: any) {
-        var command = section.substring(6);
-        var eq = command.indexOf('=');
-        if (eq == -1) {
-            return ('{label:' + command + '}');
-        }
-
-        var text = command.substring(eq + 1);
-        var label = command.substring(0, eq);
-
-        return '<span class="squiffy-label-' + label + '">' + process(text, data) + '</span>';
-    }
-
-    function processTextCommand_Rotate(type: string, section: string) {
-        var options;
-        var attribute = '';
-        if (section.substring(type.length, type.length + 1) == ' ') {
-            var colon = section.indexOf(':');
-            if (colon == -1) {
-                return '{' + section + '}';
-            }
-            options = section.substring(colon + 1);
-            attribute = section.substring(type.length + 1, colon);
-        }
-        else {
-            options = section.substring(type.length + 1);
-        }
-        // TODO: Check - previously there was no second parameter here
-        var rotation = rotate(options.replace(/"/g, '&quot;').replace(/'/g, '&#39;'), null);
-        if (attribute) {
-            squiffy.set(attribute, rotation[0]);
-        }
-        return '<a class="squiffy-link" data-' + type + '="' + rotation[1] + '" data-attribute="' + attribute + '" role="link">' + rotation[0] + '</a>';
-    }
-
-    var data = {
-        fulltext: text
-    };
-    return process(text, data);
+    },
+    transition: function (f: any) {
+        squiffy.set('_transition', f.toString());
+        f();
+    },
 };
 
-squiffy.ui.transition = function (f: any) {
-    squiffy.set('_transition', f.toString());
-    f();
-};
-
-squiffy.storageFallback = {};
+storageFallback = {};
 
 var startsWith = function (string: string, prefix: string) {
     return string.substring(0, prefix.length) === prefix;
