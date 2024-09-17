@@ -94,14 +94,14 @@ var initLinkHandler = function () {
             passage = processLink(passage);
             if (passage) {
                 currentSection?.appendChild(document.createElement('hr'));
-                squiffy.story.passage(passage);
+                showPassage(passage);
             }
             var turnPassage = '@' + squiffy.get('_turncount');
             if (turnPassage in squiffy.story.section.passages) {
-                squiffy.story.passage(turnPassage);
+                showPassage(turnPassage);
             }
             if ('@last' in squiffy.story.section.passages && squiffy.get('_turncount') >= squiffy.story.section.passageCount) {
-                squiffy.story.passage('@last');
+                showPassage('@last');
             }
         }
         else if (section) {
@@ -124,7 +124,7 @@ var initLinkHandler = function () {
             if (attribute) {
                 squiffy.set(attribute, result[0]);
             }
-            squiffy.story.save();
+            save();
         }
     };
 
@@ -256,7 +256,7 @@ var replaceLabel = function (expr: string) {
         labelElement.innerHTML = squiffy.ui.processText(text);
 
         labelElement.addEventListener('transitionend', function () {
-            squiffy.story.save();
+            save();
         }, { once: true });
 
         labelElement.classList.remove('fade-out');
@@ -275,19 +275,19 @@ const go = function (section: string) {
     setSeen(section);
     var master = squiffy.story.sections[''];
     if (master) {
-        squiffy.story.run(master);
+        run(master);
         squiffy.ui.write(master.text);
     }
-    squiffy.story.run(squiffy.story.section);
+    run(squiffy.story.section);
     // The JS might have changed which section we're in
     if (squiffy.get('_section') == section) {
         squiffy.set('_turncount', 0);
         squiffy.ui.write(squiffy.story.section.text);
-        squiffy.story.save();
+        save();
     }
 };
 
-squiffy.story.run = function (section: Section) {
+const run = function (section: Section) {
     if (section.clear) {
         squiffy.ui.clearScreen();
     }
@@ -299,7 +299,7 @@ squiffy.story.run = function (section: Section) {
     }
 };
 
-squiffy.story.passage = function (passageName: string) {
+const showPassage = function (passageName: string) {
     var passage = squiffy.story.section.passages[passageName];
     var masterSection = squiffy.story.sections[''];
     if (!passage && masterSection) passage = masterSection.passages[passageName];
@@ -308,18 +308,18 @@ squiffy.story.passage = function (passageName: string) {
     if (masterSection) {
         var masterPassage = masterSection.passages[''];
         if (masterPassage) {
-            squiffy.story.run(masterPassage);
+            run(masterPassage);
             squiffy.ui.write(masterPassage.text);
         }
     }
     var master = squiffy.story.section.passages[''];
     if (master) {
-        squiffy.story.run(master);
+        run(master);
         squiffy.ui.write(master.text);
     }
-    squiffy.story.run(passage);
+    run(passage);
     squiffy.ui.write(passage.text);
-    squiffy.story.save();
+    save();
 };
 
 var processAttributes = function (attributes: string[]) {
@@ -333,7 +333,7 @@ var processAttributes = function (attributes: string[]) {
     });
 };
 
-squiffy.story.restart = function () {
+const restart = function () {
     if (squiffy.ui.settings.persist && window.localStorage) {
         var keys = Object.keys(localStorage);
         keys.forEach(key => {
@@ -354,7 +354,7 @@ squiffy.story.restart = function () {
     }
 };
 
-squiffy.story.save = function () {
+const save = function () {
     squiffy.set('_output', squiffy.ui.output.innerHTML);
 };
 
@@ -380,7 +380,7 @@ var setSeen = function (sectionName: string) {
     }
 };
 
-squiffy.story.seen = function (sectionName: string) {
+const seen = function (sectionName: string) {
     var seenSections = squiffy.get('_seen_sections');
     if (!seenSections) return false;
     return (seenSections.indexOf(sectionName) > -1);
@@ -568,7 +568,7 @@ squiffy.ui.processText = function (text) {
             }
 
             if (startsWith(condition, 'seen ')) {
-                result = (squiffy.story.seen(condition.substring(5)) == checkValue);
+                result = (seen(condition.substring(5)) == checkValue);
             }
             else {
                 var value = squiffy.get(condition);
@@ -676,7 +676,7 @@ squiffy.init = function (options: SquiffyInitOptions): SquiffyApi {
     return {
         askRestart: function () {
             if (!squiffy.ui.settings.restartPrompt || confirm('Are you sure you want to restart?')) {
-                squiffy.story.restart();
+                restart();
             }
         }
     };
