@@ -20,7 +20,7 @@ interface Squiffy {
     init: (options: SquiffyInitOptions) => void;
     story: any;
     ui: {
-        output: JQuery,
+        $output: JQuery,
         settings: SquiffySettings,
         processText: (text: string) => string,
         write: (text: string) => void,
@@ -64,7 +64,7 @@ export const squiffy: Squiffy = {
         return JSON.parse(result);
     },
     ui: {
-        output: null!,
+        $output: null!,
         settings: null!,
         processText: null!,
         write: null!,
@@ -76,19 +76,19 @@ export const squiffy: Squiffy = {
 };
 
 var initLinkHandler = function () {
-    var handleLink = function (link: JQuery) {
-        if (link.hasClass('disabled')) return;
-        var passage = link.data('passage');
-        var section = link.data('section');
-        var rotateAttr = link.attr('data-rotate');
-        var sequenceAttr = link.attr('data-sequence');
+    var handleLink = function ($link: JQuery) {
+        if ($link.hasClass('disabled')) return;
+        var passage = $link.data('passage');
+        var section = $link.data('section');
+        var rotateAttr = $link.attr('data-rotate');
+        var sequenceAttr = $link.attr('data-sequence');
         var rotateOrSequenceAttr = rotateAttr || sequenceAttr;
         if (passage) {
-            disableLink(link);
+            disableLink($link);
             squiffy.set('_turncount', squiffy.get('_turncount') + 1);
             passage = processLink(passage);
             if (passage) {
-                currentSection!.append('<hr/>');
+                $currentSection!.append('<hr/>');
                 squiffy.story.passage(passage);
             }
             var turnPassage = '@' + squiffy.get('_turncount');
@@ -100,20 +100,20 @@ var initLinkHandler = function () {
             }
         }
         else if (section) {
-            currentSection!.append('<hr/>');
-            disableLink(link);
+            $currentSection!.append('<hr/>');
+            disableLink($link);
             section = processLink(section);
             squiffy.story.go(section);
         }
         else if (rotateOrSequenceAttr) {
-            var result = rotate(rotateOrSequenceAttr, rotateAttr ? link.text() : '');
-            link.html(result[0]!.replace(/&quot;/g, '"').replace(/&#39;/g, '\''));
+            var result = rotate(rotateOrSequenceAttr, rotateAttr ? $link.text() : '');
+            $link.html(result[0]!.replace(/&quot;/g, '"').replace(/&#39;/g, '\''));
             var dataAttribute = rotateAttr ? 'data-rotate' : 'data-sequence';
-            link.attr(dataAttribute, result[1]);
+            $link.attr(dataAttribute, result[1]);
             if (!result[1]) {
-                disableLink(link);
+                disableLink($link);
             }
-            const attribute = link.attr('data-attribute');
+            const attribute = $link.attr('data-attribute');
             if (attribute) {
                 squiffy.set(attribute, result[0]);
             }
@@ -121,23 +121,23 @@ var initLinkHandler = function () {
         }
     };
 
-    squiffy.ui.output.on('click', 'a.squiffy-link', function () {
+    squiffy.ui.$output.on('click', 'a.squiffy-link', function () {
         handleLink(jQuery(this));
     });
 
-    squiffy.ui.output.on('keypress', 'a.squiffy-link', function (e) {
+    squiffy.ui.$output.on('keypress', 'a.squiffy-link', function (e) {
         if (e.which !== 13) return;
         handleLink(jQuery(this));
     });
 
-    squiffy.ui.output.on('mousedown', 'a.squiffy-link', function (event) {
+    squiffy.ui.$output.on('mousedown', 'a.squiffy-link', function (event) {
         event.preventDefault();
     });
 };
 
-var disableLink = function (link: JQuery) {
-    link.addClass('disabled');
-    link.attr('tabindex', -1);
+var disableLink = function ($link: JQuery) {
+    $link.addClass('disabled');
+    $link.attr('tabindex', -1);
 }
 
 squiffy.story.begin = function () {
@@ -237,7 +237,7 @@ var replaceLabel = function (expr: string) {
     if (stripParagsMatch) {
         text = stripParagsMatch[1];
     }
-    var $labels = squiffy.ui.output.find('.squiffy-label-' + label);
+    var $labels = squiffy.ui.$output.find('.squiffy-label-' + label);
     $labels.fadeOut(1000, function () {
         $labels.html(squiffy.ui.processText(text));
         $labels.fadeIn(1000, function () {
@@ -326,7 +326,7 @@ squiffy.story.restart = function () {
         squiffy.storageFallback = {};
     }
     if (squiffy.ui.settings.scroll === 'element') {
-        squiffy.ui.output.html('');
+        squiffy.ui.$output.html('');
         squiffy.story.begin();
     }
     else {
@@ -335,14 +335,14 @@ squiffy.story.restart = function () {
 };
 
 squiffy.story.save = function () {
-    squiffy.set('_output', squiffy.ui.output.html());
+    squiffy.set('_output', squiffy.ui.$output.html());
 };
 
 squiffy.story.load = function () {
     var output = squiffy.get('_output');
     if (!output) return false;
-    squiffy.ui.output.html(output);
-    currentSection = jQuery('#' + squiffy.get('_output-section'));
+    squiffy.ui.$output.html(output);
+    $currentSection = jQuery('#' + squiffy.get('_output-section'));
     squiffy.story.section = squiffy.story.sections[squiffy.get('_section')];
     var transition = squiffy.get('_transition');
     if (transition) {
@@ -366,24 +366,24 @@ squiffy.story.seen = function (sectionName: string) {
     return (seenSections.indexOf(sectionName) > -1);
 };
 
-var currentSection: JQuery | null = null;
+var $currentSection: JQuery | null = null;
 var scrollPosition = 0;
 
 var newSection = function () {
-    if (currentSection) {
-        disableLink(jQuery('.squiffy-link', currentSection));
-        currentSection.find('input').each(function () {
+    if ($currentSection) {
+        disableLink(jQuery('.squiffy-link', $currentSection));
+        $currentSection.find('input').each(function () {
             squiffy.set($(this).data('attribute') || this.id, this.value);
             this.disabled = true;
         });
-        currentSection.find("[contenteditable]").each(function () {
+        $currentSection.find("[contenteditable]").each(function () {
             squiffy.set($(this).data('attribute') || this.id, this.innerHTML);
             // TODO: This doesn't compile in TypeScript...
             // this.disabled = true;
             // try...
             // this.contentEditable = 'false' ??
         });
-        currentSection.find('textarea').each(function () {
+        $currentSection.find('textarea').each(function () {
             squiffy.set($(this).data('attribute') || this.id, this.value);
             this.disabled = true;
         });
@@ -392,32 +392,32 @@ var newSection = function () {
     var sectionCount = squiffy.get('_section-count') + 1;
     squiffy.set('_section-count', sectionCount);
     var id = 'squiffy-section-' + sectionCount;
-    currentSection = jQuery('<div/>', {
+    $currentSection = jQuery('<div/>', {
         id: id,
-    }).appendTo(squiffy.ui.output);
+    }).appendTo(squiffy.ui.$output);
     squiffy.set('_output-section', id);
 };
 
 squiffy.ui.write = function (text) {
-    scrollPosition = squiffy.ui.output.height() || 0;
-    currentSection!.append(jQuery('<div/>').html(squiffy.ui.processText(text)));
+    scrollPosition = squiffy.ui.$output.height() || 0;
+    $currentSection!.append(jQuery('<div/>').html(squiffy.ui.processText(text)));
     squiffy.ui.scrollToEnd();
 };
 
 squiffy.ui.clearScreen = function () {
-    squiffy.ui.output.html('');
+    squiffy.ui.$output.html('');
     newSection();
 };
 
 squiffy.ui.scrollToEnd = function () {
     var scrollTo, currentScrollTop, distance, duration;
     if (squiffy.ui.settings.scroll === 'element') {
-        scrollTo = squiffy.ui.output[0].scrollHeight - (squiffy.ui.output?.height() || 0);
-        currentScrollTop = squiffy.ui.output.scrollTop();
+        scrollTo = squiffy.ui.$output[0].scrollHeight - (squiffy.ui.$output?.height() || 0);
+        currentScrollTop = squiffy.ui.$output.scrollTop();
         if (scrollTo > (currentScrollTop || 0)) {
             distance = scrollTo - (currentScrollTop || 0);
             duration = distance / 0.4;
-            squiffy.ui.output.stop().animate({ scrollTop: scrollTo }, duration);
+            squiffy.ui.$output.stop().animate({ scrollTop: scrollTo }, duration);
         }
     }
     else {
@@ -636,11 +636,11 @@ squiffy.init = function (options: SquiffyInitOptions): SquiffyApi {
         onSet: function () { }
     };
 
-    squiffy.ui.output = jQuery(options.element);
+    squiffy.ui.$output = jQuery(options.element);
     squiffy.ui.settings = settings;
 
     if (settings.scroll === 'element') {
-        squiffy.ui.output.css('overflow-y', 'auto');
+        squiffy.ui.$output.css('overflow-y', 'auto');
     }
 
     initLinkHandler();
