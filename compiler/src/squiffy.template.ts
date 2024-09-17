@@ -78,15 +78,15 @@ export const squiffy: Squiffy = {
 };
 
 var initLinkHandler = function () {
-    var handleLink = function ($link: JQuery) {
-        if ($link.hasClass('disabled')) return;
-        var passage = $link.data('passage');
-        var section = $link.data('section');
-        var rotateAttr = $link.attr('data-rotate');
-        var sequenceAttr = $link.attr('data-sequence');
+    var handleLink = function (link: HTMLElement) {
+        if (link.classList.contains('disabled')) return;
+        var passage = link.getAttribute('data-passage');
+        var section = link.getAttribute('data-section');
+        var rotateAttr = link.getAttribute('data-rotate');
+        var sequenceAttr = link.getAttribute('data-sequence');
         var rotateOrSequenceAttr = rotateAttr || sequenceAttr;
         if (passage) {
-            $disableLink($link);
+            disableLink(link);
             squiffy.set('_turncount', squiffy.get('_turncount') + 1);
             passage = processLink(passage);
             if (passage) {
@@ -103,19 +103,19 @@ var initLinkHandler = function () {
         }
         else if (section) {
             currentSection?.appendChild(document.createElement('hr'));
-            $disableLink($link);
+            disableLink(link);
             section = processLink(section);
             squiffy.story.go(section);
         }
         else if (rotateOrSequenceAttr) {
-            var result = rotate(rotateOrSequenceAttr, rotateAttr ? $link.text() : '');
-            $link.html(result[0]!.replace(/&quot;/g, '"').replace(/&#39;/g, '\''));
+            var result = rotate(rotateOrSequenceAttr, rotateAttr ? link.innerText : '');
+            link.innerHTML = result[0]!.replace(/&quot;/g, '"').replace(/&#39;/g, '\'');
             var dataAttribute = rotateAttr ? 'data-rotate' : 'data-sequence';
-            $link.attr(dataAttribute, result[1]);
+            link.setAttribute(dataAttribute, result[1] || '');
             if (!result[1]) {
-                $disableLink($link);
+                disableLink(link);
             }
-            const attribute = $link.attr('data-attribute');
+            const attribute = link.getAttribute('data-attribute');
             if (attribute) {
                 squiffy.set(attribute, result[0]);
             }
@@ -126,7 +126,7 @@ var initLinkHandler = function () {
     const handleClick = (event: Event) => {
         var target = event.target as HTMLElement;
         if (target.classList.contains('squiffy-link')) {
-            handleLink(jQuery(target));
+            handleLink(target);
         }
     };
 
@@ -137,16 +137,13 @@ var initLinkHandler = function () {
     });
 };
 
-var $disableLink = function ($link: JQuery) {
-    $link.addClass('disabled');
-    $link.attr('tabindex', -1);
+const disableLink = function (link: Element) {
+    link.classList.add('disabled');
+    link.setAttribute('tabindex', '-1');
 }
 
 const disableLinks = function (links: NodeListOf<Element>) {
-    links.forEach(link => {
-        link.classList.add('disabled');
-        link.setAttribute('tabindex', '-1');
-    });
+    links.forEach(disableLink);
 }
 
 squiffy.story.begin = function () {
