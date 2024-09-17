@@ -39,10 +39,24 @@ interface Squiffy {
 }
 
 interface Section {
-    clear: boolean;
-    attributes: string[],
+    text?: string;
+    clear?: boolean;
+    attributes?: string[],
+    jsIndex?: number;
+    passages?: Record<string, Passage>;
+    passageCount?: number;
+}
+
+interface Passage {
+    text?: string;
+    clear?: boolean;
+    attributes?: string[];
     jsIndex?: number;
 }
+
+let currentSection: Section;
+let currentSectionElement: HTMLElement | null = null;
+let scrollPosition = 0;
 
 export const squiffy: Squiffy = {
     init: null!,
@@ -93,19 +107,21 @@ var initLinkHandler = function () {
             squiffy.set('_turncount', squiffy.get('_turncount') + 1);
             passage = processLink(passage);
             if (passage) {
-                currentSection?.appendChild(document.createElement('hr'));
+                currentSectionElement?.appendChild(document.createElement('hr'));
                 showPassage(passage);
             }
             var turnPassage = '@' + squiffy.get('_turncount');
-            if (turnPassage in squiffy.story.section.passages) {
-                showPassage(turnPassage);
-            }
-            if ('@last' in squiffy.story.section.passages && squiffy.get('_turncount') >= squiffy.story.section.passageCount) {
-                showPassage('@last');
+            if (currentSection.passages) {
+                if (turnPassage in currentSection.passages) {
+                    showPassage(turnPassage);
+                }
+                if ('@last' in currentSection.passages && squiffy.get('_turncount') >= (currentSection.passageCount || 0)) {
+                    showPassage('@last');
+                }
             }
         }
         else if (section) {
-            currentSection?.appendChild(document.createElement('hr'));
+            currentSectionElement?.appendChild(document.createElement('hr'));
             disableLink(link);
             section = processLink(section);
             if (section) {
@@ -237,8 +253,8 @@ var replaceLabel = function (expr: string) {
     if (!match) return;
     var label = match[1];
     var text = match[2];
-    if (text in squiffy.story.section.passages) {
-        text = squiffy.story.section.passages[text].text;
+    if (currentSection.passages && text in currentSection.passages) {
+        text = currentSection.passages[text].text || '';
     }
     else if (text in squiffy.story.sections) {
         text = squiffy.story.sections[text].text;
@@ -269,8 +285,8 @@ var replaceLabel = function (expr: string) {
 const go = function (section: string) {
     squiffy.set('_transition', null);
     newSection();
-    squiffy.story.section = squiffy.story.sections[section];
-    if (!squiffy.story.section) return;
+    currentSection = squiffy.story.sections[section];
+    if (!currentSection) return;
     squiffy.set('_section', section);
     setSeen(section);
     var master = squiffy.story.sections[''];
@@ -278,11 +294,11 @@ const go = function (section: string) {
         run(master);
         squiffy.ui.write(master.text);
     }
-    run(squiffy.story.section);
+    run(currentSection);
     // The JS might have changed which section we're in
     if (squiffy.get('_section') == section) {
         squiffy.set('_turncount', 0);
-        squiffy.ui.write(squiffy.story.section.text);
+        squiffy.ui.write(currentSection.text || '');
         save();
     }
 };
@@ -300,7 +316,7 @@ const run = function (section: Section) {
 };
 
 const showPassage = function (passageName: string) {
-    var passage = squiffy.story.section.passages[passageName];
+    var passage = currentSection.passages && currentSection.passages[passageName];
     var masterSection = squiffy.story.sections[''];
     if (!passage && masterSection) passage = masterSection.passages[passageName];
     if (!passage) return;
@@ -312,13 +328,13 @@ const showPassage = function (passageName: string) {
             squiffy.ui.write(masterPassage.text);
         }
     }
-    var master = squiffy.story.section.passages[''];
+    var master = currentSection.passages && currentSection.passages[''];
     if (master) {
         run(master);
-        squiffy.ui.write(master.text);
+        squiffy.ui.write(master.text || '');
     }
     run(passage);
-    squiffy.ui.write(passage.text);
+    squiffy.ui.write(passage.text || '');
     save();
 };
 
@@ -362,8 +378,8 @@ const load = function () {
     var output = squiffy.get('_output');
     if (!output) return false;
     squiffy.ui.output.innerHTML = output;
-    currentSection = document.getElementById(squiffy.get('_output-section'));
-    squiffy.story.section = squiffy.story.sections[squiffy.get('_section')];
+    currentSectionElement = document.getElementById(squiffy.get('_output-section'));
+    currentSection = squiffy.story.sections[squiffy.get('_section')];
     var transition = squiffy.get('_transition');
     if (transition) {
         eval('(' + transition + ')()');
@@ -386,25 +402,22 @@ const seen = function (sectionName: string) {
     return (seenSections.indexOf(sectionName) > -1);
 };
 
-var currentSection: HTMLElement | null = null;
-var scrollPosition = 0;
-
 var newSection = function () {
-    if (currentSection) {
-        disableLinks(currentSection.querySelectorAll('.squiffy-link'));
-        currentSection.querySelectorAll('input').forEach(el => {
+    if (currentSectionElement) {
+        disableLinks(currentSectionElement.querySelectorAll('.squiffy-link'));
+        currentSectionElement.querySelectorAll('input').forEach(el => {
             const attribute = el.getAttribute('data-attribute') || el.id;
             if (attribute) squiffy.set(attribute, el.value);
             el.disabled = true
         });
 
-        currentSection.querySelectorAll("[contenteditable]").forEach(el => {
+        currentSectionElement.querySelectorAll("[contenteditable]").forEach(el => {
             const attribute = el.getAttribute('data-attribute') || el.id;
             if (attribute) squiffy.set(attribute, el.innerHTML);
             (el as HTMLElement).contentEditable = 'false'
         });
 
-        currentSection.querySelectorAll('textarea').forEach(el => {
+        currentSectionElement.querySelectorAll('textarea').forEach(el => {
             const attribute = el.getAttribute('data-attribute') || el.id;
             if (attribute) squiffy.set(attribute, el.value);
             el.disabled = true
@@ -415,19 +428,19 @@ var newSection = function () {
     squiffy.set('_section-count', sectionCount);
     var id = 'squiffy-section-' + sectionCount;
 
-    currentSection = document.createElement('div');
-    currentSection.id = id;
-    squiffy.ui.output.appendChild(currentSection);
+    currentSectionElement = document.createElement('div');
+    currentSectionElement.id = id;
+    squiffy.ui.output.appendChild(currentSectionElement);
 
     squiffy.set('_output-section', id);
 };
 
 squiffy.ui.write = function (text) {
-    if (!currentSection) return;
+    if (!currentSectionElement) return;
     scrollPosition = squiffy.ui.output.scrollHeight;
 
     const div = document.createElement('div');
-    currentSection.appendChild(div);
+    currentSectionElement.appendChild(div);
     div.innerHTML = squiffy.ui.processText(text);
     
     squiffy.ui.scrollToEnd();
@@ -518,8 +531,8 @@ squiffy.ui.processText = function (text) {
         else if (/^sequence[: ]/.test(text)) {
             return processTextCommand_Rotate('sequence', text);
         }
-        else if (squiffy.story.section.passages && text in squiffy.story.section.passages) {
-            return process(squiffy.story.section.passages[text].text, data);
+        else if (currentSection.passages && text in currentSection.passages) {
+            return process(currentSection.passages[text].text || '', data);
         }
         else if (text in squiffy.story.sections) {
             return process(squiffy.story.sections[text].text, data);
