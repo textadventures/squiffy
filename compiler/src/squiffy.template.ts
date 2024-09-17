@@ -239,13 +239,22 @@ var replaceLabel = function (expr: string) {
     if (stripParagsMatch) {
         text = stripParagsMatch[1];
     }
-    var $labels = squiffy.ui.$output.find('.squiffy-label-' + label);
-    $labels.fadeOut(1000, function () {
-        $labels.html(squiffy.ui.processText(text));
-        $labels.fadeIn(1000, function () {
+
+    const labelElement = squiffy.ui.output.querySelector('.squiffy-label-' + label);
+    if (!labelElement) return;
+
+    labelElement.addEventListener('transitionend', function () {
+        labelElement.innerHTML = squiffy.ui.processText(text);
+
+        labelElement.addEventListener('transitionend', function () {
             squiffy.story.save();
-        });
-    });
+        }, { once: true });
+
+        labelElement.classList.remove('fade-out');
+        labelElement.classList.add('fade-in');
+    }, { once: true });
+
+    labelElement.classList.add('fade-out');
 };
 
 squiffy.story.go = function (section: string) {

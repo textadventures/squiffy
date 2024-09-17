@@ -42,3 +42,11 @@ hr {
     border-bottom: 1px solid rgba(255, 255, 255, 0.3);
     margin-top: 16px; margin-bottom: 16px;
 }
+.fade-out {
+    opacity: 0;
+    transition: opacity 1000ms;
+}
+.fade-in {
+    opacity: 1;
+    transition: opacity 1000ms;
+}
