@@ -6,11 +6,13 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<!-- SCRIPTS -->
 		<script type="module">
-			import { squiffy } from './story.js';
+			import { squiffy } from './squiffy.runtime.js';
+			import { story } from './story.js';
 
 			document.addEventListener('DOMContentLoaded', function() {
 				const squiffyApi = squiffy.init({
-					element: document.getElementById('squiffy')
+					element: document.getElementById('squiffy'),
+					story: story,
 				});
 
 				const restartButton = document.getElementById('restart');

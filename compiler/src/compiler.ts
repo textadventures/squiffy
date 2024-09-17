@@ -44,25 +44,20 @@ export class Compiler {
         this.story = new Story(settings.scriptBaseFilename);
     }
 
-    async getJs(template: string /*, options */) {
-        // When calling from Vite, can set template this way:
-        // const template = (await import('./squiffy.runtime.js?raw')).default;
-
+    async getJs() {
         const storyData = await this.getStoryData();
         const outputJs: string[] = [];
-        outputJs.push('squiffy.story.js = [');
+        outputJs.push(`// Created with Squiffy ${SQUIFFY_VERSION}`);
+        outputJs.push('// https://github.com/textadventures/squiffy');
+        outputJs.push('export const story = {};');
+        outputJs.push('story.js = [');
         for (const js of storyData.js) {
             this.writeJs(outputJs, 1, js);
         }
         outputJs.push('];');
+        outputJs.push('story.data = ' + JSON.stringify(storyData.story, null, 4));
 
-        return `// Created with Squiffy ${SQUIFFY_VERSION}
-// https://github.com/textadventures/squiffy
-
-${template}
-${outputJs.join('\n')}
-squiffy.story = {...squiffy.story, ...${JSON.stringify(storyData.story, null, 4)}};
-`;
+        return outputJs.join('\n');
     }
 
     async getStoryData(): Promise<Output> {

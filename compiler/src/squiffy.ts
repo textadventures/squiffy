@@ -8,7 +8,6 @@ const argv = yargs(hideBin(process.argv))
     .usage(
         `Usage: $0 filename.squiffy [options]`)
     .demand(1)
-    .alias('c', 'cdn')
     .alias('s', 'serve')
     .alias('p', 'port')
     .describe('s', 'Start HTTP server after compiling')
@@ -20,7 +19,6 @@ const argv = yargs(hideBin(process.argv))
 console.log('Squiffy ' + SQUIFFY_VERSION);
 
 var options = {
-    useCdn: argv.c,
     serve: argv.s,
     scriptOnly: argv.scriptonly,
     pluginName: argv.pluginname,
