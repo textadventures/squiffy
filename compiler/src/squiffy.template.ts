@@ -90,7 +90,7 @@ var initLinkHandler = function () {
             squiffy.set('_turncount', squiffy.get('_turncount') + 1);
             passage = processLink(passage);
             if (passage) {
-                $currentSection!.append('<hr/>');
+                currentSection?.appendChild(document.createElement('hr'));
                 squiffy.story.passage(passage);
             }
             var turnPassage = '@' + squiffy.get('_turncount');
@@ -102,7 +102,7 @@ var initLinkHandler = function () {
             }
         }
         else if (section) {
-            $currentSection!.append('<hr/>');
+            currentSection?.appendChild(document.createElement('hr'));
             disableLink($link);
             section = processLink(section);
             squiffy.story.go(section);
@@ -353,6 +353,7 @@ squiffy.story.load = function () {
     var output = squiffy.get('_output');
     if (!output) return false;
     squiffy.ui.output.innerHTML = output;
+    currentSection = document.getElementById(squiffy.get('_output-section'));
     $currentSection = jQuery('#' + squiffy.get('_output-section'));
     squiffy.story.section = squiffy.story.sections[squiffy.get('_section')];
     var transition = squiffy.get('_transition');
@@ -377,6 +378,7 @@ squiffy.story.seen = function (sectionName: string) {
     return (seenSections.indexOf(sectionName) > -1);
 };
 
+var currentSection: HTMLElement | null = null;
 var $currentSection: JQuery | null = null;
 var scrollPosition = 0;
 
@@ -403,15 +405,23 @@ var newSection = function () {
     var sectionCount = squiffy.get('_section-count') + 1;
     squiffy.set('_section-count', sectionCount);
     var id = 'squiffy-section-' + sectionCount;
-    $currentSection = jQuery('<div/>', {
-        id: id,
-    }).appendTo(squiffy.ui.$output);
+
+    currentSection = document.createElement('div');
+    currentSection.id = id;
+    squiffy.ui.output.appendChild(currentSection);
+
+    $currentSection = jQuery(currentSection);
     squiffy.set('_output-section', id);
 };
 
 squiffy.ui.write = function (text) {
+    if (!currentSection) return;
     scrollPosition = squiffy.ui.$output.height() || 0;
-    $currentSection!.append(jQuery('<div/>').html(squiffy.ui.processText(text)));
+
+    const div = document.createElement('div');
+    currentSection.appendChild(div);
+    div.innerHTML = squiffy.ui.processText(text);
+    
     squiffy.ui.scrollToEnd();
 };
 
