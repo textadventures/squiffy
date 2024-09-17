@@ -1,0 +1,22 @@
+Enter some text in the box:
+
+<input type="text" data-attribute="name" placeholder="Type here...">
+
++++Continue...
+You entered: {name}.
+
+Now type some more...
+
+<textarea data-attribute="some-text"></textarea>
+
++++Continue...
+
+You entered: {some-text}.
+
+<div contenteditable="true" data-attribute="some-content">
+This is editable content.
+</div>
+
++++Continue...
+
+You entered: {some-content}.

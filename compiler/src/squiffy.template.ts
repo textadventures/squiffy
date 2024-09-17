@@ -391,10 +391,7 @@ var newSection = function () {
         });
         $currentSection.find("[contenteditable]").each(function () {
             squiffy.set($(this).data('attribute') || this.id, this.innerHTML);
-            // TODO: This doesn't compile in TypeScript...
-            // this.disabled = true;
-            // try...
-            // this.contentEditable = 'false' ??
+            this.contentEditable = 'false'
         });
         $currentSection.find('textarea').each(function () {
             squiffy.set($(this).data('attribute') || this.id, this.value);
@@ -515,7 +512,7 @@ squiffy.ui.processText = function (text) {
         else if (/^sequence[: ]/.test(text)) {
             return processTextCommand_Rotate('sequence', text);
         }
-        else if (text in squiffy.story.section.passages) {
+        else if (squiffy.story.section.passages && text in squiffy.story.section.passages) {
             return process(squiffy.story.section.passages[text].text, data);
         }
         else if (text in squiffy.story.sections) {
