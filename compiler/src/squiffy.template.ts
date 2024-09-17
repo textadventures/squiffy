@@ -331,7 +331,7 @@ var processAttributes = function (attributes: string[]) {
 squiffy.story.restart = function () {
     if (squiffy.ui.settings.persist && window.localStorage) {
         var keys = Object.keys(localStorage);
-        jQuery.each(keys, function (_, key) {
+        keys.forEach(key => {
             if (startsWith(key, squiffy.story.id)) {
                 localStorage.removeItem(key);
             }
@@ -434,25 +434,20 @@ squiffy.ui.clearScreen = function () {
 };
 
 squiffy.ui.scrollToEnd = function () {
-    var scrollTo, currentScrollTop, distance, duration;
     if (squiffy.ui.settings.scroll === 'element') {
-        scrollTo = squiffy.ui.$output[0].scrollHeight - (squiffy.ui.$output?.height() || 0);
-        currentScrollTop = squiffy.ui.$output.scrollTop();
+        const scrollTo = squiffy.ui.output.scrollHeight - squiffy.ui.output.clientHeight;
+        const currentScrollTop = squiffy.ui.output.scrollTop;
         if (scrollTo > (currentScrollTop || 0)) {
-            distance = scrollTo - (currentScrollTop || 0);
-            duration = distance / 0.4;
-            squiffy.ui.$output.stop().animate({ scrollTop: scrollTo }, duration);
+            squiffy.ui.output.scrollTo({ top: scrollTo, behavior: 'smooth' });
         }
     }
     else {
-        scrollTo = scrollPosition;
-        currentScrollTop = Math.max((jQuery('body').scrollTop() || 0), (jQuery('html').scrollTop() || 0));
+        let scrollTo = scrollPosition;
+        const currentScrollTop = Math.max(document.body.scrollTop, document.documentElement.scrollTop);
         if (scrollTo > currentScrollTop) {
-            var maxScrollTop = (jQuery(document).height() || 0) - (jQuery(window).height() || 0);
+            var maxScrollTop = document.documentElement.scrollHeight - window.innerHeight;
             if (scrollTo > maxScrollTop) scrollTo = maxScrollTop;
-            distance = scrollTo - currentScrollTop;
-            duration = distance / 0.5;
-            jQuery('body,html').stop().animate({ scrollTop: scrollTo }, duration);
+            window.scrollTo({ top: scrollTo, behavior: 'smooth' });
         }
     }
 };
