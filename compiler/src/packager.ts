@@ -4,7 +4,7 @@ import { Compiler } from './compiler.js';
 import { SQUIFFY_VERSION } from './version.js';
 
 export const createPackage = async (inputFilename: string) => {
-    const template = fs.readFileSync(path.join(import.meta.dirname, "squiffy.template.js")).toString();
+    const template = fs.readFileSync(path.join(import.meta.dirname, "squiffy.runtime.js")).toString();
     
     return await generate(inputFilename, template);
 }

@@ -37,7 +37,7 @@
   },
   "scripts": {
     "test": "vitest",
-    "build": "tsc && shx cp src/index.template.html ./dist/ && shx cp src/squiffy.template.js ./dist/ && shx cp src/style.template.css ./dist/",
+    "build": "tsc && shx cp src/index.template.html ./dist/ && shx cp src/squiffy.runtime.js ./dist/ && shx cp src/style.template.css ./dist/",
     "dev": "tsc --project tsconfig.runtime.json && tsx src/squiffy.ts"
   },
   "main": "dist/compiler.js",

@@ -2,4 +2,4 @@ index.html
 story.js
 style.css
 _site
-src/squiffy.template.js
+src/squiffy.runtime.js

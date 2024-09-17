@@ -46,7 +46,7 @@ export class Compiler {
 
     async getJs(template: string /*, options */) {
         // When calling from Vite, can set template this way:
-        // const template = (await import('./squiffy.template.js?raw')).default;
+        // const template = (await import('./squiffy.runtime.js?raw')).default;
 
         const storyData = await this.getStoryData();
         const outputJs: string[] = [];

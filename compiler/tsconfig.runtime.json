@@ -7,6 +7,6 @@
       "noFallthroughCasesInSwitch": true,
       "skipLibCheck": true
     },
-    "include": ["src/squiffy.template.ts"]
+    "include": ["src/squiffy.runtime.ts"]
 }
   
