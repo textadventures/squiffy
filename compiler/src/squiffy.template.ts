@@ -328,7 +328,7 @@ squiffy.story.restart = function () {
         squiffy.storageFallback = {};
     }
     if (squiffy.ui.settings.scroll === 'element') {
-        squiffy.ui.$output.html('');
+        squiffy.ui.output.innerHTML = '';
         squiffy.story.begin();
     }
     else {
@@ -337,13 +337,13 @@ squiffy.story.restart = function () {
 };
 
 squiffy.story.save = function () {
-    squiffy.set('_output', squiffy.ui.$output.html());
+    squiffy.set('_output', squiffy.ui.output.innerHTML);
 };
 
 squiffy.story.load = function () {
     var output = squiffy.get('_output');
     if (!output) return false;
-    squiffy.ui.$output.html(output);
+    squiffy.ui.output.innerHTML = output;
     $currentSection = jQuery('#' + squiffy.get('_output-section'));
     squiffy.story.section = squiffy.story.sections[squiffy.get('_section')];
     var transition = squiffy.get('_transition');
@@ -407,7 +407,7 @@ squiffy.ui.write = function (text) {
 };
 
 squiffy.ui.clearScreen = function () {
-    squiffy.ui.$output.html('');
+    squiffy.ui.output.innerHTML = '';
     newSection();
 };
 
