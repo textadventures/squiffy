@@ -23,8 +23,6 @@ interface Squiffy {
     init: (options: SquiffyInitOptions) => void;
     story: Story;
     ui: {
-        output: HTMLElement,
-        settings: SquiffySettings,
         processText: (text: string) => string,
         write: (text: string) => void,
         clearScreen: () => void,
@@ -62,23 +60,25 @@ interface Passage {
 let currentSection: Section;
 let currentSectionElement: HTMLElement | null = null;
 let scrollPosition = 0;
+let outputElement: HTMLElement = null!;
+let settings: SquiffySettings = null!;
 
 export const squiffy: Squiffy = {
     init: null!,
     story: null!,
     set: function (attribute: string, value: any) {
         if (typeof value === 'undefined') value = true;
-        if (squiffy.ui.settings.persist && window.localStorage) {
+        if (settings.persist && window.localStorage) {
             localStorage[squiffy.story.id + '-' + attribute] = JSON.stringify(value);
         }
         else {
             squiffy.storageFallback[attribute] = JSON.stringify(value);
         }
-        squiffy.ui.settings.onSet(attribute, value);
+        settings.onSet(attribute, value);
     },
     get: function (attribute): any {
         var result;
-        if (squiffy.ui.settings.persist && window.localStorage) {
+        if (settings.persist && window.localStorage) {
             result = localStorage[squiffy.story.id + '-' + attribute];
         }
         else {
@@ -88,8 +88,6 @@ export const squiffy: Squiffy = {
         return JSON.parse(result);
     },
     ui: {
-        output: null!,
-        settings: null!,
         processText: null!,
         write: null!,
         clearScreen: null!,
@@ -270,7 +268,7 @@ var replaceLabel = function (expr: string) {
         text = stripParagsMatch[1];
     }
 
-    const labelElement = squiffy.ui.output.querySelector('.squiffy-label-' + label);
+    const labelElement = outputElement.querySelector('.squiffy-label-' + label);
     if (!labelElement) return;
 
     labelElement.addEventListener('transitionend', function () {
@@ -355,7 +353,7 @@ var processAttributes = function (attributes: string[]) {
 };
 
 const restart = function () {
-    if (squiffy.ui.settings.persist && window.localStorage) {
+    if (settings.persist && window.localStorage) {
         var keys = Object.keys(localStorage);
         keys.forEach(key => {
             if (startsWith(key, squiffy.story.id)) {
@@ -366,8 +364,8 @@ const restart = function () {
     else {
         squiffy.storageFallback = {};
     }
-    if (squiffy.ui.settings.scroll === 'element') {
-        squiffy.ui.output.innerHTML = '';
+    if (settings.scroll === 'element') {
+        outputElement.innerHTML = '';
         begin();
     }
     else {
@@ -376,13 +374,13 @@ const restart = function () {
 };
 
 const save = function () {
-    squiffy.set('_output', squiffy.ui.output.innerHTML);
+    squiffy.set('_output', outputElement.innerHTML);
 };
 
 const load = function () {
     var output = squiffy.get('_output');
     if (!output) return false;
-    squiffy.ui.output.innerHTML = output;
+    outputElement.innerHTML = output;
     currentSectionElement = document.getElementById(squiffy.get('_output-section'));
     currentSection = squiffy.story.sections[squiffy.get('_section')];
     var transition = squiffy.get('_transition');
@@ -435,14 +433,14 @@ var newSection = function () {
 
     currentSectionElement = document.createElement('div');
     currentSectionElement.id = id;
-    squiffy.ui.output.appendChild(currentSectionElement);
+    outputElement.appendChild(currentSectionElement);
 
     squiffy.set('_output-section', id);
 };
 
 squiffy.ui.write = function (text) {
     if (!currentSectionElement) return;
-    scrollPosition = squiffy.ui.output.scrollHeight;
+    scrollPosition = outputElement.scrollHeight;
 
     const div = document.createElement('div');
     currentSectionElement.appendChild(div);
@@ -452,16 +450,16 @@ squiffy.ui.write = function (text) {
 };
 
 squiffy.ui.clearScreen = function () {
-    squiffy.ui.output.innerHTML = '';
+    outputElement.innerHTML = '';
     newSection();
 };
 
 squiffy.ui.scrollToEnd = function () {
-    if (squiffy.ui.settings.scroll === 'element') {
-        const scrollTo = squiffy.ui.output.scrollHeight - squiffy.ui.output.clientHeight;
-        const currentScrollTop = squiffy.ui.output.scrollTop;
+    if (settings.scroll === 'element') {
+        const scrollTo = outputElement.scrollHeight - outputElement.clientHeight;
+        const currentScrollTop = outputElement.scrollTop;
         if (scrollTo > (currentScrollTop || 0)) {
-            squiffy.ui.output.scrollTo({ top: scrollTo, behavior: 'smooth' });
+            outputElement.scrollTo({ top: scrollTo, behavior: 'smooth' });
         }
     }
     else {
@@ -671,19 +669,18 @@ var rotate = function (options: string, current: string | null) {
 };
 
 squiffy.init = function (options: SquiffyInitOptions): SquiffyApi {
-    const settings: SquiffySettings = {
+    settings = {
         scroll: 'body',
         persist: true,
         restartPrompt: true,
         onSet: function () { }
     };
 
-    squiffy.ui.output = options.element;
-    squiffy.ui.settings = settings;
+    outputElement = options.element;
     squiffy.story = options.story;
 
     if (settings.scroll === 'element') {
-        squiffy.ui.output.style.overflowY = 'auto';
+        outputElement.style.overflowY = 'auto';
     }
 
     initLinkHandler();
@@ -691,7 +688,7 @@ squiffy.init = function (options: SquiffyInitOptions): SquiffyApi {
 
     return {
         askRestart: function () {
-            if (!squiffy.ui.settings.restartPrompt || confirm('Are you sure you want to restart?')) {
+            if (!settings.restartPrompt || confirm('Are you sure you want to restart?')) {
                 restart();
             }
         }
