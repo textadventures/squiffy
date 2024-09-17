@@ -20,6 +20,7 @@ interface Squiffy {
     init: (options: SquiffyInitOptions) => void;
     story: any;
     ui: {
+        output: HTMLElement,
         $output: JQuery,
         settings: SquiffySettings,
         processText: (text: string) => string,
@@ -64,6 +65,7 @@ export const squiffy: Squiffy = {
         return JSON.parse(result);
     },
     ui: {
+        output: null!,
         $output: null!,
         settings: null!,
         processText: null!,
@@ -121,17 +123,17 @@ var initLinkHandler = function () {
         }
     };
 
-    squiffy.ui.$output.on('click', 'a.squiffy-link', function () {
-        handleLink(jQuery(this));
-    });
+    const handleClick = (event: Event) => {
+        var target = event.target as HTMLElement;
+        if (target.classList.contains('squiffy-link')) {
+            handleLink(jQuery(target));
+        }
+    };
 
-    squiffy.ui.$output.on('keypress', 'a.squiffy-link', function (e) {
-        if (e.which !== 13) return;
-        handleLink(jQuery(this));
-    });
-
-    squiffy.ui.$output.on('mousedown', 'a.squiffy-link', function (event) {
-        event.preventDefault();
+    document.addEventListener('click', handleClick);
+    document.addEventListener('keypress', function (event) {
+        if (event.key !== "Enter") return
+        handleClick(event);
     });
 };
 
@@ -636,6 +638,7 @@ squiffy.init = function (options: SquiffyInitOptions): SquiffyApi {
         onSet: function () { }
     };
 
+    squiffy.ui.output = options.element;
     squiffy.ui.$output = jQuery(options.element);
     squiffy.ui.settings = settings;
 
