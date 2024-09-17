@@ -1,12 +1,10 @@
 interface SquiffyInitOptions {
     element: HTMLElement;
     story: {
-        js: [() => void],
-        data: {
-            start: string;
-            id: string;
-            sections: Record<string, Section>;
-        }
+        js: [() => void];
+        start: string;
+        id: string;
+        sections: Record<string, Section>;
     }
 }
 
@@ -23,7 +21,7 @@ interface SquiffyApi {
 
 interface Squiffy {
     init: (options: SquiffyInitOptions) => void;
-    story: any;
+    story: Story;
     ui: {
         output: HTMLElement,
         settings: SquiffySettings,
@@ -36,6 +34,13 @@ interface Squiffy {
     storageFallback: any;
     set: (attribute: string, value: any) => void;
     get: (attribute: string) => any;
+}
+
+interface Story {
+    js: [() => void];
+    start: string;
+    id: string;
+    sections: Record<string, Section>;
 }
 
 interface Section {
@@ -60,7 +65,7 @@ let scrollPosition = 0;
 
 export const squiffy: Squiffy = {
     init: null!,
-    story: {},
+    story: null!,
     set: function (attribute: string, value: any) {
         if (typeof value === 'undefined') value = true;
         if (squiffy.ui.settings.persist && window.localStorage) {
@@ -257,7 +262,7 @@ var replaceLabel = function (expr: string) {
         text = currentSection.passages[text].text || '';
     }
     else if (text in squiffy.story.sections) {
-        text = squiffy.story.sections[text].text;
+        text = squiffy.story.sections[text].text || '';
     }
     var stripParags = /^<p>(.*)<\/p>$/;
     var stripParagsMatch = stripParags.exec(text);
@@ -292,7 +297,7 @@ const go = function (section: string) {
     var master = squiffy.story.sections[''];
     if (master) {
         run(master);
-        squiffy.ui.write(master.text);
+        squiffy.ui.write(master.text || '');
     }
     run(currentSection);
     // The JS might have changed which section we're in
@@ -318,14 +323,14 @@ const run = function (section: Section) {
 const showPassage = function (passageName: string) {
     var passage = currentSection.passages && currentSection.passages[passageName];
     var masterSection = squiffy.story.sections[''];
-    if (!passage && masterSection) passage = masterSection.passages[passageName];
+    if (!passage && masterSection && masterSection.passages) passage = masterSection.passages[passageName];
     if (!passage) return;
     setSeen(passageName);
-    if (masterSection) {
+    if (masterSection && masterSection.passages) {
         var masterPassage = masterSection.passages[''];
         if (masterPassage) {
             run(masterPassage);
-            squiffy.ui.write(masterPassage.text);
+            squiffy.ui.write(masterPassage.text || '');
         }
     }
     var master = currentSection.passages && currentSection.passages[''];
@@ -535,7 +540,7 @@ squiffy.ui.processText = function (text) {
             return process(currentSection.passages[text].text || '', data);
         }
         else if (text in squiffy.story.sections) {
-            return process(squiffy.story.sections[text].text, data);
+            return process(squiffy.story.sections[text].text || '', data);
         }
         else if (startsWith(text, '@') && !startsWith(text, '@replace')) {
             processAttributes(text.substring(1).split(","));
@@ -675,9 +680,7 @@ squiffy.init = function (options: SquiffyInitOptions): SquiffyApi {
 
     squiffy.ui.output = options.element;
     squiffy.ui.settings = settings;
-
-    squiffy.story.js = options.story.js;
-    squiffy.story = { ...squiffy.story, ...options.story.data };
+    squiffy.story = options.story;
 
     if (settings.scroll === 'element') {
         squiffy.ui.output.style.overflowY = 'auto';

@@ -50,12 +50,14 @@ export class Compiler {
         outputJs.push(`// Created with Squiffy ${SQUIFFY_VERSION}`);
         outputJs.push('// https://github.com/textadventures/squiffy');
         outputJs.push('export const story = {};');
+        outputJs.push(`story.id = ${JSON.stringify(storyData.story.id, null, 4)};`);
+        outputJs.push(`story.start = ${JSON.stringify(storyData.story.start, null, 4)};`);
+        outputJs.push(`story.sections = ${JSON.stringify(storyData.story.sections, null, 4)};`);
         outputJs.push('story.js = [');
         for (const js of storyData.js) {
             this.writeJs(outputJs, 1, js);
         }
         outputJs.push('];');
-        outputJs.push('story.data = ' + JSON.stringify(storyData.story, null, 4));
 
         return outputJs.join('\n');
     }
