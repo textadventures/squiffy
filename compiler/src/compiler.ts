@@ -48,11 +48,6 @@ export class Compiler {
         // When calling from Vite, can set template this way:
         // const template = (await import('./squiffy.template.js?raw')).default;
 
-
-        // if (options.scriptOnly && options.pluginName) {
-        //     jsData = jsData.replace('jQuery.fn.squiffy =', 'jQuery.fn.' + options.pluginName + ' =');
-        // }
-
         const storyData = await this.getStoryData();
         const outputJs: string[] = [];
         outputJs.push('squiffy.story.js = [');

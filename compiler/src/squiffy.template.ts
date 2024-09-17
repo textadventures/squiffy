@@ -1,6 +1,3 @@
-/// <reference path ="../node_modules/@types/jquery/jquery.d.ts"/>
-/// <reference path ="./jquery.squiffy.d.ts"/>
-
 interface SquiffyInitOptions {
     element: HTMLElement;
 }
@@ -21,7 +18,6 @@ interface Squiffy {
     story: any;
     ui: {
         output: HTMLElement,
-        $output: JQuery,
         settings: SquiffySettings,
         processText: (text: string) => string,
         write: (text: string) => void,
@@ -66,7 +62,6 @@ export const squiffy: Squiffy = {
     },
     ui: {
         output: null!,
-        $output: null!,
         settings: null!,
         processText: null!,
         write: null!,
@@ -419,7 +414,7 @@ var newSection = function () {
 
 squiffy.ui.write = function (text) {
     if (!currentSection) return;
-    scrollPosition = squiffy.ui.$output.height() || 0;
+    scrollPosition = squiffy.ui.output.scrollHeight;
 
     const div = document.createElement('div');
     currentSection.appendChild(div);
@@ -656,11 +651,10 @@ squiffy.init = function (options: SquiffyInitOptions): SquiffyApi {
     };
 
     squiffy.ui.output = options.element;
-    squiffy.ui.$output = jQuery(options.element);
     squiffy.ui.settings = settings;
 
     if (settings.scroll === 'element') {
-        squiffy.ui.$output.css('overflow-y', 'auto');
+        squiffy.ui.output.style.overflowY = 'auto';
     }
 
     initLinkHandler();

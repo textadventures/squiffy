@@ -46,22 +46,6 @@ async function generate(inputFilename: string, template: string) {
         var htmlData = htmlTemplateFile.toString();
         htmlData = htmlData.replace('<!-- INFO -->', `<!--\n\nCreated with Squiffy ${SQUIFFY_VERSION}\n\n\nhttps://github.com/textadventures/squiffy\n\n-->`);
         htmlData = htmlData.replace('<!-- TITLE -->', uiInfo.title);
-        // var jQueryPath = "";
-        // if (typeof options.escritorio !== "undefined")
-        //     jQueryPath = path.join(sourcePath, '..', 'jquery', 'dist', 'jquery.min.js');
-        // else
-        //     jQueryPath = path.join(sourcePath, 'node_modules', 'jquery', 'dist', 'jquery.min.js');
-        var jqueryJs = 'jquery.min.js';
-        // if (options.useCdn) {
-        //     var jqueryVersion = packageJson.dependencies.jquery.match(/[0-9.]+/)[0];
-        //     jqueryJs = `https://ajax.aspnetcdn.com/ajax/jquery/jquery-${jqueryVersion}.min.js`;
-        // }
-        // else if (options.write) {
-            fs.createReadStream(path.join(import.meta.dirname, 'jquery.min.js')).pipe(fs.createWriteStream(path.join(outputPath, 'jquery.min.js')));
-        // }
-
-        htmlData = htmlData.replace('<!-- JQUERY -->', jqueryJs);
-
         var scriptData = uiInfo.externalScripts.map(script => `<script src="${script}"></script>`).join('\n');
         htmlData = htmlData.replace('<!-- SCRIPTS -->', scriptData);
 
@@ -84,10 +68,6 @@ async function generate(inputFilename: string, template: string) {
         //     zip.file(storyJsName, storyJs);
         //     zip.file('index.html', htmlData);
         //     zip.file('style.css', cssData);
-        //     if (!options.useCdn) {
-        //         var jquery = fs.readFileSync(jQueryPath);
-        //         zip.file(jqueryJs, jquery);
-        //     }
         //     var buffer = zip.generate({
         //         type: 'nodebuffer'
         //     });
