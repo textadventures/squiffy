@@ -108,7 +108,9 @@ var initLinkHandler = function () {
             currentSection?.appendChild(document.createElement('hr'));
             disableLink(link);
             section = processLink(section);
-            squiffy.story.go(section);
+            if (section) {
+                go(section);
+            }
         }
         else if (rotateOrSequenceAttr) {
             var result = rotate(rotateOrSequenceAttr, rotateAttr ? link.innerText : '');
@@ -149,9 +151,9 @@ const disableLinks = function (links: NodeListOf<Element>) {
     links.forEach(disableLink);
 }
 
-squiffy.story.begin = function () {
-    if (!squiffy.story.load()) {
-        squiffy.story.go(squiffy.story.start);
+const begin = function () {
+    if (!load()) {
+        go(squiffy.story.start);
     }
 };
 
@@ -264,7 +266,7 @@ var replaceLabel = function (expr: string) {
     labelElement.classList.add('fade-out');
 };
 
-squiffy.story.go = function (section: string) {
+const go = function (section: string) {
     squiffy.set('_transition', null);
     newSection();
     squiffy.story.section = squiffy.story.sections[section];
@@ -345,7 +347,7 @@ squiffy.story.restart = function () {
     }
     if (squiffy.ui.settings.scroll === 'element') {
         squiffy.ui.output.innerHTML = '';
-        squiffy.story.begin();
+        begin();
     }
     else {
         location.reload();
@@ -356,7 +358,7 @@ squiffy.story.save = function () {
     squiffy.set('_output', squiffy.ui.output.innerHTML);
 };
 
-squiffy.story.load = function () {
+const load = function () {
     var output = squiffy.get('_output');
     if (!output) return false;
     squiffy.ui.output.innerHTML = output;
@@ -669,7 +671,7 @@ squiffy.init = function (options: SquiffyInitOptions): SquiffyApi {
     }
 
     initLinkHandler();
-    squiffy.story.begin();
+    begin();
 
     return {
         askRestart: function () {
