@@ -42,10 +42,10 @@ interface Passage {
 export const init = (options: SquiffyInitOptions): SquiffyApi => {
     let story: Story;
     let currentSection: Section;
-    let currentSectionElement: HTMLElement | null = null;
+    let currentSectionElement: HTMLElement;
     let scrollPosition = 0;
-    let outputElement: HTMLElement = null!;
-    let settings: SquiffySettings = null!;
+    let outputElement: HTMLElement;
+    let settings: SquiffySettings;
     let storageFallback: Record<string, string> = {};
     
     function set(attribute: string, value: any) {
@@ -354,7 +354,9 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
         const output = get('_output');
         if (!output) return false;
         outputElement.innerHTML = output;
-        currentSectionElement = document.getElementById(get('_output-section'));
+        const element = document.getElementById(get('_output-section'));
+        if (!element) return false;
+        currentSectionElement = element;
         currentSection = story.sections[get('_section')];
         const transition = get('_transition');
         if (transition) {
