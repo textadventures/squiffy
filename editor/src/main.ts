@@ -4,10 +4,11 @@ import 'chosen-js/chosen.min.css'
 
 import $ from 'jquery';
 import { Modal, Tab, Tooltip } from 'bootstrap'
-import { getJs } from "./compiler";
+import { Compiler, Output } from '../../compiler';
 import { openFile, saveFile } from './file-handler';
 import { Settings } from './settings';
 import * as editor from './editor';
+import { init as runtimeInit } from '../../compiler/dist/squiffy.runtime';
 
 Object.assign(window, { $: $, jQuery: $ });
 
@@ -483,7 +484,14 @@ const logToDebugger = function (text: string) {
 };
 
 const compile = async function () {
-    const result = await getJs(editor.getValue());
+    const script = editor.getValue();
+
+    const compiler = new Compiler({
+        scriptBaseFilename: "filename.squiffy",
+        script: script,
+    });
+    await compiler.load();
+    const result = await compiler.getStoryData();
 
     // TODO: Pass array of errors/warnings as the second parameter
     onCompileSuccess(result, []);
@@ -491,25 +499,28 @@ const compile = async function () {
     // TODO: Handle zip request (input.zip previously called "/zip" on server version)
 };
 
-const onCompileSuccess = function (data: string, msgs: string[]) {
+const onCompileSuccess = function (data: Output, msgs: string[]) {
     el<HTMLButtonElement>('restart').hidden = false;
 
-    const output = el<HTMLElement>('output');
+    // const output = el<HTMLElement>('output');
 
     showWarnings(msgs);
     // Show output
-    if (data.indexOf('Failed') === 0) {
-        output.innerHTML = data;
-        return;
-    }
+    // if (data.indexOf('Failed') === 0) {
+    //     output.innerHTML = data;
+    //     return;
+    // }
 
-    try {
-        eval(data);
-    }
-    catch (e) {
-        output.innerHTML = e as string;
-        return;
-    }
+    // try {
+    //     eval(data);
+    //     //output.innerHTML = data;
+    // }
+    // catch (e) {
+    //     output.innerHTML = e as string;
+    //     return;
+    // }
+
+    const js = data.js.map(jsLines => () => { eval(jsLines.join('\n')) });
 
     const outputContainer = el<HTMLElement>('output-container');
     outputContainer.innerHTML = '';
@@ -517,13 +528,22 @@ const onCompileSuccess = function (data: string, msgs: string[]) {
     newOutput.id = 'output';
     outputContainer.appendChild(newOutput);
 
-    $(newOutput).squiffy({
-        scroll: 'element',
-        persist: false,
-        restartPrompt: false,
-        onSet: function (attribute: string, value: string) {
-            onSet(attribute, value);
-        }
+    // $(newOutput).squiffy({
+    //     scroll: 'element',
+    //     persist: false,
+    //     restartPrompt: false,
+    //     onSet: function (attribute: string, value: string) {
+    //         onSet(attribute, value);
+    //     }
+    // });
+
+    runtimeInit({
+        element: newOutput,
+        story: {
+            js: js,
+            ...data.story,
+            id: 'blah',         // TODO: Fix...
+        },
     });
 };
 

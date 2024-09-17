@@ -17,7 +17,7 @@ interface SquiffyApi {
 }
 
 interface Story {
-    js: [() => void];
+    js: (() => void)[];
     start: string;
     id: string;
     sections: Record<string, Section>;

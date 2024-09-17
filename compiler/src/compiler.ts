@@ -1,8 +1,8 @@
 import * as marked from 'marked';
-import * as crypto from 'crypto';
+//import * as crypto from 'crypto';
 import { SQUIFFY_VERSION } from './version.js';
 
-interface Output {
+export interface Output {
     story: OutputStory;
     js: string[][];
 }
@@ -438,9 +438,10 @@ class Story {
     id: string | null = null;
 
     constructor(inputFilename: string) {
-        var shasum = crypto.createHash('sha1');
-        shasum.update(inputFilename);
-        this.id = shasum.digest('hex').substring(0, 10);
+        console.log(inputFilename);
+        // var shasum = crypto.createHash('sha1');
+        // shasum.update(inputFilename);
+        // this.id = shasum.digest('hex').substring(0, 10);
     }
 
     addSection(name: string, filename: string, line: number): Section {
