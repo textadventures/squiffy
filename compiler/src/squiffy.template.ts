@@ -86,7 +86,7 @@ var initLinkHandler = function () {
         var sequenceAttr = $link.attr('data-sequence');
         var rotateOrSequenceAttr = rotateAttr || sequenceAttr;
         if (passage) {
-            disableLink($link);
+            $disableLink($link);
             squiffy.set('_turncount', squiffy.get('_turncount') + 1);
             passage = processLink(passage);
             if (passage) {
@@ -103,7 +103,7 @@ var initLinkHandler = function () {
         }
         else if (section) {
             currentSection?.appendChild(document.createElement('hr'));
-            disableLink($link);
+            $disableLink($link);
             section = processLink(section);
             squiffy.story.go(section);
         }
@@ -113,7 +113,7 @@ var initLinkHandler = function () {
             var dataAttribute = rotateAttr ? 'data-rotate' : 'data-sequence';
             $link.attr(dataAttribute, result[1]);
             if (!result[1]) {
-                disableLink($link);
+                $disableLink($link);
             }
             const attribute = $link.attr('data-attribute');
             if (attribute) {
@@ -137,9 +137,16 @@ var initLinkHandler = function () {
     });
 };
 
-var disableLink = function ($link: JQuery) {
+var $disableLink = function ($link: JQuery) {
     $link.addClass('disabled');
     $link.attr('tabindex', -1);
+}
+
+const disableLinks = function (links: NodeListOf<Element>) {
+    links.forEach(link => {
+        link.classList.add('disabled');
+        link.setAttribute('tabindex', '-1');
+    });
 }
 
 squiffy.story.begin = function () {
@@ -354,7 +361,6 @@ squiffy.story.load = function () {
     if (!output) return false;
     squiffy.ui.output.innerHTML = output;
     currentSection = document.getElementById(squiffy.get('_output-section'));
-    $currentSection = jQuery('#' + squiffy.get('_output-section'));
     squiffy.story.section = squiffy.story.sections[squiffy.get('_section')];
     var transition = squiffy.get('_transition');
     if (transition) {
@@ -379,23 +385,27 @@ squiffy.story.seen = function (sectionName: string) {
 };
 
 var currentSection: HTMLElement | null = null;
-var $currentSection: JQuery | null = null;
 var scrollPosition = 0;
 
 var newSection = function () {
-    if ($currentSection) {
-        disableLink(jQuery('.squiffy-link', $currentSection));
-        $currentSection.find('input').each(function () {
-            squiffy.set($(this).data('attribute') || this.id, this.value);
-            this.disabled = true;
+    if (currentSection) {
+        disableLinks(currentSection.querySelectorAll('.squiffy-link'));
+        currentSection.querySelectorAll('input').forEach(el => {
+            const attribute = el.getAttribute('data-attribute') || el.id;
+            if (attribute) squiffy.set(attribute, el.value);
+            el.disabled = true
         });
-        $currentSection.find("[contenteditable]").each(function () {
-            squiffy.set($(this).data('attribute') || this.id, this.innerHTML);
-            this.contentEditable = 'false'
+
+        currentSection.querySelectorAll("[contenteditable]").forEach(el => {
+            const attribute = el.getAttribute('data-attribute') || el.id;
+            if (attribute) squiffy.set(attribute, el.innerHTML);
+            (el as HTMLElement).contentEditable = 'false'
         });
-        $currentSection.find('textarea').each(function () {
-            squiffy.set($(this).data('attribute') || this.id, this.value);
-            this.disabled = true;
+
+        currentSection.querySelectorAll('textarea').forEach(el => {
+            const attribute = el.getAttribute('data-attribute') || el.id;
+            if (attribute) squiffy.set(attribute, el.value);
+            el.disabled = true
         });
     }
 
@@ -407,7 +417,6 @@ var newSection = function () {
     currentSection.id = id;
     squiffy.ui.output.appendChild(currentSection);
 
-    $currentSection = jQuery(currentSection);
     squiffy.set('_output-section', id);
 };
 
