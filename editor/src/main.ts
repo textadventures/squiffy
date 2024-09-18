@@ -524,7 +524,7 @@ const onCompileSuccess = function (data: Output, msgs: string[]) {
     //     return;
     // }
 
-    const js = data.js.map(jsLines => () => { eval(jsLines.join('\n')) });
+    const js = data.js.map(jsLines => new Function('squiffy', 'get', 'set', jsLines.join('\n')));
 
     const outputContainer = el<HTMLElement>('output-container');
     outputContainer.innerHTML = '';
