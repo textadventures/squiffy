@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { Compiler } from './compiler.js';
+import { compile } from './compiler.js';
 import { SQUIFFY_VERSION } from './version.js';
 import { externalFiles } from './external-files.js';
 
@@ -14,16 +14,14 @@ async function generate(inputFilename: string) {
     var inputFile = fs.readFileSync(inputFilename);
     var inputText = inputFile.toString();
 
-    const compiler = new Compiler({
+    const result = await compile({
         scriptBaseFilename: path.basename(inputFilename),
         script: inputText,
         onWarning: console.warn,
         externalFiles: externalFiles(inputFilename)
     });
 
-    const success = await compiler.load();
-
-    if (!success) {
+    if (!result.success) {
         console.log('Failed.');
         return;
     }
@@ -32,12 +30,12 @@ async function generate(inputFilename: string) {
 
     console.log('Writing ' + storyJsName);
 
-    var storyJs = await compiler.getJs();
+    var storyJs = await result.getJs();
 
     var outputPath = path.resolve(path.dirname(inputFilename));
     fs.writeFileSync(path.join(outputPath, storyJsName), storyJs);
 
-    const uiInfo = compiler.getUiInfo();
+    const uiInfo = result.getUiInfo();
 
     console.log('Writing squiffy.runtime.js');
     fs.copyFileSync(path.join(import.meta.dirname, 'squiffy.runtime.js'), path.join(outputPath, 'squiffy.runtime.js'));

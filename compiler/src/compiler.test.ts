@@ -2,19 +2,25 @@ import { expect, test } from 'vitest'
 import * as fs from 'fs';
 import path from 'path';
 
-import { Compiler } from './compiler.js';
+import { compile, CompileSuccess } from './compiler.js';
 import { externalFiles } from './external-files.js';
 
+function assertSuccess(obj: unknown): asserts obj is CompileSuccess {
+    if (!obj || typeof obj !== 'object' || !('success' in obj) || !obj.success) {
+        throw new Error('Expected success');
+    }
+}
+
 test('"Hello world" should compile', async () => {
-    const compiler = new Compiler({
+    const result = await compile({
         scriptBaseFilename: "filename.squiffy",
         script: "hello world",
     });
-    await compiler.load();
-    const result = await compiler.getStoryData();
-    expect(result.story.start).toBe("_default");
-    expect(Object.keys(result.story.sections).length).toBe(1);
-    expect(result.story.sections._default.text).toBe("<p>hello world</p>");
+
+    assertSuccess(result);
+    expect(result.output.story.start).toBe("_default");
+    expect(Object.keys(result.output.story.sections).length).toBe(1);
+    expect(result.output.story.sections._default.text).toBe("<p>hello world</p>");
 });
 
 const examples = [
@@ -41,7 +47,7 @@ for (const example of examples) {
         const filename = path.basename(example);
         const warnings: string[] = [];
 
-        const compiler = new Compiler({
+        const result = await compile({
             scriptBaseFilename: filename,
             script: script,
             onWarning: (message) => {
@@ -50,10 +56,9 @@ for (const example of examples) {
             },
             externalFiles: externalFiles(`examples/${example}`)
         });
-        await compiler.load();
 
-        const result = await compiler.getStoryData();
-        expect(result).toMatchSnapshot();
+        assertSuccess(result);
+        expect(result.output).toMatchSnapshot();
         expect(warnings.length).toBe(0);
     });
 }
@@ -70,14 +75,12 @@ for (const example of warningExamples) {
 
         const warnings: string[] = [];
 
-        const compiler = new Compiler({
+        await compile({
             scriptBaseFilename: filename,
             script: script,
             onWarning: (message) => warnings.push(message)
         });
         
-        await compiler.load();
-        await compiler.getStoryData();
         expect(warnings).toMatchSnapshot();
     });
 }
