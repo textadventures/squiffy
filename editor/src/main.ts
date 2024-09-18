@@ -4,7 +4,7 @@ import 'chosen-js/chosen.min.css'
 
 import $ from 'jquery';
 import { Modal, Tab, Tooltip } from 'bootstrap'
-import { Compiler, Output } from '../../compiler';
+import { Output, compile as squiffyCompile } from '../../compiler';
 import { openFile, saveFile } from './file-handler';
 import { Settings } from './settings';
 import * as editor from './editor';
@@ -486,15 +486,21 @@ const logToDebugger = function (text: string) {
 const compile = async function () {
     const script = editor.getValue();
 
-    const compiler = new Compiler({
+    const result = await squiffyCompile({
         scriptBaseFilename: "filename.squiffy",
         script: script,
     });
-    await compiler.load();
-    const result = await compiler.getStoryData();
+
+    if (!result.success) {
+        // TODO
+        // onCompileFail(result, []);
+        return;
+    }
+
+    onCompileSuccess(result.output, []);
 
     // TODO: Pass array of errors/warnings as the second parameter
-    onCompileSuccess(result, []);
+    onCompileSuccess(result.output, []);
 
     // TODO: Handle zip request (input.zip previously called "/zip" on server version)
 };
