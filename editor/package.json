@@ -32,6 +32,7 @@
     "chosen-js": "^1.8.7",
     "jquery": "^3.7.1",
     "marked": "^13.0.2",
-    "squiffy-compiler": "^6.0.0-alpha.0"
+    "squiffy-compiler": "^6.0.0-alpha.0",
+    "squiffy-runtime": "^6.0.0-alpha.2"
   }
 }

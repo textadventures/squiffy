@@ -8,7 +8,7 @@ import { Output, compile as squiffyCompile } from 'squiffy-compiler';
 import { openFile, saveFile } from './file-handler';
 import { Settings } from './settings';
 import * as editor from './editor';
-import { init as runtimeInit } from 'squiffy-compiler/dist/squiffy.runtime';
+import { init as runtimeInit } from 'squiffy-runtime';
 
 Object.assign(window, { $: $, jQuery: $ });
 
