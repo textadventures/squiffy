@@ -1,7 +1,7 @@
-import { expect, test } from 'vitest';
+import { expect, test, beforeEach, afterEach } from 'vitest';
 import fs from 'fs/promises';
 import { JSDOM } from 'jsdom';
-import 'global-jsdom/register';
+import globalJsdom from 'global-jsdom';
 import { init } from './squiffy.runtime.js';
 import { compile } from 'squiffy-compiler'; 
 
@@ -57,6 +57,16 @@ const findLink = (element: HTMLElement, linkType: string, linkText: string) => {
     return Array.from(links).find(link => link.textContent === linkText) as HTMLElement;
 };
 
+let cleanup: { (): void };
+
+beforeEach(() => {
+    cleanup = globalJsdom();
+});
+
+afterEach(() => {
+    cleanup();
+});
+
 test('"Hello world" script should run', async () => {
     const { element } = await initScript("Hello world");
     expect(element.innerHTML).toMatchSnapshot();
@@ -80,5 +90,26 @@ test('Click a section link', async () => {
 
     expect(linkToPassage.classList).toContain('disabled');
     expect(section3Link.classList).toContain('disabled');
+    expect(element.innerHTML).toMatchSnapshot();
+});
+
+test('Click a passage link', async () => {
+    const script = await fs.readFile('../examples/test/example.squiffy', 'utf-8');
+    const { squiffyApi, element } = await initScript(script);
+    expect(element.innerHTML).toMatchSnapshot();
+
+    expect(element.querySelectorAll('a.squiffy-link').length).toBe(10);
+    const linkToPassage = findLink(element, 'passage', 'a link to a passage');
+    const section3Link = findLink(element, 'section', 'section 3');
+
+    expect(linkToPassage).toBeDefined();
+    expect(section3Link).toBeDefined();
+    expect(linkToPassage.classList).not.toContain('disabled');
+    expect(section3Link.classList).not.toContain('disabled');
+
+    squiffyApi.clickLink(linkToPassage);
+
+    expect(linkToPassage.classList).toContain('disabled');
+    expect(section3Link.classList).not.toContain('disabled');
     expect(element.innerHTML).toMatchSnapshot();
 });
