@@ -103,7 +103,7 @@ export class Compiler {
             if ('@last' in section.passages) {
                 var passageCount = 0;
                 for (const passageName of Object.keys(section.passages)) {
-                    if (passageName?.substring(0, 1) !== '@') {
+                    if (passageName.length > 0 && passageName?.substring(0, 1) !== '@') {
                         passageCount++;
                     }
                 }

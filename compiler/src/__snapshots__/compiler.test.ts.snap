@@ -259,7 +259,7 @@ exports[`last/last.squiffy 1`] = `
         "text": "<p>Test section with some passages. <a class="squiffy-link link-passage" data-passage="a" role="link" tabindex="0">a</a>, <a class="squiffy-link link-passage" data-passage="b" role="link" tabindex="0">b</a>, <a class="squiffy-link link-passage" data-passage="c" role="link" tabindex="0">c</a>.</p>",
       },
       "section2": {
-        "passageCount": 4,
+        "passageCount": 3,
         "passages": {
           "": {
             "text": "<p>Master passage.</p>",
