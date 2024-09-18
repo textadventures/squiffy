@@ -62,7 +62,7 @@ const examples = [
 
 for (const example of examples) {
     test(example, async () => {
-        const script = await fs.readFile(`examples/${example}`, 'utf8');
+        const script = await fs.readFile(`../examples/${example}`, 'utf8');
         const filename = path.basename(example);
         const warnings: string[] = [];
 
@@ -73,7 +73,7 @@ for (const example of examples) {
                 console.warn(message);
                 warnings.push(message);
             },
-            externalFiles: externalFiles(`examples/${example}`)
+            externalFiles: externalFiles(`../examples/${example}`)
         });
 
         assertSuccess(result);
@@ -89,7 +89,7 @@ const warningExamples = [
 
 for (const example of warningExamples) {
     test(example, async () => {
-        const script = await fs.readFile(`examples/${example}`, 'utf8');
+        const script = await fs.readFile(`../examples/${example}`, 'utf8');
         const filename = path.basename(example);
 
         const warnings: string[] = [];
