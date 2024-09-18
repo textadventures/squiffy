@@ -4,11 +4,11 @@ import 'chosen-js/chosen.min.css'
 
 import $ from 'jquery';
 import { Modal, Tab, Tooltip } from 'bootstrap'
-import { Output, compile as squiffyCompile } from '../../compiler';
+import { Output, compile as squiffyCompile } from 'squiffy-compiler';
 import { openFile, saveFile } from './file-handler';
 import { Settings } from './settings';
 import * as editor from './editor';
-import { init as runtimeInit } from '../../compiler/dist/squiffy.runtime';
+import { init as runtimeInit } from 'squiffy-compiler/dist/squiffy.runtime';
 
 Object.assign(window, { $: $, jQuery: $ });
 

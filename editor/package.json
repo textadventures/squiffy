@@ -31,6 +31,7 @@
     "bootstrap-icons": "^1.11.3",
     "chosen-js": "^1.8.7",
     "jquery": "^3.7.1",
-    "marked": "^13.0.2"
+    "marked": "^13.0.2",
+    "squiffy-compiler": "^6.0.0-alpha.0"
   }
 }
