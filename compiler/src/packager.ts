@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Compiler } from './compiler.js';
 import { SQUIFFY_VERSION } from './version.js';
+import { externalFiles } from './external-files.js';
 
 export const createPackage = async (inputFilename: string) => {
     return await generate(inputFilename);
@@ -16,7 +17,8 @@ async function generate(inputFilename: string) {
     const compiler = new Compiler({
         scriptBaseFilename: path.basename(inputFilename),
         script: inputText,
-        onWarning: console.warn
+        onWarning: console.warn,
+        externalFiles: externalFiles(inputFilename)
     });
 
     const success = await compiler.load();

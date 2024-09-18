@@ -29,9 +29,16 @@ interface OutputPassage {
 }
 
 interface CompilerSettings {
-    scriptBaseFilename: string,
-    script: string,
+    scriptBaseFilename: string;
+    script: string;
     onWarning?: (message: string) => void;
+    externalFiles?: ExternalFiles;
+}
+
+interface ExternalFiles {
+    getMatchingFilenames(pattern: string): Promise<string[]>;
+    getContent(filename: string): Promise<string>;
+    getLocalFilename(filename: string): string;
 }
 
 export class Compiler {
@@ -214,28 +221,24 @@ export class Compiler {
             else if (match.start) {
                 this.story.start = match.start[1];
             }
-            
-            // TODO: When handling @import, keep track of which files have been included already. Don't include them again.
+            else if (match.import && this.settings.externalFiles) {
+                var importFilenames = await this.settings.externalFiles.getMatchingFilenames(match.import[1]);
 
-            // else if (match.import && inputFilename) {
-            //     var basePath = path.resolve(path.dirname(inputFilename));
-            //     var newFilenames = path.join(basePath, match.import[1]);
-            //     var importFilenames = glob.sync(newFilenames);
-            //     importFilenames.every(function (importFilename) {
-            //         if (importFilename.endsWith('.squiffy')) {
-            //             var success = await this.processFile(story, importFilename, false);
-            //             if (!success) return false;
-            //         }
-            //         else if (importFilename.endsWith('.js')) {
-            //             story.scripts.push(path.relative(basePath, importFilename));
-            //         }
-            //         else if (importFilename.endsWith('.css')) {
-            //             story.stylesheets.push(path.relative(basePath, importFilename));
-            //         }
-
-            //         return true;
-            //     }, this);
-            // }
+                for (const importFilename of importFilenames) {
+                    console.log("importing", importFilename);
+                    if (importFilename.endsWith('.squiffy')) {
+                        const content = await this.settings.externalFiles.getContent(importFilename);
+                        var success = await this.processFileText(content, importFilename, false);
+                        if (!success) return false;
+                    }
+                    else if (importFilename.endsWith('.js')) {
+                        this.story.scripts.push(this.settings.externalFiles.getLocalFilename(importFilename));
+                    }
+                    else if (importFilename.endsWith('.css')) {
+                        this.story.stylesheets.push(this.settings.externalFiles.getLocalFilename(importFilename));
+                    }
+                }
+            }
             else if (match.attributes) {
                 section = ensureSectionExists();
                 section = this.addAttribute(match.attributes[1], section!, passage, isFirst, inputFilename, lineCount);
@@ -431,8 +434,8 @@ export class Compiler {
 class Story {
     sections: Record<string, Section> = {};
     title = '';
-    scripts = [];
-    stylesheets = [];
+    scripts: string[] = [];
+    stylesheets: string[] = [];
     start = '';
     id: string | null = null;
 
