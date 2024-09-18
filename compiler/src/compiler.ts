@@ -169,6 +169,8 @@ export class Compiler {
             return this.ensureSectionExists(section, isFirst, inputFilename, lineCount);
         };
 
+        const secondPass: (() => Promise<void>)[] = [];
+
         let result = true;
 
         for (const line of inputLines) {
@@ -255,13 +257,17 @@ export class Compiler {
                 section = this.addAttribute(match.dec[1] + '-=' + (match.dec[2] === undefined ? '1' : match.dec[2]), section, passage, isFirst, inputFilename, lineCount);
             }
             else if (match.replace) {
-                section = ensureSectionExists();
+                const thisSection = ensureSectionExists();
+                const thisPassage = passage;
                 var replaceAttribute = match.replace[1];
                 var attributeMatch = /^(.*?)=(.*)$/.exec(replaceAttribute);
-                if (attributeMatch) {
-                    replaceAttribute = attributeMatch[1] + '=' + await this.processText(attributeMatch[2], section, null);
-                }
-                section = this.addAttribute('@replace ' + replaceAttribute, section!, passage, isFirst, inputFilename, lineCount);
+                secondPass.push(async () => {
+                    // add this to secondPass functions, because processText might result in links to passages which have not been created yet
+                    if (attributeMatch) {
+                        replaceAttribute = attributeMatch[1] + '=' + await this.processText(attributeMatch[2], thisSection, null);
+                    }
+                    this.addAttribute('@replace ' + replaceAttribute, section!, thisPassage, isFirst, inputFilename, lineCount);
+                });
             }
             else if (!textStarted && match.js) {
                 if (!passage) {
@@ -285,6 +291,10 @@ export class Compiler {
                     textStarted = true;
                 }
             }
+        }
+
+        for (const fn of secondPass) {
+            await fn();
         }
         
         return result;

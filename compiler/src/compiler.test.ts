@@ -39,16 +39,22 @@ for (const example of examples) {
     test(example, async () => {
         const script = fs.readFileSync(`examples/${example}`, 'utf8');
         const filename = path.basename(example);
+        const warnings: string[] = [];
 
         const compiler = new Compiler({
             scriptBaseFilename: filename,
             script: script,
+            onWarning: (message) => {
+                console.warn(message);
+                warnings.push(message);
+            },
             externalFiles: externalFiles(`examples/${example}`)
         });
         await compiler.load();
 
         const result = await compiler.getStoryData();
         expect(result).toMatchSnapshot();
+        expect(warnings.length).toBe(0);
     });
 }
 
