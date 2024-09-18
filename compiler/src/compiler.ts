@@ -1,6 +1,6 @@
 import * as marked from 'marked';
 
-export const SQUIFFY_VERSION = '6.0.0-alpha.1';
+export const SQUIFFY_VERSION = '6.0.0-alpha.2';
 
 export interface Output {
     story: OutputStory;
@@ -51,7 +51,7 @@ interface UiInfo {
 export interface CompileSuccess {
     success: true;
     output: Output;
-    getJs: () => Promise<string>;
+    getJs: (excludeHeader?: boolean) => Promise<string>;
     getUiInfo: () => UiInfo;
 }
 
@@ -64,10 +64,12 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
     const story = new Story(settings.scriptBaseFilename);
     const errors: string[] = [];
 
-    async function getJs(storyData: Output) {
+    async function getJs(storyData: Output, excludeHeader: boolean) {
         const outputJs: string[] = [];
-        outputJs.push(`// Created with Squiffy ${SQUIFFY_VERSION}`);
-        outputJs.push('// https://github.com/textadventures/squiffy');
+        if (!excludeHeader) {
+            outputJs.push(`// Created with Squiffy ${SQUIFFY_VERSION}`);
+            outputJs.push('// https://github.com/textadventures/squiffy');
+        }
         outputJs.push('export const story = {};');
         outputJs.push(`story.id = ${JSON.stringify(storyData.story.id, null, 4)};`);
         outputJs.push(`story.start = ${JSON.stringify(storyData.story.start, null, 4)};`);
@@ -430,11 +432,11 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
 
     function writeJs(outputJsFile: string[], tabCount: number, js: string[]) {
         var tabs = new Array(tabCount + 1).join('\t');
-        outputJsFile.push(`${tabs}function() {\n`);
+        outputJsFile.push(`${tabs}(squiffy, get, set) => {`);
         for (const jsLine of js) {
-            outputJsFile.push(`${tabs}\t${jsLine}\n`);
+            outputJsFile.push(`${tabs}\t${jsLine}`);
         }
-        outputJsFile.push(`${tabs}},\n`);
+        outputJsFile.push(`${tabs}},`);
     };
 
     const success = await processFileText(settings.script, settings.scriptBaseFilename, true);
@@ -445,8 +447,8 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         return {
             success: true,
             output: storyData,
-            getJs: () => {
-                return getJs(storyData);
+            getJs: (excludeHeader?: boolean) => {
+                return getJs(storyData, excludeHeader || false);
             },
             getUiInfo: () => {
                 return {

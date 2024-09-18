@@ -1,6 +1,6 @@
 {
   "name": "squiffy-compiler",
-  "version": "6.0.0-alpha.1",
+  "version": "6.0.0-alpha.2",
   "description": "A tool for creating multiple-choice interactive stories",
   "dependencies": {
     "marked": "^13.0.2"

@@ -77,7 +77,7 @@ for (const example of examples) {
         });
 
         assertSuccess(result);
-        expect(result.output).toMatchSnapshot();
+        expect(await result.getJs(true)).toMatchSnapshot();
         expect(warnings.length).toBe(0);
     });
 }
