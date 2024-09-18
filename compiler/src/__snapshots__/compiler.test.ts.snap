@@ -205,6 +205,35 @@ exports[`helloworld/helloworld.squiffy 1`] = `
 }
 `;
 
+exports[`import/test.squiffy 1`] = `
+{
+  "js": [
+    [
+      "test();",
+    ],
+  ],
+  "story": {
+    "id": "test.squiffy",
+    "sections": {
+      "_default": {
+        "text": "<p>Text from file 1.</p>
+<p><a class="squiffy-link link-section" data-section="file2" role="link" tabindex="0">Go to file 2</a></p>",
+      },
+      "file2": {
+        "passages": {
+          "test": {
+            "jsIndex": 0,
+            "text": "",
+          },
+        },
+        "text": "<p>Text from file 2. Run the <a class="squiffy-link link-passage" data-passage="test" role="link" tabindex="0">test</a> function.</p>",
+      },
+    },
+    "start": "_default",
+  },
+}
+`;
+
 exports[`last/last.squiffy 1`] = `
 {
   "js": [],

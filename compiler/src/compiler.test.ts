@@ -1,7 +1,9 @@
 import { expect, test } from 'vitest'
 import * as fs from 'fs';
-import { Compiler } from './compiler.js';
 import path from 'path';
+
+import { Compiler } from './compiler.js';
+import { externalFiles } from './external-files.js';
 
 test('"Hello world" should compile', async () => {
     const compiler = new Compiler({
@@ -20,7 +22,7 @@ const examples = [
     "clearscreen/clearscreen.squiffy",
     "continue/continue.squiffy",
     "helloworld/helloworld.squiffy",
-    // TODO: import/test.squiffy - needs a way for us to provide imported files
+    "import/test.squiffy",
     "last/last.squiffy",
     "master/master.squiffy",
     "replace/replace.squiffy",
@@ -41,6 +43,7 @@ for (const example of examples) {
         const compiler = new Compiler({
             scriptBaseFilename: filename,
             script: script,
+            externalFiles: externalFiles(`examples/${example}`)
         });
         await compiler.load();
 

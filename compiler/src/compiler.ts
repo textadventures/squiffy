@@ -225,7 +225,6 @@ export class Compiler {
                 var importFilenames = await this.settings.externalFiles.getMatchingFilenames(match.import[1]);
 
                 for (const importFilename of importFilenames) {
-                    console.log("importing", importFilename);
                     if (importFilename.endsWith('.squiffy')) {
                         const content = await this.settings.externalFiles.getContent(importFilename);
                         var success = await this.processFileText(content, importFilename, false);
