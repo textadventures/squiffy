@@ -155,7 +155,7 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
     function processLink(link: string): string | null {
         const sections = link.split(',');
         let first = true;
-        let target = null;
+        let target: string | null = null;
         sections.forEach(function (section) {
             section = section.trim();
             if (startsWith(section, '@replace ')) {

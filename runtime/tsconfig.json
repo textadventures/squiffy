@@ -5,7 +5,9 @@
       "noUnusedLocals": true,
       "noUnusedParameters": true,
       "noFallthroughCasesInSwitch": true,
-      "skipLibCheck": true
+      "skipLibCheck": true,
+      "outDir": "dist",
+      "declaration": true,
     },
     "include": ["src/squiffy.runtime.ts"]
 }

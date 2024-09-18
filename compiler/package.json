@@ -8,6 +8,7 @@
     "jszip": "^3.9.1",
     "marked": "^13.0.2",
     "serve-static": "^1.16.2",
+    "squiffy-runtime": "^6.0.0-alpha.2",
     "yargs": "^17.7.2"
   },
   "author": "Alex Warren",
@@ -37,8 +38,8 @@
   },
   "scripts": {
     "test": "vitest",
-    "build": "tsc && shx cp src/index.template.html ./dist/ && shx cp src/squiffy.runtime.js ./dist/ && shx cp src/style.template.css ./dist/",
-    "dev": "tsc --project tsconfig.runtime.json && tsx src/squiffy.ts"
+    "build": "tsc && shx cp src/index.template.html ./dist/ && shx cp node_modules/squiffy-runtime/dist/squiffy.runtime.js ./dist/ && shx cp src/style.template.css ./dist/",
+    "dev": "cp node_modules/squiffy-runtime/dist/squiffy.runtime.js ./src/ && tsx src/squiffy.ts"
   },
   "main": "dist/compiler.js",
   "types": "dist/compiler.d.ts",
