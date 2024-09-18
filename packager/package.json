@@ -8,8 +8,16 @@
     "dev": "cp node_modules/squiffy-runtime/dist/squiffy.runtime.js ./src/ && tsx src/squiffy.ts"
   },
   "author": "Alex Warren",
+  "contributors": [
+    "CrisisSDK",
+    "mrangel",
+    "Luis Felipe Morales"
+  ],
   "license": "MIT",
   "description": "",
+  "bin": {
+    "squiffy": "squiffy.js"
+  },
   "dependencies": {
     "finalhandler": "^1.3.1",
     "serve-static": "^1.16.2",

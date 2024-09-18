@@ -1,9 +1,28 @@
 import { expect, test } from 'vitest'
-import * as fs from 'fs';
+import * as fs from 'fs/promises';
+import { glob } from "glob";
 import path from 'path';
 
 import { compile, CompileSuccess } from './compiler.js';
-import { externalFiles } from './external-files.js';
+
+const externalFiles = (inputFilename: string) => {
+    const includedFiles = [path.resolve(inputFilename)];
+    const basePath = path.resolve(path.dirname(inputFilename));
+    return {
+        getMatchingFilenames: async (pattern: string): Promise<string[]> => {
+            const filenames = path.join(basePath, pattern);
+            const result = await glob(filenames);
+            return result.filter((filename: string) => !includedFiles.includes(filename));
+        },
+        getContent: async (filename: string): Promise<string> => {
+            includedFiles.push(filename);
+            return (await fs.readFile(filename)).toString();
+        },
+        getLocalFilename(filename: string): string {
+            return path.relative(basePath, filename);
+        }
+    }
+}
 
 function assertSuccess(obj: unknown): asserts obj is CompileSuccess {
     if (!obj || typeof obj !== 'object' || !('success' in obj) || !obj.success) {
@@ -43,7 +62,7 @@ const examples = [
 
 for (const example of examples) {
     test(example, async () => {
-        const script = fs.readFileSync(`examples/${example}`, 'utf8');
+        const script = await fs.readFile(`examples/${example}`, 'utf8');
         const filename = path.basename(example);
         const warnings: string[] = [];
 
@@ -70,7 +89,7 @@ const warningExamples = [
 
 for (const example of warningExamples) {
     test(example, async () => {
-        const script = fs.readFileSync(`examples/${example}`, 'utf8');
+        const script = await fs.readFile(`examples/${example}`, 'utf8');
         const filename = path.basename(example);
 
         const warnings: string[] = [];

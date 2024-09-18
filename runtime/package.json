@@ -8,6 +8,11 @@
     "build": "tsc"
   },
   "author": "Alex Warren",
+  "contributors": [
+    "CrisisSDK",
+    "mrangel",
+    "Luis Felipe Morales"
+  ],
   "license": "MIT",
   "description": "",
   "devDependencies": {

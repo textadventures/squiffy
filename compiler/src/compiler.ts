@@ -1,5 +1,6 @@
 import * as marked from 'marked';
-import { SQUIFFY_VERSION } from './version.js';
+
+export const SQUIFFY_VERSION = '6.0.0-alpha.1';
 
 export interface Output {
     story: OutputStory;
