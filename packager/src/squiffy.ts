@@ -1,8 +1,10 @@
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import { SQUIFFY_VERSION } from './version.js';
+// import { SQUIFFY_VERSION } from './version.js';
 import { createPackage } from './packager.js';
 import { serve } from './server.js';
+
+const SQUIFFY_VERSION = '6.0.0-alpha.0';
 
 const argv = yargs(hideBin(process.argv))
     .usage(
