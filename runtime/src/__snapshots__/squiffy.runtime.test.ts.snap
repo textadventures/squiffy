@@ -4,3 +4,27 @@ exports[`"Hello world" script should run 1`] = `
 "
     <div id="squiffy-section-1"><div><p>Hello world</p></div></div>"
 `;
+
+exports[`Click a section link 1`] = `
+"
+    <div id="squiffy-section-1"><div><p>Hello world</p></div></div><div id="squiffy-section-2"><div><h1>Squiffy Test</h1>
+<p>This is <a href="http://textadventures.co.uk">a website link</a>.</p>
+<p>This should be <a class="squiffy-link link-passage" data-passage="passage" role="link" tabindex="0">a link to a passage</a>. Here's <a class="squiffy-link link-passage" data-passage="passage2" role="link" tabindex="0">another one</a>.</p>
+<p>You don't need to specify a name - for example, this <a class="squiffy-link link-passage" data-passage="link" role="link" tabindex="0">link</a> and this <a class="squiffy-link link-section" data-section="section" role="link" tabindex="0">section</a>.</p>
+<p>And this goes to the <a class="squiffy-link link-section" data-section="section2" role="link" tabindex="0">next section</a>.</p>
+<p>This line has links to <a class="squiffy-link link-section" data-section="section 3" role="link" tabindex="0">section 3</a> and <a class="squiffy-link link-section" data-section="section four" role="link" tabindex="0">section 4</a>.</p>
+<p>This line has links to <a class="squiffy-link link-passage" data-passage="passage 3" role="link" tabindex="0">passage 3</a> and <a class="squiffy-link link-passage" data-passage="passage four" role="link" tabindex="0">passage 4</a>.</p>
+<p>Oh look - <a class="squiffy-link link-passage" data-passage="it's a passage with an apostrophe" role="link" tabindex="0">it's a passage with an apostrophe</a>.</p></div></div>"
+`;
+
+exports[`Click a section link 2`] = `
+"
+    <div id="squiffy-section-1"><div><p>Hello world</p></div></div><div id="squiffy-section-2"><div><h1>Squiffy Test</h1>
+<p>This is <a href="http://textadventures.co.uk">a website link</a>.</p>
+<p>This should be <a class="squiffy-link link-passage disabled" data-passage="passage" role="link" tabindex="-1">a link to a passage</a>. Here's <a class="squiffy-link link-passage disabled" data-passage="passage2" role="link" tabindex="-1">another one</a>.</p>
+<p>You don't need to specify a name - for example, this <a class="squiffy-link link-passage disabled" data-passage="link" role="link" tabindex="-1">link</a> and this <a class="squiffy-link link-section disabled" data-section="section" role="link" tabindex="-1">section</a>.</p>
+<p>And this goes to the <a class="squiffy-link link-section disabled" data-section="section2" role="link" tabindex="-1">next section</a>.</p>
+<p>This line has links to <a class="squiffy-link link-section disabled" data-section="section 3" role="link" tabindex="-1">section 3</a> and <a class="squiffy-link link-section disabled" data-section="section four" role="link" tabindex="-1">section 4</a>.</p>
+<p>This line has links to <a class="squiffy-link link-passage disabled" data-passage="passage 3" role="link" tabindex="-1">passage 3</a> and <a class="squiffy-link link-passage disabled" data-passage="passage four" role="link" tabindex="-1">passage 4</a>.</p>
+<p>Oh look - <a class="squiffy-link link-passage disabled" data-passage="it's a passage with an apostrophe" role="link" tabindex="-1">it's a passage with an apostrophe</a>.</p></div><hr></div><div id="squiffy-section-3"><div><p>Another section is here.</p></div></div>"
+`;

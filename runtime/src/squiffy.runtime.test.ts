@@ -1,4 +1,5 @@
 import { expect, test } from 'vitest';
+import fs from 'fs/promises';
 import { JSDOM } from 'jsdom';
 import 'global-jsdom/register';
 import { init } from './squiffy.runtime.js';
@@ -16,12 +17,8 @@ const html = `
 </html>
 `;
 
-const script = `
-Hello world
-`;
-
-test('"Hello world" script should run', async () => {
-    const { window } = new JSDOM(html);
+const initScript = async (script: string) => {
+    const { window } = new JSDOM(html, { runScripts: "dangerously" });
     const document = window.document;
     const element = document.getElementById('squiffy');
 
@@ -49,5 +46,39 @@ test('"Hello world" script should run', async () => {
         },
     });
 
+    return {
+        squiffyApi,
+        element
+    }
+};
+
+const findLink = (element: HTMLElement, linkType: string, linkText: string) => {
+    const links = element.querySelectorAll(`a.squiffy-link.link-${linkType}`);
+    return Array.from(links).find(link => link.textContent === linkText) as HTMLElement;
+};
+
+test('"Hello world" script should run', async () => {
+    const { element } = await initScript("Hello world");
+    expect(element.innerHTML).toMatchSnapshot();
+});
+
+test('Click a section link', async () => {
+    const script = await fs.readFile('../examples/test/example.squiffy', 'utf-8');
+    const { squiffyApi, element } = await initScript(script);
+    expect(element.innerHTML).toMatchSnapshot();
+
+    expect(element.querySelectorAll('a.squiffy-link').length).toBe(10);
+    const linkToPassage = findLink(element, 'passage', 'a link to a passage');
+    const section3Link = findLink(element, 'section', 'section 3');
+
+    expect(linkToPassage).toBeDefined();
+    expect(section3Link).toBeDefined();
+    expect(linkToPassage.classList).not.toContain('disabled');
+    expect(section3Link.classList).not.toContain('disabled');
+
+    squiffyApi.clickLink(section3Link);
+
+    expect(linkToPassage.classList).toContain('disabled');
+    expect(section3Link.classList).toContain('disabled');
     expect(element.innerHTML).toMatchSnapshot();
 });

@@ -16,6 +16,7 @@ interface SquiffyApi {
     restart: () => void;
     get: (attribute: string) => any;
     set: (attribute: string, value: any) => void;
+    clickLink: (link: HTMLElement) => void;
 }
 
 interface Story {
@@ -73,68 +74,60 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
         return JSON.parse(result);
     }
     
-    function initLinkHandler() {
-        function handleLink(link: HTMLElement) {
-            if (link.classList.contains('disabled')) return;
-            let passage = link.getAttribute('data-passage');
-            let section = link.getAttribute('data-section');
-            const rotateAttr = link.getAttribute('data-rotate');
-            const sequenceAttr = link.getAttribute('data-sequence');
-            const rotateOrSequenceAttr = rotateAttr || sequenceAttr;
+    function handleLink(link: HTMLElement) {
+        if (link.classList.contains('disabled')) return;
+        let passage = link.getAttribute('data-passage');
+        let section = link.getAttribute('data-section');
+        const rotateAttr = link.getAttribute('data-rotate');
+        const sequenceAttr = link.getAttribute('data-sequence');
+        const rotateOrSequenceAttr = rotateAttr || sequenceAttr;
+        if (passage) {
+            disableLink(link);
+            set('_turncount', get('_turncount') + 1);
+            passage = processLink(passage);
             if (passage) {
-                disableLink(link);
-                set('_turncount', get('_turncount') + 1);
-                passage = processLink(passage);
-                if (passage) {
-                    currentSectionElement?.appendChild(document.createElement('hr'));
-                    showPassage(passage);
-                }
-                const turnPassage = '@' + get('_turncount');
-                if (currentSection.passages) {
-                    if (turnPassage in currentSection.passages) {
-                        showPassage(turnPassage);
-                    }
-                    if ('@last' in currentSection.passages && get('_turncount') >= (currentSection.passageCount || 0)) {
-                        showPassage('@last');
-                    }
-                }
-            }
-            else if (section) {
                 currentSectionElement?.appendChild(document.createElement('hr'));
+                showPassage(passage);
+            }
+            const turnPassage = '@' + get('_turncount');
+            if (currentSection.passages) {
+                if (turnPassage in currentSection.passages) {
+                    showPassage(turnPassage);
+                }
+                if ('@last' in currentSection.passages && get('_turncount') >= (currentSection.passageCount || 0)) {
+                    showPassage('@last');
+                }
+            }
+        }
+        else if (section) {
+            currentSectionElement?.appendChild(document.createElement('hr'));
+            disableLink(link);
+            section = processLink(section);
+            if (section) {
+                go(section);
+            }
+        }
+        else if (rotateOrSequenceAttr) {
+            const result = rotate(rotateOrSequenceAttr, rotateAttr ? link.innerText : '');
+            link.innerHTML = result[0]!.replace(/&quot;/g, '"').replace(/&#39;/g, '\'');
+            const dataAttribute = rotateAttr ? 'data-rotate' : 'data-sequence';
+            link.setAttribute(dataAttribute, result[1] || '');
+            if (!result[1]) {
                 disableLink(link);
-                section = processLink(section);
-                if (section) {
-                    go(section);
-                }
             }
-            else if (rotateOrSequenceAttr) {
-                const result = rotate(rotateOrSequenceAttr, rotateAttr ? link.innerText : '');
-                link.innerHTML = result[0]!.replace(/&quot;/g, '"').replace(/&#39;/g, '\'');
-                const dataAttribute = rotateAttr ? 'data-rotate' : 'data-sequence';
-                link.setAttribute(dataAttribute, result[1] || '');
-                if (!result[1]) {
-                    disableLink(link);
-                }
-                const attribute = link.getAttribute('data-attribute');
-                if (attribute) {
-                    set(attribute, result[0]);
-                }
-                save();
+            const attribute = link.getAttribute('data-attribute');
+            if (attribute) {
+                set(attribute, result[0]);
             }
+            save();
         }
-    
-        function handleClick(event: Event) {
-            const target = event.target as HTMLElement;
-            if (target.classList.contains('squiffy-link')) {
-                handleLink(target);
-            }
+    }
+
+    function handleClick(event: Event) {
+        const target = event.target as HTMLElement;
+        if (target.classList.contains('squiffy-link')) {
+            handleLink(target);
         }
-    
-        document.addEventListener('click', handleClick);
-        document.addEventListener('keypress', function (event) {
-            if (event.key !== "Enter") return;
-            handleClick(event);
-        });
     }
     
     function disableLink(link: Element) {
@@ -659,12 +652,18 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
         outputElement.style.overflowY = 'auto';
     }
 
-    initLinkHandler();
+    document.addEventListener('click', handleClick);
+    document.addEventListener('keypress', function (event) {
+        if (event.key !== "Enter") return;
+        handleClick(event);
+    });
+    
     begin();
 
     return {
         restart: restart,
         get: get,
         set: set,
+        clickLink: handleLink
     };
 };
