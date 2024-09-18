@@ -19,8 +19,25 @@ interface SquiffyApi {
     clickLink: (link: HTMLElement) => void;
 }
 
+// Previous versions of Squiffy had "squiffy", "get" and "set" as globals - we now pass these directly into JS functions.
+// We may tidy up this API at some point, though that would be a breaking change.
+interface SquiffyJsFunctionApi {
+    get: (attribute: string) => any;
+    set: (attribute: string, value: any) => void;
+    ui: {
+        transition: (f: any) => void;
+    };
+    story: {
+        go: (section: string) => void;
+    };
+}
+
 interface Story {
-    js: (() => void)[];
+    js: ((
+            squiffy: SquiffyJsFunctionApi,
+            get: (attribute: string) => any,
+            set: (attribute: string, value: any) => void
+        ) => void)[];
     start: string;
     id?: string | null;
     sections: Record<string, Section>;
@@ -282,7 +299,17 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
             processAttributes(section.attributes.map(line => line.replace(/^random\s*:\s*(\w+)\s*=\s*(.+)/i, (line, attr, options) => (options = options.split("|")) ? attr + " = " + options[Math.floor(Math.random() * options.length)] : line)));
         }
         if (section.jsIndex !== undefined) {
-            story.js[section.jsIndex]();
+            const squiffy = {
+                get: get,
+                set: set,
+                ui: {
+                    transition: ui.transition,
+                },
+                story: {
+                    go: go,
+                },
+            };
+            story.js[section.jsIndex](squiffy, get, set);
         }
     }
     
