@@ -1,17 +1,19 @@
 interface SquiffyInitOptions {
     element: HTMLElement;
     story: Story;
+    scroll?: string,
+    persist?: boolean,
+    onSet?: (attribute: string, value: any) => void,
 }
 
 interface SquiffySettings {
     scroll: string,
     persist: boolean,
-    restartPrompt: boolean,
     onSet: (attribute: string, value: any) => void,
 }
 
 interface SquiffyApi {
-    askRestart: () => void;
+    restart: () => void;
     get: (attribute: string) => any;
     set: (attribute: string, value: any) => void;
 }
@@ -19,7 +21,7 @@ interface SquiffyApi {
 interface Story {
     js: (() => void)[];
     start: string;
-    id: string;
+    id?: string | null;
     sections: Record<string, Section>;
 }
 
@@ -326,13 +328,13 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
     }
     
     function restart() {
-        if (settings.persist && window.localStorage) {
+        if (settings.persist && window.localStorage && story.id) {
             const keys = Object.keys(localStorage);
-            keys.forEach(key => {
+            for (const key of keys) {
                 if (startsWith(key, story.id)) {
                     localStorage.removeItem(key);
                 }
-            });
+            }
         }
         else {
             storageFallback = {};
@@ -639,15 +641,19 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
         return [next, remaining];
     }
 
-    settings = {
-        scroll: 'body',
-        persist: true,
-        restartPrompt: true,
-        onSet: function () { }
-    };
-
     outputElement = options.element;
     story = options.story;
+
+    settings = {
+        scroll: options.scroll || 'body',
+        persist: (options.persist === undefined) ? true : options.persist,
+        onSet: options.onSet || (() => {})
+    };
+
+    if (options.persist === true && !story.id) {
+        console.warn("Persist is set to true in Squiffy runtime options, but no story id has been set. Persist will be disabled.");
+        settings.persist = false;
+    }
 
     if (settings.scroll === 'element') {
         outputElement.style.overflowY = 'auto';
@@ -657,11 +663,7 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
     begin();
 
     return {
-        askRestart: function () {
-            if (!settings.restartPrompt || confirm('Are you sure you want to restart?')) {
-                restart();
-            }
-        },
+        restart: restart,
         get: get,
         set: set,
     };

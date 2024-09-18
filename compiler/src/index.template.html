@@ -13,11 +13,14 @@
 				const squiffyApi = init({
 					element: document.getElementById('squiffy'),
 					story: story,
+					persist: true,
 				});
 
 				const restartButton = document.getElementById('restart');
 				restartButton.addEventListener('click', function() {
-					squiffyApi.askRestart();
+					if (confirm('Are you sure you want to restart?')) {
+						squiffyApi.restart();
+					}
 				});
 			});
 		</script>

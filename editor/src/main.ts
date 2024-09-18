@@ -534,21 +534,14 @@ const onCompileSuccess = function (data: Output, msgs: string[]) {
     newOutput.id = 'output';
     outputContainer.appendChild(newOutput);
 
-    // $(newOutput).squiffy({
-    //     scroll: 'element',
-    //     persist: false,
-    //     restartPrompt: false,
-    //     onSet: function (attribute: string, value: string) {
-    //         onSet(attribute, value);
-    //     }
-    // });
-
     runtimeInit({
         element: newOutput,
+        scroll: 'element',
+        persist: false,
+        onSet: onSet,
         story: {
             js: js,
             ...data.story,
-            id: 'blah',         // TODO: Fix...
         },
     });
 };
