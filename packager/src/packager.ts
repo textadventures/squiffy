@@ -1,10 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { compile } from 'squiffy-compiler';
-// import { SQUIFFY_VERSION } from 'squiffy-compiler';   // TODO: Export from squiffy-compiler
+import { compile, SQUIFFY_VERSION } from 'squiffy-compiler';
 import { externalFiles } from './external-files.js';
-
-const SQUIFFY_VERSION = '6.0.0-alpha.0';
 
 export const createPackage = async (inputFilename: string) => {
     return await generate(inputFilename);
