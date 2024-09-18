@@ -8,7 +8,7 @@ exports[`attributes/attributes.squiffy 1`] = `
     ],
   ],
   "story": {
-    "id": "8f021510b2",
+    "id": "attributes.squiffy",
     "sections": {
       "_default": {
         "attributes": [
@@ -127,7 +127,7 @@ exports[`clearscreen/clearscreen.squiffy 1`] = `
 {
   "js": [],
   "story": {
-    "id": "11cfb14565",
+    "id": "clearscreen.squiffy",
     "sections": {
       "_default": {
         "passages": {
@@ -162,7 +162,7 @@ exports[`continue/continue.squiffy 1`] = `
     ],
   ],
   "story": {
-    "id": "b3f364a185",
+    "id": "continue.squiffy",
     "sections": {
       "_continue1": {
         "text": "<p>More text.</p>
@@ -194,7 +194,7 @@ exports[`helloworld/helloworld.squiffy 1`] = `
 {
   "js": [],
   "story": {
-    "id": "23136e3f56",
+    "id": "helloworld.squiffy",
     "sections": {
       "_default": {
         "text": "<p>Hello, world!</p>",
@@ -209,7 +209,7 @@ exports[`last/last.squiffy 1`] = `
 {
   "js": [],
   "story": {
-    "id": "4f03742f3a",
+    "id": "last.squiffy",
     "sections": {
       "_default": {
         "passageCount": 3,
@@ -267,7 +267,7 @@ exports[`master/master.squiffy 1`] = `
     ],
   ],
   "story": {
-    "id": "7af5cb7b84",
+    "id": "master.squiffy",
     "sections": {
       "": {
         "passages": {
@@ -318,7 +318,7 @@ exports[`replace/replace.squiffy 1`] = `
 {
   "js": [],
   "story": {
-    "id": "b8c7a2e078",
+    "id": "replace.squiffy",
     "sections": {
       "_default": {
         "passages": {
@@ -363,7 +363,7 @@ exports[`rotate/rotate.squiffy 1`] = `
 {
   "js": [],
   "story": {
-    "id": "c97bf092b3",
+    "id": "rotate.squiffy",
     "sections": {
       "Go!": {
         "text": "<p>That&#39;s all folks!</p>",
@@ -399,7 +399,7 @@ exports[`sectiontrack/sectiontrack.squiffy 1`] = `
 {
   "js": [],
   "story": {
-    "id": "2d832c6c7c",
+    "id": "sectiontrack.squiffy",
     "sections": {
       "_default": {
         "passages": {
@@ -430,7 +430,7 @@ exports[`start/start.squiffy 1`] = `
 {
   "js": [],
   "story": {
-    "id": "a9ca7b4973",
+    "id": "start.squiffy",
     "sections": {
       "not the start section": {
         "text": "<p>This is page 2, although it was defined first.</p>",
@@ -455,7 +455,7 @@ exports[`test/example.squiffy 1`] = `
     ],
   ],
   "story": {
-    "id": "f54b445d13",
+    "id": "example.squiffy",
     "sections": {
       "Introduction": {
         "passages": {
@@ -511,7 +511,7 @@ exports[`textprocessor/textprocessor.squiffy 1`] = `
 {
   "js": [],
   "story": {
-    "id": "9be28bc73c",
+    "id": "textprocessor.squiffy",
     "sections": {
       "_default": {
         "text": "<p>Choose a gender:</p>
@@ -583,7 +583,7 @@ exports[`transitions/transitions.squiffy 1`] = `
     ],
   ],
   "story": {
-    "id": "11e1f120df",
+    "id": "transitions.squiffy",
     "sections": {
       "_default": {
         "passages": {
@@ -616,7 +616,7 @@ exports[`turncount/turncount.squiffy 1`] = `
     ],
   ],
   "story": {
-    "id": "cd4da28f01",
+    "id": "turncount.squiffy",
     "sections": {
       "_default": {
         "passages": {
