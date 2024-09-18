@@ -679,8 +679,8 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
         outputElement.style.overflowY = 'auto';
     }
 
-    document.addEventListener('click', handleClick);
-    document.addEventListener('keypress', function (event) {
+    outputElement.addEventListener('click', handleClick);
+    outputElement.addEventListener('keypress', function (event) {
         if (event.key !== "Enter") return;
         handleClick(event);
     });

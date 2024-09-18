@@ -497,8 +497,6 @@ const compile = async function () {
         return;
     }
 
-    onCompileSuccess(result.output, []);
-
     // TODO: Pass array of errors/warnings as the second parameter
     onCompileSuccess(result.output, []);
 

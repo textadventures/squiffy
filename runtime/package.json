@@ -1,6 +1,6 @@
 {
   "name": "squiffy-runtime",
-  "version": "6.0.0-alpha.3",
+  "version": "6.0.0-alpha.4",
   "main": "dist/squiffy.runtime.js",
   "types": "dist/squiffy.runtime.d.ts",
   "scripts": {
