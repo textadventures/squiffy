@@ -4,7 +4,7 @@
   "main": "dist/squiffy.runtime.js",
   "types": "dist/squiffy.runtime.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "vitest",
     "build": "tsc"
   },
   "author": "Alex Warren",
@@ -16,6 +16,11 @@
   "license": "MIT",
   "description": "",
   "devDependencies": {
-    "typescript": "^5.6.2"
+    "@types/jsdom": "^21.1.7",
+    "global-jsdom": "^25.0.0",
+    "jsdom": "^25.0.0",
+    "squiffy-compiler": "^6.0.0-alpha.1",
+    "typescript": "^5.6.2",
+    "vitest": "^2.1.1"
   }
 }

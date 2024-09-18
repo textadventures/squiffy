@@ -1,0 +1,6 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`"Hello world" script should run 1`] = `
+"
+    <div id="squiffy-section-1"><div><p>Hello world</p></div></div>"
+`;
