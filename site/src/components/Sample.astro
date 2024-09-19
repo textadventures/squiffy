@@ -28,7 +28,14 @@ const { script } = Astro.props;
             const script = (editor as HTMLElement).dataset.squiffyScript;
             new EditorView({
                 doc: script,
-                extensions: [basicSetup, EditorView.lineWrapping],
+                extensions: [
+                    basicSetup,
+                    EditorView.lineWrapping,
+                    EditorView.theme({
+                        ".cm-content": {fontSize: "13px"},
+                        ".cm-lineNumbers": {fontSize: "13px"},
+                    })
+                ],
                 parent: editor
             });
         }
