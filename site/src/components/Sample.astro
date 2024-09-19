@@ -1,6 +1,4 @@
 ---
-import Squiffy from "@components/Squiffy.astro";
-
 interface Props {
     script: string;
 }
@@ -8,36 +6,115 @@ interface Props {
 const { script } = Astro.props;
 ---
 
-<div class="row sample">
-    <div class="col-md-6">
-        <div class="squiffy-editor" data-squiffy-script={script}>
-        </div>
+<style is:global>
+    a.squiffy-link
+    {
+        text-decoration: underline;
+        color: Blue;
+        cursor: pointer;
+    }
+    a.squiffy-link.disabled
+    {
+        text-decoration: inherit;
+        color: inherit !important;
+        cursor: inherit;
+    }
+</style>
+
+<div class="row sample" data-squiffy-script={script}>
+    <div class="col-md-6 editor">
     </div>
-    <div class="col-md-6 output">
-        <Squiffy script={script} />
+    <div class="col-md-6">
+        <div class="viewer"></div>
+        <button class="btn btn-primary btn-sm restart">Restart</button>
     </div>
 </div>
 
 <script>
-    import {basicSetup, EditorView} from "codemirror";
+    import {basicSetup, EditorView} from 'codemirror';
+    import { compile as squiffyCompile } from 'squiffy-compiler';
+    import { init as runtimeInit } from 'squiffy-runtime';
+    import debounce from 'debounce';
 
-    const editors = document.querySelectorAll('.squiffy-editor');
+    const samples = document.querySelectorAll('.sample');
     
     document.addEventListener("DOMContentLoaded", async () => {
-        for (const editor of editors) {
-            const script = (editor as HTMLElement).dataset.squiffyScript;
+        for (const sample of samples) {
+            let script = '';
+            let loaded = false;
+
+            const editor = sample.querySelector('.editor');
+            if (!editor) continue;
+
+            const viewer = sample.querySelector('.viewer') as HTMLElement;
+            if (!viewer) continue;
+
+            const restart = sample.querySelector('.restart') as HTMLButtonElement;
+
+            const init = async () => {
+                await initRuntime(script, viewer, restart);
+            };
+
+            const updateListener = EditorView.updateListener.of(async (update) => {
+                const value = update.state.doc.toString();
+                if (value == script) return;
+
+                script = value;
+
+                if (!loaded) {
+                    loaded = true;
+                    await init();
+                } else {
+                    debounce(init, 1000)();
+                }
+            });
+
             new EditorView({
-                doc: script,
+                doc: (sample as HTMLElement).dataset.squiffyScript,
                 extensions: [
                     basicSetup,
                     EditorView.lineWrapping,
                     EditorView.theme({
                         ".cm-content": {fontSize: "13px"},
                         ".cm-lineNumbers": {fontSize: "13px"},
-                    })
+                    }),
+                    updateListener
                 ],
                 parent: editor
             });
         }
     });
+
+    async function initRuntime(script: string, outputContainer: HTMLElement, restartButton: HTMLElement) {
+        outputContainer.innerHTML = '';
+        const output = document.createElement('div');
+        outputContainer.appendChild(output);
+
+        const result = await squiffyCompile({
+            scriptBaseFilename: "filename.squiffy",
+            script: script,
+        });
+
+        if (!result.success) {
+            console.error("Failed to compile script", result.errors);
+            return;
+        }
+
+        const data = result.output;
+        const js = data.js.map(jsLines => new Function('squiffy', 'get', 'set', jsLines.join('\n')));
+
+        const squiffyApi = runtimeInit({
+            element: output,
+            scroll: 'element',
+            persist: false,
+            story: {
+                js: js as any,
+                ...data.story,
+            },
+        });
+
+        restartButton.addEventListener('click', () => {
+            squiffyApi.restart();
+        });
+    }
 </script>
