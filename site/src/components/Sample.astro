@@ -10,11 +10,27 @@ const { script } = Astro.props;
 
 <div class="row sample">
     <div class="col-md-6">
-        <pre>
-            {script}
-        </pre>
+        <div class="squiffy-editor" data-squiffy-script={script}>
+        </div>
     </div>
     <div class="col-md-6 output">
         <Squiffy script={script} />
     </div>
 </div>
+
+<script>
+    import {basicSetup, EditorView} from "codemirror";
+
+    const editors = document.querySelectorAll('.squiffy-editor');
+    
+    document.addEventListener("DOMContentLoaded", async () => {
+        for (const editor of editors) {
+            const script = (editor as HTMLElement).dataset.squiffyScript;
+            new EditorView({
+                doc: script,
+                extensions: [basicSetup, EditorView.lineWrapping],
+                parent: editor
+            });
+        }
+    });
+</script>
