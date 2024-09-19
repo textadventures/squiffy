@@ -1,0 +1,15 @@
+---
+layout: "@layouts/MarkdownLayout.astro"
+title: Using JavaScript
+---
+
+import Sample from "@components/Sample.astro"
+
+Any section or passage can call some JavaScript when it is displayed. Simply indent with four spaces or a tab, before the text.
+
+<Sample script="Clicking this [link] will show an alert.
+
+[link]:
+&#32;&#32;&#32;&#32;alert (&quot;Hello!&quot;);
+    
+Text for the passage."></Sample>
