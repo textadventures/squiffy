@@ -6,29 +6,67 @@ interface Props {
 const { script } = Astro.props;
 ---
 
-<div class="squiffy-output" data-squiffy-script={script}></button>
+<style is:global>
+    a.squiffy-link
+    {
+        text-decoration: underline;
+        color: Blue;
+        cursor: pointer;
+    }
+    a.squiffy-link.disabled
+    {
+        text-decoration: inherit;
+        color: inherit !important;
+        cursor: inherit;
+    }
+</style>
+
+<div class="squiffy-output-container" data-squiffy-script={script}>
+    <div class="squiffy-output"></div>
+    <button class="btn btn-primary btn-sm restart">Restart</button>
+</div>
 
 <script>
-    import $ from 'jquery';
-    import { getJs } from "../../../editor/src/compiler.ts";
+    import { compile as squiffyCompile } from 'squiffy-compiler';
+    import { init as runtimeInit } from 'squiffy-runtime';
 
-    Object.assign(window, { $: $, jQuery: $ });
+    const containers = document.querySelectorAll('.squiffy-output-container');
 
-    const squiffyOutputs = document.querySelectorAll('.squiffy-output');
+    document.addEventListener("DOMContentLoaded", async () => {
+        for (const container of containers) {
+            const squiffyOutput = container.querySelector('.squiffy-output') as HTMLElement;
 
-    document.addEventListener("DOMContentLoaded", () => {
-        squiffyOutputs.forEach(async squiffyOutput => {
-            const script = (squiffyOutput as HTMLElement).dataset.squiffyScript;
+            const script = (container as HTMLElement).dataset.squiffyScript;
 
-            const result = await getJs(script || "");
-            eval(result);
+            if (!script) continue;
 
-            $(squiffyOutput).squiffy({
+            const result = await squiffyCompile({
+                scriptBaseFilename: "filename.squiffy",
+                script: script,
+            });
+
+            if (!result.success) continue;
+
+            const data = result.output;
+            const js = data.js.map(jsLines => new Function('squiffy', 'get', 'set', jsLines.join('\n')));
+
+            const squiffyApi = runtimeInit({
+                element: squiffyOutput,
                 scroll: 'element',
                 persist: false,
-                restartPrompt: false,
+                story: {
+                    js: js as any,
+                    ...data.story,
+                },
             });
-        });
+
+            const restartButton = container.querySelector('.restart') as HTMLButtonElement;
+            if (restartButton) {
+                restartButton.addEventListener('click', () => {
+                    squiffyApi.restart();
+                });
+            }
+        }
     });
   
 </script>
