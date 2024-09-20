@@ -672,32 +672,50 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
         return outputElement.querySelectorAll(`[data-source='[[${section}]]']`);
     }
     
-    // function getPassageContentAll(section: string, passage: string) {
-    //     return outputElement.querySelector(`[data-source='[[${section}]][${passage}]']`);
-    // }
+    function getPassageContent(section: string, passage: string) {
+        return outputElement.querySelectorAll(`[data-source='[[${section}]][${passage}]']`);
+    }
 
     function update(newStory: Story) {
-        // for existing story sections and passages which have been output
-        // (i.e. there is a div with the relevant data-source attribute)
-        // see if they have been deleted or updated.
+        // TODO: Re-disable clicked links after update
 
         for (const existingSection of Object.keys(story.sections)) {
             const elements = getSectionContent(existingSection);
-            if (elements.length === 0) {
-                continue;
-            }
-
-            const newSection = newStory.sections[existingSection];
-            if (!newSection) {
-                // section has been deleted
-                for (const element of elements) {
-                    element.remove();
+            if (elements.length) {
+                const newSection = newStory.sections[existingSection];
+                if (!newSection) {
+                    // section has been deleted
+                    for (const element of elements) {
+                        element.remove();
+                    }
+                }
+                else if (newSection.text && newSection.text != story.sections[existingSection].text) {
+                    // section has been updated
+                    for (const element of elements) {
+                        element.innerHTML = ui.processText(newSection.text);
+                    }
                 }
             }
-            else if (newSection.text) {
-                // section has been updated
-                for (const element of elements) {
-                    element.innerHTML = ui.processText(newSection.text);
+
+            if (!story.sections[existingSection].passages) continue;
+
+            for (const existingPassage of Object.keys(story.sections[existingSection].passages)) {
+                const elements = getPassageContent(existingSection, existingPassage);
+                console.log(existingPassage);
+                if (!elements.length) continue;
+
+                const newPassage = newStory.sections[existingSection]?.passages[existingPassage];
+                if (!newPassage) {
+                    // passage has been deleted
+                    for (const element of elements) {
+                        element.remove();
+                    }
+                }
+                else if (newPassage.text && newPassage.text != story.sections[existingSection].passages[existingPassage].text) {
+                    // passage has been updated
+                    for (const element of elements) {
+                        element.innerHTML = ui.processText(newPassage.text);
+                    }
                 }
             }
         }

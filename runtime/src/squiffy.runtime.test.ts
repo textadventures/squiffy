@@ -201,15 +201,34 @@ test('Update default section output', async () => {
     expect(element.innerHTML).toMatchSnapshot();
 });
 
-test('Get passage output', async () => {
+test('Update passage output', async () => {
     const { squiffyApi, element } = await initScript(`Click this: [a]
-        
+
 [a]:
 Passage a content`);
     
     const link = findLink(element, 'passage', 'a');
     squiffyApi.clickLink(link);
 
-    const passageOutput = getPassageContent(element, '_default', 'a');
+    let defaultOutput = getSectionContent(element, '_default');
+    expect(defaultOutput).toBe('Click this: a');
+    let passageOutput = getPassageContent(element, '_default', 'a');
     expect(passageOutput).toBe('Passage a content');
+    expect(element.innerHTML).toMatchSnapshot();
+
+    const updated = await compile(`Click this: [a]
+
+[a]:
+Updated passage content`);
+
+    squiffyApi.update(updated.story);
+
+    defaultOutput = getSectionContent(element, '_default');
+    expect(defaultOutput).toBe('Click this: a');
+
+    passageOutput = getPassageContent(element, '_default', 'a');
+    expect(passageOutput).toBe('Updated passage content');
+    expect(element.innerHTML).toMatchSnapshot();
 });
+
+// TODO: Add tests for deleting section/passage

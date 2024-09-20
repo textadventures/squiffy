@@ -62,3 +62,13 @@ exports[`Update default section output 2`] = `
 "
     <div id="squiffy-section-1" data-section="_default"><div data-source="[[_default]]"><p>Updated content</p></div></div>"
 `;
+
+exports[`Update passage output 1`] = `
+"
+    <div id="squiffy-section-1" data-section="_default"><div data-source="[[_default]]"><p>Click this: <a class="squiffy-link link-passage disabled" data-passage="a" role="link" tabindex="-1">a</a></p></div><hr><div data-source="[[_default]][a]"><p>Passage a content</p></div></div>"
+`;
+
+exports[`Update passage output 2`] = `
+"
+    <div id="squiffy-section-1" data-section="_default"><div data-source="[[_default]]"><p>Click this: <a class="squiffy-link link-passage disabled" data-passage="a" role="link" tabindex="-1">a</a></p></div><hr><div data-source="[[_default]][a]"><p>Updated passage content</p></div></div>"
+`;
