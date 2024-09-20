@@ -23,7 +23,7 @@
     "glob": "^11.0.0",
     "serve-static": "^1.16.2",
     "squiffy-compiler": "^6.0.0-alpha.2",
-    "squiffy-runtime": "^6.0.0-alpha.3",
+    "squiffy-runtime": "^6.0.0-alpha.6",
     "yargs": "^17.7.2"
   },
   "devDependencies": {
