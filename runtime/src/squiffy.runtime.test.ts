@@ -89,8 +89,8 @@ test('Click a section link', async () => {
     const linkToPassage = findLink(element, 'passage', 'a link to a passage');
     const section3Link = findLink(element, 'section', 'section 3');
 
-    expect(linkToPassage).toBeDefined();
-    expect(section3Link).toBeDefined();
+    expect(linkToPassage).not.toBeNull();
+    expect(section3Link).not.toBeNull();
     expect(linkToPassage.classList).not.toContain('disabled');
     expect(section3Link.classList).not.toContain('disabled');
 
@@ -110,8 +110,8 @@ test('Click a passage link', async () => {
     const linkToPassage = findLink(element, 'passage', 'a link to a passage');
     const section3Link = findLink(element, 'section', 'section 3');
 
-    expect(linkToPassage).toBeDefined();
-    expect(section3Link).toBeDefined();
+    expect(linkToPassage).not.toBeNull();
+    expect(section3Link).not.toBeNull();
     expect(linkToPassage.classList).not.toContain('disabled');
     expect(section3Link.classList).not.toContain('disabled');
 
@@ -147,7 +147,7 @@ test('Run JavaScript functions', async () => {
 
     const clickContinue = () => {
         const continueLink = findLink(element, 'section', 'Continue...', true);
-        expect(continueLink).toBeDefined();
+        expect(continueLink).not.toBeNull();
         squiffyApi.clickLink(continueLink);
     };
 
@@ -170,4 +170,14 @@ test('Run JavaScript functions', async () => {
 
     clickContinue();
     expect(getTestOutput()).toBe('In other section');
+});
+
+function getContent(element: HTMLElement, section: string) {
+    return element.querySelector(`[data-source='[[${section}]]'] p`)?.textContent;
+}
+
+test('Get default section', async () => {
+    const { element } = await initScript("Hello world");
+    const defaultOutput = getContent(element, '_default');
+    expect(defaultOutput).toBe('Hello world');
 });
