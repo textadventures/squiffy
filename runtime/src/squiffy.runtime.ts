@@ -64,6 +64,7 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
     let story: Story;
     let currentSection: Section;
     let currentSectionElement: HTMLElement;
+    let currentBlockOutputElement: HTMLElement;
     let scrollPosition = 0;
     let outputElement: HTMLElement;
     let settings: SquiffySettings;
@@ -104,7 +105,7 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
             set('_turncount', get('_turncount') + 1);
             passage = processLink(passage);
             if (passage) {
-                currentSectionElement?.appendChild(document.createElement('hr'));
+                newBlockOutputElement();
                 showPassage(passage);
             }
             const turnPassage = '@' + get('_turncount');
@@ -118,7 +119,6 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
             }
         }
         else if (section) {
-            currentSectionElement?.appendChild(document.createElement('hr'));
             disableLink(link);
             section = processLink(section);
             if (section) {
@@ -377,9 +377,10 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
         const output = get('_output');
         if (!output) return false;
         outputElement.innerHTML = output;
-        const element = document.getElementById(get('_output-section'));
-        if (!element) return false;
-        currentSectionElement = element;
+
+        currentSectionElement = outputElement.querySelector('.squiffy-output-section:last-child');
+        currentBlockOutputElement = outputElement.querySelector('.squiffy-output-block:last-child');
+
         currentSection = story.sections[get('_section')];
         const transition = get('_transition');
         if (transition) {
@@ -401,6 +402,12 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
         const seenSections = get('_seen_sections');
         if (!seenSections) return false;
         return (seenSections.indexOf(sectionName) > -1);
+    }
+
+    function newBlockOutputElement() {
+        currentBlockOutputElement = document.createElement('div');
+        currentBlockOutputElement.classList.add('squiffy-output-block');
+        currentSectionElement?.appendChild(currentBlockOutputElement);
     }
     
     function newSection(sectionName: string | null) {
@@ -430,25 +437,25 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
         const id = 'squiffy-section-' + sectionCount;
     
         currentSectionElement = document.createElement('div');
+        currentSectionElement.classList.add('squiffy-output-section');
         currentSectionElement.id = id;
         if (sectionName) {
             currentSectionElement.setAttribute('data-section', `${sectionName}`);
         }
         outputElement.appendChild(currentSectionElement);
-    
-        set('_output-section', id);
+        newBlockOutputElement();
     }
     
     const ui = {
         write: (text: string, source: string) => {
-            if (!currentSectionElement) return;
+            if (!currentBlockOutputElement) return;
             scrollPosition = outputElement.scrollHeight;
     
             const div = document.createElement('div');
             if (source) {
                 div.setAttribute('data-source', source);
             }
-            currentSectionElement.appendChild(div);
+            currentBlockOutputElement.appendChild(div);
             div.innerHTML = ui.processText(text);
     
             ui.scrollToEnd();
