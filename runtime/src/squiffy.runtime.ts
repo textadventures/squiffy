@@ -701,10 +701,9 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
 
             for (const existingPassage of Object.keys(story.sections[existingSection].passages)) {
                 const elements = getPassageContent(existingSection, existingPassage);
-                console.log(existingPassage);
                 if (!elements.length) continue;
 
-                const newPassage = newStory.sections[existingSection]?.passages[existingPassage];
+                const newPassage = newStory.sections[existingSection]?.passages && newStory.sections[existingSection]?.passages[existingPassage];
                 if (!newPassage) {
                     // passage has been deleted
                     for (const element of elements) {

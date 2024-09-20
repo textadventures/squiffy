@@ -53,6 +53,26 @@ exports[`Click a section link 2`] = `
 <p>Oh look - <a class="squiffy-link link-passage disabled" data-passage="it's a passage with an apostrophe" role="link" tabindex="-1">it's a passage with an apostrophe</a>.</p></div><hr></div><div id="squiffy-section-2" data-section="section 3"><div data-source="[[section 3]]"><p>Another section is here.</p></div></div>"
 `;
 
+exports[`Delete passage 1`] = `
+"
+    <div id="squiffy-section-1" data-section="_default"><div data-source="[[_default]]"><p>Click this: <a class="squiffy-link link-passage disabled" data-passage="a" role="link" tabindex="-1">a</a></p></div><hr><div data-source="[[_default]][a]"><p>New passage</p></div></div>"
+`;
+
+exports[`Delete passage 2`] = `
+"
+    <div id="squiffy-section-1" data-section="_default"><div data-source="[[_default]]"><p>Click this: <a class="squiffy-link link-passage disabled" data-passage="a" role="link" tabindex="-1">a</a></p></div><hr></div>"
+`;
+
+exports[`Delete section 1`] = `
+"
+    <div id="squiffy-section-1" data-section="_default"><div data-source="[[_default]]"><p>Click this: <a class="squiffy-link link-section disabled" data-section="a" role="link" tabindex="-1">a</a></p></div><hr></div><div id="squiffy-section-2" data-section="a"><div data-source="[[a]]"><p>New section</p></div></div>"
+`;
+
+exports[`Delete section 2`] = `
+"
+    <div id="squiffy-section-1" data-section="_default"><div data-source="[[_default]]"><p>Click this: <a class="squiffy-link link-section disabled" data-section="a" role="link" tabindex="-1">a</a></p></div><hr></div><div id="squiffy-section-2" data-section="a"></div>"
+`;
+
 exports[`Update default section output 1`] = `
 "
     <div id="squiffy-section-1" data-section="_default"><div data-source="[[_default]]"><p>Hello world</p></div></div>"
