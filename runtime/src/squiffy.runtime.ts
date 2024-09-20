@@ -270,23 +270,23 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
         labelElement.classList.add('fade-out');
     }
     
-    function go(section: string) {
+    function go(sectionName: string) {
         set('_transition', null);
-        newSection();
-        currentSection = story.sections[section];
+        newSection(sectionName);
+        currentSection = story.sections[sectionName];
         if (!currentSection) return;
-        set('_section', section);
-        setSeen(section);
+        set('_section', sectionName);
+        setSeen(sectionName);
         const master = story.sections[''];
         if (master) {
             run(master);
-            ui.write(master.text || '');
+            ui.write(master.text || '', "[[]]");
         }
         run(currentSection);
         // The JS might have changed which section we're in
-        if (get('_section') == section) {
+        if (get('_section') == sectionName) {
             set('_turncount', 0);
-            ui.write(currentSection.text || '');
+            ui.write(currentSection.text || '', `[[${sectionName}]]`);
             save();
         }
     }
@@ -323,16 +323,16 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
             const masterPassage = masterSection.passages[''];
             if (masterPassage) {
                 run(masterPassage);
-                ui.write(masterPassage.text || '');
+                ui.write(masterPassage.text || '', `[[]][]`);
             }
         }
         const master = currentSection.passages && currentSection.passages[''];
         if (master) {
             run(master);
-            ui.write(master.text || '');
+            ui.write(master.text || '', `[[${get("_section")}]][]`);
         }
         run(passage);
-        ui.write(passage.text || '');
+        ui.write(passage.text || '', `[[${get("_section")}]][${passageName}]`);
         save();
     }
     
@@ -402,7 +402,7 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
         return (seenSections.indexOf(sectionName) > -1);
     }
     
-    function newSection() {
+    function newSection(sectionName: string | null) {
         if (currentSectionElement) {
             disableLinks(currentSectionElement.querySelectorAll('.squiffy-link'));
             currentSectionElement.querySelectorAll('input').forEach(el => {
@@ -430,17 +430,23 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
     
         currentSectionElement = document.createElement('div');
         currentSectionElement.id = id;
+        if (sectionName) {
+            currentSectionElement.setAttribute('data-section', `${sectionName}`);
+        }
         outputElement.appendChild(currentSectionElement);
     
         set('_output-section', id);
     }
     
     const ui = {
-        write: (text: string) => {
+        write: (text: string, source: string) => {
             if (!currentSectionElement) return;
             scrollPosition = outputElement.scrollHeight;
     
             const div = document.createElement('div');
+            if (source) {
+                div.setAttribute('data-source', source);
+            }
             currentSectionElement.appendChild(div);
             div.innerHTML = ui.processText(text);
     
@@ -448,7 +454,7 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
         },
         clearScreen: () => {
             outputElement.innerHTML = '';
-            newSection();
+            newSection(null);
         },
         scrollToEnd: () => {
             if (settings.scroll === 'element') {
