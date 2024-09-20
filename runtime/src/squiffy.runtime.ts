@@ -1,4 +1,4 @@
-interface SquiffyInitOptions {
+export interface SquiffyInitOptions {
     element: HTMLElement;
     story: Story;
     scroll?: string,
@@ -6,13 +6,13 @@ interface SquiffyInitOptions {
     onSet?: (attribute: string, value: any) => void,
 }
 
-interface SquiffySettings {
+export interface SquiffySettings {
     scroll: string,
     persist: boolean,
     onSet: (attribute: string, value: any) => void,
 }
 
-interface SquiffyApi {
+export interface SquiffyApi {
     restart: () => void;
     get: (attribute: string) => any;
     set: (attribute: string, value: any) => void;
@@ -33,7 +33,7 @@ interface SquiffyJsFunctionApi {
     };
 }
 
-interface Story {
+export interface Story {
     js: ((
             squiffy: SquiffyJsFunctionApi,
             get: (attribute: string) => any,
@@ -44,7 +44,7 @@ interface Story {
     sections: Record<string, Section>;
 }
 
-interface Section {
+export interface Section {
     text?: string;
     clear?: boolean;
     attributes?: string[],
@@ -53,7 +53,7 @@ interface Section {
     passageCount?: number;
 }
 
-interface Passage {
+export interface Passage {
     text?: string;
     clear?: boolean;
     attributes?: string[];

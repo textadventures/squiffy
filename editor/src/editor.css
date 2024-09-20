@@ -26,6 +26,12 @@ a.squiffy-link.disabled
     cursor: inherit;
 }
 
+div.squiffy-output-block:not(:last-child), div.squiffy-output-section:not(:last-child)
+{
+    margin-bottom: 1em;
+    border-bottom: 1px solid #ccc;
+}
+
 #editor { 
     position: absolute;
     top: 0;

@@ -8,7 +8,7 @@ import { Output, compile as squiffyCompile } from 'squiffy-compiler';
 import { openFile, saveFile } from './file-handler';
 import { Settings } from './settings';
 import * as editor from './editor';
-import { init as runtimeInit } from 'squiffy-runtime';
+import { init as runtimeInit, SquiffyApi } from 'squiffy-runtime';
 
 Object.assign(window, { $: $, jQuery: $ });
 
@@ -33,6 +33,7 @@ var sourceMap: Section[];
 var currentRow: any;
 var currentSection: Section | null;
 var currentPassage: Passage | null;
+let squiffyApi: SquiffyApi | null;
 
 const defaultSettings = {
     fontSize: "12"
@@ -189,7 +190,7 @@ const showSettings = function () {
 
 var localSaveTimeout: number | undefined, autoSaveTimeout: number | undefined;
 
-const editorChange = function () {
+const editorChange = async function () {
     if (loading) return;
     setInfo('');
     if (localSaveTimeout) clearTimeout(localSaveTimeout);
@@ -197,6 +198,23 @@ const editorChange = function () {
     if (autoSaveTimeout) clearTimeout(autoSaveTimeout);
     autoSaveTimeout = setTimeout(autoSave, 5000);
     // TODO: Show some indicator that the current file has not been saved
+
+    if (squiffyApi) {
+        const result = await squiffyCompile({
+            scriptBaseFilename: "filename.squiffy",
+            script: editor.getValue(),
+        });
+
+        if (result.success) {
+            const js = result.output.js.map(jsLines => new Function('squiffy', 'get', 'set', jsLines.join('\n')));
+            const story = {
+                js: js as any,
+                ...result.output.story,
+            };
+
+            squiffyApi.update(story);
+        }
+    }
 };
 
 const localSave = function () {
@@ -506,23 +524,7 @@ const compile = async function () {
 const onCompileSuccess = function (data: Output, msgs: string[]) {
     el<HTMLButtonElement>('restart').hidden = false;
 
-    // const output = el<HTMLElement>('output');
-
     showWarnings(msgs);
-    // Show output
-    // if (data.indexOf('Failed') === 0) {
-    //     output.innerHTML = data;
-    //     return;
-    // }
-
-    // try {
-    //     eval(data);
-    //     //output.innerHTML = data;
-    // }
-    // catch (e) {
-    //     output.innerHTML = e as string;
-    //     return;
-    // }
 
     const js = data.js.map(jsLines => new Function('squiffy', 'get', 'set', jsLines.join('\n')));
 
@@ -532,13 +534,13 @@ const onCompileSuccess = function (data: Output, msgs: string[]) {
     newOutput.id = 'output';
     outputContainer.appendChild(newOutput);
 
-    runtimeInit({
+    squiffyApi = runtimeInit({
         element: newOutput,
         scroll: 'element',
         persist: false,
         onSet: onSet,
         story: {
-            js: js,
+            js: js as any,
             ...data.story,
         },
     });

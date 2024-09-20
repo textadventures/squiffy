@@ -33,6 +33,6 @@
     "jquery": "^3.7.1",
     "marked": "^13.0.2",
     "squiffy-compiler": "^6.0.0-alpha.2",
-    "squiffy-runtime": "^6.0.0-alpha.4"
+    "squiffy-runtime": "^6.0.0-alpha.7"
   }
 }
