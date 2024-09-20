@@ -172,12 +172,29 @@ test('Run JavaScript functions', async () => {
     expect(getTestOutput()).toBe('In other section');
 });
 
-function getContent(element: HTMLElement, section: string) {
+function getSectionContent(element: HTMLElement, section: string) {
     return element.querySelector(`[data-source='[[${section}]]'] p`)?.textContent;
 }
 
-test('Get default section', async () => {
+function getPassageContent(element: HTMLElement, section: string, passage) {
+    return element.querySelector(`[data-source='[[${section}]][${passage}]'] p`)?.textContent;
+}
+
+test('Get default section output', async () => {
     const { element } = await initScript("Hello world");
-    const defaultOutput = getContent(element, '_default');
+    const defaultOutput = getSectionContent(element, '_default');
     expect(defaultOutput).toBe('Hello world');
+});
+
+test('Get passage output', async () => {
+    const { squiffyApi, element } = await initScript(`Click this: [a]
+        
+[a]:
+Passage a content`);
+    
+    const link = findLink(element, 'passage', 'a');
+    squiffyApi.clickLink(link);
+
+    const passageOutput = getPassageContent(element, '_default', 'a');
+    expect(passageOutput).toBe('Passage a content');
 });
