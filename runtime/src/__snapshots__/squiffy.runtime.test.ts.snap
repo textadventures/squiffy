@@ -52,3 +52,13 @@ exports[`Click a section link 2`] = `
 <p>This line has links to <a class="squiffy-link link-passage disabled" data-passage="passage 3" role="link" tabindex="-1">passage 3</a> and <a class="squiffy-link link-passage disabled" data-passage="passage four" role="link" tabindex="-1">passage 4</a>.</p>
 <p>Oh look - <a class="squiffy-link link-passage disabled" data-passage="it's a passage with an apostrophe" role="link" tabindex="-1">it's a passage with an apostrophe</a>.</p></div><hr></div><div id="squiffy-section-2" data-section="section 3"><div data-source="[[section 3]]"><p>Another section is here.</p></div></div>"
 `;
+
+exports[`Update default section output 1`] = `
+"
+    <div id="squiffy-section-1" data-section="_default"><div data-source="[[_default]]"><p>Hello world</p></div></div>"
+`;
+
+exports[`Update default section output 2`] = `
+"
+    <div id="squiffy-section-1" data-section="_default"><div data-source="[[_default]]"><p>Updated content</p></div></div>"
+`;

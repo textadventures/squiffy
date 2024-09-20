@@ -2,7 +2,7 @@ import { expect, test, beforeEach, afterEach } from 'vitest';
 import fs from 'fs/promises';
 import globalJsdom from 'global-jsdom';
 import { init } from './squiffy.runtime.js';
-import { compile } from 'squiffy-compiler'; 
+import { compile as squiffyCompile } from 'squiffy-compiler'; 
 
 const html = `
 <!DOCTYPE html>
@@ -18,15 +18,8 @@ const html = `
 </html>
 `;
 
-const initScript = async (script: string) => {
-    globalJsdom(html);
-    const element = document.getElementById('squiffy');
-
-    if (!element) {
-        throw new Error('Element not found');
-    }
-
-    const compileResult = await compile({
+const compile = async (script: string) => {
+    const compileResult = await squiffyCompile({
         scriptBaseFilename: "filename.squiffy", // TODO: This shouldn't be required
         script: script,
     });
@@ -38,12 +31,27 @@ const initScript = async (script: string) => {
     const story = compileResult.output.story;
     const js = compileResult.output.js.map(jsLines => new Function('squiffy', 'get', 'set', jsLines.join('\n')));
 
-    const squiffyApi = init({
-        element: element,
+    return {
         story: {
             js: js as any,
             ...story,
         },
+    };
+}
+
+const initScript = async (script: string) => {
+    globalJsdom(html);
+    const element = document.getElementById('squiffy');
+
+    if (!element) {
+        throw new Error('Element not found');
+    }
+
+    const compileResult = await compile(script);
+
+    const squiffyApi = init({
+        element: element,
+        story: compileResult.story,
     });
 
     return {
@@ -176,14 +184,21 @@ function getSectionContent(element: HTMLElement, section: string) {
     return element.querySelector(`[data-source='[[${section}]]'] p`)?.textContent;
 }
 
-function getPassageContent(element: HTMLElement, section: string, passage) {
+function getPassageContent(element: HTMLElement, section: string, passage: string) {
     return element.querySelector(`[data-source='[[${section}]][${passage}]'] p`)?.textContent;
 }
 
-test('Get default section output', async () => {
-    const { element } = await initScript("Hello world");
-    const defaultOutput = getSectionContent(element, '_default');
+test('Update default section output', async () => {
+    const { squiffyApi, element } = await initScript("Hello world");
+    let defaultOutput = getSectionContent(element, '_default');
     expect(defaultOutput).toBe('Hello world');
+    expect(element.innerHTML).toMatchSnapshot();
+
+    const updated = await compile("Updated content");
+    squiffyApi.update(updated.story);
+    defaultOutput = getSectionContent(element, '_default');
+    expect(defaultOutput).toBe('Updated content');
+    expect(element.innerHTML).toMatchSnapshot();
 });
 
 test('Get passage output', async () => {

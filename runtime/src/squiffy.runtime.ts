@@ -17,6 +17,7 @@ interface SquiffyApi {
     get: (attribute: string) => any;
     set: (attribute: string, value: any) => void;
     clickLink: (link: HTMLElement) => void;
+    update: (story: Story) => void;
 }
 
 // Previous versions of Squiffy had "squiffy", "get" and "set" as globals - we now pass these directly into JS functions.
@@ -667,6 +668,43 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
         return [next, remaining];
     }
 
+    function getSectionContent(section: string) {
+        return outputElement.querySelectorAll(`[data-source='[[${section}]]']`);
+    }
+    
+    // function getPassageContentAll(section: string, passage: string) {
+    //     return outputElement.querySelector(`[data-source='[[${section}]][${passage}]']`);
+    // }
+
+    function update(newStory: Story) {
+        // for existing story sections and passages which have been output
+        // (i.e. there is a div with the relevant data-source attribute)
+        // see if they have been deleted or updated.
+
+        for (const existingSection of Object.keys(story.sections)) {
+            const elements = getSectionContent(existingSection);
+            if (elements.length === 0) {
+                continue;
+            }
+
+            const newSection = newStory.sections[existingSection];
+            if (!newSection) {
+                // section has been deleted
+                for (const element of elements) {
+                    element.remove();
+                }
+            }
+            else if (newSection.text) {
+                // section has been updated
+                for (const element of elements) {
+                    element.innerHTML = ui.processText(newSection.text);
+                }
+            }
+        }
+
+        story = newStory;
+    }
+
     outputElement = options.element;
     story = options.story;
 
@@ -697,6 +735,7 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
         restart: restart,
         get: get,
         set: set,
-        clickLink: handleLink
+        clickLink: handleLink,
+        update: update,
     };
 };
