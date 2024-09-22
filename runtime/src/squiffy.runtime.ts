@@ -691,8 +691,22 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
         return outputElement.querySelectorAll(`[data-source='[[${section}]][${passage}]']`);
     }
 
+    function updateElementTextPreservingDisabledPassageLinks(element: Element, text: string) {
+        // Record which passage links are disabled
+        const disabledPassages = Array.from(element
+            .querySelectorAll("a.link-passage.disabled"))
+            .map((el: HTMLElement) => el.getAttribute("data-passage"));
+
+        element.innerHTML = text;
+
+        // Re-disable links that were disabled before the update
+        for (const passage of disabledPassages) {
+            const link = element.querySelector(`a.link-passage[data-passage="${passage}"]`);
+            if (link) disableLink(link);
+        }
+    }
+
     function update(newStory: Story) {
-        // TODO: Re-disable clicked links after update
         // TODO: Delete empty output blocks
 
         for (const existingSection of Object.keys(story.sections)) {
@@ -708,7 +722,7 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
                 else if (newSection.text && newSection.text != story.sections[existingSection].text) {
                     // section has been updated
                     for (const element of elements) {
-                        element.innerHTML = ui.processText(newSection.text);
+                        updateElementTextPreservingDisabledPassageLinks(element, newSection.text);
                     }
                 }
             }
@@ -729,7 +743,7 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
                 else if (newPassage.text && newPassage.text != story.sections[existingSection].passages[existingPassage].text) {
                     // passage has been updated
                     for (const element of elements) {
-                        element.innerHTML = ui.processText(newPassage.text);
+                        updateElementTextPreservingDisabledPassageLinks(element, newPassage.text);
                     }
                 }
             }

@@ -61,7 +61,9 @@ const initScript = async (script: string) => {
 };
 
 const findLink = (element: HTMLElement, linkType: string, linkText: string, onlyEnabled: boolean = false) => {
-    const links = element.querySelectorAll(`.squiffy-output-section:last-child a.squiffy-link.link-${linkType}`);
+    const links = onlyEnabled
+        ? element.querySelectorAll(`.squiffy-output-section:last-child a.squiffy-link.link-${linkType}`)
+        : element.querySelectorAll(`a.squiffy-link.link-${linkType}`);
     return Array.from(links).find(link => link.textContent === linkText && (onlyEnabled ? !link.classList.contains("disabled") : true)) as HTMLElement;
 };
 
@@ -290,4 +292,42 @@ New passage`);
     expect(passageOutput).toBeNull();
 
     expect(element.innerHTML).toMatchSnapshot();
+});
+
+test('Clicked passage links remain disabled after an update', async () => {
+    const { squiffyApi, element } = await initScript(`Click one of these: [a] [b]
+
+[a]:
+Output for passage A.
+
+[b]:
+Output for passage B.`);
+
+    // click linkA
+    
+    let linkA = findLink(element, 'passage', 'a');
+    expect(linkA.classList).not.toContain('disabled');
+    expect(squiffyApi.clickLink(linkA)).toBe(true);
+
+    const updated = await compile(`Click one of these (updated): [a] [b]
+
+[a]:
+Output for passage A.
+
+[b]:
+Output for passage B.`);
+
+    squiffyApi.update(updated.story);
+
+    // linkA should still be disabled
+
+    linkA = findLink(element, 'passage', 'a');
+    expect(linkA.classList).toContain('disabled');
+    expect(squiffyApi.clickLink(linkA)).toBe(false);
+
+    // linkB should still be enabled
+
+    let linkB = findLink(element, 'passage', 'b');
+    expect(linkB.classList).not.toContain('disabled');
+    expect(squiffyApi.clickLink(linkB)).toBe(true);
 });
