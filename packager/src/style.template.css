@@ -4,7 +4,7 @@ a.squiffy-link
     color: Blue;
     cursor: pointer;
 }
-a.squiffy-link.disabled
+a.squiffy-link.disabled, div.squiffy-output-section:not(:last-child) a.squiffy-link
 {
     text-decoration: inherit;
     color: inherit !important;
