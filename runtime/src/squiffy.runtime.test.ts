@@ -61,7 +61,7 @@ const initScript = async (script: string) => {
 };
 
 const findLink = (element: HTMLElement, linkType: string, linkText: string, onlyEnabled: boolean = false) => {
-    const links = element.querySelectorAll(`a.squiffy-link.link-${linkType}`);
+    const links = element.querySelectorAll(`.squiffy-output-section:last-child a.squiffy-link.link-${linkType}`);
     return Array.from(links).find(link => link.textContent === linkText && (onlyEnabled ? !link.classList.contains("disabled") : true)) as HTMLElement;
 };
 
@@ -100,13 +100,14 @@ test('Click a section link', async () => {
     expect(linkToPassage).not.toBeNull();
     expect(section3Link).not.toBeNull();
     expect(linkToPassage.classList).not.toContain('disabled');
-    expect(section3Link.classList).not.toContain('disabled');
 
-    squiffyApi.clickLink(section3Link);
+    const handled = squiffyApi.clickLink(section3Link);
+    expect(handled).toBe(true);
 
-    expect(linkToPassage.classList).toContain('disabled');
-    expect(section3Link.classList).toContain('disabled');
     expect(element.innerHTML).toMatchSnapshot();
+
+    // passage link is from the previous section, so should be unclickable
+    expect(squiffyApi.clickLink(linkToPassage)).toBe(false);
 });
 
 test('Click a passage link', async () => {
@@ -121,13 +122,15 @@ test('Click a passage link', async () => {
     expect(linkToPassage).not.toBeNull();
     expect(section3Link).not.toBeNull();
     expect(linkToPassage.classList).not.toContain('disabled');
-    expect(section3Link.classList).not.toContain('disabled');
 
-    squiffyApi.clickLink(linkToPassage);
+    const handled = squiffyApi.clickLink(linkToPassage);
+    expect(handled).toBe(true);
 
     expect(linkToPassage.classList).toContain('disabled');
-    expect(section3Link.classList).not.toContain('disabled');
     expect(element.innerHTML).toMatchSnapshot();
+
+    // shouldn't be able to click it again
+    expect(squiffyApi.clickLink(linkToPassage)).toBe(false);
 });
 
 test('Run JavaScript functions', async () => {
@@ -156,7 +159,8 @@ test('Run JavaScript functions', async () => {
     const clickContinue = () => {
         const continueLink = findLink(element, 'section', 'Continue...', true);
         expect(continueLink).not.toBeNull();
-        squiffyApi.clickLink(continueLink);
+        const handled = squiffyApi.clickLink(continueLink);
+        expect(handled).toBe(true);
     };
 
     const { squiffyApi, element } = await initScript(script);
@@ -208,7 +212,8 @@ test('Update passage output', async () => {
 Passage a content`);
     
     const link = findLink(element, 'passage', 'a');
-    squiffyApi.clickLink(link);
+    const handled = squiffyApi.clickLink(link);
+    expect(handled).toBe(true);
 
     let defaultOutput = getSectionContent(element, '_default');
     expect(defaultOutput).toBe('Click this: a');
@@ -238,7 +243,8 @@ test('Delete section', async () => {
 New section`);
     
     const link = findLink(element, 'section', 'a');
-    squiffyApi.clickLink(link);
+    const handled = squiffyApi.clickLink(link);
+    expect(handled).toBe(true);
 
     let defaultOutput = getSectionContent(element, '_default');
     expect(defaultOutput).toBe('Click this: a');
@@ -265,7 +271,8 @@ test('Delete passage', async () => {
 New passage`);
     
     const link = findLink(element, 'passage', 'a');
-    squiffyApi.clickLink(link);
+    const handled = squiffyApi.clickLink(link);
+    expect(handled).toBe(true);
 
     let defaultOutput = getSectionContent(element, '_default');
     expect(defaultOutput).toBe('Click this: a');

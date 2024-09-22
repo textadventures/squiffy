@@ -16,7 +16,7 @@ export interface SquiffyApi {
     restart: () => void;
     get: (attribute: string) => any;
     set: (attribute: string, value: any) => void;
-    clickLink: (link: HTMLElement) => void;
+    clickLink: (link: HTMLElement) => boolean;
     update: (story: Story) => void;
 }
 
@@ -93,8 +93,12 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
         return JSON.parse(result);
     }
     
-    function handleLink(link: HTMLElement) {
-        if (link.classList.contains('disabled')) return;
+    function handleLink(link: HTMLElement): boolean {
+        const outputSection = link.closest('.squiffy-output-section');
+        if (outputSection !== currentSectionElement) return false;
+
+        if (link.classList.contains('disabled')) return false;
+
         let passage = link.getAttribute('data-passage');
         let section = link.getAttribute('data-section');
         const rotateAttr = link.getAttribute('data-rotate');
@@ -117,15 +121,20 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
                     showPassage('@last');
                 }
             }
+
+            return true;
         }
-        else if (section) {
-            disableLink(link);
+        
+        if (section) {
             section = processLink(section);
             if (section) {
                 go(section);
             }
+
+            return true;
         }
-        else if (rotateOrSequenceAttr) {
+        
+        if (rotateOrSequenceAttr) {
             const result = rotate(rotateOrSequenceAttr, rotateAttr ? link.innerText : '');
             link.innerHTML = result[0]!.replace(/&quot;/g, '"').replace(/&#39;/g, '\'');
             const dataAttribute = rotateAttr ? 'data-rotate' : 'data-sequence';
@@ -138,7 +147,11 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
                 set(attribute, result[0]);
             }
             save();
+            
+            return true;
         }
+
+        return false;
     }
 
     function handleClick(event: Event) {
@@ -151,10 +164,6 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
     function disableLink(link: Element) {
         link.classList.add('disabled');
         link.setAttribute('tabindex', '-1');
-    }
-    
-    function disableLinks(links: NodeListOf<Element>) {
-        links.forEach(disableLink);
     }
     
     function begin() {
@@ -412,7 +421,6 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
     
     function newSection(sectionName: string | null) {
         if (currentSectionElement) {
-            disableLinks(currentSectionElement.querySelectorAll('.squiffy-link'));
             currentSectionElement.querySelectorAll('input').forEach(el => {
                 const attribute = el.getAttribute('data-attribute') || el.id;
                 if (attribute) set(attribute, el.value);
@@ -685,6 +693,7 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
 
     function update(newStory: Story) {
         // TODO: Re-disable clicked links after update
+        // TODO: Delete empty output blocks
 
         for (const existingSection of Object.keys(story.sections)) {
             const elements = getSectionContent(existingSection);

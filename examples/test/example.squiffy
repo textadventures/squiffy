@@ -40,13 +40,37 @@ Nothing to worry about.
 
 	alert ("This section has some JavaScript");
 
-This is the next section.
+This is the next section, with passages [a] and [b].
+
+[a]:
+Just a.
+
+[b]:
+Just b.
 
 [[section]]:
-This is another section.
+This is another section, with passages [a] and [b].
+
+[a]:
+Just a in a different section.
+
+[b]:
+Just b in a different section.
 
 [[section 3]]:
-Another section is here.
+Another section is here, with passages [a] and [b].
+
+[a]:
+Just a in section3.
+
+[b]:
+Just b in section3.
 
 [[section four]]:
-Some other section.
+Some other section, with passages [a] and [b].
+
+[a]:
+Just a in section four.
+
+[b]:
+Just b in section four.
