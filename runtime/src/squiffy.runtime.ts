@@ -707,8 +707,6 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
     }
 
     function update(newStory: Story) {
-        // TODO: Delete empty output blocks
-
         for (const existingSection of Object.keys(story.sections)) {
             const elements = getSectionContent(existingSection);
             if (elements.length) {
@@ -716,7 +714,8 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
                 if (!newSection) {
                     // section has been deleted
                     for (const element of elements) {
-                        element.remove();
+                        const parentOutputSection = element.closest('.squiffy-output-section');
+                        parentOutputSection.remove();
                     }
                 }
                 else if (newSection.text && newSection.text != story.sections[existingSection].text) {
@@ -737,7 +736,8 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
                 if (!newPassage) {
                     // passage has been deleted
                     for (const element of elements) {
-                        element.remove();
+                        const parentOutputBlock = element.closest('.squiffy-output-block');
+                        parentOutputBlock.remove();
                     }
                 }
                 else if (newPassage.text && newPassage.text != story.sections[existingSection].passages[existingPassage].text) {

@@ -60,7 +60,7 @@ exports[`Delete passage 1`] = `
 
 exports[`Delete passage 2`] = `
 "
-    <div class="squiffy-output-section" id="squiffy-section-1" data-section="_default"><div class="squiffy-output-block"><div data-source="[[_default]]"><p>Click this: <a class="squiffy-link link-passage disabled" data-passage="a" role="link" tabindex="-1">a</a></p></div></div><div class="squiffy-output-block"></div></div>"
+    <div class="squiffy-output-section" id="squiffy-section-1" data-section="_default"><div class="squiffy-output-block"><div data-source="[[_default]]"><p>Click this: <a class="squiffy-link link-passage disabled" data-passage="a" role="link" tabindex="-1">a</a></p></div></div></div>"
 `;
 
 exports[`Delete section 1`] = `
@@ -70,7 +70,7 @@ exports[`Delete section 1`] = `
 
 exports[`Delete section 2`] = `
 "
-    <div class="squiffy-output-section" id="squiffy-section-1" data-section="_default"><div class="squiffy-output-block"><div data-source="[[_default]]"><p>Click this: <a class="squiffy-link link-section" data-section="a" role="link" tabindex="0">a</a></p></div></div></div><div class="squiffy-output-section" id="squiffy-section-2" data-section="a"><div class="squiffy-output-block"></div></div>"
+    <div class="squiffy-output-section" id="squiffy-section-1" data-section="_default"><div class="squiffy-output-block"><div data-source="[[_default]]"><p>Click this: <a class="squiffy-link link-section" data-section="a" role="link" tabindex="0">a</a></p></div></div></div>"
 `;
 
 exports[`Update default section output 1`] = `
