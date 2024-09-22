@@ -60,16 +60,6 @@ div.squiffy-output-block:not(:last-child), div.squiffy-output-section:not(:last-
     background: #fff;
 }
 
-.ui-layout-north {
-   z-index: 50 !important;
-   overflow: visible !important;
-   -webkit-user-select: none;
-}
-
-.ui-layout-center {
-  padding: 0px !important;
-}
-
 #info {
     margin-left: 20px;
     font-size: 90%;
