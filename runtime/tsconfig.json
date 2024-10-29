@@ -8,7 +8,10 @@
       "skipLibCheck": true,
       "outDir": "dist",
       "declaration": true,
+      "module": "NodeNext",
+      "moduleResolution": "nodenext",
+      "allowSyntheticDefaultImports": true
     },
-    "include": ["src/squiffy.runtime.ts"]
+    "include": ["src/*.ts"]
 }
   
