@@ -683,12 +683,16 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
         return [next, remaining];
     }
 
-    function getSectionContent(section: string) {
-        return outputElement.querySelectorAll(`[data-source='[[${section}]]']`);
+    function safeQuerySelector(name: string) {
+        return name.replace(/'/g, "\\'");
     }
-    
+
+    function getSectionContent(section: string) {
+        return outputElement.querySelectorAll(`[data-source='[[${safeQuerySelector(section)}]]']`);
+    }
+
     function getPassageContent(section: string, passage: string) {
-        return outputElement.querySelectorAll(`[data-source='[[${section}]][${passage}]']`);
+        return outputElement.querySelectorAll(`[data-source='[[${safeQuerySelector(section)}]][${safeQuerySelector(passage)}]']`);
     }
 
     function updateElementTextPreservingDisabledPassageLinks(element: Element, text: string) {

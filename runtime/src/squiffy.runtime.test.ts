@@ -186,12 +186,16 @@ test('Run JavaScript functions', async () => {
     expect(getTestOutput()).toBe('In other section');
 });
 
+function safeQuerySelector(name: string) {
+    return name.replace(/'/g, "\\'");
+}
+
 function getSectionContent(element: HTMLElement, section: string) {
-    return element.querySelector(`[data-source='[[${section}]]'] p`)?.textContent || null;
+    return element.querySelector(`[data-source='[[${safeQuerySelector(section)}]]'] p`)?.textContent || null;
 }
 
 function getPassageContent(element: HTMLElement, section: string, passage: string) {
-    return element.querySelector(`[data-source='[[${section}]][${passage}]'] p`)?.textContent || null;
+    return element.querySelector(`[data-source='[[${safeQuerySelector(section)}]][${safeQuerySelector(passage)}]'] p`)?.textContent || null;
 }
 
 test('Update default section output', async () => {
@@ -207,33 +211,33 @@ test('Update default section output', async () => {
     expect(element.innerHTML).toMatchSnapshot();
 });
 
-test('Update passage output', async () => {
-    const { squiffyApi, element } = await initScript(`Click this: [a]
+test.each(['a', 'a\'1'])('Update passage output - passage name "%s"', async (name) => {
+    const { squiffyApi, element } = await initScript(`Click this: [${name}]
 
-[a]:
+[${name}]:
 Passage a content`);
     
-    const link = findLink(element, 'passage', 'a');
+    const link = findLink(element, 'passage', name);
     const handled = squiffyApi.clickLink(link);
     expect(handled).toBe(true);
 
     let defaultOutput = getSectionContent(element, '_default');
-    expect(defaultOutput).toBe('Click this: a');
-    let passageOutput = getPassageContent(element, '_default', 'a');
+    expect(defaultOutput).toBe(`Click this: ${name}`);
+    let passageOutput = getPassageContent(element, '_default', name);
     expect(passageOutput).toBe('Passage a content');
     expect(element.innerHTML).toMatchSnapshot();
 
-    const updated = await compile(`Click this: [a]
+    const updated = await compile(`Click this: [${name}]
 
-[a]:
+[${name}]:
 Updated passage content`);
 
     squiffyApi.update(updated.story);
 
     defaultOutput = getSectionContent(element, '_default');
-    expect(defaultOutput).toBe('Click this: a');
+    expect(defaultOutput).toBe(`Click this: ${name}`);
 
-    passageOutput = getPassageContent(element, '_default', 'a');
+    passageOutput = getPassageContent(element, '_default', name);
     expect(passageOutput).toBe('Updated passage content');
     expect(element.innerHTML).toMatchSnapshot();
 });
