@@ -327,7 +327,9 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
         let passage = currentSection.passages && currentSection.passages[passageName];
         const masterSection = story.sections[''];
         if (!passage && masterSection && masterSection.passages) passage = masterSection.passages[passageName];
-        if (!passage) return;
+        if (!passage) {
+            throw `No passage named ${passageName} in the current section or master section`;
+        }
         setSeen(passageName);
         if (masterSection && masterSection.passages) {
             const masterPassage = masterSection.passages[''];
@@ -754,6 +756,9 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
         }
 
         story = newStory;
+        currentSectionElement = outputElement.querySelector('.squiffy-output-section:last-child');
+        const sectionName = currentSectionElement.getAttribute('data-section');
+        currentSection = story.sections[sectionName];
     }
 
     outputElement = options.element;

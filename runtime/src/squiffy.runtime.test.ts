@@ -335,3 +335,57 @@ Output for passage B.`);
     expect(linkB.classList).not.toContain('disabled');
     expect(squiffyApi.clickLink(linkB)).toBe(true);
 });
+
+test('Deleting the current section activates the previous section', async () => {
+    const { squiffyApi, element } = await initScript(`Choose a section: [[a]] [[b]], or passage [start1].
+    
+[start1]:
+Output for passage start1.
+
+[[a]]:
+Output for section A.
+
+[[b]]:
+Output for section B.`);
+
+    // click linkA
+
+    let linkA = findLink(element, 'section', 'a');
+    let linkB = findLink(element, 'section', 'b');
+    expect(linkA.classList).not.toContain('disabled');
+    expect(squiffyApi.clickLink(linkA)).toBe(true);
+
+    // can't click start1 passage as we're in section [[a]] now
+    let linkStart1 = findLink(element, 'passage', 'start1');
+    expect(squiffyApi.clickLink(linkStart1)).toBe(false);
+
+    // can't click linkB as we're in section [[a]] now
+    expect(squiffyApi.clickLink(linkB)).toBe(false);
+
+    // now we delete section [[a]]
+
+    const updated = await compile(`Choose a section: [[a]] [[b]], or passage [start1].
+    
+[start1]:
+Output for passage start1.
+
+[[b]]:
+Output for section B. Here's a passage: [b1].
+
+[b1]:
+Passage in section B.`);
+
+    squiffyApi.update(updated.story);
+
+    // We're in the first section, so the start1 passage should be clickable now
+    linkStart1 = findLink(element, 'passage', 'start1');
+    expect(squiffyApi.clickLink(linkStart1)).toBe(true);
+
+    // We're in the first section, so linkB should be clickable now
+    linkB = findLink(element, 'section', 'b');
+    expect(squiffyApi.clickLink(linkB)).toBe(true);
+
+    // and the passage [b1] within it should be clickable
+    const linkB1 = findLink(element, 'passage', 'b1');
+    expect(squiffyApi.clickLink(linkB1)).toBe(true);
+});
