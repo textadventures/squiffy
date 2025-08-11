@@ -1,0 +1,37 @@
+---
+const { gap = "1rem", min = "280px" } = Astro.props;
+---
+<section class="split" style={`--gap:${gap}; --min:${min};`}>
+    <div class="pane"><slot name="left" /></div>
+    <div class="pane"><slot name="right" /></div>
+</section>
+
+<style>
+    :root {
+        --gap: 1rem;
+        --min: 280px;
+    }
+
+    .split {
+        display: grid;
+        gap: var(--gap);
+    }
+    /* Stack on small screens */
+    @media (max-width: 800px) {
+        .split { grid-template-columns: 1fr; }
+    }
+    /* Side-by-side on larger screens */
+    @media (min-width: 801px) {
+        .split { grid-template-columns: minmax(var(--min), 1fr) minmax(var(--min), 1fr); }
+    }
+
+    /* Minimal chrome, no forced padding */
+    .pane {
+        border: 1px solid rgba(0,0,0,.12);
+        border-radius: 8px;
+        overflow: hidden; /* great for editors/previews */
+    }
+
+    /* Optional: remove margins inside */
+    .pane > :is(div, pre, figure, section) { margin: 0; }
+</style>

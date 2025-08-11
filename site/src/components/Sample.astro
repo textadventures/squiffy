@@ -3,6 +3,9 @@ interface Props {
     script: string;
 }
 
+import { Card, CardGrid } from '@astrojs/starlight/components';
+import Split from "./Split.astro";
+
 const { script } = Astro.props;
 ---
 
@@ -13,21 +16,36 @@ const { script } = Astro.props;
         color: Blue;
         cursor: pointer;
     }
-    a.squiffy-link.disabled
+    a.squiffy-link.disabled, div.squiffy-output-section:not(:last-child) a.squiffy-link
     {
         text-decoration: inherit;
         color: inherit !important;
         cursor: inherit;
     }
+
+    div.squiffy-output-block:not(:last-child), div.squiffy-output-section:not(:last-child)
+    {
+        margin-bottom: 1em;
+        border-bottom: 1px solid #ccc;
+    }
+
+    .viewer {
+        padding: 2px;
+    }
+    .viewer p {
+        margin-bottom: 1rem;
+    }
 </style>
 
-<div class="row sample mt-4 mb-4" data-squiffy-script={script}>
-    <div class="col-md-6 editor not-content">
-    </div>
-    <div class="col-md-6">
-        <div class="viewer"></div>
-        <button class="btn btn-primary btn-sm restart">Restart</button>
-    </div>
+<div class="sample not-content" data-squiffy-script={script}>
+    <Split gap="0.75rem" min="200px">
+        <div slot="left" class="editor">
+        </div>
+        <div slot="right">
+            <div class="viewer"></div>
+            <button class="btn btn-primary btn-sm restart">Restart</button>
+        </div>
+    </Split>
 </div>
 
 <script>
