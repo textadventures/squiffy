@@ -1,14 +1,26 @@
 ---
-title: Squiffy - Documentation
+title: Squiffy
+description: A simple way to write interactive fiction
+sidebar:
+    order: 0
 ---
 
 import Sample from "@components/Sample.astro"
 
-Squiffy is a tool for creating interactive fiction - that is, multiple choice games that focus on text and story. Players navigate through the game or story by clicking links. Sometimes these kinds of games or stories are known as [gamebooks](http://en.wikipedia.org/wiki/Gamebook).
+Squiffy is a tool for creating interactive fiction - that is,
+multiple choice games that focus on text and story. Players
+navigate through the game or story by clicking links.
 
-Squiffy is free and open source. It creates HTML and JavaScript, so you can upload it to your own website, or to a site like [itch.io](https://itch.io/) or [textadventures.co.uk](https://textadventures.co.uk).
+Squiffy is free and open source. It creates HTML and JavaScript,
+so you can upload it to your own website, or to a site like <a href="https://itch.io/">itch.io</a>
+or <a href="https://textadventures.co.uk">textadventures.co.uk</a>.
 
-A player's state is automatically saved to their browser's local storage, so they can always pick up from where they left off just by going back to the same web page.
+A player's state is automatically saved to their browser's local
+storage, so they can always pick up from where they left off
+just by going back to the same web page.
+
+The Squiffy Editor runs entirely in your browser.
+All your data is saved locally on your device, automatically.
 
 Documentation
 -------------
@@ -39,23 +51,23 @@ Example
 
 <Sample script="Squiffy is a tool for creating interactive stories.
 
-You write your story in a text file. Each choice is represented by a [[new section]]. You can create links to new sections by surrounding them in double square brackets.
+    You write your story in a text file. Each choice is represented by a [[new section]]. You can create links to new sections by surrounding them in double square brackets.
 
-[[new section]]:
+    [[new section]]:
 
-In addition to sections, Squiffy has the concept of passages. These are sections of text that don't advance the story. For example, you can click this [passage link], and this [other passage link], but the story won't advance until you click this [[section link]].
+    In addition to sections, Squiffy has the concept of passages. These are sections of text that don't advance the story. For example, you can click this [passage link], and this [other passage link], but the story won't advance until you click this [[section link]].
 
-[passage link]:
+    [passage link]:
 
-This is the text for the first passage link.
+    This is the text for the first passage link.
 
-[other passage link]:
+    [other passage link]:
 
-This is the text for the second passage link.
+    This is the text for the second passage link.
 
-[[section link]]:
+    [[section link]]:
 
-When a new section appears, any unclicked passage links from the previous section are disabled."></Sample>
+    When a new section appears, any unclicked passage links from the previous section are disabled."></Sample>
 
 Publishing your game
 --------------------
