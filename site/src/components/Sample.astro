@@ -3,7 +3,6 @@ interface Props {
     script: string;
 }
 
-import { Card, CardGrid } from '@astrojs/starlight/components';
 import Split from "./Split.astro";
 
 const { script } = Astro.props;
@@ -22,13 +21,11 @@ const { script } = Astro.props;
         color: inherit !important;
         cursor: inherit;
     }
-
     div.squiffy-output-block:not(:last-child), div.squiffy-output-section:not(:last-child)
     {
         margin-bottom: 1em;
         border-bottom: 1px solid #ccc;
     }
-
     .viewer {
         padding: 2px;
     }
@@ -54,6 +51,7 @@ const { script } = Astro.props;
     import { init as runtimeInit } from 'squiffy-runtime';
     import debounce from 'debounce';
 
+    let squiffyApi: SquiffyApi | null;
     const samples = document.querySelectorAll('.sample');
     
     document.addEventListener("DOMContentLoaded", async () => {
@@ -104,10 +102,6 @@ const { script } = Astro.props;
     });
 
     async function initRuntime(script: string, outputContainer: HTMLElement, restartButton: HTMLElement) {
-        outputContainer.innerHTML = '';
-        const output = document.createElement('div');
-        outputContainer.appendChild(output);
-
         const result = await squiffyCompile({
             scriptBaseFilename: "filename.squiffy",
             script: script,
@@ -121,18 +115,32 @@ const { script } = Astro.props;
         const data = result.output;
         const js = data.js.map(jsLines => new Function('squiffy', 'get', 'set', jsLines.join('\n')));
 
-        const squiffyApi = runtimeInit({
-            element: output,
-            scroll: 'element',
-            persist: false,
-            story: {
+        if (squiffyApi)
+        {
+            const story = {
                 js: js as any,
-                ...data.story,
-            },
-        });
+                ...result.output.story,
+            };
+            squiffyApi.update(story);
+        }
+        else {
+            outputContainer.innerHTML = '';
+            const output = document.createElement('div');
+            outputContainer.appendChild(output);
 
-        restartButton.addEventListener('click', () => {
-            squiffyApi.restart();
-        });
+            squiffyApi = runtimeInit({
+                element: output,
+                scroll: 'element',
+                persist: false,
+                story: {
+                    js: js as any,
+                    ...data.story,
+                },
+            });
+
+            restartButton.addEventListener('click', () => {
+                squiffyApi.restart();
+            });
+        }
     }
 </script>
