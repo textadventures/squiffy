@@ -71,7 +71,8 @@ const { script } = Astro.props;
 <script>
     import {basicSetup, EditorView} from 'codemirror';
     import { compile as squiffyCompile } from 'squiffy-compiler';
-    import { init as runtimeInit } from 'squiffy-runtime';
+    import {init as runtimeInit} from 'squiffy-runtime';
+    import type { SquiffyApi } from 'squiffy-runtime';
     import debounce from 'debounce';
 
     let squiffyApi: SquiffyApi | null;
@@ -162,7 +163,7 @@ const { script } = Astro.props;
             });
 
             restartButton.addEventListener('click', () => {
-                squiffyApi.restart();
+                squiffyApi?.restart();
             });
         }
     }
