@@ -26,11 +26,34 @@ const { script } = Astro.props;
         margin-bottom: 1em;
         border-bottom: 1px solid #ccc;
     }
-    .viewer {
-        padding: 2px;
+    .viewer-container {
+        padding: 0.5em;
     }
     .viewer p {
         margin-bottom: 1rem;
+    }
+    .sample-button {
+        background: var(--sl-color-accent, #4f46e5); /* fallback if no theme var */
+        color: white;
+        border: none;
+        border-radius: 0.5rem;
+        padding: 0.4rem 1rem;
+        font-size: 0.8rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.2s ease, transform 0.15s ease;
+    }
+    .sample-button:hover {
+        background: color-mix(in srgb, var(--sl-color-accent, #4f46e5) 85%, black);
+        transform: translateY(-2px);
+    }
+    .sample-button:active {
+        transform: translateY(0);
+        background: color-mix(in srgb, var(--sl-color-accent, #4f46e5) 70%, black);
+    }
+    .sample-button:focus {
+        outline: 2px solid var(--sl-color-accent, #4f46e5);
+        outline-offset: 2px;
     }
 </style>
 
@@ -38,9 +61,9 @@ const { script } = Astro.props;
     <Split gap="0.75rem" min="200px">
         <div slot="left" class="editor">
         </div>
-        <div slot="right">
+        <div slot="right" class="viewer-container">
             <div class="viewer"></div>
-            <button class="btn btn-primary btn-sm restart">Restart</button>
+            <button class="restart sample-button">Restart</button>
         </div>
     </Split>
 </div>

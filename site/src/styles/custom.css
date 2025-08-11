@@ -1,0 +1,3 @@
+:root {
+    --sl-content-width: 60rem; /* Set a custom width to better handle side-by-side examples (Sample.astro component) */
+}

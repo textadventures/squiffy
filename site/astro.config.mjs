@@ -11,7 +11,10 @@ export default defineConfig({
         astroExpressiveCode(),
         mdx(),
         starlight({
-            title: 'Squiffy'
+            title: 'Squiffy',
+            customCss: [
+                './src/styles/custom.css',
+            ],
         })],
     markdown: {
         shikiConfig: {
