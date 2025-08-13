@@ -7,18 +7,31 @@ export const createPackage = async (inputFilename: string) => {
     return await generate(inputFilename);
 }
 
-async function generate(inputFilename: string) {
-    console.log('Loading ' + inputFilename);
+export const compileFile = async (inputFilename: string) : Promise<string | null> => {
+    const result = await getCompileResult(inputFilename);
 
+    if (!result.success) {
+        return null;
+    }
+
+    return await result.getJs();
+}
+
+async function getCompileResult(inputFilename: string) {
     const inputFile = fs.readFileSync(inputFilename);
     const inputText = inputFile.toString();
-
-    const result = await compile({
+    return await compile({
         scriptBaseFilename: path.basename(inputFilename),
         script: inputText,
         onWarning: console.warn,
         externalFiles: externalFiles(inputFilename)
     });
+}
+
+async function generate(inputFilename: string) {
+    console.log('Loading ' + inputFilename);
+
+    const result = await getCompileResult(inputFilename);
 
     if (!result.success) {
         console.log('Failed.');
