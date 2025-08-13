@@ -20,7 +20,7 @@ const argv = yargs(hideBin(process.argv))
 
 console.log('Squiffy ' + SQUIFFY_VERSION);
 
-var options = {
+const options = {
     serve: argv.s,
     scriptOnly: argv.scriptonly,
     pluginName: argv.pluginname,
@@ -30,9 +30,9 @@ var options = {
 
 const inputFilename = argv._[0] as string;
 
-var result = await createPackage(inputFilename);
+const result = await createPackage(inputFilename);
 
 if (result && options.serve) {
-    var port = (argv.p as number) || 8282;
+    const port = (argv.p as number) || 8282;
     serve(result, port);
 }

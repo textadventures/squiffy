@@ -10,8 +10,8 @@ export const createPackage = async (inputFilename: string) => {
 async function generate(inputFilename: string) {
     console.log('Loading ' + inputFilename);
 
-    var inputFile = fs.readFileSync(inputFilename);
-    var inputText = inputFile.toString();
+    const inputFile = fs.readFileSync(inputFilename);
+    const inputText = inputFile.toString();
 
     const result = await compile({
         scriptBaseFilename: path.basename(inputFilename),
@@ -25,31 +25,27 @@ async function generate(inputFilename: string) {
         return;
     }
 
-    var storyJsName = /* typeof options.scriptOnly === 'string' ? options.scriptOnly : */ 'story.js';
+    const storyJsName = /* typeof options.scriptOnly === 'string' ? options.scriptOnly : */ 'story.js';
 
     console.log('Writing ' + storyJsName);
 
-    var storyJs = await result.getJs();
+    const storyJs = await result.getJs();
 
-    var outputPath = path.resolve(path.dirname(inputFilename));
+    const outputPath = path.resolve(path.dirname(inputFilename));
     fs.writeFileSync(path.join(outputPath, storyJsName), storyJs);
 
     const uiInfo = result.getUiInfo();
 
     console.log('Writing squiffy.runtime.js');
     fs.copyFileSync(path.join(import.meta.dirname, 'squiffy.runtime.js'), path.join(outputPath, 'squiffy.runtime.js'));
-
-    var cssTemplateFile = fs.readFileSync(findFile('style.template.css', outputPath /*, sourcePath */));
-    var cssData = cssTemplateFile.toString();
-    fs.writeFileSync(path.join(outputPath, 'style.css'), cssData);
     
     console.log('Writing index.html');
 
-    var htmlTemplateFile = fs.readFileSync(findFile('index.template.html', outputPath /*, sourcePath */));
-    var htmlData = htmlTemplateFile.toString();
+    const htmlTemplateFile = fs.readFileSync(findFile('index.template.html', outputPath /*, sourcePath */));
+    let htmlData = htmlTemplateFile.toString();
     htmlData = htmlData.replace('<!-- INFO -->', `<!--\n\nCreated with Squiffy ${SQUIFFY_VERSION}\n\n\nhttps://github.com/textadventures/squiffy\n\n-->`);
     htmlData = htmlData.replace('<!-- TITLE -->', uiInfo.title);
-    var scriptData = uiInfo.externalScripts.map(script => `<script src="${script}"></script>`).join('\n');
+    const scriptData = uiInfo.externalScripts.map(script => `<script src="${script}"></script>`).join('\n');
     htmlData = htmlData.replace('<!-- SCRIPTS -->', scriptData);
 
     var stylesheetData = uiInfo.externalStylesheets.map(sheet => `<link rel="stylesheet" href="${sheet}"/>`).join('\n');
@@ -58,8 +54,8 @@ async function generate(inputFilename: string) {
     fs.writeFileSync(path.join(outputPath, 'index.html'), htmlData);
 
     console.log('Writing style.css');
-    var cssTemplateFile = fs.readFileSync(findFile('style.template.css', outputPath /*, sourcePath */));
-    var cssData = cssTemplateFile.toString();
+    const cssTemplateFile = fs.readFileSync(findFile('style.template.css', outputPath /*, sourcePath */));
+    const cssData = cssTemplateFile.toString();
     fs.writeFileSync(path.join(outputPath, 'style.css'), cssData);
 
     // if (options.zip) {
@@ -83,14 +79,14 @@ async function generate(inputFilename: string) {
     console.log('Done.');
 
     return outputPath;
-};
+}
 
 function findFile(filename: string, outputPath: string /*, sourcePath: string */) {
     if (outputPath) {
-        var outputPathFile = path.join(outputPath, filename);
+        const outputPathFile = path.join(outputPath, filename);
         if (fs.existsSync(outputPathFile)) {
             return outputPathFile;
         }
     }
     return path.join(import.meta.dirname, filename);
-};
+}
