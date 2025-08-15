@@ -40,7 +40,6 @@ const compile = async (script: string) => {
 }
 
 const initScript = async (script: string) => {
-    globalJsdom(html);
     const element = document.getElementById('squiffy');
 
     if (!element) {
@@ -78,7 +77,7 @@ const getTestOutput = () => {
 let cleanup: { (): void };
 
 beforeEach(() => {
-    cleanup = globalJsdom();
+    cleanup = globalJsdom(html);
 });
 
 afterEach(() => {
