@@ -20,7 +20,6 @@ const html = `
 
 const compile = async (script: string) => {
     const compileResult = await squiffyCompile({
-        scriptBaseFilename: "filename.squiffy", // TODO: This shouldn't be required
         script: script,
     });
 
