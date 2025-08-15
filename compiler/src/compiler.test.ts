@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest'
 import * as fs from 'fs/promises';
 import { glob } from "glob";
-import path from 'path';
+import * as path from 'path';
 
 import { compile, CompileSuccess } from './compiler.js';
 
