@@ -1,0 +1,14 @@
+export function startsWith(string: string, prefix: string) {
+    return string.substring(0, prefix.length) === prefix;
+}
+
+export function rotate(options: string, current: string | null) {
+    const colon = options.indexOf(':');
+    if (colon == -1) {
+        return [options, current];
+    }
+    const next = options.substring(0, colon);
+    let remaining = options.substring(colon + 1);
+    if (current) remaining += ':' + current;
+    return [next, remaining];
+}

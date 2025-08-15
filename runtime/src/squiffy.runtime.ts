@@ -1,4 +1,6 @@
 import { SquiffyApi, SquiffyInitOptions, SquiffySettings, Story, Section } from './types.js';
+import { startsWith, rotate } from "./utils.js";
+import { TextProcessor } from './textProcessor.js';
 
 export const init = (options: SquiffyInitOptions): SquiffyApi => {
     let story: Story;
@@ -9,6 +11,7 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
     let outputElement: HTMLElement;
     let settings: SquiffySettings;
     let storageFallback: Record<string, string> = {};
+    let textProcessor: TextProcessor;
     
     function set(attribute: string, value: any) {
         if (typeof value === 'undefined') value = true;
@@ -433,197 +436,16 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
             }
         },
         processText: (text: string) => {
-            function process(text: string, data: any) {
-                let containsUnprocessedSection = false;
-                const open = text.indexOf('{');
-                let close;
-    
-                if (open > -1) {
-                    let nestCount = 1;
-                    let searchStart = open + 1;
-                    let finished = false;
-    
-                    while (!finished) {
-                        const nextOpen = text.indexOf('{', searchStart);
-                        const nextClose = text.indexOf('}', searchStart);
-    
-                        if (nextClose > -1) {
-                            if (nextOpen > -1 && nextOpen < nextClose) {
-                                nestCount++;
-                                searchStart = nextOpen + 1;
-                            }
-                            else {
-                                nestCount--;
-                                searchStart = nextClose + 1;
-                                if (nestCount === 0) {
-                                    close = nextClose;
-                                    containsUnprocessedSection = true;
-                                    finished = true;
-                                }
-                            }
-                        }
-                        else {
-                            finished = true;
-                        }
-                    }
-                }
-    
-                if (containsUnprocessedSection) {
-                    const section = text.substring(open + 1, close);
-                    const value = processTextCommand(section, data);
-                    text = text.substring(0, open) + value + process(text.substring(close! + 1), data);
-                }
-    
-                return (text);
-            }
-    
-            function processTextCommand(text: string, data: any) {
-                if (startsWith(text, 'if ')) {
-                    return processTextCommand_If(text, data);
-                }
-                else if (startsWith(text, 'else:')) {
-                    return processTextCommand_Else(text, data);
-                }
-                else if (startsWith(text, 'label:')) {
-                    return processTextCommand_Label(text, data);
-                }
-                else if (/^rotate[: ]/.test(text)) {
-                    return processTextCommand_Rotate('rotate', text);
-                }
-                else if (/^sequence[: ]/.test(text)) {
-                    return processTextCommand_Rotate('sequence', text);
-                }
-                else if (currentSection.passages && text in currentSection.passages) {
-                    return process(currentSection.passages[text].text || '', data);
-                }
-                else if (text in story.sections) {
-                    return process(story.sections[text].text || '', data);
-                }
-                else if (startsWith(text, '@') && !startsWith(text, '@replace')) {
-                    processAttributes(text.substring(1).split(","));
-                    return "";
-                }
-                return get(text);
-            }
-    
-            function processTextCommand_If(section: string, data: any) {
-                const command = section.substring(3);
-                const colon = command.indexOf(':');
-                if (colon == -1) {
-                    return ('{if ' + command + '}');
-                }
-    
-                const text = command.substring(colon + 1);
-                let condition = command.substring(0, colon);
-                condition = condition.replace("<", "&lt;");
-                const operatorRegex = /([\w ]*)(=|&lt;=|&gt;=|&lt;&gt;|&lt;|&gt;)(.*)/;
-                const match = operatorRegex.exec(condition);
-    
-                let result = false;
-    
-                if (match) {
-                    const lhs = get(match[1]);
-                    const op = match[2];
-                    let rhs = match[3];
-    
-                    if (startsWith(rhs, '@')) rhs = get(rhs.substring(1));
-    
-                    if (op == '=' && lhs == rhs) result = true;
-                    if (op == '&lt;&gt;' && lhs != rhs) result = true;
-                    if (op == '&gt;' && lhs > rhs) result = true;
-                    if (op == '&lt;' && lhs < rhs) result = true;
-                    if (op == '&gt;=' && lhs >= rhs) result = true;
-                    if (op == '&lt;=' && lhs <= rhs) result = true;
-                }
-                else {
-                    let checkValue = true;
-                    if (startsWith(condition, 'not ')) {
-                        condition = condition.substring(4);
-                        checkValue = false;
-                    }
-    
-                    if (startsWith(condition, 'seen ')) {
-                        result = (seen(condition.substring(5)) == checkValue);
-                    }
-                    else {
-                        let value = get(condition);
-                        if (value === null) value = false;
-                        result = (value == checkValue);
-                    }
-                }
-    
-                const textResult = result ? process(text, data) : '';
-    
-                data.lastIf = result;
-                return textResult;
-            }
-    
-            function processTextCommand_Else(section: string, data: any) {
-                if (!('lastIf' in data) || data.lastIf) return '';
-                const text = section.substring(5);
-                return process(text, data);
-            }
-    
-            function processTextCommand_Label(section: string, data: any) {
-                const command = section.substring(6);
-                const eq = command.indexOf('=');
-                if (eq == -1) {
-                    return ('{label:' + command + '}');
-                }
-    
-                const text = command.substring(eq + 1);
-                const label = command.substring(0, eq);
-    
-                return '<span class="squiffy-label-' + label + '">' + process(text, data) + '</span>';
-            }
-    
-            function processTextCommand_Rotate(type: string, section: string) {
-                let options;
-                let attribute = '';
-                if (section.substring(type.length, type.length + 1) == ' ') {
-                    const colon = section.indexOf(':');
-                    if (colon == -1) {
-                        return '{' + section + '}';
-                    }
-                    options = section.substring(colon + 1);
-                    attribute = section.substring(type.length + 1, colon);
-                }
-                else {
-                    options = section.substring(type.length + 1);
-                }
-                // TODO: Check - previously there was no second parameter here
-                const rotation = rotate(options.replace(/"/g, '&quot;').replace(/'/g, '&#39;'), null);
-                if (attribute) {
-                    set(attribute, rotation[0]);
-                }
-                return '<a class="squiffy-link" data-' + type + '="' + rotation[1] + '" data-attribute="' + attribute + '" role="link">' + rotation[0] + '</a>';
-            }
-    
             const data = {
                 fulltext: text
             };
-            return process(text, data);
+            return textProcessor.process(text, data);
         },
         transition: function (f: any) {
             set('_transition', f.toString());
             f();
         },
     };
-    
-    function startsWith(string: string, prefix: string) {
-        return string.substring(0, prefix.length) === prefix;
-    }
-    
-    function rotate(options: string, current: string | null) {
-        const colon = options.indexOf(':');
-        if (colon == -1) {
-            return [options, current];
-        }
-        const next = options.substring(0, colon);
-        let remaining = options.substring(colon + 1);
-        if (current) remaining += ':' + current;
-        return [next, remaining];
-    }
 
     function safeQuerySelector(name: string) {
         return name.replace(/'/g, "\\'");
@@ -724,6 +546,8 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
         if (event.key !== "Enter") return;
         handleClick(event);
     });
+
+    textProcessor = new TextProcessor(get, set, story, ui, seen, processAttributes);
     
     begin();
 
