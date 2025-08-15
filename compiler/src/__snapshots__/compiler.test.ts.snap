@@ -458,17 +458,49 @@ story.sections = {
         }
     },
     "section2": {
-        "text": "<p>This is the next section.</p>",
-        "jsIndex": 1
+        "text": "<p>This is the next section, with passages <a class=\\"squiffy-link link-passage\\" data-passage=\\"a\\" role=\\"link\\" tabindex=\\"0\\">a</a> and <a class=\\"squiffy-link link-passage\\" data-passage=\\"b\\" role=\\"link\\" tabindex=\\"0\\">b</a>.</p>",
+        "jsIndex": 1,
+        "passages": {
+            "a": {
+                "text": "<p>Just a.</p>"
+            },
+            "b": {
+                "text": "<p>Just b.</p>"
+            }
+        }
     },
     "section": {
-        "text": "<p>This is another section.</p>"
+        "text": "<p>This is another section, with passages <a class=\\"squiffy-link link-passage\\" data-passage=\\"a\\" role=\\"link\\" tabindex=\\"0\\">a</a> and <a class=\\"squiffy-link link-passage\\" data-passage=\\"b\\" role=\\"link\\" tabindex=\\"0\\">b</a>.</p>",
+        "passages": {
+            "a": {
+                "text": "<p>Just a in a different section.</p>"
+            },
+            "b": {
+                "text": "<p>Just b in a different section.</p>"
+            }
+        }
     },
     "section 3": {
-        "text": "<p>Another section is here.</p>"
+        "text": "<p>Another section is here, with passages <a class=\\"squiffy-link link-passage\\" data-passage=\\"a\\" role=\\"link\\" tabindex=\\"0\\">a</a> and <a class=\\"squiffy-link link-passage\\" data-passage=\\"b\\" role=\\"link\\" tabindex=\\"0\\">b</a>.</p>",
+        "passages": {
+            "a": {
+                "text": "<p>Just a in section3.</p>"
+            },
+            "b": {
+                "text": "<p>Just b in section3.</p>"
+            }
+        }
     },
     "section four": {
-        "text": "<p>Some other section.</p>"
+        "text": "<p>Some other section, with passages <a class=\\"squiffy-link link-passage\\" data-passage=\\"a\\" role=\\"link\\" tabindex=\\"0\\">a</a> and <a class=\\"squiffy-link link-passage\\" data-passage=\\"b\\" role=\\"link\\" tabindex=\\"0\\">b</a>.</p>",
+        "passages": {
+            "a": {
+                "text": "<p>Just a in section four.</p>"
+            },
+            "b": {
+                "text": "<p>Just b in section four.</p>"
+            }
+        }
     }
 };
 story.js = [
