@@ -1,6 +1,6 @@
 {
   "name": "squiffy-compiler",
-  "version": "6.0.0-alpha.2",
+  "version": "6.0.0-alpha.3",
   "description": "A tool for creating multiple-choice interactive stories",
   "dependencies": {
     "marked": "^13.0.2"
@@ -24,8 +24,9 @@
     "vitest": "^2.1.1"
   },
   "scripts": {
-    "test": "vitest",
-    "build": "tsc"
+    "test": "vitest --run",
+    "build": "tsc",
+    "prepublishOnly": "npm run build && npm run test"
   },
   "main": "dist/compiler.js",
   "types": "dist/compiler.d.ts",
