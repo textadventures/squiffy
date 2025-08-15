@@ -1,6 +1,7 @@
 import { SquiffyApi, SquiffyInitOptions, SquiffySettings, Story, Section } from './types.js';
 import { startsWith, rotate } from "./utils.js";
 import { TextProcessor } from './textProcessor.js';
+import { Emitter, SquiffyEventMap } from './events.js';
 
 export const init = (options: SquiffyInitOptions): SquiffyApi => {
     let story: Story;
@@ -12,6 +13,7 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
     let settings: SquiffySettings;
     let storageFallback: Record<string, string> = {};
     let textProcessor: TextProcessor;
+    const emitter = new Emitter<SquiffyEventMap>();
     
     function set(attribute: string, value: any) {
         if (typeof value === 'undefined') value = true;
@@ -65,6 +67,7 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
                 }
             }
 
+            emitter.emit('linkClick', { linkType: 'passage' });
             return true;
         }
         
@@ -74,6 +77,7 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
                 go(section);
             }
 
+            emitter.emit('linkClick', { linkType: 'section' });
             return true;
         }
         
@@ -90,7 +94,8 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
                 set(attribute, result[0]);
             }
             save();
-            
+
+            emitter.emit('linkClick', { linkType: rotateAttr ? 'rotate' : 'sequence' });
             return true;
         }
 
@@ -557,5 +562,8 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
         set: set,
         clickLink: handleLink,
         update: update,
+        on: (e, h) => emitter.on(e, h),
+        off: (e, h) => emitter.off(e, h),
+        once: (e, h) => emitter.once(e, h),
     };
 };

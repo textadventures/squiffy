@@ -1,3 +1,5 @@
+import {SquiffyEventHandler, SquiffyEventMap} from "./events.js";
+
 export interface SquiffyInitOptions {
     element: HTMLElement;
     story: Story;
@@ -18,6 +20,21 @@ export interface SquiffyApi {
     set: (attribute: string, value: any) => void;
     clickLink: (link: HTMLElement) => boolean;
     update: (story: Story) => void;
+
+    on<E extends keyof SquiffyEventMap>(
+        event: E,
+        handler: SquiffyEventHandler<E>
+    ): () => void; // returns unsubscribe
+
+    off<E extends keyof SquiffyEventMap>(
+        event: E,
+        handler: SquiffyEventHandler<E>
+    ): void;
+
+    once<E extends keyof SquiffyEventMap>(
+        event: E,
+        handler: SquiffyEventHandler<E>
+    ): () => void;
 }
 
 // Previous versions of Squiffy had "squiffy", "get" and "set" as globals - we now pass these directly into JS functions.

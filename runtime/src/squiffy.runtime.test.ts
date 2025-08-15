@@ -1,4 +1,4 @@
-import { expect, test, beforeEach, afterEach } from 'vitest';
+import { expect, test, beforeEach, afterEach, vi } from 'vitest';
 import fs from 'fs/promises';
 import globalJsdom from 'global-jsdom';
 import { init } from './squiffy.runtime.js';
@@ -101,6 +101,9 @@ test('Click a section link', async () => {
     expect(section3Link).not.toBeNull();
     expect(linkToPassage.classList).not.toContain('disabled');
 
+    const handler = vi.fn();
+    const off = squiffyApi.on('linkClick', handler);
+
     const handled = squiffyApi.clickLink(section3Link);
     expect(handled).toBe(true);
 
@@ -108,6 +111,15 @@ test('Click a section link', async () => {
 
     // passage link is from the previous section, so should be unclickable
     expect(squiffyApi.clickLink(linkToPassage)).toBe(false);
+
+    // await for the event to be processed
+    await Promise.resolve();
+
+    expect(handler).toHaveBeenCalledTimes(1);
+    expect(handler).toHaveBeenCalledWith(
+        expect.objectContaining({ linkType: 'section' })
+    );
+    off();
 });
 
 test('Click a passage link', async () => {
@@ -123,6 +135,9 @@ test('Click a passage link', async () => {
     expect(section3Link).not.toBeNull();
     expect(linkToPassage.classList).not.toContain('disabled');
 
+    const handler = vi.fn();
+    const off = squiffyApi.on('linkClick', handler);
+
     const handled = squiffyApi.clickLink(linkToPassage);
     expect(handled).toBe(true);
 
@@ -131,6 +146,15 @@ test('Click a passage link', async () => {
 
     // shouldn't be able to click it again
     expect(squiffyApi.clickLink(linkToPassage)).toBe(false);
+
+    // await for the event to be processed
+    await Promise.resolve();
+
+    expect(handler).toHaveBeenCalledTimes(1);
+    expect(handler).toHaveBeenCalledWith(
+        expect.objectContaining({ linkType: 'passage' })
+    );
+    off();
 });
 
 test('Run JavaScript functions', async () => {
