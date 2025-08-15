@@ -1,0 +1,41 @@
+{
+  "name": "@textadventures/vite-plugin-squiffy",
+  "version": "0.1.4",
+  "description": "Vite plugin to compile .squiffy files",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -w -p tsconfig.json",
+    "prepublishOnly": "npm run build"
+  },
+  "author": "Alex Warren",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@textadventures/squiffy-types": "^0.1.0",
+    "squiffy-packager": "^6.0.0-alpha.5"
+  },
+  "peerDependencies": {
+    "vite": "^7.1.2"
+  },
+  "devDependencies": {
+    "shx": "^0.4.0",
+    "typescript": "^5.9.2"
+  }
+}
