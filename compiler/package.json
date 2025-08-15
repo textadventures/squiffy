@@ -3,7 +3,7 @@
   "version": "6.0.0-alpha.3",
   "description": "A tool for creating multiple-choice interactive stories",
   "dependencies": {
-    "marked": "^13.0.2"
+    "marked": "^16.1.2"
   },
   "author": "Alex Warren",
   "contributors": [
@@ -18,10 +18,10 @@
   "license": "MIT",
   "preferGlobal": true,
   "devDependencies": {
-    "@types/node": "^22.5.5",
-    "glob": "^11.0.0",
-    "typescript": "^5.6.2",
-    "vitest": "^2.1.1"
+    "@types/node": "^24.3.0",
+    "glob": "^11.0.3",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
   },
   "scripts": {
     "test": "vitest --run",
