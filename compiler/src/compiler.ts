@@ -30,7 +30,7 @@ interface OutputPassage {
 }
 
 interface CompilerSettings {
-    scriptBaseFilename: string;
+    scriptBaseFilename?: string;
     script: string;
     onWarning?: (message: string) => void;
     externalFiles?: ExternalFiles;
@@ -168,7 +168,7 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         continue: /^\+\+\+(.*)$/,
     };
 
-    async function processFileText(inputText: string, inputFilename: string, isFirst: boolean) {
+    async function processFileText(inputText: string, inputFilename: string | undefined, isFirst: boolean) {
         var inputLines = inputText.replace(/\r/g, '').split('\n');
 
         var lineCount = 0;
@@ -308,14 +308,14 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         return true;
     };
 
-    function ensureSectionExists(section: Section | null, isFirst: boolean, inputFilename: string, lineCount: number) {
+    function ensureSectionExists(section: Section | null, isFirst: boolean, inputFilename: string | undefined, lineCount: number) {
         if (!section && isFirst) {
             section = story.addSection('_default', inputFilename, lineCount);
         }
         return section!;
     };
 
-    function addAttribute(attribute: string, section: Section, passage: Passage | null, isFirst: boolean, inputFilename: string, lineCount: number) {
+    function addAttribute(attribute: string, section: Section, passage: Passage | null, isFirst: boolean, inputFilename: string | undefined, lineCount: number) {
         if (!passage) {
             section = ensureSectionExists(section, isFirst, inputFilename, lineCount);
             section.addAttribute(attribute);
@@ -479,7 +479,7 @@ class Story {
         this.id = inputFilename || null;
     }
 
-    addSection(name: string, filename: string, line: number): Section {
+    addSection(name: string, filename: string | undefined, line: number): Section {
         const section = new Section(name, filename, line);
         this.sections[name] = section;
         return section;
@@ -487,14 +487,14 @@ class Story {
 }
 
 class Section {
-    constructor(name: string, filename: string, line: number) {
+    constructor(name: string, filename: string | undefined, line: number) {
         this.name = name;
         this.filename = filename;
         this.line = line;
     }
 
     name: string;
-    filename: string;
+    filename: string | undefined;
     line: number;
 
     text: string[] = [];
