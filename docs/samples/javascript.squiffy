@@ -1,6 +1,0 @@
-Clicking this [link] will show an alert.
-
-[link]:
-    alert ("Hello!");
-    
-Text for the passage.

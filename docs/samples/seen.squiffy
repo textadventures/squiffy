@@ -1,7 +1,0 @@
-You can see a [cupboard]. Maybe you should [open] it?
-
-[open]:
-You open the cupboard.
-
-[cupboard]:
-The cupboard is {if seen open:open, and there are empty bottles inside}{else:closed}.
