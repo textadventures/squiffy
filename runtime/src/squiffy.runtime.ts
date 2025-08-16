@@ -3,6 +3,8 @@ import { startsWith, rotate } from "./utils.js";
 import { TextProcessor } from './textProcessor.js';
 import { Emitter, SquiffyEventMap } from './events.js';
 
+export type { SquiffyApi } from "./types.js"
+
 export const init = (options: SquiffyInitOptions): SquiffyApi => {
     let story: Story;
     let currentSection: Section;

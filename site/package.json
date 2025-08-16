@@ -19,7 +19,7 @@
     "debounce": "^2.2.0",
     "sass": "^1.90.0",
     "squiffy-compiler": "^6.0.0-alpha.3",
-    "squiffy-runtime": "^6.0.0-alpha.11",
+    "squiffy-runtime": "^6.0.0-alpha.12",
     "typescript": "^5.9.2"
   }
 }
