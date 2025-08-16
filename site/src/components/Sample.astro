@@ -33,23 +33,24 @@ const { script } = Astro.props;
         margin-bottom: 1rem;
     }
     .sample-button {
-        background: var(--sl-color-accent, #4f46e5); /* fallback if no theme var */
-        color: white;
-        border: none;
+        background: transparent;
+        color: var(--sl-color-accent, #4f46e5);
+        border: 1px solid var(--sl-color-accent, #4f46e5);
         border-radius: 0.5rem;
         padding: 0.4rem 1rem;
         font-size: 0.8rem;
         font-weight: 500;
         cursor: pointer;
-        transition: background 0.2s ease, transform 0.15s ease;
+        transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
     }
     .sample-button:hover {
-        background: color-mix(in srgb, var(--sl-color-accent, #4f46e5) 85%, black);
+        background: color-mix(in srgb, var(--sl-color-accent, #4f46e5) 15%, white);
+        color: var(--sl-color-accent, #4f46e5);
         transform: translateY(-2px);
     }
     .sample-button:active {
         transform: translateY(0);
-        background: color-mix(in srgb, var(--sl-color-accent, #4f46e5) 70%, black);
+        background: color-mix(in srgb, var(--sl-color-accent, #4f46e5) 25%, white);
     }
     .sample-button:focus {
         outline: 2px solid var(--sl-color-accent, #4f46e5);
