@@ -55,6 +55,9 @@ const { script } = Astro.props;
         outline: 2px solid var(--sl-color-accent, #4f46e5);
         outline-offset: 2px;
     }
+    .restart.hidden {
+        display: none;
+    }
 </style>
 
 <div class="sample not-content" data-squiffy-script={script}>
@@ -63,7 +66,7 @@ const { script } = Astro.props;
         </div>
         <div slot="right" class="viewer-container">
             <div class="viewer"></div>
-            <button class="restart sample-button">Restart</button>
+            <button class="restart hidden sample-button">Restart</button>
         </div>
     </Split>
 </div>
@@ -159,11 +162,21 @@ const { script } = Astro.props;
                 story: {
                     js: js as any,
                     ...data.story,
-                },
+                }
             });
+
+            const showRestartOnLinkClick = () => {
+                squiffyApi.once('linkClick', () => {
+                    restartButton.classList.remove('hidden');
+                });
+            };
+
+            showRestartOnLinkClick();
 
             restartButton.addEventListener('click', () => {
                 squiffyApi?.restart();
+                restartButton.classList.add('hidden');
+                showRestartOnLinkClick();
             });
         }
     }

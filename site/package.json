@@ -11,15 +11,15 @@
   },
   "dependencies": {
     "@astrojs/check": "^0.9.4",
-    "@astrojs/mdx": "^4.3.3",
+    "@astrojs/mdx": "^4.3.4",
     "@astrojs/starlight": "^0.35.2",
-    "astro": "^5.12.9",
+    "astro": "^5.13.2",
     "bootstrap": "^5.3.7",
     "codemirror": "^6.0.2",
     "debounce": "^2.2.0",
     "sass": "^1.90.0",
-    "squiffy-compiler": "^6.0.0-alpha.2",
-    "squiffy-runtime": "^6.0.0-alpha.10",
+    "squiffy-compiler": "^6.0.0-alpha.3",
+    "squiffy-runtime": "^6.0.0-alpha.11",
     "typescript": "^5.9.2"
   }
 }
