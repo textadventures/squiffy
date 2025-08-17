@@ -95,7 +95,6 @@ const { script } = Astro.props;
             const restart = this.querySelector('.restart') as HTMLButtonElement;
 
             const init = async () => {
-                console.log("init...");
                 await initRuntime(script, viewer, restart);
             };
 
