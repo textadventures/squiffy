@@ -61,7 +61,7 @@ const { script } = Astro.props;
     }
 </style>
 
-<div class="sample not-content" data-squiffy-script={script}>
+<squiffy-sample class="sample not-content" data-squiffy-script={script}>
     <Split gap="0.75rem" min="200px">
         <div slot="left" class="editor">
         </div>
@@ -70,7 +70,7 @@ const { script } = Astro.props;
             <button class="restart hidden sample-button">Restart</button>
         </div>
     </Split>
-</div>
+</squiffy-sample>
 
 <script>
     import {basicSetup, EditorView} from 'codemirror';
@@ -79,29 +79,32 @@ const { script } = Astro.props;
     import type { SquiffyApi } from 'squiffy-runtime';
     import debounce from 'debounce';
 
-    let squiffyApi: SquiffyApi | null;
-    const samples = document.querySelectorAll('.sample');
-    
-    document.addEventListener("DOMContentLoaded", async () => {
-        for (const sample of samples) {
+    class Sample extends HTMLElement {
+        connectedCallback() {
             let script = '';
+
+            const editor = this.querySelector('.editor') as HTMLElement;
+            if (!editor) return;
+
+            const viewer = this.querySelector('.viewer') as HTMLElement;
+            if (!viewer) return;
+
+            let squiffyApi: SquiffyApi | null;
             let loaded = false;
 
-            const editor = sample.querySelector('.editor');
-            if (!editor) continue;
-
-            const viewer = sample.querySelector('.viewer') as HTMLElement;
-            if (!viewer) continue;
-
-            const restart = sample.querySelector('.restart') as HTMLButtonElement;
+            const restart = this.querySelector('.restart') as HTMLButtonElement;
 
             const init = async () => {
+                console.log("init...");
                 await initRuntime(script, viewer, restart);
             };
 
             const updateListener = EditorView.updateListener.of(async (update) => {
                 const value = update.state.doc.toString();
-                if (value == script) return;
+                if (value == script) {
+                    console.log("erk");
+                    return;
+                }
 
                 script = value;
 
@@ -114,7 +117,7 @@ const { script } = Astro.props;
             });
 
             new EditorView({
-                doc: (sample as HTMLElement).dataset.squiffyScript,
+                doc: this.dataset.squiffyScript,
                 extensions: [
                     basicSetup,
                     EditorView.lineWrapping,
@@ -126,59 +129,60 @@ const { script } = Astro.props;
                 ],
                 parent: editor
             });
-        }
-    });
 
-    async function initRuntime(script: string, outputContainer: HTMLElement, restartButton: HTMLElement) {
-        const result = await squiffyCompile({
-            scriptBaseFilename: "filename.squiffy",
-            script: script,
-        });
-
-        if (!result.success) {
-            console.error("Failed to compile script", result.errors);
-            return;
-        }
-
-        const data = result.output;
-        const js = data.js.map(jsLines => new Function('squiffy', 'get', 'set', jsLines.join('\n')));
-
-        if (squiffyApi)
-        {
-            const story = {
-                js: js as any,
-                ...result.output.story,
-            };
-            squiffyApi.update(story);
-        }
-        else {
-            outputContainer.innerHTML = '';
-            const output = document.createElement('div');
-            outputContainer.appendChild(output);
-
-            squiffyApi = runtimeInit({
-                element: output,
-                scroll: 'element',
-                persist: false,
-                story: {
-                    js: js as any,
-                    ...data.story,
-                }
-            });
-
-            const showRestartOnLinkClick = () => {
-                squiffyApi?.once('linkClick', () => {
-                    restartButton.classList.remove('hidden');
+            async function initRuntime(script: string, outputContainer: HTMLElement, restartButton: HTMLElement) {
+                const result = await squiffyCompile({
+                    scriptBaseFilename: "filename.squiffy",
+                    script: script,
                 });
-            };
 
-            showRestartOnLinkClick();
+                if (!result.success) {
+                    console.error("Failed to compile script", result.errors);
+                    return;
+                }
 
-            restartButton.addEventListener('click', () => {
-                squiffyApi?.restart();
-                restartButton.classList.add('hidden');
-                showRestartOnLinkClick();
-            });
+                const data = result.output;
+                const js = data.js.map(jsLines => new Function('squiffy', 'get', 'set', jsLines.join('\n')));
+
+                if (squiffyApi)
+                {
+                    const story = {
+                        js: js as any,
+                        ...result.output.story,
+                    };
+                    squiffyApi.update(story);
+                }
+                else {
+                    outputContainer.innerHTML = '';
+                    const output = document.createElement('div');
+                    outputContainer.appendChild(output);
+
+                    squiffyApi = runtimeInit({
+                        element: output,
+                        scroll: 'element',
+                        persist: false,
+                        story: {
+                            js: js as any,
+                            ...data.story,
+                        }
+                    });
+
+                    const showRestartOnLinkClick = () => {
+                        squiffyApi?.once('linkClick', () => {
+                            restartButton.classList.remove('hidden');
+                        });
+                    };
+
+                    showRestartOnLinkClick();
+
+                    restartButton.addEventListener('click', () => {
+                        squiffyApi?.restart();
+                        restartButton.classList.add('hidden');
+                        showRestartOnLinkClick();
+                    });
+                }
+            }
         }
     }
+    customElements.define('squiffy-sample', Sample);
 </script>
