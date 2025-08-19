@@ -12,9 +12,20 @@ export default defineConfig({
         mdx(),
         starlight({
             title: 'Squiffy',
+            logo: {
+                src: './src/assets/squiffy.png',
+            },
+            favicon: '/squiffy.png',
             customCss: [
                 './src/styles/custom.css',
             ],
+            social: [
+                { icon: 'github', label: 'GitHub', href: 'https://github.com/textadventures/squiffy' },
+                { icon: 'discord', label: 'Discord', href: 'https://textadventures.co.uk/community/discord' }
+            ],
+            editLink: {
+                baseUrl: 'https://github.com/textadventures/squiffy/edit/main/site/',
+            },
         })],
     markdown: {
         shikiConfig: {
