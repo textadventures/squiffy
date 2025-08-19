@@ -496,7 +496,7 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
                 else if (newSection.text && newSection.text != story.sections[existingSection].text) {
                     // section has been updated
                     for (const element of elements) {
-                        updateElementTextPreservingDisabledPassageLinks(element, newSection.text);
+                        updateElementTextPreservingDisabledPassageLinks(element, ui.processText(newSection.text));
                     }
                 }
             }
@@ -518,7 +518,7 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
                 else if (newPassage.text && newPassage.text != story.sections[existingSection].passages[existingPassage].text) {
                     // passage has been updated
                     for (const element of elements) {
-                        updateElementTextPreservingDisabledPassageLinks(element, newPassage.text);
+                        updateElementTextPreservingDisabledPassageLinks(element, ui.processText(newPassage.text));
                     }
                 }
             }

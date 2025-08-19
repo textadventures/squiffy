@@ -441,3 +441,65 @@ Text from a passage.
     let output = getSectionContent(element, 'section1');
     expect(output).toBe('Here is some text from a passage: Text from a passage.');
 });
+
+test('Update section with embedded text', async () => {
+    const script = `
+[[section1]]:
+Here is some text from the next section: {section2}
+
+[[section2]]:
+Text from next section.
+`;
+
+    const { squiffyApi, element } = await initScript(script);
+
+    let output = getSectionContent(element, 'section1');
+    expect(output).toBe('Here is some text from the next section: Text from next section.');
+
+    const script2 = `
+[[section1]]:
+Here is an updated script with text from the next section: {section2}
+
+[[section2]]:
+Updated text from next section.
+`;
+
+    const updated = await compile(script2);
+    squiffyApi.update(updated.story);
+    output = getSectionContent(element, 'section1');
+
+    // NOTE: The embedded text does not currently get updated. We would need to track where the embedded
+    // text has been written.
+    expect(output).toBe('Here is an updated script with text from the next section: Text from next section.');
+});
+
+test('Update passage with embedded text', async () => {
+    const script = `
+[[section1]]:
+Here is some text from a passage: {passage}
+
+[passage]:
+Text from a passage.
+`;
+
+    const { squiffyApi, element } = await initScript(script);
+
+    let output = getSectionContent(element, 'section1');
+    expect(output).toBe('Here is some text from a passage: Text from a passage.');
+
+    const script2 = `
+[[section1]]:
+Here is an updated script with text from a passage: {passage}
+
+[passage]:
+Updated text from a passage.
+`;
+
+    const updated = await compile(script2);
+    squiffyApi.update(updated.story);
+    output = getSectionContent(element, 'section1');
+
+    // NOTE: The embedded text does not currently get updated. We would need to track where the embedded
+    // text has been written.
+    expect(output).toBe('Here is an updated script with text from a passage: Text from a passage.');
+});
