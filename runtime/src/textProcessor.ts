@@ -77,10 +77,8 @@ export class TextProcessor {
         } else if (/^sequence[: ]/.test(text)) {
             return this.processTextCommand_Rotate('sequence', text);
         } else if (currentSection.passages && text in currentSection.passages) {
-            console.log("Found passage");
             return this.process(currentSection.passages[text].text || '', data);
         } else if (text in this.story.sections) {
-            console.log("Found section");
             return this.process(this.story.sections[text].text || '', data);
         } else if (startsWith(text, '@') && !startsWith(text, '@replace')) {
             this.processAttributes(text.substring(1).split(","));
