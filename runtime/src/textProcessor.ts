@@ -1,22 +1,23 @@
 import { startsWith, rotate } from "./utils.js";
+import { Section } from "./types.js";
 
 export class TextProcessor {
     get: (attribute: string) => any;
     set: (attribute: string, value: any) => void;
     story: any;
-    currentSection: any;
+    getCurrentSection: () => Section;
     seen: (section: string) => boolean;
     processAttributes: (attributes: string[]) => void;
 
     constructor (get: (attribute: string) => any,
                  set: (attribute: string, value: any) => void,
-                 story: any, currentSection: any,
+                 story: any, currentSection: () => Section,
                  seen: (section: string) => boolean,
                  processAttributes: (attributes: string[]) => void) {
         this.get = get;
         this.set = set;
         this.story = story;
-        this.currentSection = currentSection;
+        this.getCurrentSection = currentSection;
         this.seen = seen;
         this.processAttributes = processAttributes;
     }
@@ -64,6 +65,7 @@ export class TextProcessor {
     }
 
     processTextCommand(text: string, data: any) {
+        const currentSection = this.getCurrentSection();
         if (startsWith(text, 'if ')) {
             return this.processTextCommand_If(text, data);
         } else if (startsWith(text, 'else:')) {
@@ -74,9 +76,11 @@ export class TextProcessor {
             return this.processTextCommand_Rotate('rotate', text);
         } else if (/^sequence[: ]/.test(text)) {
             return this.processTextCommand_Rotate('sequence', text);
-        } else if (this.currentSection.passages && text in this.currentSection.passages) {
-            return this.process(this.currentSection.passages[text].text || '', data);
+        } else if (currentSection.passages && text in currentSection.passages) {
+            console.log("Found passage");
+            return this.process(currentSection.passages[text].text || '', data);
         } else if (text in this.story.sections) {
+            console.log("Found section");
             return this.process(this.story.sections[text].text || '', data);
         } else if (startsWith(text, '@') && !startsWith(text, '@replace')) {
             this.processAttributes(text.substring(1).split(","));

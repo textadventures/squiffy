@@ -554,7 +554,7 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
         handleClick(event);
     });
 
-    textProcessor = new TextProcessor(get, set, story, ui, seen, processAttributes);
+    textProcessor = new TextProcessor(get, set, story, () => currentSection, seen, processAttributes);
     
     begin();
 

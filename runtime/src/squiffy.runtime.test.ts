@@ -213,11 +213,11 @@ function safeQuerySelector(name: string) {
 }
 
 function getSectionContent(element: HTMLElement, section: string) {
-    return element.querySelector(`[data-source='[[${safeQuerySelector(section)}]]'] p`)?.textContent || null;
+    return element.querySelector(`[data-source='[[${safeQuerySelector(section)}]]']`)?.textContent || null;
 }
 
 function getPassageContent(element: HTMLElement, section: string, passage: string) {
-    return element.querySelector(`[data-source='[[${safeQuerySelector(section)}]][${safeQuerySelector(passage)}]'] p`)?.textContent || null;
+    return element.querySelector(`[data-source='[[${safeQuerySelector(section)}]][${safeQuerySelector(passage)}]']`)?.textContent || null;
 }
 
 test('Update default section output', async () => {
@@ -410,4 +410,34 @@ Passage in section B.`);
     // and the passage [b1] within it should be clickable
     const linkB1 = findLink(element, 'passage', 'b1');
     expect(squiffyApi.clickLink(linkB1)).toBe(true);
+});
+
+test('Embed text from a section', async () => {
+    const script = `
+[[section1]]:
+Here is some text from the next section: {section2}
+
+[[section2]]:
+Text from next section.
+`;
+
+    const { element } = await initScript(script);
+
+    let output = getSectionContent(element, 'section1');
+    expect(output).toBe('Here is some text from the next section: Text from next section.');
+});
+
+test('Embed text from a passage', async () => {
+    const script = `
+[[section1]]:
+Here is some text from a passage: {passage}
+
+[passage]:
+Text from a passage.
+`;
+
+    const { element } = await initScript(script);
+
+    let output = getSectionContent(element, 'section1');
+    expect(output).toBe('Here is some text from a passage: Text from a passage.');
 });
