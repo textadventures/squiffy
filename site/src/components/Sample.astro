@@ -26,6 +26,14 @@ const { script } = Astro.props;
         margin-bottom: 1em;
         border-bottom: 1px solid #ccc;
     }
+    .fade-out {
+        opacity: 0;
+        transition: opacity 1000ms;
+    }
+    .fade-in {
+        opacity: 1;
+        transition: opacity 1000ms;
+    }
     .viewer-container {
         padding: 0.5em;
     }
