@@ -1,8 +1,13 @@
-import './scss/styles.scss'
+import 'bootstrap/scss/bootstrap.scss';
 import 'bootstrap-icons/font/bootstrap-icons.css'
 import 'chosen-js/chosen.min.css'
 
 import $ from 'jquery';
+
+(window as any).$ = $;
+(window as any).jQuery = $;
+
+import "chosen-js/chosen.jquery.js"
 import { Modal, Tab, Tooltip } from 'bootstrap'
 import { Output, compile as squiffyCompile } from 'squiffy-compiler';
 import { openFile, saveFile } from './file-handler';
