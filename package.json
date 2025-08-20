@@ -1,0 +1,16 @@
+{
+  "name": "squiffy",
+  "private": true,
+  "workspaces": [
+    "compiler",
+    "editor",
+    "packager",
+    "runtime",
+    "types",
+    "vite-plugin"
+  ],
+  "scripts": {
+    "build": "npm run -ws build",
+    "test": "npm run -ws test"
+  }
+}
