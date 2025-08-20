@@ -1,10 +1,12 @@
 ---
-title: Replacing text
+title: Dynamic text
 sidebar:
-    order: 11
+    order: 2
 ---
 
 import Sample from "@components/Sample.astro"
+
+## Replace text
 
 By creating labels, you can replace existing output when a link is clicked or when a passage or section is displayed. In the example below, we create a label called "1", and we change the text in that label using a link:
 
@@ -37,3 +39,30 @@ If the replacement text matches a section or passage name, the contents of that 
 
     [[join the circus]]:
     Off I went to the circus..."></Sample>
+
+## Rotate
+
+For a text link that replaces itself each time it is clicked:
+
+<Sample script="{rotate:one:two:three}"></Sample>
+
+You can store the result in an attribute:
+
+<Sample script="Please choose: {rotate size:small:medium:large}
+
+        +++Then continue...
+
+        You chose {size}."></Sample>
+
+## Sequence
+
+If you don't want a rotating list, use a sequence instead. The final option won't be a link.
+
+<Sample script="{sequence:Ready:Steady:Go}"></Sample>
+
+As a variation on this, you can use a section link as the final option in a sequence.
+
+<Sample script="{sequence:Click me:Click me again:[[And once more]](next)}
+
+        [[next]]:
+        Done!"></Sample>
