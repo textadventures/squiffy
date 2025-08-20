@@ -193,7 +193,7 @@ const showSettings = function () {
     new Modal('#settings-dialog').show();
 };
 
-var localSaveTimeout: number | undefined, autoSaveTimeout: number | undefined;
+var localSaveTimeout: NodeJS.Timeout | undefined, autoSaveTimeout: NodeJS.Timeout | undefined;
 
 const editorChange = async function () {
     if (loading) return;
