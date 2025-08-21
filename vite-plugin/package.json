@@ -1,6 +1,6 @@
 {
   "name": "@textadventures/vite-plugin-squiffy",
-  "version": "0.1.4",
+  "version": "6.0.0-alpha.15",
   "description": "Vite plugin to compile .squiffy files",
   "type": "module",
   "main": "./dist/index.js",
@@ -28,8 +28,8 @@
     "node": ">=18.0.0"
   },
   "dependencies": {
-    "@textadventures/squiffy-types": "^0.1.0",
-    "squiffy-packager": "^6.0.0-alpha.5"
+    "@textadventures/squiffy-types": "^6.0.0-alpha.15",
+    "squiffy-packager": "^6.0.0-alpha.15"
   },
   "peerDependencies": {
     "vite": "^7.1.2"

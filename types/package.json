@@ -1,7 +1,11 @@
 {
   "name": "@textadventures/squiffy-types",
-  "version": "0.1.0",
+  "version": "6.0.0-alpha.15",
   "types": "./index.d.ts",
-  "files": ["index.d.ts", "README.md", "LICENSE"],
+  "files": [
+    "index.d.ts",
+    "README.md",
+    "LICENSE"
+  ],
   "license": "MIT"
 }
