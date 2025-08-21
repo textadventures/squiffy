@@ -1,5 +1,5 @@
 {
-  "name": "site",
+  "name": "@textadventures/squiffystory.com",
   "type": "module",
   "private": true,
   "version": "0.0.1",
