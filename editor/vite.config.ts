@@ -1,7 +1,7 @@
 import {VitePWA} from 'vite-plugin-pwa';
 import {defineConfig} from 'vite';
 import inject from "@rollup/plugin-inject";
-import path from 'path';
+import * as path from 'node:path';
 
 // https://vitejs.dev/config/
 export default defineConfig({
