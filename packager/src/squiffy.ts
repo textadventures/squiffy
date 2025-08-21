@@ -8,7 +8,7 @@ import { SQUIFFY_VERSION } from 'squiffy-compiler';
 
 const argv = yargs(hideBin(process.argv))
     .usage(
-        `Usage: $0 filename.squiffy [options]`)
+        `Usage: squiffy-packager filename.squiffy [options]`)
     .demand(1)
     .alias('s', 'serve')
     .alias('p', 'port')
