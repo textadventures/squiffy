@@ -4,9 +4,8 @@
   "main": "dist/packager.js",
   "types": "dist/packager.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc && shx cp src/index.template.html ./dist/ && shx cp node_modules/squiffy-runtime/dist/squiffy.runtime.js ./dist/ && shx cp src/style.template.css ./dist/",
-    "dev": "cp node_modules/squiffy-runtime/dist/squiffy.runtime.js ./src/ && tsx src/squiffy.ts"
+    "build": "tsc && shx cp src/index.template.html ./dist/ && shx cp ../node_modules/squiffy-runtime/dist/squiffy.runtime.js ./dist/ && shx cp src/style.template.css ./dist/",
+    "dev": "cp ../node_modules/squiffy-runtime/dist/squiffy.runtime.js ./src/ && tsx src/squiffy.ts"
   },
   "author": "Alex Warren",
   "contributors": [
