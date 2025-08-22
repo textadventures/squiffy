@@ -4,12 +4,15 @@ import { startsWith, rotate } from "./utils.js";
 import { Section } from "./types.js";
 
 export class TextProcessor {
+    enableLegacyTextProcessor = false;
+
     get: (attribute: string) => any;
     set: (attribute: string, value: any) => void;
     story: any;
     getCurrentSection: () => Section;
     seen: (section: string) => boolean;
     processAttributes: (attributes: string[]) => void;
+    handlebars: typeof Handlebars;
 
     constructor (get: (attribute: string) => any,
                  set: (attribute: string, value: any) => void,
@@ -22,9 +25,19 @@ export class TextProcessor {
         this.getCurrentSection = currentSection;
         this.seen = seen;
         this.processAttributes = processAttributes;
-    }
+        this.handlebars = Handlebars.create();
 
-    enableLegacyTextProcessor = false;
+        const self = this;
+
+        this.handlebars.registerHelper("embed", function (name: string) {
+            const currentSection = self.getCurrentSection();
+            if (currentSection.passages && name in currentSection.passages) {
+                return self.process(currentSection.passages[name].text || '', null, true);
+            } else if (name in self.story.sections) {
+                return self.process(self.story.sections[name].text || '', null, true);
+            }
+        });
+    }
 
     process(text: string, data: any, inline: boolean) {
         if (this.enableLegacyTextProcessor) {
@@ -67,7 +80,7 @@ export class TextProcessor {
             }
         }
         else {
-            const template = Handlebars.compile(text);
+            const template = this.handlebars.compile(text);
             text = template({});
         }
 

@@ -415,7 +415,7 @@ Passage in section B.`);
 test('Embed text from a section', async () => {
     const script = `
 [[section1]]:
-Here is some text from the next section: {section2}
+Here is some text from the next section: {{embed "section2"}}
 
 [[section2]]:
 Text from next section.
@@ -430,7 +430,7 @@ Text from next section.
 test('Embed text from a passage', async () => {
     const script = `
 [[section1]]:
-Here is some text from a passage: {passage}
+Here is some text from a passage: {{embed "passage"}}
 
 [passage]:
 Text from a passage.
@@ -445,7 +445,7 @@ Text from a passage.
 test('Update section with embedded text', async () => {
     const script = `
 [[section1]]:
-Here is some text from the next section: {section2}
+Here is some text from the next section: {{embed "section2"}}
 
 [[section2]]:
 Text from next section.
@@ -458,7 +458,7 @@ Text from next section.
 
     const script2 = `
 [[section1]]:
-Here is an updated script with text from the next section: {section2}
+Here is an updated script with text from the next section: {{embed "section2"}}
 
 [[section2]]:
 Updated text from next section.
@@ -476,7 +476,7 @@ Updated text from next section.
 test('Update passage with embedded text', async () => {
     const script = `
 [[section1]]:
-Here is some text from a passage: {passage}
+Here is some text from a passage: {{embed "passage"}}
 
 [passage]:
 Text from a passage.
@@ -489,7 +489,7 @@ Text from a passage.
 
     const script2 = `
 [[section1]]:
-Here is an updated script with text from a passage: {passage}
+Here is an updated script with text from a passage: {{embed "passage"}}
 
 [passage]:
 Updated text from a passage.
