@@ -267,7 +267,11 @@ You can tell if the player has seen a passage or section using JavaScript:
     if (squiffy.story.seen("passage3")) alert ("You have seen passage3!");
 ```
 
-You can also conditionally display text:
+You can also conditionally display text. Here we're using `{{#if}}` with the
+`seen` helper to check if the passage "open" has been seen.
+Try clicking the "cupboard" link first, to see the description of the closed
+cupboard. Then, Restart the game, and now click "open" first, then "cupboard",
+to see the difference.
 
 <Sample script="You can see a [cupboard]. Maybe you should [open] it?
 
@@ -275,7 +279,12 @@ You can also conditionally display text:
     You open the cupboard.
 
     [cupboard]:
-    The cupboard is {if seen open:open, and there are empty bottles inside}{else:closed}."></Sample>
+    The cupboard is
+    {{#if (seen &quot;open&quot;)}}
+    &#32;&#32;&#32;&#32;open, and there are empty bottles inside.
+    {{else}}
+    &#32;&#32;&#32;&#32;closed.
+    {{/if}}"></Sample>
 
 ## Set the start section
 

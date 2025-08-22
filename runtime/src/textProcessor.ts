@@ -37,6 +37,10 @@ export class TextProcessor {
                 return self.process(self.story.sections[name].text || '', null, true);
             }
         });
+
+        this.handlebars.registerHelper("seen", function (name: string) {
+            return self.seen(name);
+        });
     }
 
     process(text: string, data: any, inline: boolean) {
