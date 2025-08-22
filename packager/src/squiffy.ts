@@ -4,7 +4,9 @@ import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { createPackage } from './packager.js';
 import { serve } from './server.js';
-import { SQUIFFY_VERSION } from 'squiffy-compiler';
+
+import pkg from '../package.json' with { type: 'json' };
+const version = pkg.version;
 
 const argv = yargs(hideBin(process.argv))
     .usage(
@@ -16,9 +18,10 @@ const argv = yargs(hideBin(process.argv))
     .describe('p', 'Port for HTTP server (only with --serve)')
     .describe('scriptonly', 'Only generate JavaScript file (and optionally specify a name)')
     .describe('zip', 'Create zip file')
+    .version(version)
     .parseSync();
 
-console.log('Squiffy ' + SQUIFFY_VERSION);
+console.log('Squiffy ' + version);
 
 const options = {
     serve: argv.s,

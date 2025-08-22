@@ -1,7 +1,7 @@
 {
   "name": "squiffy-packager",
   "version": "6.0.0-alpha.15",
-  "main": "dist/packager.js",
+  "main": "dist/squiffy.js",
   "types": "dist/packager.d.ts",
   "scripts": {
     "build": "tsc && shx cp src/index.template.html ./dist/ && shx cp ../node_modules/squiffy-runtime/dist/squiffy.runtime.js ./dist/ && shx cp src/style.template.css ./dist/",
@@ -16,7 +16,7 @@
   "license": "MIT",
   "description": "",
   "bin": {
-    "squiffy": "dist/squiffy.js"
+    "squiffy-packager": "dist/squiffy.js"
   },
   "dependencies": {
     "finalhandler": "^2.1.0",
