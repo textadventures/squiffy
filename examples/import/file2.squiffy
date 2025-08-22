@@ -1,6 +1,10 @@
 [[file2]]:
 
-Text from file 2. Run the [test] function.
+Text from file 2.
+
++++Continue from here...
+
+Now run the [test] function.
 
 [test]:
 	test();

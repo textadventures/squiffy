@@ -1,5 +1,7 @@
 Text from file 1.
 
++++Continue...
+
 [[Go to file 2]](file2)
 
 @import *.squiffy

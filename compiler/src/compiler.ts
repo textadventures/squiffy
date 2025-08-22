@@ -64,6 +64,7 @@ export interface CompileError {
 export async function compile(settings: CompilerSettings): Promise<CompileSuccess | CompileError> {
     const story = new Story(settings.scriptBaseFilename);
     const errors: string[] = [];
+    let autoSectionCount = 0;
 
     async function getJs(storyData: Output, excludeHeader: boolean) {
         const outputJs: string[] = [];
@@ -173,7 +174,6 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         var inputLines = inputText.replace(/\r/g, '').split('\n');
 
         var lineCount = 0;
-        var autoSectionCount = 0;
         var section: Section | null = null;
         var passage = null as Passage | null;   // annotated differently to section, as a workaround for TypeScript "Property does not exist on type never"
         var textStarted = false;
