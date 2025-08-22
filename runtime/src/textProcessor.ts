@@ -37,6 +37,7 @@ export class TextProcessor {
         });
 
         this.handlebars.registerHelper("seen", (name: string) => this.seen(name));
+        this.handlebars.registerHelper("get", (attribute: string) => this.get(attribute));
     }
 
     process(text: string, data: any, inline: boolean) {

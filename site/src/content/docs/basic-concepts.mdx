@@ -163,6 +163,10 @@ My first reaction to the explosion was...
 
 ## Set attributes
 
+<Aside type="caution">TODO: Create a separate page for Attributes</Aside>
+
+<Aside type="caution">TODO: Need a full interactive sample here (e.g. choosing from a food menu)</Aside>
+
 You can set an attribute within a section or passage like this:
 
 ```
@@ -220,10 +224,10 @@ And you can also set a value in JavaScript:
 
 ## Read attributes
 
-You can display the value of an attribute by surrounding it with curly brackets.
+You can display the value of an attribute using `{{get "attribute name"}}`.
 
 ```
-You chose {gender}.
+You chose {{get "gender"}}.
 ```
 
 You can also read a value using JavaScript:
@@ -232,7 +236,9 @@ You can also read a value using JavaScript:
     var gender = squiffy.get("gender");
 ```
 
-You can conditionally display text depending on the value of an attribute using "if" inside curly brackets. You can also use "else":
+You can conditionally display text depending on the value of a boolean attribute using `{{#if (get "attribute name")}}`.
+
+<Aside type="caution">TODO: Comparing string attributes. The following examples are out of date.</Aside>
 
 ```
 {if gender=male:You are a man.}{else:You are a woman.}
