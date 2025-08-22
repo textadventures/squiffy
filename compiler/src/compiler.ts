@@ -1,5 +1,3 @@
-import * as marked from 'marked';
-
 import pkg from '../package.json' with { type: 'json' };
 const version = pkg.version;
 
@@ -379,7 +377,7 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
 
         input = input.replace(unnamedPassageLinkRegex, '<a class="squiffy-link link-passage" data-passage="$1" role="link" tabindex="0">$1</a>$2');
 
-        return (await marked.parse(input)).trim();
+        return input;
     };
 
     function allMatchesForGroup(input: string, regex: RegExp, groupNumber: number) {

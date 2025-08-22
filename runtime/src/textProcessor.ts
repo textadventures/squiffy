@@ -1,3 +1,4 @@
+import * as marked from 'marked';
 import { startsWith, rotate } from "./utils.js";
 import { Section } from "./types.js";
 
@@ -22,7 +23,7 @@ export class TextProcessor {
         this.processAttributes = processAttributes;
     }
 
-    process(text: string, data: any) {
+    process(text: string, data: any, inline: boolean) {
         let containsUnprocessedSection = false;
         const open = text.indexOf('{');
         let close;
@@ -58,10 +59,15 @@ export class TextProcessor {
         if (containsUnprocessedSection) {
             const section = text.substring(open + 1, close);
             const value = this.processTextCommand(section, data);
-            text = text.substring(0, open) + value + this.process(text.substring(close! + 1), data);
+            text = text.substring(0, open) + value + this.process(text.substring(close! + 1), data, true);
         }
 
-        return (text);
+        if (inline) {
+            return marked.parseInline(text, { async: false }).trim();
+        }
+        else {
+            return marked.parse(text, { async: false }).trim();
+        }
     }
 
     processTextCommand(text: string, data: any) {
@@ -77,9 +83,11 @@ export class TextProcessor {
         } else if (/^sequence[: ]/.test(text)) {
             return this.processTextCommand_Rotate('sequence', text);
         } else if (currentSection.passages && text in currentSection.passages) {
-            return this.process(currentSection.passages[text].text || '', data);
+            // TODO: Setting inline=false here for now, to match previous behaviour - but should probably be true
+            return this.process(currentSection.passages[text].text || '', data, false);
         } else if (text in this.story.sections) {
-            return this.process(this.story.sections[text].text || '', data);
+            // TODO: Setting inline=false here for now, to match previous behaviour - but should probably be true
+            return this.process(this.story.sections[text].text || '', data, false);
         } else if (startsWith(text, '@') && !startsWith(text, '@replace')) {
             this.processAttributes(text.substring(1).split(","));
             return "";
@@ -131,7 +139,7 @@ export class TextProcessor {
             }
         }
 
-        const textResult = result ? this.process(text, data) : '';
+        const textResult = result ? this.process(text, data, true) : '';
 
         data.lastIf = result;
         return textResult;
@@ -140,7 +148,7 @@ export class TextProcessor {
     processTextCommand_Else(section: string, data: any) {
         if (!('lastIf' in data) || data.lastIf) return '';
         const text = section.substring(5);
-        return this.process(text, data);
+        return this.process(text, data, true);
     }
 
     processTextCommand_Label(section: string, data: any) {
@@ -153,7 +161,7 @@ export class TextProcessor {
         const text = command.substring(eq + 1);
         const label = command.substring(0, eq);
 
-        return '<span class="squiffy-label-' + label + '">' + this.process(text, data) + '</span>';
+        return '<span class="squiffy-label-' + label + '">' + this.process(text, data, true) + '</span>';
     }
 
     processTextCommand_Rotate(type: string, section: string) {

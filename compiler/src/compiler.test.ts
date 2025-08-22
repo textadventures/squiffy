@@ -39,7 +39,7 @@ test('"Hello world" should compile', async () => {
     assertSuccess(result);
     expect(result.output.story.start).toBe("_default");
     expect(Object.keys(result.output.story.sections).length).toBe(1);
-    expect(result.output.story.sections._default.text).toBe("<p>hello world</p>");
+    expect(result.output.story.sections._default.text).toBe("hello world");
 });
 
 const examples = [

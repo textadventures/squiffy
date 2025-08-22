@@ -6,19 +6,19 @@ story.id = "attributes.squiffy";
 story.start = "_default";
 story.sections = {
     "_default": {
-        "text": "<p>Set a start value: <a class=\\"squiffy-link link-section\\" data-section=\\"one\\" role=\\"link\\" tabindex=\\"0\\">1</a> or <a class=\\"squiffy-link link-section\\" data-section=\\"two\\" role=\\"link\\" tabindex=\\"0\\">2</a>.</p>",
+        "text": "Set a start value: <a class=\\"squiffy-link link-section\\" data-section=\\"one\\" role=\\"link\\" tabindex=\\"0\\">1</a> or <a class=\\"squiffy-link link-section\\" data-section=\\"two\\" role=\\"link\\" tabindex=\\"0\\">2</a>.\\n",
         "attributes": [
             "my_string = some text"
         ]
     },
     "one": {
-        "text": "<p>Maybe you&#39;d like it to be <a class=\\"squiffy-link link-passage\\" data-passage=\\"three\\" role=\\"link\\" tabindex=\\"0\\">3</a> instead? Or you could just <a class=\\"squiffy-link link-section\\" data-section=\\"next\\" role=\\"link\\" tabindex=\\"0\\">continue...</a></p>",
+        "text": "Maybe you'd like it to be <a class=\\"squiffy-link link-passage\\" data-passage=\\"three\\" role=\\"link\\" tabindex=\\"0\\">3</a> instead? Or you could just <a class=\\"squiffy-link link-section\\" data-section=\\"next\\" role=\\"link\\" tabindex=\\"0\\">continue...</a>\\n",
         "attributes": [
             "my_attribute = 1"
         ],
         "passages": {
             "three": {
-                "text": "<p>OK. Three it is.</p>",
+                "text": "OK. Three it is.\\n",
                 "attributes": [
                     "my_attribute = 3",
                     "chose_passage"
@@ -27,7 +27,7 @@ story.sections = {
         }
     },
     "two": {
-        "text": "<p>Maybe you&#39;d like it to be <a class=\\"squiffy-link link-passage\\" data-passage=\\"four\\" role=\\"link\\" tabindex=\\"0\\">4</a> instead? You could try <a class=\\"squiffy-link link-passage\\" data-passage=\\"javascript\\" role=\\"link\\" tabindex=\\"0\\">javascript</a>. Or you could just <a class=\\"squiffy-link link-section\\" data-section=\\"next\\" role=\\"link\\" tabindex=\\"0\\">continue...</a></p>",
+        "text": "Maybe you'd like it to be <a class=\\"squiffy-link link-passage\\" data-passage=\\"four\\" role=\\"link\\" tabindex=\\"0\\">4</a> instead? You could try <a class=\\"squiffy-link link-passage\\" data-passage=\\"javascript\\" role=\\"link\\" tabindex=\\"0\\">javascript</a>. Or you could just <a class=\\"squiffy-link link-section\\" data-section=\\"next\\" role=\\"link\\" tabindex=\\"0\\">continue...</a>\\n",
         "attributes": [
             "my_attribute = 2"
         ],
@@ -37,7 +37,7 @@ story.sections = {
                 "jsIndex": 0
             },
             "four": {
-                "text": "<p>OK. Four it is.</p>",
+                "text": "OK. Four it is.\\n",
                 "attributes": [
                     "my_attribute = 4",
                     "chose_passage"
@@ -46,40 +46,40 @@ story.sections = {
         }
     },
     "next": {
-        "text": "<p>my_attribute = {my_attribute}</p>\\n<p>Also, my_string = &quot;{my_string}&quot;</p>\\n<p>Did you choose a passage link? {if chose_passage:yes}{else:no} <a class=\\"squiffy-link link-passage\\" data-passage=\\"unset\\" role=\\"link\\" tabindex=\\"0\\">unset</a></p>\\n<p>Click some more links: <a class=\\"squiffy-link link-passage\\" data-passage=\\"a\\" role=\\"link\\" tabindex=\\"0\\">a</a>, <a class=\\"squiffy-link link-passage\\" data-passage=\\"b\\" role=\\"link\\" tabindex=\\"0\\">b</a>, <a class=\\"squiffy-link link-passage\\" data-passage=\\"c\\" role=\\"link\\" tabindex=\\"0\\">c</a>, <a class=\\"squiffy-link link-passage\\" data-passage=\\"d\\" role=\\"link\\" tabindex=\\"0\\">d</a>, <a class=\\"squiffy-link link-passage\\" data-passage=\\"e\\" role=\\"link\\" tabindex=\\"0\\">e</a> and then click <a class=\\"squiffy-link link-section\\" data-section=\\"done\\" role=\\"link\\" tabindex=\\"0\\">done</a>.</p>",
+        "text": "my_attribute = {my_attribute}\\n\\nAlso, my_string = \\"{my_string}\\"\\n\\nDid you choose a passage link? {if chose_passage:yes}{else:no} <a class=\\"squiffy-link link-passage\\" data-passage=\\"unset\\" role=\\"link\\" tabindex=\\"0\\">unset</a>\\n\\nClick some more links: <a class=\\"squiffy-link link-passage\\" data-passage=\\"a\\" role=\\"link\\" tabindex=\\"0\\">a</a>, <a class=\\"squiffy-link link-passage\\" data-passage=\\"b\\" role=\\"link\\" tabindex=\\"0\\">b</a>, <a class=\\"squiffy-link link-passage\\" data-passage=\\"c\\" role=\\"link\\" tabindex=\\"0\\">c</a>, <a class=\\"squiffy-link link-passage\\" data-passage=\\"d\\" role=\\"link\\" tabindex=\\"0\\">d</a>, <a class=\\"squiffy-link link-passage\\" data-passage=\\"e\\" role=\\"link\\" tabindex=\\"0\\">e</a> and then click <a class=\\"squiffy-link link-section\\" data-section=\\"done\\" role=\\"link\\" tabindex=\\"0\\">done</a>.\\n",
         "passages": {
             "unset": {
-                "text": "<p>Now the value is: {if chose_passage:yes}{else:no}</p>",
+                "text": "Now the value is: {if chose_passage:yes}{else:no}\\n",
                 "attributes": [
                     "not chose_passage"
                 ]
             },
             "a": {
-                "text": "<p>OK...</p>",
+                "text": "OK...\\n",
                 "attributes": [
                     "count+=1"
                 ]
             },
             "b": {
-                "text": "<p>OK...</p>",
+                "text": "OK...\\n",
                 "attributes": [
                     "count+=1"
                 ]
             },
             "c": {
-                "text": "<p>OK...</p>",
+                "text": "OK...\\n",
                 "attributes": [
                     "count+=1"
                 ]
             },
             "d": {
-                "text": "<p>OK...</p>",
+                "text": "OK...\\n",
                 "attributes": [
                     "count+=1"
                 ]
             },
             "e": {
-                "text": "<p>OK...</p>",
+                "text": "OK...\\n",
                 "attributes": [
                     "count+=1"
                 ]
@@ -87,22 +87,22 @@ story.sections = {
         }
     },
     "done": {
-        "text": "<p>You clicked {count} links. What about calling <a class=\\"squiffy-link link-passage\\" data-passage=\\"dec\\" role=\\"link\\" tabindex=\\"0\\">dec</a>?</p>",
+        "text": "You clicked {count} links. What about calling <a class=\\"squiffy-link link-passage\\" data-passage=\\"dec\\" role=\\"link\\" tabindex=\\"0\\">dec</a>?\\n",
         "passages": {
             "dec": {
-                "text": "<p>Now count is {count}. You can also <a class=\\"squiffy-link link-passage\\" data-passage=\\"increase\\" role=\\"link\\" tabindex=\\"0\\">increase</a> or <a class=\\"squiffy-link link-passage\\" data-passage=\\"decrease\\" role=\\"link\\" tabindex=\\"0\\">decrease</a> by values other than 1.</p>",
+                "text": "Now count is {count}. You can also <a class=\\"squiffy-link link-passage\\" data-passage=\\"increase\\" role=\\"link\\" tabindex=\\"0\\">increase</a> or <a class=\\"squiffy-link link-passage\\" data-passage=\\"decrease\\" role=\\"link\\" tabindex=\\"0\\">decrease</a> by values other than 1.\\n",
                 "attributes": [
                     "count-=1"
                 ]
             },
             "increase": {
-                "text": "<p>Now count is {count}.</p>",
+                "text": "Now count is {count}.\\n",
                 "attributes": [
                     "count+=10"
                 ]
             },
             "decrease": {
-                "text": "<p>Now count is {count}.</p>",
+                "text": "Now count is {count}.",
                 "attributes": [
                     "count-=5"
                 ]
@@ -123,23 +123,23 @@ story.id = "clearscreen.squiffy";
 story.start = "_default";
 story.sections = {
     "_default": {
-        "text": "<p><a class=\\"squiffy-link link-passage\\" data-passage=\\"one\\" role=\\"link\\" tabindex=\\"0\\">This link</a> doesn&#39;t clear the screen. But <a class=\\"squiffy-link link-passage\\" data-passage=\\"two\\" role=\\"link\\" tabindex=\\"0\\">this link</a> does.</p>",
+        "text": "<a class=\\"squiffy-link link-passage\\" data-passage=\\"one\\" role=\\"link\\" tabindex=\\"0\\">This link</a> doesn't clear the screen. But <a class=\\"squiffy-link link-passage\\" data-passage=\\"two\\" role=\\"link\\" tabindex=\\"0\\">this link</a> does.\\n",
         "passages": {
             "one": {
-                "text": "<p>This text is on the same screen.</p>"
+                "text": "This text is on the same screen.\\n"
             },
             "two": {
                 "clear": true,
-                "text": "<p>This text is on a new screen. This <a class=\\"squiffy-link link-section\\" data-section=\\"same page\\" role=\\"link\\" tabindex=\\"0\\">section</a> will be on the same screen, and this <a class=\\"squiffy-link link-section\\" data-section=\\"clear section\\" role=\\"link\\" tabindex=\\"0\\">section</a> clears the screen.</p>"
+                "text": "This text is on a new screen. This <a class=\\"squiffy-link link-section\\" data-section=\\"same page\\" role=\\"link\\" tabindex=\\"0\\">section</a> will be on the same screen, and this <a class=\\"squiffy-link link-section\\" data-section=\\"clear section\\" role=\\"link\\" tabindex=\\"0\\">section</a> clears the screen.\\n"
             }
         }
     },
     "same page": {
-        "text": "<p>This section is on the same screen.</p>"
+        "text": "This section is on the same screen.\\n"
     },
     "clear section": {
         "clear": true,
-        "text": "<p>Another new page.</p>"
+        "text": "Another new page."
     }
 };
 story.js = [
@@ -152,19 +152,19 @@ story.id = "continue.squiffy";
 story.start = "_default";
 story.sections = {
     "_default": {
-        "text": "<p>Here is some text.</p>\\n<p><a class=\\"squiffy-link link-section\\" data-section=\\"_continue1\\" role=\\"link\\" tabindex=\\"0\\">Continue...</a></p>"
+        "text": "Here is some text.\\n\\n<a class=\\"squiffy-link link-section\\" data-section=\\"_continue1\\" role=\\"link\\" tabindex=\\"0\\">Continue...</a>"
     },
     "_continue1": {
-        "text": "<p>More text.</p>\\n<p><a class=\\"squiffy-link link-section\\" data-section=\\"_continue2\\" role=\\"link\\" tabindex=\\"0\\">Carry on further...</a></p>"
+        "text": "More text.\\n\\n<a class=\\"squiffy-link link-section\\" data-section=\\"_continue2\\" role=\\"link\\" tabindex=\\"0\\">Carry on further...</a>"
     },
     "_continue2": {
-        "text": "<p>There&#39;s some more text now.</p>\\n<p><a class=\\"squiffy-link link-section\\" data-section=\\"_continue3\\" role=\\"link\\" tabindex=\\"0\\">Keep walking!</a></p>"
+        "text": "There's some more text now.\\n\\n<a class=\\"squiffy-link link-section\\" data-section=\\"_continue3\\" role=\\"link\\" tabindex=\\"0\\">Keep walking!</a>"
     },
     "_continue3": {
-        "text": "<p>Oh, even more text appeared!</p>\\n<p><a class=\\"squiffy-link link-section\\" data-section=\\"_continue4\\" role=\\"link\\" tabindex=\\"0\\">A little closer...</a></p>"
+        "text": "Oh, even more text appeared!\\n\\n<a class=\\"squiffy-link link-section\\" data-section=\\"_continue4\\" role=\\"link\\" tabindex=\\"0\\">A little closer...</a>"
     },
     "_continue4": {
-        "text": "<p>Pretty scary.</p>",
+        "text": "Pretty scary.",
         "jsIndex": 0
     }
 };
@@ -181,7 +181,7 @@ story.id = "helloworld.squiffy";
 story.start = "_default";
 story.sections = {
     "_default": {
-        "text": "<p>Hello, world!</p>"
+        "text": "Hello, world!"
     }
 };
 story.js = [
@@ -194,10 +194,16 @@ story.id = "test.squiffy";
 story.start = "_default";
 story.sections = {
     "_default": {
-        "text": "<p>Text from file 1.</p>\\n<p><a class=\\"squiffy-link link-section\\" data-section=\\"file2\\" role=\\"link\\" tabindex=\\"0\\">Go to file 2</a></p>"
+        "text": "Text from file 1.\\n\\n<a class=\\"squiffy-link link-section\\" data-section=\\"_continue1\\" role=\\"link\\" tabindex=\\"0\\">Continue...</a>"
+    },
+    "_continue1": {
+        "text": "<a class=\\"squiffy-link link-section\\" data-section=\\"file2\\" role=\\"link\\" tabindex=\\"0\\">Go to file 2</a>\\n"
     },
     "file2": {
-        "text": "<p>Text from file 2. Run the <a class=\\"squiffy-link link-passage\\" data-passage=\\"test\\" role=\\"link\\" tabindex=\\"0\\">test</a> function.</p>",
+        "text": "Text from file 2.\\n\\n<a class=\\"squiffy-link link-section\\" data-section=\\"_continue2\\" role=\\"link\\" tabindex=\\"0\\">Continue from here...</a>"
+    },
+    "_continue2": {
+        "text": "Now run the <a class=\\"squiffy-link link-passage\\" data-passage=\\"test\\" role=\\"link\\" tabindex=\\"0\\">test</a> function.\\n",
         "passages": {
             "test": {
                 "text": "",
@@ -219,41 +225,41 @@ story.id = "last.squiffy";
 story.start = "_default";
 story.sections = {
     "_default": {
-        "text": "<p>Test section with some passages. <a class=\\"squiffy-link link-passage\\" data-passage=\\"a\\" role=\\"link\\" tabindex=\\"0\\">a</a>, <a class=\\"squiffy-link link-passage\\" data-passage=\\"b\\" role=\\"link\\" tabindex=\\"0\\">b</a>, <a class=\\"squiffy-link link-passage\\" data-passage=\\"c\\" role=\\"link\\" tabindex=\\"0\\">c</a>.</p>",
+        "text": "Test section with some passages. <a class=\\"squiffy-link link-passage\\" data-passage=\\"a\\" role=\\"link\\" tabindex=\\"0\\">a</a>, <a class=\\"squiffy-link link-passage\\" data-passage=\\"b\\" role=\\"link\\" tabindex=\\"0\\">b</a>, <a class=\\"squiffy-link link-passage\\" data-passage=\\"c\\" role=\\"link\\" tabindex=\\"0\\">c</a>.\\n",
         "passageCount": 3,
         "passages": {
             "a": {
-                "text": "<p>Passage A.</p>"
+                "text": "Passage A.\\n"
             },
             "b": {
-                "text": "<p>Passage B.</p>"
+                "text": "Passage B.\\n"
             },
             "c": {
-                "text": "<p>Passage C.</p>"
+                "text": "Passage C.\\n"
             },
             "@last": {
-                "text": "<p>You saw all passages! Now go to the <a class=\\"squiffy-link link-section\\" data-section=\\"section2\\" role=\\"link\\" tabindex=\\"0\\">next section</a>.</p>"
+                "text": "You saw all passages! Now go to the <a class=\\"squiffy-link link-section\\" data-section=\\"section2\\" role=\\"link\\" tabindex=\\"0\\">next section</a>.\\n"
             }
         }
     },
     "section2": {
-        "text": "<p>Second test. <a class=\\"squiffy-link link-passage\\" data-passage=\\"a\\" role=\\"link\\" tabindex=\\"0\\">a</a>, <a class=\\"squiffy-link link-passage\\" data-passage=\\"b\\" role=\\"link\\" tabindex=\\"0\\">b</a>, <a class=\\"squiffy-link link-passage\\" data-passage=\\"c\\" role=\\"link\\" tabindex=\\"0\\">c</a>.</p>",
+        "text": "Second test. <a class=\\"squiffy-link link-passage\\" data-passage=\\"a\\" role=\\"link\\" tabindex=\\"0\\">a</a>, <a class=\\"squiffy-link link-passage\\" data-passage=\\"b\\" role=\\"link\\" tabindex=\\"0\\">b</a>, <a class=\\"squiffy-link link-passage\\" data-passage=\\"c\\" role=\\"link\\" tabindex=\\"0\\">c</a>.\\n",
         "passageCount": 3,
         "passages": {
             "": {
-                "text": "<p>Master passage.</p>"
+                "text": "Master passage.\\n"
             },
             "a": {
-                "text": "<p>Passage A.</p>"
+                "text": "Passage A.\\n"
             },
             "b": {
-                "text": "<p>Passage B.</p>"
+                "text": "Passage B.\\n"
             },
             "c": {
-                "text": "<p>Passage C.</p>"
+                "text": "Passage C.\\n"
             },
             "@last": {
-                "text": "<p>You saw all passages!</p>"
+                "text": "You saw all passages!"
             }
         }
     }
@@ -268,7 +274,7 @@ story.id = "master.squiffy";
 story.start = "intro";
 story.sections = {
     "": {
-        "text": "<p>This text appears before each section in the game.</p>",
+        "text": "This text appears before each section in the game.\\n",
         "passages": {
             "": {
                 "text": "",
@@ -277,31 +283,31 @@ story.sections = {
         }
     },
     "intro": {
-        "text": "<p>This is the first section.</p>\\n<p><a class=\\"squiffy-link link-section\\" data-section=\\"_continue1\\" role=\\"link\\" tabindex=\\"0\\">Continue...</a></p>"
+        "text": "This is the first section.\\n\\n<a class=\\"squiffy-link link-section\\" data-section=\\"_continue1\\" role=\\"link\\" tabindex=\\"0\\">Continue...</a>"
     },
     "_continue1": {
-        "text": "<p>This is the second section. <a class=\\"squiffy-link link-passage\\" data-passage=\\"One\\" role=\\"link\\" tabindex=\\"0\\">One</a>, <a class=\\"squiffy-link link-passage\\" data-passage=\\"two\\" role=\\"link\\" tabindex=\\"0\\">two</a>, <a class=\\"squiffy-link link-passage\\" data-passage=\\"three\\" role=\\"link\\" tabindex=\\"0\\">three</a>. <a class=\\"squiffy-link link-section\\" data-section=\\"Next!\\" role=\\"link\\" tabindex=\\"0\\">Next!</a></p>",
+        "text": "This is the second section. <a class=\\"squiffy-link link-passage\\" data-passage=\\"One\\" role=\\"link\\" tabindex=\\"0\\">One</a>, <a class=\\"squiffy-link link-passage\\" data-passage=\\"two\\" role=\\"link\\" tabindex=\\"0\\">two</a>, <a class=\\"squiffy-link link-passage\\" data-passage=\\"three\\" role=\\"link\\" tabindex=\\"0\\">three</a>. <a class=\\"squiffy-link link-section\\" data-section=\\"Next!\\" role=\\"link\\" tabindex=\\"0\\">Next!</a>\\n",
         "passages": {
             "": {
-                "text": "<p>This text appears before each passage in this section.</p>",
+                "text": "This text appears before each passage in this section.\\n",
                 "jsIndex": 1
             },
             "One": {
-                "text": "<p>1...</p>"
+                "text": "1...\\n"
             },
             "two": {
-                "text": "<p>2...</p>"
+                "text": "2...\\n"
             },
             "three": {
-                "text": "<p>3...</p>"
+                "text": "3...\\n"
             }
         }
     },
     "Next!": {
-        "text": "<p>Final section, no master passages here. <a class=\\"squiffy-link link-passage\\" data-passage=\\"See\\" role=\\"link\\" tabindex=\\"0\\">See</a>.</p>",
+        "text": "Final section, no master passages here. <a class=\\"squiffy-link link-passage\\" data-passage=\\"See\\" role=\\"link\\" tabindex=\\"0\\">See</a>.\\n",
         "passages": {
             "See": {
-                "text": "<p>The end...</p>"
+                "text": "The end..."
             }
         }
     }
@@ -322,33 +328,33 @@ story.id = "replace.squiffy";
 story.start = "_default";
 story.sections = {
     "_default": {
-        "text": "<p>I {label:1=walked} to the shops and I bought {label:2=a pint of milk}.</p>\\n<p>But then I thought, hang on, I <a class=\\"squiffy-link link-passage\\" data-passage=\\"next, @replace 2=beer\\" role=\\"link\\" tabindex=\\"0\\">don&#39;t really like milk</a>.</p>",
+        "text": "I {label:1=walked} to the shops and I bought {label:2=a pint of milk}.\\n\\nBut then I thought, hang on, I <a class=\\"squiffy-link link-passage\\" data-passage=\\"next, @replace 2=beer\\" role=\\"link\\" tabindex=\\"0\\">don't really like milk</a>.\\n",
         "passages": {
             "beer": {
-                "text": "<p>a <a class=\\"squiffy-link link-passage\\" data-passage=\\"crate of beer\\" role=\\"link\\" tabindex=\\"0\\">crate of beer</a></p>"
+                "text": "a <a class=\\"squiffy-link link-passage\\" data-passage=\\"crate of beer\\" role=\\"link\\" tabindex=\\"0\\">crate of beer</a>\\n"
             },
             "crate of beer": {
-                "text": "<p>Yes, beer.</p>"
+                "text": "Yes, beer.\\n"
             },
             "next": {
-                "text": "<p>And then I thought, hang on, I {label:3=<a class=\\"squiffy-link link-passage\\" data-passage=\\"@replace 1=teleported, @replace 3=love teleporting\\" role=\\"link\\" tabindex=\\"0\\">hate walking</a>}.</p>"
+                "text": "And then I thought, hang on, I {label:3=<a class=\\"squiffy-link link-passage\\" data-passage=\\"@replace 1=teleported, @replace 3=love teleporting\\" role=\\"link\\" tabindex=\\"0\\">hate walking</a>}.\\n"
             },
             "love teleporting": {
-                "text": "<p>love teleporting, so much I might <a class=\\"squiffy-link link-section\\" data-section=\\"section2\\" role=\\"link\\" tabindex=\\"0\\">embark on a wild and crazy adventure</a></p>"
+                "text": "love teleporting, so much I might <a class=\\"squiffy-link link-section\\" data-section=\\"section2\\" role=\\"link\\" tabindex=\\"0\\">embark on a wild and crazy adventure</a>\\n"
             }
         }
     },
     "section2": {
-        "text": "<p>And so it {label:4=began...}</p>\\n<p><a class=\\"squiffy-link link-section\\" data-section=\\"section3\\" role=\\"link\\" tabindex=\\"0\\">Or did it?</a></p>"
+        "text": "And so it {label:4=began...}\\n\\n<a class=\\"squiffy-link link-section\\" data-section=\\"section3\\" role=\\"link\\" tabindex=\\"0\\">Or did it?</a>\\n"
     },
     "section3": {
-        "text": "<p>Oh well.</p>",
+        "text": "Oh well.\\n",
         "attributes": [
-            "@replace 4=<p>ended <a class=\\"squiffy-link link-passage\\" data-passage=\\"abruptly\\" role=\\"link\\" tabindex=\\"0\\">abruptly</a>.</p>"
+            "@replace 4=ended <a class=\\"squiffy-link link-passage\\" data-passage=\\"abruptly\\" role=\\"link\\" tabindex=\\"0\\">abruptly</a>."
         ],
         "passages": {
             "abruptly": {
-                "text": "<p>That is all.</p>"
+                "text": "That is all."
             }
         }
     }
@@ -363,22 +369,22 @@ story.id = "rotate.squiffy";
 story.start = "_default";
 story.sections = {
     "_default": {
-        "text": "<p>Choose a number: {rotate:one:two:three}</p>\\n<p><a class=\\"squiffy-link link-section\\" data-section=\\"_continue1\\" role=\\"link\\" tabindex=\\"0\\">OK...</a></p>"
+        "text": "Choose a number: {rotate:one:two:three}\\n\\n<a class=\\"squiffy-link link-section\\" data-section=\\"_continue1\\" role=\\"link\\" tabindex=\\"0\\">OK...</a>"
     },
     "_continue1": {
-        "text": "<p>Now {rotate result:four:five:six}</p>\\n<p><a class=\\"squiffy-link link-section\\" data-section=\\"_continue2\\" role=\\"link\\" tabindex=\\"0\\">OK...</a></p>"
+        "text": "Now {rotate result:four:five:six}\\n\\n<a class=\\"squiffy-link link-section\\" data-section=\\"_continue2\\" role=\\"link\\" tabindex=\\"0\\">OK...</a>"
     },
     "_continue2": {
-        "text": "<p>You chose {result}.</p>\\n<p>Now for a sequence: {sequence:one:two:three:four:five}.</p>\\n<p><a class=\\"squiffy-link link-section\\" data-section=\\"_continue3\\" role=\\"link\\" tabindex=\\"0\\">And another...</a></p>"
+        "text": "You chose {result}.\\n\\nNow for a sequence: {sequence:one:two:three:four:five}.\\n\\n<a class=\\"squiffy-link link-section\\" data-section=\\"_continue3\\" role=\\"link\\" tabindex=\\"0\\">And another...</a>"
     },
     "_continue3": {
-        "text": "<p>Another sequence: {sequence seqresult:a:b:c:d:e:f:g}.</p>\\n<p><a class=\\"squiffy-link link-section\\" data-section=\\"_continue4\\" role=\\"link\\" tabindex=\\"0\\">Finally...</a></p>"
+        "text": "Another sequence: {sequence seqresult:a:b:c:d:e:f:g}.\\n\\n<a class=\\"squiffy-link link-section\\" data-section=\\"_continue4\\" role=\\"link\\" tabindex=\\"0\\">Finally...</a>"
     },
     "_continue4": {
-        "text": "<p>You chose {seqresult}.</p>\\n<p>Here&#39;s a sequence that links to another section. {sequence:Ready...:Steady...:<a class=\\"squiffy-link link-section\\" data-section=\\"Go!\\" role=\\"link\\" tabindex=\\"0\\">Go!</a>}</p>"
+        "text": "You chose {seqresult}.\\n\\nHere's a sequence that links to another section. {sequence:Ready...:Steady...:<a class=\\"squiffy-link link-section\\" data-section=\\"Go!\\" role=\\"link\\" tabindex=\\"0\\">Go!</a>}\\n"
     },
     "Go!": {
-        "text": "<p>That&#39;s all folks!</p>"
+        "text": "That's all folks!"
     }
 };
 story.js = [
@@ -391,21 +397,21 @@ story.id = "sectiontrack.squiffy";
 story.start = "_default";
 story.sections = {
     "_default": {
-        "text": "<p>Choose: <a class=\\"squiffy-link link-section\\" data-section=\\"a\\" role=\\"link\\" tabindex=\\"0\\">a</a>, <a class=\\"squiffy-link link-section\\" data-section=\\"b\\" role=\\"link\\" tabindex=\\"0\\">b</a>, <a class=\\"squiffy-link link-section\\" data-section=\\"c\\" role=\\"link\\" tabindex=\\"0\\">c</a>. Or read this <a class=\\"squiffy-link link-passage\\" data-passage=\\"note\\" role=\\"link\\" tabindex=\\"0\\">note</a>.</p>",
+        "text": "Choose: <a class=\\"squiffy-link link-section\\" data-section=\\"a\\" role=\\"link\\" tabindex=\\"0\\">a</a>, <a class=\\"squiffy-link link-section\\" data-section=\\"b\\" role=\\"link\\" tabindex=\\"0\\">b</a>, <a class=\\"squiffy-link link-section\\" data-section=\\"c\\" role=\\"link\\" tabindex=\\"0\\">c</a>. Or read this <a class=\\"squiffy-link link-passage\\" data-passage=\\"note\\" role=\\"link\\" tabindex=\\"0\\">note</a>.\\n",
         "passages": {
             "note": {
-                "text": "<p>This is a passage.</p>"
+                "text": "This is a passage.\\n"
             }
         }
     },
     "a": {
-        "text": "<p>Now choose <a class=\\"squiffy-link link-section\\" data-section=\\"b\\" role=\\"link\\" tabindex=\\"0\\">b</a> or <a class=\\"squiffy-link link-section\\" data-section=\\"c\\" role=\\"link\\" tabindex=\\"0\\">c</a>.</p>"
+        "text": "Now choose <a class=\\"squiffy-link link-section\\" data-section=\\"b\\" role=\\"link\\" tabindex=\\"0\\">b</a> or <a class=\\"squiffy-link link-section\\" data-section=\\"c\\" role=\\"link\\" tabindex=\\"0\\">c</a>.\\n"
     },
     "b": {
-        "text": "<p>Now go to <a class=\\"squiffy-link link-section\\" data-section=\\"c\\" role=\\"link\\" tabindex=\\"0\\">c</a>.</p>"
+        "text": "Now go to <a class=\\"squiffy-link link-section\\" data-section=\\"c\\" role=\\"link\\" tabindex=\\"0\\">c</a>.\\n"
     },
     "c": {
-        "text": "<p>{if seen a:You saw A.}{else:You didn&#39;t see A.}\\n{if not seen b:You didn&#39;t see B.}{else:You saw B.}</p>\\n<p>{if seen note:You looked at the note.}{else:You didn&#39;t look at the note.}</p>"
+        "text": "{if seen a:You saw A.}{else:You didn't see A.}\\n{if not seen b:You didn't see B.}{else:You saw B.}\\n\\n{if seen note:You looked at the note.}{else:You didn't look at the note.}"
     }
 };
 story.js = [
@@ -418,10 +424,10 @@ story.id = "start.squiffy";
 story.start = "the start section";
 story.sections = {
     "not the start section": {
-        "text": "<p>This is page 2, although it was defined first.</p>"
+        "text": "This is page 2, although it was defined first.\\n"
     },
     "the start section": {
-        "text": "<p>This is the start section. We also defined a section called <a class=\\"squiffy-link link-section\\" data-section=\\"not the start section\\" role=\\"link\\" tabindex=\\"0\\">not the start section</a>.</p>"
+        "text": "This is the start section. We also defined a section called <a class=\\"squiffy-link link-section\\" data-section=\\"not the start section\\" role=\\"link\\" tabindex=\\"0\\">not the start section</a>."
     }
 };
 story.js = [
@@ -434,71 +440,71 @@ story.id = "example.squiffy";
 story.start = "Introduction";
 story.sections = {
     "Introduction": {
-        "text": "<h1>Squiffy Test</h1>\\n<p>This is <a href=\\"http://textadventures.co.uk\\">a website link</a>.</p>\\n<p>This should be <a class=\\"squiffy-link link-passage\\" data-passage=\\"passage\\" role=\\"link\\" tabindex=\\"0\\">a link to a passage</a>. Here&#39;s <a class=\\"squiffy-link link-passage\\" data-passage=\\"passage2\\" role=\\"link\\" tabindex=\\"0\\">another one</a>.</p>\\n<p>You don&#39;t need to specify a name - for example, this <a class=\\"squiffy-link link-passage\\" data-passage=\\"link\\" role=\\"link\\" tabindex=\\"0\\">link</a> and this <a class=\\"squiffy-link link-section\\" data-section=\\"section\\" role=\\"link\\" tabindex=\\"0\\">section</a>.</p>\\n<p>And this goes to the <a class=\\"squiffy-link link-section\\" data-section=\\"section2\\" role=\\"link\\" tabindex=\\"0\\">next section</a>.</p>\\n<p>This line has links to <a class=\\"squiffy-link link-section\\" data-section=\\"section 3\\" role=\\"link\\" tabindex=\\"0\\">section 3</a> and <a class=\\"squiffy-link link-section\\" data-section=\\"section four\\" role=\\"link\\" tabindex=\\"0\\">section 4</a>.</p>\\n<p>This line has links to <a class=\\"squiffy-link link-passage\\" data-passage=\\"passage 3\\" role=\\"link\\" tabindex=\\"0\\">passage 3</a> and <a class=\\"squiffy-link link-passage\\" data-passage=\\"passage four\\" role=\\"link\\" tabindex=\\"0\\">passage 4</a>.</p>\\n<p>Oh look - <a class=\\"squiffy-link link-passage\\" data-passage=\\"it's a passage with an apostrophe\\" role=\\"link\\" tabindex=\\"0\\">it&#39;s a passage with an apostrophe</a>.</p>",
+        "text": "# Squiffy Test\\nThis is [a website link](http://textadventures.co.uk).\\n\\nThis should be <a class=\\"squiffy-link link-passage\\" data-passage=\\"passage\\" role=\\"link\\" tabindex=\\"0\\">a link to a passage</a>. Here's <a class=\\"squiffy-link link-passage\\" data-passage=\\"passage2\\" role=\\"link\\" tabindex=\\"0\\">another one</a>.\\n\\nYou don't need to specify a name - for example, this <a class=\\"squiffy-link link-passage\\" data-passage=\\"link\\" role=\\"link\\" tabindex=\\"0\\">link</a> and this <a class=\\"squiffy-link link-section\\" data-section=\\"section\\" role=\\"link\\" tabindex=\\"0\\">section</a>.\\n\\nAnd this goes to the <a class=\\"squiffy-link link-section\\" data-section=\\"section2\\" role=\\"link\\" tabindex=\\"0\\">next section</a>.\\n\\nThis line has links to <a class=\\"squiffy-link link-section\\" data-section=\\"section 3\\" role=\\"link\\" tabindex=\\"0\\">section 3</a> and <a class=\\"squiffy-link link-section\\" data-section=\\"section four\\" role=\\"link\\" tabindex=\\"0\\">section 4</a>.\\n\\nThis line has links to <a class=\\"squiffy-link link-passage\\" data-passage=\\"passage 3\\" role=\\"link\\" tabindex=\\"0\\">passage 3</a> and <a class=\\"squiffy-link link-passage\\" data-passage=\\"passage four\\" role=\\"link\\" tabindex=\\"0\\">passage 4</a>.\\n\\nOh look - <a class=\\"squiffy-link link-passage\\" data-passage=\\"it's a passage with an apostrophe\\" role=\\"link\\" tabindex=\\"0\\">it's a passage with an apostrophe</a>.\\n",
         "passages": {
             "passage": {
-                "text": "<p>Here&#39;s some text for the passage.</p>"
+                "text": "Here's some text for the passage.\\n"
             },
             "passage2": {
-                "text": "<p>This is the text for the second passage.</p>",
+                "text": "This is the text for the second passage.\\n",
                 "jsIndex": 0
             },
             "passage 3": {
-                "text": "<p>Another passage.</p>"
+                "text": "Another passage.\\n"
             },
             "passage four": {
-                "text": "<p>Yet another passage.</p>"
+                "text": "Yet another passage.\\n"
             },
             "link": {
-                "text": "<p>Here is the text for the simple link.</p>"
+                "text": "Here is the text for the simple link.\\n"
             },
             "it's a passage with an apostrophe": {
-                "text": "<p>Nothing to worry about.</p>"
+                "text": "Nothing to worry about.\\n"
             }
         }
     },
     "section2": {
-        "text": "<p>This is the next section, with passages <a class=\\"squiffy-link link-passage\\" data-passage=\\"a\\" role=\\"link\\" tabindex=\\"0\\">a</a> and <a class=\\"squiffy-link link-passage\\" data-passage=\\"b\\" role=\\"link\\" tabindex=\\"0\\">b</a>.</p>",
+        "text": "This is the next section, with passages <a class=\\"squiffy-link link-passage\\" data-passage=\\"a\\" role=\\"link\\" tabindex=\\"0\\">a</a> and <a class=\\"squiffy-link link-passage\\" data-passage=\\"b\\" role=\\"link\\" tabindex=\\"0\\">b</a>.\\n",
         "jsIndex": 1,
         "passages": {
             "a": {
-                "text": "<p>Just a.</p>"
+                "text": "Just a.\\n"
             },
             "b": {
-                "text": "<p>Just b.</p>"
+                "text": "Just b.\\n"
             }
         }
     },
     "section": {
-        "text": "<p>This is another section, with passages <a class=\\"squiffy-link link-passage\\" data-passage=\\"a\\" role=\\"link\\" tabindex=\\"0\\">a</a> and <a class=\\"squiffy-link link-passage\\" data-passage=\\"b\\" role=\\"link\\" tabindex=\\"0\\">b</a>.</p>",
+        "text": "This is another section, with passages <a class=\\"squiffy-link link-passage\\" data-passage=\\"a\\" role=\\"link\\" tabindex=\\"0\\">a</a> and <a class=\\"squiffy-link link-passage\\" data-passage=\\"b\\" role=\\"link\\" tabindex=\\"0\\">b</a>.\\n",
         "passages": {
             "a": {
-                "text": "<p>Just a in a different section.</p>"
+                "text": "Just a in a different section.\\n"
             },
             "b": {
-                "text": "<p>Just b in a different section.</p>"
+                "text": "Just b in a different section.\\n"
             }
         }
     },
     "section 3": {
-        "text": "<p>Another section is here, with passages <a class=\\"squiffy-link link-passage\\" data-passage=\\"a\\" role=\\"link\\" tabindex=\\"0\\">a</a> and <a class=\\"squiffy-link link-passage\\" data-passage=\\"b\\" role=\\"link\\" tabindex=\\"0\\">b</a>.</p>",
+        "text": "Another section is here, with passages <a class=\\"squiffy-link link-passage\\" data-passage=\\"a\\" role=\\"link\\" tabindex=\\"0\\">a</a> and <a class=\\"squiffy-link link-passage\\" data-passage=\\"b\\" role=\\"link\\" tabindex=\\"0\\">b</a>.\\n",
         "passages": {
             "a": {
-                "text": "<p>Just a in section3.</p>"
+                "text": "Just a in section3.\\n"
             },
             "b": {
-                "text": "<p>Just b in section3.</p>"
+                "text": "Just b in section3.\\n"
             }
         }
     },
     "section four": {
-        "text": "<p>Some other section, with passages <a class=\\"squiffy-link link-passage\\" data-passage=\\"a\\" role=\\"link\\" tabindex=\\"0\\">a</a> and <a class=\\"squiffy-link link-passage\\" data-passage=\\"b\\" role=\\"link\\" tabindex=\\"0\\">b</a>.</p>",
+        "text": "Some other section, with passages <a class=\\"squiffy-link link-passage\\" data-passage=\\"a\\" role=\\"link\\" tabindex=\\"0\\">a</a> and <a class=\\"squiffy-link link-passage\\" data-passage=\\"b\\" role=\\"link\\" tabindex=\\"0\\">b</a>.\\n",
         "passages": {
             "a": {
-                "text": "<p>Just a in section four.</p>"
+                "text": "Just a in section four.\\n"
             },
             "b": {
-                "text": "<p>Just b in section four.</p>"
+                "text": "Just b in section four."
             }
         }
     }
@@ -519,21 +525,21 @@ story.id = "textprocessor.squiffy";
 story.start = "_default";
 story.sections = {
     "_default": {
-        "text": "<p>Choose a gender:</p>\\n<ul>\\n<li><a class=\\"squiffy-link link-section\\" data-section=\\"start, gender=male\\" role=\\"link\\" tabindex=\\"0\\">Male</a></li>\\n<li><a class=\\"squiffy-link link-section\\" data-section=\\"start, gender=female\\" role=\\"link\\" tabindex=\\"0\\">Female</a></li>\\n</ul>"
+        "text": "Choose a gender:\\n\\n* <a class=\\"squiffy-link link-section\\" data-section=\\"start, gender=male\\" role=\\"link\\" tabindex=\\"0\\">Male</a>\\n* <a class=\\"squiffy-link link-section\\" data-section=\\"start, gender=female\\" role=\\"link\\" tabindex=\\"0\\">Female</a>\\n"
     },
     "start": {
-        "text": "<p>You chose {gender}.</p>\\n<p>{if gender=male:You are a man.}\\n{else:You are a woman.}</p>\\n<p><a class=\\"squiffy-link link-passage\\" data-passage=\\"Next\\" role=\\"link\\" tabindex=\\"0\\">Next</a></p>",
+        "text": "You chose {gender}.\\n\\n{if gender=male:You are a man.}\\n{else:You are a woman.}\\n\\n<a class=\\"squiffy-link link-passage\\" data-passage=\\"Next\\" role=\\"link\\" tabindex=\\"0\\">Next</a>\\n",
         "passages": {
             "Next": {
-                "text": "<p>This is a test. {passage} {section}</p>"
+                "text": "This is a test. {passage} {section}\\n"
             },
             "passage": {
-                "text": "<p>Text from passage.</p>"
+                "text": "Text from passage.\\n"
             }
         }
     },
     "section": {
-        "text": "<p>Text from section.</p>"
+        "text": "Text from section."
     }
 };
 story.js = [
@@ -546,20 +552,20 @@ story.id = "transitions.squiffy";
 story.start = "_default";
 story.sections = {
     "_default": {
-        "text": "<p>You are standing in a room. You can see a <a class=\\"squiffy-link link-passage\\" data-passage=\\"hammer\\" role=\\"link\\" tabindex=\\"0\\">hammer</a>.</p>",
+        "text": "You are standing in a room. You can see a <a class=\\"squiffy-link link-passage\\" data-passage=\\"hammer\\" role=\\"link\\" tabindex=\\"0\\">hammer</a>.\\n",
         "passages": {
             "hammer": {
-                "text": "<p>It&#39;s nice and weighty. Perhaps you want to <a class=\\"squiffy-link link-section\\" data-section=\\"hit\\" role=\\"link\\" tabindex=\\"0\\">hit yourself in the face with it</a>?</p>"
+                "text": "It's nice and weighty. Perhaps you want to <a class=\\"squiffy-link link-section\\" data-section=\\"hit\\" role=\\"link\\" tabindex=\\"0\\">hit yourself in the face with it</a>?\\n"
             }
         }
     },
     "hit": {
-        "text": "<p>Bang.</p>",
+        "text": "Bang.\\n",
         "jsIndex": 0
     },
     "wake up": {
         "clear": true,
-        "text": "<p>Slowly your eyes open.</p>\\n<p>That was a rather stupid thing to do.</p>"
+        "text": "Slowly your eyes open.\\n\\nThat was a rather stupid thing to do."
     }
 };
 story.js = [
@@ -607,39 +613,39 @@ story.id = "turncount.squiffy";
 story.start = "_default";
 story.sections = {
     "_default": {
-        "text": "<p>After clicking two links in this section, an additional passage will be displayed.</p>\\n<p><a class=\\"squiffy-link link-passage\\" data-passage=\\"One\\" role=\\"link\\" tabindex=\\"0\\">One</a>, <a class=\\"squiffy-link link-passage\\" data-passage=\\"two\\" role=\\"link\\" tabindex=\\"0\\">two</a>, <a class=\\"squiffy-link link-passage\\" data-passage=\\"three\\" role=\\"link\\" tabindex=\\"0\\">three</a>, <a class=\\"squiffy-link link-passage\\" data-passage=\\"four\\" role=\\"link\\" tabindex=\\"0\\">four</a>.</p>",
+        "text": "After clicking two links in this section, an additional passage will be displayed.\\n\\n<a class=\\"squiffy-link link-passage\\" data-passage=\\"One\\" role=\\"link\\" tabindex=\\"0\\">One</a>, <a class=\\"squiffy-link link-passage\\" data-passage=\\"two\\" role=\\"link\\" tabindex=\\"0\\">two</a>, <a class=\\"squiffy-link link-passage\\" data-passage=\\"three\\" role=\\"link\\" tabindex=\\"0\\">three</a>, <a class=\\"squiffy-link link-passage\\" data-passage=\\"four\\" role=\\"link\\" tabindex=\\"0\\">four</a>.\\n",
         "passages": {
             "One": {
-                "text": "<p>First passage.</p>"
+                "text": "First passage.\\n"
             },
             "two": {
-                "text": "<p>Second passage.</p>"
+                "text": "Second passage.\\n"
             },
             "three": {
-                "text": "<p>Third passage.</p>"
+                "text": "Third passage.\\n"
             },
             "four": {
-                "text": "<p>Fourth passage.</p>"
+                "text": "Fourth passage.\\n"
             },
             "@2": {
-                "text": "<p>This is some extra text to appear after the second click. The <a class=\\"squiffy-link link-section\\" data-section=\\"next section\\" role=\\"link\\" tabindex=\\"0\\">next section</a> is also good.</p>"
+                "text": "This is some extra text to appear after the second click. The <a class=\\"squiffy-link link-section\\" data-section=\\"next section\\" role=\\"link\\" tabindex=\\"0\\">next section</a> is also good.\\n"
             }
         }
     },
     "next section": {
-        "text": "<p>In this section, you can only click one link, and then you&#39;ll be taken to the final section.</p>\\n<p><a class=\\"squiffy-link link-passage\\" data-passage=\\"One\\" role=\\"link\\" tabindex=\\"0\\">One</a>, <a class=\\"squiffy-link link-passage\\" data-passage=\\"two\\" role=\\"link\\" tabindex=\\"0\\">two</a>, <a class=\\"squiffy-link link-passage\\" data-passage=\\"three\\" role=\\"link\\" tabindex=\\"0\\">three</a>, <a class=\\"squiffy-link link-passage\\" data-passage=\\"four\\" role=\\"link\\" tabindex=\\"0\\">four</a>.</p>",
+        "text": "In this section, you can only click one link, and then you'll be taken to the final section.\\n\\n<a class=\\"squiffy-link link-passage\\" data-passage=\\"One\\" role=\\"link\\" tabindex=\\"0\\">One</a>, <a class=\\"squiffy-link link-passage\\" data-passage=\\"two\\" role=\\"link\\" tabindex=\\"0\\">two</a>, <a class=\\"squiffy-link link-passage\\" data-passage=\\"three\\" role=\\"link\\" tabindex=\\"0\\">three</a>, <a class=\\"squiffy-link link-passage\\" data-passage=\\"four\\" role=\\"link\\" tabindex=\\"0\\">four</a>.\\n",
         "passages": {
             "One": {
-                "text": "<p>First passage.</p>"
+                "text": "First passage.\\n"
             },
             "two": {
-                "text": "<p>Second passage.</p>"
+                "text": "Second passage.\\n"
             },
             "three": {
-                "text": "<p>Third passage.</p>"
+                "text": "Third passage.\\n"
             },
             "four": {
-                "text": "<p>Fourth passage.</p>"
+                "text": "Fourth passage.\\n"
             },
             "@1": {
                 "text": "",
@@ -648,7 +654,7 @@ story.sections = {
         }
     },
     "final section": {
-        "text": "<p><strong>THE END</strong></p>"
+        "text": "**THE END**"
     }
 };
 story.js = [

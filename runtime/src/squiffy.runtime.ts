@@ -145,7 +145,7 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
     }
     
     function setAttribute(expr: string) {
-        expr = expr.replace(/^(\w*\s*):=(.*)$/, (_, name, value) => (name + "=" + ui.processText(value)));
+        expr = expr.replace(/^(\w*\s*):=(.*)$/, (_, name, value) => (name + "=" + ui.processText(value, true)));
         const setRegex = /^([\w]*)\s*=\s*(.*)$/;
         const setMatch = setRegex.exec(expr);
         if (setMatch) {
@@ -207,17 +207,12 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
         else if (text in story.sections) {
             text = story.sections[text].text || '';
         }
-        const stripParags = /^<p>(.*)<\/p>$/;
-        const stripParagsMatch = stripParags.exec(text);
-        if (stripParagsMatch) {
-            text = stripParagsMatch[1];
-        }
-    
+
         const labelElement = outputElement.querySelector('.squiffy-label-' + label);
         if (!labelElement) return;
     
         labelElement.addEventListener('transitionend', function () {
-            labelElement.innerHTML = ui.processText(text);
+            labelElement.innerHTML = ui.processText(text, true);
     
             labelElement.addEventListener('transitionend', function () {
                 save();
@@ -416,7 +411,7 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
                 div.setAttribute('data-source', source);
             }
             currentBlockOutputElement.appendChild(div);
-            div.innerHTML = ui.processText(text);
+            div.innerHTML = ui.processText(text, false);
     
             ui.scrollToEnd();
         },
@@ -442,11 +437,11 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
                 }
             }
         },
-        processText: (text: string) => {
+        processText: (text: string, inline: boolean) => {
             const data = {
                 fulltext: text
             };
-            return textProcessor.process(text, data);
+            return textProcessor.process(text, data, inline);
         },
         transition: function (f: any) {
             set('_transition', f.toString());
@@ -496,7 +491,7 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
                 else if (newSection.text && newSection.text != story.sections[existingSection].text) {
                     // section has been updated
                     for (const element of elements) {
-                        updateElementTextPreservingDisabledPassageLinks(element, ui.processText(newSection.text));
+                        updateElementTextPreservingDisabledPassageLinks(element, ui.processText(newSection.text, false));
                     }
                 }
             }
@@ -518,7 +513,7 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
                 else if (newPassage.text && newPassage.text != story.sections[existingSection].passages[existingPassage].text) {
                     // passage has been updated
                     for (const element of elements) {
-                        updateElementTextPreservingDisabledPassageLinks(element, ui.processText(newPassage.text));
+                        updateElementTextPreservingDisabledPassageLinks(element, ui.processText(newPassage.text, false));
                     }
                 }
             }
