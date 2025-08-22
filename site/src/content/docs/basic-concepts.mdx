@@ -24,7 +24,7 @@ You can format text using [Markdown](http://daringfireball.net/projects/markdown
 
     A link to [Google](https://www.google.com).
 
-    Using a `<span>` tag to <span style=&quot;color: red&quot;>change the colour</span> of some text.
+    Using a `&lt;span&gt;` tag to &lt;span style=&quot;color: red&quot;&gt;change the colour&lt;/span&gt; of some text.
 "></Sample>
 
 To create interactive stories, you'll need to add some links. There are two types of text block you can use in Squiffy:
@@ -246,12 +246,12 @@ To compare two attributes, add an `@` before the second attribute name:
 
 ## Embed text
 
-You can embed text from another section, or from a passage in the current section, by surrounding its name with curly brackets.
+You can embed text from another section, or from a passage in the current section, using `{{embed "section or passage name"}}`.
 
 <Sample script="[[section1]]:
-Here is some text from the next section: {section2}
+Here is some text from the next section: {{embed &quot;section2&quot;}}
 
-    Here is some text from a passage in this section: {passage}
+    Here is some text from a passage in this section: {{embed &quot;passage&quot;}}
 
     [passage]:
     Text from passage.
