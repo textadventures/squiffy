@@ -1,7 +1,10 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { compile, SQUIFFY_VERSION } from 'squiffy-compiler';
+import { compile } from 'squiffy-compiler';
 import { externalFiles } from './external-files.js';
+
+import pkg from '../package.json' with { type: 'json' };
+const version = pkg.version;
 
 export const createPackage = async (inputFilename: string) => {
     return await generate(inputFilename);
@@ -56,7 +59,7 @@ async function generate(inputFilename: string) {
 
     const htmlTemplateFile = fs.readFileSync(findFile('index.template.html', outputPath /*, sourcePath */));
     let htmlData = htmlTemplateFile.toString();
-    htmlData = htmlData.replace('<!-- INFO -->', `<!--\n\nCreated with Squiffy ${SQUIFFY_VERSION}\n\n\nhttps://github.com/textadventures/squiffy\n\n-->`);
+    htmlData = htmlData.replace('<!-- INFO -->', `<!--\n\nCreated with Squiffy ${version}\n\n\nhttps://github.com/textadventures/squiffy\n\n-->`);
     htmlData = htmlData.replace('<!-- TITLE -->', uiInfo.title);
     const scriptData = uiInfo.externalScripts.map(script => `<script src="${script}"></script>`).join('\n');
     htmlData = htmlData.replace('<!-- SCRIPTS -->', scriptData);

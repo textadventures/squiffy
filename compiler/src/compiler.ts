@@ -1,6 +1,7 @@
 import * as marked from 'marked';
 
-export const SQUIFFY_VERSION = '6.0.0-alpha.2';
+import pkg from '../package.json' with { type: 'json' };
+const version = pkg.version;
 
 export interface Output {
     story: OutputStory;
@@ -67,7 +68,7 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
     async function getJs(storyData: Output, excludeHeader: boolean) {
         const outputJs: string[] = [];
         if (!excludeHeader) {
-            outputJs.push(`// Created with Squiffy ${SQUIFFY_VERSION}`);
+            outputJs.push(`// Created with Squiffy ${version}`);
             outputJs.push('// https://github.com/textadventures/squiffy');
         }
         outputJs.push('export const story = {};');
