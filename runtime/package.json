@@ -28,6 +28,7 @@
     "vite-plugin-dts": "^4.5.4"
   },
   "dependencies": {
+    "handlebars": "^4.7.8",
     "marked": "^16.2.0"
   }
 }

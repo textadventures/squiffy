@@ -1,4 +1,5 @@
 import * as marked from 'marked';
+import Handlebars from "handlebars";
 import { startsWith, rotate } from "./utils.js";
 import { Section } from "./types.js";
 
@@ -23,43 +24,51 @@ export class TextProcessor {
         this.processAttributes = processAttributes;
     }
 
+    enableLegacyTextProcessor = false;
+
     process(text: string, data: any, inline: boolean) {
-        let containsUnprocessedSection = false;
-        const open = text.indexOf('{');
-        let close;
+        if (this.enableLegacyTextProcessor) {
+            let containsUnprocessedSection = false;
+            const open = text.indexOf('{');
+            let close;
 
-        if (open > -1) {
-            let nestCount = 1;
-            let searchStart = open + 1;
-            let finished = false;
+            if (open > -1) {
+                let nestCount = 1;
+                let searchStart = open + 1;
+                let finished = false;
 
-            while (!finished) {
-                const nextOpen = text.indexOf('{', searchStart);
-                const nextClose = text.indexOf('}', searchStart);
+                while (!finished) {
+                    const nextOpen = text.indexOf('{', searchStart);
+                    const nextClose = text.indexOf('}', searchStart);
 
-                if (nextClose > -1) {
-                    if (nextOpen > -1 && nextOpen < nextClose) {
-                        nestCount++;
-                        searchStart = nextOpen + 1;
-                    } else {
-                        nestCount--;
-                        searchStart = nextClose + 1;
-                        if (nestCount === 0) {
-                            close = nextClose;
-                            containsUnprocessedSection = true;
-                            finished = true;
+                    if (nextClose > -1) {
+                        if (nextOpen > -1 && nextOpen < nextClose) {
+                            nestCount++;
+                            searchStart = nextOpen + 1;
+                        } else {
+                            nestCount--;
+                            searchStart = nextClose + 1;
+                            if (nestCount === 0) {
+                                close = nextClose;
+                                containsUnprocessedSection = true;
+                                finished = true;
+                            }
                         }
+                    } else {
+                        finished = true;
                     }
-                } else {
-                    finished = true;
                 }
             }
-        }
 
-        if (containsUnprocessedSection) {
-            const section = text.substring(open + 1, close);
-            const value = this.processTextCommand(section, data);
-            text = text.substring(0, open) + value + this.process(text.substring(close! + 1), data, true);
+            if (containsUnprocessedSection) {
+                const section = text.substring(open + 1, close);
+                const value = this.processTextCommand(section, data);
+                text = text.substring(0, open) + value + this.process(text.substring(close! + 1), data, true);
+            }
+        }
+        else {
+            const template = Handlebars.compile(text);
+            text = template({});
         }
 
         if (inline) {
