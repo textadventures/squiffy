@@ -4,15 +4,18 @@ Choose a gender:
 * [[Female]](start, gender=female)
 
 [[start]]:
-You chose {gender}.
+You chose {{get "gender"}}.
 
-{if gender=male:You are a man.}
-{else:You are a woman.}
+{{#if (eq (get "gender") "male")}}
+You are a man.
+{{else}}
+You are a woman.
+{{/if}}
 
 [Next]
 
 [Next]:
-This is a test. {passage} {section}
+This is a test. {{embed "passage"}} {{embed "section"}}
 
 [passage]:
 Text from passage.

@@ -38,6 +38,15 @@ export class TextProcessor {
 
         this.handlebars.registerHelper("seen", (name: string) => this.seen(name));
         this.handlebars.registerHelper("get", (attribute: string) => this.get(attribute));
+        this.handlebars.registerHelper('and', (...args) => args.slice(0,-1).every(Boolean));
+        this.handlebars.registerHelper('or',  (...args) => args.slice(0,-1).some(Boolean));
+        this.handlebars.registerHelper('not', (v) => !v);
+        this.handlebars.registerHelper('eq',  (a,b) => a == b);
+        this.handlebars.registerHelper('ne',  (a,b) => a != b);
+        this.handlebars.registerHelper('gt',  (a,b) => a >  b);
+        this.handlebars.registerHelper('lt',  (a,b) => a <  b);
+        this.handlebars.registerHelper('gte', (a,b) => a >= b);
+        this.handlebars.registerHelper('lte', (a,b) => a <= b);
     }
 
     process(text: string, data: any, inline: boolean) {
