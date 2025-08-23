@@ -68,7 +68,7 @@ export class TextProcessor {
 
         this.handlebars.registerHelper("passage", (passage: string, options) => {
             const text = options.hash.text as string || passage;
-            return new Handlebars.SafeString(`<a class="squiffy-link link-section" data-passage="${passage}" role="link" tabindex="0">${text}</a>`);
+            return new Handlebars.SafeString(`<a class="squiffy-link link-passage" data-passage="${passage}" role="link" tabindex="0">${text}</a>`);
         });
     }
 

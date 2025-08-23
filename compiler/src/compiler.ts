@@ -338,7 +338,7 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         var links = allMatchesForGroup(input, namedSectionLinkRegex, 2);
         checkSectionLinks(links, section, passage);
 
-        input = input.replace(namedSectionLinkRegex, '<a class="squiffy-link link-section" data-section="$2" role="link" tabindex="0">$1</a>');
+        input = input.replace(namedSectionLinkRegex, '{{section "$2" text="$1"}}');
 
         // namedPassageLinkRegex matches:
         //   open [
@@ -352,7 +352,7 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         links = allMatchesForGroup(input, namedPassageLinkRegex, 2);
         checkPassageLinks(links, section, passage);
 
-        input = input.replace(namedPassageLinkRegex, '<a class="squiffy-link link-passage" data-passage="$2" role="link" tabindex="0">$1</a>');
+        input = input.replace(namedPassageLinkRegex, '{{passage "$2" text="$1"}}');
 
         // unnamedSectionLinkRegex matches:
         //   open [[
@@ -363,7 +363,7 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         links = allMatchesForGroup(input, unnamedSectionLinkRegex, 1);
         checkSectionLinks(links, section, passage);
 
-        input = input.replace(unnamedSectionLinkRegex, '<a class="squiffy-link link-section" data-section="$1" role="link" tabindex="0">$1</a>');
+        input = input.replace(unnamedSectionLinkRegex, '{{section "$1"}}');
 
         // unnamedPassageLinkRegex matches:
         //   open [
@@ -375,7 +375,7 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         links = allMatchesForGroup(input, unnamedPassageLinkRegex, 1);
         checkPassageLinks(links, section, passage);
 
-        input = input.replace(unnamedPassageLinkRegex, '<a class="squiffy-link link-passage" data-passage="$1" role="link" tabindex="0">$1</a>$2');
+        input = input.replace(unnamedPassageLinkRegex, '{{passage "$1"}}$2');
 
         return input;
     };
