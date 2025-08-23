@@ -46,10 +46,10 @@ story.sections = {
         }
     },
     "next": {
-        "text": "my_attribute = {my_attribute}\\n\\nAlso, my_string = \\"{my_string}\\"\\n\\nDid you choose a passage link? {if chose_passage:yes}{else:no} <a class=\\"squiffy-link link-passage\\" data-passage=\\"unset\\" role=\\"link\\" tabindex=\\"0\\">unset</a>\\n\\nClick some more links: <a class=\\"squiffy-link link-passage\\" data-passage=\\"a\\" role=\\"link\\" tabindex=\\"0\\">a</a>, <a class=\\"squiffy-link link-passage\\" data-passage=\\"b\\" role=\\"link\\" tabindex=\\"0\\">b</a>, <a class=\\"squiffy-link link-passage\\" data-passage=\\"c\\" role=\\"link\\" tabindex=\\"0\\">c</a>, <a class=\\"squiffy-link link-passage\\" data-passage=\\"d\\" role=\\"link\\" tabindex=\\"0\\">d</a>, <a class=\\"squiffy-link link-passage\\" data-passage=\\"e\\" role=\\"link\\" tabindex=\\"0\\">e</a> and then click <a class=\\"squiffy-link link-section\\" data-section=\\"done\\" role=\\"link\\" tabindex=\\"0\\">done</a>.\\n",
+        "text": "my_attribute = {{get \\"my_attribute\\"}}\\n\\nAlso, my_string = \\"{{get \\"my_string\\"}}\\"\\n\\nDid you choose a passage link? {{#if (get \\"chose_passage\\")}}yes{{else}}no{{/if}} <a class=\\"squiffy-link link-passage\\" data-passage=\\"unset\\" role=\\"link\\" tabindex=\\"0\\">unset</a>\\n\\nClick some more links: <a class=\\"squiffy-link link-passage\\" data-passage=\\"a\\" role=\\"link\\" tabindex=\\"0\\">a</a>, <a class=\\"squiffy-link link-passage\\" data-passage=\\"b\\" role=\\"link\\" tabindex=\\"0\\">b</a>, <a class=\\"squiffy-link link-passage\\" data-passage=\\"c\\" role=\\"link\\" tabindex=\\"0\\">c</a>, <a class=\\"squiffy-link link-passage\\" data-passage=\\"d\\" role=\\"link\\" tabindex=\\"0\\">d</a>, <a class=\\"squiffy-link link-passage\\" data-passage=\\"e\\" role=\\"link\\" tabindex=\\"0\\">e</a> and then click <a class=\\"squiffy-link link-section\\" data-section=\\"done\\" role=\\"link\\" tabindex=\\"0\\">done</a>.\\n",
         "passages": {
             "unset": {
-                "text": "Now the value is: {if chose_passage:yes}{else:no}\\n",
+                "text": "Now the value is: {{#if (get \\"chose_passage\\")}}yes{{else}}no{{/if}}\\n",
                 "attributes": [
                     "not chose_passage"
                 ]
@@ -87,22 +87,22 @@ story.sections = {
         }
     },
     "done": {
-        "text": "You clicked {count} links. What about calling <a class=\\"squiffy-link link-passage\\" data-passage=\\"dec\\" role=\\"link\\" tabindex=\\"0\\">dec</a>?\\n",
+        "text": "You clicked {{get \\"count\\"}} links. What about calling <a class=\\"squiffy-link link-passage\\" data-passage=\\"dec\\" role=\\"link\\" tabindex=\\"0\\">dec</a>?\\n",
         "passages": {
             "dec": {
-                "text": "Now count is {count}. You can also <a class=\\"squiffy-link link-passage\\" data-passage=\\"increase\\" role=\\"link\\" tabindex=\\"0\\">increase</a> or <a class=\\"squiffy-link link-passage\\" data-passage=\\"decrease\\" role=\\"link\\" tabindex=\\"0\\">decrease</a> by values other than 1.\\n",
+                "text": "Now count is {{get \\"count\\"}}. You can also <a class=\\"squiffy-link link-passage\\" data-passage=\\"increase\\" role=\\"link\\" tabindex=\\"0\\">increase</a> or <a class=\\"squiffy-link link-passage\\" data-passage=\\"decrease\\" role=\\"link\\" tabindex=\\"0\\">decrease</a> by values other than 1.\\n",
                 "attributes": [
                     "count-=1"
                 ]
             },
             "increase": {
-                "text": "Now count is {count}.\\n",
+                "text": "Now count is {{get \\"count\\"}}.\\n",
                 "attributes": [
                     "count+=10"
                 ]
             },
             "decrease": {
-                "text": "Now count is {count}.",
+                "text": "Now count is {{get \\"count\\"}}.",
                 "attributes": [
                     "count-=5"
                 ]
@@ -328,7 +328,7 @@ story.id = "replace.squiffy";
 story.start = "_default";
 story.sections = {
     "_default": {
-        "text": "I {label:1=walked} to the shops and I bought {label:2=a pint of milk}.\\n\\nBut then I thought, hang on, I <a class=\\"squiffy-link link-passage\\" data-passage=\\"next, @replace 2=beer\\" role=\\"link\\" tabindex=\\"0\\">don't really like milk</a>.\\n",
+        "text": "I {{#label \\"1\\"}}walked{{/label}} to the shops and I bought {{#label \\"2\\"}}a pint of milk{{/label}}.\\n\\nBut then I thought, hang on, I <a class=\\"squiffy-link link-passage\\" data-passage=\\"next, @replace 2=beer\\" role=\\"link\\" tabindex=\\"0\\">don't really like milk</a>.\\n",
         "passages": {
             "beer": {
                 "text": "a <a class=\\"squiffy-link link-passage\\" data-passage=\\"crate of beer\\" role=\\"link\\" tabindex=\\"0\\">crate of beer</a>\\n"
@@ -337,7 +337,7 @@ story.sections = {
                 "text": "Yes, beer.\\n"
             },
             "next": {
-                "text": "And then I thought, hang on, I {label:3=<a class=\\"squiffy-link link-passage\\" data-passage=\\"@replace 1=teleported, @replace 3=love teleporting\\" role=\\"link\\" tabindex=\\"0\\">hate walking</a>}.\\n"
+                "text": "And then I thought, hang on, I {{#label \\"3\\"}}<a class=\\"squiffy-link link-passage\\" data-passage=\\"@replace 1=teleported, @replace 3=love teleporting\\" role=\\"link\\" tabindex=\\"0\\">hate walking</a>{{/label}}.\\n"
             },
             "love teleporting": {
                 "text": "love teleporting, so much I might <a class=\\"squiffy-link link-section\\" data-section=\\"section2\\" role=\\"link\\" tabindex=\\"0\\">embark on a wild and crazy adventure</a>\\n"
@@ -345,7 +345,7 @@ story.sections = {
         }
     },
     "section2": {
-        "text": "And so it {label:4=began...}\\n\\n<a class=\\"squiffy-link link-section\\" data-section=\\"section3\\" role=\\"link\\" tabindex=\\"0\\">Or did it?</a>\\n"
+        "text": "And so it {{#label \\"4\\"}}began...{{/label}}\\n\\n<a class=\\"squiffy-link link-section\\" data-section=\\"section3\\" role=\\"link\\" tabindex=\\"0\\">Or did it?</a>\\n"
     },
     "section3": {
         "text": "Oh well.\\n",
@@ -369,19 +369,19 @@ story.id = "rotate.squiffy";
 story.start = "_default";
 story.sections = {
     "_default": {
-        "text": "Choose a number: {rotate:one:two:three}\\n\\n<a class=\\"squiffy-link link-section\\" data-section=\\"_continue1\\" role=\\"link\\" tabindex=\\"0\\">OK...</a>"
+        "text": "Choose a number: {{rotate (array \\"one\\" \\"two\\" \\"three\\")}}\\n\\n<a class=\\"squiffy-link link-section\\" data-section=\\"_continue1\\" role=\\"link\\" tabindex=\\"0\\">OK...</a>"
     },
     "_continue1": {
-        "text": "Now {rotate result:four:five:six}\\n\\n<a class=\\"squiffy-link link-section\\" data-section=\\"_continue2\\" role=\\"link\\" tabindex=\\"0\\">OK...</a>"
+        "text": "Now {{rotate (array \\"four\\" \\"five\\" \\"six\\") set=\\"result\\"}}\\n\\n<a class=\\"squiffy-link link-section\\" data-section=\\"_continue2\\" role=\\"link\\" tabindex=\\"0\\">OK...</a>"
     },
     "_continue2": {
-        "text": "You chose {result}.\\n\\nNow for a sequence: {sequence:one:two:three:four:five}.\\n\\n<a class=\\"squiffy-link link-section\\" data-section=\\"_continue3\\" role=\\"link\\" tabindex=\\"0\\">And another...</a>"
+        "text": "You chose {{get \\"result\\"}}.\\n\\nNow for a sequence: {{sequence (array \\"one\\" \\"two\\" \\"three\\" \\"four\\" \\"five\\")}}.\\n\\n<a class=\\"squiffy-link link-section\\" data-section=\\"_continue3\\" role=\\"link\\" tabindex=\\"0\\">And another...</a>"
     },
     "_continue3": {
-        "text": "Another sequence: {sequence seqresult:a:b:c:d:e:f:g}.\\n\\n<a class=\\"squiffy-link link-section\\" data-section=\\"_continue4\\" role=\\"link\\" tabindex=\\"0\\">Finally...</a>"
+        "text": "Another sequence: {{sequence (array \\"a\\" \\"b\\" \\"c\\" \\"d\\" \\"e\\" \\"f\\" \\"g\\") set=\\"seqresult\\"}}.\\n\\n<a class=\\"squiffy-link link-section\\" data-section=\\"_continue4\\" role=\\"link\\" tabindex=\\"0\\">Finally...</a>"
     },
     "_continue4": {
-        "text": "You chose {seqresult}.\\n\\nHere's a sequence that links to another section. {sequence:Ready...:Steady...:<a class=\\"squiffy-link link-section\\" data-section=\\"Go!\\" role=\\"link\\" tabindex=\\"0\\">Go!</a>}\\n"
+        "text": "You chose {{get \\"seqresult\\"}}.\\n\\nHere's a sequence that links to another section. {{sequence (array \\"Ready...\\" \\"Steady...\\" (section \\"Go!\\"))}}\\n"
     },
     "Go!": {
         "text": "That's all folks!"
@@ -411,7 +411,7 @@ story.sections = {
         "text": "Now go to <a class=\\"squiffy-link link-section\\" data-section=\\"c\\" role=\\"link\\" tabindex=\\"0\\">c</a>.\\n"
     },
     "c": {
-        "text": "{if seen a:You saw A.}{else:You didn't see A.}\\n{if not seen b:You didn't see B.}{else:You saw B.}\\n\\n{if seen note:You looked at the note.}{else:You didn't look at the note.}"
+        "text": "{{#if (seen \\"a\\")}}You saw A.{{else}}You didn't see A.{{/if}}\\n{{#if (not (seen \\"b\\"))}}You didn't see B.{{else}}You saw B.{{/if}}\\n\\n{{#if (seen \\"note\\")}}You looked at the note.{{else}}You didn't look at the note.{{/if}}"
     }
 };
 story.js = [
@@ -528,10 +528,10 @@ story.sections = {
         "text": "Choose a gender:\\n\\n* <a class=\\"squiffy-link link-section\\" data-section=\\"start, gender=male\\" role=\\"link\\" tabindex=\\"0\\">Male</a>\\n* <a class=\\"squiffy-link link-section\\" data-section=\\"start, gender=female\\" role=\\"link\\" tabindex=\\"0\\">Female</a>\\n"
     },
     "start": {
-        "text": "You chose {gender}.\\n\\n{if gender=male:You are a man.}\\n{else:You are a woman.}\\n\\n<a class=\\"squiffy-link link-passage\\" data-passage=\\"Next\\" role=\\"link\\" tabindex=\\"0\\">Next</a>\\n",
+        "text": "You chose {{get \\"gender\\"}}.\\n\\n{{#if (eq (get \\"gender\\") \\"male\\")}}\\nYou are a man.\\n{{else}}\\nYou are a woman.\\n{{/if}}\\n\\n<a class=\\"squiffy-link link-passage\\" data-passage=\\"Next\\" role=\\"link\\" tabindex=\\"0\\">Next</a>\\n",
         "passages": {
             "Next": {
-                "text": "This is a test. {passage} {section}\\n"
+                "text": "This is a test. {{embed \\"passage\\"}} {{embed \\"section\\"}}\\n"
             },
             "passage": {
                 "text": "Text from passage.\\n"
