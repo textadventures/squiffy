@@ -440,10 +440,7 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
             }
         },
         processText: (text: string, inline: boolean) => {
-            const data = {
-                fulltext: text
-            };
-            return textProcessor.process(text, data, inline);
+            return textProcessor.process(text, inline);
         },
         transition: function (f: any) {
             set('_transition', f.toString());
@@ -551,7 +548,7 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
         handleClick(event);
     });
 
-    textProcessor = new TextProcessor(get, set, story, () => currentSection, seen, processAttributes);
+    textProcessor = new TextProcessor(get, set, story, () => currentSection, seen);
     
     begin();
 

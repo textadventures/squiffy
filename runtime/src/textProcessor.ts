@@ -9,28 +9,25 @@ export class TextProcessor {
     story: any;
     getCurrentSection: () => Section;
     seen: (section: string) => boolean;
-    processAttributes: (attributes: string[]) => void;
     handlebars: typeof Handlebars;
 
     constructor (get: (attribute: string) => any,
                  set: (attribute: string, value: any) => void,
                  story: any, currentSection: () => Section,
-                 seen: (section: string) => boolean,
-                 processAttributes: (attributes: string[]) => void) {
+                 seen: (section: string) => boolean) {
         this.get = get;
         this.set = set;
         this.story = story;
         this.getCurrentSection = currentSection;
         this.seen = seen;
-        this.processAttributes = processAttributes;
         this.handlebars = Handlebars.create();
 
         this.handlebars.registerHelper("embed", (name: string) => {
             const currentSection = this.getCurrentSection();
             if (currentSection.passages && name in currentSection.passages) {
-                return this.process(currentSection.passages[name].text || '', null, true);
+                return this.process(currentSection.passages[name].text || '', true);
             } else if (name in this.story.sections) {
-                return this.process(this.story.sections[name].text || '', null, true);
+                return this.process(this.story.sections[name].text || '', true);
             }
         });
 
@@ -75,7 +72,7 @@ export class TextProcessor {
         });
     }
 
-    process(text: string, data: any, inline: boolean) {
+    process(text: string, inline: boolean) {
         const template = this.handlebars.compile(text);
         text = template({});
 
