@@ -259,6 +259,8 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
                 set: set,
                 ui: {
                     transition: ui.transition,
+                    write: ui.write,
+                    scrollToEnd: ui.scrollToEnd,
                 },
                 story: {
                     go: go,
