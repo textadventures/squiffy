@@ -10,13 +10,13 @@ import Sample from "@components/Sample.astro"
 
 By creating labels, you can replace existing output when a link is clicked or when a passage or section is displayed. In the example below, we create a label called "1", and we change the text in that label using a link:
 
-<Sample script="I walked to the shops and I bought {label:1=a pint of milk}.
+<Sample script="I walked to the shops and I bought {{#label &quot;1&quot;}}a pint of milk{{/label}}.
 
     Or maybe [I bought something different?](@replace 1=a loaf of bread)"></Sample>
 
 We can also change the text when a section or passage is displayed:
 
-<Sample script="I walked to the shops and I bought {label:1=a pint of milk}.
+<Sample script="I walked to the shops and I bought {{#label &quot;1&quot;}}a pint of milk{{/label}}.
 
     Or maybe [I bought something different?](next passage)
 
@@ -27,7 +27,7 @@ We can also change the text when a section or passage is displayed:
 
 If the replacement text matches a section or passage name, the contents of that section or passage will be inserted instead.
 
-<Sample script="I walked to the shops and I {label:1=bought a pint of milk}.
+<Sample script="I walked to the shops and I {{#label &quot;1&quot;}}a pint of milk{{/label}}.
 
     But I was [thinking](@replace 1=thoughts)...
 

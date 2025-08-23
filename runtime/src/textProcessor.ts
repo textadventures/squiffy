@@ -47,6 +47,9 @@ export class TextProcessor {
         this.handlebars.registerHelper('lt',  (a,b) => a <  b);
         this.handlebars.registerHelper('gte', (a,b) => a >= b);
         this.handlebars.registerHelper('lte', (a,b) => a <= b);
+        this.handlebars.registerHelper("label", (name: string, options) => {
+            return new Handlebars.SafeString(`<span class="squiffy-label-${name}">${options.fn(this)}</span>`);
+        });
     }
 
     process(text: string, data: any, inline: boolean) {
@@ -115,10 +118,8 @@ export class TextProcessor {
         } else if (/^sequence[: ]/.test(text)) {
             return this.processTextCommand_Rotate('sequence', text);
         } else if (currentSection.passages && text in currentSection.passages) {
-            // TODO: Setting inline=false here for now, to match previous behaviour - but should probably be true
             return this.process(currentSection.passages[text].text || '', data, false);
         } else if (text in this.story.sections) {
-            // TODO: Setting inline=false here for now, to match previous behaviour - but should probably be true
             return this.process(this.story.sections[text].text || '', data, false);
         } else if (startsWith(text, '@') && !startsWith(text, '@replace')) {
             this.processAttributes(text.substring(1).split(","));
@@ -209,7 +210,6 @@ export class TextProcessor {
         } else {
             options = section.substring(type.length + 1);
         }
-        // TODO: Check - previously there was no second parameter here
         const rotation = rotate(options.replace(/"/g, '&quot;').replace(/'/g, '&#39;'), null);
         if (attribute) {
             this.set(attribute, rotation[0]);
