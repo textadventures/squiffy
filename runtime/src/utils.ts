@@ -2,6 +2,7 @@ export function startsWith(string: string, prefix: string) {
     return string.substring(0, prefix.length) === prefix;
 }
 
+// TODO: This should take an array of strings instead of a colon-separated string
 export function rotate(options: string, current: string | null) {
     const colon = options.indexOf(':');
     if (colon == -1) {

@@ -1,24 +1,24 @@
-Choose a number: {rotate:one:two:three}
+Choose a number: {{rotate (array "one" "two" "three")}}
 
 +++OK...
 
-Now {rotate result:four:five:six}
+Now {{rotate (array "four" "five" "six") set="result"}}
 
 +++OK...
 
-You chose {result}.
+You chose {{get "result"}}.
 
-Now for a sequence: {sequence:one:two:three:four:five}.
+Now for a sequence: {{sequence (array "one" "two" "three" "four" "five")}}.
 
 +++And another...
 
-Another sequence: {sequence seqresult:a:b:c:d:e:f:g}.
+Another sequence: {{sequence (array "a" "b" "c" "d" "e" "f" "g") set="seqresult"}}.
 
 +++Finally...
 
-You chose {seqresult}.
+You chose {{get "seqresult"}}.
 
-Here's a sequence that links to another section. {sequence:Ready...:Steady...:[[Go!]]}
+Here's a sequence that links to another section. {{sequence (array "Ready..." "Steady..." (section "Go!"))}}
 
 [[Go!]]:
 

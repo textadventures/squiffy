@@ -44,25 +44,25 @@ If the replacement text matches a section or passage name, the contents of that 
 
 For a text link that replaces itself each time it is clicked:
 
-<Sample script="{rotate:one:two:three}"></Sample>
+<Sample script="{{rotate (array &quot;one&quot; &quot;two&quot; &quot;three&quot;)}}"></Sample>
 
 You can store the result in an attribute:
 
-<Sample script="Please choose: {rotate size:small:medium:large}
+<Sample script="Please choose: {{rotate (array &quot;small&quot; &quot;medium&quot; &quot;large&quot;) set=&quot;size&quot;}}
 
         +++Then continue...
 
-        You chose {size}."></Sample>
+        You chose {{get &quot;size&quot;}}."></Sample>
 
 ## Sequence
 
 If you don't want a rotating list, use a sequence instead. The final option won't be a link.
 
-<Sample script="{sequence:Ready:Steady:Go}"></Sample>
+<Sample script="{{sequence (array &quot;Ready&quot; &quot;Steady&quot; &quot;Go&quot;)}}"></Sample>
 
 As a variation on this, you can use a section link as the final option in a sequence.
 
-<Sample script="{sequence:Click me:Click me again:[[And once more]](next)}
+<Sample script="{{sequence (array &quot;Click me&quot; &quot;Click me again&quot; (section &quot;next&quot; text=&quot;And once more&quot;))}}
 
         [[next]]:
         Done!"></Sample>

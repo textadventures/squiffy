@@ -50,6 +50,31 @@ export class TextProcessor {
         this.handlebars.registerHelper("label", (name: string, options) => {
             return new Handlebars.SafeString(`<span class="squiffy-label-${name}">${options.fn(this)}</span>`);
         });
+        this.handlebars.registerHelper("array", function() {
+            return Array.prototype.slice.call(arguments, 0, -1);
+        });
+
+        const rotateSequence = (type: string, items: string[], options: any) => {
+            const rotation = rotate(items.join(':').replace(/"/g, '&quot;').replace(/'/g, '&#39;'), null);
+            const attribute = options.hash.set as string || '';
+            if (attribute) {
+                this.set(attribute, rotation[0]);
+            }
+            return new Handlebars.SafeString(`<a class="squiffy-link" data-${type}="${rotation[1]}" data-attribute="${attribute}" role="link">${rotation[0]}</a>`);
+        };
+
+        this.handlebars.registerHelper("rotate", (items: string[], options) => rotateSequence("rotate", items, options));
+        this.handlebars.registerHelper("sequence", (items: string[], options) => rotateSequence("sequence", items, options));
+
+        this.handlebars.registerHelper("section", (section: string, options) => {
+            const text = options.hash.text as string || section;
+            return new Handlebars.SafeString(`<a class="squiffy-link link-section" data-section="${section}" role="link" tabindex="0">${text}</a>`);
+        });
+
+        this.handlebars.registerHelper("passage", (passage: string, options) => {
+            const text = options.hash.text as string || passage;
+            return new Handlebars.SafeString(`<a class="squiffy-link link-section" data-passage="${passage}" role="link" tabindex="0">${text}</a>`);
+        });
     }
 
     process(text: string, data: any, inline: boolean) {
