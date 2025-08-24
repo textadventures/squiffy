@@ -1,5 +1,4 @@
 import {HandleLinkResult, PluginHost, SquiffyPlugin} from "../types.plugins.js";
-import {rotate} from "../utils.js";
 import Handlebars from "handlebars";
 
 const rotateSequence = (squiffy: PluginHost, type: string, items: string[], options: any) => {
@@ -28,6 +27,18 @@ const handleLink = (squiffy: PluginHost, link: HTMLElement, isRotate: boolean) =
     }
 
     return result;
+}
+
+// TODO: This should take an array of strings instead of a colon-separated string
+const rotate = (options: string, current: string | null)=> {
+    const colon = options.indexOf(':');
+    if (colon == -1) {
+        return [options, current];
+    }
+    const next = options.substring(0, colon);
+    let remaining = options.substring(colon + 1);
+    if (current) remaining += ':' + current;
+    return [next, remaining];
 }
 
 export const RotateSquencePlugin : SquiffyPlugin = {
