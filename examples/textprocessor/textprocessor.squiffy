@@ -1,3 +1,7 @@
+It's another {{random (array "Monday" "Tuesday" "Wednesday" "Thursday" "Friday" "Saturday" "Sunday")}} in the city.
+
+The weather is {{random (array "sunny" "cloudy" "rainy" "windy" "snowy") set="weather"}}.
+
 Choose a gender:
 
 * [[Male]](start, gender=male)
@@ -11,6 +15,8 @@ You are a man.
 {{else}}
 You are a woman.
 {{/if}}
+
+It's still {{weather}}.
 
 [Next]
 

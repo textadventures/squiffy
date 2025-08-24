@@ -5,6 +5,7 @@ import { State } from "./state.js";
 import { updateStory } from "./updater.js";
 import {PluginManager} from "./pluginManager.js";
 import {RotateSequencePlugin} from "./plugins/rotateSequence.js";
+import {RandomPlugin} from "./plugins/random.js";
 import {LinkHandler} from "./linkHandler.js";
 
 export type { SquiffyApi } from "./types.js"
@@ -441,6 +442,7 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
     linkHandler = new LinkHandler();
     pluginManager = new PluginManager(textProcessor, state, linkHandler);
     pluginManager.add(RotateSequencePlugin);
+    pluginManager.add(RandomPlugin);
     
     begin();
 
