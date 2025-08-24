@@ -27,7 +27,7 @@ export class TextProcessor {
             }
         });
 
-        this.handlebars.registerHelper("seen", (name: string) => this.state.seen(name));
+        this.handlebars.registerHelper("seen", (name: string) => this.state.getSeen(name));
         this.handlebars.registerHelper("get", (attribute: string) => this.state.get(attribute));
         this.handlebars.registerHelper('and', (...args) => args.slice(0,-1).every(Boolean));
         this.handlebars.registerHelper('or',  (...args) => args.slice(0,-1).some(Boolean));

@@ -209,7 +209,7 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
         currentSection = story.sections[sectionName];
         if (!currentSection) return;
         set('_section', sectionName);
-        setSeen(sectionName);
+        state.setSeen(sectionName);
         const master = story.sections[''];
         if (master) {
             run(master);
@@ -255,7 +255,7 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
         if (!passage) {
             throw `No passage named ${passageName} in the current section or master section`;
         }
-        setSeen(passageName);
+        state.setSeen(passageName);
         if (masterSection && masterSection.passages) {
             const masterPassage = masterSection.passages[''];
             if (masterPassage) {
@@ -313,15 +313,6 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
             eval('(' + transition + ')()');
         }
         return true;
-    }
-    
-    function setSeen(sectionName: string) {
-        let seenSections = get('_seen_sections');
-        if (!seenSections) seenSections = [];
-        if (seenSections.indexOf(sectionName) == -1) {
-            seenSections.push(sectionName);
-            set('_seen_sections', seenSections);
-        }
     }
 
     function newBlockOutputElement() {
