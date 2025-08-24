@@ -1,7 +1,5 @@
-type LinkType = 'section' | 'passage' | 'rotate' | 'sequence';
-
 export type SquiffyEventMap = {
-    linkClick: { linkType: LinkType }; // a story link was clicked
+    linkClick: { linkType: string }; // a story link was clicked
 };
 
 export type SquiffyEventHandler<E extends keyof SquiffyEventMap> =

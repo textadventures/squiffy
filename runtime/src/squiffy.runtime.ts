@@ -1,11 +1,11 @@
 import { SquiffyApi, SquiffyInitOptions, SquiffySettings, Story, Section } from './types.js';
-import { rotate } from "./utils.js";
 import { TextProcessor } from './textProcessor.js';
 import { Emitter, SquiffyEventMap } from './events.js';
 import { State } from "./state.js";
 import { updateStory } from "./updater.js";
 import {PluginManager} from "./pluginManager.js";
 import {RotateSquencePlugin} from "./plugins/rotateSequence.js";
+import {LinkHandler} from "./linkHandler.js";
 
 export type { SquiffyApi } from "./types.js"
 
@@ -19,6 +19,7 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
     let settings: SquiffySettings;
     let state: State;
     let textProcessor: TextProcessor;
+    let linkHandler: LinkHandler;
     let pluginManager: PluginManager;
     const emitter = new Emitter<SquiffyEventMap>();
     
@@ -30,9 +31,7 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
 
         let passage = link.getAttribute('data-passage');
         let section = link.getAttribute('data-section');
-        const rotateAttr = link.getAttribute('data-rotate');
-        const sequenceAttr = link.getAttribute('data-sequence');
-        const rotateOrSequenceAttr = rotateAttr || sequenceAttr;
+
         if (passage) {
             disableLink(link);
             set('_turncount', get('_turncount') + 1);
@@ -64,22 +63,17 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
             emitter.emit('linkClick', { linkType: 'section' });
             return true;
         }
+
+        const [handled, type, result] = linkHandler.handleLink(link);
         
-        if (rotateOrSequenceAttr) {
-            const result = rotate(rotateOrSequenceAttr, rotateAttr ? link.innerText : '');
-            link.innerHTML = result[0]!.replace(/&quot;/g, '"').replace(/&#39;/g, '\'');
-            const dataAttribute = rotateAttr ? 'data-rotate' : 'data-sequence';
-            link.setAttribute(dataAttribute, result[1] || '');
-            if (!result[1]) {
+        if (handled) {
+            if (result?.disableLink) {
                 disableLink(link);
             }
-            const attribute = link.getAttribute('data-attribute');
-            if (attribute) {
-                set(attribute, result[0]);
-            }
+
             save();
 
-            emitter.emit('linkClick', { linkType: rotateAttr ? 'rotate' : 'sequence' });
+            emitter.emit('linkClick', { linkType: type });
             return true;
         }
 
@@ -444,7 +438,8 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
     const set = state.set.bind(state);
 
     textProcessor = new TextProcessor(story, state, () => currentSection);
-    pluginManager = new PluginManager(textProcessor, state);
+    linkHandler = new LinkHandler();
+    pluginManager = new PluginManager(textProcessor, state, linkHandler);
     pluginManager.add(RotateSquencePlugin);
     
     begin();
