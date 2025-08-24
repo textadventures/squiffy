@@ -2,6 +2,7 @@ import { SquiffyApi, SquiffyInitOptions, SquiffySettings, Story, Section } from 
 import { startsWith, rotate } from "./utils.js";
 import { TextProcessor } from './textProcessor.js';
 import { Emitter, SquiffyEventMap } from './events.js';
+import { State } from "./state.js";
 
 export type { SquiffyApi } from "./types.js"
 
@@ -13,32 +14,9 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
     let scrollPosition = 0;
     let outputElement: HTMLElement;
     let settings: SquiffySettings;
-    let storageFallback: Record<string, string> = {};
+    let state: State;
     let textProcessor: TextProcessor;
     const emitter = new Emitter<SquiffyEventMap>();
-    
-    function set(attribute: string, value: any) {
-        if (typeof value === 'undefined') value = true;
-        if (settings.persist && window.localStorage) {
-            localStorage[story.id + '-' + attribute] = JSON.stringify(value);
-        }
-        else {
-            storageFallback[attribute] = JSON.stringify(value);
-        }
-        settings.onSet(attribute, value);
-    }
-    
-    function get(attribute: string): any {
-        let result;
-        if (settings.persist && window.localStorage) {
-            result = localStorage[story.id + '-' + attribute];
-        }
-        else {
-            result = storageFallback[attribute];
-        }
-        if (!result) return null;
-        return JSON.parse(result);
-    }
     
     function handleLink(link: HTMLElement): boolean {
         const outputSection = link.closest('.squiffy-output-section');
@@ -307,17 +285,7 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
     }
     
     function restart() {
-        if (settings.persist && window.localStorage && story.id) {
-            const keys = Object.keys(localStorage);
-            for (const key of keys) {
-                if (startsWith(key, story.id)) {
-                    localStorage.removeItem(key);
-                }
-            }
-        }
-        else {
-            storageFallback = {};
-        }
+        state.reset();
         if (settings.scroll === 'element') {
             outputElement.innerHTML = '';
             begin();
@@ -547,6 +515,10 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
         if (event.key !== "Enter") return;
         handleClick(event);
     });
+
+    state = new State(settings.persist, story.id || '', settings.onSet);
+    const get = state.get.bind(state);
+    const set = state.set.bind(state);
 
     textProcessor = new TextProcessor(get, set, story, () => currentSection, seen);
     
