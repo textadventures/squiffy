@@ -1,0 +1,22 @@
+import {SquiffyPlugin} from "../types.plugins.js";
+import Handlebars from "handlebars";
+
+export const LivePlugin : SquiffyPlugin = {
+    name: "live",
+    init(squiffy) {
+        squiffy.registerHelper("live", (attribute: string, options) => {
+            let result = '';
+            const section = options.hash.section as string || '';
+            if (section) {
+                result = squiffy.processText(squiffy.getSectionText(section) || '', true);
+                return new Handlebars.SafeString(`<span class="squiffy-live" data-attribute="${attribute}" data-section="${section}">${result}</span>`);
+            }
+            const passage = options.hash.passage as string || '';
+            if (passage) {
+                result = squiffy.processText(squiffy.getPassageText(passage) || '', true);
+                return new Handlebars.SafeString(`<span class="squiffy-live" data-attribute="${attribute}" data-passage="${passage}">${result}</span>`);
+            }
+            return new Handlebars.SafeString(`<span class="squiffy-live" data-attribute="${attribute}">${squiffy.get(attribute)}</span>`);
+        });
+    }
+}

@@ -1,0 +1,20 @@
+@set count = 0
+
+This is static: {{count}}.
+
+This is live: {{live "count"}}.
+
+And so is this: {{live "count" section="embedded"}}
+
++++Continue
+@inc count
+
+Now count is {{count}}.
+
++++Continue
+@inc count
+
+Now count is {{count}}.
+
+[[embedded]]:
+Text from a section, and count is {{count}}.

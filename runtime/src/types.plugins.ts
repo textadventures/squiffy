@@ -14,4 +14,7 @@ export interface PluginHost {
     registerLinkHandler(type: string, handler: (el: HTMLElement) => HandleLinkResult): void;
     get(attribute: string): any;
     set(attribute: string, value: any): void;
+    getSectionText(name: string): string | null;
+    getPassageText(name: string): string | null;
+    processText: (text: string, inline: boolean) => string;
 }

@@ -6,6 +6,7 @@ import { updateStory } from "./updater.js";
 import {PluginManager} from "./pluginManager.js";
 import {RotateSequencePlugin} from "./plugins/rotateSequence.js";
 import {RandomPlugin} from "./plugins/random.js";
+import {LivePlugin} from "./plugins/live.js";
 import {LinkHandler} from "./linkHandler.js";
 
 export type { SquiffyApi } from "./types.js"
@@ -440,9 +441,27 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
 
     textProcessor = new TextProcessor(story, state, () => currentSection);
     linkHandler = new LinkHandler();
-    pluginManager = new PluginManager(textProcessor, state, linkHandler);
+
+    const getSectionText = (sectionName: string) => {
+        if (sectionName in story.sections) {
+            return story.sections[sectionName].text || null;
+        }
+        return null;
+    }
+
+    const getPassageText = (name: string) => {
+        if (currentSection.passages && name in currentSection.passages) {
+            return currentSection.passages[name].text || null;
+        } else if ('passages' in story.sections[''] && story.sections[''].passages && name in story.sections[''].passages) {
+            return story.sections[''].passages![name].text || null;
+        }
+        return null;
+    }
+
+    pluginManager = new PluginManager(textProcessor, state, linkHandler, getSectionText, getPassageText, ui.processText);
     pluginManager.add(RotateSequencePlugin);
     pluginManager.add(RandomPlugin);
+    pluginManager.add(LivePlugin);
     
     begin();
 
