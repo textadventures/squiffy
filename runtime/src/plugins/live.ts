@@ -20,7 +20,7 @@ export const LivePlugin: SquiffyPlugin = {
         });
 
         squiffy.on('set', e => {
-            const selector = `[data-attribute="${CSS.escape(e.attribute)}"]`;
+            const selector = `.squiffy-live[data-attribute="${CSS.escape(e.attribute)}"]`;
             document.querySelectorAll<HTMLElement>(selector).forEach((el) => {
                 if (el.dataset.section) {
                     const sectionText = squiffy.getSectionText(el.dataset.section);
