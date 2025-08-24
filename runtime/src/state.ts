@@ -4,7 +4,7 @@ export class State {
     persist: boolean;
     storyId: string;
     onSet: (attribute: string, value: any) => void;
-    storageFallback: Record<string, string> = {};
+    store: Record<string, any> = {};
 
     constructor(persist: boolean,
                 storyId: string,
@@ -14,40 +14,57 @@ export class State {
         this.onSet = onSet;
     }
 
+    private usePersistentStorage() {
+        return this.persist && window.localStorage && this.storyId;
+    }
+
     set(attribute: string, value: any) {
         if (typeof value === 'undefined') value = true;
-        if (this.persist && window.localStorage) {
+
+        this.store[attribute] = structuredClone(value);
+
+        if (this.usePersistentStorage()) {
             localStorage[this.storyId + '-' + attribute] = JSON.stringify(value);
         }
-        else {
-            this.storageFallback[attribute] = JSON.stringify(value);
-        }
+
         this.onSet(attribute, value);
     }
 
     get(attribute: string): any {
-        let result;
-        if (this.persist && window.localStorage) {
-            result = localStorage[this.storyId + '-' + attribute];
+        if (attribute in this.store) {
+            return structuredClone(this.store[attribute]);
         }
-        else {
-            result = this.storageFallback[attribute];
+
+        return null;
+    }
+
+    load() {
+        if (!this.usePersistentStorage()) {
+            return;
         }
-        if (!result) return null;
-        return JSON.parse(result);
+
+        const keys = Object.keys(localStorage);
+        for (const key of keys) {
+            if (startsWith(key, this.storyId + '-')) {
+                const attribute = key.substring(this.storyId.length + 1);
+                this.store[attribute] = JSON.parse(localStorage[key]);
+                console.log('Loaded', attribute, this.store[attribute]);
+            }
+        }
     }
 
     reset() {
-        if (this.persist && window.localStorage && this.storyId) {
-            const keys = Object.keys(localStorage);
-            for (const key of keys) {
-                if (startsWith(key, this.storyId)) {
-                    localStorage.removeItem(key);
-                }
-            }
+        this.store = {};
+
+        if (!this.usePersistentStorage()) {
+            return;
         }
-        else {
-            this.storageFallback = {};
+
+        const keys = Object.keys(localStorage);
+        for (const key of keys) {
+            if (startsWith(key, this.storyId)) {
+                localStorage.removeItem(key);
+            }
         }
     }
 

@@ -300,6 +300,7 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
     }
     
     function load() {
+        state.load();
         const output = get('_output');
         if (!output) return false;
         outputElement.innerHTML = output;
