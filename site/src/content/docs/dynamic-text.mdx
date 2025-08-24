@@ -6,7 +6,7 @@ sidebar:
 
 import Sample from "@components/Sample.astro"
 
-## Random text
+## Random
 
 Use the `{{random}}` helper to insert random text. You can provide a list of options using the `array` function.
 To store the result in an attribute, use the `set` option.
@@ -26,7 +26,7 @@ So below, we need to use `{{get "weather"}}` in the same section where we set it
     The weather is still {{weather}}.
 "></Sample>
 
-## Replace text
+## Replace
 
 By creating labels, you can replace existing output when a link is clicked or when a passage or section is displayed. In the example below, we create a label called "1", and we change the text in that label using a link:
 
@@ -86,3 +86,42 @@ As a variation on this, you can use a section link as the final option in a sequ
 
         [[next]]:
         Done!"></Sample>
+
+## Live
+
+Using `{{live}}`, you can change text that is already on-screen when an attribute value changes.
+
+In this example, notice how the static `{{count}}` does not change, but the live `{{live "count"}}` does as the `count` attribute is incremented.
+
+<Sample script="@set count = 0
+
+    This is static: {{count}}.
+
+    This is live: {{live &quot;count&quot;}}.
+
+    +++Continue
+    @inc count
+
+    Now count is {{count}}.
+
+    +++Continue
+    @inc count
+
+    Now count is {{count}}."></Sample>
+
+Here we combine `{{live}}` with `{{rotate}}` to create a button that cycles through options. Instead of simply
+displaying the attribute value, we use the `section` parameter to display text which can itself contain
+further helpers.
+
+<Sample script="Choose a colour: {{rotate (array &quot;red&quot; &quot;green&quot; &quot;blue&quot;) set=&quot;colour&quot;}}
+
+        {{live &quot;colour&quot; section=&quot;colourDescription&quot;}}
+
+        [[colourDescription]]:
+        {{#if (eq colour &quot;red&quot;)}}
+            The colour of fire and blood.
+        {{else if (eq colour &quot;green&quot;)}}
+            The colour of nature and life.
+        {{else if (eq colour &quot;blue&quot;)}}
+            The colour of the sky and the sea.
+        {{/if}}"></Sample>
