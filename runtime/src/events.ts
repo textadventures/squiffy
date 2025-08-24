@@ -28,14 +28,11 @@ export class Emitter<Events extends Record<string, any>> {
     }
 
     emit<E extends keyof Events>(event: E, payload: Events[E]) {
-        // Fire handlers asynchronously so the runtime isn't blocked by user code.
-        queueMicrotask(() => {
-            this.listeners.get(event)?.forEach(h => {
-                try { (h as any)(payload); } catch (err) {
-                    // Swallow so a bad handler doesn't break the game; optionally log.
-                    console.error(`[Squiffy] handler for "${String(event)}" failed`, err);
-                }
-            });
+        this.listeners.get(event)?.forEach(h => {
+            try { (h as any)(payload); } catch (err) {
+                // Swallow so a bad handler doesn't break the game; optionally log.
+                console.error(`[Squiffy] handler for "${String(event)}" failed`, err);
+            }
         });
     }
 }
