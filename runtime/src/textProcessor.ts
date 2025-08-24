@@ -1,25 +1,21 @@
 import * as marked from 'marked';
 import Handlebars from "handlebars";
 import { rotate } from "./utils.js";
-import { Section } from "./types.js";
+import {Section, Story} from "./types.js";
+import {State} from "./state.js";
 
 export class TextProcessor {
-    get: (attribute: string) => any;
-    set: (attribute: string, value: any) => void;
-    story: any;
+    story: Story;
+    state: State;
     getCurrentSection: () => Section;
-    seen: (section: string) => boolean;
     handlebars: typeof Handlebars;
 
-    constructor (get: (attribute: string) => any,
-                 set: (attribute: string, value: any) => void,
-                 story: any, currentSection: () => Section,
-                 seen: (section: string) => boolean) {
-        this.get = get;
-        this.set = set;
+    constructor (story: Story,
+                 state: State,
+                 currentSection: () => Section) {
         this.story = story;
+        this.state = state;
         this.getCurrentSection = currentSection;
-        this.seen = seen;
         this.handlebars = Handlebars.create();
 
         this.handlebars.registerHelper("embed", (name: string) => {
@@ -31,8 +27,8 @@ export class TextProcessor {
             }
         });
 
-        this.handlebars.registerHelper("seen", (name: string) => this.seen(name));
-        this.handlebars.registerHelper("get", (attribute: string) => this.get(attribute));
+        this.handlebars.registerHelper("seen", (name: string) => this.state.seen(name));
+        this.handlebars.registerHelper("get", (attribute: string) => this.state.get(attribute));
         this.handlebars.registerHelper('and', (...args) => args.slice(0,-1).every(Boolean));
         this.handlebars.registerHelper('or',  (...args) => args.slice(0,-1).some(Boolean));
         this.handlebars.registerHelper('not', (v) => !v);
@@ -53,7 +49,7 @@ export class TextProcessor {
             const rotation = rotate(items.join(':').replace(/"/g, '&quot;').replace(/'/g, '&#39;'), null);
             const attribute = options.hash.set as string || '';
             if (attribute) {
-                this.set(attribute, rotation[0]);
+                this.state.set(attribute, rotation[0]);
             }
             return new Handlebars.SafeString(`<a class="squiffy-link" data-${type}="${rotation[1]}" data-attribute="${attribute}" role="link">${rotation[0]}</a>`);
         };

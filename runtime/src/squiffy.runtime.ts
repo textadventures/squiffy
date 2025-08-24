@@ -323,12 +323,6 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
             set('_seen_sections', seenSections);
         }
     }
-    
-    function seen(sectionName: string) {
-        const seenSections = get('_seen_sections');
-        if (!seenSections) return false;
-        return (seenSections.indexOf(sectionName) > -1);
-    }
 
     function newBlockOutputElement() {
         currentBlockOutputElement = document.createElement('div');
@@ -520,7 +514,7 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
     const get = state.get.bind(state);
     const set = state.set.bind(state);
 
-    textProcessor = new TextProcessor(get, set, story, () => currentSection, seen);
+    textProcessor = new TextProcessor(story, state, () => currentSection);
     
     begin();
 

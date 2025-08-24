@@ -50,4 +50,10 @@ export class State {
             this.storageFallback = {};
         }
     }
+
+    seen(sectionName: string) {
+        const seenSections = this.get('_seen_sections');
+        if (!seenSections) return false;
+        return (seenSections.indexOf(sectionName) > -1);
+    }
 }
