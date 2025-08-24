@@ -4,6 +4,7 @@ import {State} from "./state.js";
 import {LinkHandler} from "./linkHandler.js";
 
 export class PluginManager {
+    outputElement: HTMLElement;
     textProcessor: TextProcessor;
     state: State;
     linkHandler: LinkHandler;
@@ -11,12 +12,14 @@ export class PluginManager {
     getPassageText: (name: string) => string | null;
     processText: (text: string, inline: boolean) => string;
 
-    constructor(textProcessor: TextProcessor,
+    constructor(outputElement: HTMLElement,
+                textProcessor: TextProcessor,
                 state: State,
                 linkHandler: LinkHandler,
                 getSectionText: (name: string) => string | null,
                 getPassageText: (name: string) => string | null,
                 processText: (text: string, inline: boolean) => string) {
+        this.outputElement = outputElement;
         this.textProcessor = textProcessor;
         this.state = state;
         this.linkHandler = linkHandler;
@@ -27,6 +30,7 @@ export class PluginManager {
 
     add(plugin: SquiffyPlugin) {
         return plugin.init({
+            outputElement: this.outputElement,
             registerHelper: (name, helper) => {
                 this.textProcessor.handlebars.registerHelper(name, helper);
             },

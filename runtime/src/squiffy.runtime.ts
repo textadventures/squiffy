@@ -458,7 +458,8 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
         return null;
     }
 
-    pluginManager = new PluginManager(textProcessor, state, linkHandler, getSectionText, getPassageText, ui.processText);
+    pluginManager = new PluginManager(outputElement, textProcessor, state, linkHandler,
+        getSectionText, getPassageText, ui.processText);
     pluginManager.add(RotateSequencePlugin);
     pluginManager.add(RandomPlugin);
     pluginManager.add(LivePlugin);

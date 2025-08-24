@@ -10,6 +10,7 @@ export interface HandleLinkResult {
 }
 
 export interface PluginHost {
+    outputElement: HTMLElement;
     registerHelper(name: string, helper: HelperDelegate): void;
     registerLinkHandler(type: string, handler: (el: HTMLElement) => HandleLinkResult): void;
     get(attribute: string): any;
