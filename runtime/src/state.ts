@@ -1,15 +1,20 @@
+import {Emitter, SquiffyEventMap} from "./events.js";
+
 export class State {
     persist: boolean;
     storyId: string;
     onSet: (attribute: string, value: any) => void;
     store: Record<string, any> = {};
+    emitter: Emitter<SquiffyEventMap>;
 
     constructor(persist: boolean,
                 storyId: string,
-                onSet: (attribute: string, value: any) => void) {
+                onSet: (attribute: string, value: any) => void,
+                emitter: Emitter<SquiffyEventMap>) {
         this.persist = persist;
         this.storyId = storyId;
         this.onSet = onSet;
+        this.emitter = emitter;
     }
 
     private usePersistentStorage() {
@@ -25,6 +30,7 @@ export class State {
             localStorage[this.storyId + '-' + attribute] = JSON.stringify(value);
         }
 
+        this.emitter.emit('set', {attribute, value});
         this.onSet(attribute, value);
     }
 

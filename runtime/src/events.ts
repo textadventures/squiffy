@@ -1,5 +1,6 @@
 export type SquiffyEventMap = {
     linkClick: { linkType: string }; // a story link was clicked
+    set: { attribute: string, value: any }; // an attribute was set
 };
 
 export type SquiffyEventHandler<E extends keyof SquiffyEventMap> =

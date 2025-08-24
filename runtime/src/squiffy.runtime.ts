@@ -435,7 +435,7 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
         handleClick(event);
     });
 
-    state = new State(settings.persist, story.id || '', settings.onSet);
+    state = new State(settings.persist, story.id || '', settings.onSet, emitter);
     const get = state.get.bind(state);
     const set = state.set.bind(state);
 
@@ -459,7 +459,7 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
     }
 
     pluginManager = new PluginManager(outputElement, textProcessor, state, linkHandler,
-        getSectionText, getPassageText, ui.processText);
+        getSectionText, getPassageText, ui.processText, emitter);
     pluginManager.add(RotateSequencePlugin);
     pluginManager.add(RandomPlugin);
     pluginManager.add(LivePlugin);

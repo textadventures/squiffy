@@ -2,6 +2,7 @@ import {TextProcessor} from "./textProcessor.js";
 import {SquiffyPlugin} from "./types.plugins.js";
 import {State} from "./state.js";
 import {LinkHandler} from "./linkHandler.js";
+import {Emitter, SquiffyEventMap} from "./events.js";
 
 export class PluginManager {
     outputElement: HTMLElement;
@@ -11,6 +12,7 @@ export class PluginManager {
     getSectionText: (name: string) => string | null;
     getPassageText: (name: string) => string | null;
     processText: (text: string, inline: boolean) => string;
+    emitter: Emitter<SquiffyEventMap>;
 
     constructor(outputElement: HTMLElement,
                 textProcessor: TextProcessor,
@@ -18,7 +20,8 @@ export class PluginManager {
                 linkHandler: LinkHandler,
                 getSectionText: (name: string) => string | null,
                 getPassageText: (name: string) => string | null,
-                processText: (text: string, inline: boolean) => string) {
+                processText: (text: string, inline: boolean) => string,
+                emitter: Emitter<SquiffyEventMap>) {
         this.outputElement = outputElement;
         this.textProcessor = textProcessor;
         this.state = state;
@@ -26,6 +29,7 @@ export class PluginManager {
         this.getSectionText = getSectionText;
         this.getPassageText = getPassageText;
         this.processText = processText;
+        this.emitter = emitter;
     }
 
     add(plugin: SquiffyPlugin) {
@@ -41,7 +45,10 @@ export class PluginManager {
             set: (attribute, value) => this.state.set(attribute, value),
             getSectionText: this.getSectionText,
             getPassageText: this.getPassageText,
-            processText: this.processText
+            processText: this.processText,
+            on: (e, h) => this.emitter.on(e, h),
+            off: (e, h) => this.emitter.off(e, h),
+            once: (e, h) => this.emitter.once(e, h),
         });
     }
 }

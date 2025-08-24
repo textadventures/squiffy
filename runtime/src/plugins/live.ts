@@ -42,5 +42,9 @@ export const LivePlugin: SquiffyPlugin = {
                 });
             }
         }).observe(squiffy.outputElement, {childList: true, subtree: true});
+
+        squiffy.on('set', e => {
+            console.log(`Set...${e.attribute} = ${e.value}`);
+        })
     }
 }

@@ -1,4 +1,5 @@
 import type { HelperDelegate } from "handlebars";
+import {SquiffyEventHandler, SquiffyEventMap} from "./events.js";
 
 export interface SquiffyPlugin {
     name: string;
@@ -18,4 +19,18 @@ export interface PluginHost {
     getSectionText(name: string): string | null;
     getPassageText(name: string): string | null;
     processText: (text: string, inline: boolean) => string;
+    on<E extends keyof SquiffyEventMap>(
+        event: E,
+        handler: SquiffyEventHandler<E>
+    ): () => void; // returns unsubscribe
+
+    off<E extends keyof SquiffyEventMap>(
+        event: E,
+        handler: SquiffyEventHandler<E>
+    ): void;
+
+    once<E extends keyof SquiffyEventMap>(
+        event: E,
+        handler: SquiffyEventHandler<E>
+    ): () => void;
 }
