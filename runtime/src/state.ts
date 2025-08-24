@@ -1,5 +1,3 @@
-import {startsWith} from "./utils.js";
-
 export class State {
     persist: boolean;
     storyId: string;
@@ -45,10 +43,9 @@ export class State {
 
         const keys = Object.keys(localStorage);
         for (const key of keys) {
-            if (startsWith(key, this.storyId + '-')) {
+            if (key.startsWith(this.storyId + '-')) {
                 const attribute = key.substring(this.storyId.length + 1);
                 this.store[attribute] = JSON.parse(localStorage[key]);
-                console.log('Loaded', attribute, this.store[attribute]);
             }
         }
     }
@@ -62,7 +59,7 @@ export class State {
 
         const keys = Object.keys(localStorage);
         for (const key of keys) {
-            if (startsWith(key, this.storyId)) {
+            if (key.startsWith(this.storyId)) {
                 localStorage.removeItem(key);
             }
         }

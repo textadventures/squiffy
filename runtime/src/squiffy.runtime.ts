@@ -1,5 +1,5 @@
 import { SquiffyApi, SquiffyInitOptions, SquiffySettings, Story, Section } from './types.js';
-import { startsWith, rotate } from "./utils.js";
+import { rotate } from "./utils.js";
 import { TextProcessor } from './textProcessor.js';
 import { Emitter, SquiffyEventMap } from './events.js';
 import { State } from "./state.js";
@@ -106,7 +106,7 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
         let target: string | null = null;
         sections.forEach(function (section) {
             section = section.trim();
-            if (startsWith(section, '@replace ')) {
+            if (section.startsWith('@replace ')) {
                 replaceLabel(section.substring(9));
             }
             else {
@@ -130,7 +130,7 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
             const lhs = setMatch[1];
             let rhs = setMatch[2];
             if (isNaN(rhs as any)) {
-                if (startsWith(rhs, "@")) rhs = get(rhs.substring(1));
+                if (rhs.startsWith("@")) rhs = get(rhs.substring(1));
                 set(lhs, rhs);
             }
             else {
@@ -144,7 +144,7 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
                 const lhs = incDecMatch[1];
                 const op = incDecMatch[2];
                 let rhs = incDecMatch[3];
-                if (startsWith(rhs, "@")) rhs = get(rhs.substring(1));
+                if (rhs.startsWith("@")) rhs = get(rhs.substring(1));
                 const rhsNumeric = parseFloat(rhs);
                 let value = get(lhs);
                 if (value === null) value = 0;
@@ -164,7 +164,7 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
             }
             else {
                 let value = true;
-                if (startsWith(expr, 'not ')) {
+                if (expr.startsWith('not ')) {
                     expr = expr.substring(4);
                     value = false;
                 }
@@ -275,7 +275,7 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
     
     function processAttributes(attributes: string[]) {
         attributes.forEach(function (attribute) {
-            if (startsWith(attribute, '@replace ')) {
+            if (attribute.startsWith('@replace ')) {
                 replaceLabel(attribute.substring(9));
             }
             else {
