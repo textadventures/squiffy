@@ -1,6 +1,5 @@
 import * as marked from 'marked';
 import Handlebars from "handlebars";
-import { rotate } from "./utils.js";
 import {Section, Story} from "./types.js";
 import {State} from "./state.js";
 
@@ -44,18 +43,6 @@ export class TextProcessor {
         this.handlebars.registerHelper("array", function() {
             return Array.prototype.slice.call(arguments, 0, -1);
         });
-
-        const rotateSequence = (type: string, items: string[], options: any) => {
-            const rotation = rotate(items.join(':').replace(/"/g, '&quot;').replace(/'/g, '&#39;'), null);
-            const attribute = options.hash.set as string || '';
-            if (attribute) {
-                this.state.set(attribute, rotation[0]);
-            }
-            return new Handlebars.SafeString(`<a class="squiffy-link" data-${type}="${rotation[1]}" data-attribute="${attribute}" role="link">${rotation[0]}</a>`);
-        };
-
-        this.handlebars.registerHelper("rotate", (items: string[], options) => rotateSequence("rotate", items, options));
-        this.handlebars.registerHelper("sequence", (items: string[], options) => rotateSequence("sequence", items, options));
 
         this.handlebars.registerHelper("section", (section: string, options) => {
             const text = options.hash.text as string || section;

@@ -4,6 +4,8 @@ import { TextProcessor } from './textProcessor.js';
 import { Emitter, SquiffyEventMap } from './events.js';
 import { State } from "./state.js";
 import { updateStory } from "./updater.js";
+import {PluginManager} from "./pluginManager.js";
+import {RotateSquencePlugin} from "./plugins/rotateSequence.js";
 
 export type { SquiffyApi } from "./types.js"
 
@@ -17,6 +19,7 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
     let settings: SquiffySettings;
     let state: State;
     let textProcessor: TextProcessor;
+    let pluginManager: PluginManager;
     const emitter = new Emitter<SquiffyEventMap>();
     
     function handleLink(link: HTMLElement): boolean {
@@ -441,6 +444,8 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
     const set = state.set.bind(state);
 
     textProcessor = new TextProcessor(story, state, () => currentSection);
+    pluginManager = new PluginManager(textProcessor, state);
+    pluginManager.add(RotateSquencePlugin);
     
     begin();
 
