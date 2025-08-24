@@ -4,9 +4,9 @@ Choose a gender:
 * [[Female]](start, gender=female)
 
 [[start]]:
-You chose {{get "gender"}}.
+You chose {{gender}}.
 
-{{#if (eq (get "gender") "male")}}
+{{#if (eq gender "male")}}
 You are a man.
 {{else}}
 You are a woman.

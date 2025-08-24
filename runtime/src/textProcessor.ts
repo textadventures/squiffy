@@ -70,7 +70,7 @@ export class TextProcessor {
 
     process(text: string, inline: boolean) {
         const template = this.handlebars.compile(text);
-        text = template({});
+        text = template(this.state.getStore());
 
         if (inline) {
             return marked.parseInline(text, { async: false }).trim();

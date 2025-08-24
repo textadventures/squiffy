@@ -46,10 +46,10 @@ story.sections = {
         }
     },
     "next": {
-        "text": "my_attribute = {{get \\"my_attribute\\"}}\\n\\nAlso, my_string = \\"{{get \\"my_string\\"}}\\"\\n\\nDid you choose a passage link? {{#if (get \\"chose_passage\\")}}yes{{else}}no{{/if}} {{passage \\"unset\\"}}\\n\\nClick some more links: {{passage \\"a\\"}}, {{passage \\"b\\"}}, {{passage \\"c\\"}}, {{passage \\"d\\"}}, {{passage \\"e\\"}} and then click {{section \\"done\\"}}.\\n",
+        "text": "my_attribute = {{my_attribute}}\\n\\nAlso, my_string = \\"{{my_string}}\\"\\n\\nDid you choose a passage link? {{#if chose_passage}}yes{{else}}no{{/if}} {{passage \\"unset\\"}}\\n\\nClick some more links: {{passage \\"a\\"}}, {{passage \\"b\\"}}, {{passage \\"c\\"}}, {{passage \\"d\\"}}, {{passage \\"e\\"}} and then click {{section \\"done\\"}}.\\n",
         "passages": {
             "unset": {
-                "text": "Now the value is: {{#if (get \\"chose_passage\\")}}yes{{else}}no{{/if}}\\n",
+                "text": "Now the value is: {{#if chose_passage}}yes{{else}}no{{/if}}\\n",
                 "attributes": [
                     "not chose_passage"
                 ]
@@ -87,22 +87,22 @@ story.sections = {
         }
     },
     "done": {
-        "text": "You clicked {{get \\"count\\"}} links. What about calling {{passage \\"dec\\"}}?\\n",
+        "text": "You clicked {{count}} links. What about calling {{passage \\"dec\\"}}?\\n",
         "passages": {
             "dec": {
-                "text": "Now count is {{get \\"count\\"}}. You can also {{passage \\"increase\\"}} or {{passage \\"decrease\\"}} by values other than 1.\\n",
+                "text": "Now count is {{count}}. You can also {{passage \\"increase\\"}} or {{passage \\"decrease\\"}} by values other than 1.\\n",
                 "attributes": [
                     "count-=1"
                 ]
             },
             "increase": {
-                "text": "Now count is {{get \\"count\\"}}.\\n",
+                "text": "Now count is {{count}}.\\n",
                 "attributes": [
                     "count+=10"
                 ]
             },
             "decrease": {
-                "text": "Now count is {{get \\"count\\"}}.",
+                "text": "Now count is {{count}}.",
                 "attributes": [
                     "count-=5"
                 ]
@@ -375,13 +375,13 @@ story.sections = {
         "text": "Now {{rotate (array \\"four\\" \\"five\\" \\"six\\") set=\\"result\\"}}\\n\\n{{section \\"_continue2\\" text=\\"OK...\\"}}"
     },
     "_continue2": {
-        "text": "You chose {{get \\"result\\"}}.\\n\\nNow for a sequence: {{sequence (array \\"one\\" \\"two\\" \\"three\\" \\"four\\" \\"five\\")}}.\\n\\n{{section \\"_continue3\\" text=\\"And another...\\"}}"
+        "text": "You chose {{result}}.\\n\\nNow for a sequence: {{sequence (array \\"one\\" \\"two\\" \\"three\\" \\"four\\" \\"five\\")}}.\\n\\n{{section \\"_continue3\\" text=\\"And another...\\"}}"
     },
     "_continue3": {
         "text": "Another sequence: {{sequence (array \\"a\\" \\"b\\" \\"c\\" \\"d\\" \\"e\\" \\"f\\" \\"g\\") set=\\"seqresult\\"}}.\\n\\n{{section \\"_continue4\\" text=\\"Finally...\\"}}"
     },
     "_continue4": {
-        "text": "You chose {{get \\"seqresult\\"}}.\\n\\nHere's a sequence that links to another section. {{sequence (array \\"Ready...\\" \\"Steady...\\" (section \\"Go!\\"))}}\\n"
+        "text": "You chose {{seqresult}}.\\n\\nHere's a sequence that links to another section. {{sequence (array \\"Ready...\\" \\"Steady...\\" (section \\"Go!\\"))}}\\n"
     },
     "Go!": {
         "text": "That's all folks!"
@@ -528,7 +528,7 @@ story.sections = {
         "text": "Choose a gender:\\n\\n* {{section \\"start, gender=male\\" text=\\"Male\\"}}\\n* {{section \\"start, gender=female\\" text=\\"Female\\"}}\\n"
     },
     "start": {
-        "text": "You chose {{get \\"gender\\"}}.\\n\\n{{#if (eq (get \\"gender\\") \\"male\\")}}\\nYou are a man.\\n{{else}}\\nYou are a woman.\\n{{/if}}\\n\\n{{passage \\"Next\\"}}\\n",
+        "text": "You chose {{gender}}.\\n\\n{{#if (eq gender \\"male\\")}}\\nYou are a man.\\n{{else}}\\nYou are a woman.\\n{{/if}}\\n\\n{{passage \\"Next\\"}}\\n",
         "passages": {
             "Next": {
                 "text": "This is a test. {{embed \\"passage\\"}} {{embed \\"section\\"}}\\n"

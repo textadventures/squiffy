@@ -3,7 +3,7 @@ Enter some text in the box:
 <input type="text" data-attribute="name" placeholder="Type here...">
 
 +++Continue...
-You entered: {{get "name"}}.
+You entered: {{name}}.
 
 Now type some more...
 
@@ -11,7 +11,7 @@ Now type some more...
 
 +++Continue...
 
-You entered: {{get "some-text"}}.
+You entered: {{some-text}}.
 
 <div contenteditable="true" data-attribute="some-content">
 This is editable content.
@@ -19,4 +19,4 @@ This is editable content.
 
 +++Continue...
 
-You entered: {{get "some-content"}}.
+You entered: {{some-content}}.

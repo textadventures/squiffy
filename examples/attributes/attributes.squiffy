@@ -27,18 +27,18 @@ Maybe you'd like it to be [4](four) instead? You could try [javascript]. Or you 
 OK. Four it is.
 
 [[next]]:
-my_attribute = {{get "my_attribute"}}
+my_attribute = {{my_attribute}}
 
-Also, my_string = "{{get "my_string"}}"
+Also, my_string = "{{my_string}}"
 
-Did you choose a passage link? {{#if (get "chose_passage")}}yes{{else}}no{{/if}} [unset]
+Did you choose a passage link? {{#if chose_passage}}yes{{else}}no{{/if}} [unset]
 
 Click some more links: [a], [b], [c], [d], [e] and then click [[done]].
 
 [unset]:
 @unset chose_passage
 
-Now the value is: {{#if (get "chose_passage")}}yes{{else}}no{{/if}}
+Now the value is: {{#if chose_passage}}yes{{else}}no{{/if}}
 
 [a]:
 @inc count
@@ -66,16 +66,16 @@ OK...
 OK...
 
 [[done]]:
-You clicked {{get "count"}} links. What about calling [dec]?
+You clicked {{count}} links. What about calling [dec]?
 
 [dec]:
 @dec count
-Now count is {{get "count"}}. You can also [increase] or [decrease] by values other than 1.
+Now count is {{count}}. You can also [increase] or [decrease] by values other than 1.
 
 [increase]:
 @inc count 10
-Now count is {{get "count"}}.
+Now count is {{count}}.
 
 [decrease]:
 @dec count 5
-Now count is {{get "count"}}.
+Now count is {{count}}.

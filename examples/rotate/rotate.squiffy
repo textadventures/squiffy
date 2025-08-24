@@ -6,7 +6,7 @@ Now {{rotate (array "four" "five" "six") set="result"}}
 
 +++OK...
 
-You chose {{get "result"}}.
+You chose {{result}}.
 
 Now for a sequence: {{sequence (array "one" "two" "three" "four" "five")}}.
 
@@ -16,7 +16,7 @@ Another sequence: {{sequence (array "a" "b" "c" "d" "e" "f" "g") set="seqresult"
 
 +++Finally...
 
-You chose {{get "seqresult"}}.
+You chose {{seqresult}}.
 
 Here's a sequence that links to another section. {{sequence (array "Ready..." "Steady..." (section "Go!"))}}
 

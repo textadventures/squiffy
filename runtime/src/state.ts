@@ -36,6 +36,10 @@ export class State {
         return null;
     }
 
+    getStore() {
+        return structuredClone(this.store);
+    }
+
     load() {
         if (!this.usePersistentStorage()) {
             return;
