@@ -1,23 +1,26 @@
 import {HandleLinkResult, PluginHost, SquiffyPlugin} from "../types.plugins.js";
 import Handlebars from "handlebars";
+import type { SafeString } from "handlebars";
 
-const rotateSequence = (squiffy: PluginHost, type: string, items: string[], options: any) => {
-    const rotation = rotate(items.join(':').replace(/"/g, '&quot;').replace(/'/g, '&#39;'), null);
+const rotateSequence = (squiffy: PluginHost, type: string, items: (string | SafeString)[], options: any) => {
+    const stringItems = items.map(i => i.toString());
+    const rotation = rotate(stringItems, null);
     const attribute = options.hash.set as string || '';
     if (attribute) {
         squiffy.set(attribute, rotation[0]);
     }
-    return new Handlebars.SafeString(`<a class="squiffy-link" data-handler="${type}" data-options="${rotation[1]}" data-attribute="${attribute}" role="link">${rotation[0]}</a>`);
+    const optionsString = JSON.stringify(rotation.slice(1)) || '';
+    return new Handlebars.SafeString(`<a class="squiffy-link" data-handler="${type}" data-options='${optionsString}' data-attribute="${attribute}" role="link">${rotation[0]}</a>`);
 };
 
 const handleLink = (squiffy: PluginHost, link: HTMLElement, isRotate: boolean) => {
     const result: HandleLinkResult = {};
-    const options = link.getAttribute('data-options');
+    const options = JSON.parse(link.getAttribute('data-options')) as string[] || [];
 
     const rotateResult = rotate(options, isRotate ? link.innerText : '');
-    link.innerHTML = rotateResult[0]!.replace(/&quot;/g, '"').replace(/&#39;/g, '\'');
+    link.innerHTML = rotateResult[0];
 
-    link.setAttribute('data-options', rotateResult[1] || '');
+    link.setAttribute('data-options', JSON.stringify(rotateResult.slice(1)) || '');
     if (!rotateResult[1]) {
         result.disableLink = true;
     }
@@ -29,24 +32,19 @@ const handleLink = (squiffy: PluginHost, link: HTMLElement, isRotate: boolean) =
     return result;
 }
 
-// TODO: This should take an array of strings instead of a colon-separated string
-const rotate = (options: string, current: string | null)=> {
-    const colon = options.indexOf(':');
-    if (colon == -1) {
-        return [options, current];
-    }
-    const next = options.substring(0, colon);
-    let remaining = options.substring(colon + 1);
-    if (current) remaining += ':' + current;
-    return [next, remaining];
+const rotate = (options: string[], current: string | null): string[] => {
+    const next = options[0]
+    let remaining = options.slice(1);
+    if (current) remaining.push(current);
+    return [next, ...remaining];
 }
 
-export const RotateSquencePlugin : SquiffyPlugin = {
+export const RotateSequencePlugin : SquiffyPlugin = {
     name: "rotateSequence",
     init(squiffy) {
-        squiffy.registerHelper("rotate", (items: string[], options) =>
+        squiffy.registerHelper("rotate", (items: (string | SafeString)[], options) =>
             rotateSequence(squiffy, "rotate", items, options));
-        squiffy.registerHelper("sequence", (items: string[], options) =>
+        squiffy.registerHelper("sequence", (items: (string | SafeString)[], options) =>
             rotateSequence(squiffy, "sequence", items, options));
 
         squiffy.registerLinkHandler("rotate", (link: HTMLElement) => {

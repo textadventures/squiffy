@@ -4,7 +4,7 @@ import { Emitter, SquiffyEventMap } from './events.js';
 import { State } from "./state.js";
 import { updateStory } from "./updater.js";
 import {PluginManager} from "./pluginManager.js";
-import {RotateSquencePlugin} from "./plugins/rotateSequence.js";
+import {RotateSequencePlugin} from "./plugins/rotateSequence.js";
 import {LinkHandler} from "./linkHandler.js";
 
 export type { SquiffyApi } from "./types.js"
@@ -440,7 +440,7 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
     textProcessor = new TextProcessor(story, state, () => currentSection);
     linkHandler = new LinkHandler();
     pluginManager = new PluginManager(textProcessor, state, linkHandler);
-    pluginManager.add(RotateSquencePlugin);
+    pluginManager.add(RotateSequencePlugin);
     
     begin();
 
