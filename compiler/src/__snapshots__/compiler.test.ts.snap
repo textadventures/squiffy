@@ -328,7 +328,7 @@ story.id = "replace.squiffy";
 story.start = "_default";
 story.sections = {
     "_default": {
-        "text": "I {{#label \\"1\\"}}walked{{/label}} to the shops and I bought {{#label \\"2\\"}}a pint of milk{{/label}}.\\n\\nBut then I thought, hang on, I {{passage \\"next, @replace 2=beer\\" text=\\"don't really like milk\\"}}.\\n",
+        "text": "I {{#label \\"1\\"}}walked{{/label}} to the shops and I bought {{#label \\"2\\"}}a pint of milk{{/label}}.\\n\\nBut then I thought, hang on, I {{passage \\"next\\" text=\\"don't really like milk\\" replace=\\"2=beer\\"}}.\\n",
         "passages": {
             "beer": {
                 "text": "a {{passage \\"crate of beer\\"}}\\n"
@@ -337,7 +337,7 @@ story.sections = {
                 "text": "Yes, beer.\\n"
             },
             "next": {
-                "text": "And then I thought, hang on, I {{#label \\"3\\"}}{{passage \\"@replace 1=teleported, @replace 3=love teleporting\\" text=\\"hate walking\\"}}{{/label}}.\\n"
+                "text": "And then I thought, hang on, I {{#label \\"3\\"}}{{passage \\"\\" text=\\"hate walking\\" replace=\\"1=teleported, 3=love teleporting\\"}}{{/label}}.\\n"
             },
             "love teleporting": {
                 "text": "love teleporting, so much I might {{section \\"section2\\" text=\\"embark on a wild and crazy adventure\\"}}\\n"
@@ -525,10 +525,10 @@ story.id = "textprocessor.squiffy";
 story.start = "_default";
 story.sections = {
     "_default": {
-        "text": "Choose a gender:\\n\\n* {{section \\"start, gender=male\\" text=\\"Male\\"}}\\n* {{section \\"start, gender=female\\" text=\\"Female\\"}}\\n"
+        "text": "It's another {{random (array \\"Monday\\" \\"Tuesday\\" \\"Wednesday\\" \\"Thursday\\" \\"Friday\\" \\"Saturday\\" \\"Sunday\\")}} in the city.\\n\\nThe weather is {{random (array \\"sunny\\" \\"cloudy\\" \\"rainy\\" \\"windy\\" \\"snowy\\") set=\\"weather\\"}}.\\n\\nChoose a gender:\\n\\n* {{section \\"start\\" text=\\"Male\\" set=\\"gender=male\\"}}\\n* {{section \\"start\\" text=\\"Female\\" set=\\"gender=female\\"}}\\n"
     },
     "start": {
-        "text": "You chose {{gender}}.\\n\\n{{#if (eq gender \\"male\\")}}\\nYou are a man.\\n{{else}}\\nYou are a woman.\\n{{/if}}\\n\\n{{passage \\"Next\\"}}\\n",
+        "text": "You chose {{gender}}.\\n\\n{{#if (eq gender \\"male\\")}}\\nYou are a man.\\n{{else}}\\nYou are a woman.\\n{{/if}}\\n\\nIt's still {{weather}}.\\n\\n{{passage \\"Next\\"}}\\n",
         "passages": {
             "Next": {
                 "text": "This is a test. {{embed \\"passage\\"}} {{embed \\"section\\"}}\\n"
