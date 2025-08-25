@@ -16,10 +16,9 @@ It's nice and weighty. Perhaps you want to [[hit yourself in the face with it]](
             height: "100%",
             background: "black",
             opacity: "0",              // start transparent
-            pointerEvents: "none",     // don't block clicks while invisible
             transition: "opacity 6s ease-in" // fade duration + easing
         });
-        document.body.appendChild(blackout);
+        squiffy.element.appendChild(blackout);
 
         // Force style recalculation before starting the fade
         requestAnimationFrame(() => {

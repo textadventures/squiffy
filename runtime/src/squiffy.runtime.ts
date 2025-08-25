@@ -17,6 +17,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     let currentBlockOutputElement: HTMLElement;
     let scrollPosition = 0;
     let outputElement: HTMLElement;
+    let outputElementContainer: HTMLElement;
     let settings: SquiffySettings;
     let state: State;
     let textProcessor: TextProcessor;
@@ -228,6 +229,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
                 story: {
                     go: go,
                 },
+                element: outputElementContainer,
             };
             story.js[section.jsIndex](squiffy, get, set);
         }
@@ -398,7 +400,11 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         currentSection = story.sections[sectionName];
     }
 
-    outputElement = options.element;
+    // We create a separate div inside the passed-in element. This allows us to clear the text output, but
+    // without affecting any overlays that may have been added to the container (for transitions).
+    outputElementContainer = options.element;
+    outputElement = document.createElement('div');
+    outputElementContainer.appendChild(outputElement);
     story = options.story;
 
     settings = {
