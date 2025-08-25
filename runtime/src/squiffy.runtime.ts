@@ -11,7 +11,7 @@ import {LinkHandler} from "./linkHandler.js";
 
 export type { SquiffyApi } from "./types.js"
 
-export const init = (options: SquiffyInitOptions): SquiffyApi => {
+export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => {
     let story: Story;
     let currentSection: Section;
     let currentSectionElement: HTMLElement;
@@ -25,7 +25,7 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
     let pluginManager: PluginManager;
     const emitter = new Emitter<SquiffyEventMap>();
     
-    function handleLink(link: HTMLElement): boolean {
+    async function handleLink(link: HTMLElement): Promise<boolean> {
         const outputSection = link.closest('.squiffy-output-section');
         if (outputSection !== currentSectionElement) return false;
 
@@ -37,18 +37,18 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
         if (passage !== null) {
             disableLink(link);
             set('_turncount', get('_turncount') + 1);
-            processLink(link);
+            await processLink(link);
             if (passage) {
                 newBlockOutputElement();
-                showPassage(passage);
+                await showPassage(passage);
             }
             const turnPassage = '@' + get('_turncount');
             if (currentSection.passages) {
                 if (turnPassage in currentSection.passages) {
-                    showPassage(turnPassage);
+                    await showPassage(turnPassage);
                 }
                 if ('@last' in currentSection.passages && get('_turncount') >= (currentSection.passageCount || 0)) {
-                    showPassage('@last');
+                    await showPassage('@last');
                 }
             }
 
@@ -57,9 +57,9 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
         }
         
         if (section !== null) {
-            processLink(link);
+            await processLink(link);
             if (section) {
-                go(section);
+                await go(section);
             }
 
             emitter.emit('linkClick', { linkType: 'section' });
@@ -82,10 +82,10 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
         return false;
     }
 
-    function handleClick(event: Event) {
+    async function handleClick(event: Event) {
         const target = event.target as HTMLElement;
         if (target.classList.contains('squiffy-link')) {
-            handleLink(target);
+            await handleLink(target);
         }
     }
     
@@ -94,26 +94,26 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
         link.setAttribute('tabindex', '-1');
     }
     
-    function begin() {
+    async function begin() {
         if (!load()) {
-            go(story.start);
+            await go(story.start);
         }
     }
     
-    function processLink(link: HTMLElement) {
+    async function processLink(link: HTMLElement) {
         const settersJson = link.getAttribute('data-set');
         if (settersJson) {
             const setters = JSON.parse(settersJson) as string[];
-            setters.forEach(function (attribute) {
+            for (const attribute of setters) {
                 setAttribute(attribute);
-            });
+            }
         }
         const replacementsJson = link.getAttribute('data-replace');
         if (replacementsJson) {
             const replacements = JSON.parse(replacementsJson) as string[];
-            replacements.forEach(function (replacement) {
-                replaceLabel(replacement);
-            });
+            for (const replacement of replacements) {
+                await replaceLabel(replacement);
+            }
         }
     }
     
@@ -168,7 +168,7 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
         }
     }
     
-    function replaceLabel(expr: string) {
+    async function replaceLabel(expr: string) {
         const regex = /^([\w]*)\s*=\s*(.*)$/;
         const match = regex.exec(expr);
         if (!match) return;
@@ -181,24 +181,34 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
             text = story.sections[text].text || '';
         }
 
-        const labelElement = outputElement.querySelector('.squiffy-label-' + label);
+        const labelElement = outputElement.querySelector('.squiffy-label-' + label) as HTMLElement;
         if (!labelElement) return;
-    
-        labelElement.addEventListener('transitionend', function () {
-            labelElement.innerHTML = ui.processText(text, true);
-    
-            labelElement.addEventListener('transitionend', function () {
-                save();
+
+        text = ui.processText(text, true);
+        console.log("Start fade...");
+        await fadeReplace(labelElement, text);
+        console.log("...fade done");
+        save();
+    }
+
+    function fadeReplace(element: HTMLElement, text: string): Promise<void> {
+        return new Promise((resolve) => {
+            element.addEventListener('transitionend', function () {
+                element.innerHTML = text;
+
+                element.addEventListener('transitionend', function () {
+                    resolve();
+                }, { once: true });
+
+                element.classList.remove('fade-out');
+                element.classList.add('fade-in');
             }, { once: true });
-    
-            labelElement.classList.remove('fade-out');
-            labelElement.classList.add('fade-in');
-        }, { once: true });
-    
-        labelElement.classList.add('fade-out');
+
+            element.classList.add('fade-out');
+        });
     }
     
-    function go(sectionName: string) {
+    async function go(sectionName: string) {
         set('_transition', null);
         newSection(sectionName);
         currentSection = story.sections[sectionName];
@@ -207,10 +217,10 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
         state.setSeen(sectionName);
         const master = story.sections[''];
         if (master) {
-            run(master);
+            await run(master);
             ui.write(master.text || '', "[[]]");
         }
-        run(currentSection);
+        await run(currentSection);
         // The JS might have changed which section we're in
         if (get('_section') == sectionName) {
             set('_turncount', 0);
@@ -219,12 +229,12 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
         }
     }
     
-    function run(section: Section) {
+    async function run(section: Section) {
         if (section.clear) {
             ui.clearScreen();
         }
         if (section.attributes) {
-            processAttributes(section.attributes);
+            await processAttributes(section.attributes);
         }
         if (section.jsIndex !== undefined) {
             const squiffy = {
@@ -243,7 +253,7 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
         }
     }
     
-    function showPassage(passageName: string) {
+    async function showPassage(passageName: string) {
         let passage = currentSection.passages && currentSection.passages[passageName];
         const masterSection = story.sections[''];
         if (!passage && masterSection && masterSection.passages) passage = masterSection.passages[passageName];
@@ -254,29 +264,29 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
         if (masterSection && masterSection.passages) {
             const masterPassage = masterSection.passages[''];
             if (masterPassage) {
-                run(masterPassage);
+                await run(masterPassage);
                 ui.write(masterPassage.text || '', `[[]][]`);
             }
         }
         const master = currentSection.passages && currentSection.passages[''];
         if (master) {
-            run(master);
+            await run(master);
             ui.write(master.text || '', `[[${get("_section")}]][]`);
         }
-        run(passage);
+        await run(passage);
         ui.write(passage.text || '', `[[${get("_section")}]][${passageName}]`);
         save();
     }
     
-    function processAttributes(attributes: string[]) {
-        attributes.forEach(function (attribute) {
+    async function processAttributes(attributes: string[]) {
+        for (const attribute of attributes) {
             if (attribute.startsWith('@replace ')) {
-                replaceLabel(attribute.substring(9));
+                await replaceLabel(attribute.substring(9));
             }
             else {
                 setAttribute(attribute);
             }
-        });
+        }
     }
     
     function restart() {
@@ -427,9 +437,9 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
     }
 
     outputElement.addEventListener('click', handleClick);
-    outputElement.addEventListener('keypress', function (event) {
+    outputElement.addEventListener('keypress', async function (event) {
         if (event.key !== "Enter") return;
-        handleClick(event);
+        await handleClick(event);
     });
 
     state = new State(settings.persist, story.id || '', settings.onSet, emitter);
@@ -461,7 +471,7 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
     pluginManager.add(RandomPlugin());
     pluginManager.add(LivePlugin());
     
-    begin();
+    await begin();
 
     return {
         restart: restart,

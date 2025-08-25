@@ -159,7 +159,7 @@ const { script } = Astro.props;
                     const output = document.createElement('div');
                     outputContainer.appendChild(output);
 
-                    squiffyApi = runtimeInit({
+                    squiffyApi = await runtimeInit({
                         element: output,
                         scroll: 'element',
                         persist: false,

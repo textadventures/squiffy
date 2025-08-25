@@ -10,8 +10,8 @@
         import {init} from './squiffy.runtime.js';
         import {story} from './story.js';
 
-        document.addEventListener('DOMContentLoaded', function () {
-            const squiffyApi = init({
+        document.addEventListener('DOMContentLoaded', async function () {
+            const squiffyApi = await init({
                 element: document.getElementById('squiffy'),
                 story: story,
                 persist: true,

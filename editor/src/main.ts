@@ -521,12 +521,12 @@ const compile = async function () {
     }
 
     // TODO: Pass array of errors/warnings as the second parameter
-    onCompileSuccess(result.output, []);
+    await onCompileSuccess(result.output, []);
 
     // TODO: Handle zip request (input.zip previously called "/zip" on server version)
 };
 
-const onCompileSuccess = function (data: Output, msgs: string[]) {
+const onCompileSuccess = async function (data: Output, msgs: string[]) {
     el<HTMLButtonElement>('restart').hidden = false;
 
     showWarnings(msgs);
@@ -539,7 +539,7 @@ const onCompileSuccess = function (data: Output, msgs: string[]) {
     newOutput.id = 'output';
     outputContainer.appendChild(newOutput);
 
-    squiffyApi = runtimeInit({
+    squiffyApi = await runtimeInit({
         element: newOutput,
         scroll: 'element',
         persist: false,
