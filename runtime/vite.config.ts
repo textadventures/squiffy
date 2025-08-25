@@ -17,5 +17,5 @@ export default defineConfig({
             entryRoot: "src",
             outDir: "dist",
         })
-    ]
+    ],
 });

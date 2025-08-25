@@ -20,6 +20,7 @@
   "description": "",
   "devDependencies": {
     "@types/jsdom": "^21.1.7",
+    "css.escape": "^1.5.1",
     "global-jsdom": "^25.0.0",
     "jsdom": "^25.0.0",
     "squiffy-compiler": "^6.0.0-alpha.15",
