@@ -1,6 +1,7 @@
 import {PluginHost, SquiffyPlugin} from "../types.plugins.js";
 import Handlebars from "handlebars";
 import {fadeReplace} from "../utils.js";
+import {SquiffyEventHandler, SquiffyEventMap} from "../events.js";
 
 export function LivePlugin(): SquiffyPlugin {
     let squiffy: PluginHost;
@@ -26,7 +27,7 @@ export function LivePlugin(): SquiffyPlugin {
                 return new Handlebars.SafeString(`<span class="squiffy-live" data-attribute="${attribute}"></span>`);
             });
 
-            squiffy.on('set', async e => {
+            const onSet = async (e: SquiffyEventMap['set']) => {
                 const promises: Promise<void>[] = [];
                 const selector = `.squiffy-live[data-attribute="${CSS.escape(e.attribute)}"]`;
                 for (const el of squiffy.outputElement.querySelectorAll<HTMLElement>(selector)) {
@@ -50,7 +51,12 @@ export function LivePlugin(): SquiffyPlugin {
                     }
                 }
                 await Promise.all(promises);
-            })
+            };
+
+            let setQueue: Promise<void> = Promise.resolve();
+            squiffy.on('set', (e) => {
+                setQueue = setQueue.then(() => onSet(e));
+            });
         },
         onWrite(element: HTMLElement) {
             if (!squiffy) return;
