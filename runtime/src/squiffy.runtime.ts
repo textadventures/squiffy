@@ -190,7 +190,6 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     }
     
     async function go(sectionName: string) {
-        set('_transition', null);
         newSection(sectionName);
         currentSection = story.sections[sectionName];
         if (!currentSection) return;
@@ -218,11 +217,14 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             await processAttributes(section.attributes);
         }
         if (section.jsIndex !== undefined) {
+            const transitions: (() => Promise<void>)[] = [];
             const squiffy = {
                 get: get,
                 set: set,
                 ui: {
-                    transition: ui.transition,
+                    transition: (fn: () => Promise<void>) => {
+                        transitions.push(fn);
+                    },
                     write: ui.write,
                     scrollToEnd: ui.scrollToEnd,
                 },
@@ -232,6 +234,10 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
                 element: outputElementContainer,
             };
             story.js[section.jsIndex](squiffy, get, set);
+
+            for (const transition of transitions) {
+                await transition();
+            }
         }
     }
     
@@ -296,10 +302,6 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         currentBlockOutputElement = outputElement.querySelector('.squiffy-output-block:last-child');
 
         currentSection = story.sections[get('_section')];
-        const transition = get('_transition');
-        if (transition) {
-            eval('(' + transition + ')()');
-        }
         return true;
     }
 
@@ -384,10 +386,6 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         },
         processText: (text: string, inline: boolean) => {
             return textProcessor.process(text, inline);
-        },
-        transition: function (f: any) {
-            set('_transition', f.toString());
-            f();
         },
     };
 

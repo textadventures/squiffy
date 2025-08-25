@@ -5,40 +5,43 @@ It's nice and weighty. Perhaps you want to [[hit yourself in the face with it]](
 
 [[hit]]:
     squiffy.ui.transition(function(){
-        // Create a blackout <div>...
-        const blackout = document.createElement("div");
-        blackout.id = "blackout";
-        Object.assign(blackout.style, {
-            position: "fixed",
-            top: "0",
-            left: "0",
-            width: "100%",
-            height: "100%",
-            background: "black",
-            opacity: "0",              // start transparent
-            transition: "opacity 6s ease-in" // fade duration + easing
+        return new Promise((resolve) => {
+            // Create a blackout <div>...
+            const blackout = document.createElement("div");
+            blackout.id = "blackout";
+            Object.assign(blackout.style, {
+                position: "fixed",
+                top: "0",
+                left: "0",
+                width: "100%",
+                height: "100%",
+                background: "black",
+                opacity: "0",              // start transparent
+                transition: "opacity 6s ease-in" // fade duration + easing
+            });
+            squiffy.element.appendChild(blackout);
+
+            // Force style recalculation before starting the fade
+            requestAnimationFrame(() => {
+                blackout.style.opacity = "1"; // fade in over 6s
+            });
+
+            // After fading it in...
+            setTimeout(() => {
+                // Move to the next section...
+                squiffy.story.go("wake up");
+
+                // Fade out the blackout
+                blackout.style.transition = "opacity 6s ease-in";
+                blackout.style.opacity = "0";
+
+                // Remove <div> after transition ends
+                blackout.addEventListener("transitionend", () => {
+                    blackout.remove();
+                    resolve();
+                }, { once: true });
+            }, 9000);
         });
-        squiffy.element.appendChild(blackout);
-
-        // Force style recalculation before starting the fade
-        requestAnimationFrame(() => {
-            blackout.style.opacity = "1"; // fade in over 6s
-        });
-
-        // After fading it in...
-        setTimeout(() => {
-            // Move to the next section...
-            squiffy.story.go("wake up");
-
-            // Fade out the blackout
-            blackout.style.transition = "opacity 6s ease-in";
-            blackout.style.opacity = "0";
-
-            // Remove <div> after transition ends
-            blackout.addEventListener("transitionend", () => {
-                blackout.remove();
-            }, { once: true });
-        }, 9000);
 	});
 
 Bang.
