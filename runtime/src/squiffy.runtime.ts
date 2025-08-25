@@ -4,9 +4,7 @@ import { Emitter, SquiffyEventMap } from './events.js';
 import { State } from "./state.js";
 import { updateStory } from "./updater.js";
 import {PluginManager} from "./pluginManager.js";
-import {RotateSequencePlugin} from "./plugins/rotateSequence.js";
-import {RandomPlugin} from "./plugins/random.js";
-import {LivePlugin} from "./plugins/live.js";
+import {Plugins} from "./plugins/index.js";
 import {LinkHandler} from "./linkHandler.js";
 
 export type { SquiffyApi } from "./types.js"
@@ -185,9 +183,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         if (!labelElement) return;
 
         text = ui.processText(text, true);
-        console.log("Start fade...");
         await fadeReplace(labelElement, text);
-        console.log("...fade done");
         save();
     }
 
@@ -467,9 +463,9 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
 
     pluginManager = new PluginManager(outputElement, textProcessor, state, linkHandler,
         getSectionText, getPassageText, ui.processText, emitter);
-    pluginManager.add(RotateSequencePlugin());
-    pluginManager.add(RandomPlugin());
-    pluginManager.add(LivePlugin());
+    pluginManager.add(Plugins.RotateSequencePlugin());
+    pluginManager.add(Plugins.RandomPlugin());
+    pluginManager.add(Plugins.LivePlugin());
     
     await begin();
 
