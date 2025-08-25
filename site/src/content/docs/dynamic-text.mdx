@@ -72,7 +72,17 @@ You can store the result in an attribute:
 
         +++Then continue...
 
-        You chose {{get &quot;size&quot;}}."></Sample>
+        You chose {{size}}."></Sample>
+
+You might want the link to display the _next_ option, rather than the current one. Use the `show="next"` option for this:
+
+<Sample script="Current size: {{live &quot;size&quot;}}.
+
+        Change size: {{rotate (array &quot;small&quot; &quot;medium&quot; &quot;large&quot;) set=&quot;size&quot; show=&quot;next&quot;}}
+
+        +++Or pick this one...
+
+        You chose {{size}}."></Sample>
 
 ## Sequence
 
