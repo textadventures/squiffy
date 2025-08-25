@@ -1,0 +1,41 @@
+@set not even
+@set c = 1
+
+Hello.
+
+Choose [[one]](next, t=1, c+=1), [[two]](next, t=2, even=true, c+=1) or [[three]](next, t=3, c+=1).
+
+[[next]]:
+You selected: {{t}}.
+
+{{#if even}}
+You selected an even number.
+{{else}}
+You selected an odd number.
+{{/if}}
+
+c = {{c}}.
+
++++Continue...
+
+Now using helpers...
+
+@set not even
+@set c = 1
+
+Choose
+{{section "next2" text="one" set="t=1, c+=1"}},
+{{section "next2" text="two" set="t=2, even=true, c+=1"}}
+or
+{{section "next2" text="three" set="t=3, c+=1"}}
+
+[[next2]]:
+You selected: {{t}}.
+
+{{#if even}}
+You selected an even number.
+{{else}}
+You selected an odd number.
+{{/if}}
+
+c = {{c}}.

@@ -37,7 +37,7 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
         if (passage) {
             disableLink(link);
             set('_turncount', get('_turncount') + 1);
-            passage = processLink(passage);
+            processLink(link);
             if (passage) {
                 newBlockOutputElement();
                 showPassage(passage);
@@ -57,7 +57,7 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
         }
         
         if (section) {
-            section = processLink(section);
+            processLink(link);
             if (section) {
                 go(section);
             }
@@ -100,26 +100,21 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
         }
     }
     
-    function processLink(link: string): string | null {
-        const sections = link.split(',');
-        let first = true;
-        let target: string | null = null;
-        sections.forEach(function (section) {
-            section = section.trim();
-            if (section.startsWith('@replace ')) {
-                replaceLabel(section.substring(9));
-            }
-            else {
-                if (first) {
-                    target = section;
-                }
-                else {
-                    setAttribute(section);
-                }
-            }
-            first = false;
-        });
-        return target;
+    function processLink(link: HTMLElement) {
+        const settersJson = link.getAttribute('data-set');
+        if (settersJson) {
+            const setters = JSON.parse(settersJson) as string[];
+            setters.forEach(function (attribute) {
+                setAttribute(attribute);
+            });
+        }
+        const replacementsJson = link.getAttribute('data-replace');
+        if (replacementsJson) {
+            const replacements = JSON.parse(replacementsJson) as string[];
+            replacements.forEach(function (replacement) {
+                replaceLabel(replacement);
+            });
+        }
     }
     
     function setAttribute(expr: string) {

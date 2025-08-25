@@ -325,6 +325,49 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         return section;
     };
 
+    function extractLinkFunctions(link: string): { target: string, setters: string, replacements: string } {
+        const setters: string[] = [];
+        const replacements: string[] = [];
+        const fragments = link.split(',');
+        let first = true;
+        let target: string | null = null;
+        fragments.forEach(function (fragment) {
+            fragment = fragment.trim();
+            if (fragment.startsWith('@replace ')) {
+                replacements.push(fragment.substring(9));
+            }
+            else {
+                if (first) {
+                    target = fragment;
+                }
+                else {
+                    setters.push(fragment);
+                }
+            }
+            first = false;
+        });
+        return {
+            target: target || '',
+            setters: setters.join(', '),
+            replacements: replacements.join(', ')
+        };
+    }
+
+    function getAdditionalLinkParameters(link: string): { target: string, additionalParameters: string } {
+        const functions = extractLinkFunctions(link);
+        let additionalParameters = '';
+        if (functions.setters.length > 0) {
+            additionalParameters += ` set="${functions.setters}"`;
+        }
+        if (functions.replacements.length > 0) {
+            additionalParameters += ` replace="${functions.replacements}"`;
+        }
+        return {
+            target: functions.target,
+            additionalParameters
+        };
+    }
+
     async function processText(input: string, section: Section, passage: Passage | null) {
         // namedSectionLinkRegex matches:
         //   open [[
@@ -338,7 +381,10 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         var links = allMatchesForGroup(input, namedSectionLinkRegex, 2);
         checkSectionLinks(links, section, passage);
 
-        input = input.replace(namedSectionLinkRegex, '{{section "$2" text="$1"}}');
+        input = input.replace(namedSectionLinkRegex, (_match, text /* $1 */, name/* $2 */) => {
+            const parsedName = getAdditionalLinkParameters(name);
+            return `{{section "${parsedName.target}" text="${text}"${parsedName.additionalParameters}}}`;
+        });
 
         // namedPassageLinkRegex matches:
         //   open [
@@ -352,7 +398,10 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         links = allMatchesForGroup(input, namedPassageLinkRegex, 2);
         checkPassageLinks(links, section, passage);
 
-        input = input.replace(namedPassageLinkRegex, '{{passage "$2" text="$1"}}');
+        input = input.replace(namedPassageLinkRegex, (_match, text /* $1 */, name/* $2 */) => {
+            const parsedName = getAdditionalLinkParameters(name);
+            return `{{passage "${parsedName.target}" text="${text}"${parsedName.additionalParameters}}}`;
+        });
 
         // unnamedSectionLinkRegex matches:
         //   open [[
