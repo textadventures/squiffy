@@ -1,5 +1,6 @@
 import {PluginHost, SquiffyPlugin} from "../types.plugins.js";
 import Handlebars from "handlebars";
+import {fadeReplace} from "../utils.js";
 
 export function LivePlugin(): SquiffyPlugin {
     let squiffy: PluginHost;
@@ -25,23 +26,30 @@ export function LivePlugin(): SquiffyPlugin {
                 return new Handlebars.SafeString(`<span class="squiffy-live" data-attribute="${attribute}"></span>`);
             });
 
-            squiffy.on('set', e => {
+            squiffy.on('set', async e => {
+                const promises: Promise<void>[] = [];
                 const selector = `.squiffy-live[data-attribute="${CSS.escape(e.attribute)}"]`;
-                squiffy.outputElement.querySelectorAll<HTMLElement>(selector).forEach((el) => {
+                for (const el of squiffy.outputElement.querySelectorAll<HTMLElement>(selector)) {
+                    const oldContent = el.innerHTML;
+                    let newContent = '';
                     if (el.dataset.section) {
                         const sectionText = squiffy.getSectionText(el.dataset.section);
                         if (sectionText) {
-                            el.innerHTML = squiffy.processText(sectionText, true);
+                            newContent = squiffy.processText(sectionText, true);
                         }
                     } else if (el.dataset.passage) {
                         const passageText = squiffy.getPassageText(el.dataset.passage);
                         if (passageText) {
-                            el.innerHTML = squiffy.processText(passageText, true);
+                            newContent = squiffy.processText(passageText, true);
                         }
                     } else {
-                        el.textContent = e.value;
+                        newContent = e.value;
                     }
-                });
+                    if (oldContent !== newContent) {
+                        promises.push(fadeReplace(el, newContent));
+                    }
+                }
+                await Promise.all(promises);
             })
         },
         onWrite(element: HTMLElement) {

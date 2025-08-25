@@ -6,6 +6,7 @@ import { updateStory } from "./updater.js";
 import {PluginManager} from "./pluginManager.js";
 import {Plugins} from "./plugins/index.js";
 import {LinkHandler} from "./linkHandler.js";
+import {fadeReplace} from "./utils.js";
 
 export type { SquiffyApi } from "./types.js"
 
@@ -185,23 +186,6 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         text = ui.processText(text, true);
         await fadeReplace(labelElement, text);
         save();
-    }
-
-    function fadeReplace(element: HTMLElement, text: string): Promise<void> {
-        return new Promise((resolve) => {
-            element.addEventListener('transitionend', function () {
-                element.innerHTML = text;
-
-                element.addEventListener('transitionend', function () {
-                    resolve();
-                }, { once: true });
-
-                element.classList.remove('fade-out');
-                element.classList.add('fade-in');
-            }, { once: true });
-
-            element.classList.add('fade-out');
-        });
     }
     
     async function go(sectionName: string) {
