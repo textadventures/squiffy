@@ -169,6 +169,8 @@ const { script } = Astro.props;
                         }
                     });
 
+                    await squiffyApi.begin();
+
                     const showRestartOnLinkClick = () => {
                         squiffyApi?.once('linkClick', () => {
                             restartButton.classList.remove('hidden');

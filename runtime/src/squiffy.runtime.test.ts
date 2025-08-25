@@ -52,6 +52,8 @@ const initScript = async (script: string) => {
         story: compileResult.story,
     });
 
+    await squiffyApi.begin();
+
     return {
         squiffyApi,
         element

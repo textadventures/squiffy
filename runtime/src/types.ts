@@ -15,6 +15,7 @@ export interface SquiffySettings {
 }
 
 export interface SquiffyApi {
+    begin: () => Promise<void>;
     restart: () => void;
     get: (attribute: string) => any;
     set: (attribute: string, value: any) => void;

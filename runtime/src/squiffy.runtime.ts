@@ -466,10 +466,9 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     pluginManager.add(Plugins.RotateSequencePlugin());
     pluginManager.add(Plugins.RandomPlugin());
     pluginManager.add(Plugins.LivePlugin());
-    
-    await begin();
 
     return {
+        begin: begin,
         restart: restart,
         get: get,
         set: set,

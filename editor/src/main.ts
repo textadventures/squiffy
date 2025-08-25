@@ -549,6 +549,8 @@ const onCompileSuccess = async function (data: Output, msgs: string[]) {
             ...data.story,
         },
     });
+
+    await squiffyApi.begin();
 };
 
 // fail: function (data: string, msgs: string[]) {
