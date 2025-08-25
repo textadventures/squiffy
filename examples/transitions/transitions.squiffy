@@ -4,45 +4,43 @@ You are standing in a room. You can see a [hammer].
 It's nice and weighty. Perhaps you want to [[hit yourself in the face with it]](hit)?
 
 [[hit]]:
+    squiffy.ui.transition(function(){
+        // Create a blackout <div>...
+        const blackout = document.createElement("div");
+        blackout.id = "blackout";
+        Object.assign(blackout.style, {
+            position: "fixed",
+            top: "0",
+            left: "0",
+            width: "100%",
+            height: "100%",
+            background: "black",
+            opacity: "0",              // start transparent
+            pointerEvents: "none",     // don't block clicks while invisible
+            transition: "opacity 6s ease-in" // fade duration + easing
+        });
+        document.body.appendChild(blackout);
 
-	squiffy.ui.transition(function(){
-		// Create a blackout <div>...
-		$("<div/>", {
-			id: "blackout"
-		}).css({
-			position: "fixed",
-			top: 0,
-			left: 0,
-			width: "100%",
-			height: "100%",
-			background: "black",
-			display: "none"
-		}).appendTo("body");
+        // Force style recalculation before starting the fade
+        requestAnimationFrame(() => {
+            blackout.style.opacity = "1"; // fade in over 6s
+        });
 
-		// Fade it in over 6 seconds...
-		$("#blackout").fadeIn({
-			duration: 6000,
-			easing: "easeInQuad",
-		});
+        // After fading it in...
+        setTimeout(() => {
+            // Move to the next section...
+            squiffy.story.go("wake up");
 
-		// After fading it in...
-		setTimeout(function () {
+            // Fade out the blackout
+            blackout.style.transition = "opacity 6s ease-in";
+            blackout.style.opacity = "0";
 
-			// Move to the next section...
-			squiffy.story.go("wake up");
-
-			// Fade out the blackout and remove the <div>...
-			$("#blackout").fadeOut({
-				duration: 6000,
-				easing: "easeInQuad",
-				complete: function() {
-					$(this).remove();
-				}
-			});
-		}, 9000);
+            // Remove <div> after transition ends
+            blackout.addEventListener("transitionend", () => {
+                blackout.remove();
+            }, { once: true });
+        }, 9000);
 	});
-
-	
 
 Bang.
 
