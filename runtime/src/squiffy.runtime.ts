@@ -197,19 +197,17 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         state.setSeen(sectionName);
         const master = story.sections[''];
         if (master) {
-            await run(master);
-            ui.write(master.text || '', "[[]]");
+            await run(master, "[[]]");
         }
-        await run(currentSection);
+        await run(currentSection, `[[${sectionName}]]`);
         // The JS might have changed which section we're in
         if (get('_section') == sectionName) {
             set('_turncount', 0);
-            ui.write(currentSection.text || '', `[[${sectionName}]]`);
             save();
         }
     }
     
-    async function run(section: Section) {
+    async function run(section: Section, source: string) {
         if (section.clear) {
             ui.clearScreen();
         }
@@ -235,9 +233,14 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             };
             story.js[section.jsIndex](squiffy, get, set);
 
+            ui.write(section.text || '', source);
+
             for (const transition of transitions) {
                 await transition();
             }
+        }
+        else {
+            ui.write(section.text || '', source);
         }
     }
     
@@ -252,17 +255,14 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         if (masterSection && masterSection.passages) {
             const masterPassage = masterSection.passages[''];
             if (masterPassage) {
-                await run(masterPassage);
-                ui.write(masterPassage.text || '', `[[]][]`);
+                await run(masterPassage, `[[]][]`);
             }
         }
         const master = currentSection.passages && currentSection.passages[''];
         if (master) {
-            await run(master);
-            ui.write(master.text || '', `[[${get("_section")}]][]`);
+            await run(master, `[[${get("_section")}]][]`);
         }
-        await run(passage);
-        ui.write(passage.text || '', `[[${get("_section")}]][${passageName}]`);
+        await run(passage, `[[${get("_section")}]][${passageName}]`);
         save();
     }
     
@@ -289,6 +289,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     }
     
     function save() {
+        // TODO: Queue up all attribute changes and save them only when this is called
         set('_output', outputElement.innerHTML);
     }
     
