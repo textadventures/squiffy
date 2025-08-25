@@ -7,23 +7,25 @@ export function LivePlugin(): SquiffyPlugin {
         name: "live",
         init(sq: PluginHost) {
             squiffy = sq;
+
+            // No need to render the attribute value (or section or passage contents) here - this
+            // is handled by onWrite, so that we pick up any attribute values set in the same passage.
+            // TODO: We could mark values as "pending", then in onWrite we could iteratively resolve
+            // any that are still pending. That would let us pick up {{live}} helpers inside embed
+            // live sections/passages.
             squiffy.registerHelper("live", (attribute: string, options) => {
-                let result = '';
                 const section = options.hash.section as string || '';
                 if (section) {
-                    result = squiffy.processText(squiffy.getSectionText(section) || '', true);
-                    return new Handlebars.SafeString(`<span class="squiffy-live" data-attribute="${attribute}" data-section="${section}">${result}</span>`);
+                    return new Handlebars.SafeString(`<span class="squiffy-live" data-attribute="${attribute}" data-section="${section}"></span>`);
                 }
                 const passage = options.hash.passage as string || '';
                 if (passage) {
-                    result = squiffy.processText(squiffy.getPassageText(passage) || '', true);
-                    return new Handlebars.SafeString(`<span class="squiffy-live" data-attribute="${attribute}" data-passage="${passage}">${result}</span>`);
+                    return new Handlebars.SafeString(`<span class="squiffy-live" data-attribute="${attribute}" data-passage="${passage}"></span>`);
                 }
-                return new Handlebars.SafeString(`<span class="squiffy-live" data-attribute="${attribute}">${squiffy.get(attribute)}</span>`);
+                return new Handlebars.SafeString(`<span class="squiffy-live" data-attribute="${attribute}"></span>`);
             });
 
             squiffy.on('set', e => {
-                console.log(e.attribute, squiffy.outputElement);
                 const selector = `.squiffy-live[data-attribute="${CSS.escape(e.attribute)}"]`;
                 squiffy.outputElement.querySelectorAll<HTMLElement>(selector).forEach((el) => {
                     if (el.dataset.section) {
