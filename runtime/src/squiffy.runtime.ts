@@ -366,8 +366,10 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
             if (source) {
                 div.setAttribute('data-source', source);
             }
-            currentBlockOutputElement.appendChild(div);
+
             div.innerHTML = ui.processText(text, false);
+            pluginManager.onWrite(div);
+            currentBlockOutputElement.appendChild(div);
     
             ui.scrollToEnd();
         },
@@ -460,9 +462,9 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
 
     pluginManager = new PluginManager(outputElement, textProcessor, state, linkHandler,
         getSectionText, getPassageText, ui.processText, emitter);
-    pluginManager.add(RotateSequencePlugin);
-    pluginManager.add(RandomPlugin);
-    pluginManager.add(LivePlugin);
+    pluginManager.add(RotateSequencePlugin());
+    pluginManager.add(RandomPlugin());
+    pluginManager.add(LivePlugin());
     
     begin();
 

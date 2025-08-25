@@ -4,6 +4,7 @@ import {SquiffyEventHandler, SquiffyEventMap} from "./events.js";
 export interface SquiffyPlugin {
     name: string;
     init(host: PluginHost): void | Promise<void>;
+    onWrite?(el: HTMLElement): void;
 }
 
 export interface HandleLinkResult {

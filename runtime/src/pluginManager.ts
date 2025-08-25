@@ -13,6 +13,7 @@ export class PluginManager {
     getPassageText: (name: string) => string | null;
     processText: (text: string, inline: boolean) => string;
     emitter: Emitter<SquiffyEventMap>;
+    plugins: SquiffyPlugin[] = [];
 
     constructor(outputElement: HTMLElement,
                 textProcessor: TextProcessor,
@@ -33,7 +34,7 @@ export class PluginManager {
     }
 
     add(plugin: SquiffyPlugin) {
-        return plugin.init({
+        const instance = plugin.init({
             outputElement: this.outputElement,
             registerHelper: (name, helper) => {
                 this.textProcessor.handlebars.registerHelper(name, helper);
@@ -50,5 +51,11 @@ export class PluginManager {
             off: (e, h) => this.emitter.off(e, h),
             once: (e, h) => this.emitter.once(e, h),
         });
+        this.plugins.push(plugin);
+        return instance;
+    }
+
+    onWrite(el: HTMLElement) {
+        this.plugins.forEach(p => p.onWrite?.(el));
     }
 }
