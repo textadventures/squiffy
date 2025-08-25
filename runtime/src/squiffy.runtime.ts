@@ -34,7 +34,7 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
         let passage = link.getAttribute('data-passage');
         let section = link.getAttribute('data-section');
 
-        if (passage) {
+        if (passage !== null) {
             disableLink(link);
             set('_turncount', get('_turncount') + 1);
             processLink(link);
@@ -56,7 +56,7 @@ export const init = (options: SquiffyInitOptions): SquiffyApi => {
             return true;
         }
         
-        if (section) {
+        if (section !== null) {
             processLink(link);
             if (section) {
                 go(section);
