@@ -23,6 +23,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     let linkHandler: LinkHandler;
     let pluginManager: PluginManager;
     const emitter = new Emitter<SquiffyEventMap>();
+    const transitions: (() => Promise<void>)[] = [];
     
     async function handleLink(link: HTMLElement): Promise<boolean> {
         const outputSection = link.closest('.squiffy-output-section');
@@ -179,6 +180,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     }
     
     async function run(section: Section, source: string) {
+        transitions.length = 0;
         if (section.clear) {
             ui.clearScreen();
         }
@@ -186,14 +188,11 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             await processAttributes(section.attributes);
         }
         if (section.jsIndex !== undefined) {
-            const transitions: (() => Promise<void>)[] = [];
             const squiffy = {
                 get: get,
                 set: set,
                 ui: {
-                    transition: (fn: () => Promise<void>) => {
-                        transitions.push(fn);
-                    },
+                    transition: addTransition,
                     write: ui.write,
                     scrollToEnd: ui.scrollToEnd,
                 },
@@ -203,15 +202,12 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
                 element: outputElementContainer,
             };
             story.js[section.jsIndex](squiffy, get, set);
-
-            ui.write(section.text || '', source);
-
-            for (const transition of transitions) {
-                await transition();
-            }
         }
-        else {
-            ui.write(section.text || '', source);
+
+        ui.write(section.text || '', source);
+
+        for (const transition of transitions) {
+            await transition();
         }
     }
     
@@ -416,8 +412,13 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         return null;
     }
 
+    const addTransition = (fn: () => Promise<void>) => {
+        transitions.push(fn);
+    };
+
     pluginManager = new PluginManager(outputElement, textProcessor, state, linkHandler,
-        getSectionText, getPassageText, ui.processText, emitter);
+        getSectionText, getPassageText, ui.processText, addTransition, emitter);
+    pluginManager.add(Plugins.ReplaceLabel());
     pluginManager.add(Plugins.RotateSequencePlugin());
     pluginManager.add(Plugins.RandomPlugin());
     pluginManager.add(Plugins.LivePlugin());

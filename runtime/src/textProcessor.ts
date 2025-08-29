@@ -37,9 +37,6 @@ export class TextProcessor {
         this.handlebars.registerHelper('lt',  (a,b) => a <  b);
         this.handlebars.registerHelper('gte', (a,b) => a >= b);
         this.handlebars.registerHelper('lte', (a,b) => a <= b);
-        this.handlebars.registerHelper("label", (name: string, options) => {
-            return new Handlebars.SafeString(`<span class="squiffy-label-${name}">${options.fn(this)}</span>`);
-        });
         this.handlebars.registerHelper("array", function() {
             return Array.prototype.slice.call(arguments, 0, -1);
         });

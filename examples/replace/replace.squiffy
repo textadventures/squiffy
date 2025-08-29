@@ -3,21 +3,15 @@ I {{#label "1"}}walked{{/label}} to the shops and I bought {{#label "2"}}a pint 
 But then I thought, hang on, I [don't really like milk](next).
 
 [next]:
-{{#replace "2"}}a [crate of beer]{{/replace}}.
+{{#replace "2"}}a [crate of beer]{{/replace}}
 And then I thought, hang on, I {{#label "3"}}[hate walking]{{/label}}.
-
-[beer]:
-a [crate of beer]
 
 [crate of beer]:
 Yes, beer.
 
-[love teleporting]:
-love teleporting, so much I might [[embark on a wild and crazy adventure]](section2)
-
 [hate walking]:
 {{#replace "1"}}teleported{{/replace}}
-{{#replace "3"}}love teleporting{{/replace}}
+{{#replace "3"}}love teleporting, so much I might [[embark on a wild and crazy adventure]](section2){{/replace}}
 
 [[section2]]:
 And so it {{#label "4"}}began...{{/label}}
@@ -25,7 +19,7 @@ And so it {{#label "4"}}began...{{/label}}
 [[Or did it?]](section3)
 
 [[section3]]:
-{#replace "4"}}ended [abruptly].{{/replace}}
+{{#replace "4"}}ended [abruptly].{{/replace}}
 Oh well.
 
 [abruptly]:

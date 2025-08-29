@@ -20,6 +20,7 @@ export interface PluginHost {
     getSectionText(name: string): string | null;
     getPassageText(name: string): string | null;
     processText: (text: string, inline: boolean) => string;
+    addTransition: (fn: () => Promise<void>) => void;
     on<E extends keyof SquiffyEventMap>(
         event: E,
         handler: SquiffyEventHandler<E>
