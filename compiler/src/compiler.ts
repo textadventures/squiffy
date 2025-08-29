@@ -163,7 +163,6 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         unset: /^@unset (.*)$/,
         inc: /^@inc (\S+)(?: (\d+))?$/,
         dec: /^@dec (\S+)(?: (\d+))?$/,
-        replace: /^@replace (.*$)/,
         js: /^(\t| {4})(.*)$/,
         continue: /^\+\+\+(.*)$/,
     };
@@ -263,19 +262,6 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
                 section = ensureThisSectionExists();
                 section = addAttribute(match.dec[1] + '-=' + (match.dec[2] === undefined ? '1' : match.dec[2]), section, passage, isFirst, inputFilename, lineCount);
             }
-            else if (match.replace) {
-                const thisSection = ensureThisSectionExists();
-                const thisPassage = passage;
-                var replaceAttribute = match.replace[1];
-                var attributeMatch = /^(.*?)=(.*)$/.exec(replaceAttribute);
-                secondPass.push(async () => {
-                    // add this to secondPass functions, because processText might result in links to passages which have not been created yet
-                    if (attributeMatch) {
-                        replaceAttribute = attributeMatch[1] + '=' + await processText(attributeMatch[2], thisSection, null);
-                    }
-                    addAttribute('@replace ' + replaceAttribute, section!, thisPassage, isFirst, inputFilename, lineCount);
-                });
-            }
             else if (!textStarted && match.js) {
                 if (!passage) {
                     section = ensureThisSectionExists();
@@ -325,31 +311,11 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         return section;
     };
 
-    function extractLinkFunctions(link: string): { target: string, setters: string, replacements: string } {
-        const setters: string[] = [];
-        const replacements: string[] = [];
+    function extractLinkFunctions(link: string): { target: string, setters: string } {
         const fragments = link.split(',');
-        let first = true;
-        let target: string | null = null;
-        fragments.forEach(function (fragment) {
-            fragment = fragment.trim();
-            if (fragment.startsWith('@replace ')) {
-                replacements.push(fragment.substring(9));
-            }
-            else {
-                if (first) {
-                    target = fragment;
-                }
-                else {
-                    setters.push(fragment);
-                }
-            }
-            first = false;
-        });
         return {
-            target: target || '',
-            setters: setters.join(', '),
-            replacements: replacements.join(', ')
+            target: fragments[0].trim(),
+            setters: fragments.slice(1).join(', ')
         };
     }
 
@@ -358,9 +324,6 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         let additionalParameters = '';
         if (functions.setters.length > 0) {
             additionalParameters += ` set="${functions.setters}"`;
-        }
-        if (functions.replacements.length > 0) {
-            additionalParameters += ` replace="${functions.replacements}"`;
         }
         return {
             target: functions.target,
@@ -452,14 +415,9 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         // Link destination data may look like:
         //   passageName
         //   passageName, my_attribute=2
-        //   passageName, @replace 1=new text, some_attribute=5
-        //   @replace 2=some words
         // We're only interested in checking if the named passage or section exists.
 
         var linkDestination = link.split(',')[0];
-        if (linkDestination.substring(0, 1) == '@') {
-            return true;
-        }
         return Object.keys(keys).includes(linkDestination);
     };
 
