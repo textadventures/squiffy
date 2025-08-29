@@ -39,7 +39,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             set('_turncount', get('_turncount') + 1);
             await processLink(link);
             if (passage) {
-                newBlockOutputElement();
+                currentBlockOutputElement = null;
                 await showPassage(passage);
             }
             const turnPassage = '@' + get('_turncount');
@@ -311,19 +311,25 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     
     const ui = {
         write: (text: string, source: string) => {
-            if (!currentBlockOutputElement) return;
             scrollPosition = outputElement.scrollHeight;
-    
-            const div = document.createElement('div');
-            if (source) {
-                div.setAttribute('data-source', source);
-            }
 
-            div.innerHTML = ui.processText(text, false);
-            pluginManager.onWrite(div);
-            currentBlockOutputElement.appendChild(div);
-    
-            ui.scrollToEnd();
+            const html = ui.processText(text, false).trim();
+
+            if (html.length > 0) {
+                if (!currentBlockOutputElement) {
+                    newBlockOutputElement();
+                }
+
+                const div = document.createElement('div');
+                if (source) {
+                    div.setAttribute('data-source', source);
+                }
+
+                div.innerHTML = html;
+                pluginManager.onWrite(div);
+                currentBlockOutputElement.appendChild(div);
+                ui.scrollToEnd();
+            }
         },
         clearScreen: () => {
             outputElement.innerHTML = '';

@@ -12,7 +12,6 @@ export function ReplaceLabel() : SquiffyPlugin {
             squiffy.registerHelper("replace", (name: string, options) => {
                 const result = options.fn(this);
                 const element = squiffy.outputElement.querySelector<HTMLElement>(`.squiffy-label-${name}`);
-                console.log(element, result);
                 if (element) {
                     squiffy.addTransition(() => fadeReplace(element, result))
                 }
