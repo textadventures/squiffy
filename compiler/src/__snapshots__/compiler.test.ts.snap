@@ -328,19 +328,22 @@ story.id = "replace.squiffy";
 story.start = "_default";
 story.sections = {
     "_default": {
-        "text": "I {{#label \\"1\\"}}walked{{/label}} to the shops and I bought {{#label \\"2\\"}}a pint of milk{{/label}}.\\n\\nBut then I thought, hang on, I {{passage \\"next\\" text=\\"don't really like milk\\" replace=\\"2=beer\\"}}.\\n",
+        "text": "I {{#label \\"1\\"}}walked{{/label}} to the shops and I bought {{#label \\"2\\"}}a pint of milk{{/label}}.\\n\\nBut then I thought, hang on, I {{passage \\"next\\" text=\\"don't really like milk\\"}}.\\n",
         "passages": {
+            "next": {
+                "text": "{{#replace \\"2\\"}}a {{passage \\"crate of beer\\"}}{{/replace}}.\\nAnd then I thought, hang on, I {{#label \\"3\\"}}{{passage \\"hate walking\\"}}{{/label}}.\\n"
+            },
             "beer": {
                 "text": "a {{passage \\"crate of beer\\"}}\\n"
             },
             "crate of beer": {
                 "text": "Yes, beer.\\n"
             },
-            "next": {
-                "text": "And then I thought, hang on, I {{#label \\"3\\"}}{{passage \\"\\" text=\\"hate walking\\" replace=\\"1=teleported, 3=love teleporting\\"}}{{/label}}.\\n"
-            },
             "love teleporting": {
                 "text": "love teleporting, so much I might {{section \\"section2\\" text=\\"embark on a wild and crazy adventure\\"}}\\n"
+            },
+            "hate walking": {
+                "text": "{{#replace \\"1\\"}}teleported{{/replace}}\\n{{#replace \\"3\\"}}love teleporting{{/replace}}\\n"
             }
         }
     },
@@ -348,10 +351,7 @@ story.sections = {
         "text": "And so it {{#label \\"4\\"}}began...{{/label}}\\n\\n{{section \\"section3\\" text=\\"Or did it?\\"}}\\n"
     },
     "section3": {
-        "text": "Oh well.\\n",
-        "attributes": [
-            "@replace 4=ended {{passage \\"abruptly\\"}}."
-        ],
+        "text": "{#replace \\"4\\"}}ended {{passage \\"abruptly\\"}}.{{/replace}}\\nOh well.\\n",
         "passages": {
             "abruptly": {
                 "text": "That is all."
@@ -525,7 +525,7 @@ story.id = "textprocessor.squiffy";
 story.start = "_default";
 story.sections = {
     "_default": {
-        "text": "It's another {{random (array \\"Monday\\" \\"Tuesday\\" \\"Wednesday\\" \\"Thursday\\" \\"Friday\\" \\"Saturday\\" \\"Sunday\\")}} in the city.\\n\\nThe weather is {{random (array \\"sunny\\" \\"cloudy\\" \\"rainy\\" \\"windy\\" \\"snowy\\") set=\\"weather\\"}}.\\n\\nChoose a gender:\\n\\n* {{section \\"start\\" text=\\"Male\\" set=\\"gender=male\\"}}\\n* {{section \\"start\\" text=\\"Female\\" set=\\"gender=female\\"}}\\n"
+        "text": "It's another {{random (array \\"Monday\\" \\"Tuesday\\" \\"Wednesday\\" \\"Thursday\\" \\"Friday\\" \\"Saturday\\" \\"Sunday\\")}} in the city.\\n\\nThe weather is {{random (array \\"sunny\\" \\"cloudy\\" \\"rainy\\" \\"windy\\" \\"snowy\\") set=\\"weather\\"}}.\\n\\nChoose a gender:\\n\\n* {{section \\"start\\" text=\\"Male\\" set=\\" gender=male\\"}}\\n* {{section \\"start\\" text=\\"Female\\" set=\\" gender=female\\"}}\\n"
     },
     "start": {
         "text": "You chose {{gender}}.\\n\\n{{#if (eq gender \\"male\\")}}\\nYou are a man.\\n{{else}}\\nYou are a woman.\\n{{/if}}\\n\\nIt's still {{weather}}.\\n\\n{{passage \\"Next\\"}}\\n",
@@ -571,38 +571,40 @@ story.sections = {
 story.js = [
 	(squiffy, get, set) => {
 		squiffy.ui.transition(function(){
-			// Create a blackout <div>...
-			$("<div/>", {
-				id: "blackout"
-			}).css({
-				position: "fixed",
-				top: 0,
-				left: 0,
-				width: "100%",
-				height: "100%",
-				background: "black",
-				display: "none"
-			}).appendTo("body");
-			// Fade it in over 6 seconds...
-			$("#blackout").fadeIn({
-				duration: 6000,
-				easing: "easeInQuad",
-			});
-			// After fading it in...
-			setTimeout(function () {
-				// Move to the next section...
-				squiffy.story.go("wake up");
-				// Fade out the blackout and remove the <div>...
-				$("#blackout").fadeOut({
-					duration: 6000,
-					easing: "easeInQuad",
-					complete: function() {
-						$(this).remove();
-					}
-				});
-			}, 9000);
+		    return new Promise((resolve) => {
+		        // Create a blackout <div>...
+		        const blackout = document.createElement("div");
+		        blackout.id = "blackout";
+		        Object.assign(blackout.style, {
+		            position: "fixed",
+		            top: "0",
+		            left: "0",
+		            width: "100%",
+		            height: "100%",
+		            background: "black",
+		            opacity: "0",              // start transparent
+		            transition: "opacity 6s ease-in" // fade duration + easing
+		        });
+		        squiffy.element.appendChild(blackout);
+		        // Force style recalculation before starting the fade
+		        requestAnimationFrame(() => {
+		            blackout.style.opacity = "1"; // fade in over 6s
+		        });
+		        // After fading it in...
+		        setTimeout(() => {
+		            // Move to the next section...
+		            squiffy.story.go("wake up");
+		            // Fade out the blackout
+		            blackout.style.transition = "opacity 6s ease-in";
+		            blackout.style.opacity = "0";
+		            // Remove <div> after transition ends
+		            blackout.addEventListener("transitionend", () => {
+		                blackout.remove();
+		                resolve();
+		            }, { once: true });
+		        }, 9000);
+		    });
 		});
-		
 	},
 ];"
 `;
