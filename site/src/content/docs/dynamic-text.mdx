@@ -28,31 +28,23 @@ So below, we need to use `{{get "weather"}}` in the same section where we set it
 
 ## Replace
 
-By creating labels, you can replace existing output when a link is clicked or when a passage or section is displayed. In the example below, we create a label called "1", and we change the text in that label using a link:
+By creating labels, you can replace existing output when a link is clicked or when a passage or section is displayed. In the example below, we create a label called "1" using `{{#label}}`, and in the next passage we replace the text inside that label:
 
 <Sample script="I walked to the shops and I bought {{#label &quot;1&quot;}}a pint of milk{{/label}}.
 
-    Or maybe [I bought something different?](@replace 1=a loaf of bread)"></Sample>
+    Or maybe I bought [something different]?
 
-We can also change the text when a section or passage is displayed:
+    [something different]:
+    {{#replace &quot;1&quot;}}a loaf of bread{{/replace}}"></Sample>
 
-<Sample script="I walked to the shops and I bought {{#label &quot;1&quot;}}a pint of milk{{/label}}.
+The replacement text can include links to other passages or sections:
 
-    Or maybe [I bought something different?](next passage)
+<Sample script="I walked to the shops and I {{#label &quot;1&quot;}}bought a pint of milk{{/label}}.
 
-    [next passage]:
-    @replace 1=a bottle of whisky
+    But I was [thinking]...
 
-    I changed my mind."></Sample>
-
-If the replacement text matches a section or passage name, the contents of that section or passage will be inserted instead.
-
-<Sample script="I walked to the shops and I {{#label &quot;1&quot;}}a pint of milk{{/label}}.
-
-    But I was [thinking](@replace 1=thoughts)...
-
-    [thoughts]:
-    suddenly thought, hang on, I could [[go to the funfair]] or [[join the circus]] instead.
+    [thinking]:
+    {{#replace &quot;1&quot;}}suddenly thought, hang on, I could [[go to the funfair]] or [[join the circus]] instead.{{/replace}}
 
     [[go to the funfair]]:
     Off I went to the funfair...
