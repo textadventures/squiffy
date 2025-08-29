@@ -50,10 +50,6 @@ export class TextProcessor {
             if (setters) {
                 result += ` data-set='${JSON.stringify(setters.split(',').map(s => s.trim()))}'`;
             }
-            const replacements = options.hash.replace as string || '';
-            if (replacements) {
-                result += ` data-replace='${JSON.stringify(replacements.split(',').map(s => s.trim()))}'`;
-            }
             return result;
         }
 

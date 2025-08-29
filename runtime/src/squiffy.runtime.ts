@@ -6,7 +6,6 @@ import { updateStory } from "./updater.js";
 import {PluginManager} from "./pluginManager.js";
 import {Plugins} from "./plugins/index.js";
 import {LinkHandler} from "./linkHandler.js";
-import {fadeReplace} from "./utils.js";
 
 export type { SquiffyApi } from "./types.js"
 
@@ -108,13 +107,6 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
                 setAttribute(attribute);
             }
         }
-        const replacementsJson = link.getAttribute('data-replace');
-        if (replacementsJson) {
-            const replacements = JSON.parse(replacementsJson) as string[];
-            for (const replacement of replacements) {
-                await replaceLabel(replacement);
-            }
-        }
     }
     
     function setAttribute(expr: string) {
@@ -167,28 +159,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             }
         }
     }
-    
-    async function replaceLabel(expr: string) {
-        const regex = /^([\w]*)\s*=\s*(.*)$/;
-        const match = regex.exec(expr);
-        if (!match) return;
-        const label = match[1];
-        let text = match[2];
-        if (currentSection.passages && text in currentSection.passages) {
-            text = currentSection.passages[text].text || '';
-        }
-        else if (text in story.sections) {
-            text = story.sections[text].text || '';
-        }
 
-        const labelElement = outputElement.querySelector('.squiffy-label-' + label) as HTMLElement;
-        if (!labelElement) return;
-
-        text = ui.processText(text, true);
-        await fadeReplace(labelElement, text);
-        save();
-    }
-    
     async function go(sectionName: string) {
         newSection(sectionName);
         currentSection = story.sections[sectionName];
@@ -268,12 +239,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     
     async function processAttributes(attributes: string[]) {
         for (const attribute of attributes) {
-            if (attribute.startsWith('@replace ')) {
-                await replaceLabel(attribute.substring(9));
-            }
-            else {
-                setAttribute(attribute);
-            }
+            setAttribute(attribute);
         }
     }
     
