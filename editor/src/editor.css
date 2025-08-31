@@ -15,8 +15,10 @@ html, body {
 a.squiffy-link
 {
     text-decoration: underline;
+    text-decoration-color: Blue;
     color: Blue;
     cursor: pointer;
+    transition: color 0.4s ease-in-out, text-decoration-color 0.4s ease-in-out;
 }
 
 a.squiffy-link.disabled,
@@ -24,6 +26,7 @@ div.squiffy-output-section:not(:last-child) a.squiffy-link,
 div.squiffy-output-section.links-disabled a.squiffy-link
 {
     text-decoration: inherit;
+    text-decoration-color: transparent;
     color: inherit !important;
     cursor: inherit;
     pointer-events: none;
