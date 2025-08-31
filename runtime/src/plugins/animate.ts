@@ -43,9 +43,10 @@ export function AnimatePlugin(): SquiffyPlugin {
                 } else {
                     squiffy.addTransition(() => {
                         return new Promise<void>((resolve) => {
+                            const currentContent = el.innerHTML;
                             squiffy.animation.runAnimation(params.name, el, params, () => {
                                 el.classList.remove("squiffy-animate");
-                                el.innerHTML = params.content;
+                                el.innerHTML = currentContent;
                                 resolve();
                             }, false);
                         });
