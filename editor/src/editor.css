@@ -19,11 +19,14 @@ a.squiffy-link
     cursor: pointer;
 }
 
-a.squiffy-link.disabled, div.squiffy-output-section:not(:last-child) a.squiffy-link
+a.squiffy-link.disabled,
+div.squiffy-output-section:not(:last-child) a.squiffy-link,
+div.squiffy-output-section.links-disabled a.squiffy-link
 {
     text-decoration: inherit;
     color: inherit !important;
     cursor: inherit;
+    pointer-events: none;
 }
 
 div.squiffy-output-block:not(:last-child), div.squiffy-output-section:not(:last-child)

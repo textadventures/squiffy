@@ -27,8 +27,10 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     let animation: Animation;
     const emitter = new Emitter<SquiffyEventMap>();
     const transitions: (() => Promise<void>)[] = [];
+    let runningTransitions = false;
     
     async function handleLink(link: HTMLElement): Promise<boolean> {
+        if (runningTransitions) return false;
         const outputSection = link.closest('.squiffy-output-section');
         if (outputSection !== currentSectionElement) return false;
 
@@ -220,10 +222,14 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     }
 
     async function runTransitions() {
+        runningTransitions = true;
+        currentSectionElement.classList.add('links-disabled');
         for (const transition of transitions) {
             await transition();
         }
         transitions.length = 0;
+        runningTransitions = false;
+        currentSectionElement.classList.remove('links-disabled');
     }
     
     async function showPassage(passageName: string) {
