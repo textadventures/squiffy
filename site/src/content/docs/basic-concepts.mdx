@@ -294,12 +294,9 @@ to see the difference.
 
 ## Set the start section
 
-<Aside type="caution">TODO: Note that changing or removing the `@start` in the sample below
-    doesn't currently trigger the runtime to update the game start.</Aside>
-
 By default, the story begins in the first section. You can choose a different section like this:
 
-<Sample script="@start Beginning
+<Sample alwaysShowRestart={true} script="@start Beginning
 
     [[some other section]]:
     This section would normally be the start, but we have overridden it.

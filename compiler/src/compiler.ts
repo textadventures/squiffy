@@ -9,6 +9,7 @@ export interface Output {
 interface OutputStory {
     start: string;
     id: string | null;
+    uiJsIndex?: number;
     sections: Record<string, OutputSection>;
 }
 
@@ -72,6 +73,9 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         }
         outputJs.push('export const story = {};');
         outputJs.push(`story.id = ${JSON.stringify(storyData.story.id, null, 4)};`);
+        if (storyData.story.uiJsIndex !== undefined) {
+            outputJs.push(`story.uiJsIndex = ${storyData.story.uiJsIndex};`);
+        }
         outputJs.push(`story.start = ${JSON.stringify(storyData.story.start, null, 4)};`);
         outputJs.push(`story.sections = ${JSON.stringify(storyData.story.sections, null, 4)};`);
         outputJs.push('story.js = [');
@@ -96,6 +100,11 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
             },
             js: [],
         };
+
+        if (story.uiJs.length > 0) {
+            output.js.push(story.uiJs);
+            output.story.uiJsIndex = output.js.length - 1;
+        }
 
         for (const sectionName of Object.keys(story.sections)) {
             const section = story.sections[sectionName];
@@ -165,30 +174,41 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         dec: /^@dec (\S+)(?: (\d+))?$/,
         js: /^(\t| {4})(.*)$/,
         continue: /^\+\+\+(.*)$/,
+        ui: /^@ui (.*)$/,
     };
 
     async function processFileText(inputText: string, inputFilename: string | undefined, isFirst: boolean) {
-        var inputLines = inputText.replace(/\r/g, '').split('\n');
+        const inputLines = inputText.replace(/\r/g, '').split('\n');
 
-        var lineCount = 0;
-        var section: Section | null = null;
-        var passage = null as Passage | null;   // annotated differently to section, as a workaround for TypeScript "Property does not exist on type never"
-        var textStarted = false;
-        var ensureThisSectionExists = () => {
+        let lineCount = 0;
+        let section: Section | null = null;
+        let passage = null as Passage | null;   // annotated differently to section, as a workaround for TypeScript "Property does not exist on type never"
+        let textStarted = false;
+        let inUiBlock = false;
+        const ensureThisSectionExists = () => {
             return ensureSectionExists(section, isFirst, inputFilename, lineCount);
         };
-
-        const secondPass: (() => Promise<void>)[] = [];
+        const addAutoSection = () => {
+            autoSectionCount++;
+            const autoSectionName = `_continue${autoSectionCount}`;
+            section = story.addSection(autoSectionName, inputFilename, lineCount);
+            passage = null;
+            textStarted = false;
+            return autoSectionName;
+        }
 
         for (const line of inputLines) {
-            var stripLine = line.trim();
+            const stripLine = line.trim();
             lineCount++;
 
-            var match: Record<string, RegExpExecArray | null> = {};
+            const match: Record<string, RegExpExecArray> = {};
 
             for (const key of Object.keys(regexes)) {
                 const regex = regexes[key];
-                match[key] = key == 'js' ? regex.exec(line) : regex.exec(stripLine);
+                const result = key == 'js' ? regex.exec(line) : regex.exec(stripLine);
+                if (result) {
+                    match[key] = result;
+                }
             }
 
             if (match.section) {
@@ -207,12 +227,26 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
             }
             else if (match.continue) {
                 section = ensureThisSectionExists();
-                autoSectionCount++;
-                var autoSectionName = `_continue${autoSectionCount}`;
-                section.addText(`[[${match.continue[1]}]](${autoSectionName})`);
-                section = story.addSection(autoSectionName, inputFilename, lineCount);
-                passage = null;
-                textStarted = false;
+                const previousSection = section;
+                const autoSectionName = addAutoSection();
+                previousSection.addText(`[[${match.continue[1]}]](${autoSectionName})`);
+            }
+            else if (stripLine == '---') {
+                inUiBlock = false;
+                if (!section) {
+                    // Just add the _default section if we haven't started yet
+                    ensureThisSectionExists();
+                }
+                else {
+                    addAutoSection();
+                }
+            }
+            else if (stripLine == '@ui') {
+                inUiBlock = true;
+            }
+            else if (match.ui && settings.externalFiles) {
+                const content = await settings.externalFiles.getContent(match.ui[1]);
+                story.addUiJs(content);
             }
             else if (stripLine == '@clear') {
                 if (!passage) {
@@ -230,12 +264,12 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
                 story.start = match.start[1];
             }
             else if (match.import && settings.externalFiles) {
-                var importFilenames = await settings.externalFiles.getMatchingFilenames(match.import[1]);
+                const importFilenames = await settings.externalFiles.getMatchingFilenames(match.import[1]);
 
                 for (const importFilename of importFilenames) {
                     if (importFilename.endsWith('.squiffy')) {
                         const content = await settings.externalFiles.getContent(importFilename);
-                        var success = await processFileText(content, importFilename, false);
+                        const success = await processFileText(content, importFilename, false);
                         if (!success) return false;
                     }
                     else if (importFilename.endsWith('.js')) {
@@ -263,7 +297,10 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
                 section = addAttribute(match.dec[1] + '-=' + (match.dec[2] === undefined ? '1' : match.dec[2]), section, passage, isFirst, inputFilename, lineCount);
             }
             else if (!textStarted && match.js) {
-                if (!passage) {
+                if (inUiBlock) {
+                    story.addUiJs(match.js[2]);
+                }
+                else if (!passage) {
                     section = ensureThisSectionExists();
                     section.addJS(match.js[2]);
                 }
@@ -272,7 +309,10 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
                 }
             }
             else if (textStarted || stripLine.length > 0) {
-                if (!passage) {
+                if (inUiBlock) {
+                    errors.push(`ERROR: ${inputFilename} line ${lineCount}: Unexpected text in @ui block.`);
+                }
+                else if (!passage) {
                     section = ensureThisSectionExists();
                     if (section) {
                         section.addText(line);
@@ -284,10 +324,6 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
                     textStarted = true;
                 }
             }
-        }
-
-        for (const fn of secondPass) {
-            await fn();
         }
         
         return true;
@@ -480,6 +516,7 @@ class Story {
     stylesheets: string[] = [];
     start = '';
     id: string | null = null;
+    uiJs: string[] = [];
 
     constructor(inputFilename?: string) {
         this.id = inputFilename || null;
@@ -490,6 +527,10 @@ class Story {
         this.sections[name] = section;
         return section;
     };
+
+    addUiJs(text: string) {
+        this.uiJs.push(text);
+    }
 }
 
 class Section {

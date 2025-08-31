@@ -1,10 +1,12 @@
 import type { HelperDelegate } from "handlebars";
 import {SquiffyEventHandler, SquiffyEventMap} from "./events.js";
+import {Animation} from "./animation.js";
 
 export interface SquiffyPlugin {
     name: string;
     init(host: PluginHost): void | Promise<void>;
     onWrite?(el: HTMLElement): void;
+    onLoad?(): void;
 }
 
 export interface HandleLinkResult {
@@ -21,6 +23,7 @@ export interface PluginHost {
     getPassageText(name: string): string | null;
     processText: (text: string, inline: boolean) => string;
     addTransition: (fn: () => Promise<void>) => void;
+    animation: Animation;
     on<E extends keyof SquiffyEventMap>(
         event: E,
         handler: SquiffyEventHandler<E>

@@ -59,6 +59,7 @@ export interface Story {
     ) => void)[];
     start: string;
     id?: string | null;
+    uiJsIndex?: number;
     sections: Record<string, Section>;
 }
 

@@ -1,11 +1,14 @@
 ---
 interface Props {
     script: string;
+    alwaysShowRestart?: boolean;
 }
 
 import Split from "./Split.astro";
 
-const { script } = Astro.props;
+const { script, alwaysShowRestart } = Astro.props;
+
+const restartClass = "sample-button restart" + (!alwaysShowRestart ? " hidden" : "");
 ---
 
 <style is:global>
@@ -69,13 +72,13 @@ const { script } = Astro.props;
     }
 </style>
 
-<squiffy-sample class="sample not-content" data-squiffy-script={script}>
+<squiffy-sample class="sample not-content" data-squiffy-script={script} data-always-show-restart={alwaysShowRestart}>
     <Split gap="0.75rem" min="200px">
         <div slot="left" class="editor">
         </div>
         <div slot="right" class="viewer-container">
             <div class="viewer"></div>
-            <button class="restart hidden sample-button">Restart</button>
+            <button class={restartClass}>Restart</button>
         </div>
     </Split>
 </squiffy-sample>
@@ -133,6 +136,8 @@ const { script } = Astro.props;
                 parent: editor
             });
 
+            const alwaysShowRestart = this.dataset.alwaysShowRestart === 'true';
+
             async function initRuntime(script: string, outputContainer: HTMLElement, restartButton: HTMLElement) {
                 const result = await squiffyCompile({
                     script: script,
@@ -181,7 +186,9 @@ const { script } = Astro.props;
 
                     restartButton.addEventListener('click', () => {
                         squiffyApi?.restart();
-                        restartButton.classList.add('hidden');
+                        if (!alwaysShowRestart) {
+                            restartButton.classList.add('hidden');
+                        }
                         showRestartOnLinkClick();
                     });
                 }

@@ -1,0 +1,19 @@
+@ui ui.js
+
+Hello world.
+
+{{#animate "typewriter" loop=true}}This is animated.{{/animate}}
+
+{{#animate "typewriter" start=2000}}This is some much longer text which is also animated, but not looped.{{/animate}}
+
++++Continue...
+
+{{#animate "typewriter" interval=500}}This is a bit slower.{{/animate}}
+
++++Would you like some toast?
+
+{{#animate "toast"}}This text appears word by word with a toast effect.{{/animate}}
+
++++Custom animation
+
+{{#animate "custom-animation"}}This text appears with a custom animation defined in ui.js.{{/animate}}

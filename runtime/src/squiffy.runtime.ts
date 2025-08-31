@@ -6,6 +6,8 @@ import { updateStory } from "./updater.js";
 import {PluginManager} from "./pluginManager.js";
 import {Plugins} from "./plugins/index.js";
 import {LinkHandler} from "./linkHandler.js";
+import {Animation} from "./animation.js";
+import {imports} from "./import.js";
 
 export type { SquiffyApi } from "./types.js"
 
@@ -22,6 +24,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     let textProcessor: TextProcessor;
     let linkHandler: LinkHandler;
     let pluginManager: PluginManager;
+    let animation: Animation;
     const emitter = new Emitter<SquiffyEventMap>();
     const transitions: (() => Promise<void>)[] = [];
     
@@ -178,6 +181,25 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             save();
         }
     }
+
+    function runJs(index: number, extra: any = null) {
+        const squiffy = {
+            get: get,
+            set: set,
+            ui: {
+                transition: addTransition,
+                write: ui.write,
+                scrollToEnd: ui.scrollToEnd,
+            },
+            story: {
+                go: go,
+            },
+            element: outputElementContainer,
+            import: imports,
+            ...extra
+        };
+        story.js[index](squiffy, get, set);
+    }
     
     async function run(section: Section, source: string) {
         transitions.length = 0;
@@ -188,20 +210,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             await processAttributes(section.attributes);
         }
         if (section.jsIndex !== undefined) {
-            const squiffy = {
-                get: get,
-                set: set,
-                ui: {
-                    transition: addTransition,
-                    write: ui.write,
-                    scrollToEnd: ui.scrollToEnd,
-                },
-                story: {
-                    go: go,
-                },
-                element: outputElementContainer,
-            };
-            story.js[section.jsIndex](squiffy, get, set);
+            runJs(section.jsIndex);
         }
 
         ui.write(section.text || '', source);
@@ -256,15 +265,29 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     }
     
     function load() {
+        const runUiJs = () => {
+            if (story.uiJsIndex !== undefined) {
+                runJs(story.uiJsIndex, {
+                    registerAnimation: animation.registerAnimation.bind(animation),
+                });
+            }
+        }
+
         state.load();
         const output = get('_output');
-        if (!output) return false;
+        if (!output) {
+            runUiJs();
+            return false;
+        }
+
         outputElement.innerHTML = output;
 
         currentSectionElement = outputElement.querySelector('.squiffy-output-section:last-child');
         currentBlockOutputElement = outputElement.querySelector('.squiffy-output-block:last-child');
 
         currentSection = story.sections[get('_section')];
+        runUiJs();
+        pluginManager.onLoad();
         return true;
     }
 
@@ -422,12 +445,15 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         transitions.push(fn);
     };
 
+    animation = new Animation();
+
     pluginManager = new PluginManager(outputElement, textProcessor, state, linkHandler,
-        getSectionText, getPassageText, ui.processText, addTransition, emitter);
+        getSectionText, getPassageText, ui.processText, addTransition, animation, emitter);
     pluginManager.add(Plugins.ReplaceLabel());
     pluginManager.add(Plugins.RotateSequencePlugin());
     pluginManager.add(Plugins.RandomPlugin());
     pluginManager.add(Plugins.LivePlugin());
+    pluginManager.add(Plugins.AnimatePlugin());
 
     return {
         begin: begin,

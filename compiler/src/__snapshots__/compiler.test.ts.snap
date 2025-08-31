@@ -331,19 +331,13 @@ story.sections = {
         "text": "I {{#label \\"1\\"}}walked{{/label}} to the shops and I bought {{#label \\"2\\"}}a pint of milk{{/label}}.\\n\\nBut then I thought, hang on, I {{passage \\"next\\" text=\\"don't really like milk\\"}}.\\n",
         "passages": {
             "next": {
-                "text": "{{#replace \\"2\\"}}a {{passage \\"crate of beer\\"}}{{/replace}}.\\nAnd then I thought, hang on, I {{#label \\"3\\"}}{{passage \\"hate walking\\"}}{{/label}}.\\n"
-            },
-            "beer": {
-                "text": "a {{passage \\"crate of beer\\"}}\\n"
+                "text": "{{#replace \\"2\\"}}a {{passage \\"crate of beer\\"}}{{/replace}}\\nAnd then I thought, hang on, I {{#label \\"3\\"}}{{passage \\"hate walking\\"}}{{/label}}.\\n"
             },
             "crate of beer": {
                 "text": "Yes, beer.\\n"
             },
-            "love teleporting": {
-                "text": "love teleporting, so much I might {{section \\"section2\\" text=\\"embark on a wild and crazy adventure\\"}}\\n"
-            },
             "hate walking": {
-                "text": "{{#replace \\"1\\"}}teleported{{/replace}}\\n{{#replace \\"3\\"}}love teleporting{{/replace}}\\n"
+                "text": "{{#replace \\"1\\"}}teleported{{/replace}}\\n{{#replace \\"3\\"}}love teleporting, so much I might {{section \\"section2\\" text=\\"embark on a wild and crazy adventure\\"}}{{/replace}}\\n"
             }
         }
     },
@@ -351,7 +345,7 @@ story.sections = {
         "text": "And so it {{#label \\"4\\"}}began...{{/label}}\\n\\n{{section \\"section3\\" text=\\"Or did it?\\"}}\\n"
     },
     "section3": {
-        "text": "{#replace \\"4\\"}}ended {{passage \\"abruptly\\"}}.{{/replace}}\\nOh well.\\n",
+        "text": "{{#replace \\"4\\"}}ended {{passage \\"abruptly\\"}}.{{/replace}}\\nOh well.\\n",
         "passages": {
             "abruptly": {
                 "text": "That is all."

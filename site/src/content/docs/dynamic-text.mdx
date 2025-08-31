@@ -26,6 +26,21 @@ So below, we need to use `{{get "weather"}}` in the same section where we set it
     The weather is still {{weather}}.
 "></Sample>
 
+## Animation
+
+<Sample alwaysShowRestart={true} script="You can animate text like this:
+
+    {{#animate &quot;typewriter&quot;}}This is animated text using a typewriter effect.{{/animate}}
+
+    +++Continue...
+
+    There are other effects you can use too:
+
+    {{#animate &quot;toast&quot;}}This is animated text using a toast effect.{{/animate}}
+
+    Be careful not to overuse them though!
+"></Sample>
+
 ## Replace
 
 By creating labels, you can replace existing output when a link is clicked or when a passage or section is displayed. In the example below, we create a label called "1" using `{{#label}}`, and in the next passage we replace the text inside that label:
