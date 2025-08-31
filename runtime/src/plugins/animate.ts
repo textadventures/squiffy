@@ -37,18 +37,29 @@ export function AnimatePlugin(): SquiffyPlugin {
                 continue;
             }
 
-            if (params.loop) {
-                squiffy.animation.runAnimation(params.name, el, params, () => {}, true);
+            const runAnimation = () => {
+                if (params.loop) {
+                    squiffy.animation.runAnimation(params.name, el, params, () => {}, true);
+                } else {
+                    squiffy.addTransition(() => {
+                        return new Promise<void>((resolve) => {
+                            squiffy.animation.runAnimation(params.name, el, params, () => {
+                                el.classList.remove("squiffy-animate");
+                                el.innerHTML = params.content;
+                                resolve();
+                            }, false);
+                        });
+                    })
+                }
+            }
+
+            if (params.trigger === "link") {
+                const links = el.querySelectorAll("a");
+                for (const link of links) {
+                    squiffy.animation.addLinkAnimation(link, runAnimation);
+                }
             } else {
-                squiffy.addTransition(() => {
-                    return new Promise<void>((resolve) => {
-                        squiffy.animation.runAnimation(params.name, el, params, () => {
-                            el.classList.remove("squiffy-animate");
-                            el.innerHTML = params.content;
-                            resolve();
-                        }, false);
-                    });
-                })
+                runAnimation();
             }
         }
     }

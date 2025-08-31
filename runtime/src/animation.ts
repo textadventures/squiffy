@@ -2,6 +2,7 @@ import {animate, stagger, text} from "animejs";
 
 export class Animation {
     animations: {[name: string]: (el: HTMLElement, params: Record<string, any>, onComplete: () => void, loop: boolean) => void} = {};
+    linkAnimations = new Map<HTMLElement, () => void>();
 
     registerAnimation(name: string, handler: (el: HTMLElement, params: Record<string, any>, onComplete: () => void, loop: boolean) => void) {
         this.animations[name] = handler;
@@ -14,6 +15,17 @@ export class Animation {
         } else {
             console.warn(`No animation registered with name: ${name}`);
             onComplete();
+        }
+    }
+
+    addLinkAnimation(link: HTMLElement, fn: () => void) {
+        this.linkAnimations.set(link, fn);
+    }
+
+    runLinkAnimation(link: HTMLElement) {
+        const fn = this.linkAnimations.get(link);
+        if (fn) {
+            fn();
         }
     }
 

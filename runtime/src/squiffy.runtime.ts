@@ -104,6 +104,8 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     }
     
     async function processLink(link: HTMLElement) {
+        animation.runLinkAnimation(link);
+        await runTransitions();
         const settersJson = link.getAttribute('data-set');
         if (settersJson) {
             const setters = JSON.parse(settersJson) as string[];
@@ -202,7 +204,6 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     }
     
     async function run(section: Section, source: string) {
-        transitions.length = 0;
         if (section.clear) {
             ui.clearScreen();
         }
@@ -215,9 +216,14 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
 
         ui.write(section.text || '', source);
 
+        await runTransitions();
+    }
+
+    async function runTransitions() {
         for (const transition of transitions) {
             await transition();
         }
+        transitions.length = 0;
     }
     
     async function showPassage(passageName: string) {
