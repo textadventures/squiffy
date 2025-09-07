@@ -74,11 +74,11 @@ export const init = () => {
                     },
                     {
                         token: 'support.variable',
-                        regex: /^\@(clear|set|start|replace|title|import|unset|inc|dec)(.*)$/
+                        regex: /^\@(clear|set|start|title|import|unset|inc|dec|ui)(.*)$/
                     },
                     {
                         token: 'string',
-                        regex: /\{(.*)(\}|\}\})/
+                        regex: /\{\{(.*)\}\}/
                     },
                     {
                         token: 'support.other',
