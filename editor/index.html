@@ -31,6 +31,10 @@
             </button>
             <button id="restart" class="btn btn-success" hidden>
                 <i class="bi bi-arrow-clockwise"></i> Restart</button>
+            <button id="add-section" class="btn btn-primary">Add section</button>
+            <button id="add-passage" class="btn btn-primary">Add passage</button>
+            <button id="collapse-all" class="btn btn-primary" data-bs-toggle="tooltip" title="Collapse all sections and passages"><i class="bi bi-arrows-collapse"></i></button>
+            <button id="uncollapse-all" class="btn btn-primary" data-bs-toggle="tooltip" title="Expand all sections and passages"><i class="bi bi-arrows-expand"></i></button>
             <span id="info"></span>
             <div style="float: right">
                 <button id="settings" class="btn btn-outline-primary" data-bs-toggle="tooltip" data-bs-placement="bottom"
@@ -75,9 +79,6 @@
                         <button class="nav-link active" id="tab-output-button" data-bs-toggle="tab" data-bs-target="#tab-output">Output</button>
                     </li>
                     <li class="nav-item">
-                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-tools">Tools</button>
-                    </li>
-                    <li class="nav-item">
                         <button class="nav-link" id="tab-debugger-button" data-bs-toggle="tab" data-bs-target="#tab-debugger">Debugger</button>
                     </li>
                 </ul>
@@ -87,19 +88,6 @@
                             <div id="output">
                                 Click the Run button to start the game.
                             </div>
-                        </div>
-                    </div>
-                    <div role="tabpanel" class="tab-pane" id="tab-tools">
-                        <h3>Add a new section or passage</h3>
-                        Select some text first to automatically create a link to the new section or passage.
-                        <div class="toolbar">
-                            <button id="add-section" class="btn btn-primary">Add section</button>
-                            <button id="add-passage" class="btn btn-primary">Add passage</button>
-                        </div>
-                        <h3>View</h3>
-                        <div class="toolbar">
-                            <button id="collapse-all" class="btn btn-primary">Collapse all</button>
-                            <button id="uncollapse-all" class="btn btn-primary">Uncollapse all</button>
                         </div>
                     </div>
                     <div role="tabpanel" class="tab-pane" id="tab-debugger">
