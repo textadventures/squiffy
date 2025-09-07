@@ -6,6 +6,14 @@ export const init = () => {
     ace.define('ace/theme/squiffy', [], function (require, exports, module) {
         exports.isDark = false;
         exports.cssClass = 'ace-squiffy';
+        exports.cssText = `
+            /* syntax highlighting: section and passage inline links */
+            .ace-squiffy .ace_markup.ace_link.ace_section,
+            .ace-squiffy .ace_markup.ace_link.ace_passage {
+                color: #0066cc;
+                text-decoration: underline;
+            }
+        `;
     });
 
     ace.define('ace/folding/squiffy', [], function (require, exports, module) {
@@ -50,13 +58,15 @@ export const init = () => {
                         regex: /^(\t| {4})/,
                         next: 'js-start'
                     },
+                    // Inline section links: [[...]] with optional (target)
                     {
-                        token: 'markup.heading.passage',
-                        regex: /(\[\[[\s\S]*?\]\](\,|\.|\s|\:|\;)|\[\[[\s\S]*?\]\]\([\s\S]*?\))/
+                        token: 'markup.link.section',
+                        regex: /\[\[(?:\\.|[^\]\r\n])+]](?:\((?:\\.|[^)\r\n])+\))?(?=$|[\s.,:;!?\)\]"'’”»])/
                     },
+                    // Inline passage links: [...] with optional (target)
                     {
-                        token: 'constant.language',
-                        regex: /(\[[\s\S]*?\](\,|\.|\s|\:|\;)|\[[\s\S]*?\]\([\s\S]*?\))/
+                        token: 'markup.link.passage',
+                        regex: /\[(?:\\.|[^\]\r\n])+](?:\((?:\\.|[^)\r\n])+\))?(?=$|[\s.,:;!?\)\]"'’”»])/
                     },
                     {
                         token: 'support.other',
