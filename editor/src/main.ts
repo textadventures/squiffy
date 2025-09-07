@@ -428,6 +428,7 @@ const init = function (data: string) {
 
     onClick('run', run);
     onClick('restart', restart);
+    onClick('file-new', () => editorLoad(""));
     onClick('open', () => openFile(editorLoad));
     onClick('save', () => saveFile(editor.getValue()));
 
