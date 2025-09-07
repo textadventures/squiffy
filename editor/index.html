@@ -71,30 +71,23 @@
             </div>
             <div class="position-relative w-50 p-1">
                 <ul class="nav nav-tabs" id="tabs">
-                    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab"
-                            data-bs-target="#tab-help">Help</button></li>
-                    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-tools">Tools</a>
+                    <li class="nav-item">
+                        <button class="nav-link active" id="tab-output-button" data-bs-toggle="tab" data-bs-target="#tab-output">Output</button>
                     </li>
-                    <li class="nav-item"><button class="nav-link" id="tab-output-button" data-bs-toggle="tab"
-                            data-bs-target="#tab-output">Output</button></li>
-                    <li class="nav-item"><button class="nav-link" id="tab-debugger-button" data-bs-toggle="tab"
-                        data-bs-target="#tab-debugger">Debugger</button></li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-tools">Tools</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" id="tab-debugger-button" data-bs-toggle="tab" data-bs-target="#tab-debugger">Debugger</button>
+                    </li>
                 </ul>
                 <div class="tab-content">
-                    <div role="tabpanel" class="tab-pane show active" id="tab-help">
-                        You can format your text using HTML and
-                        <a href="http://daringfireball.net/projects/markdown/syntax" class="external-link" target="_blank">
-                            Markdown</a>.<br /><br />
-                        To create a new section:
-                        <pre>[[new section]]:</pre>
-                        To link to a section:
-                        <pre>Link [[like this]] or [[use different link text]](new section)</pre>
-                        To create a new passage:
-                        <pre>[new passage]:</pre>
-                        To link to a passage:
-                        <pre>Link [like this] or [use different link text](new passage)</pre>
-                        <a href="http://docs.textadventures.co.uk/squiffy/" class="external-link" target="_blank">Full
-                            documentation</a>
+                    <div role="tabpanel" class="tab-pane show active" id="tab-output">
+                        <div id="output-container">
+                            <div id="output">
+                                Click the Run button to start the game.
+                            </div>
+                        </div>
                     </div>
                     <div role="tabpanel" class="tab-pane" id="tab-tools">
                         <h3>Add a new section or passage</h3>
@@ -107,13 +100,6 @@
                         <div class="toolbar">
                             <button id="collapse-all" class="btn btn-primary">Collapse all</button>
                             <button id="uncollapse-all" class="btn btn-primary">Uncollapse all</button>
-                        </div>
-                    </div>
-                    <div role="tabpanel" class="tab-pane" id="tab-output">
-                        <div id="output-container">
-                            <div id="output">
-                                Click the Run button to start the game.
-                            </div>
                         </div>
                     </div>
                     <div role="tabpanel" class="tab-pane" id="tab-debugger">

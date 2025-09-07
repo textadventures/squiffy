@@ -56,7 +56,7 @@ div.squiffy-output-block:not(:last-child), div.squiffy-output-section:not(:last-
     position: fixed;
 }
 
-#output, #tab-help, #tab-tools {
+#output, #tab-tools {
     position: absolute;
     top: 54px;
     right: 0;
