@@ -33,6 +33,7 @@
     "chosen-js": "^1.8.7",
     "jquery": "^3.7.1",
     "marked": "^16.2.0",
+    "split.js": "^1.6.5",
     "squiffy-compiler": "^6.0.0-alpha.3",
     "squiffy-runtime": "^6.0.0-alpha.14"
   }

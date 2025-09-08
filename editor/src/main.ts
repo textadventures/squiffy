@@ -1,6 +1,7 @@
 import 'bootstrap/scss/bootstrap.scss';
 import 'bootstrap-icons/font/bootstrap-icons.css'
 import 'chosen-js/chosen.min.css'
+import Split from 'split.js'
 
 import $ from 'jquery';
 
@@ -615,3 +616,5 @@ document.addEventListener("DOMContentLoaded", () => {
             '[[section link]]:\n\nWhen a new section appears, any unclicked passage links from the previous section are disabled.');
     }
 });
+
+Split(['#left-pane', '#right-pane']);
