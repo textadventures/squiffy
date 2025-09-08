@@ -82,9 +82,6 @@ const run = async function () {
     el<HTMLElement>('debugger').innerHTML = '';
     el<HTMLButtonElement>('restart').hidden = true;
 
-    const tabOutputButton = document.querySelector('#tab-output-button');
-    Tab.getInstance(tabOutputButton!)!.show();
-
     await compile();
 };
 
