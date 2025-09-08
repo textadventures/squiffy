@@ -1,7 +1,7 @@
 {
   "name": "@textadventures/squiffy-editor",
   "private": true,
-  "version": "0.0.0",
+  "version": "6.0.0-alpha.16",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -34,7 +34,7 @@
     "jquery": "^3.7.1",
     "marked": "^16.2.0",
     "split.js": "^1.6.5",
-    "squiffy-compiler": "^6.0.0-alpha.3",
-    "squiffy-runtime": "^6.0.0-alpha.14"
+    "squiffy-compiler": "^6.0.0-alpha.16",
+    "squiffy-runtime": "^6.0.0-alpha.16"
   }
 }

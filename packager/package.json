@@ -1,6 +1,6 @@
 {
   "name": "squiffy-packager",
-  "version": "6.0.0-alpha.15",
+  "version": "6.0.0-alpha.16",
   "main": "dist/squiffy.js",
   "types": "dist/packager.d.ts",
   "scripts": {
@@ -22,8 +22,8 @@
     "finalhandler": "^2.1.0",
     "glob": "^11.0.3",
     "serve-static": "^2.2.0",
-    "squiffy-compiler": "^6.0.0-alpha.15",
-    "squiffy-runtime": "^6.0.0-alpha.15",
+    "squiffy-compiler": "^6.0.0-alpha.16",
+    "squiffy-runtime": "^6.0.0-alpha.16",
     "yargs": "^18.0.0"
   },
   "devDependencies": {

@@ -1,6 +1,6 @@
 {
   "name": "squiffy-runtime",
-  "version": "6.0.0-alpha.15",
+  "version": "6.0.0-alpha.16",
   "type": "module",
   "main": "dist/squiffy.runtime.js",
   "types": "dist/squiffy.runtime.d.ts",
@@ -23,7 +23,7 @@
     "css.escape": "^1.5.1",
     "global-jsdom": "^25.0.0",
     "jsdom": "^25.0.0",
-    "squiffy-compiler": "^6.0.0-alpha.15",
+    "squiffy-compiler": "^6.0.0-alpha.16",
     "typescript": "^5.6.2",
     "vite": "^7.1.3",
     "vite-plugin-dts": "^4.5.4"
