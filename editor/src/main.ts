@@ -502,7 +502,9 @@ const onSet = function (attribute: string, value: string) {
 };
 
 const logToDebugger = function (text: string) {
-    el<HTMLElement>('debugger').innerHTML += `${text}<br>`;
+    const debuggerEl = el<HTMLElement>('debugger');
+    debuggerEl.innerHTML += `${text}<br>`;
+    debuggerEl.scrollTop = debuggerEl.scrollHeight;
 };
 
 const compile = async function () {
@@ -615,3 +617,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 Split(['#left-pane', '#right-pane']);
+Split(['#output-container', '#debugger'], {
+    direction: 'vertical',
+    sizes: [75, 25],
+});

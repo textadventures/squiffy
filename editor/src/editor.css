@@ -39,6 +39,7 @@ div.squiffy-output-block:not(:last-child), div.squiffy-output-section:not(:last-
 
 #debugger {
     font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+    overflow-y: scroll;
 }
 
 #output {
