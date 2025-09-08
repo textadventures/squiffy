@@ -218,6 +218,10 @@ const editorChange = async function () {
             };
 
             squiffyApi.update(story);
+        } else {
+            for (const err of result.errors) {
+                logToDebugger(err);
+            }
         }
     }
 };
@@ -518,8 +522,10 @@ const compile = async function () {
     });
 
     if (!result.success) {
-        // TODO
-        // onCompileFail(result, []);
+        // TODO: This is duplicated in editorChange
+        for (const err of result.errors) {
+            logToDebugger(err);
+        }
         return;
     }
 
