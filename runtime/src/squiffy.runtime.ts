@@ -372,11 +372,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         },
         scrollToEnd: () => {
             if (settings.scroll === 'element') {
-                const scrollTo = outputElement.scrollHeight - outputElement.clientHeight;
-                const currentScrollTop = outputElement.scrollTop;
-                if (scrollTo > (currentScrollTop || 0)) {
-                    outputElement.scrollTo({ top: scrollTo, behavior: 'smooth' });
-                }
+                outputElement.lastElementChild.scrollIntoView({ block: 'end', inline: 'nearest', behavior: 'smooth' });
             }
             else {
                 let scrollTo = scrollPosition;

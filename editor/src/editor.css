@@ -41,7 +41,7 @@ div.squiffy-output-block:not(:last-child), div.squiffy-output-section:not(:last-
     font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
 }
 
-#output, #tab-tools {
+#output {
     min-height: 0;
     padding: 20px;
     background: #fff;
