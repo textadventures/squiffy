@@ -1,3 +1,5 @@
+import pkg from '../package.json' with { type: 'json' };
+const version = pkg.version;
 import 'bootstrap/scss/bootstrap.scss';
 import 'bootstrap-icons/font/bootstrap-icons.css'
 import 'chosen-js/chosen.min.css'
@@ -621,3 +623,5 @@ Split(['#output-container', '#debugger'], {
     direction: 'vertical',
     sizes: [75, 25],
 });
+
+logToDebugger("Squiffy " + version);
