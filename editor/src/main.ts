@@ -79,10 +79,15 @@ const populateSettingsDialog = function () {
     });
 };
 
+const clearDebugger = function () {
+    el<HTMLElement>('debugger').innerHTML = '';
+    logToDebugger("Squiffy " + version);
+};
+
 const run = async function () {
     el<HTMLElement>('output').innerHTML = '';
-    el<HTMLElement>('debugger').innerHTML = '';
     el<HTMLButtonElement>('restart').hidden = true;
+    clearDebugger();
 
     await compile();
 };
@@ -324,12 +329,13 @@ const processFile = function (data: string) {
     cursorMoved(true);
 };
 
-const editorLoad = function (data: string) {
+const editorLoad = async function (data: string) {
     loading = true;
     editor.setValue(data);
     loading = false;
     localStorage.squiffy = data;
     processFile(data);
+    await compile();
 };
 
 const cursorMoved = function (force?: boolean) {
@@ -394,7 +400,7 @@ const passageChanged = function () {
     });
 };
 
-const init = function (data: string) {
+const init = async function (data: string) {
     const options: Settings = {
         data: data,
         autoSave: function () {
@@ -412,7 +418,7 @@ const init = function (data: string) {
 
     editor.init(options, editorChange, cursorMoved);
 
-    editorLoad(options.data);
+    await editorLoad(options.data);
     cursorMoved();
 
     // if (options.preview) {
@@ -593,7 +599,7 @@ var userSettings = {
     }
 };
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
     const triggerTabList = document.querySelectorAll('#tabs button');
     triggerTabList.forEach(triggerEl => {
         const tabTrigger = new Tab(triggerEl);
@@ -609,9 +615,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     var saved = localStorage.squiffy;
     if (saved) {
-        init(localStorage.squiffy);
+        await init(localStorage.squiffy);
     } else {
-        init('@title New Game\n\n' +
+        await init('@title New Game\n\n' +
             'Start writing! You can delete all of this text, or play around with it if you\'re new to Squiffy.\n\n' +
             'Each choice is represented by a [[new section]]. You can create links to new sections by surrounding them ' +
             'in double square brackets.\n\n' +
@@ -630,4 +636,4 @@ Split(['#output-container', '#debugger'], {
     sizes: [75, 25],
 });
 
-logToDebugger("Squiffy " + version);
+clearDebugger();
