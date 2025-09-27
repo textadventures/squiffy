@@ -350,21 +350,26 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
 
             const html = ui.processText(text, false).trim();
 
-            if (html.length > 0) {
-                if (!currentBlockOutputElement) {
-                    newBlockOutputElement();
-                }
+            // Previously, we skipped the rest of this if "html" came back as an empty string.
+            // But, we _do_ always want the block to be created, in the editor at least - as the
+            // author might be in the middle of an edit. When they start writing text for this
+            // source (section or passage), we want it to appear in the right place.
+            // TODO: What if this comes from a master section/passage though, and there's no
+            // text (just a script)? Or if there's conditional text that doesn't display?
 
-                const div = document.createElement('div');
-                if (source) {
-                    div.setAttribute('data-source', source);
-                }
-
-                div.innerHTML = html;
-                pluginManager.onWrite(div);
-                currentBlockOutputElement.appendChild(div);
-                ui.scrollToEnd();
+            if (!currentBlockOutputElement) {
+                newBlockOutputElement();
             }
+
+            const div = document.createElement('div');
+            if (source) {
+                div.setAttribute('data-source', source);
+            }
+
+            div.innerHTML = html;
+            pluginManager.onWrite(div);
+            currentBlockOutputElement.appendChild(div);
+            ui.scrollToEnd();
         },
         clearScreen: () => {
             outputElement.innerHTML = '';
