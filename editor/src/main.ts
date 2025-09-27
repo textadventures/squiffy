@@ -209,6 +209,8 @@ const editorChange = async function () {
     autoSaveTimeout = setTimeout(autoSave, 5000);
     // TODO: Show some indicator that the current file has not been saved
 
+    clearDebugger();
+    
     if (squiffyApi) {
         const result = await squiffyCompile({
             scriptBaseFilename: "filename.squiffy",
