@@ -506,3 +506,24 @@ Updated text from a passage.
     // text has been written.
     expect(output).toBe('Here is an updated script with text from a passage: Text from a passage.');
 });
+
+test('Clear entire script, then update', async () => {
+    const script = "Original content";
+
+    const { squiffyApi, element } = await initScript(script);
+
+    let output = getSectionContent(element, '_default');
+    expect(output).toBe("Original content");
+
+    const script2 = "";
+    const update2 = await compile(script2);
+    squiffyApi.update(update2.story);
+    output = getSectionContent(element, '_default');
+    expect(output).toBeNull();
+
+    const script3 = "New content";
+    const update3 = await compile(script3);
+    squiffyApi.update(update3.story);
+    output = getSectionContent(element, '_default');
+    expect(output).toBe("New content");
+});

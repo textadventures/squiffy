@@ -42,6 +42,18 @@ test('"Hello world" should compile', async () => {
     expect(result.output.story.sections._default.text).toBe("hello world");
 });
 
+test('Blank game should compile', async () => {
+    const result = await compile({
+        scriptBaseFilename: "filename.squiffy",
+        script: "",
+    });
+
+    assertSuccess(result);
+    expect(result.output.story.start).toBe("_default");
+    expect(Object.keys(result.output.story.sections).length).toBe(1);
+    expect(result.output.story.sections._default.text).toBe("");
+});
+
 const examples = [
     "attributes/attributes.squiffy",
     "clearscreen/clearscreen.squiffy",

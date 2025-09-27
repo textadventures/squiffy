@@ -484,6 +484,9 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
     const success = await processFileText(settings.script, settings.scriptBaseFilename, true);
 
     if (success) {
+        if (!Object.keys(story.sections).length) {
+            ensureSectionExists(null, true, settings.scriptBaseFilename, 0);
+        }
         const storyData = await getStoryData();
 
         return {

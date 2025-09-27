@@ -44,7 +44,7 @@ export function updateStory(oldStory: Story,
                     parentOutputSection.remove();
                 }
             }
-            else if (newSection.text && newSection.text != oldStory.sections[existingSection].text) {
+            else if (newSection.text != oldStory.sections[existingSection].text) {
                 // section has been updated
                 for (const element of elements) {
                     updateElementTextPreservingDisabledPassageLinks(element, ui.processText(newSection.text, false));
