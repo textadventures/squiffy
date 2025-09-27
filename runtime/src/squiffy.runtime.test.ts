@@ -527,3 +527,19 @@ test('Clear entire script, then update', async () => {
     output = getSectionContent(element, '_default');
     expect(output).toBe("New content");
 });
+
+test('Changing the start section', async () => {
+    const script = "Original content in default section";
+
+    const { squiffyApi, element } = await initScript(script);
+
+    let output = getSectionContent(element, '_default');
+    expect(output).toBe("Original content in default section");
+
+    const script2 = `[[new]]:
+This is the new start section`;
+    const update2 = await compile(script2);
+    squiffyApi.update(update2.story);
+    output = getSectionContent(element, 'new');
+    expect(output).toBe("This is the new start section");
+});

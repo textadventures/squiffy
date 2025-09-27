@@ -390,6 +390,14 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     };
 
     function update(newStory: Story) {
+        if (newStory.start != story.start) {
+            story = newStory;
+            state.reset();
+            outputElement.innerHTML = '';
+            go(story.start);
+            return;
+        }
+
         updateStory(story, newStory, outputElement, ui, disableLink);
 
         story = newStory;
