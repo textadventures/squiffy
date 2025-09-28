@@ -94,7 +94,7 @@ const run = async function () {
 
 const restart = function () {
     el<HTMLElement>('debugger').innerHTML = '';
-    $('#output').squiffy('restart');
+    squiffyApi?.restart();
 };
 
 const downloadSquiffyScript = function () {
