@@ -229,7 +229,8 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
                 section = ensureThisSectionExists();
                 const previousSection = section;
                 const autoSectionName = addAutoSection();
-                previousSection.addText(`[[${match.continue[1]}]](${autoSectionName})`);
+                const text = match.continue[1] || "Continue...";
+                previousSection.addText(`[[${text}]](${autoSectionName})`);
             }
             else if (stripLine == '---') {
                 inUiBlock = false;
