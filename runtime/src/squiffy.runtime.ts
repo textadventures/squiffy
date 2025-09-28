@@ -262,7 +262,9 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     
     function restart() {
         state.reset();
-        if (settings.scroll === 'element') {
+        // TODO: This feels like the wrong way of triggering location.reload()
+        // - should be a separate setting to the scroll setting.
+        if (settings.scroll === 'element' || settings.scroll === 'none') {
             outputElement.innerHTML = '';
             begin();
         }
@@ -376,7 +378,10 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             newSection(null);
         },
         scrollToEnd: () => {
-            if (settings.scroll === 'element') {
+            if (settings.scroll === 'none') {
+                // do nothing
+            }
+            else if (settings.scroll === 'element') {
                 outputElement.lastElementChild.scrollIntoView({ block: 'end', inline: 'nearest', behavior: 'smooth' });
             }
             else {
