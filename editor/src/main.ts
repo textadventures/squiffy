@@ -12,7 +12,7 @@ import $ from 'jquery';
 
 import "chosen-js/chosen.jquery.js"
 import { Modal, Tab, Tooltip } from 'bootstrap'
-import { Output, compile as squiffyCompile } from 'squiffy-compiler';
+import {Output, compile as squiffyCompile, CompileError} from 'squiffy-compiler';
 import { openFile, saveFile } from './file-handler';
 import { Settings } from './settings';
 import * as editor from './editor';
@@ -221,9 +221,7 @@ const editorChange = async function () {
             const story = getStoryFromCompilerOutput(result.output);
             squiffyApi.update(story);
         } else {
-            for (const err of result.errors) {
-                logToDebugger(err);
-            }
+            showErrors(result);
         }
     }
 };
@@ -525,10 +523,7 @@ const compile = async function () {
     });
 
     if (!result.success) {
-        // TODO: This is duplicated in editorChange
-        for (const err of result.errors) {
-            logToDebugger(err);
-        }
+        showErrors(result);
         return;
     }
 
@@ -544,6 +539,12 @@ const getStoryFromCompilerOutput = function (data: Output) {
         js: js as any,
         ...data.story,
     };
+}
+
+const showErrors = function (result: CompileError) {
+    for (const err of result.errors) {
+        logToDebugger(err);
+    }
 }
 
 const onCompileSuccess = async function (data: Output, msgs: string[]) {
