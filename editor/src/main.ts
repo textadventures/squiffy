@@ -218,12 +218,7 @@ const editorChange = async function () {
         });
 
         if (result.success) {
-            const js = result.output.js.map(jsLines => new Function('squiffy', 'get', 'set', jsLines.join('\n')));
-            const story = {
-                js: js as any,
-                ...result.output.story,
-            };
-
+            const story = getStoryFromCompilerOutput(result.output);
             squiffyApi.update(story);
         } else {
             for (const err of result.errors) {
@@ -543,12 +538,20 @@ const compile = async function () {
     // TODO: Handle zip request (input.zip previously called "/zip" on server version)
 };
 
+const getStoryFromCompilerOutput = function (data: Output) {
+    const js = data.js.map(jsLines => new Function('squiffy', 'get', 'set', jsLines.join('\n')));
+    return {
+        js: js as any,
+        ...data.story,
+    };
+}
+
 const onCompileSuccess = async function (data: Output, msgs: string[]) {
     el<HTMLButtonElement>('restart').hidden = false;
 
     showWarnings(msgs);
 
-    const js = data.js.map(jsLines => new Function('squiffy', 'get', 'set', jsLines.join('\n')));
+    const story = getStoryFromCompilerOutput(data);
 
     const outputContainer = el<HTMLElement>('output-container');
     outputContainer.innerHTML = '';
@@ -561,10 +564,7 @@ const onCompileSuccess = async function (data: Output, msgs: string[]) {
         scroll: 'element',
         persist: false,
         onSet: onSet,
-        story: {
-            js: js as any,
-            ...data.story,
-        },
+        story: story,
     });
 
     await squiffyApi.begin();
