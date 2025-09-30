@@ -84,16 +84,8 @@ const clearDebugger = function () {
     logToDebugger("Squiffy " + version);
 };
 
-const run = async function () {
-    el<HTMLElement>('output').innerHTML = '';
-    el<HTMLButtonElement>('restart').hidden = true;
-    clearDebugger();
-
-    await compile();
-};
-
 const restart = function () {
-    el<HTMLElement>('debugger').innerHTML = '';
+    clearDebugger();
     squiffyApi?.restart();
 };
 
@@ -212,16 +204,11 @@ const editorChange = async function () {
     clearDebugger();
     
     if (squiffyApi) {
-        const result = await squiffyCompile({
-            scriptBaseFilename: "filename.squiffy",
-            script: editor.getValue(),
-        });
+        const result = await compile();
 
         if (result.success) {
             const story = getStoryFromCompilerOutput(result.output);
             squiffyApi.update(story);
-        } else {
-            showErrors(result);
         }
     }
 };
@@ -330,7 +317,7 @@ const editorLoad = async function (data: string) {
     loading = false;
     localStorage.squiffy = data;
     processFile(data);
-    await compile();
+    await initialCompile();
 };
 
 const cursorMoved = function (force?: boolean) {
@@ -431,7 +418,6 @@ const init = async function (data: string) {
     //     $('#build').click(options.build);
     // }
 
-    onClick('run', run);
     onClick('restart', restart);
     onClick('file-new', () => editorLoad(""));
     onClick('open', () => openFile(editorLoad));
@@ -514,7 +500,7 @@ const logToDebugger = function (text: string) {
     debuggerEl.scrollTop = debuggerEl.scrollHeight;
 };
 
-const compile = async function () {
+const compile = async function() {
     const script = editor.getValue();
 
     const result = await squiffyCompile({
@@ -524,35 +510,23 @@ const compile = async function () {
 
     if (!result.success) {
         showErrors(result);
+    }
+
+    // TODO: Get warnings
+    const warnings: string[] = [];
+    showWarnings(warnings);
+
+    return result;
+};
+
+const initialCompile = async function () {
+    const result = await compile();
+
+    if (!result.success) {
         return;
     }
 
-    // TODO: Pass array of errors/warnings as the second parameter
-    await onCompileSuccess(result.output, []);
-
-    // TODO: Handle zip request (input.zip previously called "/zip" on server version)
-};
-
-const getStoryFromCompilerOutput = function (data: Output) {
-    const js = data.js.map(jsLines => new Function('squiffy', 'get', 'set', jsLines.join('\n')));
-    return {
-        js: js as any,
-        ...data.story,
-    };
-}
-
-const showErrors = function (result: CompileError) {
-    for (const err of result.errors) {
-        logToDebugger(err);
-    }
-}
-
-const onCompileSuccess = async function (data: Output, msgs: string[]) {
-    el<HTMLButtonElement>('restart').hidden = false;
-
-    showWarnings(msgs);
-
-    const story = getStoryFromCompilerOutput(data);
+    const story = getStoryFromCompilerOutput(result.output);
 
     const outputContainer = el<HTMLElement>('output-container');
     outputContainer.innerHTML = '';
@@ -571,6 +545,26 @@ const onCompileSuccess = async function (data: Output, msgs: string[]) {
     await squiffyApi.begin();
 };
 
+const getStoryFromCompilerOutput = function (data: Output) {
+    const js = data.js.map(jsLines => new Function('squiffy', 'get', 'set', jsLines.join('\n')));
+    return {
+        js: js as any,
+        ...data.story,
+    };
+}
+
+const showErrors = function (result: CompileError) {
+    for (const err of result.errors) {
+        logToDebugger(err);
+    }
+}
+
+const showWarnings = function (warnings: string[]) {
+    for (const warning of warnings) {
+        logToDebugger(warning);
+    }
+};
+
 // fail: function (data: string, msgs: string[]) {
 //     $('<div/>', { id: 'output' }).appendTo('#output-container');
 
@@ -580,16 +574,6 @@ const onCompileSuccess = async function (data: Output, msgs: string[]) {
 //     // Show detailed info
 //     this.showWarnings(msgs);
 // }
-
-const showWarnings = function (msgs: string[]) {
-    const WarningStyle = '"color: gold; background-color: gray"';
-
-    if (msgs.length > 0) {
-        el<HTMLElement>('output').innerHTML = '<div style=' + WarningStyle + '>' + msgs + '</div>';
-    }
-
-    return;
-};
 
 var userSettings = {
     get: function (setting: string) {
