@@ -502,18 +502,20 @@ const logToDebugger = function (text: string) {
 
 const compile = async function() {
     const script = editor.getValue();
+    const warnings: string[] = [];
 
     const result = await squiffyCompile({
         scriptBaseFilename: "filename.squiffy",
         script: script,
+        onWarning: (message: string) => {
+            warnings.push(message);
+        }
     });
 
     if (!result.success) {
         showErrors(result);
     }
 
-    // TODO: Get warnings
-    const warnings: string[] = [];
     showWarnings(warnings);
 
     return result;
