@@ -20,10 +20,6 @@ export default defineConfig({
         }
     },
     plugins: [
-        inject({
-            $: "jquery",
-            jQuery: "jquery",
-        }),
         VitePWA({
             registerType: 'autoUpdate',
             injectRegister: 'auto',

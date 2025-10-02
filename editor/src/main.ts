@@ -4,12 +4,7 @@ import 'bootstrap/scss/bootstrap.scss';
 import 'bootstrap-icons/font/bootstrap-icons.css'
 import 'chosen-js/chosen.min.css'
 import Split from 'split.js'
-
-import $ from 'jquery';
-
-(window as any).$ = $;
-(window as any).jQuery = $;
-
+import './jquery-globals';
 import "chosen-js/chosen.jquery.js"
 import { Modal, Tab, Tooltip } from 'bootstrap'
 import {Output, compile as squiffyCompile, CompileError} from 'squiffy-compiler';
