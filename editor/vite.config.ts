@@ -10,6 +10,15 @@ export default defineConfig({
             '~bootstrap': path.resolve(__dirname, 'node_modules/bootstrap'),
         }
     },
+    // Silence deprecations for Bootstrap
+    css: {
+        preprocessorOptions: {
+            scss: {
+                api: 'modern',
+                silenceDeprecations: ['color-functions', 'global-builtin', 'import']
+            }
+        }
+    },
     plugins: [
         inject({
             $: "jquery",
