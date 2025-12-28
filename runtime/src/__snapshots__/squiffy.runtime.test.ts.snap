@@ -26,7 +26,7 @@ exports[`Click a passage link 2`] = `
 <p>And this goes to the <a class="squiffy-link link-section" data-section="section2" role="link" tabindex="0">next section</a>.</p>
 <p>This line has links to <a class="squiffy-link link-section" data-section="section 3" role="link" tabindex="0">section 3</a> and <a class="squiffy-link link-section" data-section="section four" role="link" tabindex="0">section 4</a>.</p>
 <p>This line has links to <a class="squiffy-link link-passage" data-passage="passage 3" role="link" tabindex="0">passage 3</a> and <a class="squiffy-link link-passage" data-passage="passage four" role="link" tabindex="0">passage 4</a>.</p>
-<p>Oh look - <a class="squiffy-link link-passage" data-passage="it's a passage with an apostrophe" role="link" tabindex="0">it's a passage with an apostrophe</a>.</p></div></div><div class="squiffy-output-block"><div data-source="[[Introduction]][passage]"><p>Here's some text for the passage.</p></div></div></div></div>"
+<p>Oh look - <a class="squiffy-link link-passage" data-passage="it's a passage with an apostrophe" role="link" tabindex="0">it's a passage with an apostrophe</a>.</p></div></div><div class="squiffy-output-passage" data-passage="passage"><div class="squiffy-output-block"><div data-source="[[Introduction]][passage]"><p>Here's some text for the passage.</p></div></div></div></div></div>"
 `;
 
 exports[`Click a section link 1`] = `
@@ -55,7 +55,7 @@ exports[`Click a section link 2`] = `
 
 exports[`Delete passage 1`] = `
 "
-    <div><div class="squiffy-output-section" id="squiffy-section-1" data-section="_default"><div class="squiffy-output-block"><div data-source="[[_default]]"><p>Click this: <a class="squiffy-link link-passage disabled" data-passage="a" role="link" tabindex="-1">a</a></p></div></div><div class="squiffy-output-block"><div data-source="[[_default]][a]"><p>New passage</p></div></div></div></div>"
+    <div><div class="squiffy-output-section" id="squiffy-section-1" data-section="_default"><div class="squiffy-output-block"><div data-source="[[_default]]"><p>Click this: <a class="squiffy-link link-passage disabled" data-passage="a" role="link" tabindex="-1">a</a></p></div></div><div class="squiffy-output-passage" data-passage="a"><div class="squiffy-output-block"><div data-source="[[_default]][a]"><p>New passage</p></div></div></div></div></div>"
 `;
 
 exports[`Delete passage 2`] = `
@@ -85,20 +85,20 @@ exports[`Update default section output 2`] = `
 
 exports[`Update passage output - passage name "a" 1`] = `
 "
-    <div><div class="squiffy-output-section" id="squiffy-section-1" data-section="_default"><div class="squiffy-output-block"><div data-source="[[_default]]"><p>Click this: <a class="squiffy-link link-passage disabled" data-passage="a" role="link" tabindex="-1">a</a></p></div></div><div class="squiffy-output-block"><div data-source="[[_default]][a]"><p>Passage a content</p></div></div></div></div>"
+    <div><div class="squiffy-output-section" id="squiffy-section-1" data-section="_default"><div class="squiffy-output-block"><div data-source="[[_default]]"><p>Click this: <a class="squiffy-link link-passage disabled" data-passage="a" role="link" tabindex="-1">a</a></p></div></div><div class="squiffy-output-passage" data-passage="a"><div class="squiffy-output-block"><div data-source="[[_default]][a]"><p>Passage a content</p></div></div></div></div></div>"
 `;
 
 exports[`Update passage output - passage name "a" 2`] = `
 "
-    <div><div class="squiffy-output-section" id="squiffy-section-1" data-section="_default"><div class="squiffy-output-block"><div data-source="[[_default]]"><p>Click this: <a class="squiffy-link link-passage disabled" data-passage="a" role="link" tabindex="-1">a</a></p></div></div><div class="squiffy-output-block"><div data-source="[[_default]][a]"><p>Updated passage content</p></div></div></div></div>"
+    <div><div class="squiffy-output-section" id="squiffy-section-1" data-section="_default"><div class="squiffy-output-block"><div data-source="[[_default]]"><p>Click this: <a class="squiffy-link link-passage disabled" data-passage="a" role="link" tabindex="-1">a</a></p></div></div><div class="squiffy-output-passage" data-passage="a"><div class="squiffy-output-block"><div data-source="[[_default]][a]"><p>Updated passage content</p></div></div></div></div></div>"
 `;
 
 exports[`Update passage output - passage name "a'1" 1`] = `
 "
-    <div><div class="squiffy-output-section" id="squiffy-section-1" data-section="_default"><div class="squiffy-output-block"><div data-source="[[_default]]"><p>Click this: <a class="squiffy-link link-passage disabled" data-passage="a'1" role="link" tabindex="-1">a'1</a></p></div></div><div class="squiffy-output-block"><div data-source="[[_default]][a'1]"><p>Passage a content</p></div></div></div></div>"
+    <div><div class="squiffy-output-section" id="squiffy-section-1" data-section="_default"><div class="squiffy-output-block"><div data-source="[[_default]]"><p>Click this: <a class="squiffy-link link-passage disabled" data-passage="a'1" role="link" tabindex="-1">a'1</a></p></div></div><div class="squiffy-output-passage" data-passage="a'1"><div class="squiffy-output-block"><div data-source="[[_default]][a'1]"><p>Passage a content</p></div></div></div></div></div>"
 `;
 
 exports[`Update passage output - passage name "a'1" 2`] = `
 "
-    <div><div class="squiffy-output-section" id="squiffy-section-1" data-section="_default"><div class="squiffy-output-block"><div data-source="[[_default]]"><p>Click this: <a class="squiffy-link link-passage disabled" data-passage="a'1" role="link" tabindex="-1">a'1</a></p></div></div><div class="squiffy-output-block"><div data-source="[[_default]][a'1]"><p>Updated passage content</p></div></div></div></div>"
+    <div><div class="squiffy-output-section" id="squiffy-section-1" data-section="_default"><div class="squiffy-output-block"><div data-source="[[_default]]"><p>Click this: <a class="squiffy-link link-passage disabled" data-passage="a'1" role="link" tabindex="-1">a'1</a></p></div></div><div class="squiffy-output-passage" data-passage="a'1"><div class="squiffy-output-block"><div data-source="[[_default]][a'1]"><p>Updated passage content</p></div></div></div></div></div>"
 `;
