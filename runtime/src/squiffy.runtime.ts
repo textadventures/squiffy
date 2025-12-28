@@ -441,6 +441,8 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         // If there isn't:
         //   - remove that from "seen" sections
         //   - remove the div
+
+        // TODO: Also, unset any attribute changes (we'll need to record these in the div data)
     }
 
     // We create a separate div inside the passed-in element. This allows us to clear the text output, but
