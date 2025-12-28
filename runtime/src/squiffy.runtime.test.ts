@@ -124,6 +124,28 @@ test('Click a section link', async () => {
     off();
 });
 
+test('Click a section link and go back', async () => {
+    const script = await fs.readFile('../examples/test/example.squiffy', 'utf-8');
+    const { squiffyApi, element } = await initScript(script);
+
+    const linkToPassage = findLink(element, 'passage', 'a link to a passage');
+    const section3Link = findLink(element, 'section', 'section 3');
+    expect(section3Link).not.toBeNull();
+
+    await squiffyApi.clickLink(section3Link);
+
+    // passage link is from the previous section, so should be unclickable
+    expect(await squiffyApi.clickLink(linkToPassage)).toBe(false);
+
+    // Now go back
+    squiffyApi.goBack();
+
+    // TODO: Should match snapshot
+    // And linkToPassage should be clickable
+
+    expect(await squiffyApi.clickLink(linkToPassage)).toBe(true);
+});
+
 test('Click a passage link', async () => {
     const script = await fs.readFile('../examples/test/example.squiffy', 'utf-8');
     const { squiffyApi, element } = await initScript(script);

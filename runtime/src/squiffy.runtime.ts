@@ -431,6 +431,12 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
 
     function goBack() {
         // TODO
+
+        // Find the last squiffy-output-section
+        // Then find the last squiffy-output-passage inside that
+        // If there _is_ a squiffy-output-passage, remove that from "seen" passages,
+        //   and remove the div.
+        // If there isn't, then remove the section.
     }
 
     // We create a separate div inside the passed-in element. This allows us to clear the text output, but
