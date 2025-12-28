@@ -15,6 +15,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     let story: Story;
     let currentSection: Section;
     let currentSectionElement: HTMLElement;
+    let currentPassageElement: HTMLElement;
     let currentBlockOutputElement: HTMLElement;
     let scrollPosition = 0;
     let outputElement: HTMLElement;
@@ -240,6 +241,13 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             throw `No passage named ${passageName} in the current section or master section`;
         }
         state.setSeen(passageName);
+
+        currentPassageElement = document.createElement('div');
+        currentPassageElement.classList.add('squiffy-output-passage');
+        currentPassageElement.setAttribute('data-passage', `${passageName}`);
+
+        currentSectionElement.appendChild(currentPassageElement);
+
         if (masterSection && masterSection.passages) {
             const masterPassage = masterSection.passages[''];
             if (masterPassage) {
@@ -297,6 +305,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         outputElement.innerHTML = output;
 
         currentSectionElement = outputElement.querySelector('.squiffy-output-section:last-child');
+        currentPassageElement = outputElement.querySelector('.squiffy-output-passage:last-child');
         currentBlockOutputElement = outputElement.querySelector('.squiffy-output-block:last-child');
 
         currentSection = story.sections[get('_section')];
@@ -308,7 +317,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     function newBlockOutputElement() {
         currentBlockOutputElement = document.createElement('div');
         currentBlockOutputElement.classList.add('squiffy-output-block');
-        currentSectionElement?.appendChild(currentBlockOutputElement);
+        (currentPassageElement || currentSectionElement)?.appendChild(currentBlockOutputElement);
     }
     
     function newSection(sectionName: string | null) {
@@ -335,7 +344,9 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         const sectionCount = get('_section-count') + 1;
         set('_section-count', sectionCount);
         const id = 'squiffy-section-' + sectionCount;
-    
+
+        currentPassageElement = null;
+
         currentSectionElement = document.createElement('div');
         currentSectionElement.classList.add('squiffy-output-section');
         currentSectionElement.id = id;
@@ -414,6 +425,12 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         currentSectionElement = outputElement.querySelector('.squiffy-output-section:last-child');
         const sectionName = currentSectionElement.getAttribute('data-section');
         currentSection = story.sections[sectionName];
+
+        currentPassageElement = outputElement.querySelector('.squiffy-output-passage:last-child');
+    }
+
+    function goBack() {
+        // TODO
     }
 
     // We create a separate div inside the passed-in element. This allows us to clear the text output, but
@@ -488,6 +505,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         set: set,
         clickLink: handleLink,
         update: update,
+        goBack: goBack,
         on: (e, h) => emitter.on(e, h),
         off: (e, h) => emitter.off(e, h),
         once: (e, h) => emitter.once(e, h),

@@ -30,7 +30,9 @@ const restartClass = "sample-button restart" + (!alwaysShowRestart ? " hidden" :
         cursor: inherit;
         pointer-events: none;
     }
-    div.squiffy-output-block:not(:last-child), div.squiffy-output-section:not(:last-child)
+    div.squiffy-output-block:not(:last-child),
+    div.squiffy-output-passage:not(:last-child),
+    div.squiffy-output-section:not(:last-child)
     {
         margin-bottom: 1em;
         border-bottom: 1px solid #ccc;
