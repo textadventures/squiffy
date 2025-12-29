@@ -13,6 +13,10 @@ npm install
 npm run build
 ```
 
+You may then need to run `npm install` again to register the local copies of the packages. 
+
+## Structure
+
 | Folder        | Package name                          | Type            | Description                                                                                             |
 |---------------|---------------------------------------|-----------------|---------------------------------------------------------------------------------------------------------|
 | `compiler`    | `squiffy-compiler`                    | Package         | Squiffy compiler, which converts Squiffy scripts into JavaScript                                        |
@@ -24,3 +28,8 @@ npm run build
 | `vite-plugin` | `@textadventures/vite-plugin-squiffy` | Package         | Vite plugin, allowing you to build Squiffy scripts as part of a web app                                 |
 
 There is also an `examples` folder which contains some sample Squiffy scripts.
+
+```
+cd examples/test
+npx squiffy-packager example.squiffy -s
+```
