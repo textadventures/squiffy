@@ -390,6 +390,8 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             ui.scrollToEnd();
         },
         clearScreen: () => {
+            // TODO: Create a "clear-stack" <div> if not already present, with display: none
+            // Instead of clearing outputElement, move its contents into a new div inside the clear-stack.
             outputElement.innerHTML = '';
             newSection(null);
         },
@@ -443,7 +445,9 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     }
 
     function goBack() {
-        // TODO: Handle going back after an "@clear"
+        // TODO: Handle going back after an "@clear". Take the last-child of clear-stack and move it to the
+        // outputElement.
+
         if (currentPassageElement) {
             // TODO: remove from "seen" passages
 
