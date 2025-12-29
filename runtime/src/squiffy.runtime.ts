@@ -443,6 +443,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     }
 
     function goBack() {
+        // TODO: Handle going back after an "@clear"
         if (currentPassageElement) {
             // TODO: remove from "seen" passages
 
@@ -458,6 +459,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             setCurrentPassageElement();
         }
         else {
+            // TODO: Don't allow going back if this is the only section (i.e. we're back at the start of the game)
             // TODO: remove from "seen" sections
             currentSectionElement.remove();
             setCurrentSectionElement();
