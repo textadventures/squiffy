@@ -84,6 +84,10 @@ const restart = function () {
     squiffyApi?.restart();
 };
 
+const goBack = function () {
+    squiffyApi?.goBack();
+}
+
 const downloadSquiffyScript = function () {
     localSave();
     download(editor.getValue(), title + '.squiffy');
@@ -414,6 +418,7 @@ const init = async function (data: string) {
     // }
 
     onClick('restart', restart);
+    onClick('back', goBack);
     onClick('file-new', () => editorLoad(""));
     onClick('open', () => openFile(editorLoad));
     onClick('save', () => saveFile(editor.getValue()));
