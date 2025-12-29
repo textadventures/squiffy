@@ -140,9 +140,7 @@ test('Click a section link and go back', async () => {
     // Now go back
     squiffyApi.goBack();
 
-    // TODO: Should match snapshot
-    // And linkToPassage should be clickable
-
+    expect(element.innerHTML).toMatchSnapshot();
     expect(await squiffyApi.clickLink(linkToPassage)).toBe(true);
 });
 

@@ -99,6 +99,11 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         link.classList.add('disabled');
         link.setAttribute('tabindex', '-1');
     }
+
+    function enableLink(link: Element) {
+        link.classList.remove('disabled');
+        link.removeAttribute('tabindex');
+    }
     
     async function begin() {
         if (!load()) {
@@ -422,25 +427,41 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         updateStory(story, newStory, outputElement, ui, disableLink);
 
         story = newStory;
+
+        setCurrentSectionElement();
+        setCurrentPassageElement();
+    }
+
+    function setCurrentSectionElement() {
         currentSectionElement = outputElement.querySelector('.squiffy-output-section:last-child');
         const sectionName = currentSectionElement.getAttribute('data-section');
         currentSection = story.sections[sectionName];
+    }
 
+    function setCurrentPassageElement() {
         currentPassageElement = currentSectionElement.querySelector('.squiffy-output-passage:last-child');
     }
 
     function goBack() {
-        // TODO
+        if (currentPassageElement) {
+            // TODO: remove from "seen" passages
 
-        // Find the last squiffy-output-section
-        // Then find the last squiffy-output-passage inside that
-        // If there _is_ a squiffy-output-passage:
-        //   - remove that from "seen" passages
-        //   - un-disable links to that passage
-        //   - remove the div
-        // If there isn't:
-        //   - remove that from "seen" sections
-        //   - remove the div
+            const currentPassage = currentPassageElement.getAttribute('data-passage');
+
+            for (const link of currentSectionElement.querySelectorAll('a.squiffy-link[data-passage]')) {
+                if (link.getAttribute('data-passage') == currentPassage) {
+                    enableLink(link);
+                }
+            }
+
+            currentPassageElement.remove();
+            setCurrentPassageElement();
+        }
+        else {
+            // TODO: remove from "seen" sections
+            currentSectionElement.remove();
+            setCurrentSectionElement();
+        }
 
         // TODO: Also, unset any attribute changes (we'll need to record these in the div data)
     }
