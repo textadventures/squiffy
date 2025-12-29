@@ -137,10 +137,12 @@ test('Click a section link and go back', async () => {
     // passage link is from the previous section, so should be unclickable
     expect(await squiffyApi.clickLink(linkToPassage)).toBe(false);
 
-    // Now go back
+    // now go back
     squiffyApi.goBack();
 
     expect(element.innerHTML).toMatchSnapshot();
+
+    // passage link should be clickable now
     expect(await squiffyApi.clickLink(linkToPassage)).toBe(true);
 });
 
@@ -177,6 +179,26 @@ test('Click a passage link', async () => {
         expect.objectContaining({ linkType: 'passage' })
     );
     off();
+});
+
+test('Click a passage link and go back', async () => {
+    const script = await fs.readFile('../examples/test/example.squiffy', 'utf-8');
+    const { squiffyApi, element } = await initScript(script);
+
+    const linkToPassage = findLink(element, 'passage', 'a link to a passage');
+
+    await squiffyApi.clickLink(linkToPassage);
+
+    // the passage link was clicked, so should be disabled
+    expect(linkToPassage.classList).toContain('disabled');
+
+    // now go back
+    squiffyApi.goBack();
+
+    expect(element.innerHTML).toMatchSnapshot();
+
+    // passage link should be clickable now
+    expect(await squiffyApi.clickLink(linkToPassage)).toBe(true);
 });
 
 test('Run JavaScript functions', async () => {
