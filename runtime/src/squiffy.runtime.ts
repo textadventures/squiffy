@@ -182,9 +182,9 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         state.setSeen(sectionName);
         const master = story.sections[''];
         if (master) {
-            await run(master, "[[]]");
+            await run(master, "[[]]", true);
         }
-        await run(currentSection, `[[${sectionName}]]`);
+        await run(currentSection, `[[${sectionName}]]`, true);
         // The JS might have changed which section we're in
         if (get('_section') == sectionName) {
             set('_turncount', 0);
@@ -211,9 +211,9 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         story.js[index](squiffy, get, set);
     }
     
-    async function run(section: Section, source: string) {
+    async function run(section: Section, source: string, isSection: boolean) {
         if (section.clear) {
-            ui.clearScreen();
+            clearScreen(!isSection);
         }
         if (section.attributes) {
             await processAttributes(section.attributes);
@@ -256,14 +256,14 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         if (masterSection && masterSection.passages) {
             const masterPassage = masterSection.passages[''];
             if (masterPassage) {
-                await run(masterPassage, `[[]][]`);
+                await run(masterPassage, `[[]][]`, false);
             }
         }
         const master = currentSection.passages && currentSection.passages[''];
         if (master) {
-            await run(master, `[[${get("_section")}]][]`);
+            await run(master, `[[${get("_section")}]][]`, false);
         }
-        await run(passage, `[[${get("_section")}]][${passageName}]`);
+        await run(passage, `[[${get("_section")}]][${passageName}]`, false);
         save();
     }
     
@@ -361,6 +361,35 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         outputElement.appendChild(currentSectionElement);
         newBlockOutputElement();
     }
+
+    function clearScreen(createNewSection: boolean) {
+        let clearStack = outputElement.querySelector<HTMLElement>('.squiffy-clear-stack');
+        if (!clearStack) {
+            clearStack = document.createElement('div');
+            clearStack.classList.add('squiffy-clear-stack');
+            clearStack.style.display = 'none';
+            outputElement.prepend(clearStack);
+        }
+
+        const clearStackItem = document.createElement('div');
+        clearStack.appendChild(clearStackItem);
+
+        // Move everything in the outputElement (except the clearStack itself) into the new clearStackItem
+        for (const child of outputElement.children) {
+            if (child !== clearStack) {
+                clearStackItem.appendChild(child);
+            }
+        }
+
+        // NOTE: If we offer an option to disable the "back" feature, all of the above can be replaced with:
+        //    outputElement.innerHTML = '';
+
+        // Create a new section element only if we didn't already just create one (as we will have done if this is
+        // @clear from a section element)
+        if (createNewSection) {
+            newSection(null);
+        }
+    }
     
     const ui = {
         write: (text: string, source: string) => {
@@ -390,28 +419,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             ui.scrollToEnd();
         },
         clearScreen: () => {
-            let clearStack = outputElement.querySelector<HTMLElement>('.squiffy-clear-stack');
-            if (!clearStack) {
-                clearStack = document.createElement('div');
-                clearStack.classList.add('squiffy-clear-stack');
-                clearStack.style.display = 'none';
-                outputElement.prepend(clearStack);
-            }
-
-            const clearStackItem = document.createElement('div');
-            clearStack.appendChild(clearStackItem);
-
-            // Move everything in the outputElement (except the clearStack itself) into the new clearStackItem
-            for (const child of outputElement.children) {
-                if (child !== clearStack) {
-                    clearStackItem.appendChild(child);
-                }
-            }
-
-            // NOTE: If we offer an option to disable the "back" feature, all of the above can be replaced with:
-            //    outputElement.innerHTML = '';
-
-            newSection(null);
+            clearScreen(true);
         },
         scrollToEnd: () => {
             if (settings.scroll === 'none') {
