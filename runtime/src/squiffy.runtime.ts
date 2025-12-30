@@ -390,9 +390,27 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             ui.scrollToEnd();
         },
         clearScreen: () => {
-            // TODO: Create a "clear-stack" <div> if not already present, with display: none
-            // Instead of clearing outputElement, move its contents into a new div inside the clear-stack.
-            outputElement.innerHTML = '';
+            let clearStack = outputElement.querySelector<HTMLElement>('.squiffy-clear-stack');
+            if (!clearStack) {
+                clearStack = document.createElement('div');
+                clearStack.classList.add('squiffy-clear-stack');
+                clearStack.style.display = 'none';
+                outputElement.prepend(clearStack);
+            }
+
+            const clearStackItem = document.createElement('div');
+            clearStack.appendChild(clearStackItem);
+
+            // Move everything in the outputElement (except the clearStack itself) into the new clearStackItem
+            for (const child of outputElement.children) {
+                if (child !== clearStack) {
+                    clearStackItem.appendChild(child);
+                }
+            }
+
+            // NOTE: If we offer an option to disable the "back" feature, all of the above can be replaced with:
+            //    outputElement.innerHTML = '';
+
             newSection(null);
         },
         scrollToEnd: () => {
