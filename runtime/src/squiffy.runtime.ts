@@ -449,8 +449,6 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         // outputElement.
 
         if (currentPassageElement) {
-            // TODO: remove from "seen" passages
-
             const currentPassage = currentPassageElement.getAttribute('data-passage');
 
             for (const link of currentSectionElement.querySelectorAll('a.squiffy-link[data-passage]')) {
@@ -464,12 +462,12 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         }
         else {
             // TODO: Don't allow going back if this is the only section (i.e. we're back at the start of the game)
-            // TODO: remove from "seen" sections
             currentSectionElement.remove();
             setCurrentSectionElement();
         }
 
-        // TODO: Also, unset any attribute changes (we'll need to record these in the div data)
+        // TODO: Unset any attribute changes (we'll need to record these in the div data) - this will update
+        // the "seen" list
     }
 
     // We create a separate div inside the passed-in element. This allows us to clear the text output, but
