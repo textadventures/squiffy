@@ -328,8 +328,8 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
 
         outputElement.innerHTML = output;
 
-        currentSectionElement = outputElement.querySelector('.squiffy-output-section:last-child');
-        currentPassageElement = currentSectionElement.querySelector('.squiffy-output-passage:last-child');
+        setCurrentSectionElement();
+        setCurrentPassageElement();
         currentBlockOutputElement = outputElement.querySelector('.squiffy-output-block:last-child');
 
         currentSection = story.sections[get('_section')];
@@ -474,7 +474,10 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     }
 
     function setCurrentSectionElement() {
-        currentSectionElement = outputElement.querySelector('.squiffy-output-section:last-child');
+        // Multiple .squiffy-output-section elements may be "last-child" if some have been moved to the clear-stack,
+        // so we want the very last one
+        const allSectionElements = outputElement.querySelectorAll<HTMLElement>('.squiffy-output-section:last-child');
+        currentSectionElement = allSectionElements[allSectionElements.length - 1];
         const sectionName = currentSectionElement.getAttribute('data-section');
         currentSection = story.sections[sectionName];
     }
