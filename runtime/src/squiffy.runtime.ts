@@ -1,4 +1,4 @@
-import { SquiffyApi, SquiffyInitOptions, SquiffySettings, Story, Section } from './types.js';
+import {SquiffyApi, SquiffyInitOptions, SquiffySettings, Story, Section, Passage} from './types.js';
 import { TextProcessor } from './textProcessor.js';
 import { Emitter, SquiffyEventMap } from './events.js';
 import { State } from "./state.js";
@@ -181,10 +181,13 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         set('_section', sectionName);
         state.setSeen(sectionName);
         const master = story.sections[''];
-        if (master) {
-            await run(master, "[[]]", true);
+        if (master?.clear || currentSection.clear) {
+            clearScreen();
         }
-        await run(currentSection, `[[${sectionName}]]`, true);
+        if (master) {
+            await run(master, "[[]]");
+        }
+        await run(currentSection, `[[${sectionName}]]`);
         // The JS might have changed which section we're in
         if (get('_section') == sectionName) {
             set('_turncount', 0);
@@ -211,10 +214,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         story.js[index](squiffy, get, set);
     }
     
-    async function run(section: Section, source: string, isSection: boolean) {
-        if (section.clear) {
-            clearScreen(!isSection);
-        }
+    async function run(section: Section, source: string) {
         if (section.attributes) {
             await processAttributes(section.attributes);
         }
@@ -247,23 +247,42 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         }
         state.setSeen(passageName);
 
+        const passages: Passage[] = [];
+        const runFns: Function[] = [];
+
+        if (masterSection && masterSection.passages) {
+            const masterPassage = masterSection.passages[''];
+            if (masterPassage) {
+                passages.push(masterPassage);
+                runFns.push(() => run(masterPassage, `[[]][]`));
+            }
+        }
+
+        const master = currentSection.passages && currentSection.passages[''];
+        if (master) {
+            passages.push(master);
+            runFns.push(() => run(master, `[[${get("_section")}]][]`));
+        }
+
+        passages.push(passage);
+        runFns.push(() => run(passage, `[[${get("_section")}]][${passageName}]`));
+
+        if (passages.some(p => p.clear)) {
+            clearScreen();
+            createSectionElement();
+        }
+
         currentPassageElement = document.createElement('div');
         currentPassageElement.classList.add('squiffy-output-passage');
         currentPassageElement.setAttribute('data-passage', `${passageName}`);
 
         currentSectionElement.appendChild(currentPassageElement);
+        currentBlockOutputElement = null;
 
-        if (masterSection && masterSection.passages) {
-            const masterPassage = masterSection.passages[''];
-            if (masterPassage) {
-                await run(masterPassage, `[[]][]`, false);
-            }
+        for (const fn of runFns) {
+            await fn();
         }
-        const master = currentSection.passages && currentSection.passages[''];
-        if (master) {
-            await run(master, `[[${get("_section")}]][]`, false);
-        }
-        await run(passage, `[[${get("_section")}]][${passageName}]`, false);
+
         save();
     }
     
@@ -325,7 +344,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         (currentPassageElement || currentSectionElement)?.appendChild(currentBlockOutputElement);
     }
     
-    function newSection(sectionName: string | null) {
+    function newSection(sectionName?: string) {
         if (currentSectionElement) {
             currentSectionElement.querySelectorAll('input').forEach(el => {
                 const attribute = el.getAttribute('data-attribute') || el.id;
@@ -345,24 +364,23 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
                 el.disabled = true;
             });
         }
-    
-        const sectionCount = get('_section-count') + 1;
-        set('_section-count', sectionCount);
-        const id = 'squiffy-section-' + sectionCount;
 
         currentPassageElement = null;
-
-        currentSectionElement = document.createElement('div');
-        currentSectionElement.classList.add('squiffy-output-section');
-        currentSectionElement.id = id;
-        if (sectionName) {
-            currentSectionElement.setAttribute('data-section', `${sectionName}`);
-        }
-        outputElement.appendChild(currentSectionElement);
+        createSectionElement(sectionName);
         newBlockOutputElement();
     }
 
-    function clearScreen(createNewSection: boolean) {
+    function createSectionElement(sectionName?: string) {
+        currentSectionElement = document.createElement('div');
+        currentSectionElement.classList.add('squiffy-output-section');
+        currentSectionElement.setAttribute('data-section', sectionName ?? get("_section"));
+        outputElement.appendChild(currentSectionElement);
+    }
+
+    function clearScreen() {
+        // Callers should call createSectionElement() after calling this function, so there's a place for new
+        // output to go. We don't call this automatically within this function, in case we're just about to create
+        // a new section anyway.
         let clearStack = outputElement.querySelector<HTMLElement>('.squiffy-clear-stack');
         if (!clearStack) {
             clearStack = document.createElement('div');
@@ -383,12 +401,6 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
 
         // NOTE: If we offer an option to disable the "back" feature, all of the above can be replaced with:
         //    outputElement.innerHTML = '';
-
-        // Create a new section element only if we didn't already just create one (as we will have done if this is
-        // @clear from a section element)
-        if (createNewSection) {
-            newSection(null);
-        }
     }
     
     const ui = {
@@ -419,7 +431,8 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             ui.scrollToEnd();
         },
         clearScreen: () => {
-            clearScreen(true);
+            clearScreen();
+            createSectionElement();
         },
         scrollToEnd: () => {
             if (settings.scroll === 'none') {
