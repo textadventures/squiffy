@@ -500,11 +500,16 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             }
 
             currentPassageElement.remove();
+
+            // TODO: If there's nothing left in the outputElement except for a parent section element that
+            // is marked with a "cleared" attribute (TODO - add), pop the clear-stack.
             setCurrentPassageElement();
         }
         else {
             // TODO: Don't allow going back if this is the only section (i.e. we're back at the start of the game)
             currentSectionElement.remove();
+
+            // TODO: If there's nothing left in the outputElement except for the clear-stack, pop it
             setCurrentSectionElement();
         }
 
