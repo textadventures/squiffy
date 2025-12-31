@@ -374,6 +374,9 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         currentSectionElement = document.createElement('div');
         currentSectionElement.classList.add('squiffy-output-section');
         currentSectionElement.setAttribute('data-section', sectionName ?? get("_section"));
+        if (!sectionName) {
+            currentSectionElement.setAttribute('data-clear', "true");
+        }
         outputElement.appendChild(currentSectionElement);
     }
 
@@ -401,6 +404,10 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
 
         // NOTE: If we offer an option to disable the "back" feature, all of the above can be replaced with:
         //    outputElement.innerHTML = '';
+    }
+
+    function unClearScreen() {
+        console.log("UNCLEAR SCREEN!");
     }
     
     const ui = {
@@ -487,8 +494,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     }
 
     function goBack() {
-        // TODO: Handle going back after an "@clear". Take the last-child of clear-stack and move it to the
-        // outputElement.
+        const clearStack = outputElement.querySelector<HTMLElement>('.squiffy-clear-stack');
 
         if (currentPassageElement) {
             const currentPassage = currentPassageElement.getAttribute('data-passage');
@@ -501,15 +507,47 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
 
             currentPassageElement.remove();
 
-            // TODO: If there's nothing left in the outputElement except for a parent section element that
-            // is marked with a "cleared" attribute (TODO - add), pop the clear-stack.
+            // If there's nothing left in the outputElement except for an empty section element that
+            // was created when the screen was cleared, pop the clear-stack.
+
+            let hasEmptySection = false;
+            let hasOtherElements = false;
+            for (const child of outputElement.children) {
+                if (child === clearStack) {
+                    continue;
+                }
+                if (child.getAttribute('data-clear') == 'true' && child.children.length == 0) {
+                    hasEmptySection = true;
+                    continue;
+                }
+                hasOtherElements = true;
+                break;
+            }
+
+            if (hasEmptySection && !hasOtherElements) {
+                unClearScreen();
+            }
+
             setCurrentPassageElement();
         }
         else {
             // TODO: Don't allow going back if this is the only section (i.e. we're back at the start of the game)
             currentSectionElement.remove();
 
-            // TODO: If there's nothing left in the outputElement except for the clear-stack, pop it
+            // If there's nothing left in the outputElement except for the clear-stack, pop it
+            let hasOtherElements = false;
+            for (const child of outputElement.children) {
+                if (child === clearStack) {
+                    continue;
+                }
+                hasOtherElements = true;
+                break;
+            }
+
+            if (!hasOtherElements) {
+                unClearScreen();
+            }
+
             setCurrentSectionElement();
         }
 
