@@ -192,6 +192,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         // The JS might have changed which section we're in
         if (get('_section') == sectionName) {
             set('_turncount', 0);
+            writeUndoLog();
             save();
         }
         const newCanGoBack = canGoBack();
@@ -289,6 +290,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             await fn();
         }
 
+        writeUndoLog();
         save();
         const newCanGoBack = canGoBack();
         if (newCanGoBack != oldCanGoBack) {
@@ -632,7 +634,20 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         await handleClick(event);
     });
 
-    state = new State(settings.persist, story.id || '', settings.onSet, emitter);
+    let undoLog: Record<string, any> = {};
+
+    const onSet = function(attribute: string, oldValue: any) {
+        if (attribute == '_output') return;
+        if (attribute in undoLog) return;
+        undoLog[attribute] = oldValue;
+    }
+
+    const writeUndoLog = function() {
+        (currentPassageElement ?? currentSectionElement).setAttribute('data-undo', JSON.stringify(undoLog));
+        undoLog = {};
+    }
+
+    state = new State(settings.persist, story.id || '', settings.onSet, emitter, onSet);
     const get = state.get.bind(state);
     const set = state.set.bind(state);
 

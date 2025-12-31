@@ -4,17 +4,20 @@ export class State {
     persist: boolean;
     storyId: string;
     onSet: (attribute: string, value: any) => void;
+    onSetInternal?: (attribute: string, oldValue: any, newValue: any) => void;
     store: Record<string, any> = {};
     emitter: Emitter<SquiffyEventMap>;
 
     constructor(persist: boolean,
                 storyId: string,
                 onSet: (attribute: string, value: any) => void,
-                emitter: Emitter<SquiffyEventMap>) {
+                emitter: Emitter<SquiffyEventMap>,
+                onSetInternal?: (attribute: string, oldValue: any, newValue: any) => void) {
         this.persist = persist;
         this.storyId = storyId;
         this.onSet = onSet;
         this.emitter = emitter;
+        this.onSetInternal = onSetInternal;
     }
 
     private usePersistentStorage() {
@@ -23,6 +26,10 @@ export class State {
 
     set(attribute: string, value: any) {
         if (typeof value === 'undefined') value = true;
+
+        if (this.onSetInternal) {
+            this.onSetInternal(attribute, this.get(attribute), structuredClone(value));
+        }
 
         this.store[attribute] = structuredClone(value);
 
