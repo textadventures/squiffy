@@ -591,16 +591,20 @@ test('Going back handling @clear and attribute changes', async () => {
 Choose: [a], [b]
 
 [a]:
+@set test = 123
 You chose a. Now [[continue]]
 
 [b]:
+@set test = 456
 You chose b. Now [[continue]]
 
 [[continue]]:
+@set test = 789
 Now choose: [c], [d]
 
 [c]:
 @clear
+@set test = 321
 You chose c. Now [[finish]]
 
 [d]:
@@ -619,12 +623,14 @@ Done.
 
     // "a" should be marked as seen
     expect(squiffyApi.get('_seen_sections') as []).toContain('a');
+    expect(squiffyApi.get('test')).toBe(123);
 
     // Go back
     squiffyApi.goBack();
 
     // "a" should not be marked as seen
     expect(squiffyApi.get('_seen_sections') as []).not.toContain('a');
+    expect(squiffyApi.get('test')).toBe(null);
 
     // Click link to "b", then click link to "continue"
     let linkB = findLink(element, 'passage', 'b');
@@ -633,18 +639,21 @@ Done.
     await squiffyApi.clickLink(continueLink);
 
     expect(squiffyApi.get('_seen_sections') as []).toContain('b');
+    expect(squiffyApi.get('test')).toBe(456);
 
     // Go back
     squiffyApi.goBack();
 
     // "b" should still be marked as seen, because we didn't go back that far yet
     expect(squiffyApi.get('_seen_sections') as []).toContain('b');
+    expect(squiffyApi.get('test')).toBe(456);
 
     // Go back
     squiffyApi.goBack();
 
     // Now "b" should not be marked as seen
     expect(squiffyApi.get('_seen_sections') as []).not.toContain('b');
+    expect(squiffyApi.get('test')).toBe(null);
 
     // Click "b" again, then "continue", and "c", which clears the screen
     linkB = findLink(element, 'passage', 'b');
@@ -656,11 +665,12 @@ Done.
 
     // Should match snapshot, where passage "c" is the only thing visible
     expect(element.innerHTML).toMatchSnapshot();
+    expect(squiffyApi.get('test')).toBe(321);
 
     // Go back
     squiffyApi.goBack();
 
     // Should match snapshot, where the previous text is visible again
     expect(element.innerHTML).toMatchSnapshot();
-
+    expect(squiffyApi.get('test')).toBe(789);
 });
