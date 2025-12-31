@@ -12,6 +12,7 @@ import { openFile, saveFile } from './file-handler';
 import { Settings } from './settings';
 import * as editor from './editor';
 import { init as runtimeInit, SquiffyApi } from 'squiffy-runtime';
+import {SquiffyEventHandler} from "squiffy-runtime/dist/events";
 
 Object.assign(window, { $: $, jQuery: $ });
 
@@ -81,6 +82,7 @@ const clearDebugger = function () {
 
 const restart = function () {
     clearDebugger();
+    setBackButtonEnabled(false);
     squiffyApi?.restart();
 };
 
@@ -487,6 +489,16 @@ const init = async function (data: string) {
 //     editor.execCommand('replace');
 // }
 
+const setBackButtonEnabled = function(enabled: boolean) {
+    const backButton = document.getElementById('back') as HTMLButtonElement | null;
+    if (!backButton) return;
+    backButton.disabled = !enabled;
+}
+
+const onCanGoBackChanged : SquiffyEventHandler<"canGoBackChanged"> = function (p) {
+    setBackButtonEnabled(p.canGoBack);
+}
+
 const onSet = function (attribute: string, value: string) {
     // don't log internal attribute changes
     if (attribute.indexOf('_') === 0) return;
@@ -543,6 +555,9 @@ const initialCompile = async function () {
         onSet: onSet,
         story: story,
     });
+
+    setBackButtonEnabled(false);
+    squiffyApi.on('canGoBackChanged', onCanGoBackChanged);
 
     await squiffyApi.begin();
 };
