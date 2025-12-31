@@ -560,6 +560,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             }
 
             setCurrentSectionElement();
+            setCurrentPassageElement();
         }
 
         // TODO: Unset any attribute changes (we'll need to record these in the div data) - this will update
