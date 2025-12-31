@@ -25,9 +25,13 @@ export class State {
     }
 
     set(attribute: string, value: any) {
+        this.setInternal(attribute, value, true);
+    }
+
+    setInternal(attribute: string, value: any, raiseEvents: boolean) {
         if (typeof value === 'undefined') value = true;
 
-        if (this.onSetInternal) {
+        if (raiseEvents && this.onSetInternal) {
             this.onSetInternal(attribute, this.get(attribute), structuredClone(value));
         }
 
@@ -37,7 +41,10 @@ export class State {
             localStorage[this.storyId + '-' + attribute] = JSON.stringify(value);
         }
 
-        this.emitter.emit('set', {attribute, value});
+        if (raiseEvents) {
+            this.emitter.emit('set', {attribute, value});
+        }
+
         this.onSet(attribute, value);
     }
 

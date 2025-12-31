@@ -545,6 +545,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
 
         if (currentPassageElement) {
             const currentPassage = currentPassageElement.getAttribute('data-passage');
+            doUndo(currentPassageElement.getAttribute('data-undo'));
             currentPassageElement.remove();
 
             // If there's nothing left in the outputElement except for an empty section element that
@@ -578,6 +579,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             setCurrentPassageElement();
         }
         else {
+            doUndo(currentSectionElement.getAttribute('data-undo'));
             currentSectionElement.remove();
 
             // If there's nothing left in the outputElement except for the clear-stack, pop it
@@ -601,9 +603,6 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         if (!canGoBack()) {
             emitter.emit('canGoBackChanged', { canGoBack: false });
         }
-
-        // TODO: Unset any attribute changes (we'll need to record these in the div data) - this will update
-        // the "seen" list
     }
 
     // We create a separate div inside the passed-in element. This allows us to clear the text output, but
@@ -645,6 +644,15 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     const writeUndoLog = function() {
         (currentPassageElement ?? currentSectionElement).setAttribute('data-undo', JSON.stringify(undoLog));
         undoLog = {};
+    }
+
+    const doUndo = function(undosJson: string | null) {
+        if (!undosJson) return;
+        const undos = JSON.parse(undosJson) as Record<string, any>;
+        if (!undos) return;
+        for (const attribute of Object.keys(undos)) {
+            state.setInternal(attribute, undos[attribute], false);
+        }
     }
 
     state = new State(settings.persist, story.id || '', settings.onSet, emitter, onSet);
