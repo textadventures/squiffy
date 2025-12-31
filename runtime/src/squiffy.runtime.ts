@@ -407,7 +407,18 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     }
 
     function unClearScreen() {
-        console.log("UNCLEAR SCREEN!");
+        const clearStack = outputElement.querySelector<HTMLElement>('.squiffy-clear-stack');
+        for (const child of outputElement.children) {
+            if (child !== clearStack) {
+                child.remove();
+            }
+        }
+
+        const clearStackItem = clearStack.children[clearStack.children.length - 1];
+        for (const child of clearStackItem.children) {
+            outputElement.appendChild(child);
+        }
+        clearStackItem.remove();
     }
     
     const ui = {
@@ -498,13 +509,6 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
 
         if (currentPassageElement) {
             const currentPassage = currentPassageElement.getAttribute('data-passage');
-
-            for (const link of currentSectionElement.querySelectorAll('a.squiffy-link[data-passage]')) {
-                if (link.getAttribute('data-passage') == currentPassage) {
-                    enableLink(link);
-                }
-            }
-
             currentPassageElement.remove();
 
             // If there's nothing left in the outputElement except for an empty section element that
@@ -526,6 +530,13 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
 
             if (hasEmptySection && !hasOtherElements) {
                 unClearScreen();
+                setCurrentSectionElement();
+            }
+
+            for (const link of currentSectionElement.querySelectorAll('a.squiffy-link[data-passage]')) {
+                if (link.getAttribute('data-passage') == currentPassage) {
+                    enableLink(link);
+                }
             }
 
             setCurrentPassageElement();
