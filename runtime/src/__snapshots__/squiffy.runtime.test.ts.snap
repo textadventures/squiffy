@@ -2,12 +2,12 @@
 
 exports[`"Hello world" script should run 1`] = `
 "
-    <div><div class="squiffy-output-section" data-section="_default"><div class="squiffy-output-block"><div data-source="[[_default]]"><p>Hello world</p></div></div></div></div>"
+    <div><div class="squiffy-output-section" data-section="_default" data-undo="{&quot;_section&quot;:null,&quot;_seen_sections&quot;:null,&quot;_turncount&quot;:null}"><div class="squiffy-output-block"><div data-source="[[_default]]"><p>Hello world</p></div></div></div></div>"
 `;
 
 exports[`Click a passage link 1`] = `
 "
-    <div><div class="squiffy-output-section" data-section="Introduction"><div class="squiffy-output-block"><div data-source="[[Introduction]]"><h1>Squiffy Test</h1>
+    <div><div class="squiffy-output-section" data-section="Introduction" data-undo="{&quot;_section&quot;:null,&quot;_seen_sections&quot;:null,&quot;_turncount&quot;:null}"><div class="squiffy-output-block"><div data-source="[[Introduction]]"><h1>Squiffy Test</h1>
 <p>This is <a href="http://textadventures.co.uk">a website link</a>.</p>
 <p>This should be <a class="squiffy-link link-passage" data-passage="passage" role="link" tabindex="0">a link to a passage</a>. Here's <a class="squiffy-link link-passage" data-passage="passage2" role="link" tabindex="0">another one</a>.</p>
 <p>You don't need to specify a name - for example, this <a class="squiffy-link link-passage" data-passage="link" role="link" tabindex="0">link</a> and this <a class="squiffy-link link-section" data-section="section" role="link" tabindex="0">section</a>.</p>
@@ -19,19 +19,19 @@ exports[`Click a passage link 1`] = `
 
 exports[`Click a passage link 2`] = `
 "
-    <div><div class="squiffy-output-section" data-section="Introduction"><div class="squiffy-output-block"><div data-source="[[Introduction]]"><h1>Squiffy Test</h1>
+    <div><div class="squiffy-output-section" data-section="Introduction" data-undo="{&quot;_section&quot;:null,&quot;_seen_sections&quot;:null,&quot;_turncount&quot;:null}"><div class="squiffy-output-block"><div data-source="[[Introduction]]"><h1>Squiffy Test</h1>
 <p>This is <a href="http://textadventures.co.uk">a website link</a>.</p>
 <p>This should be <a class="squiffy-link link-passage disabled" data-passage="passage" role="link" tabindex="-1">a link to a passage</a>. Here's <a class="squiffy-link link-passage" data-passage="passage2" role="link" tabindex="0">another one</a>.</p>
 <p>You don't need to specify a name - for example, this <a class="squiffy-link link-passage" data-passage="link" role="link" tabindex="0">link</a> and this <a class="squiffy-link link-section" data-section="section" role="link" tabindex="0">section</a>.</p>
 <p>And this goes to the <a class="squiffy-link link-section" data-section="section2" role="link" tabindex="0">next section</a>.</p>
 <p>This line has links to <a class="squiffy-link link-section" data-section="section 3" role="link" tabindex="0">section 3</a> and <a class="squiffy-link link-section" data-section="section four" role="link" tabindex="0">section 4</a>.</p>
 <p>This line has links to <a class="squiffy-link link-passage" data-passage="passage 3" role="link" tabindex="0">passage 3</a> and <a class="squiffy-link link-passage" data-passage="passage four" role="link" tabindex="0">passage 4</a>.</p>
-<p>Oh look - <a class="squiffy-link link-passage" data-passage="it's a passage with an apostrophe" role="link" tabindex="0">it's a passage with an apostrophe</a>.</p></div></div><div class="squiffy-output-passage" data-passage="passage"><div class="squiffy-output-block"><div data-source="[[Introduction]][passage]"><p>Here's some text for the passage.</p></div></div></div></div></div>"
+<p>Oh look - <a class="squiffy-link link-passage" data-passage="it's a passage with an apostrophe" role="link" tabindex="0">it's a passage with an apostrophe</a>.</p></div></div><div class="squiffy-output-passage" data-passage="passage" data-undo="{&quot;_turncount&quot;:0,&quot;_seen_sections&quot;:[&quot;Introduction&quot;]}"><div class="squiffy-output-block"><div data-source="[[Introduction]][passage]"><p>Here's some text for the passage.</p></div></div></div></div></div>"
 `;
 
 exports[`Click a passage link and go back 1`] = `
 "
-    <div><div class="squiffy-output-section" data-section="Introduction"><div class="squiffy-output-block"><div data-source="[[Introduction]]"><h1>Squiffy Test</h1>
+    <div><div class="squiffy-output-section" data-section="Introduction" data-undo="{&quot;_section&quot;:null,&quot;_seen_sections&quot;:null,&quot;_turncount&quot;:null}"><div class="squiffy-output-block"><div data-source="[[Introduction]]"><h1>Squiffy Test</h1>
 <p>This is <a href="http://textadventures.co.uk">a website link</a>.</p>
 <p>This should be <a class="squiffy-link link-passage" data-passage="passage" role="link">a link to a passage</a>. Here's <a class="squiffy-link link-passage" data-passage="passage2" role="link" tabindex="0">another one</a>.</p>
 <p>You don't need to specify a name - for example, this <a class="squiffy-link link-passage" data-passage="link" role="link" tabindex="0">link</a> and this <a class="squiffy-link link-section" data-section="section" role="link" tabindex="0">section</a>.</p>
@@ -43,7 +43,7 @@ exports[`Click a passage link and go back 1`] = `
 
 exports[`Click a section link 1`] = `
 "
-    <div><div class="squiffy-output-section" data-section="Introduction"><div class="squiffy-output-block"><div data-source="[[Introduction]]"><h1>Squiffy Test</h1>
+    <div><div class="squiffy-output-section" data-section="Introduction" data-undo="{&quot;_section&quot;:null,&quot;_seen_sections&quot;:null,&quot;_turncount&quot;:null}"><div class="squiffy-output-block"><div data-source="[[Introduction]]"><h1>Squiffy Test</h1>
 <p>This is <a href="http://textadventures.co.uk">a website link</a>.</p>
 <p>This should be <a class="squiffy-link link-passage" data-passage="passage" role="link" tabindex="0">a link to a passage</a>. Here's <a class="squiffy-link link-passage" data-passage="passage2" role="link" tabindex="0">another one</a>.</p>
 <p>You don't need to specify a name - for example, this <a class="squiffy-link link-passage" data-passage="link" role="link" tabindex="0">link</a> and this <a class="squiffy-link link-section" data-section="section" role="link" tabindex="0">section</a>.</p>
@@ -55,19 +55,19 @@ exports[`Click a section link 1`] = `
 
 exports[`Click a section link 2`] = `
 "
-    <div><div class="squiffy-output-section" data-section="Introduction"><div class="squiffy-output-block"><div data-source="[[Introduction]]"><h1>Squiffy Test</h1>
+    <div><div class="squiffy-output-section" data-section="Introduction" data-undo="{&quot;_section&quot;:null,&quot;_seen_sections&quot;:null,&quot;_turncount&quot;:null}"><div class="squiffy-output-block"><div data-source="[[Introduction]]"><h1>Squiffy Test</h1>
 <p>This is <a href="http://textadventures.co.uk">a website link</a>.</p>
 <p>This should be <a class="squiffy-link link-passage" data-passage="passage" role="link" tabindex="0">a link to a passage</a>. Here's <a class="squiffy-link link-passage" data-passage="passage2" role="link" tabindex="0">another one</a>.</p>
 <p>You don't need to specify a name - for example, this <a class="squiffy-link link-passage" data-passage="link" role="link" tabindex="0">link</a> and this <a class="squiffy-link link-section" data-section="section" role="link" tabindex="0">section</a>.</p>
 <p>And this goes to the <a class="squiffy-link link-section" data-section="section2" role="link" tabindex="0">next section</a>.</p>
 <p>This line has links to <a class="squiffy-link link-section" data-section="section 3" role="link" tabindex="0">section 3</a> and <a class="squiffy-link link-section" data-section="section four" role="link" tabindex="0">section 4</a>.</p>
 <p>This line has links to <a class="squiffy-link link-passage" data-passage="passage 3" role="link" tabindex="0">passage 3</a> and <a class="squiffy-link link-passage" data-passage="passage four" role="link" tabindex="0">passage 4</a>.</p>
-<p>Oh look - <a class="squiffy-link link-passage" data-passage="it's a passage with an apostrophe" role="link" tabindex="0">it's a passage with an apostrophe</a>.</p></div></div></div><div class="squiffy-output-section" data-section="section 3"><div class="squiffy-output-block"><div data-source="[[section 3]]"><p>Another section is here, with passages <a class="squiffy-link link-passage" data-passage="a" role="link" tabindex="0">a</a> and <a class="squiffy-link link-passage" data-passage="b" role="link" tabindex="0">b</a>.</p></div></div></div></div>"
+<p>Oh look - <a class="squiffy-link link-passage" data-passage="it's a passage with an apostrophe" role="link" tabindex="0">it's a passage with an apostrophe</a>.</p></div></div></div><div class="squiffy-output-section" data-section="section 3" data-undo="{&quot;_section&quot;:&quot;Introduction&quot;,&quot;_seen_sections&quot;:[&quot;Introduction&quot;],&quot;_turncount&quot;:0}"><div class="squiffy-output-block"><div data-source="[[section 3]]"><p>Another section is here, with passages <a class="squiffy-link link-passage" data-passage="a" role="link" tabindex="0">a</a> and <a class="squiffy-link link-passage" data-passage="b" role="link" tabindex="0">b</a>.</p></div></div></div></div>"
 `;
 
 exports[`Click a section link and go back 1`] = `
 "
-    <div><div class="squiffy-output-section" data-section="Introduction"><div class="squiffy-output-block"><div data-source="[[Introduction]]"><h1>Squiffy Test</h1>
+    <div><div class="squiffy-output-section" data-section="Introduction" data-undo="{&quot;_section&quot;:null,&quot;_seen_sections&quot;:null,&quot;_turncount&quot;:null}"><div class="squiffy-output-block"><div data-source="[[Introduction]]"><h1>Squiffy Test</h1>
 <p>This is <a href="http://textadventures.co.uk">a website link</a>.</p>
 <p>This should be <a class="squiffy-link link-passage" data-passage="passage" role="link" tabindex="0">a link to a passage</a>. Here's <a class="squiffy-link link-passage" data-passage="passage2" role="link" tabindex="0">another one</a>.</p>
 <p>You don't need to specify a name - for example, this <a class="squiffy-link link-passage" data-passage="link" role="link" tabindex="0">link</a> and this <a class="squiffy-link link-section" data-section="section" role="link" tabindex="0">section</a>.</p>
@@ -79,50 +79,50 @@ exports[`Click a section link and go back 1`] = `
 
 exports[`Delete passage 1`] = `
 "
-    <div><div class="squiffy-output-section" data-section="_default"><div class="squiffy-output-block"><div data-source="[[_default]]"><p>Click this: <a class="squiffy-link link-passage disabled" data-passage="a" role="link" tabindex="-1">a</a></p></div></div><div class="squiffy-output-passage" data-passage="a"><div class="squiffy-output-block"><div data-source="[[_default]][a]"><p>New passage</p></div></div></div></div></div>"
+    <div><div class="squiffy-output-section" data-section="_default" data-undo="{&quot;_section&quot;:null,&quot;_seen_sections&quot;:null,&quot;_turncount&quot;:null}"><div class="squiffy-output-block"><div data-source="[[_default]]"><p>Click this: <a class="squiffy-link link-passage disabled" data-passage="a" role="link" tabindex="-1">a</a></p></div></div><div class="squiffy-output-passage" data-passage="a" data-undo="{&quot;_turncount&quot;:0,&quot;_seen_sections&quot;:[&quot;_default&quot;]}"><div class="squiffy-output-block"><div data-source="[[_default]][a]"><p>New passage</p></div></div></div></div></div>"
 `;
 
 exports[`Delete passage 2`] = `
 "
-    <div><div class="squiffy-output-section" data-section="_default"><div class="squiffy-output-block"><div data-source="[[_default]]"><p>Click this: <a class="squiffy-link link-passage disabled" data-passage="a" role="link" tabindex="-1">a</a></p></div></div></div></div>"
+    <div><div class="squiffy-output-section" data-section="_default" data-undo="{&quot;_section&quot;:null,&quot;_seen_sections&quot;:null,&quot;_turncount&quot;:null}"><div class="squiffy-output-block"><div data-source="[[_default]]"><p>Click this: <a class="squiffy-link link-passage disabled" data-passage="a" role="link" tabindex="-1">a</a></p></div></div></div></div>"
 `;
 
 exports[`Delete section 1`] = `
 "
-    <div><div class="squiffy-output-section" data-section="_default"><div class="squiffy-output-block"><div data-source="[[_default]]"><p>Click this: <a class="squiffy-link link-section" data-section="a" role="link" tabindex="0">a</a></p></div></div></div><div class="squiffy-output-section" data-section="a"><div class="squiffy-output-block"><div data-source="[[a]]"><p>New section</p></div></div></div></div>"
+    <div><div class="squiffy-output-section" data-section="_default" data-undo="{&quot;_section&quot;:null,&quot;_seen_sections&quot;:null,&quot;_turncount&quot;:null}"><div class="squiffy-output-block"><div data-source="[[_default]]"><p>Click this: <a class="squiffy-link link-section" data-section="a" role="link" tabindex="0">a</a></p></div></div></div><div class="squiffy-output-section" data-section="a" data-undo="{&quot;_section&quot;:&quot;_default&quot;,&quot;_seen_sections&quot;:[&quot;_default&quot;],&quot;_turncount&quot;:0}"><div class="squiffy-output-block"><div data-source="[[a]]"><p>New section</p></div></div></div></div>"
 `;
 
 exports[`Delete section 2`] = `
 "
-    <div><div class="squiffy-output-section" data-section="_default"><div class="squiffy-output-block"><div data-source="[[_default]]"><p>Click this: <a class="squiffy-link link-section" data-section="a" role="link" tabindex="0">a</a></p></div></div></div></div>"
+    <div><div class="squiffy-output-section" data-section="_default" data-undo="{&quot;_section&quot;:null,&quot;_seen_sections&quot;:null,&quot;_turncount&quot;:null}"><div class="squiffy-output-block"><div data-source="[[_default]]"><p>Click this: <a class="squiffy-link link-section" data-section="a" role="link" tabindex="0">a</a></p></div></div></div></div>"
 `;
 
 exports[`Update default section output 1`] = `
 "
-    <div><div class="squiffy-output-section" data-section="_default"><div class="squiffy-output-block"><div data-source="[[_default]]"><p>Hello world</p></div></div></div></div>"
+    <div><div class="squiffy-output-section" data-section="_default" data-undo="{&quot;_section&quot;:null,&quot;_seen_sections&quot;:null,&quot;_turncount&quot;:null}"><div class="squiffy-output-block"><div data-source="[[_default]]"><p>Hello world</p></div></div></div></div>"
 `;
 
 exports[`Update default section output 2`] = `
 "
-    <div><div class="squiffy-output-section" data-section="_default"><div class="squiffy-output-block"><div data-source="[[_default]]"><p>Updated content</p></div></div></div></div>"
+    <div><div class="squiffy-output-section" data-section="_default" data-undo="{&quot;_section&quot;:null,&quot;_seen_sections&quot;:null,&quot;_turncount&quot;:null}"><div class="squiffy-output-block"><div data-source="[[_default]]"><p>Updated content</p></div></div></div></div>"
 `;
 
 exports[`Update passage output - passage name "a" 1`] = `
 "
-    <div><div class="squiffy-output-section" data-section="_default"><div class="squiffy-output-block"><div data-source="[[_default]]"><p>Click this: <a class="squiffy-link link-passage disabled" data-passage="a" role="link" tabindex="-1">a</a></p></div></div><div class="squiffy-output-passage" data-passage="a"><div class="squiffy-output-block"><div data-source="[[_default]][a]"><p>Passage a content</p></div></div></div></div></div>"
+    <div><div class="squiffy-output-section" data-section="_default" data-undo="{&quot;_section&quot;:null,&quot;_seen_sections&quot;:null,&quot;_turncount&quot;:null}"><div class="squiffy-output-block"><div data-source="[[_default]]"><p>Click this: <a class="squiffy-link link-passage disabled" data-passage="a" role="link" tabindex="-1">a</a></p></div></div><div class="squiffy-output-passage" data-passage="a" data-undo="{&quot;_turncount&quot;:0,&quot;_seen_sections&quot;:[&quot;_default&quot;]}"><div class="squiffy-output-block"><div data-source="[[_default]][a]"><p>Passage a content</p></div></div></div></div></div>"
 `;
 
 exports[`Update passage output - passage name "a" 2`] = `
 "
-    <div><div class="squiffy-output-section" data-section="_default"><div class="squiffy-output-block"><div data-source="[[_default]]"><p>Click this: <a class="squiffy-link link-passage disabled" data-passage="a" role="link" tabindex="-1">a</a></p></div></div><div class="squiffy-output-passage" data-passage="a"><div class="squiffy-output-block"><div data-source="[[_default]][a]"><p>Updated passage content</p></div></div></div></div></div>"
+    <div><div class="squiffy-output-section" data-section="_default" data-undo="{&quot;_section&quot;:null,&quot;_seen_sections&quot;:null,&quot;_turncount&quot;:null}"><div class="squiffy-output-block"><div data-source="[[_default]]"><p>Click this: <a class="squiffy-link link-passage disabled" data-passage="a" role="link" tabindex="-1">a</a></p></div></div><div class="squiffy-output-passage" data-passage="a" data-undo="{&quot;_turncount&quot;:0,&quot;_seen_sections&quot;:[&quot;_default&quot;]}"><div class="squiffy-output-block"><div data-source="[[_default]][a]"><p>Updated passage content</p></div></div></div></div></div>"
 `;
 
 exports[`Update passage output - passage name "a'1" 1`] = `
 "
-    <div><div class="squiffy-output-section" data-section="_default"><div class="squiffy-output-block"><div data-source="[[_default]]"><p>Click this: <a class="squiffy-link link-passage disabled" data-passage="a'1" role="link" tabindex="-1">a'1</a></p></div></div><div class="squiffy-output-passage" data-passage="a'1"><div class="squiffy-output-block"><div data-source="[[_default]][a'1]"><p>Passage a content</p></div></div></div></div></div>"
+    <div><div class="squiffy-output-section" data-section="_default" data-undo="{&quot;_section&quot;:null,&quot;_seen_sections&quot;:null,&quot;_turncount&quot;:null}"><div class="squiffy-output-block"><div data-source="[[_default]]"><p>Click this: <a class="squiffy-link link-passage disabled" data-passage="a'1" role="link" tabindex="-1">a'1</a></p></div></div><div class="squiffy-output-passage" data-passage="a'1" data-undo="{&quot;_turncount&quot;:0,&quot;_seen_sections&quot;:[&quot;_default&quot;]}"><div class="squiffy-output-block"><div data-source="[[_default]][a'1]"><p>Passage a content</p></div></div></div></div></div>"
 `;
 
 exports[`Update passage output - passage name "a'1" 2`] = `
 "
-    <div><div class="squiffy-output-section" data-section="_default"><div class="squiffy-output-block"><div data-source="[[_default]]"><p>Click this: <a class="squiffy-link link-passage disabled" data-passage="a'1" role="link" tabindex="-1">a'1</a></p></div></div><div class="squiffy-output-passage" data-passage="a'1"><div class="squiffy-output-block"><div data-source="[[_default]][a'1]"><p>Updated passage content</p></div></div></div></div></div>"
+    <div><div class="squiffy-output-section" data-section="_default" data-undo="{&quot;_section&quot;:null,&quot;_seen_sections&quot;:null,&quot;_turncount&quot;:null}"><div class="squiffy-output-block"><div data-source="[[_default]]"><p>Click this: <a class="squiffy-link link-passage disabled" data-passage="a'1" role="link" tabindex="-1">a'1</a></p></div></div><div class="squiffy-output-passage" data-passage="a'1" data-undo="{&quot;_turncount&quot;:0,&quot;_seen_sections&quot;:[&quot;_default&quot;]}"><div class="squiffy-output-block"><div data-source="[[_default]][a'1]"><p>Updated passage content</p></div></div></div></div></div>"
 `;
