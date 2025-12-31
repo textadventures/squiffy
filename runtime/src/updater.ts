@@ -62,8 +62,8 @@ export function updateStory(oldStory: Story,
             if (!newPassage) {
                 // passage has been deleted
                 for (const element of elements) {
-                    const parentOutputBlock = element.closest('.squiffy-output-block');
-                    parentOutputBlock.remove();
+                    const parentOutputPassage = element.closest('.squiffy-output-passage');
+                    parentOutputPassage.remove();
                 }
             }
             else if (newPassage.text && newPassage.text != oldStory.sections[existingSection].passages[existingPassage].text) {

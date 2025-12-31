@@ -124,6 +124,28 @@ test('Click a section link', async () => {
     off();
 });
 
+test('Click a section link and go back', async () => {
+    const script = await fs.readFile('../examples/test/example.squiffy', 'utf-8');
+    const { squiffyApi, element } = await initScript(script);
+
+    const linkToPassage = findLink(element, 'passage', 'a link to a passage');
+    const section3Link = findLink(element, 'section', 'section 3');
+    expect(section3Link).not.toBeNull();
+
+    await squiffyApi.clickLink(section3Link);
+
+    // passage link is from the previous section, so should be unclickable
+    expect(await squiffyApi.clickLink(linkToPassage)).toBe(false);
+
+    // now go back
+    squiffyApi.goBack();
+
+    expect(element.innerHTML).toMatchSnapshot();
+
+    // passage link should be clickable now
+    expect(await squiffyApi.clickLink(linkToPassage)).toBe(true);
+});
+
 test('Click a passage link', async () => {
     const script = await fs.readFile('../examples/test/example.squiffy', 'utf-8');
     const { squiffyApi, element } = await initScript(script);
@@ -157,6 +179,26 @@ test('Click a passage link', async () => {
         expect.objectContaining({ linkType: 'passage' })
     );
     off();
+});
+
+test('Click a passage link and go back', async () => {
+    const script = await fs.readFile('../examples/test/example.squiffy', 'utf-8');
+    const { squiffyApi, element } = await initScript(script);
+
+    const linkToPassage = findLink(element, 'passage', 'a link to a passage');
+
+    await squiffyApi.clickLink(linkToPassage);
+
+    // the passage link was clicked, so should be disabled
+    expect(linkToPassage.classList).toContain('disabled');
+
+    // now go back
+    squiffyApi.goBack();
+
+    expect(element.innerHTML).toMatchSnapshot();
+
+    // passage link should be clickable now
+    expect(await squiffyApi.clickLink(linkToPassage)).toBe(true);
 });
 
 test('Run JavaScript functions', async () => {
@@ -542,4 +584,94 @@ This is the new start section`;
     squiffyApi.update(update2.story);
     output = getSectionContent(element, 'new');
     expect(output).toBe("This is the new start section");
+});
+
+test('Going back handling @clear and attribute changes', async () => {
+    const script = `
+Choose: [a], [b]
+
+[a]:
+@set test = 123
+You chose a. Now [[continue]]
+
+[b]:
+@set test = 456
+You chose b. Now [[continue]]
+
+[[continue]]:
+@set test = 789
+Now choose: [c], [d]
+
+[c]:
+@clear
+@set test = 321
+You chose c. Now [[finish]]
+
+[d]:
+You chose d. Now [[finish]]
+
+[[finish]]:
+Done.
+`;
+
+    const { squiffyApi, element } = await initScript(script);
+
+    const linkA = findLink(element, 'passage', 'a');
+
+    // Click link to "a"
+    await squiffyApi.clickLink(linkA);
+
+    // "a" should be marked as seen
+    expect(squiffyApi.get('_seen_sections') as []).toContain('a');
+    expect(squiffyApi.get('test')).toBe(123);
+
+    // Go back
+    squiffyApi.goBack();
+
+    // "a" should not be marked as seen
+    expect(squiffyApi.get('_seen_sections') as []).not.toContain('a');
+    expect(squiffyApi.get('test')).toBe(null);
+
+    // Click link to "b", then click link to "continue"
+    let linkB = findLink(element, 'passage', 'b');
+    await squiffyApi.clickLink(linkB);
+    expect(squiffyApi.get('test')).toBe(456);
+    let continueLink = findLink(element, 'section', 'continue');
+    await squiffyApi.clickLink(continueLink);
+
+    expect(squiffyApi.get('_seen_sections') as []).toContain('b');
+    expect(squiffyApi.get('test')).toBe(789);
+
+    // Go back
+    squiffyApi.goBack();
+
+    // "b" should still be marked as seen, because we didn't go back that far yet
+    expect(squiffyApi.get('_seen_sections') as []).toContain('b');
+    expect(squiffyApi.get('test')).toBe(456);
+
+    // Go back
+    squiffyApi.goBack();
+
+    // Now "b" should not be marked as seen
+    expect(squiffyApi.get('_seen_sections') as []).not.toContain('b');
+    expect(squiffyApi.get('test')).toBe(null);
+
+    // Click "b" again, then "continue", and "c", which clears the screen
+    linkB = findLink(element, 'passage', 'b');
+    await squiffyApi.clickLink(linkB);
+    continueLink = findLink(element, 'section', 'continue');
+    await squiffyApi.clickLink(continueLink);
+    const linkC = findLink(element, 'passage', 'c');
+    await squiffyApi.clickLink(linkC);
+
+    // Should match snapshot, where passage "c" is the only thing visible
+    expect(element.innerHTML).toMatchSnapshot();
+    expect(squiffyApi.get('test')).toBe(321);
+
+    // Go back
+    squiffyApi.goBack();
+
+    // Should match snapshot, where the previous text is visible again
+    expect(element.innerHTML).toMatchSnapshot();
+    expect(squiffyApi.get('test')).toBe(789);
 });

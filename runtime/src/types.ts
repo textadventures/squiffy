@@ -21,6 +21,7 @@ export interface SquiffyApi {
     set: (attribute: string, value: any) => void;
     clickLink: (link: HTMLElement) => Promise<boolean>;
     update: (story: Story) => void;
+    goBack: () => void;
 
     on<E extends keyof SquiffyEventMap>(
         event: E,

@@ -1,6 +1,7 @@
 export type SquiffyEventMap = {
     linkClick: { linkType: string }; // a story link was clicked
     set: { attribute: string, value: any }; // an attribute was set
+    canGoBackChanged: { canGoBack: boolean }; // whether the "back" button should be enabled
 };
 
 export type SquiffyEventHandler<E extends keyof SquiffyEventMap> =
