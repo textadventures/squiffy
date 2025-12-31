@@ -175,6 +175,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     }
 
     async function go(sectionName: string) {
+        const oldCanGoBack = canGoBack();
         newSection(sectionName);
         currentSection = story.sections[sectionName];
         if (!currentSection) return;
@@ -192,6 +193,10 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         if (get('_section') == sectionName) {
             set('_turncount', 0);
             save();
+        }
+        const newCanGoBack = canGoBack();
+        if (newCanGoBack != oldCanGoBack) {
+            emitter.emit('canGoBackChanged', { canGoBack: newCanGoBack });
         }
     }
 
@@ -239,6 +244,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     }
     
     async function showPassage(passageName: string) {
+        const oldCanGoBack = canGoBack();
         let passage = currentSection.passages && currentSection.passages[passageName];
         const masterSection = story.sections[''];
         if (!passage && masterSection && masterSection.passages) passage = masterSection.passages[passageName];
@@ -284,6 +290,10 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         }
 
         save();
+        const newCanGoBack = canGoBack();
+        if (newCanGoBack != oldCanGoBack) {
+            emitter.emit('canGoBackChanged', { canGoBack: newCanGoBack });
+        }
     }
     
     async function processAttributes(attributes: string[]) {
@@ -380,11 +390,15 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         outputElement.appendChild(currentSectionElement);
     }
 
+    function getClearStack() {
+        return outputElement.querySelector<HTMLElement>('.squiffy-clear-stack');
+    }
+
     function clearScreen() {
         // Callers should call createSectionElement() after calling this function, so there's a place for new
         // output to go. We don't call this automatically within this function, in case we're just about to create
         // a new section anyway.
-        let clearStack = outputElement.querySelector<HTMLElement>('.squiffy-clear-stack');
+        let clearStack = getClearStack();
         if (!clearStack) {
             clearStack = document.createElement('div');
             clearStack.classList.add('squiffy-clear-stack');
@@ -407,7 +421,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     }
 
     function unClearScreen() {
-        const clearStack = outputElement.querySelector<HTMLElement>('.squiffy-clear-stack');
+        const clearStack = getClearStack();
         for (const child of outputElement.children) {
             if (child !== clearStack) {
                 child.remove();
@@ -504,8 +518,28 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         currentPassageElement = currentSectionElement.querySelector('.squiffy-output-passage:last-child');
     }
 
+    function getHistoryCount() {
+        const clearStack = getClearStack();
+        const sectionPassageCount = outputElement.querySelectorAll('.squiffy-output-section').length
+            + outputElement.querySelectorAll('.squiffy-output-passage').length;
+
+        if (!clearStack) {
+            return sectionPassageCount;
+        }
+
+        return sectionPassageCount + clearStack.children.length;
+    }
+
+    function canGoBack() {
+        return getHistoryCount() > 1;
+    }
+
     function goBack() {
-        const clearStack = outputElement.querySelector<HTMLElement>('.squiffy-clear-stack');
+        if (!canGoBack()) {
+            return;
+        }
+
+        const clearStack = getClearStack();
 
         if (currentPassageElement) {
             const currentPassage = currentPassageElement.getAttribute('data-passage');
@@ -542,7 +576,6 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             setCurrentPassageElement();
         }
         else {
-            // TODO: Don't allow going back if this is the only section (i.e. we're back at the start of the game)
             currentSectionElement.remove();
 
             // If there's nothing left in the outputElement except for the clear-stack, pop it
@@ -561,6 +594,10 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
 
             setCurrentSectionElement();
             setCurrentPassageElement();
+        }
+
+        if (!canGoBack()) {
+            emitter.emit('canGoBackChanged', { canGoBack: false });
         }
 
         // TODO: Unset any attribute changes (we'll need to record these in the div data) - this will update
