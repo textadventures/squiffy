@@ -635,11 +635,12 @@ Done.
     // Click link to "b", then click link to "continue"
     let linkB = findLink(element, 'passage', 'b');
     await squiffyApi.clickLink(linkB);
+    expect(squiffyApi.get('test')).toBe(456);
     let continueLink = findLink(element, 'section', 'continue');
     await squiffyApi.clickLink(continueLink);
 
     expect(squiffyApi.get('_seen_sections') as []).toContain('b');
-    expect(squiffyApi.get('test')).toBe(456);
+    expect(squiffyApi.get('test')).toBe(789);
 
     // Go back
     squiffyApi.goBack();
