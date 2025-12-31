@@ -585,3 +585,82 @@ This is the new start section`;
     output = getSectionContent(element, 'new');
     expect(output).toBe("This is the new start section");
 });
+
+test('Going back handling @clear and attribute changes', async () => {
+    const script = `
+Choose: [a], [b]
+
+[a]:
+You chose a. Now [[continue]]
+
+[b]:
+You chose b. Now [[continue]]
+
+[[continue]]:
+Now choose: [c], [d]
+
+[c]:
+@clear
+You chose c. Now [[finish]]
+
+[d]:
+You chose d. Now [[finish]]
+
+[[finish]]:
+Done.
+`;
+
+    const { squiffyApi, element } = await initScript(script);
+
+    const linkA = findLink(element, 'passage', 'a');
+
+    // Click link to "a"
+    await squiffyApi.clickLink(linkA);
+
+    // "a" should be marked as seen
+    expect(squiffyApi.get('_seen_sections') as []).toContain('a');
+
+    // Go back
+    squiffyApi.goBack();
+
+    // "a" should not be marked as seen
+    expect(squiffyApi.get('_seen_sections') as []).not.toContain('a');
+
+    // Click link to "b", then click link to "continue"
+    let linkB = findLink(element, 'passage', 'b');
+    await squiffyApi.clickLink(linkB);
+    let continueLink = findLink(element, 'section', 'continue');
+    await squiffyApi.clickLink(continueLink);
+
+    expect(squiffyApi.get('_seen_sections') as []).toContain('b');
+
+    // Go back
+    squiffyApi.goBack();
+
+    // "b" should still be marked as seen, because we didn't go back that far yet
+    expect(squiffyApi.get('_seen_sections') as []).toContain('b');
+
+    // Go back
+    squiffyApi.goBack();
+
+    // Now "b" should not be marked as seen
+    expect(squiffyApi.get('_seen_sections') as []).not.toContain('b');
+
+    // Click "b" again, then "continue", and "c", which clears the screen
+    linkB = findLink(element, 'passage', 'b');
+    await squiffyApi.clickLink(linkB);
+    continueLink = findLink(element, 'section', 'continue');
+    await squiffyApi.clickLink(continueLink);
+    const linkC = findLink(element, 'passage', 'c');
+    await squiffyApi.clickLink(linkC);
+
+    // Should match snapshot, where passage "c" is the only thing visible
+    expect(element.innerHTML).toMatchSnapshot();
+
+    // Go back
+    squiffyApi.goBack();
+
+    // Should match snapshot, where the previous text is visible again
+    expect(element.innerHTML).toMatchSnapshot();
+
+});

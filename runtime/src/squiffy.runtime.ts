@@ -412,7 +412,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         clearStack.appendChild(clearStackItem);
 
         // Move everything in the outputElement (except the clearStack itself) into the new clearStackItem
-        for (const child of outputElement.children) {
+        for (const child of [...outputElement.children]) {
             if (child !== clearStack) {
                 clearStackItem.appendChild(child);
             }
@@ -424,14 +424,14 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
 
     function unClearScreen() {
         const clearStack = getClearStack();
-        for (const child of outputElement.children) {
+        for (const child of [...outputElement.children]) {
             if (child !== clearStack) {
                 child.remove();
             }
         }
 
         const clearStackItem = clearStack.children[clearStack.children.length - 1];
-        for (const child of clearStackItem.children) {
+        for (const child of [...clearStackItem.children]) {
             outputElement.appendChild(child);
         }
         clearStackItem.remove();
@@ -584,7 +584,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
 
             // If there's nothing left in the outputElement except for the clear-stack, pop it
             let hasOtherElements = false;
-            for (const child of outputElement.children) {
+            for (const child of [...outputElement.children]) {
                 if (child === clearStack) {
                     continue;
                 }
