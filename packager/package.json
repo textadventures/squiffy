@@ -1,0 +1,30 @@
+{
+  "name": "@textadventures/squiffy-packager",
+  "version": "6.0.0-alpha.16",
+  "types": "dist/packager.d.ts",
+  "scripts": {
+    "build": "tsc && shx cp src/index.template.html ./dist/ && shx cp ../node_modules/squiffy-runtime/dist/squiffy.runtime.js ./dist/ && shx cp src/style.template.css ./dist/",
+    "dev": "cp ../node_modules/squiffy-runtime/dist/squiffy.runtime.js ./src/ && tsx src/squiffy.ts"
+  },
+  "author": "Alex Warren",
+  "contributors": [
+    "CrisisSDK",
+    "mrangel",
+    "Luis Felipe Morales"
+  ],
+  "license": "MIT",
+  "description": "",
+  "dependencies": {
+    "squiffy-compiler": "^6.0.0-alpha.16",
+    "squiffy-runtime": "^6.0.0-alpha.16"
+  },
+  "devDependencies": {
+    "shx": "^0.4.0",
+    "tsx": "^4.20.4",
+    "typescript": "^5.9.2"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module"
+}

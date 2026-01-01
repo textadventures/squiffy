@@ -5,6 +5,7 @@
     "compiler",
     "editor",
     "cli",
+    "packager",
     "runtime",
     "site",
     "types"

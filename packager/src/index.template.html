@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<!-- INFO -->
+<head>
+    <title><!-- TITLE --></title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- SCRIPTS -->
+    <script type="module">
+        import {init} from './squiffy.runtime.js';
+        import {story} from './story.js';
+
+        document.addEventListener('DOMContentLoaded', async function () {
+            const squiffyApi = await init({
+                element: document.getElementById('squiffy'),
+                story: story,
+                persist: true,
+            });
+
+            const restartButton = document.getElementById('restart');
+            restartButton.addEventListener('click', function () {
+                if (confirm('Are you sure you want to restart?')) {
+                    squiffyApi.restart();
+                }
+            });
+
+            await squiffyApi.begin();
+        });
+    </script>
+    <link rel="stylesheet" href="style.css"/>
+    <!-- STYLESHEETS -->
+</head>
+<body>
+<div id="squiffy-container">
+    <div id="squiffy-header">
+        <button class="squiffy-header-button" id="restart" tabindex="0">Restart</button>
+    </div>
+    <div id="squiffy">
+    </div>
+</div>
+</body>
+</html>
