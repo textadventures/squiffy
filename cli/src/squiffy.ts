@@ -2,7 +2,7 @@
 
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import { createPackage } from './packager.js';
+import { createPackage } from '@textadventures/squiffy-packager';
 import { serve } from './server.js';
 
 import pkg from '../package.json' with { type: 'json' };

@@ -19,6 +19,7 @@
     "squiffy-packager": "dist/squiffy.js"
   },
   "dependencies": {
+    "@textadventures/squiffy-packager": "^6.0.0-alpha.16",
     "finalhandler": "^2.1.0",
     "glob": "^11.0.3",
     "serve-static": "^2.2.0",
