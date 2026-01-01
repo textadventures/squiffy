@@ -10,7 +10,7 @@ const version = pkg.version;
 
 const argv = yargs(hideBin(process.argv))
     .usage(
-        `Usage: squiffy-packager filename.squiffy [options]`)
+        `Usage: npx @textadventures/squiffy-cli filename.squiffy [options]`)
     .demand(1)
     .alias('s', 'serve')
     .alias('p', 'port')

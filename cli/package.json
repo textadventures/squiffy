@@ -1,5 +1,5 @@
 {
-  "name": "squiffy-packager",
+  "name": "@textadventures/squiffy-cli",
   "version": "6.0.0-alpha.16",
   "main": "dist/squiffy.js",
   "types": "dist/packager.d.ts",
