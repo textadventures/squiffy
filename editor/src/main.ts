@@ -109,18 +109,15 @@ const downloadSquiffyScript = function () {
 //     });
 // };
 
-// const downloadJavascript = async function () {
-//     localSave();
-//     await settings.compile({
-//         data: editor.getValue(),
-//         success: function (data) {
-//             download(data, title + '.js');
-//         },
-//         fail: function (data) {
-//             $('#output').html(data.message);
-//         }
-//     });
-// };
+const downloadJavascript = async function () {
+    localSave();
+    const result = await compile();
+
+    if (result.success) {
+        const js = await result.getJs();
+        download(js, title + '.js');
+    }
+};
 
 const download = function (data: string, filename: string, type?: string) {
     var blob = new Blob([data], { type: type || 'text/plain' });
@@ -438,7 +435,7 @@ const init = async function (data: string) {
 
     onClick('download-squiffy-script', downloadSquiffyScript);
     // $('#export-html-js').click(downloadZip);
-    // $('#export-js').click(downloadJavascript);
+    onClick('export-js', downloadJavascript);
 
     onClick('settings', showSettings);
     onClick('add-section', addSection);
