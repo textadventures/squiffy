@@ -29,7 +29,7 @@ export const writeScriptFile = async(inputFilename: string, outputPath: string, 
     fs.writeFileSync(path.join(outputPath, outputFilename), await result.getJs());
 }
 
-export const createPackageFiles = async (inputFilename: string, outputPath: string) => {
+export const createPackageFiles = async (inputFilename: string, outputPath: string, createZip: boolean) => {
     console.log('Loading ' + inputFilename);
 
     const result = await getCompileResult(inputFilename);
@@ -39,30 +39,18 @@ export const createPackageFiles = async (inputFilename: string, outputPath: stri
         return false;
     }
 
-    const pkg = await createPackage(result);
+    const pkg = await createPackage(result, createZip);
+    const files = pkg.files;
 
-    for (const file of Object.keys(pkg)) {
+    for (const file of Object.keys(files)) {
         console.log(`Writing ${file}`);
-        fs.writeFileSync(path.join(outputPath, file), pkg[file]);
+        fs.writeFileSync(path.join(outputPath, file), files[file]);
     }
 
-    // if (options.zip) {
-    //     console.log('Creating zip file');
-    //     var JSZip = require('jszip');
-    //     var zip = new JSZip();
-    //     zip.file(storyJsName, storyJs);
-    //     zip.file('index.html', htmlData);
-    //     zip.file('style.css', cssData);
-    //     var buffer = zip.generate({
-    //         type: 'nodebuffer'
-    //     });
-    //     if (options.write) {
-    //         fs.writeFileSync(path.join(outputPath, 'output.zip'), buffer);
-    //     }
-    //     else {
-    //         return buffer;
-    //     }
-    // }
+    if (createZip && pkg.zip) {
+        console.log(`Writing output.zip`);
+        fs.writeFileSync(path.join(outputPath, 'output.zip'), pkg.zip);
+    }
 
     console.log('Done.');
     return true;

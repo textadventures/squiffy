@@ -38,7 +38,7 @@ if (options.scriptOnly) {
     await writeScriptFile(inputFilename, outputPath, outputFilename);
 }
 else {
-    const result = await createPackageFiles(inputFilename, outputPath);
+    const result = await createPackageFiles(inputFilename, outputPath, !!options.zip);
 
     if (result && options.serve) {
         const port = (argv.p as number) || 8282;

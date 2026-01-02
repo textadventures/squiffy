@@ -15,6 +15,7 @@
   "license": "MIT",
   "description": "",
   "dependencies": {
+    "fflate": "^0.8.2",
     "squiffy-compiler": "^6.0.0-alpha.16",
     "squiffy-runtime": "^6.0.0-alpha.16"
   },

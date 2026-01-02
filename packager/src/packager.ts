@@ -1,4 +1,5 @@
-import { CompileSuccess } from 'squiffy-compiler';
+import {strToU8, zipSync} from "fflate";
+import {CompileSuccess} from 'squiffy-compiler';
 
 import squiffyRuntime from 'squiffy-runtime/dist/squiffy.runtime.js?raw';
 import htmlTemplateFile from './index.template.html?raw';
@@ -8,13 +9,18 @@ import pkg from '../package.json' with {type: 'json'};
 
 const version = pkg.version;
 
-export const createPackage = async (result: CompileSuccess) => {
+export interface Package {
+    files: Record<string, string>;
+    zip?: Uint8Array;
+}
+
+export const createPackage = async (input: CompileSuccess, createZip: boolean): Promise<Package> => {
     const output: Record<string, string> = {};
 
-    output['story.js'] = await result.getJs();
+    output['story.js'] = await input.getJs();
     output['squiffy.runtime.js'] = squiffyRuntime;
 
-    const uiInfo = result.getUiInfo();
+    const uiInfo = input.getUiInfo();
 
     let htmlData = htmlTemplateFile.toString();
     htmlData = htmlData.replace('<!-- INFO -->', `<!--\n\nCreated with Squiffy ${version}\n\n\nhttps://github.com/textadventures/squiffy\n\n-->`);
@@ -28,5 +34,12 @@ export const createPackage = async (result: CompileSuccess) => {
     output['index.html'] = htmlData;
     output['style.css'] = cssTemplateFile.toString();
 
-    return output;
+    return {
+        files: output,
+        zip: !createZip ? undefined : zipSync(
+            Object.fromEntries(
+                Object.entries(output).map(([name, text]) => [name, strToU8(text)])
+            )
+        )
+    };
 }
