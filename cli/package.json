@@ -1,0 +1,40 @@
+{
+  "name": "@textadventures/squiffy-cli",
+  "version": "6.0.0-alpha.16",
+  "main": "dist/squiffy.js",
+  "scripts": {
+    "build": "tsc"
+  },
+  "author": "Alex Warren",
+  "contributors": [
+    "CrisisSDK",
+    "mrangel",
+    "Luis Felipe Morales"
+  ],
+  "license": "MIT",
+  "description": "",
+  "bin": {
+    "squiffy-packager": "dist/squiffy.js"
+  },
+  "dependencies": {
+    "@textadventures/squiffy-packager": "^6.0.0-alpha.16",
+    "finalhandler": "^2.1.0",
+    "glob": "^11.0.3",
+    "serve-static": "^2.2.0",
+    "squiffy-compiler": "^6.0.0-alpha.16",
+    "squiffy-runtime": "^6.0.0-alpha.16",
+    "yargs": "^18.0.0"
+  },
+  "devDependencies": {
+    "@types/finalhandler": "^1.2.4",
+    "@types/node": "^24.2.1",
+    "@types/serve-static": "^1.15.8",
+    "@types/yargs": "^17.0.33",
+    "tsx": "^4.20.4",
+    "typescript": "^5.9.2"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module"
+}

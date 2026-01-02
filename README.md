@@ -19,6 +19,7 @@ You may then need to run `npm install` again to register the local copies of the
 
 | Folder        | Package name                          | Type            | Description                                                                                             |
 |---------------|---------------------------------------|-----------------|---------------------------------------------------------------------------------------------------------|
+| `cli`         | `@textadventures/squiffy-cli`         | CLI             | Squiffy packager CLI                                                                                    |
 | `compiler`    | `squiffy-compiler`                    | Package         | Squiffy compiler, which converts Squiffy scripts into JavaScript                                        |
 | `editor`      | `@textadventures/squiffy-editor`      | Web app         | Squiffy editor, `app.squiffystory.com` - a web-based interface for creating and editing Squiffy scripts |
 | `packager`    | `squiffy-packager`                    | Package and CLI | Squiffy packager, which calls the compiler and packages the output into HTML, CSS and JS                |
@@ -30,5 +31,5 @@ There is also an `examples` folder which contains some sample Squiffy scripts.
 
 ```
 cd examples/test
-npx squiffy-packager example.squiffy -s
+npx @textadventures/squiffy-cli example.squiffy -s
 ```

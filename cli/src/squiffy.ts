@@ -2,15 +2,16 @@
 
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import { createPackage } from './packager.js';
 import { serve } from './server.js';
+import { createPackageFiles, writeScriptFile } from "./file-packager.js";
 
 import pkg from '../package.json' with { type: 'json' };
+import path from "path";
 const version = pkg.version;
 
 const argv = yargs(hideBin(process.argv))
     .usage(
-        `Usage: squiffy-packager filename.squiffy [options]`)
+        `Usage: npx @textadventures/squiffy-cli filename.squiffy [options]`)
     .demand(1)
     .alias('s', 'serve')
     .alias('p', 'port')
@@ -26,16 +27,21 @@ console.log('Squiffy ' + version);
 const options = {
     serve: argv.s,
     scriptOnly: argv.scriptonly,
-    pluginName: argv.pluginname,
-    zip: argv.zip,
-    write: true,
+    zip: argv.zip
 };
 
 const inputFilename = argv._[0] as string;
+const outputPath = path.resolve(path.dirname(inputFilename));
 
-const result = await createPackage(inputFilename);
+if (options.scriptOnly) {
+    const outputFilename = typeof options.scriptOnly === 'string' ? options.scriptOnly : 'story.js';
+    await writeScriptFile(inputFilename, outputPath, outputFilename);
+}
+else {
+    const result = await createPackageFiles(inputFilename, outputPath, !!options.zip);
 
-if (result && options.serve) {
-    const port = (argv.p as number) || 8282;
-    serve(result, port);
+    if (result && options.serve) {
+        const port = (argv.p as number) || 8282;
+        serve(outputPath, port);
+    }
 }

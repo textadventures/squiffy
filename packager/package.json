@@ -1,11 +1,10 @@
 {
-  "name": "squiffy-packager",
+  "name": "@textadventures/squiffy-packager",
   "version": "6.0.0-alpha.16",
-  "main": "dist/squiffy.js",
+  "main": "dist/packager.js",
   "types": "dist/packager.d.ts",
   "scripts": {
-    "build": "tsc && shx cp src/index.template.html ./dist/ && shx cp ../node_modules/squiffy-runtime/dist/squiffy.runtime.js ./dist/ && shx cp src/style.template.css ./dist/",
-    "dev": "cp ../node_modules/squiffy-runtime/dist/squiffy.runtime.js ./src/ && tsx src/squiffy.ts"
+    "build": "vite build"
   },
   "author": "Alex Warren",
   "contributors": [
@@ -15,25 +14,16 @@
   ],
   "license": "MIT",
   "description": "",
-  "bin": {
-    "squiffy-packager": "dist/squiffy.js"
-  },
   "dependencies": {
-    "finalhandler": "^2.1.0",
-    "glob": "^11.0.3",
-    "serve-static": "^2.2.0",
+    "fflate": "^0.8.2",
     "squiffy-compiler": "^6.0.0-alpha.16",
-    "squiffy-runtime": "^6.0.0-alpha.16",
-    "yargs": "^18.0.0"
+    "squiffy-runtime": "^6.0.0-alpha.16"
   },
   "devDependencies": {
-    "@types/finalhandler": "^1.2.4",
-    "@types/node": "^24.2.1",
-    "@types/serve-static": "^1.15.8",
-    "@types/yargs": "^17.0.33",
-    "shx": "^0.4.0",
     "tsx": "^4.20.4",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "vite": "^7.1.3",
+    "vite-plugin-dts": "^4.5.4"
   },
   "files": [
     "dist"

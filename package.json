@@ -4,6 +4,7 @@
   "workspaces": [
     "compiler",
     "editor",
+    "cli",
     "packager",
     "runtime",
     "site",
