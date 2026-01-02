@@ -1,4 +1,4 @@
-import {CompileSuccess} from 'squiffy-compiler';
+import { CompileSuccess } from 'squiffy-compiler';
 
 import squiffyRuntime from 'squiffy-runtime/dist/squiffy.runtime.js?raw';
 import htmlTemplateFile from './index.template.html?raw';
@@ -10,9 +10,8 @@ const version = pkg.version;
 
 export const createPackage = async (result: CompileSuccess) => {
     const output: Record<string, string> = {};
-    const storyJsName = /* typeof options.scriptOnly === 'string' ? options.scriptOnly : */ 'story.js';
 
-    output[storyJsName] = await result.getJs();
+    output['story.js'] = await result.getJs();
     output['squiffy.runtime.js'] = squiffyRuntime;
 
     const uiInfo = result.getUiInfo();

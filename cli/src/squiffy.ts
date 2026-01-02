@@ -3,7 +3,7 @@
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { serve } from './server.js';
-import {createPackageFiles} from "./file-packager.js";
+import { createPackageFiles } from "./file-packager.js";
 
 import pkg from '../package.json' with { type: 'json' };
 import path from "path";
