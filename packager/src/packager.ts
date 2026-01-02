@@ -3,6 +3,8 @@
 // import { compile } from 'squiffy-compiler';
 // import { externalFiles } from './external-files.js';
 
+import squiffyRuntime from 'squiffy-runtime/dist/squiffy.runtime.js?raw';
+
 import pkg from '../package.json' with { type: 'json' };
 const version = pkg.version;
 
@@ -21,6 +23,8 @@ export const createPackage = async (inputFilename: string) => {
     console.log('Loading ' + inputFilename);
 
     console.log('temp: ' + version);
+
+    console.log('runtime: ' + squiffyRuntime);
 
     // const result = await getCompileResult(inputFilename);
     //

@@ -3,7 +3,7 @@
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { createPackage } from '@textadventures/squiffy-packager';
-import { serve } from './server.js';
+// import { serve } from './server.js';
 
 import pkg from '../package.json' with { type: 'json' };
 const version = pkg.version;
@@ -23,19 +23,19 @@ const argv = yargs(hideBin(process.argv))
 
 console.log('Squiffy ' + version);
 
-const options = {
-    serve: argv.s,
-    scriptOnly: argv.scriptonly,
-    pluginName: argv.pluginname,
-    zip: argv.zip,
-    write: true,
-};
+// const options = {
+//     serve: argv.s,
+//     scriptOnly: argv.scriptonly,
+//     pluginName: argv.pluginname,
+//     zip: argv.zip,
+//     write: true,
+// };
 
 const inputFilename = argv._[0] as string;
 
-const result = await createPackage(inputFilename);
+await createPackage(inputFilename);
 
-if (result && options.serve) {
-    const port = (argv.p as number) || 8282;
-    serve(result, port);
-}
+// if (result && options.serve) {
+//     const port = (argv.p as number) || 8282;
+//     serve(result, port);
+// }

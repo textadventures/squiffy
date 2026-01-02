@@ -8,6 +8,7 @@ export default defineConfig({
         lib: {
             entry: "src/packager.ts",
             formats: ["es"],
+            fileName: 'packager'
         }
     },
     plugins: [
