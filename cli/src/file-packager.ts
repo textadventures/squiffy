@@ -15,6 +15,20 @@ async function getCompileResult(inputFilename: string) {
     });
 }
 
+export const writeScriptFile = async(inputFilename: string, outputPath: string, outputFilename: string)=> {
+    console.log('Loading ' + inputFilename);
+
+    const result = await getCompileResult(inputFilename);
+
+    if (!result.success) {
+        console.log('Failed.');
+        return false;
+    }
+
+    console.log(`Writing ${outputFilename}`);
+    fs.writeFileSync(path.join(outputPath, outputFilename), await result.getJs());
+}
+
 export const createPackageFiles = async (inputFilename: string, outputPath: string) => {
     console.log('Loading ' + inputFilename);
 
