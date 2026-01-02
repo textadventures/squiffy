@@ -1,6 +1,6 @@
 export type __squiffy_types_ref = typeof import('@textadventures/squiffy-types');
 import { type Plugin } from 'vite';
-import { compileFile } from 'squiffy-packager';
+import { compileFile } from '@textadventures/squiffy-packager';
 
 export interface SquiffyPluginOptions {
     /** Log transformed file paths (defaults to false). */
