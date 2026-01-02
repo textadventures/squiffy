@@ -26,7 +26,6 @@ You may then need to run `npm install` again to register the local copies of the
 | `runtime`     | `squiffy-runtime`                     | Package         | Squiffy runtime, which provides the JavaScript library for running Squiffy scripts                      |
 | `site`        | `site`                                | Web app         | Squiffy website, `squiffystory.com`                                                                     |
 | `types`       | `@textadventures/squiffy-types`       | Package         | Type definitions used by the Vite plugin                                                                |
-| `vite-plugin` | `@textadventures/vite-plugin-squiffy` | Package         | Vite plugin, allowing you to build Squiffy scripts as part of a web app                                 |
 
 There is also an `examples` folder which contains some sample Squiffy scripts.
 
