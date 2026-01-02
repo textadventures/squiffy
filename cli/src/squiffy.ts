@@ -2,8 +2,8 @@
 
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import { createPackage } from '@textadventures/squiffy-packager';
 // import { serve } from './server.js';
+import {createPackageFiles} from "./file-packager.js";
 
 import pkg from '../package.json' with { type: 'json' };
 const version = pkg.version;
@@ -32,8 +32,7 @@ console.log('Squiffy ' + version);
 // };
 
 const inputFilename = argv._[0] as string;
-
-await createPackage(inputFilename);
+await createPackageFiles(inputFilename);
 
 // if (result && options.serve) {
 //     const port = (argv.p as number) || 8282;
