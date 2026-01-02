@@ -4,8 +4,7 @@
   "main": "dist/packager.js",
   "types": "dist/packager.d.ts",
   "scripts": {
-    "build": "vite build && shx cp src/index.template.html ./dist/ && shx cp ../node_modules/squiffy-runtime/dist/squiffy.runtime.js ./dist/ && shx cp src/style.template.css ./dist/",
-    "dev": "cp ../node_modules/squiffy-runtime/dist/squiffy.runtime.js ./src/ && tsx src/squiffy.ts"
+    "build": "vite build"
   },
   "author": "Alex Warren",
   "contributors": [
@@ -20,7 +19,6 @@
     "squiffy-runtime": "^6.0.0-alpha.16"
   },
   "devDependencies": {
-    "shx": "^0.4.0",
     "tsx": "^4.20.4",
     "typescript": "^5.9.2",
     "vite": "^7.1.3",
