@@ -6,20 +6,6 @@ import { externalFiles } from './external-files.js';
 import pkg from '../package.json' with { type: 'json' };
 const version = pkg.version;
 
-export const createPackage = async (inputFilename: string) => {
-    return await generate(inputFilename);
-}
-
-export const compileFile = async (inputFilename: string) : Promise<string | null> => {
-    const result = await getCompileResult(inputFilename);
-
-    if (!result.success) {
-        return null;
-    }
-
-    return await result.getJs();
-}
-
 async function getCompileResult(inputFilename: string) {
     const inputFile = fs.readFileSync(inputFilename);
     const inputText = inputFile.toString();
@@ -31,7 +17,7 @@ async function getCompileResult(inputFilename: string) {
     });
 }
 
-async function generate(inputFilename: string) {
+export const createPackage = async (inputFilename: string) => {
     console.log('Loading ' + inputFilename);
 
     const result = await getCompileResult(inputFilename);
