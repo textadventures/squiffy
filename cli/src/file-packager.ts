@@ -15,16 +15,41 @@ async function getCompileResult(inputFilename: string) {
     });
 }
 
-export const createPackageFiles = async (inputFilename: string) => {
+export const createPackageFiles = async (inputFilename: string, outputPath: string) => {
     console.log('Loading ' + inputFilename);
 
     const result = await getCompileResult(inputFilename);
 
     if (!result.success) {
         console.log('Failed.');
-        return;
+        return false;
     }
 
     const pkg = await createPackage(result);
-    console.log(pkg);
+
+    for (const file of Object.keys(pkg)) {
+        console.log(`Writing ${file}`);
+        fs.writeFileSync(path.join(outputPath, file), pkg[file]);
+    }
+
+    // if (options.zip) {
+    //     console.log('Creating zip file');
+    //     var JSZip = require('jszip');
+    //     var zip = new JSZip();
+    //     zip.file(storyJsName, storyJs);
+    //     zip.file('index.html', htmlData);
+    //     zip.file('style.css', cssData);
+    //     var buffer = zip.generate({
+    //         type: 'nodebuffer'
+    //     });
+    //     if (options.write) {
+    //         fs.writeFileSync(path.join(outputPath, 'output.zip'), buffer);
+    //     }
+    //     else {
+    //         return buffer;
+    //     }
+    // }
+
+    console.log('Done.');
+    return true;
 };
