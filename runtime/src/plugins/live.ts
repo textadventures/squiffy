@@ -16,23 +16,23 @@ export function LivePlugin(): SquiffyPlugin {
             // any that are still pending. That would let us pick up {{live}} helpers inside embed
             // live sections/passages.
             squiffy.registerHelper("live", (attribute: string, options) => {
-                const section = options.hash.section as string || '';
+                const section = options.hash.section as string || "";
                 if (section) {
                     return new Handlebars.SafeString(`<span class="squiffy-live" data-attribute="${attribute}" data-section="${section}"></span>`);
                 }
-                const passage = options.hash.passage as string || '';
+                const passage = options.hash.passage as string || "";
                 if (passage) {
                     return new Handlebars.SafeString(`<span class="squiffy-live" data-attribute="${attribute}" data-passage="${passage}"></span>`);
                 }
                 return new Handlebars.SafeString(`<span class="squiffy-live" data-attribute="${attribute}"></span>`);
             });
 
-            const onSet = async (e: SquiffyEventMap['set']) => {
+            const onSet = async (e: SquiffyEventMap["set"]) => {
                 const promises: Promise<void>[] = [];
                 const selector = `.squiffy-live[data-attribute="${CSS.escape(e.attribute)}"]`;
                 for (const el of squiffy.outputElement.querySelectorAll<HTMLElement>(selector)) {
                     const oldContent = el.innerHTML;
-                    let newContent = '';
+                    let newContent = "";
                     if (el.dataset.section) {
                         const sectionText = squiffy.getSectionText(el.dataset.section);
                         if (sectionText) {
@@ -54,7 +54,7 @@ export function LivePlugin(): SquiffyPlugin {
             };
 
             let setQueue: Promise<void> = Promise.resolve();
-            squiffy.on('set', (e) => {
+            squiffy.on("set", (e) => {
                 setQueue = setQueue.then(() => onSet(e));
             });
         },
@@ -75,7 +75,7 @@ export function LivePlugin(): SquiffyPlugin {
                     }
                 } else {
                     const attribute = el.dataset.attribute;
-                    el.textContent = attribute ? squiffy.get(attribute) : '';
+                    el.textContent = attribute ? squiffy.get(attribute) : "";
                 }
             });
         }

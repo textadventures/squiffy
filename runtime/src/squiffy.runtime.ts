@@ -1,6 +1,6 @@
-import {SquiffyApi, SquiffyInitOptions, SquiffySettings, Story, Section, Passage} from './types.js';
-import { TextProcessor } from './textProcessor.js';
-import { Emitter, SquiffyEventMap } from './events.js';
+import {SquiffyApi, SquiffyInitOptions, SquiffySettings, Story, Section, Passage} from "./types.js";
+import { TextProcessor } from "./textProcessor.js";
+import { Emitter, SquiffyEventMap } from "./events.js";
 import { State } from "./state.js";
 import { updateStory } from "./updater.js";
 import {PluginManager} from "./pluginManager.js";
@@ -32,33 +32,33 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     
     async function handleLink(link: HTMLElement): Promise<boolean> {
         if (runningTransitions) return false;
-        const outputSection = link.closest('.squiffy-output-section');
+        const outputSection = link.closest(".squiffy-output-section");
         if (outputSection !== currentSectionElement) return false;
 
-        if (link.classList.contains('disabled')) return false;
+        if (link.classList.contains("disabled")) return false;
 
-        const passage = link.getAttribute('data-passage');
-        const section = link.getAttribute('data-section');
+        const passage = link.getAttribute("data-passage");
+        const section = link.getAttribute("data-section");
 
         if (passage !== null) {
             disableLink(link);
-            set('_turncount', get('_turncount') + 1);
+            set("_turncount", get("_turncount") + 1);
             await processLink(link);
             if (passage) {
                 currentBlockOutputElement = null;
                 await showPassage(passage);
             }
-            const turnPassage = '@' + get('_turncount');
+            const turnPassage = "@" + get("_turncount");
             if (currentSection.passages) {
                 if (turnPassage in currentSection.passages) {
                     await showPassage(turnPassage);
                 }
-                if ('@last' in currentSection.passages && get('_turncount') >= (currentSection.passageCount || 0)) {
-                    await showPassage('@last');
+                if ("@last" in currentSection.passages && get("_turncount") >= (currentSection.passageCount || 0)) {
+                    await showPassage("@last");
                 }
             }
 
-            emitter.emit('linkClick', { linkType: 'passage' });
+            emitter.emit("linkClick", { linkType: "passage" });
             return true;
         }
         
@@ -68,7 +68,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
                 await go(section);
             }
 
-            emitter.emit('linkClick', { linkType: 'section' });
+            emitter.emit("linkClick", { linkType: "section" });
             return true;
         }
 
@@ -81,7 +81,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
 
             save();
 
-            emitter.emit('linkClick', { linkType: type });
+            emitter.emit("linkClick", { linkType: type });
             return true;
         }
 
@@ -90,19 +90,19 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
 
     async function handleClick(event: Event) {
         const target = event.target as HTMLElement;
-        if (target.classList.contains('squiffy-link')) {
+        if (target.classList.contains("squiffy-link")) {
             await handleLink(target);
         }
     }
     
     function disableLink(link: Element) {
-        link.classList.add('disabled');
-        link.setAttribute('tabindex', '-1');
+        link.classList.add("disabled");
+        link.setAttribute("tabindex", "-1");
     }
 
     function enableLink(link: Element) {
-        link.classList.remove('disabled');
-        link.removeAttribute('tabindex');
+        link.classList.remove("disabled");
+        link.removeAttribute("tabindex");
     }
     
     async function begin() {
@@ -114,7 +114,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     async function processLink(link: HTMLElement) {
         animation.runLinkAnimation(link);
         await runTransitions();
-        const settersJson = link.getAttribute('data-set');
+        const settersJson = link.getAttribute("data-set");
         if (settersJson) {
             const setters = JSON.parse(settersJson) as string[];
             for (const attribute of setters) {
@@ -149,23 +149,23 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
                 const rhsNumeric = parseFloat(rhs);
                 let value = get(lhs);
                 if (value === null) value = 0;
-                if (op == '+') {
+                if (op == "+") {
                     value += rhsNumeric;
                 }
-                if (op == '-') {
+                if (op == "-") {
                     value -= rhsNumeric;
                 }
-                if (op == '*') {
+                if (op == "*") {
                     value *= rhsNumeric;
                 }
-                if (op == '/') {
+                if (op == "/") {
                     value /= rhsNumeric;
                 }
                 set(lhs, value);
             }
             else {
                 let value = true;
-                if (expr.startsWith('not ')) {
+                if (expr.startsWith("not ")) {
                     expr = expr.substring(4);
                     value = false;
                 }
@@ -179,9 +179,9 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         newSection(sectionName);
         currentSection = story.sections[sectionName];
         if (!currentSection) return;
-        set('_section', sectionName);
+        set("_section", sectionName);
         state.setSeen(sectionName);
-        const master = story.sections[''];
+        const master = story.sections[""];
         if (master?.clear || currentSection.clear) {
             clearScreen();
         }
@@ -190,14 +190,14 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         }
         await run(currentSection, `[[${sectionName}]]`);
         // The JS might have changed which section we're in
-        if (get('_section') == sectionName) {
-            set('_turncount', 0);
+        if (get("_section") == sectionName) {
+            set("_turncount", 0);
             writeUndoLog();
             save();
         }
         const newCanGoBack = canGoBack();
         if (newCanGoBack != oldCanGoBack) {
-            emitter.emit('canGoBackChanged', { canGoBack: newCanGoBack });
+            emitter.emit("canGoBackChanged", { canGoBack: newCanGoBack });
         }
     }
 
@@ -228,26 +228,26 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             runJs(section.jsIndex);
         }
 
-        ui.write(section.text || '', source);
+        ui.write(section.text || "", source);
 
         await runTransitions();
     }
 
     async function runTransitions() {
         runningTransitions = true;
-        currentSectionElement.classList.add('links-disabled');
+        currentSectionElement.classList.add("links-disabled");
         for (const transition of transitions) {
             await transition();
         }
         transitions.length = 0;
         runningTransitions = false;
-        currentSectionElement.classList.remove('links-disabled');
+        currentSectionElement.classList.remove("links-disabled");
     }
     
     async function showPassage(passageName: string) {
         const oldCanGoBack = canGoBack();
         let passage = currentSection.passages && currentSection.passages[passageName];
-        const masterSection = story.sections[''];
+        const masterSection = story.sections[""];
         if (!passage && masterSection && masterSection.passages) passage = masterSection.passages[passageName];
         if (!passage) {
             throw `No passage named ${passageName} in the current section or master section`;
@@ -258,14 +258,14 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         const runFns: Function[] = [];
 
         if (masterSection && masterSection.passages) {
-            const masterPassage = masterSection.passages[''];
+            const masterPassage = masterSection.passages[""];
             if (masterPassage) {
                 passages.push(masterPassage);
-                runFns.push(() => run(masterPassage, `[[]][]`));
+                runFns.push(() => run(masterPassage, "[[]][]"));
             }
         }
 
-        const master = currentSection.passages && currentSection.passages[''];
+        const master = currentSection.passages && currentSection.passages[""];
         if (master) {
             passages.push(master);
             runFns.push(() => run(master, `[[${get("_section")}]][]`));
@@ -279,9 +279,9 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             createSectionElement();
         }
 
-        currentPassageElement = document.createElement('div');
-        currentPassageElement.classList.add('squiffy-output-passage');
-        currentPassageElement.setAttribute('data-passage', `${passageName}`);
+        currentPassageElement = document.createElement("div");
+        currentPassageElement.classList.add("squiffy-output-passage");
+        currentPassageElement.setAttribute("data-passage", `${passageName}`);
 
         currentSectionElement.appendChild(currentPassageElement);
         currentBlockOutputElement = null;
@@ -294,7 +294,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         save();
         const newCanGoBack = canGoBack();
         if (newCanGoBack != oldCanGoBack) {
-            emitter.emit('canGoBackChanged', { canGoBack: newCanGoBack });
+            emitter.emit("canGoBackChanged", { canGoBack: newCanGoBack });
         }
     }
     
@@ -308,8 +308,8 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         state.reset();
         // TODO: This feels like the wrong way of triggering location.reload()
         // - should be a separate setting to the scroll setting.
-        if (settings.scroll === 'element' || settings.scroll === 'none') {
-            outputElement.innerHTML = '';
+        if (settings.scroll === "element" || settings.scroll === "none") {
+            outputElement.innerHTML = "";
             begin();
         }
         else {
@@ -319,7 +319,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     
     function save() {
         // TODO: Queue up all attribute changes and save them only when this is called
-        set('_output', outputElement.innerHTML);
+        set("_output", outputElement.innerHTML);
     }
     
     function load() {
@@ -332,7 +332,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         }
 
         state.load();
-        const output = get('_output');
+        const output = get("_output");
         if (!output) {
             runUiJs();
             return false;
@@ -342,36 +342,36 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
 
         setCurrentSectionElement();
         setCurrentPassageElement();
-        currentBlockOutputElement = outputElement.querySelector('.squiffy-output-block:last-child');
+        currentBlockOutputElement = outputElement.querySelector(".squiffy-output-block:last-child");
 
-        currentSection = story.sections[get('_section')];
+        currentSection = story.sections[get("_section")];
         runUiJs();
         pluginManager.onLoad();
         return true;
     }
 
     function newBlockOutputElement() {
-        currentBlockOutputElement = document.createElement('div');
-        currentBlockOutputElement.classList.add('squiffy-output-block');
+        currentBlockOutputElement = document.createElement("div");
+        currentBlockOutputElement.classList.add("squiffy-output-block");
         (currentPassageElement || currentSectionElement)?.appendChild(currentBlockOutputElement);
     }
     
     function newSection(sectionName?: string) {
         if (currentSectionElement) {
-            currentSectionElement.querySelectorAll('input').forEach(el => {
-                const attribute = el.getAttribute('data-attribute') || el.id;
+            currentSectionElement.querySelectorAll("input").forEach(el => {
+                const attribute = el.getAttribute("data-attribute") || el.id;
                 if (attribute) set(attribute, el.value);
                 el.disabled = true;
             });
     
             currentSectionElement.querySelectorAll("[contenteditable]").forEach(el => {
-                const attribute = el.getAttribute('data-attribute') || el.id;
+                const attribute = el.getAttribute("data-attribute") || el.id;
                 if (attribute) set(attribute, el.innerHTML);
-                (el as HTMLElement).contentEditable = 'false';
+                (el as HTMLElement).contentEditable = "false";
             });
     
-            currentSectionElement.querySelectorAll('textarea').forEach(el => {
-                const attribute = el.getAttribute('data-attribute') || el.id;
+            currentSectionElement.querySelectorAll("textarea").forEach(el => {
+                const attribute = el.getAttribute("data-attribute") || el.id;
                 if (attribute) set(attribute, el.value);
                 el.disabled = true;
             });
@@ -383,17 +383,17 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     }
 
     function createSectionElement(sectionName?: string) {
-        currentSectionElement = document.createElement('div');
-        currentSectionElement.classList.add('squiffy-output-section');
-        currentSectionElement.setAttribute('data-section', sectionName ?? get("_section"));
+        currentSectionElement = document.createElement("div");
+        currentSectionElement.classList.add("squiffy-output-section");
+        currentSectionElement.setAttribute("data-section", sectionName ?? get("_section"));
         if (!sectionName) {
-            currentSectionElement.setAttribute('data-clear', "true");
+            currentSectionElement.setAttribute("data-clear", "true");
         }
         outputElement.appendChild(currentSectionElement);
     }
 
     function getClearStack() {
-        return outputElement.querySelector<HTMLElement>('.squiffy-clear-stack');
+        return outputElement.querySelector<HTMLElement>(".squiffy-clear-stack");
     }
 
     function clearScreen() {
@@ -402,13 +402,13 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         // a new section anyway.
         let clearStack = getClearStack();
         if (!clearStack) {
-            clearStack = document.createElement('div');
-            clearStack.classList.add('squiffy-clear-stack');
-            clearStack.style.display = 'none';
+            clearStack = document.createElement("div");
+            clearStack.classList.add("squiffy-clear-stack");
+            clearStack.style.display = "none";
             outputElement.prepend(clearStack);
         }
 
-        const clearStackItem = document.createElement('div');
+        const clearStackItem = document.createElement("div");
         clearStack.appendChild(clearStackItem);
 
         // Move everything in the outputElement (except the clearStack itself) into the new clearStackItem
@@ -454,9 +454,9 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
                 newBlockOutputElement();
             }
 
-            const div = document.createElement('div');
+            const div = document.createElement("div");
             if (source) {
-                div.setAttribute('data-source', source);
+                div.setAttribute("data-source", source);
             }
 
             div.innerHTML = html;
@@ -469,11 +469,11 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             createSectionElement();
         },
         scrollToEnd: () => {
-            if (settings.scroll === 'none') {
+            if (settings.scroll === "none") {
                 // do nothing
             }
-            else if (settings.scroll === 'element') {
-                outputElement.lastElementChild.scrollIntoView({ block: 'end', inline: 'nearest', behavior: 'smooth' });
+            else if (settings.scroll === "element") {
+                outputElement.lastElementChild.scrollIntoView({ block: "end", inline: "nearest", behavior: "smooth" });
             }
             else {
                 let scrollTo = scrollPosition;
@@ -481,7 +481,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
                 if (scrollTo > currentScrollTop) {
                     const maxScrollTop = document.documentElement.scrollHeight - window.innerHeight;
                     if (scrollTo > maxScrollTop) scrollTo = maxScrollTop;
-                    window.scrollTo({ top: scrollTo, behavior: 'smooth' });
+                    window.scrollTo({ top: scrollTo, behavior: "smooth" });
                 }
             }
         },
@@ -494,7 +494,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         if (newStory.start != story.start) {
             story = newStory;
             state.reset();
-            outputElement.innerHTML = '';
+            outputElement.innerHTML = "";
             go(story.start);
             return;
         }
@@ -510,20 +510,20 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     function setCurrentSectionElement() {
         // Multiple .squiffy-output-section elements may be "last-child" if some have been moved to the clear-stack,
         // so we want the very last one
-        const allSectionElements = outputElement.querySelectorAll<HTMLElement>('.squiffy-output-section:last-child');
+        const allSectionElements = outputElement.querySelectorAll<HTMLElement>(".squiffy-output-section:last-child");
         currentSectionElement = allSectionElements[allSectionElements.length - 1];
-        const sectionName = currentSectionElement.getAttribute('data-section');
+        const sectionName = currentSectionElement.getAttribute("data-section");
         currentSection = story.sections[sectionName];
     }
 
     function setCurrentPassageElement() {
-        currentPassageElement = currentSectionElement.querySelector('.squiffy-output-passage:last-child');
+        currentPassageElement = currentSectionElement.querySelector(".squiffy-output-passage:last-child");
     }
 
     function getHistoryCount() {
         const clearStack = getClearStack();
-        const sectionPassageCount = outputElement.querySelectorAll('.squiffy-output-section').length
-            + outputElement.querySelectorAll('.squiffy-output-passage').length;
+        const sectionPassageCount = outputElement.querySelectorAll(".squiffy-output-section").length
+            + outputElement.querySelectorAll(".squiffy-output-passage").length;
 
         if (!clearStack) {
             return sectionPassageCount;
@@ -544,8 +544,8 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         const clearStack = getClearStack();
 
         if (currentPassageElement) {
-            const currentPassage = currentPassageElement.getAttribute('data-passage');
-            doUndo(currentPassageElement.getAttribute('data-undo'));
+            const currentPassage = currentPassageElement.getAttribute("data-passage");
+            doUndo(currentPassageElement.getAttribute("data-undo"));
             currentPassageElement.remove();
 
             // If there's nothing left in the outputElement except for an empty section element that
@@ -557,7 +557,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
                 if (child === clearStack) {
                     continue;
                 }
-                if (child.getAttribute('data-clear') == 'true' && child.children.length == 0) {
+                if (child.getAttribute("data-clear") == "true" && child.children.length == 0) {
                     hasEmptySection = true;
                     continue;
                 }
@@ -570,8 +570,8 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
                 setCurrentSectionElement();
             }
 
-            for (const link of currentSectionElement.querySelectorAll('a.squiffy-link[data-passage]')) {
-                if (link.getAttribute('data-passage') == currentPassage) {
+            for (const link of currentSectionElement.querySelectorAll("a.squiffy-link[data-passage]")) {
+                if (link.getAttribute("data-passage") == currentPassage) {
                     enableLink(link);
                 }
             }
@@ -579,7 +579,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             setCurrentPassageElement();
         }
         else {
-            doUndo(currentSectionElement.getAttribute('data-undo'));
+            doUndo(currentSectionElement.getAttribute("data-undo"));
             currentSectionElement.remove();
 
             // If there's nothing left in the outputElement except for the clear-stack, pop it
@@ -601,19 +601,19 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         }
 
         if (!canGoBack()) {
-            emitter.emit('canGoBackChanged', { canGoBack: false });
+            emitter.emit("canGoBackChanged", { canGoBack: false });
         }
     }
 
     // We create a separate div inside the passed-in element. This allows us to clear the text output, but
     // without affecting any overlays that may have been added to the container (for transitions).
     outputElementContainer = options.element;
-    outputElement = document.createElement('div');
+    outputElement = document.createElement("div");
     outputElementContainer.appendChild(outputElement);
     story = options.story;
 
     settings = {
-        scroll: options.scroll || 'body',
+        scroll: options.scroll || "body",
         persist: (options.persist === undefined) ? true : options.persist,
         onSet: options.onSet || (() => {})
     };
@@ -623,12 +623,12 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         settings.persist = false;
     }
 
-    if (settings.scroll === 'element') {
-        outputElement.style.overflowY = 'auto';
+    if (settings.scroll === "element") {
+        outputElement.style.overflowY = "auto";
     }
 
-    outputElement.addEventListener('click', handleClick);
-    outputElement.addEventListener('keypress', async function (event) {
+    outputElement.addEventListener("click", handleClick);
+    outputElement.addEventListener("keypress", async function (event) {
         if (event.key !== "Enter") return;
         await handleClick(event);
     });
@@ -636,13 +636,13 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     let undoLog: Record<string, any> = {};
 
     const onSet = function(attribute: string, oldValue: any) {
-        if (attribute == '_output') return;
+        if (attribute == "_output") return;
         if (attribute in undoLog) return;
         undoLog[attribute] = oldValue;
     }
 
     const writeUndoLog = function() {
-        (currentPassageElement ?? currentSectionElement).setAttribute('data-undo', JSON.stringify(undoLog));
+        (currentPassageElement ?? currentSectionElement).setAttribute("data-undo", JSON.stringify(undoLog));
         undoLog = {};
     }
 
@@ -655,7 +655,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         }
     }
 
-    state = new State(settings.persist, story.id || '', settings.onSet, emitter, onSet);
+    state = new State(settings.persist, story.id || "", settings.onSet, emitter, onSet);
     const get = state.get.bind(state);
     const set = state.set.bind(state);
 
@@ -672,8 +672,8 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     const getPassageText = (name: string) => {
         if (currentSection.passages && name in currentSection.passages) {
             return currentSection.passages[name].text || null;
-        } else if ('passages' in story.sections[''] && story.sections[''].passages && name in story.sections[''].passages) {
-            return story.sections[''].passages![name].text || null;
+        } else if ("passages" in story.sections[""] && story.sections[""].passages && name in story.sections[""].passages) {
+            return story.sections[""].passages![name].text || null;
         }
         return null;
     }

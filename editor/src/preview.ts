@@ -1,4 +1,4 @@
-import { init as runtimeInit } from 'squiffy-runtime';
+import { init as runtimeInit } from "squiffy-runtime";
 import { compile as squiffyCompile } from "squiffy-compiler";
 import { getStoryFromCompilerOutput } from "./compiler-helper.ts";
 
@@ -20,7 +20,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     container.style.display = "block";
 
-    window.addEventListener('message', async e => {
+    window.addEventListener("message", async e => {
         const script: string = e.data;
 
         const result = await squiffyCompile({
@@ -40,9 +40,9 @@ document.addEventListener("DOMContentLoaded", async () => {
             story: story,
         });
 
-        const restartButton = document.getElementById('restart');
-        restartButton?.addEventListener('click', function () {
-            if (confirm('Are you sure you want to restart?')) {
+        const restartButton = document.getElementById("restart");
+        restartButton?.addEventListener("click", function () {
+            if (confirm("Are you sure you want to restart?")) {
                 squiffyApi.restart();
             }
         });
@@ -50,5 +50,5 @@ document.addEventListener("DOMContentLoaded", async () => {
         await squiffyApi.begin();
     });
 
-    window.opener.postMessage('preview-ready', '*');
+    window.opener.postMessage("preview-ready", "*");
 });

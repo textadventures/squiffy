@@ -40,7 +40,7 @@ export function updateStory(oldStory: Story,
             if (!newSection) {
                 // section has been deleted
                 for (const element of elements) {
-                    const parentOutputSection = element.closest('.squiffy-output-section');
+                    const parentOutputSection = element.closest(".squiffy-output-section");
                     parentOutputSection.remove();
                 }
             }
@@ -62,7 +62,7 @@ export function updateStory(oldStory: Story,
             if (!newPassage) {
                 // passage has been deleted
                 for (const element of elements) {
-                    const parentOutputPassage = element.closest('.squiffy-output-passage');
+                    const parentOutputPassage = element.closest(".squiffy-output-passage");
                     parentOutputPassage.remove();
                 }
             }

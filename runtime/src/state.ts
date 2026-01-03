@@ -29,7 +29,7 @@ export class State {
     }
 
     setInternal(attribute: string, value: any, raiseEvents: boolean) {
-        if (typeof value === 'undefined') value = true;
+        if (typeof value === "undefined") value = true;
 
         if (raiseEvents && this.onSetInternal) {
             this.onSetInternal(attribute, this.get(attribute), structuredClone(value));
@@ -38,11 +38,11 @@ export class State {
         this.store[attribute] = structuredClone(value);
 
         if (this.usePersistentStorage()) {
-            localStorage[this.storyId + '-' + attribute] = JSON.stringify(value);
+            localStorage[this.storyId + "-" + attribute] = JSON.stringify(value);
         }
 
         if (raiseEvents) {
-            this.emitter.emit('set', {attribute, value});
+            this.emitter.emit("set", {attribute, value});
         }
 
         this.onSet(attribute, value);
@@ -67,7 +67,7 @@ export class State {
 
         const keys = Object.keys(localStorage);
         for (const key of keys) {
-            if (key.startsWith(this.storyId + '-')) {
+            if (key.startsWith(this.storyId + "-")) {
                 const attribute = key.substring(this.storyId.length + 1);
                 this.store[attribute] = JSON.parse(localStorage[key]);
             }
@@ -90,16 +90,16 @@ export class State {
     }
 
     setSeen(sectionName: string) {
-        let seenSections = this.get('_seen_sections');
+        let seenSections = this.get("_seen_sections");
         if (!seenSections) seenSections = [];
         if (seenSections.indexOf(sectionName) == -1) {
             seenSections.push(sectionName);
-            this.set('_seen_sections', seenSections);
+            this.set("_seen_sections", seenSections);
         }
     }
 
     getSeen(sectionName: string) {
-        const seenSections = this.get('_seen_sections');
+        const seenSections = this.get("_seen_sections");
         if (!seenSections) return false;
         return (seenSections.indexOf(sectionName) > -1);
     }

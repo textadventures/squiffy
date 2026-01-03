@@ -11,7 +11,7 @@ export function RandomPlugin() : SquiffyPlugin {
                 const randomIndex = Math.floor(Math.random() * stringItems.length);
                 const item = stringItems[randomIndex];
 
-                const attribute = options.hash.set as string || '';
+                const attribute = options.hash.set as string || "";
                 if (attribute) {
                     squiffy.set(attribute, item);
                 }

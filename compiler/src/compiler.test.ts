@@ -1,9 +1,9 @@
-import { expect, test } from 'vitest'
-import * as fs from 'fs/promises';
+import { expect, test } from "vitest"
+import * as fs from "fs/promises";
 import { glob } from "glob";
-import * as path from 'path';
+import * as path from "path";
 
-import { compile, CompileSuccess } from './compiler.js';
+import { compile, CompileSuccess } from "./compiler.js";
 
 const externalFiles = (inputFilename: string) => {
     const includedFiles = [path.resolve(inputFilename)];
@@ -25,8 +25,8 @@ const externalFiles = (inputFilename: string) => {
 }
 
 function assertSuccess(obj: unknown): asserts obj is CompileSuccess {
-    if (!obj || typeof obj !== 'object' || !('success' in obj) || !obj.success) {
-        throw new Error('Expected success');
+    if (!obj || typeof obj !== "object" || !("success" in obj) || !obj.success) {
+        throw new Error("Expected success");
     }
 }
 
@@ -42,7 +42,7 @@ test('"Hello world" should compile', async () => {
     expect(result.output.story.sections._default.text).toBe("hello world");
 });
 
-test('Blank game should compile', async () => {
+test("Blank game should compile", async () => {
     const result = await compile({
         scriptBaseFilename: "filename.squiffy",
         script: "",
@@ -74,7 +74,7 @@ const examples = [
 
 for (const example of examples) {
     test(example, async () => {
-        const script = await fs.readFile(`../examples/${example}`, 'utf8');
+        const script = await fs.readFile(`../examples/${example}`, "utf8");
         const filename = path.basename(example);
         const warnings: string[] = [];
 
@@ -101,7 +101,7 @@ const warningExamples = [
 
 for (const example of warningExamples) {
     test(example, async () => {
-        const script = await fs.readFile(`../examples/${example}`, 'utf8');
+        const script = await fs.readFile(`../examples/${example}`, "utf8");
         const filename = path.basename(example);
 
         const warnings: string[] = [];

@@ -1,14 +1,19 @@
 // @ts-check
 
-import eslint from '@eslint/js';
-import { defineConfig, globalIgnores } from 'eslint/config';
-import tseslint from 'typescript-eslint';
+import eslint from "@eslint/js";
+import { defineConfig, globalIgnores } from "eslint/config";
+import tseslint from "typescript-eslint";
 import { includeIgnoreFile } from "@eslint/compat";
 import { fileURLToPath } from "node:url";
 
 const gitignorePath = fileURLToPath(new URL(".gitignore", import.meta.url));
 
 export default defineConfig([
+    {
+        rules: {
+            quotes: ["error", "double", { avoidEscape: true }],
+        },
+    },
     {
         files: ["eslint.config.*"],
         languageOptions: {

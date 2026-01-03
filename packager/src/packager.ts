@@ -1,11 +1,11 @@
 import {strToU8, zipSync} from "fflate";
-import {CompileSuccess} from 'squiffy-compiler';
+import {CompileSuccess} from "squiffy-compiler";
 
-import squiffyRuntime from 'squiffy-runtime/dist/squiffy.runtime.global.js?raw';
-import htmlTemplateFile from './index.template.html?raw';
-import cssTemplateFile from './style.template.css?raw';
+import squiffyRuntime from "squiffy-runtime/dist/squiffy.runtime.global.js?raw";
+import htmlTemplateFile from "./index.template.html?raw";
+import cssTemplateFile from "./style.template.css?raw";
 
-import pkg from '../package.json' with {type: 'json'};
+import pkg from "../package.json" with {type: "json"};
 
 const version = pkg.version;
 
@@ -17,22 +17,22 @@ export interface Package {
 export const createPackage = async (input: CompileSuccess, createZip: boolean): Promise<Package> => {
     const output: Record<string, string> = {};
 
-    output['story.js'] = await input.getJs();
-    output['squiffy.runtime.global.js'] = squiffyRuntime;
+    output["story.js"] = await input.getJs();
+    output["squiffy.runtime.global.js"] = squiffyRuntime;
 
     const uiInfo = input.getUiInfo();
 
     let htmlData = htmlTemplateFile.toString();
-    htmlData = htmlData.replace('<!-- INFO -->', `<!--\n\nCreated with Squiffy ${version}\n\nhttps://squiffystory.com\nhttps://github.com/textadventures/squiffy\n\n-->`);
-    htmlData = htmlData.replace('<!-- TITLE -->', uiInfo.title);
-    const scriptData = uiInfo.externalScripts.map(script => `<script src="${script}"></script>`).join('\n');
-    htmlData = htmlData.replace('<!-- SCRIPTS -->', scriptData);
+    htmlData = htmlData.replace("<!-- INFO -->", `<!--\n\nCreated with Squiffy ${version}\n\nhttps://squiffystory.com\nhttps://github.com/textadventures/squiffy\n\n-->`);
+    htmlData = htmlData.replace("<!-- TITLE -->", uiInfo.title);
+    const scriptData = uiInfo.externalScripts.map(script => `<script src="${script}"></script>`).join("\n");
+    htmlData = htmlData.replace("<!-- SCRIPTS -->", scriptData);
 
-    const stylesheetData = uiInfo.externalStylesheets.map(sheet => `<link rel="stylesheet" href="${sheet}"/>`).join('\n');
-    htmlData = htmlData.replace('<!-- STYLESHEETS -->', stylesheetData);
+    const stylesheetData = uiInfo.externalStylesheets.map(sheet => `<link rel="stylesheet" href="${sheet}"/>`).join("\n");
+    htmlData = htmlData.replace("<!-- STYLESHEETS -->", stylesheetData);
 
-    output['index.html'] = htmlData;
-    output['style.css'] = cssTemplateFile.toString();
+    output["index.html"] = htmlData;
+    output["style.css"] = cssTemplateFile.toString();
 
     return {
         files: output,

@@ -8,7 +8,7 @@ export class LinkHandler {
     }
 
     handleLink(link: HTMLElement): [found: boolean, type: string, result: HandleLinkResult] {
-        const type = link.getAttribute('data-handler') || '';
+        const type = link.getAttribute("data-handler") || "";
         const handler = this.linkHandlers[type];
         if (handler) {
             return [true, type, handler(link)];
