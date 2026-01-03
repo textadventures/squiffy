@@ -1,7 +1,7 @@
 import {strToU8, zipSync} from "fflate";
 import {CompileSuccess} from 'squiffy-compiler';
 
-import squiffyRuntime from 'squiffy-runtime/dist/squiffy.runtime.js?raw';
+import squiffyRuntime from 'squiffy-runtime/dist/squiffy.runtime.global.js?raw';
 import htmlTemplateFile from './index.template.html?raw';
 import cssTemplateFile from './style.template.css?raw';
 
@@ -18,12 +18,12 @@ export const createPackage = async (input: CompileSuccess, createZip: boolean): 
     const output: Record<string, string> = {};
 
     output['story.js'] = await input.getJs();
-    output['squiffy.runtime.js'] = squiffyRuntime;
+    output['squiffy.runtime.global.js'] = squiffyRuntime;
 
     const uiInfo = input.getUiInfo();
 
     let htmlData = htmlTemplateFile.toString();
-    htmlData = htmlData.replace('<!-- INFO -->', `<!--\n\nCreated with Squiffy ${version}\n\n\nhttps://github.com/textadventures/squiffy\n\n-->`);
+    htmlData = htmlData.replace('<!-- INFO -->', `<!--\n\nCreated with Squiffy ${version}\n\nhttps://squiffystory.com\nhttps://github.com/textadventures/squiffy\n\n-->`);
     htmlData = htmlData.replace('<!-- TITLE -->', uiInfo.title);
     const scriptData = uiInfo.externalScripts.map(script => `<script src="${script}"></script>`).join('\n');
     htmlData = htmlData.replace('<!-- SCRIPTS -->', scriptData);
