@@ -7,14 +7,14 @@ import Split from "split.js"
 import "./jquery-globals";
 import "chosen-js/chosen.jquery.js"
 import { Modal, Tab, Tooltip } from "bootstrap"
-import {compile as squiffyCompile, CompileError} from "squiffy-compiler";
+import { compile as squiffyCompile, CompileError } from "squiffy-compiler";
 import { openFile, saveFile } from "./file-handler";
 import { Settings } from "./settings";
 import * as editor from "./editor";
 import { init as runtimeInit, SquiffyApi } from "squiffy-runtime";
-import {SquiffyEventHandler} from "squiffy-runtime/dist/events";
-import {createPackage} from "@textadventures/squiffy-packager";
-import {getStoryFromCompilerOutput} from "./compiler-helper.ts";
+import { SquiffyEventHandler } from "squiffy-runtime/dist/events";
+import { createPackage } from "@textadventures/squiffy-packager";
+import { getStoryFromCompilerOutput } from "./compiler-helper.ts";
 
 Object.assign(window, { $: $, jQuery: $ });
 

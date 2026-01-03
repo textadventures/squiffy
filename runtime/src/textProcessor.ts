@@ -1,7 +1,7 @@
 import * as marked from "marked";
 import Handlebars from "handlebars";
-import {Section, Story} from "./types.js";
-import {State} from "./state.js";
+import { Section, Story } from "./types.js";
+import { State } from "./state.js";
 
 export class TextProcessor {
     story: Story;

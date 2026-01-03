@@ -1,7 +1,7 @@
-import {PluginHost, SquiffyPlugin} from "../types.plugins.js";
+import { PluginHost, SquiffyPlugin } from "../types.plugins.js";
 import Handlebars from "handlebars";
-import {fadeReplace} from "../utils.js";
-import {SquiffyEventMap} from "../events.js";
+import { fadeReplace } from "../utils.js";
+import { SquiffyEventMap } from "../events.js";
 
 export function LivePlugin(): SquiffyPlugin {
     let squiffy: PluginHost;

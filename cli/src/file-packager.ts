@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { compile } from "squiffy-compiler";
 import { externalFiles } from "./external-files.js";
-import {createPackage} from "@textadventures/squiffy-packager";
+import { createPackage } from "@textadventures/squiffy-packager";
 
 async function getCompileResult(inputFilename: string) {
     const inputFile = fs.readFileSync(inputFilename);

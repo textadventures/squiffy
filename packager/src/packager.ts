@@ -1,5 +1,5 @@
-import {strToU8, zipSync} from "fflate";
-import {CompileSuccess} from "squiffy-compiler";
+import { strToU8, zipSync } from "fflate";
+import { CompileSuccess } from "squiffy-compiler";
 
 import squiffyRuntime from "squiffy-runtime/dist/squiffy.runtime.global.js?raw";
 import htmlTemplateFile from "./index.template.html?raw";

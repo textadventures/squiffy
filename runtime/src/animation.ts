@@ -1,4 +1,4 @@
-import {animate, stagger, text} from "animejs";
+import { animate, stagger, text } from "animejs";
 
 export class Animation {
     animations: {[name: string]: (el: HTMLElement, params: Record<string, any>, onComplete: () => void, loop: boolean) => void} = {};

@@ -1,4 +1,4 @@
-import {Story} from "./types.js";
+import { Story } from "./types.js";
 
 export function updateStory(oldStory: Story,
                             newStory: Story,

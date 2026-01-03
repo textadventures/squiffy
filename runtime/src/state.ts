@@ -1,4 +1,4 @@
-import {Emitter, SquiffyEventMap} from "./events.js";
+import { Emitter, SquiffyEventMap } from "./events.js";
 
 export class State {
     persist: boolean;
@@ -42,7 +42,7 @@ export class State {
         }
 
         if (raiseEvents) {
-            this.emitter.emit("set", {attribute, value});
+            this.emitter.emit("set", { attribute, value });
         }
 
         this.onSet(attribute, value);

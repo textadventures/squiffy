@@ -1,4 +1,4 @@
-import {HandleLinkResult, PluginHost, SquiffyPlugin} from "../types.plugins.js";
+import { HandleLinkResult, PluginHost, SquiffyPlugin } from "../types.plugins.js";
 import Handlebars from "handlebars";
 import type { SafeString } from "handlebars";
 

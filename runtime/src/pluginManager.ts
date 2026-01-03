@@ -1,9 +1,9 @@
-import {TextProcessor} from "./textProcessor.js";
-import {SquiffyPlugin} from "./types.plugins.js";
-import {State} from "./state.js";
-import {LinkHandler} from "./linkHandler.js";
-import {Emitter, SquiffyEventMap} from "./events.js";
-import {Animation} from "./animation.js";
+import { TextProcessor } from "./textProcessor.js";
+import { SquiffyPlugin } from "./types.plugins.js";
+import { State } from "./state.js";
+import { LinkHandler } from "./linkHandler.js";
+import { Emitter, SquiffyEventMap } from "./events.js";
+import { Animation } from "./animation.js";
 
 export class PluginManager {
     outputElement: HTMLElement;

@@ -1,5 +1,5 @@
-import {VitePWA} from "vite-plugin-pwa";
-import {defineConfig} from "vite";
+import { VitePWA } from "vite-plugin-pwa";
+import { defineConfig } from "vite";
 import inject from "@rollup/plugin-inject";
 import * as path from "node:path";
 import { resolve } from "path";

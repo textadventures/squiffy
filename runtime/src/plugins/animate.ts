@@ -1,4 +1,4 @@
-import {PluginHost, SquiffyPlugin} from "../types.plugins.js";
+import { PluginHost, SquiffyPlugin } from "../types.plugins.js";
 import Handlebars from "handlebars";
 
 export function AnimatePlugin(): SquiffyPlugin {

@@ -1,4 +1,4 @@
-import {HandleLinkResult} from "./types.plugins.js";
+import { HandleLinkResult } from "./types.plugins.js";
 
 export class LinkHandler {
     linkHandlers: {[type: string]: (el: HTMLElement) => HandleLinkResult} = {};

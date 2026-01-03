@@ -1,6 +1,6 @@
 import type { HelperDelegate } from "handlebars";
-import {SquiffyEventHandler, SquiffyEventMap} from "./events.js";
-import {Animation} from "./animation.js";
+import { SquiffyEventHandler, SquiffyEventMap } from "./events.js";
+import { Animation } from "./animation.js";
 
 export interface SquiffyPlugin {
     name: string;

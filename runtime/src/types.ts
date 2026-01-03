@@ -1,4 +1,4 @@
-import {SquiffyEventHandler, SquiffyEventMap} from "./events.js";
+import { SquiffyEventHandler, SquiffyEventMap } from "./events.js";
 
 export interface SquiffyInitOptions {
     element: HTMLElement;

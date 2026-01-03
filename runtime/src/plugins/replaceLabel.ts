@@ -1,6 +1,6 @@
-import {PluginHost, SquiffyPlugin} from "../types.plugins.js";
+import { PluginHost, SquiffyPlugin } from "../types.plugins.js";
 import Handlebars from "handlebars";
-import {fadeReplace} from "../utils.js";
+import { fadeReplace } from "../utils.js";
 
 export function ReplaceLabel() : SquiffyPlugin {
     return {

@@ -1,13 +1,13 @@
-import {SquiffyApi, SquiffyInitOptions, SquiffySettings, Story, Section, Passage} from "./types.js";
+import { SquiffyApi, SquiffyInitOptions, SquiffySettings, Story, Section, Passage } from "./types.js";
 import { TextProcessor } from "./textProcessor.js";
 import { Emitter, SquiffyEventMap } from "./events.js";
 import { State } from "./state.js";
 import { updateStory } from "./updater.js";
-import {PluginManager} from "./pluginManager.js";
-import {Plugins} from "./plugins/index.js";
-import {LinkHandler} from "./linkHandler.js";
-import {Animation} from "./animation.js";
-import {imports} from "./import.js";
+import { PluginManager } from "./pluginManager.js";
+import { Plugins } from "./plugins/index.js";
+import { LinkHandler } from "./linkHandler.js";
+import { Animation } from "./animation.js";
+import { imports } from "./import.js";
 
 export type { SquiffyApi } from "./types.js"
 
