@@ -2,9 +2,18 @@ import {VitePWA} from 'vite-plugin-pwa';
 import {defineConfig} from 'vite';
 import inject from "@rollup/plugin-inject";
 import * as path from 'node:path';
+import { resolve } from 'path';
 
 // https://vitejs.dev/config/
 export default defineConfig({
+    build: {
+        rollupOptions: {
+            input: {
+                main: resolve(__dirname, 'index.html'),
+                preview: resolve(__dirname, 'preview.html')
+            }
+        }
+    },
     resolve: {
         alias: {
             '~bootstrap': path.resolve(__dirname, 'node_modules/bootstrap'),
