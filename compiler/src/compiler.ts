@@ -34,6 +34,7 @@ interface CompilerSettings {
     script: string;
     onWarning?: (message: string) => void;
     externalFiles?: ExternalFiles;
+    globalJs?: boolean;
 }
 
 interface ExternalFiles {
@@ -71,7 +72,12 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
             outputJs.push(`// Created with Squiffy ${version}`);
             outputJs.push('// https://github.com/textadventures/squiffy');
         }
-        outputJs.push('export const story = {};');
+        if (settings.globalJs) {
+            outputJs.push('var story = {};');
+        }
+        else {
+            outputJs.push('export const story = {};');
+        }
         outputJs.push(`story.id = ${JSON.stringify(storyData.story.id, null, 4)};`);
         if (storyData.story.uiJsIndex !== undefined) {
             outputJs.push(`story.uiJsIndex = ${storyData.story.uiJsIndex};`);

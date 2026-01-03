@@ -1,4 +1,5 @@
 index.html
 squiffy.runtime.js
+squiffy.runtime.global.js
 story.js
 style.css

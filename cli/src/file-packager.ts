@@ -11,7 +11,8 @@ async function getCompileResult(inputFilename: string) {
         scriptBaseFilename: path.basename(inputFilename),
         script: inputText,
         onWarning: console.warn,
-        externalFiles: externalFiles(inputFilename)
+        externalFiles: externalFiles(inputFilename),
+        globalJs: true,
     });
 }
 

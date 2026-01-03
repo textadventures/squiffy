@@ -6,12 +6,11 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- SCRIPTS -->
-    <script type="module">
-        import {init} from './squiffy.runtime.js';
-        import {story} from './story.js';
-
+    <script src="squiffy.runtime.global.js"></script>
+    <script src="story.js"></script>
+    <script>
         document.addEventListener('DOMContentLoaded', async function () {
-            const squiffyApi = await init({
+            const squiffyApi = await squiffyRuntime.init({
                 element: document.getElementById('squiffy'),
                 story: story,
                 persist: true,

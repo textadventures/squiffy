@@ -98,7 +98,7 @@ const downloadSquiffyScript = function () {
 
 const downloadZip = async function () {
     localSave();
-    const result = await compile();
+    const result = await compile(true);
 
     if (result.success) {
         const pkg = await createPackage(result, true);
@@ -111,7 +111,7 @@ const downloadZip = async function () {
 
 const downloadJavascript = async function () {
     localSave();
-    const result = await compile();
+    const result = await compile(true);
 
     if (result.success) {
         const js = await result.getJs();
@@ -213,7 +213,7 @@ const editorChange = async function () {
     clearDebugger();
     
     if (squiffyApi) {
-        const result = await compile();
+        const result = await compile(false);
 
         if (result.success) {
             const story = getStoryFromCompilerOutput(result.output);
@@ -520,7 +520,7 @@ const logToDebugger = function (text: string) {
     debuggerEl.scrollTop = debuggerEl.scrollHeight;
 };
 
-const compile = async function() {
+const compile = async function(forExportPackage: boolean) {
     const script = editor.getValue();
     const warnings: string[] = [];
 
@@ -529,7 +529,8 @@ const compile = async function() {
         script: script,
         onWarning: (message: string) => {
             warnings.push(message);
-        }
+        },
+        globalJs: forExportPackage,
     });
 
     if (!result.success) {
@@ -542,7 +543,7 @@ const compile = async function() {
 };
 
 const initialCompile = async function () {
-    const result = await compile();
+    const result = await compile(false);
 
     if (!result.success) {
         return;
