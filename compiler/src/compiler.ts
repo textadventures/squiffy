@@ -438,7 +438,7 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
     function allMatchesForGroup(input: string, regex: RegExp, groupNumber: number) {
         const result = [];
         let match;
-        while (match = regex.exec(input)) {
+        while ((match = regex.exec(input))) {
             result.push(match[groupNumber]);
         }
         return result;
