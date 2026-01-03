@@ -32,13 +32,13 @@ interface Passage {
     end?: number;
 }
 
-var settings: Settings;
-var title: string | undefined;
-var loading: boolean;
-var sourceMap: Section[];
-var currentRow: any;
-var currentSection: Section | null;
-var currentPassage: Passage | null;
+let settings: Settings;
+let title: string | undefined;
+let loading: boolean;
+let sourceMap: Section[];
+let currentRow: any;
+let currentSection: Section | null;
+let currentPassage: Passage | null;
 let squiffyApi: SquiffyApi | null;
 
 const defaultSettings = {
@@ -46,8 +46,8 @@ const defaultSettings = {
 };
 
 const initUserSettings = function () {
-    var us = settings.userSettings;
-    var fontSize = us.get('fontSize');
+    const us = settings.userSettings;
+    const fontSize = us.get('fontSize');
     if (!fontSize) {
         us.set('fontSize', defaultSettings.fontSize);
     }
@@ -165,7 +165,7 @@ const addPassage = function () {
 
 const addSectionOrPassage = function (isSection: boolean) {
     const selection = editor.getCopyText();
-    var text;
+    let text;
 
     if (isSection) {
         text = '[[' + selection + ']]';
@@ -181,8 +181,8 @@ const addSectionOrPassage = function (isSection: boolean) {
 
     text = text + ':\n';
 
-    var insertLine = currentSection!.end!;
-    var moveToLine = insertLine;
+    let insertLine = currentSection!.end!;
+    let moveToLine = insertLine;
     if (!insertLine) {
         // adding new section/passage to the end of the document
         insertLine = editor.getLineCount();
@@ -202,7 +202,7 @@ const addSectionOrPassage = function (isSection: boolean) {
     }
     else {
         // no name was specified, so set cursor position to middle of [[ and ]]
-        var column = isSection ? 2 : 1;
+        const column = isSection ? 2 : 1;
         editor.moveTo(moveToLine, column);
     }
 };
@@ -211,7 +211,7 @@ const showSettings = function () {
     new Modal('#settings-dialog').show();
 };
 
-var localSaveTimeout: NodeJS.Timeout | undefined, autoSaveTimeout: NodeJS.Timeout | undefined;
+let localSaveTimeout: NodeJS.Timeout | undefined, autoSaveTimeout: NodeJS.Timeout | undefined;
 
 const editorChange = async function () {
     if (loading) return;
@@ -235,7 +235,7 @@ const editorChange = async function () {
 };
 
 const localSave = function () {
-    var data = editor.getValue();
+    const data = editor.getValue();
     localStorage.squiffy = data;
     processFile(data);
 };
@@ -249,10 +249,10 @@ const setInfo = function (text: string) {
 };
 
 const processFile = function (data: string) {
-    var titleRegex = /^@title (.*)$/;
-    var sectionRegex = /^\[\[(.*)\]\]:$/;
-    var passageRegex = /^\[(.*)\]:$/;
-    var newTitle;
+    const titleRegex = /^@title (.*)$/;
+    const sectionRegex = /^\[\[(.*)\]\]:$/;
+    const passageRegex = /^\[(.*)\]:$/;
+    let newTitle;
 
     sourceMap = [
         {
@@ -268,23 +268,23 @@ const processFile = function (data: string) {
         }
     ];
 
-    var lines = data.replace(/\r/g, '').split('\n');
+    const lines = data.replace(/\r/g, '').split('\n');
 
     const currentSection = function () {
         return sourceMap.slice(-1)[0];
     };
 
     const endPassage = function (index: number) {
-        var previousPassage = currentSection().passages.slice(-1)[0];
+        const previousPassage = currentSection().passages.slice(-1)[0];
         if (!previousPassage) return;
         previousPassage.end = index;
     };
 
     lines.forEach(function (line, index) {
-        var stripLine = line.trim();
-        var titleMatch = titleRegex.exec(stripLine);
-        var sectionMatch = sectionRegex.exec(stripLine);
-        var passageMatch = passageRegex.exec(stripLine);
+        const stripLine = line.trim();
+        const titleMatch = titleRegex.exec(stripLine);
+        const sectionMatch = sectionRegex.exec(stripLine);
+        const passageMatch = passageRegex.exec(stripLine);
 
         if (titleMatch) {
             newTitle = titleMatch[1];
@@ -293,7 +293,7 @@ const processFile = function (data: string) {
         if (sectionMatch) {
             endPassage(index);
             currentSection().end = index;
-            var newSection = {
+            const newSection = {
                 name: sectionMatch[1],
                 start: index,
                 passages: [
@@ -307,7 +307,7 @@ const processFile = function (data: string) {
         }
         else if (passageMatch) {
             endPassage(index);
-            var newPassage = {
+            const newPassage = {
                 name: passageMatch[1],
                 start: index
             };
@@ -322,10 +322,10 @@ const processFile = function (data: string) {
         }
     }
 
-    var selectSection = $('#sections');
+    const selectSection = $('#sections');
     selectSection.html('');
     sourceMap.forEach(function (section) {
-        var name = dropdownName(section.name);
+        const name = dropdownName(section.name);
         selectSection.append($('<option />').val(name).text(name));
     });
 
@@ -342,12 +342,12 @@ const editorLoad = async function (data: string) {
 };
 
 const cursorMoved = function (force?: boolean) {
-    var row = editor.getCurrentRow();
+    const row = editor.getCurrentRow();
     if (!force && row == currentRow) return;
     if (!sourceMap) return;
     currentRow = row;
 
-    var newCurrentSection: Section, newCurrentPassage: Passage;
+    let newCurrentSection: Section, newCurrentPassage: Passage;
 
     sourceMap.forEach(function (section) {
         if (row >= section.start && (!section.end || row < section.end)) {
@@ -365,10 +365,10 @@ const cursorMoved = function (force?: boolean) {
         currentSection = newCurrentSection!;
         $('#sections').val(dropdownName(currentSection.name));
         $('#sections').trigger('chosen:updated');
-        var selectPassage = $('#passages');
+        const selectPassage = $('#passages');
         selectPassage.html('');
         currentSection.passages.forEach(function (passage) {
-            var name = dropdownName(passage.name);
+            const name = dropdownName(passage.name);
             selectPassage.append($('<option />').val(name).text(name));
         });
     }
@@ -386,7 +386,7 @@ const dropdownName = function (name: string) {
 };
 
 const sectionChanged = function () {
-    var selectedSection = $('#sections').val();
+    const selectedSection = $('#sections').val();
     sourceMap.forEach(function (section) {
         if (dropdownName(section.name) === selectedSection) {
             editor.moveTo(section.start + (section.isDefault ? 0 : 1));
@@ -395,7 +395,7 @@ const sectionChanged = function () {
 };
 
 const passageChanged = function () {
-    var selectedPassage = $('#passages').val();
+    const selectedPassage = $('#passages').val();
     currentSection!.passages.forEach(function (passage) {
         if (dropdownName(passage.name) === selectedPassage) {
             editor.moveTo(passage.start + 1);
@@ -594,7 +594,7 @@ const showWarnings = function (warnings: string[]) {
 
 var userSettings = {
     get: function (setting: string) {
-        var value = localStorage.getItem(setting);
+        const value = localStorage.getItem(setting);
         if (value === null) return null;
         return JSON.parse(value);
     },
@@ -617,7 +617,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
     [...tooltipTriggerList].map(tooltipTriggerEl => new Tooltip(tooltipTriggerEl));
 
-    var saved = localStorage.squiffy;
+    const saved = localStorage.squiffy;
     if (saved) {
         await init(localStorage.squiffy);
     } else {

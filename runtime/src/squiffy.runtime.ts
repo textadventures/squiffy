@@ -37,8 +37,8 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
 
         if (link.classList.contains('disabled')) return false;
 
-        let passage = link.getAttribute('data-passage');
-        let section = link.getAttribute('data-section');
+        const passage = link.getAttribute('data-passage');
+        const section = link.getAttribute('data-section');
 
         if (passage !== null) {
             disableLink(link);

@@ -131,7 +131,7 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
                 outputSection.jsIndex = output.js.length - 1;
             }
             if ('@last' in section.passages) {
-                var passageCount = 0;
+                let passageCount = 0;
                 for (const passageName of Object.keys(section.passages)) {
                     if (passageName.length > 0 && passageName?.substring(0, 1) !== '@') {
                         passageCount++;
@@ -382,9 +382,9 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         //   open bracket
         //   any text - the name of the section
         //   closing bracket
-        var namedSectionLinkRegex = /\[\[([^\]]*?)\]\]\((.*?)\)/g;
+        const namedSectionLinkRegex = /\[\[([^\]]*?)\]\]\((.*?)\)/g;
 
-        var links = allMatchesForGroup(input, namedSectionLinkRegex, 2);
+        let links = allMatchesForGroup(input, namedSectionLinkRegex, 2);
         checkSectionLinks(links, section, passage);
 
         input = input.replace(namedSectionLinkRegex, (_match, text /* $1 */, name/* $2 */) => {
@@ -399,7 +399,7 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         //   open bracket, but not http(s):// after it
         //   any text - the name of the passage
         //   closing bracket
-        var namedPassageLinkRegex = /\[([^\]]*?)\]\(((?!https?:\/\/).*?)\)/g;
+        const namedPassageLinkRegex = /\[([^\]]*?)\]\(((?!https?:\/\/).*?)\)/g;
 
         links = allMatchesForGroup(input, namedPassageLinkRegex, 2);
         checkPassageLinks(links, section, passage);
@@ -413,7 +413,7 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         //   open [[
         //   any text - the link text
         //   closing ]]
-        var unnamedSectionLinkRegex = /\[\[(.*?)\]\]/g;
+        const unnamedSectionLinkRegex = /\[\[(.*?)\]\]/g;
 
         links = allMatchesForGroup(input, unnamedSectionLinkRegex, 1);
         checkSectionLinks(links, section, passage);
@@ -425,7 +425,7 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         //   any text - the link text
         //   closing ]
         //   no bracket after
-        var unnamedPassageLinkRegex = /\[(.*?)\]([^\(]|$)/g;
+        const unnamedPassageLinkRegex = /\[(.*?)\]([^\(]|$)/g;
 
         links = allMatchesForGroup(input, unnamedPassageLinkRegex, 1);
         checkPassageLinks(links, section, passage);
@@ -436,21 +436,21 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
     };
 
     function allMatchesForGroup(input: string, regex: RegExp, groupNumber: number) {
-        var result = [];
-        var match;
-        while (!!(match = regex.exec(input))) {
+        const result = [];
+        let match;
+        while (match = regex.exec(input)) {
             result.push(match[groupNumber]);
         }
         return result;
     };
 
     function checkSectionLinks(links: string[], section: Section, passage: Passage | null) {
-        var badLinks = links.filter(m => !linkDestinationExists(m, story.sections));
+        const badLinks = links.filter(m => !linkDestinationExists(m, story.sections));
         showBadLinksWarning(badLinks, 'section', '[[', ']]', section, passage);
     };
 
     function checkPassageLinks(links: string[], section: Section, passage: Passage | null) {
-        var badLinks = links.filter(m => !linkDestinationExists(m, section.passages));
+        const badLinks = links.filter(m => !linkDestinationExists(m, section.passages));
         showBadLinksWarning(badLinks, 'passage', '[', ']', section, passage);
     };
 
@@ -460,7 +460,7 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         //   passageName, my_attribute=2
         // We're only interested in checking if the named passage or section exists.
 
-        var linkDestination = link.split(',')[0];
+        const linkDestination = link.split(',')[0];
         return Object.keys(keys).includes(linkDestination);
     };
 
@@ -480,7 +480,7 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
     };
 
     function writeJs(outputJsFile: string[], tabCount: number, js: string[]) {
-        var tabs = new Array(tabCount + 1).join('\t');
+        const tabs = new Array(tabCount + 1).join('\t');
         outputJsFile.push(`${tabs}(squiffy, get, set) => {`);
         for (const jsLine of js) {
             outputJsFile.push(`${tabs}\t${jsLine}`);
@@ -561,7 +561,7 @@ class Section {
     attributes: string[] = [];
 
     addPassage(name: string, line: number) {
-        var passage = new Passage(name, line);
+        const passage = new Passage(name, line);
         this.passages[name] = passage;
         return passage;
     };

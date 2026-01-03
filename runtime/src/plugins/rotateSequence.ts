@@ -37,7 +37,7 @@ export function RotateSequencePlugin() : SquiffyPlugin {
 
     const rotate = (options: string[], current: string | null): string[] => {
         const next = options[0]
-        let remaining = options.slice(1);
+        const remaining = options.slice(1);
         if (current) remaining.push(current);
         return [next, ...remaining];
     }

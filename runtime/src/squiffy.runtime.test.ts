@@ -398,7 +398,7 @@ Output for passage B.`);
 
     // linkB should still be enabled
 
-    let linkB = findLink(element, 'passage', 'b');
+    const linkB = findLink(element, 'passage', 'b');
     expect(linkB.classList).not.toContain('disabled');
     expect(await squiffyApi.clickLink(linkB)).toBe(true);
 });
@@ -417,7 +417,7 @@ Output for section B.`);
 
     // click linkA
 
-    let linkA = findLink(element, 'section', 'a');
+    const linkA = findLink(element, 'section', 'a');
     let linkB = findLink(element, 'section', 'b');
     expect(linkA.classList).not.toContain('disabled');
     expect(await squiffyApi.clickLink(linkA)).toBe(true);
@@ -468,7 +468,7 @@ Text from next section.
 
     const { element } = await initScript(script);
 
-    let output = getSectionContent(element, 'section1');
+    const output = getSectionContent(element, 'section1');
     expect(output).toBe('Here is some text from the next section: Text from next section.');
 });
 
@@ -483,7 +483,7 @@ Text from a passage.
 
     const { element } = await initScript(script);
 
-    let output = getSectionContent(element, 'section1');
+    const output = getSectionContent(element, 'section1');
     expect(output).toBe('Here is some text from a passage: Text from a passage.');
 });
 
