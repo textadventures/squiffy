@@ -1,5 +1,6 @@
 import { init as runtimeInit } from 'squiffy-runtime';
-import { Story } from "squiffy-runtime/dist/types";
+import { compile as squiffyCompile } from "squiffy-compiler";
+import { getStoryFromCompilerOutput } from "./compiler-helper.ts";
 
 document.addEventListener("DOMContentLoaded", async () => {
     if (!window.opener) {
@@ -20,7 +21,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     container.style.display = "block";
 
     window.addEventListener('message', async e => {
-        const story: Story = e.data;
+        const script: string = e.data;
+
+        const result = await squiffyCompile({
+            scriptBaseFilename: "filename.squiffy",
+            script: script,
+        });
+
+        if (!result.success) {
+            return;
+        }
+
+        const story = getStoryFromCompilerOutput(result.output);
+
         const squiffyApi = await runtimeInit({
             element: element,
             persist: false,

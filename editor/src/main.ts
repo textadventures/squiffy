@@ -7,13 +7,14 @@ import Split from 'split.js'
 import './jquery-globals';
 import "chosen-js/chosen.jquery.js"
 import { Modal, Tab, Tooltip } from 'bootstrap'
-import {Output, compile as squiffyCompile, CompileError} from 'squiffy-compiler';
+import {compile as squiffyCompile, CompileError} from 'squiffy-compiler';
 import { openFile, saveFile } from './file-handler';
 import { Settings } from './settings';
 import * as editor from './editor';
 import { init as runtimeInit, SquiffyApi } from 'squiffy-runtime';
 import {SquiffyEventHandler} from "squiffy-runtime/dist/events";
 import {createPackage} from "@textadventures/squiffy-packager";
+import {getStoryFromCompilerOutput} from "./compiler-helper.ts";
 
 Object.assign(window, { $: $, jQuery: $ });
 
@@ -147,16 +148,10 @@ const preview = async function () {
     window.open('/preview.html', '_blank');
 };
 
-window.addEventListener('message', async function onReady(e) {
+window.addEventListener('message', async e => {
     if (e.data === 'preview-ready' && e.source) {
-        const result = await compile(false);
-
-        if (!result.success) {
-            return;
-        }
-
-        const story = getStoryFromCompilerOutput(result.output);
-        (e.source as WindowProxy).postMessage(story, "*");
+        const script = editor.getValue();
+        (e.source as WindowProxy).postMessage(script, "*");
     }
 });
 
@@ -574,14 +569,6 @@ const initialCompile = async function () {
 
     await squiffyApi.begin();
 };
-
-const getStoryFromCompilerOutput = function (data: Output) {
-    const js = data.js.map(jsLines => new Function('squiffy', 'get', 'set', jsLines.join('\n')));
-    return {
-        js: js as any,
-        ...data.story,
-    };
-}
 
 const showErrors = function (result: CompileError) {
     for (const err of result.errors) {
