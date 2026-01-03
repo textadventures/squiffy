@@ -143,6 +143,23 @@ const downloadBlob = function (blob: Blob, filename: string) {
     downloadLink.click();
 };
 
+const preview = async function () {
+    window.open('/preview.html', '_blank');
+};
+
+window.addEventListener('message', async function onReady(e) {
+    if (e.data === 'preview-ready' && e.source) {
+        const result = await compile(false);
+
+        if (!result.success) {
+            return;
+        }
+
+        const story = getStoryFromCompilerOutput(result.output);
+        (e.source as WindowProxy).postMessage(story, "*");
+    }
+});
+
 const addSection = function () {
     addSectionOrPassage(true);
 };
@@ -412,21 +429,6 @@ const init = async function (data: string) {
     await editorLoad(options.data);
     cursorMoved();
 
-    // if (options.preview) {
-    //     $('#preview').show();
-    //     $('#preview').click(options.preview);
-    // }
-
-    // if (options.publish) {
-    //     $('#publish').show();
-    //     $('#publish').click(options.publish);
-    // }
-
-    // if (options.build) {
-    //     $('#build').show();
-    //     $('#build').click(options.build);
-    // }
-
     onClick('restart', restart);
     onClick('back', goBack);
     onClick('file-new', () => editorLoad(""));
@@ -447,6 +449,8 @@ const init = async function (data: string) {
     onClick('download-squiffy-script', downloadSquiffyScript);
     onClick('export-html-js', downloadZip);
     onClick('export-js', downloadJavascript);
+
+    onClick('preview', preview);
 
     onClick('settings', showSettings);
     onClick('add-section', addSection);
