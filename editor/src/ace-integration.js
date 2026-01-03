@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable no-useless-escape */
+
 import * as ace from "ace-builds/src-noconflict/ace";
 import "ace-builds/src-noconflict/mode-markdown";
 import "ace-builds/src-noconflict/ext-searchbox";

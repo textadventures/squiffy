@@ -27,4 +27,9 @@ export default defineConfig([
     globalIgnores(["**/.astro/**", "examples/**"]),
     eslint.configs.recommended,
     tseslint.configs.recommended,
+    {
+        rules: {
+            "@typescript-eslint/no-explicit-any": "off",
+        },
+    },
 ]);
