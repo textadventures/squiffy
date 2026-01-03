@@ -224,7 +224,7 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
             }
             else if (match.passage) {
                 if (!section) {
-                    errors.push(`ERROR: ${inputFilename} line ${lineCount}: Can\'t add passage "${match.passage[1]}" as no section has been created.`);
+                    errors.push(`ERROR: ${inputFilename} line ${lineCount}: Can't add passage "${match.passage[1]}" as no section has been created.`);
                     return false;
                 }
                 section = ensureThisSectionExists();
@@ -425,7 +425,7 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         //   any text - the link text
         //   closing ]
         //   no bracket after
-        const unnamedPassageLinkRegex = /\[(.*?)\]([^\(]|$)/g;
+        const unnamedPassageLinkRegex = /\[(.*?)\]([^(]|$)/g;
 
         links = allMatchesForGroup(input, unnamedPassageLinkRegex, 1);
         checkPassageLinks(links, section, passage);

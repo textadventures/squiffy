@@ -139,7 +139,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             }
         }
         else {
-            const incDecRegex = /^([\w]*)\s*([\+\-\*\/])=\s*(.*)$/;
+            const incDecRegex = /^([\w]*)\s*([+\-*/])=\s*(.*)$/;
             const incDecMatch = incDecRegex.exec(expr);
             if (incDecMatch) {
                 const lhs = incDecMatch[1];
