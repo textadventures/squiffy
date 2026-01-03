@@ -166,7 +166,7 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         }
 
         return output;
-    };
+    }
 
     const regexes: Record<string, RegExp> = {
         section: /^\[\[(.*)\]\]:$/,
@@ -334,14 +334,14 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         }
         
         return true;
-    };
+    }
 
     function ensureSectionExists(section: Section | null, isFirst: boolean, inputFilename: string | undefined, lineCount: number) {
         if (!section && isFirst) {
             section = story.addSection("_default", inputFilename, lineCount);
         }
         return section!;
-    };
+    }
 
     function addAttribute(attribute: string, section: Section, passage: Passage | null, isFirst: boolean, inputFilename: string | undefined, lineCount: number) {
         if (!passage) {
@@ -352,7 +352,7 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
             passage.addAttribute(attribute);
         }
         return section;
-    };
+    }
 
     function extractLinkFunctions(link: string): { target: string, setters: string } {
         const fragments = link.split(",");
@@ -433,7 +433,7 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         input = input.replace(unnamedPassageLinkRegex, '{{passage "$1"}}$2');
 
         return input;
-    };
+    }
 
     function allMatchesForGroup(input: string, regex: RegExp, groupNumber: number) {
         const result = [];
@@ -442,17 +442,17 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
             result.push(match[groupNumber]);
         }
         return result;
-    };
+    }
 
     function checkSectionLinks(links: string[], section: Section, passage: Passage | null) {
         const badLinks = links.filter(m => !linkDestinationExists(m, story.sections));
         showBadLinksWarning(badLinks, "section", "[[", "]]", section, passage);
-    };
+    }
 
     function checkPassageLinks(links: string[], section: Section, passage: Passage | null) {
         const badLinks = links.filter(m => !linkDestinationExists(m, section.passages));
         showBadLinksWarning(badLinks, "passage", "[", "]", section, passage);
-    };
+    }
 
     function linkDestinationExists(link: string, keys: Record<string, any>) {
         // Link destination data may look like:
@@ -462,7 +462,7 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
 
         const linkDestination = link.split(",")[0];
         return Object.keys(keys).includes(linkDestination);
-    };
+    }
 
     function showBadLinksWarning(badLinks: string[], linkTo: string, before: string, after: string, section: Section, passage: Passage | null) {
         if (!settings.onWarning) return;
@@ -477,7 +477,7 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
             }
             settings.onWarning(`WARNING: ${warning} there is a link to a ${linkTo} called ${before}${badLink}${after}, which doesn't exist`);
         }
-    };
+    }
 
     function writeJs(outputJsFile: string[], tabCount: number, js: string[]) {
         const tabs = new Array(tabCount + 1).join("\t");
@@ -486,7 +486,7 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
             outputJsFile.push(`${tabs}\t${jsLine}`);
         }
         outputJsFile.push(`${tabs}},`);
-    };
+    }
 
     const success = await processFileText(settings.script, settings.scriptBaseFilename, true);
 
@@ -536,7 +536,7 @@ class Story {
         const section = new Section(name, filename, line);
         this.sections[name] = section;
         return section;
-    };
+    }
 
     addUiJs(text: string) {
         this.uiJs.push(text);
@@ -564,19 +564,19 @@ class Section {
         const passage = new Passage(name, line);
         this.passages[name] = passage;
         return passage;
-    };
+    }
 
     addText(text: string) {
         this.text.push(text);
-    };
+    }
 
     addJS(text: string) {
         this.js.push(text);
-    };
+    }
 
     addAttribute(text: string) {
         this.attributes.push(text);
-    };
+    }
 }
 
 class Passage {
@@ -594,13 +594,13 @@ class Passage {
 
     addText(text: string) {
         this.text.push(text);
-    };
+    }
 
     addJS(text: string) {
         this.js.push(text);
-    };
+    }
 
     addAttribute(text: string) {
         this.attributes.push(text);
-    };
+    }
 }
