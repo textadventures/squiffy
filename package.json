@@ -18,6 +18,7 @@
     "lint": "eslint ."
   },
   "devDependencies": {
+    "@eslint/compat": "^2.0.0",
     "@eslint/js": "^9.39.2",
     "eslint": "^9.39.2",
     "lerna": "^9.0.3",
