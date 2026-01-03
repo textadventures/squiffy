@@ -13,6 +13,7 @@ import { Settings } from './settings';
 import * as editor from './editor';
 import { init as runtimeInit, SquiffyApi } from 'squiffy-runtime';
 import {SquiffyEventHandler} from "squiffy-runtime/dist/events";
+import {createPackage} from "@textadventures/squiffy-packager";
 
 Object.assign(window, { $: $, jQuery: $ });
 
@@ -92,22 +93,21 @@ const goBack = function () {
 
 const downloadSquiffyScript = function () {
     localSave();
-    download(editor.getValue(), title + '.squiffy');
+    downloadString(editor.getValue(), title + '.squiffy');
 };
 
-// const downloadZip = async function () {
-//     localSave();
-//     await settings.compile({
-//         data: editor.getValue(),
-//         success: function (data) {
-//             download(data, title + '.zip', 'application/octet-stream');
-//         },
-//         fail: function (data) {
-//             $('#output').html(data.message);
-//         },
-//         zip: true
-//     });
-// };
+const downloadZip = async function () {
+    localSave();
+    const result = await compile();
+
+    if (result.success) {
+        const pkg = await createPackage(result, true);
+
+        if (pkg.zip) {
+            downloadUint8Array(pkg.zip, 'output.zip');
+        }
+    }
+};
 
 const downloadJavascript = async function () {
     localSave();
@@ -115,13 +115,24 @@ const downloadJavascript = async function () {
 
     if (result.success) {
         const js = await result.getJs();
-        download(js, title + '.js');
+        downloadString(js, title + '.js');
     }
 };
 
-const download = function (data: string, filename: string, type?: string) {
-    var blob = new Blob([data], { type: type || 'text/plain' });
-    var downloadLink = document.createElement('a');
+const downloadString = function (data: string, filename: string) {
+    const blobData = new TextEncoder().encode(data).buffer;
+    const blob = new Blob([blobData], { type: 'text/plain' });
+    downloadBlob(blob, filename);
+};
+
+const downloadUint8Array = function (data: Uint8Array, filename: string) {
+    const blobData = new Uint8Array(data).buffer;
+    const blob = new Blob([blobData], { type: 'application/octet-stream' });
+    downloadBlob(blob, filename);
+};
+
+const downloadBlob = function (blob: Blob, filename: string) {
+    const downloadLink = document.createElement('a');
     downloadLink.download = filename;
     downloadLink.href = window.URL.createObjectURL(blob);
     downloadLink.onclick = () => {
@@ -434,7 +445,7 @@ const init = async function (data: string) {
 
 
     onClick('download-squiffy-script', downloadSquiffyScript);
-    // $('#export-html-js').click(downloadZip);
+    onClick('export-html-js', downloadZip);
     onClick('export-js', downloadJavascript);
 
     onClick('settings', showSettings);
