@@ -448,42 +448,20 @@ const init = async function (data: string) {
     onClick("collapse-all", editor.collapseAll);
     onClick("uncollapse-all", editor.uncollapseAll);
 
+    onClick("edit-undo", editor.undo);
+    onClick("edit-redo", editor.redo);
+    onClick("edit-cut", editor.cut);
+    onClick("edit-copy", editor.copy);
+    onClick("edit-paste", editor.paste);
+    onClick("edit-select-all", editor.selectAll);
+    onClick("edit-find", editor.find);
+    onClick("edit-replace", editor.replace);
+
     $("#sections").on("change", sectionChanged);
     $("#passages").on("change", passageChanged);
     $("#sections, #passages").chosen({ width: "100%" });
 };
 
-// load: function (data: string) {
-//     editorLoad(data);
-//     localSave();
-// },
-// save: function () {
-//     return editor.getValue();
-// },
-// setInfo: function (text: string) {
-//     setInfo(text);
-// },
-// run: run,
-// selectAll: function () {
-//     editor.selection.selectAll();
-// },
-// undo: function () {
-//     editor.undo();
-// },
-// redo: function () {
-//     editor.redo();
-// },
-// cut: function () {
-//     var text = editor.getCopyText();
-//     editor.session.replace(editor.selection.getRange(), '');
-//     return text;
-// },
-// copy: function () {
-//     return editor.getCopyText();
-// },
-// paste: function (text: string) {
-//     editor.session.replace(editor.selection.getRange(), text);
-// },
 // find: function () {
 //     editor.execCommand('find');
 // },

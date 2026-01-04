@@ -51,3 +51,18 @@ export const moveTo = function (row: number, column?: number) {
     editor.renderer.scrollCursorIntoView();
     editor.focus();
 };
+
+export const undo = () => editor.undo();
+export const redo = () => editor.redo();
+export const cut = () => editor.execCommand("cut");
+export const copy = async () => {
+    const text = editor.getCopyText();
+    await navigator.clipboard.writeText(text);
+};
+export const paste = async () => {
+    const text = await navigator.clipboard.readText();
+    editor.insert(text);
+};
+export const selectAll = () => editor.selection.selectAll();
+export const find = () => editor.execCommand("find");
+export const replace = () => editor.execCommand("replace");
