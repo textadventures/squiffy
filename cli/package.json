@@ -1,6 +1,6 @@
 {
   "name": "@textadventures/squiffy-cli",
-  "version": "6.0.0-alpha.16",
+  "version": "6.0.0-alpha.17",
   "main": "dist/squiffy.js",
   "scripts": {
     "build": "tsc"
@@ -17,12 +17,12 @@
     "squiffy-packager": "dist/squiffy.js"
   },
   "dependencies": {
-    "@textadventures/squiffy-packager": "^6.0.0-alpha.16",
+    "@textadventures/squiffy-packager": "^6.0.0-alpha.17",
     "finalhandler": "^2.1.0",
     "glob": "^11.0.3",
     "serve-static": "^2.2.0",
-    "squiffy-compiler": "^6.0.0-alpha.16",
-    "squiffy-runtime": "^6.0.0-alpha.16",
+    "squiffy-compiler": "^6.0.0-alpha.17",
+    "squiffy-runtime": "^6.0.0-alpha.17",
     "yargs": "^18.0.0"
   },
   "devDependencies": {

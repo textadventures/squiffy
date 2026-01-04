@@ -1,6 +1,6 @@
 {
   "name": "@textadventures/squiffy-packager",
-  "version": "6.0.0-alpha.16",
+  "version": "6.0.0-alpha.17",
   "main": "dist/packager.js",
   "types": "dist/packager.d.ts",
   "scripts": {
@@ -16,8 +16,8 @@
   "description": "",
   "dependencies": {
     "fflate": "^0.8.2",
-    "squiffy-compiler": "^6.0.0-alpha.16",
-    "squiffy-runtime": "^6.0.0-alpha.16"
+    "squiffy-compiler": "^6.0.0-alpha.17",
+    "squiffy-runtime": "^6.0.0-alpha.17"
   },
   "devDependencies": {
     "tsx": "^4.20.4",
