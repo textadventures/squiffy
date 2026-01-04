@@ -25,7 +25,7 @@ export const init = (options: Settings, onEditorChange: () => void, onCursorMove
 
     editor.setFontSize(options.userSettings.get("fontSize"));
     editor.focus();
-}
+};
 
 export const getCurrentRow = () => editor.selection.getCursor().row;
 export const getValue = () => editor.getValue();
@@ -39,7 +39,7 @@ export const replaceLine = (line: number, text: string) => {
     const Range = ace.require("ace/range").Range;
     const range = new Range(line, 0, line, 0);
     editor.session.replace(range, text);
-}
+};
 
 export const collapseAll = () => editor.session.foldAll();
 export const uncollapseAll = () => editor.session.unfold(null, true);

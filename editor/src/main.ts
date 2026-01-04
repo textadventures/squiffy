@@ -1,12 +1,12 @@
 import pkg from "../package.json" with { type: "json" };
 const version = pkg.version;
 import "bootstrap/scss/bootstrap.scss";
-import "bootstrap-icons/font/bootstrap-icons.css"
-import "chosen-js/chosen.min.css"
-import Split from "split.js"
+import "bootstrap-icons/font/bootstrap-icons.css";
+import "chosen-js/chosen.min.css";
+import Split from "split.js";
 import "./jquery-globals";
-import "chosen-js/chosen.jquery.js"
-import { Modal, Tab, Tooltip } from "bootstrap"
+import "chosen-js/chosen.jquery.js";
+import { Modal, Tab, Tooltip } from "bootstrap";
 import { compile as squiffyCompile, CompileError } from "squiffy-compiler";
 import { openFile, saveFile } from "./file-handler";
 import { Settings } from "./settings";
@@ -90,7 +90,7 @@ const restart = function () {
 
 const goBack = function () {
     squiffyApi?.goBack();
-}
+};
 
 const downloadSquiffyScript = function () {
     localSave();
@@ -500,11 +500,11 @@ const setBackButtonEnabled = function(enabled: boolean) {
     const backButton = document.getElementById("back") as HTMLButtonElement | null;
     if (!backButton) return;
     backButton.disabled = !enabled;
-}
+};
 
 const onCanGoBackChanged : SquiffyEventHandler<"canGoBackChanged"> = function (p) {
     setBackButtonEnabled(p.canGoBack);
-}
+};
 
 const onSet = function (attribute: string, value: string) {
     // don't log internal attribute changes
@@ -574,7 +574,7 @@ const showErrors = function (result: CompileError) {
     for (const err of result.errors) {
         logToDebugger(err);
     }
-}
+};
 
 const showWarnings = function (warnings: string[]) {
     for (const warning of warnings) {

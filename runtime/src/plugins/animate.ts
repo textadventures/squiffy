@@ -50,9 +50,9 @@ export function AnimatePlugin(): SquiffyPlugin {
                                 resolve();
                             }, false);
                         });
-                    })
+                    });
                 }
-            }
+            };
 
             if (params.trigger === "link") {
                 const links = el.querySelectorAll("a");
@@ -63,7 +63,7 @@ export function AnimatePlugin(): SquiffyPlugin {
                 runAnimation();
             }
         }
-    }
+    };
 
     return {
         name: "animate",

@@ -49,7 +49,7 @@ export class TextProcessor {
                 result += ` data-set='${JSON.stringify(setters.split(",").map(s => s.trim()))}'`;
             }
             return result;
-        }
+        };
 
         this.handlebars.registerHelper("section", (section: string, options) => {
             const text = options.hash.text as string || section;

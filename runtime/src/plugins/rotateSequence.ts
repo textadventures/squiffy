@@ -33,14 +33,14 @@ export function RotateSequencePlugin() : SquiffyPlugin {
         }
 
         return result;
-    }
+    };
 
     const rotate = (options: string[], current: string | null): string[] => {
-        const next = options[0]
+        const next = options[0];
         const remaining = options.slice(1);
         if (current) remaining.push(current);
         return [next, ...remaining];
-    }
+    };
 
     return {
         name: "rotateSequence",
@@ -57,5 +57,5 @@ export function RotateSequencePlugin() : SquiffyPlugin {
                 return handleLink(squiffy, link, false);
             });
         }
-    }
+    };
 }

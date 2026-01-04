@@ -13,7 +13,8 @@ export default defineConfig([
         rules: {
             quotes: ["error", "double", { avoidEscape: true }],
             "object-curly-spacing": ["error", "always"],
-            "no-extra-semi": "error"
+            "no-extra-semi": "error",
+            "semi": ["error", "always"]
         },
     },
     {

@@ -16,4 +16,4 @@ function startServer(dir: string, port: number) {
 export const serve = (directory: string, port: number) => {
     startServer(directory, port);
     console.log("Started http://localhost:" + port + "/");
-}
+};

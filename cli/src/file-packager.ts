@@ -28,7 +28,7 @@ export const writeScriptFile = async(inputFilename: string, outputPath: string, 
 
     console.log(`Writing ${outputFilename}`);
     fs.writeFileSync(path.join(outputPath, outputFilename), await result.getJs());
-}
+};
 
 export const createPackageFiles = async (inputFilename: string, outputPath: string, createZip: boolean) => {
     console.log("Loading " + inputFilename);

@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         return;
     }
 
-    const container = document.getElementById("squiffy-container")
+    const container = document.getElementById("squiffy-container");
     const element = document.getElementById("squiffy");
     if (!container || !element) {
         return;

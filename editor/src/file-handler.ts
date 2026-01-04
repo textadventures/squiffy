@@ -12,7 +12,7 @@ export const openFile = async (onOpen: (data: string) => void) => {
         onOpen(e.target?.result as string);
     };
     reader.readAsText(file);
-}
+};
 
 export const saveFile = async (data: string) => {
     // TODO: Won't have a fileHandle if we've refreshed and data was loaded from local storage.
@@ -20,4 +20,4 @@ export const saveFile = async (data: string) => {
     const writable = await fileHandle.createWritable();
     await writable.write(data);
     await writable.close();
-}
+};

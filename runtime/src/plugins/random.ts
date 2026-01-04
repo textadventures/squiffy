@@ -18,5 +18,5 @@ export function RandomPlugin() : SquiffyPlugin {
                 return new Handlebars.SafeString(item);
             });
         }
-    }
+    };
 }

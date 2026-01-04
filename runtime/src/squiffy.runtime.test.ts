@@ -36,7 +36,7 @@ const compile = async (script: string) => {
             ...story,
         },
     };
-}
+};
 
 const initScript = async (script: string) => {
     const element = document.getElementById("squiffy");
@@ -57,7 +57,7 @@ const initScript = async (script: string) => {
     return {
         squiffyApi,
         element
-    }
+    };
 };
 
 const findLink = (element: HTMLElement, linkType: string, linkText: string, onlyEnabled: boolean = false) => {
@@ -73,7 +73,7 @@ const getTestOutput = () => {
         throw new Error("Test element not found");
     }
     return testElement.innerText;
-}
+};
 
 let cleanup: { (): void };
 

@@ -42,4 +42,4 @@ export const createPackage = async (input: CompileSuccess, createZip: boolean): 
             )
         )
     };
-}
+};

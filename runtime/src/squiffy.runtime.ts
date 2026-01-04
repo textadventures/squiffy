@@ -9,7 +9,7 @@ import { LinkHandler } from "./linkHandler.js";
 import { Animation } from "./animation.js";
 import { imports } from "./import.js";
 
-export type { SquiffyApi } from "./types.js"
+export type { SquiffyApi } from "./types.js";
 
 export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => {
     let story: Story;
@@ -321,7 +321,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
                     registerAnimation: animation.registerAnimation.bind(animation),
                 });
             }
-        }
+        };
 
         state.load();
         const output = get("_output");
@@ -631,12 +631,12 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         if (attribute == "_output") return;
         if (attribute in undoLog) return;
         undoLog[attribute] = oldValue;
-    }
+    };
 
     const writeUndoLog = function() {
         (currentPassageElement ?? currentSectionElement).setAttribute("data-undo", JSON.stringify(undoLog));
         undoLog = {};
-    }
+    };
 
     const doUndo = function(undosJson: string | null) {
         if (!undosJson) return;
@@ -645,7 +645,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         for (const attribute of Object.keys(undos)) {
             state.setInternal(attribute, undos[attribute], false);
         }
-    }
+    };
 
     const state = new State(settings.persist, story.id || "", settings.onSet, emitter, onSet);
     const get = state.get.bind(state);
@@ -659,7 +659,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             return story.sections[sectionName].text || null;
         }
         return null;
-    }
+    };
 
     const getPassageText = (name: string) => {
         if (currentSection.passages && name in currentSection.passages) {
@@ -668,7 +668,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             return story.sections[""].passages![name].text || null;
         }
         return null;
-    }
+    };
 
     const addTransition = (fn: () => Promise<void>) => {
         transitions.push(fn);

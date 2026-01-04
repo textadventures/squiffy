@@ -201,7 +201,7 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
             passage = null;
             textStarted = false;
             return autoSectionName;
-        }
+        };
 
         for (const line of inputLines) {
             const stripLine = line.trim();
@@ -507,15 +507,15 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
                     title: story.title,
                     externalScripts: story.scripts,
                     externalStylesheets: story.stylesheets,
-                }
+                };
             }
-        }
+        };
     }
     else {
         return {
             success: false,
             errors: errors
-        }
+        };
     }
 }
 

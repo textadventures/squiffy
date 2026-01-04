@@ -13,10 +13,10 @@ export function ReplaceLabel() : SquiffyPlugin {
                 const result = options.fn(this);
                 const element = squiffy.outputElement.querySelector<HTMLElement>(`.squiffy-label-${name}`);
                 if (element) {
-                    squiffy.addTransition(() => fadeReplace(element, result))
+                    squiffy.addTransition(() => fadeReplace(element, result));
                 }
                 return "";
             });
         }
-    }
+    };
 }

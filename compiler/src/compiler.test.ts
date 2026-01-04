@@ -1,4 +1,4 @@
-import { expect, test } from "vitest"
+import { expect, test } from "vitest";
 import * as fs from "fs/promises";
 import { glob } from "glob";
 import * as path from "path";
@@ -21,8 +21,8 @@ const externalFiles = (inputFilename: string) => {
         getLocalFilename(filename: string): string {
             return path.relative(basePath, filename);
         }
-    }
-}
+    };
+};
 
 function assertSuccess(obj: unknown): asserts obj is CompileSuccess {
     if (!obj || typeof obj !== "object" || !("success" in obj) || !obj.success) {
