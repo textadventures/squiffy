@@ -20,6 +20,11 @@ jobs:
           node-version: 24
           cache: npm
 
+      - name: Fetch full history and tags
+        run: |
+          git fetch --prune --unshallow || true
+          git fetch --tags --force
+
       - name: Install dependencies
         run: npm ci
 

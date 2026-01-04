@@ -5,11 +5,20 @@ function run(cmd) {
     return execSync(cmd, { encoding: "utf8" }).trim();
 }
 
-// Find the last published tag for this package
-const lastTag = run("git describe --tags --abbrev=0");
+let lastTag = null;
 
-// Count commits since that tag
-const commitsSince = Number(run(`git rev-list ${lastTag}..HEAD --count`));
+try {
+    lastTag = run("git describe --tags --abbrev=0");
+} catch {
+    // eslint-disable-next-line no-undef
+    console.warn("No tags found, treating as zero commits since publish");
+}
+
+let commitsSince = 0;
+
+if (lastTag) {
+    commitsSince = Number(run(`git rev-list ${lastTag}..HEAD --count`));
+}
 
 // Write it to a file that Vite can import
 writeFileSync(
