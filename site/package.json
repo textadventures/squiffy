@@ -2,7 +2,7 @@
   "name": "@textadventures/squiffystory.com",
   "type": "module",
   "private": true,
-  "version": "6.0.0-alpha.18",
+  "version": "6.0.0-alpha.19",
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
@@ -19,8 +19,8 @@
     "codemirror": "^6.0.2",
     "debounce": "^2.2.0",
     "sass": "^1.90.0",
-    "squiffy-compiler": "^6.0.0-alpha.18",
-    "squiffy-runtime": "^6.0.0-alpha.18",
+    "squiffy-compiler": "^6.0.0-alpha.19",
+    "squiffy-runtime": "^6.0.0-alpha.19",
     "typescript": "^5.9.2"
   }
 }
