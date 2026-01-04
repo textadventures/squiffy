@@ -1,5 +1,7 @@
 import pkg from "../package.json" with { type: "json" };
+import buildInfo from "./build-info.json";
 const version = pkg.version;
+const commitsSince = buildInfo.commitsSince;
 import "bootstrap/scss/bootstrap.scss";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "chosen-js/chosen.min.css";
@@ -79,7 +81,11 @@ const populateSettingsDialog = function () {
 
 const clearDebugger = function () {
     el<HTMLElement>("debugger").innerHTML = "";
-    logToDebugger("Squiffy " + version);
+    let versionInfo = `Squiffy ${version}`;
+    if (commitsSince > 0) {
+        versionInfo += `.${commitsSince}`;
+    }
+    logToDebugger("Squiffy " + versionInfo);
 };
 
 const restart = function () {
