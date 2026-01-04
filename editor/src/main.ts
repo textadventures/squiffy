@@ -18,7 +18,6 @@ import { SquiffyEventHandler } from "squiffy-runtime/dist/events";
 import { createPackage } from "@textadventures/squiffy-packager";
 import { getStoryFromCompilerOutput } from "./compiler-helper.ts";
 import * as userSettings from "./user-settings.ts";
-import {setFontSize} from "./editor";
 
 Object.assign(window, { $: $, jQuery: $ });
 
@@ -63,7 +62,7 @@ const populateSettingsDialog = function () {
         let val = fontSizeElement.value;
         if (!val) val = userSettings.defaultSettings.fontSize;
         editor.setFontSize(val);
-        setFontSize(val);
+        userSettings.setFontSize(val);
         fontSizeElement.value = val;
     });
 };
@@ -414,6 +413,7 @@ const init = async function (data: string) {
     populateSettingsDialog();
 
     editor.init(editorChange, cursorMoved);
+    editor.setFontSize(userSettings.getFontSize());
 
     await editorLoad(options.data);
     cursorMoved();

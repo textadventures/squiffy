@@ -9,13 +9,13 @@ const set = (setting: string, value: any) => {
 };
 
 export const defaultSettings = {
-    fontSize: "12"
+    fontSize: 12
 };
 
 export const initUserSettings = function () {
-    const fontSize = get("fontSize");
+    const fontSize = getFontSize();
     if (!fontSize) {
-        set("fontSize", defaultSettings.fontSize);
+        setFontSize(defaultSettings.fontSize);
     }
 };
 
