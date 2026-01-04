@@ -39,6 +39,5 @@
   "files": [
     "dist"
   ],
-  "type": "module",
-  "gitHead": "21a4f7eab5194e97afd2c3a993770d2148c3d023"
+  "type": "module"
 }
