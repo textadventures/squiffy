@@ -1,6 +1,6 @@
-import {PluginHost, SquiffyPlugin} from "../types.plugins.js";
+import { PluginHost, SquiffyPlugin } from "../types.plugins.js";
 import Handlebars from "handlebars";
-import {fadeReplace} from "../utils.js";
+import { fadeReplace } from "../utils.js";
 
 export function ReplaceLabel() : SquiffyPlugin {
     return {
@@ -13,10 +13,10 @@ export function ReplaceLabel() : SquiffyPlugin {
                 const result = options.fn(this);
                 const element = squiffy.outputElement.querySelector<HTMLElement>(`.squiffy-label-${name}`);
                 if (element) {
-                    squiffy.addTransition(() => fadeReplace(element, result))
+                    squiffy.addTransition(() => fadeReplace(element, result));
                 }
                 return "";
             });
         }
-    }
+    };
 }

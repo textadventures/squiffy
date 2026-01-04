@@ -1,7 +1,7 @@
-import * as marked from 'marked';
+import * as marked from "marked";
 import Handlebars from "handlebars";
-import {Section, Story} from "./types.js";
-import {State} from "./state.js";
+import { Section, Story } from "./types.js";
+import { State } from "./state.js";
 
 export class TextProcessor {
     story: Story;
@@ -20,35 +20,36 @@ export class TextProcessor {
         this.handlebars.registerHelper("embed", (name: string) => {
             const currentSection = this.getCurrentSection();
             if (currentSection.passages && name in currentSection.passages) {
-                return this.process(currentSection.passages[name].text || '', true);
+                return this.process(currentSection.passages[name].text || "", true);
             } else if (name in this.story.sections) {
-                return this.process(this.story.sections[name].text || '', true);
+                return this.process(this.story.sections[name].text || "", true);
             }
         });
 
         this.handlebars.registerHelper("seen", (name: string) => this.state.getSeen(name));
         this.handlebars.registerHelper("get", (attribute: string) => this.state.get(attribute));
-        this.handlebars.registerHelper('and', (...args) => args.slice(0,-1).every(Boolean));
-        this.handlebars.registerHelper('or',  (...args) => args.slice(0,-1).some(Boolean));
-        this.handlebars.registerHelper('not', (v) => !v);
-        this.handlebars.registerHelper('eq',  (a,b) => a == b);
-        this.handlebars.registerHelper('ne',  (a,b) => a != b);
-        this.handlebars.registerHelper('gt',  (a,b) => a >  b);
-        this.handlebars.registerHelper('lt',  (a,b) => a <  b);
-        this.handlebars.registerHelper('gte', (a,b) => a >= b);
-        this.handlebars.registerHelper('lte', (a,b) => a <= b);
-        this.handlebars.registerHelper("array", function() {
-            return Array.prototype.slice.call(arguments, 0, -1);
+        this.handlebars.registerHelper("and", (...args) => args.slice(0,-1).every(Boolean));
+        this.handlebars.registerHelper("or",  (...args) => args.slice(0,-1).some(Boolean));
+        this.handlebars.registerHelper("not", (v) => !v);
+        this.handlebars.registerHelper("eq",  (a,b) => a == b);
+        this.handlebars.registerHelper("ne",  (a,b) => a != b);
+        this.handlebars.registerHelper("gt",  (a,b) => a >  b);
+        this.handlebars.registerHelper("lt",  (a,b) => a <  b);
+        this.handlebars.registerHelper("gte", (a,b) => a >= b);
+        this.handlebars.registerHelper("lte", (a,b) => a <= b);
+        this.handlebars.registerHelper("array", function (...args) {
+            args.pop(); // remove last argument - options
+            return args;
         });
 
         const addAdditionalParameters = (options: any) => {
-            let result = '';
-            const setters = options.hash.set as string || '';
+            let result = "";
+            const setters = options.hash.set as string || "";
             if (setters) {
-                result += ` data-set='${JSON.stringify(setters.split(',').map(s => s.trim()))}'`;
+                result += ` data-set='${JSON.stringify(setters.split(",").map(s => s.trim()))}'`;
             }
             return result;
-        }
+        };
 
         this.handlebars.registerHelper("section", (section: string, options) => {
             const text = options.hash.text as string || section;

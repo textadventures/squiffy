@@ -1,4 +1,4 @@
-import {PluginHost, SquiffyPlugin} from "../types.plugins.js";
+import { PluginHost, SquiffyPlugin } from "../types.plugins.js";
 import Handlebars from "handlebars";
 import type { SafeString } from "handlebars";
 
@@ -11,12 +11,12 @@ export function RandomPlugin() : SquiffyPlugin {
                 const randomIndex = Math.floor(Math.random() * stringItems.length);
                 const item = stringItems[randomIndex];
 
-                const attribute = options.hash.set as string || '';
+                const attribute = options.hash.set as string || "";
                 if (attribute) {
                     squiffy.set(attribute, item);
                 }
                 return new Handlebars.SafeString(item);
             });
         }
-    }
+    };
 }

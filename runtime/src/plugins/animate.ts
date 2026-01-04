@@ -1,4 +1,4 @@
-import {PluginHost, SquiffyPlugin} from "../types.plugins.js";
+import { PluginHost, SquiffyPlugin } from "../types.plugins.js";
 import Handlebars from "handlebars";
 
 export function AnimatePlugin(): SquiffyPlugin {
@@ -50,9 +50,9 @@ export function AnimatePlugin(): SquiffyPlugin {
                                 resolve();
                             }, false);
                         });
-                    })
+                    });
                 }
-            }
+            };
 
             if (params.trigger === "link") {
                 const links = el.querySelectorAll("a");
@@ -63,7 +63,7 @@ export function AnimatePlugin(): SquiffyPlugin {
                 runAnimation();
             }
         }
-    }
+    };
 
     return {
         name: "animate",

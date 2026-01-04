@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-function-type */
+
 export type SquiffyEventMap = {
     linkClick: { linkType: string }; // a story link was clicked
     set: { attribute: string, value: any }; // an attribute was set

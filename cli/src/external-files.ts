@@ -18,5 +18,5 @@ export const externalFiles = (inputFilename: string) => {
         getLocalFilename(filename: string): string {
             return path.relative(basePath, filename);
         }
-    }
-}
+    };
+};

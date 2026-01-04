@@ -1,4 +1,4 @@
-import pkg from '../package.json' with { type: 'json' };
+import pkg from "../package.json" with { type: "json" };
 const version = pkg.version;
 
 export interface Output {
@@ -70,13 +70,13 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         const outputJs: string[] = [];
         if (!excludeHeader) {
             outputJs.push(`// Created with Squiffy ${version}`);
-            outputJs.push('// https://github.com/textadventures/squiffy');
+            outputJs.push("// https://github.com/textadventures/squiffy");
         }
         if (settings.globalJs) {
-            outputJs.push('var story = {};');
+            outputJs.push("var story = {};");
         }
         else {
-            outputJs.push('export const story = {};');
+            outputJs.push("export const story = {};");
         }
         outputJs.push(`story.id = ${JSON.stringify(storyData.story.id, null, 4)};`);
         if (storyData.story.uiJsIndex !== undefined) {
@@ -84,13 +84,13 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         }
         outputJs.push(`story.start = ${JSON.stringify(storyData.story.start, null, 4)};`);
         outputJs.push(`story.sections = ${JSON.stringify(storyData.story.sections, null, 4)};`);
-        outputJs.push('story.js = [');
+        outputJs.push("story.js = [");
         for (const js of storyData.js) {
             writeJs(outputJs, 1, js);
         }
-        outputJs.push('];');
+        outputJs.push("];");
 
-        return outputJs.join('\n');
+        return outputJs.join("\n");
     }
 
     async function getStoryData(): Promise<Output> {
@@ -121,7 +121,7 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
                 outputSection.clear = true;
             }
 
-            outputSection.text = await processText(section.text.join('\n'), section, null);
+            outputSection.text = await processText(section.text.join("\n"), section, null);
 
             if (section.attributes.length > 0) {
                 outputSection.attributes = section.attributes;
@@ -130,10 +130,10 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
                 output.js.push(section.js);
                 outputSection.jsIndex = output.js.length - 1;
             }
-            if ('@last' in section.passages) {
-                var passageCount = 0;
+            if ("@last" in section.passages) {
+                let passageCount = 0;
                 for (const passageName of Object.keys(section.passages)) {
-                    if (passageName.length > 0 && passageName?.substring(0, 1) !== '@') {
+                    if (passageName.length > 0 && passageName?.substring(0, 1) !== "@") {
                         passageCount++;
                     }
                 }
@@ -153,7 +153,7 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
                     outputPassage.clear = true;
                 }
 
-                outputPassage.text = await processText(passage.text.join('\n'), section, passage);
+                outputPassage.text = await processText(passage.text.join("\n"), section, passage);
                 
                 if (passage.attributes.length > 0) {
                     outputPassage.attributes = passage.attributes;
@@ -166,7 +166,7 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         }
 
         return output;
-    };
+    }
 
     const regexes: Record<string, RegExp> = {
         section: /^\[\[(.*)\]\]:$/,
@@ -184,7 +184,7 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
     };
 
     async function processFileText(inputText: string, inputFilename: string | undefined, isFirst: boolean) {
-        const inputLines = inputText.replace(/\r/g, '').split('\n');
+        const inputLines = inputText.replace(/\r/g, "").split("\n");
 
         let lineCount = 0;
         let section: Section | null = null;
@@ -201,7 +201,7 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
             passage = null;
             textStarted = false;
             return autoSectionName;
-        }
+        };
 
         for (const line of inputLines) {
             const stripLine = line.trim();
@@ -211,7 +211,7 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
 
             for (const key of Object.keys(regexes)) {
                 const regex = regexes[key];
-                const result = key == 'js' ? regex.exec(line) : regex.exec(stripLine);
+                const result = key == "js" ? regex.exec(line) : regex.exec(stripLine);
                 if (result) {
                     match[key] = result;
                 }
@@ -224,7 +224,7 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
             }
             else if (match.passage) {
                 if (!section) {
-                    errors.push(`ERROR: ${inputFilename} line ${lineCount}: Can\'t add passage "${match.passage[1]}" as no section has been created.`);
+                    errors.push(`ERROR: ${inputFilename} line ${lineCount}: Can't add passage "${match.passage[1]}" as no section has been created.`);
                     return false;
                 }
                 section = ensureThisSectionExists();
@@ -238,7 +238,7 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
                 const text = match.continue[1] || "Continue...";
                 previousSection.addText(`[[${text}]](${autoSectionName})`);
             }
-            else if (stripLine == '---') {
+            else if (stripLine == "---") {
                 inUiBlock = false;
                 if (!section) {
                     // Just add the _default section if we haven't started yet
@@ -248,14 +248,14 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
                     addAutoSection();
                 }
             }
-            else if (stripLine == '@ui') {
+            else if (stripLine == "@ui") {
                 inUiBlock = true;
             }
             else if (match.ui && settings.externalFiles) {
                 const content = await settings.externalFiles.getContent(match.ui[1]);
                 story.addUiJs(content);
             }
-            else if (stripLine == '@clear') {
+            else if (stripLine == "@clear") {
                 if (!passage) {
                     section = ensureThisSectionExists();
                     section.clear = true;
@@ -274,15 +274,15 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
                 const importFilenames = await settings.externalFiles.getMatchingFilenames(match.import[1]);
 
                 for (const importFilename of importFilenames) {
-                    if (importFilename.endsWith('.squiffy')) {
+                    if (importFilename.endsWith(".squiffy")) {
                         const content = await settings.externalFiles.getContent(importFilename);
                         const success = await processFileText(content, importFilename, false);
                         if (!success) return false;
                     }
-                    else if (importFilename.endsWith('.js')) {
+                    else if (importFilename.endsWith(".js")) {
                         story.scripts.push(settings.externalFiles.getLocalFilename(importFilename));
                     }
-                    else if (importFilename.endsWith('.css')) {
+                    else if (importFilename.endsWith(".css")) {
                         story.stylesheets.push(settings.externalFiles.getLocalFilename(importFilename));
                     }
                 }
@@ -293,15 +293,15 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
             }
             else if (match.unset) {
                 section = ensureThisSectionExists();
-                section = addAttribute('not ' + match.unset[1], section!, passage, isFirst, inputFilename, lineCount);
+                section = addAttribute("not " + match.unset[1], section!, passage, isFirst, inputFilename, lineCount);
             }
             else if (match.inc) {
                 section = ensureThisSectionExists();
-                section = addAttribute(match.inc[1] + '+=' + (match.inc[2] === undefined ? '1' : match.inc[2]), section, passage, isFirst, inputFilename, lineCount);
+                section = addAttribute(match.inc[1] + "+=" + (match.inc[2] === undefined ? "1" : match.inc[2]), section, passage, isFirst, inputFilename, lineCount);
             }
             else if (match.dec) {
                 section = ensureThisSectionExists();
-                section = addAttribute(match.dec[1] + '-=' + (match.dec[2] === undefined ? '1' : match.dec[2]), section, passage, isFirst, inputFilename, lineCount);
+                section = addAttribute(match.dec[1] + "-=" + (match.dec[2] === undefined ? "1" : match.dec[2]), section, passage, isFirst, inputFilename, lineCount);
             }
             else if (!textStarted && match.js) {
                 if (inUiBlock) {
@@ -334,14 +334,14 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         }
         
         return true;
-    };
+    }
 
     function ensureSectionExists(section: Section | null, isFirst: boolean, inputFilename: string | undefined, lineCount: number) {
         if (!section && isFirst) {
-            section = story.addSection('_default', inputFilename, lineCount);
+            section = story.addSection("_default", inputFilename, lineCount);
         }
         return section!;
-    };
+    }
 
     function addAttribute(attribute: string, section: Section, passage: Passage | null, isFirst: boolean, inputFilename: string | undefined, lineCount: number) {
         if (!passage) {
@@ -352,19 +352,19 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
             passage.addAttribute(attribute);
         }
         return section;
-    };
+    }
 
     function extractLinkFunctions(link: string): { target: string, setters: string } {
-        const fragments = link.split(',');
+        const fragments = link.split(",");
         return {
             target: fragments[0].trim(),
-            setters: fragments.slice(1).join(', ')
+            setters: fragments.slice(1).join(", ")
         };
     }
 
     function getAdditionalLinkParameters(link: string): { target: string, additionalParameters: string } {
         const functions = extractLinkFunctions(link);
-        let additionalParameters = '';
+        let additionalParameters = "";
         if (functions.setters.length > 0) {
             additionalParameters += ` set="${functions.setters}"`;
         }
@@ -382,9 +382,9 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         //   open bracket
         //   any text - the name of the section
         //   closing bracket
-        var namedSectionLinkRegex = /\[\[([^\]]*?)\]\]\((.*?)\)/g;
+        const namedSectionLinkRegex = /\[\[([^\]]*?)\]\]\((.*?)\)/g;
 
-        var links = allMatchesForGroup(input, namedSectionLinkRegex, 2);
+        let links = allMatchesForGroup(input, namedSectionLinkRegex, 2);
         checkSectionLinks(links, section, passage);
 
         input = input.replace(namedSectionLinkRegex, (_match, text /* $1 */, name/* $2 */) => {
@@ -399,7 +399,7 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         //   open bracket, but not http(s):// after it
         //   any text - the name of the passage
         //   closing bracket
-        var namedPassageLinkRegex = /\[([^\]]*?)\]\(((?!https?:\/\/).*?)\)/g;
+        const namedPassageLinkRegex = /\[([^\]]*?)\]\(((?!https?:\/\/).*?)\)/g;
 
         links = allMatchesForGroup(input, namedPassageLinkRegex, 2);
         checkPassageLinks(links, section, passage);
@@ -413,7 +413,7 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         //   open [[
         //   any text - the link text
         //   closing ]]
-        var unnamedSectionLinkRegex = /\[\[(.*?)\]\]/g;
+        const unnamedSectionLinkRegex = /\[\[(.*?)\]\]/g;
 
         links = allMatchesForGroup(input, unnamedSectionLinkRegex, 1);
         checkSectionLinks(links, section, passage);
@@ -425,7 +425,7 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         //   any text - the link text
         //   closing ]
         //   no bracket after
-        var unnamedPassageLinkRegex = /\[(.*?)\]([^\(]|$)/g;
+        const unnamedPassageLinkRegex = /\[(.*?)\]([^(]|$)/g;
 
         links = allMatchesForGroup(input, unnamedPassageLinkRegex, 1);
         checkPassageLinks(links, section, passage);
@@ -433,26 +433,26 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         input = input.replace(unnamedPassageLinkRegex, '{{passage "$1"}}$2');
 
         return input;
-    };
+    }
 
     function allMatchesForGroup(input: string, regex: RegExp, groupNumber: number) {
-        var result = [];
-        var match;
-        while (!!(match = regex.exec(input))) {
+        const result = [];
+        let match;
+        while ((match = regex.exec(input))) {
             result.push(match[groupNumber]);
         }
         return result;
-    };
+    }
 
     function checkSectionLinks(links: string[], section: Section, passage: Passage | null) {
-        var badLinks = links.filter(m => !linkDestinationExists(m, story.sections));
-        showBadLinksWarning(badLinks, 'section', '[[', ']]', section, passage);
-    };
+        const badLinks = links.filter(m => !linkDestinationExists(m, story.sections));
+        showBadLinksWarning(badLinks, "section", "[[", "]]", section, passage);
+    }
 
     function checkPassageLinks(links: string[], section: Section, passage: Passage | null) {
-        var badLinks = links.filter(m => !linkDestinationExists(m, section.passages));
-        showBadLinksWarning(badLinks, 'passage', '[', ']', section, passage);
-    };
+        const badLinks = links.filter(m => !linkDestinationExists(m, section.passages));
+        showBadLinksWarning(badLinks, "passage", "[", "]", section, passage);
+    }
 
     function linkDestinationExists(link: string, keys: Record<string, any>) {
         // Link destination data may look like:
@@ -460,15 +460,15 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         //   passageName, my_attribute=2
         // We're only interested in checking if the named passage or section exists.
 
-        var linkDestination = link.split(',')[0];
+        const linkDestination = link.split(",")[0];
         return Object.keys(keys).includes(linkDestination);
-    };
+    }
 
     function showBadLinksWarning(badLinks: string[], linkTo: string, before: string, after: string, section: Section, passage: Passage | null) {
         if (!settings.onWarning) return;
         
         for (const badLink of badLinks) {
-            var warning;
+            let warning: string;
             if (!passage) {
                 warning = `${section.filename} line ${section.line}: In section '${section.name}'`;
             }
@@ -477,16 +477,16 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
             }
             settings.onWarning(`WARNING: ${warning} there is a link to a ${linkTo} called ${before}${badLink}${after}, which doesn't exist`);
         }
-    };
+    }
 
     function writeJs(outputJsFile: string[], tabCount: number, js: string[]) {
-        var tabs = new Array(tabCount + 1).join('\t');
+        const tabs = new Array(tabCount + 1).join("\t");
         outputJsFile.push(`${tabs}(squiffy, get, set) => {`);
         for (const jsLine of js) {
             outputJsFile.push(`${tabs}\t${jsLine}`);
         }
         outputJsFile.push(`${tabs}},`);
-    };
+    }
 
     const success = await processFileText(settings.script, settings.scriptBaseFilename, true);
 
@@ -507,24 +507,24 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
                     title: story.title,
                     externalScripts: story.scripts,
                     externalStylesheets: story.stylesheets,
-                }
+                };
             }
-        }
+        };
     }
     else {
         return {
             success: false,
             errors: errors
-        }
+        };
     }
 }
 
 class Story {
     sections: Record<string, Section> = {};
-    title = '';
+    title = "";
     scripts: string[] = [];
     stylesheets: string[] = [];
-    start = '';
+    start = "";
     id: string | null = null;
     uiJs: string[] = [];
 
@@ -536,7 +536,7 @@ class Story {
         const section = new Section(name, filename, line);
         this.sections[name] = section;
         return section;
-    };
+    }
 
     addUiJs(text: string) {
         this.uiJs.push(text);
@@ -561,22 +561,22 @@ class Section {
     attributes: string[] = [];
 
     addPassage(name: string, line: number) {
-        var passage = new Passage(name, line);
+        const passage = new Passage(name, line);
         this.passages[name] = passage;
         return passage;
-    };
+    }
 
     addText(text: string) {
         this.text.push(text);
-    };
+    }
 
     addJS(text: string) {
         this.js.push(text);
-    };
+    }
 
     addAttribute(text: string) {
         this.attributes.push(text);
-    };
+    }
 }
 
 class Passage {
@@ -594,13 +594,13 @@ class Passage {
 
     addText(text: string) {
         this.text.push(text);
-    };
+    }
 
     addJS(text: string) {
         this.js.push(text);
-    };
+    }
 
     addAttribute(text: string) {
         this.attributes.push(text);
-    };
+    }
 }

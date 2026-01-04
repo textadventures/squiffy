@@ -1,4 +1,4 @@
-import {animate, stagger, text} from "animejs";
+import { animate, stagger, text } from "animejs";
 
 export class Animation {
     animations: {[name: string]: (el: HTMLElement, params: Record<string, any>, onComplete: () => void, loop: boolean) => void} = {};
@@ -30,7 +30,7 @@ export class Animation {
     }
 
     constructor() {
-        this.registerAnimation('typewriter', function(el, params, onComplete, loop) {
+        this.registerAnimation("typewriter", function(el, params, onComplete, loop) {
             const { chars } = text.split(el, { words: false, chars: true });
 
             const fadeDuration = params.fadeDuration || 100;   // ms fade-in per character
@@ -46,7 +46,7 @@ export class Animation {
             });
         });
 
-        this.registerAnimation('toast', function(el, params, onComplete, loop) {
+        this.registerAnimation("toast", function(el, params, onComplete, loop) {
             const { words } = text.split(el, { words: true, chars: false });
 
             const fadeDuration = params.fadeDuration || 100;   // ms fade-in per word
@@ -55,7 +55,7 @@ export class Animation {
             animate(words, {
                 opacity: [0, 1],
                 y: [
-                    { to: ['100%', '0%'] },
+                    { to: ["100%", "0%"] },
                 ],
                 easing: "linear",
                 duration: fadeDuration,
