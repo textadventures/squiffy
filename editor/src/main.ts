@@ -436,17 +436,6 @@ const init = async function (data: string) {
     onClick("open", () => openFile(editorLoad));
     onClick("save", () => saveFile(editor.getValue()));
 
-    // TODO: Also do the clearTimeout thing?
-    // if (options.save) {
-    //     $('#save').show();
-    //     $('#save').click(() => {
-    //         clearTimeout(localSaveTimeout);
-    //         localSave();
-    //         options.save!(title!);
-    //     });
-    // }
-
-
     onClick("download-squiffy-script", downloadSquiffyScript);
     onClick("export-html-js", downloadZip);
     onClick("export-js", downloadJavascript);
@@ -587,16 +576,6 @@ const showWarnings = function (warnings: string[]) {
         logToDebugger(warning);
     }
 };
-
-// fail: function (data: string, msgs: string[]) {
-//     $('<div/>', { id: 'output' }).appendTo('#output-container');
-
-//     // Show fail message
-//     $('#output').html(data.message);
-
-//     // Show detailed info
-//     this.showWarnings(msgs);
-// }
 
 const userSettings = {
     get: function (setting: string) {
