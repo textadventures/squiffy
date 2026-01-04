@@ -1,6 +1,6 @@
 {
   "name": "@textadventures/squiffy-types",
-  "version": "6.0.0-alpha.17",
+  "version": "6.0.0-alpha.18",
   "types": "./index.d.ts",
   "files": [
     "index.d.ts",
