@@ -468,7 +468,7 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         if (!settings.onWarning) return;
         
         for (const badLink of badLinks) {
-            var warning;
+            let warning: string;
             if (!passage) {
                 warning = `${section.filename} line ${section.line}: In section '${section.name}'`;
             }

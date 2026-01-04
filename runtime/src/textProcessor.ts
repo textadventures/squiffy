@@ -37,8 +37,9 @@ export class TextProcessor {
         this.handlebars.registerHelper("lt",  (a,b) => a <  b);
         this.handlebars.registerHelper("gte", (a,b) => a >= b);
         this.handlebars.registerHelper("lte", (a,b) => a <= b);
-        this.handlebars.registerHelper("array", function() {
-            return Array.prototype.slice.call(arguments, 0, -1);
+        this.handlebars.registerHelper("array", function (...args) {
+            args.pop(); // remove last argument - options
+            return args;
         });
 
         const addAdditionalParameters = (options: any) => {

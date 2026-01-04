@@ -1,4 +1,4 @@
-import { SquiffyApi, SquiffyInitOptions, SquiffySettings, Story, Section, Passage } from "./types.js";
+import { SquiffyApi, SquiffyInitOptions, Story, Section, Passage } from "./types.js";
 import { TextProcessor } from "./textProcessor.js";
 import { Emitter, SquiffyEventMap } from "./events.js";
 import { State } from "./state.js";
@@ -18,14 +18,6 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     let currentPassageElement: HTMLElement;
     let currentBlockOutputElement: HTMLElement;
     let scrollPosition = 0;
-    let outputElement: HTMLElement;
-    let outputElementContainer: HTMLElement;
-    let settings: SquiffySettings;
-    let state: State;
-    let textProcessor: TextProcessor;
-    let linkHandler: LinkHandler;
-    let pluginManager: PluginManager;
-    let animation: Animation;
     const emitter = new Emitter<SquiffyEventMap>();
     const transitions: (() => Promise<void>)[] = [];
     let runningTransitions = false;
@@ -255,7 +247,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         state.setSeen(passageName);
 
         const passages: Passage[] = [];
-        const runFns: Function[] = [];
+        const runFns: (() => Promise<void>)[] = [];
 
         if (masterSection && masterSection.passages) {
             const masterPassage = masterSection.passages[""];
@@ -607,12 +599,12 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
 
     // We create a separate div inside the passed-in element. This allows us to clear the text output, but
     // without affecting any overlays that may have been added to the container (for transitions).
-    outputElementContainer = options.element;
-    outputElement = document.createElement("div");
+    const outputElementContainer = options.element;
+    const outputElement = document.createElement("div");
     outputElementContainer.appendChild(outputElement);
     story = options.story;
 
-    settings = {
+    const settings = {
         scroll: options.scroll || "body",
         persist: (options.persist === undefined) ? true : options.persist,
         onSet: options.onSet || (() => {})
@@ -655,12 +647,12 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         }
     }
 
-    state = new State(settings.persist, story.id || "", settings.onSet, emitter, onSet);
+    const state = new State(settings.persist, story.id || "", settings.onSet, emitter, onSet);
     const get = state.get.bind(state);
     const set = state.set.bind(state);
 
-    textProcessor = new TextProcessor(story, state, () => currentSection);
-    linkHandler = new LinkHandler();
+    const textProcessor = new TextProcessor(story, state, () => currentSection);
+    const linkHandler = new LinkHandler();
 
     const getSectionText = (sectionName: string) => {
         if (sectionName in story.sections) {
@@ -682,9 +674,9 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         transitions.push(fn);
     };
 
-    animation = new Animation();
+    const animation = new Animation();
 
-    pluginManager = new PluginManager(outputElement, textProcessor, state, linkHandler,
+    const pluginManager = new PluginManager(outputElement, textProcessor, state, linkHandler,
         getSectionText, getPassageText, ui.processText, addTransition, animation, emitter);
     pluginManager.add(Plugins.ReplaceLabel());
     pluginManager.add(Plugins.RotateSequencePlugin());

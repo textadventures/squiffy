@@ -592,7 +592,7 @@ const showWarnings = function (warnings: string[]) {
 //     this.showWarnings(msgs);
 // }
 
-var userSettings = {
+const userSettings = {
     get: function (setting: string) {
         const value = localStorage.getItem(setting);
         if (value === null) return null;
