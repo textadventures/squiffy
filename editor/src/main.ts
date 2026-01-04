@@ -85,7 +85,7 @@ const clearDebugger = function () {
     if (commitsSince > 0) {
         versionInfo += `.${commitsSince}`;
     }
-    logToDebugger("Squiffy " + versionInfo);
+    logToDebugger(versionInfo);
 };
 
 const restart = function () {

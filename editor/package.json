@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "prebuild": "node ./write-build-info.js",
+    "prebuild": "git fetch --unshallow || true && git fetch --tags --force && node ./write-build-info.js",
     "build": "tsc && vite build",
     "preview": "vite preview"
   },
