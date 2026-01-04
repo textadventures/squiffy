@@ -11,7 +11,6 @@ import "chosen-js/chosen.jquery.js";
 import { Modal, Tab, Tooltip } from "bootstrap";
 import { compile as squiffyCompile, CompileError } from "squiffy-compiler";
 import { openFile, saveFile } from "./file-handler";
-import { Settings } from "./settings";
 import * as editor from "./editor";
 import { init as runtimeInit, SquiffyApi } from "squiffy-runtime";
 import { SquiffyEventHandler } from "squiffy-runtime/dist/events";
@@ -35,7 +34,6 @@ interface Passage {
     end?: number;
 }
 
-let settings: Settings;
 let title: string | undefined;
 let loading: boolean;
 let sourceMap: Section[];
@@ -235,7 +233,8 @@ const localSave = function () {
 };
 
 const autoSave = function () {
-    settings.autoSave(title);
+    // TODO
+    console.log("TODO: autoSave");
 };
 
 const setInfo = function (text: string) {
@@ -311,9 +310,7 @@ const processFile = function (data: string) {
 
     if (!title || title !== newTitle) {
         title = newTitle || "Untitled";
-        if (settings.updateTitle) {
-            settings.updateTitle(title);
-        }
+        updateTitle(title);
     }
 
     const selectSection = $("#sections");
@@ -397,25 +394,18 @@ const passageChanged = function () {
     });
 };
 
+const updateTitle = function (title: string) {
+    document.title = title + " - Squiffy Editor";
+};
+
 const init = async function (data: string) {
-    const options: Settings = {
-        data: data,
-        autoSave: function () {
-        },
-        updateTitle: function (title: string) {
-            document.title = title + " - Squiffy Editor";
-        },
-    };
-
-    settings = options;
-
     userSettings.initUserSettings();
     populateSettingsDialog();
 
     editor.init(editorChange, cursorMoved);
     editor.setFontSize(userSettings.getFontSize());
 
-    await editorLoad(options.data);
+    await editorLoad(data);
     cursorMoved();
 
     onClick("restart", restart);
