@@ -17,6 +17,8 @@ import { init as runtimeInit, SquiffyApi } from "squiffy-runtime";
 import { SquiffyEventHandler } from "squiffy-runtime/dist/events";
 import { createPackage } from "@textadventures/squiffy-packager";
 import { getStoryFromCompilerOutput } from "./compiler-helper.ts";
+import * as userSettings from "./user-settings.ts";
+import {setFontSize} from "./editor";
 
 Object.assign(window, { $: $, jQuery: $ });
 
@@ -43,18 +45,6 @@ let currentSection: Section | null;
 let currentPassage: Passage | null;
 let squiffyApi: SquiffyApi | null;
 
-const defaultSettings = {
-    fontSize: "12"
-};
-
-const initUserSettings = function () {
-    const us = settings.userSettings;
-    const fontSize = us.get("fontSize");
-    if (!fontSize) {
-        us.set("fontSize", defaultSettings.fontSize);
-    }
-};
-
 function el<T>(id: string) {
     return document.getElementById(id) as T;
 }
@@ -65,16 +55,15 @@ function onClick(id: string, fn: () => void) {
 }
 
 const populateSettingsDialog = function () {
-    const us = settings.userSettings;
     const fontSizeElement = el<HTMLFormElement>("font-size");
     if (!fontSizeElement) return;
     
-    fontSizeElement.value = us.get("fontSize");
+    fontSizeElement.value = userSettings.getFontSize();
     fontSizeElement.addEventListener("change", () => {
         let val = fontSizeElement.value;
-        if (!val) val = defaultSettings.fontSize;
+        if (!val) val = userSettings.defaultSettings.fontSize;
         editor.setFontSize(val);
-        us.set("fontSize", val);
+        setFontSize(val);
         fontSizeElement.value = val;
     });
 };
@@ -417,15 +406,14 @@ const init = async function (data: string) {
         updateTitle: function (title: string) {
             document.title = title + " - Squiffy Editor";
         },
-        userSettings: userSettings
     };
 
     settings = options;
 
-    initUserSettings();
+    userSettings.initUserSettings();
     populateSettingsDialog();
 
-    editor.init(options, editorChange, cursorMoved);
+    editor.init(editorChange, cursorMoved);
 
     await editorLoad(options.data);
     cursorMoved();
@@ -545,17 +533,6 @@ const showErrors = function (result: CompileError) {
 const showWarnings = function (warnings: string[]) {
     for (const warning of warnings) {
         logToDebugger(warning);
-    }
-};
-
-const userSettings = {
-    get: function (setting: string) {
-        const value = localStorage.getItem(setting);
-        if (value === null) return null;
-        return JSON.parse(value);
-    },
-    set: function (setting: string, value: object) {
-        localStorage.setItem(setting, JSON.stringify(value));
     }
 };
 

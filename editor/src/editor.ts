@@ -1,9 +1,9 @@
-import { Settings } from "./settings";
+import * as userSettings from "./user-settings.ts";
 import { init as initAce } from "./ace-integration";
 
 let editor: AceAjax.Editor;
 
-export const init = (options: Settings, onEditorChange: () => void, onCursorMoved: () => void) => {
+export const init = (onEditorChange: () => void, onCursorMoved: () => void) => {
     editor = ace.edit("editor");
 
     // get rid of an annoying warning
@@ -23,7 +23,7 @@ export const init = (options: Settings, onEditorChange: () => void, onCursorMove
     editor.commands.removeCommand("goToPreviousError");
     editor.commands.removeCommand("showSettingsMenu");
 
-    editor.setFontSize(options.userSettings.get("fontSize"));
+    editor.setFontSize(userSettings.getFontSize());
     editor.focus();
 };
 
