@@ -1,9 +1,9 @@
-import { Settings } from "./settings";
+import * as userSettings from "./user-settings.ts";
 import { init as initAce } from "./ace-integration";
 
 let editor: AceAjax.Editor;
 
-export const init = (options: Settings, onEditorChange: () => void, onCursorMoved: () => void) => {
+export const init = (onEditorChange: () => void, onCursorMoved: () => void) => {
     editor = ace.edit("editor");
 
     // get rid of an annoying warning
@@ -23,7 +23,7 @@ export const init = (options: Settings, onEditorChange: () => void, onCursorMove
     editor.commands.removeCommand("goToPreviousError");
     editor.commands.removeCommand("showSettingsMenu");
 
-    editor.setFontSize(options.userSettings.get("fontSize"));
+    editor.setFontSize(userSettings.getFontSize());
     editor.focus();
 };
 
@@ -51,3 +51,18 @@ export const moveTo = function (row: number, column?: number) {
     editor.renderer.scrollCursorIntoView();
     editor.focus();
 };
+
+export const undo = () => editor.undo();
+export const redo = () => editor.redo();
+export const cut = () => editor.execCommand("cut");
+export const copy = async () => {
+    const text = editor.getCopyText();
+    await navigator.clipboard.writeText(text);
+};
+export const paste = async () => {
+    const text = await navigator.clipboard.readText();
+    editor.insert(text);
+};
+export const selectAll = () => editor.selection.selectAll();
+export const find = () => editor.execCommand("find");
+export const replace = () => editor.execCommand("replace");

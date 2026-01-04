@@ -11,12 +11,12 @@ import "chosen-js/chosen.jquery.js";
 import { Modal, Tab, Tooltip } from "bootstrap";
 import { compile as squiffyCompile, CompileError } from "squiffy-compiler";
 import { openFile, saveFile } from "./file-handler";
-import { Settings } from "./settings";
 import * as editor from "./editor";
 import { init as runtimeInit, SquiffyApi } from "squiffy-runtime";
 import { SquiffyEventHandler } from "squiffy-runtime/dist/events";
 import { createPackage } from "@textadventures/squiffy-packager";
 import { getStoryFromCompilerOutput } from "./compiler-helper.ts";
+import * as userSettings from "./user-settings.ts";
 
 Object.assign(window, { $: $, jQuery: $ });
 
@@ -34,7 +34,6 @@ interface Passage {
     end?: number;
 }
 
-let settings: Settings;
 let title: string | undefined;
 let loading: boolean;
 let sourceMap: Section[];
@@ -42,18 +41,6 @@ let currentRow: any;
 let currentSection: Section | null;
 let currentPassage: Passage | null;
 let squiffyApi: SquiffyApi | null;
-
-const defaultSettings = {
-    fontSize: "12"
-};
-
-const initUserSettings = function () {
-    const us = settings.userSettings;
-    const fontSize = us.get("fontSize");
-    if (!fontSize) {
-        us.set("fontSize", defaultSettings.fontSize);
-    }
-};
 
 function el<T>(id: string) {
     return document.getElementById(id) as T;
@@ -65,16 +52,15 @@ function onClick(id: string, fn: () => void) {
 }
 
 const populateSettingsDialog = function () {
-    const us = settings.userSettings;
     const fontSizeElement = el<HTMLFormElement>("font-size");
     if (!fontSizeElement) return;
     
-    fontSizeElement.value = us.get("fontSize");
+    fontSizeElement.value = userSettings.getFontSize();
     fontSizeElement.addEventListener("change", () => {
         let val = fontSizeElement.value;
-        if (!val) val = defaultSettings.fontSize;
+        if (!val) val = userSettings.defaultSettings.fontSize;
         editor.setFontSize(val);
-        us.set("fontSize", val);
+        userSettings.setFontSize(val);
         fontSizeElement.value = val;
     });
 };
@@ -247,7 +233,8 @@ const localSave = function () {
 };
 
 const autoSave = function () {
-    settings.autoSave(title);
+    // TODO
+    console.log("TODO: autoSave");
 };
 
 const setInfo = function (text: string) {
@@ -323,9 +310,7 @@ const processFile = function (data: string) {
 
     if (!title || title !== newTitle) {
         title = newTitle || "Untitled";
-        if (settings.updateTitle) {
-            settings.updateTitle(title);
-        }
+        updateTitle(title);
     }
 
     const selectSection = $("#sections");
@@ -409,25 +394,18 @@ const passageChanged = function () {
     });
 };
 
+const updateTitle = function (title: string) {
+    document.title = title + " - Squiffy Editor";
+};
+
 const init = async function (data: string) {
-    const options: Settings = {
-        data: data,
-        autoSave: function () {
-        },
-        updateTitle: function (title: string) {
-            document.title = title + " - Squiffy Editor";
-        },
-        userSettings: userSettings
-    };
-
-    settings = options;
-
-    initUserSettings();
+    userSettings.initUserSettings();
     populateSettingsDialog();
 
-    editor.init(options, editorChange, cursorMoved);
+    editor.init(editorChange, cursorMoved);
+    editor.setFontSize(userSettings.getFontSize());
 
-    await editorLoad(options.data);
+    await editorLoad(data);
     cursorMoved();
 
     onClick("restart", restart);
@@ -435,17 +413,6 @@ const init = async function (data: string) {
     onClick("file-new", () => editorLoad(""));
     onClick("open", () => openFile(editorLoad));
     onClick("save", () => saveFile(editor.getValue()));
-
-    // TODO: Also do the clearTimeout thing?
-    // if (options.save) {
-    //     $('#save').show();
-    //     $('#save').click(() => {
-    //         clearTimeout(localSaveTimeout);
-    //         localSave();
-    //         options.save!(title!);
-    //     });
-    // }
-
 
     onClick("download-squiffy-script", downloadSquiffyScript);
     onClick("export-html-js", downloadZip);
@@ -459,48 +426,19 @@ const init = async function (data: string) {
     onClick("collapse-all", editor.collapseAll);
     onClick("uncollapse-all", editor.uncollapseAll);
 
+    onClick("edit-undo", editor.undo);
+    onClick("edit-redo", editor.redo);
+    onClick("edit-cut", editor.cut);
+    onClick("edit-copy", editor.copy);
+    onClick("edit-paste", editor.paste);
+    onClick("edit-select-all", editor.selectAll);
+    onClick("edit-find", editor.find);
+    onClick("edit-replace", editor.replace);
+
     $("#sections").on("change", sectionChanged);
     $("#passages").on("change", passageChanged);
     $("#sections, #passages").chosen({ width: "100%" });
 };
-
-// load: function (data: string) {
-//     editorLoad(data);
-//     localSave();
-// },
-// save: function () {
-//     return editor.getValue();
-// },
-// setInfo: function (text: string) {
-//     setInfo(text);
-// },
-// run: run,
-// selectAll: function () {
-//     editor.selection.selectAll();
-// },
-// undo: function () {
-//     editor.undo();
-// },
-// redo: function () {
-//     editor.redo();
-// },
-// cut: function () {
-//     var text = editor.getCopyText();
-//     editor.session.replace(editor.selection.getRange(), '');
-//     return text;
-// },
-// copy: function () {
-//     return editor.getCopyText();
-// },
-// paste: function (text: string) {
-//     editor.session.replace(editor.selection.getRange(), text);
-// },
-// find: function () {
-//     editor.execCommand('find');
-// },
-// replace: function () {
-//     editor.execCommand('replace');
-// }
 
 const setBackButtonEnabled = function(enabled: boolean) {
     const backButton = document.getElementById("back") as HTMLButtonElement | null;
@@ -585,27 +523,6 @@ const showErrors = function (result: CompileError) {
 const showWarnings = function (warnings: string[]) {
     for (const warning of warnings) {
         logToDebugger(warning);
-    }
-};
-
-// fail: function (data: string, msgs: string[]) {
-//     $('<div/>', { id: 'output' }).appendTo('#output-container');
-
-//     // Show fail message
-//     $('#output').html(data.message);
-
-//     // Show detailed info
-//     this.showWarnings(msgs);
-// }
-
-const userSettings = {
-    get: function (setting: string) {
-        const value = localStorage.getItem(setting);
-        if (value === null) return null;
-        return JSON.parse(value);
-    },
-    set: function (setting: string, value: object) {
-        localStorage.setItem(setting, JSON.stringify(value));
     }
 };
 
