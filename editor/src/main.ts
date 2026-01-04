@@ -462,13 +462,6 @@ const init = async function (data: string) {
     $("#sections, #passages").chosen({ width: "100%" });
 };
 
-// find: function () {
-//     editor.execCommand('find');
-// },
-// replace: function () {
-//     editor.execCommand('replace');
-// }
-
 const setBackButtonEnabled = function(enabled: boolean) {
     const backButton = document.getElementById("back") as HTMLButtonElement | null;
     if (!backButton) return;
