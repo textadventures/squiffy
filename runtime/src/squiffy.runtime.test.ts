@@ -243,7 +243,7 @@ test("Run JavaScript functions", async () => {
     expect(getTestOutput()).toBe("Value: some_value");
     await clickContinue();
 
-    expect(getTestOutput()).toBe("Value: 10");
+    expect(getTestOutput()).toBe("Value: WRONG");
 
     await clickContinue();
     await clickContinue();
