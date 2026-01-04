@@ -32,5 +32,6 @@
     "animejs": "^4.1.3",
     "handlebars": "^4.7.8",
     "marked": "^16.2.0"
-  }
+  },
+  "gitHead": "59e410271573c741dbc7c6031b7aab5619d9d1c7"
 }
