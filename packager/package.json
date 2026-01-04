@@ -1,6 +1,9 @@
 {
   "name": "@textadventures/squiffy-packager",
   "version": "6.0.0-alpha.17",
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "dist/packager.js",
   "types": "dist/packager.d.ts",
   "scripts": {
