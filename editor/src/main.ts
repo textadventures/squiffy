@@ -1,7 +1,5 @@
 import pkg from "../package.json" with { type: "json" };
 import buildInfo from "./build-info.json";
-const version = pkg.version;
-const commitsSince = buildInfo.commitsSince;
 import "bootstrap/scss/bootstrap.scss";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "chosen-js/chosen.min.css";
@@ -17,6 +15,9 @@ import { SquiffyEventHandler } from "squiffy-runtime/dist/events";
 import { createPackage } from "@textadventures/squiffy-packager";
 import { getStoryFromCompilerOutput } from "./compiler-helper.ts";
 import * as userSettings from "./user-settings.ts";
+
+const version = pkg.version;
+const commitsSince = buildInfo.commitsSince;
 
 Object.assign(window, { $: $, jQuery: $ });
 
@@ -203,15 +204,16 @@ const showSettings = function () {
     new Modal("#settings-dialog").show();
 };
 
-let localSaveTimeout: NodeJS.Timeout | undefined, autoSaveTimeout: NodeJS.Timeout | undefined;
+let localSaveTimeout: NodeJS.Timeout | undefined;
 
 const editorChange = async function () {
     if (loading) return;
     setInfo("");
     if (localSaveTimeout) clearTimeout(localSaveTimeout);
-    localSaveTimeout = setTimeout(localSave, 50);
-    if (autoSaveTimeout) clearTimeout(autoSaveTimeout);
-    autoSaveTimeout = setTimeout(autoSave, 5000);
+    localSaveTimeout = setTimeout(() => {
+        localSave();
+        processFile();
+    }, 50);
     // TODO: Show some indicator that the current file has not been saved
 
     clearDebugger();
@@ -227,21 +229,15 @@ const editorChange = async function () {
 };
 
 const localSave = function () {
-    const data = editor.getValue();
-    localStorage.squiffy = data;
-    processFile(data);
-};
-
-const autoSave = function () {
-    // TODO
-    console.log("TODO: autoSave");
+    localStorage.squiffy = editor.getValue();
 };
 
 const setInfo = function (text: string) {
     el<HTMLElement>("info").innerHTML = text;
 };
 
-const processFile = function (data: string) {
+const processFile = function () {
+    const data = editor.getValue();
     const titleRegex = /^@title (.*)$/;
     const sectionRegex = /^\[\[(.*)\]\]:$/;
     const passageRegex = /^\[(.*)\]:$/;
@@ -327,8 +323,8 @@ const editorLoad = async function (data: string) {
     loading = true;
     editor.setValue(data);
     loading = false;
-    localStorage.squiffy = data;
-    processFile(data);
+    localSave();
+    processFile();
     await initialCompile();
 };
 
