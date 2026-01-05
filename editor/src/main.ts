@@ -229,7 +229,9 @@ const editorChange = async function () {
 };
 
 const localSave = function () {
-    localStorage.squiffy = editor.getValue();
+    // TODO
+    console.log("TODO: localSave");
+    // localStorage.squiffy = editor.getValue();
 };
 
 const setInfo = function (text: string) {
@@ -536,10 +538,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
     [...tooltipTriggerList].map(tooltipTriggerEl => new Tooltip(tooltipTriggerEl));
 
-    const saved = localStorage.squiffy;
-    if (saved) {
-        await init(localStorage.squiffy);
-    } else {
+    // const saved = localStorage.squiffy;
+    // if (saved) {
+    //     await init(localStorage.squiffy);
+    // } else {
         await init("@title New Game\n\n" +
             "Start writing! You can delete all of this text, or play around with it if you're new to Squiffy.\n\n" +
             "Each choice is represented by a [[new section]]. You can create links to new sections by surrounding them " +
@@ -550,7 +552,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             "[passage link]:\n\nThis is the text for the first passage link.\n\n" +
             "[other passage link]:\n\nThis is the text for the second passage link.\n\n" +
             "[[section link]]:\n\nWhen a new section appears, any unclicked passage links from the previous section are disabled.");
-    }
+    // }
 });
 
 Split(["#left-pane", "#right-pane"]);
