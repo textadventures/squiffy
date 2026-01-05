@@ -14,7 +14,7 @@ import { createPackage } from "@textadventures/squiffy-packager";
 import { getStoryFromCompilerOutput } from "./compiler-helper.ts";
 import * as userSettings from "./user-settings.ts";
 import initialScript from "./init.squiffy?raw";
-import { clearDebugger } from "./debugger.ts";
+import { clearDebugger, logToDebugger } from "./debugger.ts";
 import { el } from "./util.ts";
 
 Object.assign(window, { $: $, jQuery: $ });
