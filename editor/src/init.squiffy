@@ -8,7 +8,7 @@ Each choice is represented by a [[new section]]. You can create links to new sec
 
 [[new section]]:
 
-In addition to sections, Squiffy has the concept of passages. These are sections of text that don't advance the story. Passage linkÒs use single square brackets. For example, you can click this [passage link], and this [other passage link], but the story won't advance until you click this [[section link]].
+In addition to sections, Squiffy has the concept of passages. These are sections of text that don't advance the story. Passage links use single square brackets. For example, you can click this [passage link], and this [other passage link], but the story won't advance until you click this [[section link]].
 
 [passage link]:
 
