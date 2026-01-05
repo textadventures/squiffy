@@ -6,7 +6,7 @@ import "./jquery-globals";
 import "chosen-js/chosen.jquery.js";
 import { Modal, Tab, Tooltip } from "bootstrap";
 import { compile as squiffyCompile, CompileError } from "squiffy-compiler";
-import { openFile, saveFile } from "./file-handler";
+import { openFile, saveFile, setOnOpen } from "./file-handler";
 import * as editor from "./editor";
 import { init as runtimeInit, SquiffyApi } from "squiffy-runtime";
 import { SquiffyEventHandler } from "squiffy-runtime/dist/events";
@@ -390,11 +390,12 @@ const init = async function () {
 
     await editorLoad(initialScript);
     cursorMoved();
+    setOnOpen(editorLoad);
 
     onClick("restart", restart);
     onClick("back", goBack);
     onClick("file-new", () => editorLoad(""));
-    onClick("open", () => openFile(editorLoad));
+    onClick("open", openFile);
     onClick("save", () => saveFile(editor.getValue()));
 
     onClick("download-squiffy-script", downloadSquiffyScript);
