@@ -1,5 +1,3 @@
-import pkg from "../package.json" with { type: "json" };
-import buildInfo from "./build-info.json";
 import "bootstrap/scss/bootstrap.scss";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "chosen-js/chosen.min.css";
@@ -16,9 +14,8 @@ import { createPackage } from "@textadventures/squiffy-packager";
 import { getStoryFromCompilerOutput } from "./compiler-helper.ts";
 import * as userSettings from "./user-settings.ts";
 import initialScript from "./init.squiffy?raw";
-
-const version = pkg.version;
-const commitsSince = buildInfo.commitsSince;
+import { clearDebugger } from "./debugger.ts";
+import { el } from "./util.ts";
 
 Object.assign(window, { $: $, jQuery: $ });
 
@@ -44,10 +41,6 @@ let currentSection: Section | null;
 let currentPassage: Passage | null;
 let squiffyApi: SquiffyApi | null;
 
-function el<T>(id: string) {
-    return document.getElementById(id) as T;
-}
-
 function onClick(id: string, fn: () => void) {
     const element = el<HTMLElement>(id);
     element.addEventListener("click", fn);
@@ -65,15 +58,6 @@ const populateSettingsDialog = function () {
         userSettings.setFontSize(val);
         fontSizeElement.value = val;
     });
-};
-
-const clearDebugger = function () {
-    el<HTMLElement>("debugger").innerHTML = "";
-    let versionInfo = `Squiffy ${version}`;
-    if (commitsSince > 0) {
-        versionInfo += `.${commitsSince}`;
-    }
-    logToDebugger(versionInfo);
 };
 
 const restart = function () {
@@ -454,12 +438,6 @@ const onSet = function (attribute: string, value: string) {
     if (attribute.indexOf("_") === 0) return;
 
     logToDebugger(`${attribute} = ${value}`);
-};
-
-const logToDebugger = function (text: string) {
-    const debuggerEl = el<HTMLElement>("debugger");
-    debuggerEl.innerHTML += `${text}<br>`;
-    debuggerEl.scrollTop = debuggerEl.scrollHeight;
 };
 
 const compile = async function(forExportPackage: boolean) {
