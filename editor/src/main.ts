@@ -15,6 +15,7 @@ import { SquiffyEventHandler } from "squiffy-runtime/dist/events";
 import { createPackage } from "@textadventures/squiffy-packager";
 import { getStoryFromCompilerOutput } from "./compiler-helper.ts";
 import * as userSettings from "./user-settings.ts";
+import initialScript from "./init.squiffy?raw";
 
 const version = pkg.version;
 const commitsSince = buildInfo.commitsSince;
@@ -396,14 +397,14 @@ const updateTitle = function (title: string) {
     document.title = title + " - Squiffy Editor";
 };
 
-const init = async function (data: string) {
+const init = async function () {
     userSettings.initUserSettings();
     populateSettingsDialog();
 
     editor.init(editorChange, cursorMoved);
     editor.setFontSize(userSettings.getFontSize());
 
-    await editorLoad(data);
+    await editorLoad(initialScript);
     cursorMoved();
 
     onClick("restart", restart);
@@ -542,16 +543,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // if (saved) {
     //     await init(localStorage.squiffy);
     // } else {
-        await init("@title New Game\n\n" +
-            "Start writing! You can delete all of this text, or play around with it if you're new to Squiffy.\n\n" +
-            "Each choice is represented by a [[new section]]. You can create links to new sections by surrounding them " +
-            "in double square brackets.\n\n" +
-            "[[new section]]:\n\nIn addition to sections, Squiffy has the concept of passages. These are sections of " +
-            "text that don't advance the story. Passage links use single square brackets. For example, you can click this [passage link], and this [other passage " +
-            "link], but the story won't advance until you click this [[section link]].\n\n" +
-            "[passage link]:\n\nThis is the text for the first passage link.\n\n" +
-            "[other passage link]:\n\nThis is the text for the second passage link.\n\n" +
-            "[[section link]]:\n\nWhen a new section appears, any unclicked passage links from the previous section are disabled.");
+        await init();
     // }
 });
 
