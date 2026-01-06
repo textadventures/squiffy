@@ -77,7 +77,6 @@ const openFileHandle = async() => {
     return true;
 };
 
-// TODO: This only works in response to a user click, we can't call this when the app loads
 const ensurePermission = async (handle: FileSystemFileHandle) => {
     const opts: FileSystemHandlePermissionDescriptor = { mode: "readwrite" };
 
