@@ -212,6 +212,11 @@ const showWelcome = async function (dismissable = false) {
     const closeButton = el<HTMLElement>("welcome-close");
     closeButton.style.display = dismissable ? "block" : "none";
 
+    // Clear any previous error messages
+    const errorDiv = el<HTMLElement>("welcome-error");
+    errorDiv.style.display = "none";
+    errorDiv.textContent = "";
+
     // Check if recent file exists and show/hide button
     const hasRecentFile = await hasLastFileHandle();
     const recentButton = el<HTMLElement>("welcome-open-recent");
@@ -224,28 +229,39 @@ const showWelcome = async function (dismissable = false) {
     welcomeModal.show();
 };
 
+const clearWelcomeError = function () {
+    const errorDiv = el<HTMLElement>("welcome-error");
+    errorDiv.style.display = "none";
+    errorDiv.textContent = "";
+};
+
 const handleWelcomeCreateNew = async function () {
+    clearWelcomeError();
     await editorLoad(initialScript);
     welcomeModal?.hide();
 };
 
 const handleWelcomeOpenFile = async function () {
+    clearWelcomeError();
     try {
         await openFile();
         // Only hide modal if file was successfully opened
         welcomeModal?.hide();
     } catch (error) {
-        // Modal stays visible, just show error message
-        setInfo("File open cancelled or failed.");
+        // Modal stays visible, no message needed (user cancelled)
     }
 };
 
 const handleWelcomeOpenRecent = async function () {
+    clearWelcomeError();
     const success = await tryOpenLastFile();
     if (success) {
         welcomeModal?.hide();
     } else {
-        setInfo("Could not open recent file. Please choose another option.");
+        // Show error message in the welcome screen
+        const errorDiv = el<HTMLElement>("welcome-error");
+        errorDiv.textContent = "Could not open recent file. Please choose another option.";
+        errorDiv.style.display = "block";
     }
 };
 
