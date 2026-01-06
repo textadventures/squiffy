@@ -13,21 +13,52 @@ export const openFile = async () => {
     // TODO: This only works on Chrome - Safari doesn't support window.showOpenFilePicker(), so we'll need to
     // get the File reference from an input element, see https://developer.mozilla.org/en-US/docs/Web/API/File_API/Using_files_from_web_applications
     [fileHandle] = await window.showOpenFilePicker();
-    set("lastFileHandle", fileHandle);
+    await addToRecentFiles(fileHandle);
     await openFileHandle();
 };
 
-export const tryOpenLastFile = async () => {
-    fileHandle = await get("lastFileHandle") as FileSystemFileHandle;
-    if (!fileHandle) {
-        return false;
-    }
-    return await openFileHandle();
+interface RecentFile {
+    handle: FileSystemFileHandle;
+    name: string;
+}
+
+const MAX_RECENT_FILES = 10;
+
+export const getRecentFiles = async (): Promise<RecentFile[]> => {
+    const recentFiles = await get("recentFiles") as RecentFile[] | undefined;
+    return recentFiles || [];
 };
 
-export const hasLastFileHandle = async (): Promise<boolean> => {
-    const handle = await get("lastFileHandle") as FileSystemFileHandle | undefined;
-    return handle !== undefined && handle !== null;
+export const addToRecentFiles = async (handle: FileSystemFileHandle): Promise<void> => {
+    const file = await handle.getFile();
+    const fileName = file.name;
+
+    let recentFiles = await getRecentFiles();
+
+    // Remove duplicate if file already exists (compare by name)
+    recentFiles = recentFiles.filter(rf => rf.name !== fileName);
+
+    // Add to front of list
+    recentFiles.unshift({ handle, name: fileName });
+
+    // Limit to MAX_RECENT_FILES
+    if (recentFiles.length > MAX_RECENT_FILES) {
+        recentFiles = recentFiles.slice(0, MAX_RECENT_FILES);
+    }
+
+    await set("recentFiles", recentFiles);
+};
+
+export const openRecentFile = async (fileName: string): Promise<boolean> => {
+    const recentFiles = await getRecentFiles();
+    const recentFile = recentFiles.find(rf => rf.name === fileName);
+
+    if (!recentFile) {
+        return false;
+    }
+
+    fileHandle = recentFile.handle;
+    return await openFileHandle();
 };
 
 const openFileHandle = async() => {

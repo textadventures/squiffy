@@ -6,7 +6,7 @@ import "./jquery-globals";
 import "chosen-js/chosen.jquery.js";
 import { Modal, Tab, Tooltip } from "bootstrap";
 import { compile as squiffyCompile, CompileError } from "squiffy-compiler";
-import { openFile, saveFile, setOnOpen, hasLastFileHandle, tryOpenLastFile } from "./file-handler";
+import { openFile, saveFile, setOnOpen, getRecentFiles, openRecentFile } from "./file-handler";
 import * as editor from "./editor";
 import { init as runtimeInit, SquiffyApi } from "squiffy-runtime";
 import { SquiffyEventHandler } from "squiffy-runtime/dist/events";
@@ -217,13 +217,28 @@ const showWelcome = async function (dismissable = false) {
     errorDiv.style.display = "none";
     errorDiv.textContent = "";
 
-    // Check if recent file exists and show/hide button
-    const hasRecentFile = await hasLastFileHandle();
-    const recentButton = el<HTMLElement>("welcome-open-recent");
-    if (hasRecentFile) {
-        recentButton.style.display = "block";
+    // Populate recent files list
+    const recentFiles = await getRecentFiles();
+    const recentFilesContainer = el<HTMLElement>("welcome-recent-files");
+    const recentFilesList = el<HTMLElement>("welcome-recent-files-list");
+
+    if (recentFiles.length > 0) {
+        recentFilesContainer.style.display = "block";
+
+        // Clear existing list
+        recentFilesList.innerHTML = "";
+
+        // Add each recent file as a clickable item
+        recentFiles.forEach(rf => {
+            const item = document.createElement("button");
+            item.className = "list-group-item list-group-item-action";
+            item.textContent = rf.name;
+            item.dataset.fileName = rf.name;
+            item.addEventListener("click", () => handleRecentFileClick(rf.name));
+            recentFilesList.appendChild(item);
+        });
     } else {
-        recentButton.style.display = "none";
+        recentFilesContainer.style.display = "none";
     }
 
     welcomeModal.show();
@@ -233,6 +248,19 @@ const clearWelcomeError = function () {
     const errorDiv = el<HTMLElement>("welcome-error");
     errorDiv.style.display = "none";
     errorDiv.textContent = "";
+};
+
+const handleRecentFileClick = async function (fileName: string) {
+    clearWelcomeError();
+    const success = await openRecentFile(fileName);
+    if (success) {
+        welcomeModal?.hide();
+    } else {
+        // Show error message in the welcome screen
+        const errorDiv = el<HTMLElement>("welcome-error");
+        errorDiv.textContent = `Could not open "${fileName}". The file may have been moved or deleted.`;
+        errorDiv.style.display = "block";
+    }
 };
 
 const handleWelcomeCreateNew = async function () {
@@ -249,19 +277,6 @@ const handleWelcomeOpenFile = async function () {
         welcomeModal?.hide();
     } catch (error) {
         // Modal stays visible, no message needed (user cancelled)
-    }
-};
-
-const handleWelcomeOpenRecent = async function () {
-    clearWelcomeError();
-    const success = await tryOpenLastFile();
-    if (success) {
-        welcomeModal?.hide();
-    } else {
-        // Show error message in the welcome screen
-        const errorDiv = el<HTMLElement>("welcome-error");
-        errorDiv.textContent = "Could not open recent file. Please choose another option.";
-        errorDiv.style.display = "block";
     }
 };
 
@@ -481,7 +496,6 @@ const init = async function () {
     onClick("show-welcome", () => showWelcome(true));
     onClick("welcome-create-new", handleWelcomeCreateNew);
     onClick("welcome-open-file", handleWelcomeOpenFile);
-    onClick("welcome-open-recent", handleWelcomeOpenRecent);
     onClick("add-section", addSection);
     onClick("add-passage", addPassage);
     onClick("collapse-all", editor.collapseAll);
