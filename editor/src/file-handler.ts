@@ -41,7 +41,7 @@ const openFileHandle = async() => {
 // TODO: This only works in response to a user click, we can't call this when the app loads
 const ensurePermission = async (handle: FileSystemFileHandle) => {
     const opts: FileSystemHandlePermissionDescriptor = { mode: "readwrite" };
-    
+
     let perm = await handle.queryPermission(opts);
     if (perm === "granted") return true;
 
