@@ -204,7 +204,7 @@ const showWelcome = async function (dismissable = false) {
 
     // Create modal with appropriate options
     welcomeModal = new Modal(welcomeDialog, {
-        backdrop: dismissable ? true : 'static',
+        backdrop: dismissable ? true : "static",
         keyboard: dismissable
     });
 
@@ -275,7 +275,7 @@ const handleWelcomeOpenFile = async function () {
         await openFile();
         // Only hide modal if file was successfully opened
         welcomeModal?.hide();
-    } catch (error) {
+    } catch {
         // Modal stays visible, no message needed (user cancelled)
     }
 };
