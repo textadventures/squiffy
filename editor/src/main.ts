@@ -190,15 +190,27 @@ const showSettings = function () {
     new Modal("#settings-dialog").show();
 };
 
-const showWelcome = async function () {
-    if (!welcomeModal) {
-        const welcomeDialog = document.getElementById("welcome-dialog");
-        if (!welcomeDialog) {
-            console.error("Welcome dialog element not found");
-            return;
-        }
-        welcomeModal = new Modal(welcomeDialog);
+const showWelcome = async function (dismissable = false) {
+    // Dispose of old modal if it exists
+    if (welcomeModal) {
+        welcomeModal.dispose();
     }
+
+    const welcomeDialog = document.getElementById("welcome-dialog");
+    if (!welcomeDialog) {
+        console.error("Welcome dialog element not found");
+        return;
+    }
+
+    // Create modal with appropriate options
+    welcomeModal = new Modal(welcomeDialog, {
+        backdrop: dismissable ? true : 'static',
+        keyboard: dismissable
+    });
+
+    // Show/hide close button based on dismissable parameter
+    const closeButton = el<HTMLElement>("welcome-close");
+    closeButton.style.display = dismissable ? "block" : "none";
 
     // Check if recent file exists and show/hide button
     const hasRecentFile = await hasLastFileHandle();
@@ -213,26 +225,27 @@ const showWelcome = async function () {
 };
 
 const handleWelcomeCreateNew = async function () {
-    welcomeModal?.hide();
     await editorLoad(initialScript);
+    welcomeModal?.hide();
 };
 
 const handleWelcomeOpenFile = async function () {
-    welcomeModal?.hide();
     try {
         await openFile();
+        // Only hide modal if file was successfully opened
+        welcomeModal?.hide();
     } catch (error) {
+        // Modal stays visible, just show error message
         setInfo("File open cancelled or failed.");
-        setTimeout(() => showWelcome(), 100);
     }
 };
 
 const handleWelcomeOpenRecent = async function () {
-    welcomeModal?.hide();
     const success = await tryOpenLastFile();
-    if (!success) {
+    if (success) {
+        welcomeModal?.hide();
+    } else {
         setInfo("Could not open recent file. Please choose another option.");
-        setTimeout(() => showWelcome(), 100);
     }
 };
 
@@ -449,7 +462,7 @@ const init = async function () {
     onClick("preview", preview);
 
     onClick("settings", showSettings);
-    onClick("show-welcome", showWelcome);
+    onClick("show-welcome", () => showWelcome(true));
     onClick("welcome-create-new", handleWelcomeCreateNew);
     onClick("welcome-open-file", handleWelcomeOpenFile);
     onClick("welcome-open-recent", handleWelcomeOpenRecent);
