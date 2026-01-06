@@ -15,7 +15,7 @@ import { getStoryFromCompilerOutput } from "./compiler-helper.ts";
 import * as userSettings from "./user-settings.ts";
 import initialScript from "./init.squiffy?raw";
 import { clearDebugger, logToDebugger } from "./debugger.ts";
-import { el } from "./util.ts";
+import { el, downloadString, downloadUint8Array } from "./util.ts";
 
 Object.assign(window, { $: $, jQuery: $ });
 
@@ -97,30 +97,6 @@ const downloadJavascript = async function () {
         const js = await result.getJs();
         downloadString(js, title + ".js");
     }
-};
-
-const downloadString = function (data: string, filename: string) {
-    const blobData = new TextEncoder().encode(data).buffer;
-    const blob = new Blob([blobData], { type: "text/plain" });
-    downloadBlob(blob, filename);
-};
-
-const downloadUint8Array = function (data: Uint8Array, filename: string) {
-    const blobData = new Uint8Array(data).buffer;
-    const blob = new Blob([blobData], { type: "application/octet-stream" });
-    downloadBlob(blob, filename);
-};
-
-const downloadBlob = function (blob: Blob, filename: string) {
-    const downloadLink = document.createElement("a");
-    downloadLink.download = filename;
-    downloadLink.href = window.URL.createObjectURL(blob);
-    downloadLink.onclick = () => {
-        document.body.removeChild(downloadLink);
-    };
-    downloadLink.style.display = "none";
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
 };
 
 const preview = async function () {
