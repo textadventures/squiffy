@@ -14,6 +14,11 @@ export const setOnOpen = (fn: (data: string) => void) => {
     onOpen = fn;
 };
 
+export const clearCurrentFile = () => {
+    fileHandle = null;
+    currentFileName = null;
+};
+
 const openFileFallback = async (): Promise<void> => {
     return new Promise((resolve, reject) => {
         const input = document.getElementById("file-input-fallback") as HTMLInputElement;

@@ -6,7 +6,7 @@ import "./jquery-globals";
 import "chosen-js/chosen.jquery.js";
 import { Modal, Tab, Tooltip } from "bootstrap";
 import { compile as squiffyCompile, CompileError } from "squiffy-compiler";
-import { openFile, saveFile, saveFileAs, setOnOpen, getRecentFiles, openRecentFile } from "./file-handler";
+import { openFile, saveFile, saveFileAs, setOnOpen, getRecentFiles, openRecentFile, clearCurrentFile } from "./file-handler";
 import * as editor from "./editor";
 import { init as runtimeInit, SquiffyApi } from "squiffy-runtime";
 import { SquiffyEventHandler } from "squiffy-runtime/dist/events";
@@ -458,7 +458,10 @@ const init = async function () {
 
     onClick("restart", restart);
     onClick("back", goBack);
-    onClick("file-new", () => editorLoad(""));
+    onClick("file-new", () => {
+        clearCurrentFile();
+        editorLoad(initialScript);
+    });
     onClick("open", openFile);
     onClick("save", () => saveFile(editor.getValue()));
     onClick("save-as", () => saveFileAs(editor.getValue()));
