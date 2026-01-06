@@ -6,7 +6,7 @@ import "./jquery-globals";
 import "chosen-js/chosen.jquery.js";
 import { Modal, Tab, Tooltip } from "bootstrap";
 import { compile as squiffyCompile, CompileError } from "squiffy-compiler";
-import { openFile, saveFile, setOnOpen } from "./file-handler";
+import { openFile, saveFile, setOnOpen, tryOpenLastFile } from "./file-handler";
 import * as editor from "./editor";
 import { init as runtimeInit, SquiffyApi } from "squiffy-runtime";
 import { SquiffyEventHandler } from "squiffy-runtime/dist/events";
@@ -387,10 +387,13 @@ const init = async function () {
 
     editor.init(editorChange, cursorMoved);
     editor.setFontSize(userSettings.getFontSize());
-
-    await editorLoad(initialScript);
-    cursorMoved();
     setOnOpen(editorLoad);
+
+    const loadedFile = await tryOpenLastFile();
+
+    if (!loadedFile) {
+        await editorLoad(initialScript);
+    }
 
     onClick("restart", restart);
     onClick("back", goBack);
