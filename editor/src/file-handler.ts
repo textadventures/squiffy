@@ -129,6 +129,7 @@ const openFileHandle = async() => {
         return false;
     }
     const file = await fileHandle.getFile();
+    currentFileName = file.name;
     const reader = new FileReader();
     reader.onload = (e) => {
         onOpen(e.target?.result as string);
@@ -158,5 +159,47 @@ export const saveFile = async (data: string): Promise<boolean> => {
         // Fallback - trigger download
         downloadString(data, currentFileName || "game.squiffy");
         return true;
+    }
+};
+
+export const saveFileAs = async (data: string): Promise<boolean> => {
+    if (hasFileSystemAccess()) {
+        // Modern API - show save file picker
+        try {
+            const options = {
+                types: [
+                    {
+                        description: 'Squiffy Files',
+                        accept: { 'text/plain': ['.squiffy'] },
+                    },
+                ],
+                suggestedName: currentFileName || 'game.squiffy',
+            };
+
+            fileHandle = await window.showSaveFilePicker(options);
+            await addToRecentFiles(fileHandle);
+
+            const writable = await fileHandle.createWritable();
+            await writable.write(data);
+            await writable.close();
+
+            // Update current filename
+            const file = await fileHandle.getFile();
+            currentFileName = file.name;
+
+            return true;
+        } catch (error) {
+            // User cancelled
+            return false;
+        }
+    } else {
+        // Fallback - prompt for filename and download
+        const newFileName = prompt('Save as:', currentFileName || 'game.squiffy');
+        if (newFileName) {
+            currentFileName = newFileName;
+            downloadString(data, newFileName);
+            return true;
+        }
+        return false;
     }
 };
