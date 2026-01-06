@@ -6,7 +6,7 @@ import "./jquery-globals";
 import "chosen-js/chosen.jquery.js";
 import { Modal, Tab, Tooltip } from "bootstrap";
 import { compile as squiffyCompile, CompileError } from "squiffy-compiler";
-import { openFile, saveFile, setOnOpen } from "./file-handler";
+import { openFile, saveFile, setOnOpen, hasLastFileHandle, tryOpenLastFile } from "./file-handler";
 import * as editor from "./editor";
 import { init as runtimeInit, SquiffyApi } from "squiffy-runtime";
 import { SquiffyEventHandler } from "squiffy-runtime/dist/events";
@@ -40,6 +40,7 @@ let currentRow: any;
 let currentSection: Section | null;
 let currentPassage: Passage | null;
 let squiffyApi: SquiffyApi | null;
+let welcomeModal: Modal | null = null;
 
 function onClick(id: string, fn: () => void) {
     const element = el<HTMLElement>(id);
@@ -187,6 +188,52 @@ const addSectionOrPassage = function (isSection: boolean) {
 
 const showSettings = function () {
     new Modal("#settings-dialog").show();
+};
+
+const showWelcome = async function () {
+    if (!welcomeModal) {
+        const welcomeDialog = document.getElementById("welcome-dialog");
+        if (!welcomeDialog) {
+            console.error("Welcome dialog element not found");
+            return;
+        }
+        welcomeModal = new Modal(welcomeDialog);
+    }
+
+    // Check if recent file exists and show/hide button
+    const hasRecentFile = await hasLastFileHandle();
+    const recentButton = el<HTMLElement>("welcome-open-recent");
+    if (hasRecentFile) {
+        recentButton.style.display = "block";
+    } else {
+        recentButton.style.display = "none";
+    }
+
+    welcomeModal.show();
+};
+
+const handleWelcomeCreateNew = async function () {
+    welcomeModal?.hide();
+    await editorLoad(initialScript);
+};
+
+const handleWelcomeOpenFile = async function () {
+    welcomeModal?.hide();
+    try {
+        await openFile();
+    } catch (error) {
+        setInfo("File open cancelled or failed.");
+        setTimeout(() => showWelcome(), 100);
+    }
+};
+
+const handleWelcomeOpenRecent = async function () {
+    welcomeModal?.hide();
+    const success = await tryOpenLastFile();
+    if (!success) {
+        setInfo("Could not open recent file. Please choose another option.");
+        setTimeout(() => showWelcome(), 100);
+    }
 };
 
 let localSaveTimeout: NodeJS.Timeout | undefined;
@@ -389,12 +436,6 @@ const init = async function () {
     editor.setFontSize(userSettings.getFontSize());
     setOnOpen(editorLoad);
 
-    // const loadedFile = await tryOpenLastFile();
-    //
-    // if (!loadedFile) {
-    await editorLoad(initialScript);
-    // }
-
     onClick("restart", restart);
     onClick("back", goBack);
     onClick("file-new", () => editorLoad(""));
@@ -408,6 +449,10 @@ const init = async function () {
     onClick("preview", preview);
 
     onClick("settings", showSettings);
+    onClick("show-welcome", showWelcome);
+    onClick("welcome-create-new", handleWelcomeCreateNew);
+    onClick("welcome-open-file", handleWelcomeOpenFile);
+    onClick("welcome-open-recent", handleWelcomeOpenRecent);
     onClick("add-section", addSection);
     onClick("add-passage", addPassage);
     onClick("collapse-all", editor.collapseAll);
@@ -425,6 +470,9 @@ const init = async function () {
     $("#sections").on("change", sectionChanged);
     $("#passages").on("change", passageChanged);
     $("#sections, #passages").chosen({ width: "100%" });
+
+    // Show welcome screen after all event handlers are registered
+    await showWelcome();
 };
 
 const setBackButtonEnabled = function(enabled: boolean) {

@@ -263,3 +263,19 @@ ul.dropdown-menu a {
     background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAFAQMAAABo7865AAAABlBMVEVHcEzMzMzyAv2sAAAAAXRSTlMAQObYZgAAABBJREFUeF5jOAMEEAIEEFwAn3kMwcB6I2AAAAAASUVORK5CYII=');
     cursor: row-resize;
 }
+
+/* Welcome Screen Styles */
+#welcome-dialog .modal-body {
+    padding: 2rem;
+}
+
+#welcome-dialog .btn-lg {
+    font-size: 1.1rem;
+    padding: 0.75rem 1.5rem;
+}
+
+#welcome-dialog img {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}

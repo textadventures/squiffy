@@ -19,14 +19,22 @@ export const openFile = async () => {
 
 export const tryOpenLastFile = async () => {
     fileHandle = await get("lastFileHandle") as FileSystemFileHandle;
+    if (!fileHandle) {
+        return false;
+    }
     return await openFileHandle();
+};
+
+export const hasLastFileHandle = async (): Promise<boolean> => {
+    const handle = await get("lastFileHandle") as FileSystemFileHandle | undefined;
+    return handle !== undefined && handle !== null;
 };
 
 const openFileHandle = async() => {
     if (!fileHandle) {
         return false;
     }
-    if (!ensurePermission(fileHandle)) {
+    if (!await ensurePermission(fileHandle)) {
         return false;
     }
     const file = await fileHandle.getFile();

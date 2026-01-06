@@ -25,6 +25,7 @@
                     <li><button class="dropdown-item" id="save-as">Save as...</button></li>
                     <li><hr class="dropdown-divider"></li>
                     <li><button class="dropdown-item" id="settings">Settings...</button></li>
+                    <li><button class="dropdown-item" id="show-welcome">Welcome Screen...</button></li>
                     <li><hr class="dropdown-divider"></li>
                     <li><button class="dropdown-item" id="download-squiffy-script">Download Squiffy script</button></li>
                     <li><button class="dropdown-item" id="export-html-js">Export HTML and JavaScript</button></li>
@@ -99,6 +100,30 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="welcome-dialog" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Welcome to Squiffy</h5>
+                </div>
+                <div class="modal-body text-center">
+                    <img src="/squiffy.png" alt="Squiffy Logo" class="mb-4" style="max-width: 200px;">
+                    <div class="d-grid gap-3">
+                        <button type="button" class="btn btn-primary btn-lg" id="welcome-create-new">
+                            Create New Game
+                        </button>
+                        <button type="button" class="btn btn-outline-primary btn-lg" id="welcome-open-file">
+                            Open File...
+                        </button>
+                        <button type="button" class="btn btn-outline-dark btn-lg" id="welcome-open-recent" style="display: none;">
+                            Open Recent File
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
