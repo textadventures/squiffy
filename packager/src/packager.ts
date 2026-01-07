@@ -2,6 +2,7 @@ import { strToU8, zipSync } from "fflate";
 import { CompileSuccess } from "squiffy-compiler";
 
 import squiffyRuntime from "squiffy-runtime/dist/squiffy.runtime.global.js?raw";
+import runtimeCss from "squiffy-runtime/dist/squiffy.runtime.css?raw";
 import htmlTemplateFile from "./index.template.html?raw";
 import cssTemplateFile from "./style.template.css?raw";
 
@@ -32,7 +33,8 @@ export const createPackage = async (input: CompileSuccess, createZip: boolean): 
     htmlData = htmlData.replace("<!-- STYLESHEETS -->", stylesheetData);
 
     output["index.html"] = htmlData;
-    output["style.css"] = cssTemplateFile.toString();
+    // Combine runtime CSS with application-specific container styles
+    output["style.css"] = runtimeCss.toString() + "\n\n" + cssTemplateFile.toString();
 
     return {
         files: output,

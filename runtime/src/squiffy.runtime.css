@@ -1,0 +1,54 @@
+/* Core Squiffy Runtime Styles */
+
+/* Link styles */
+a.squiffy-link
+{
+    text-decoration: underline;
+    text-decoration-color: Blue;
+    color: Blue;
+    cursor: pointer;
+    transition: color 0.4s ease-in-out, text-decoration-color 0.4s ease-in-out;
+}
+
+/* Disabled link states */
+a.squiffy-link.disabled,
+div.squiffy-output-section:not(:last-child) a.squiffy-link,
+div.squiffy-output-section.links-disabled a.squiffy-link
+{
+    text-decoration: inherit;
+    text-decoration-color: transparent;
+    color: inherit !important;
+    cursor: inherit;
+    pointer-events: none;
+}
+
+/* Header button styles */
+button.squiffy-header-button
+{
+    text-decoration: underline;
+    color: Blue;
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-family: inherit;
+}
+
+/* Output block spacing */
+div.squiffy-output-block:not(:last-child),
+div.squiffy-output-passage:not(:last-child),
+div.squiffy-output-section:not(:last-child)
+{
+    margin-bottom: 1em;
+    border-bottom: 1px solid #ccc;
+}
+
+/* Fade animations */
+.fade-out {
+    opacity: 0;
+    transition: opacity 200ms;
+}
+
+.fade-in {
+    opacity: 1;
+    transition: opacity 200ms;
+}

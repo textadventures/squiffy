@@ -1,6 +1,7 @@
 import { init as runtimeInit } from "squiffy-runtime";
 import { compile as squiffyCompile } from "squiffy-compiler";
 import { getStoryFromCompilerOutput } from "./compiler-helper.ts";
+import "squiffy-runtime/squiffy.runtime.css";
 
 document.addEventListener("DOMContentLoaded", async () => {
     if (!window.opener) {
