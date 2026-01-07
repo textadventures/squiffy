@@ -42,6 +42,8 @@ let currentSection: Section | null;
 let currentPassage: Passage | null;
 let squiffyApi: SquiffyApi | null;
 let welcomeModal: Modal | null = null;
+let unsavedChangesModal: Modal | null = null;
+let unsavedChangesCallback: ((confirm: boolean) => void) | null = null;
 
 function onClick(id: string, fn: () => void) {
     const element = el<HTMLElement>(id);
@@ -250,8 +252,12 @@ const clearWelcomeError = function () {
 
 const handleRecentFileClick = async function (fileName: string) {
     clearWelcomeError();
+    const confirm = await confirmDiscardUnsavedChanges();
+    if (!confirm) return;
+
     const success = await openRecentFile(fileName);
     if (success) {
+        await clearAutoSave();
         welcomeModal?.hide();
     } else {
         // Show error message in the welcome screen
@@ -268,19 +274,27 @@ const handleWelcomeResumeAutoSave = async function () {
         // Restore the file context (handle and name) if available
         setCurrentFile(autoSave.fileHandle || null, autoSave.fileName || null);
         await editorLoad(autoSave.content);
+        // Show indicator since we're loading unsaved work
+        showUnsavedIndicator();
         welcomeModal?.hide();
     }
 };
 
 const handleWelcomeCreateNew = async function () {
     clearWelcomeError();
-    await clearAutoSave();
-    await editorLoad(initialScript);
-    welcomeModal?.hide();
+    const confirm = await confirmDiscardUnsavedChanges();
+    if (confirm) {
+        await clearAutoSave();
+        await editorLoad(initialScript);
+        welcomeModal?.hide();
+    }
 };
 
 const handleWelcomeOpenFile = async function () {
     clearWelcomeError();
+    const confirm = await confirmDiscardUnsavedChanges();
+    if (!confirm) return;
+
     const success = await openFile();
     if (success) {
         // Clear autosave when opening a file from disk
@@ -295,13 +309,12 @@ let localSaveTimeout: NodeJS.Timeout | undefined;
 
 const editorChange = async function () {
     if (loading) return;
-    setInfo("");
+    showUnsavedIndicator();
     if (localSaveTimeout) clearTimeout(localSaveTimeout);
     localSaveTimeout = setTimeout(() => {
         localSave();
         processFile();
     }, 50);
-    // TODO: Show some indicator that the current file has not been saved
 
     clearDebugger();
     
@@ -341,10 +354,40 @@ const getAutoSave = async function (): Promise<AutoSave | undefined> {
 
 const clearAutoSave = async function () {
     await del("autosave");
+    clearUnsavedIndicator();
 };
 
 const setInfo = function (text: string) {
     el<HTMLElement>("info").innerHTML = text;
+};
+
+const showUnsavedIndicator = function () {
+    setInfo('<span class="badge bg-warning text-dark ms-2"><i class="bi bi-pencil-fill"></i> Unsaved changes</span>');
+};
+
+const clearUnsavedIndicator = function () {
+    setInfo("");
+};
+
+const confirmDiscardUnsavedChanges = async function (): Promise<boolean> {
+    const autoSave = await getAutoSave();
+    if (!autoSave) {
+        // No unsaved changes
+        return true;
+    }
+
+    return new Promise((resolve) => {
+        if (!unsavedChangesModal) {
+            unsavedChangesModal = new Modal("#unsaved-changes-dialog");
+        }
+
+        unsavedChangesCallback = (confirm: boolean) => {
+            resolve(confirm);
+            unsavedChangesModal?.hide();
+        };
+
+        unsavedChangesModal.show();
+    });
 };
 
 const processFile = function () {
@@ -515,11 +558,17 @@ const init = async function () {
     onClick("restart", restart);
     onClick("back", goBack);
     onClick("file-new", async () => {
-        clearCurrentFile();
-        await clearAutoSave();
-        await editorLoad(initialScript);
+        const confirm = await confirmDiscardUnsavedChanges();
+        if (confirm) {
+            clearCurrentFile();
+            await clearAutoSave();
+            await editorLoad(initialScript);
+        }
     });
     onClick("open", async () => {
+        const confirm = await confirmDiscardUnsavedChanges();
+        if (!confirm) return;
+
         const success = await openFile();
         if (success) {
             await clearAutoSave();
@@ -562,6 +611,22 @@ const init = async function () {
     onClick("edit-select-all", editor.selectAll);
     onClick("edit-find", editor.find);
     onClick("edit-replace", editor.replace);
+
+    onClick("unsaved-changes-confirm", () => {
+        if (unsavedChangesCallback) {
+            unsavedChangesCallback(true);
+            unsavedChangesCallback = null;
+        }
+    });
+
+    // Handle cancel/close of unsaved changes dialog
+    const unsavedChangesDialog = el<HTMLElement>("unsaved-changes-dialog");
+    unsavedChangesDialog.addEventListener("hidden.bs.modal", () => {
+        if (unsavedChangesCallback) {
+            unsavedChangesCallback(false);
+            unsavedChangesCallback = null;
+        }
+    });
 
     $("#sections").on("change", sectionChanged);
     $("#passages").on("change", passageChanged);
