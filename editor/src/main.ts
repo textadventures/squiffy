@@ -357,16 +357,12 @@ const clearAutoSave = async function () {
     clearUnsavedIndicator();
 };
 
-const setInfo = function (text: string) {
-    el<HTMLElement>("info").innerHTML = text;
-};
-
 const showUnsavedIndicator = function () {
-    setInfo('<span class="badge bg-warning text-dark ms-2"><i class="bi bi-pencil-fill"></i> Unsaved changes</span>');
+    el<HTMLElement>("unsaved-indicator").style.display = "inline";
 };
 
 const clearUnsavedIndicator = function () {
-    setInfo("");
+    el<HTMLElement>("unsaved-indicator").style.display = "none";
 };
 
 const confirmDiscardUnsavedChanges = async function (): Promise<boolean> {
