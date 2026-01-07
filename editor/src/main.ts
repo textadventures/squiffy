@@ -1,7 +1,3 @@
-import pkg from "../package.json" with { type: "json" };
-import buildInfo from "./build-info.json";
-const version = pkg.version;
-const commitsSince = buildInfo.commitsSince;
 import "bootstrap/scss/bootstrap.scss";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "chosen-js/chosen.min.css";
@@ -10,13 +6,16 @@ import "./jquery-globals";
 import "chosen-js/chosen.jquery.js";
 import { Modal, Tab, Tooltip } from "bootstrap";
 import { compile as squiffyCompile, CompileError } from "squiffy-compiler";
-import { openFile, saveFile } from "./file-handler";
+import { openFile, saveFile, saveFileAs, setOnOpen, getRecentFiles, openRecentFile, clearCurrentFile } from "./file-handler";
 import * as editor from "./editor";
 import { init as runtimeInit, SquiffyApi } from "squiffy-runtime";
 import { SquiffyEventHandler } from "squiffy-runtime/dist/events";
 import { createPackage } from "@textadventures/squiffy-packager";
 import { getStoryFromCompilerOutput } from "./compiler-helper.ts";
 import * as userSettings from "./user-settings.ts";
+import initialScript from "./init.squiffy?raw";
+import { clearDebugger, logToDebugger } from "./debugger.ts";
+import { el, downloadString, downloadUint8Array } from "./util.ts";
 
 Object.assign(window, { $: $, jQuery: $ });
 
@@ -41,10 +40,7 @@ let currentRow: any;
 let currentSection: Section | null;
 let currentPassage: Passage | null;
 let squiffyApi: SquiffyApi | null;
-
-function el<T>(id: string) {
-    return document.getElementById(id) as T;
-}
+let welcomeModal: Modal | null = null;
 
 function onClick(id: string, fn: () => void) {
     const element = el<HTMLElement>(id);
@@ -63,15 +59,6 @@ const populateSettingsDialog = function () {
         userSettings.setFontSize(val);
         fontSizeElement.value = val;
     });
-};
-
-const clearDebugger = function () {
-    el<HTMLElement>("debugger").innerHTML = "";
-    let versionInfo = `Squiffy ${version}`;
-    if (commitsSince > 0) {
-        versionInfo += `.${commitsSince}`;
-    }
-    logToDebugger(versionInfo);
 };
 
 const restart = function () {
@@ -110,30 +97,6 @@ const downloadJavascript = async function () {
         const js = await result.getJs();
         downloadString(js, title + ".js");
     }
-};
-
-const downloadString = function (data: string, filename: string) {
-    const blobData = new TextEncoder().encode(data).buffer;
-    const blob = new Blob([blobData], { type: "text/plain" });
-    downloadBlob(blob, filename);
-};
-
-const downloadUint8Array = function (data: Uint8Array, filename: string) {
-    const blobData = new Uint8Array(data).buffer;
-    const blob = new Blob([blobData], { type: "application/octet-stream" });
-    downloadBlob(blob, filename);
-};
-
-const downloadBlob = function (blob: Blob, filename: string) {
-    const downloadLink = document.createElement("a");
-    downloadLink.download = filename;
-    downloadLink.href = window.URL.createObjectURL(blob);
-    downloadLink.onclick = () => {
-        document.body.removeChild(downloadLink);
-    };
-    downloadLink.style.display = "none";
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
 };
 
 const preview = async function () {
@@ -203,15 +166,106 @@ const showSettings = function () {
     new Modal("#settings-dialog").show();
 };
 
-let localSaveTimeout: NodeJS.Timeout | undefined, autoSaveTimeout: NodeJS.Timeout | undefined;
+const showWelcome = async function (dismissable = false) {
+    // Dispose of old modal if it exists
+    if (welcomeModal) {
+        welcomeModal.dispose();
+    }
+
+    const welcomeDialog = el<HTMLElement>("welcome-dialog");
+    if (!welcomeDialog) {
+        console.error("Welcome dialog element not found");
+        return;
+    }
+
+    // Create modal with appropriate options
+    welcomeModal = new Modal(welcomeDialog, {
+        backdrop: dismissable ? true : "static",
+        keyboard: dismissable
+    });
+
+    // Show/hide close button based on dismissable parameter
+    const closeButton = el<HTMLElement>("welcome-close");
+    closeButton.style.display = dismissable ? "block" : "none";
+
+    // Clear any previous error messages
+    const errorDiv = el<HTMLElement>("welcome-error");
+    errorDiv.style.display = "none";
+    errorDiv.textContent = "";
+
+    // Populate recent files list
+    const recentFiles = await getRecentFiles();
+    const recentFilesContainer = el<HTMLElement>("welcome-recent-files");
+    const recentFilesList = el<HTMLElement>("welcome-recent-files-list");
+
+    if (recentFiles.length > 0) {
+        recentFilesContainer.style.display = "block";
+
+        // Clear existing list
+        recentFilesList.innerHTML = "";
+
+        // Add each recent file as a clickable item
+        recentFiles.forEach(rf => {
+            const item = document.createElement("button");
+            item.className = "list-group-item list-group-item-action";
+            item.textContent = rf.name;
+            item.dataset.fileName = rf.name;
+            item.addEventListener("click", () => handleRecentFileClick(rf.name));
+            recentFilesList.appendChild(item);
+        });
+    } else {
+        recentFilesContainer.style.display = "none";
+    }
+
+    welcomeModal.show();
+};
+
+const clearWelcomeError = function () {
+    const errorDiv = el<HTMLElement>("welcome-error");
+    errorDiv.style.display = "none";
+    errorDiv.textContent = "";
+};
+
+const handleRecentFileClick = async function (fileName: string) {
+    clearWelcomeError();
+    const success = await openRecentFile(fileName);
+    if (success) {
+        welcomeModal?.hide();
+    } else {
+        // Show error message in the welcome screen
+        const errorDiv = el<HTMLElement>("welcome-error");
+        errorDiv.textContent = `Could not open "${fileName}". The file may have been moved or deleted.`;
+        errorDiv.style.display = "block";
+    }
+};
+
+const handleWelcomeCreateNew = async function () {
+    clearWelcomeError();
+    await editorLoad(initialScript);
+    welcomeModal?.hide();
+};
+
+const handleWelcomeOpenFile = async function () {
+    clearWelcomeError();
+    try {
+        await openFile();
+        // Only hide modal if file was successfully opened
+        welcomeModal?.hide();
+    } catch {
+        // Modal stays visible, no message needed (user cancelled)
+    }
+};
+
+let localSaveTimeout: NodeJS.Timeout | undefined;
 
 const editorChange = async function () {
     if (loading) return;
     setInfo("");
     if (localSaveTimeout) clearTimeout(localSaveTimeout);
-    localSaveTimeout = setTimeout(localSave, 50);
-    if (autoSaveTimeout) clearTimeout(autoSaveTimeout);
-    autoSaveTimeout = setTimeout(autoSave, 5000);
+    localSaveTimeout = setTimeout(() => {
+        localSave();
+        processFile();
+    }, 50);
     // TODO: Show some indicator that the current file has not been saved
 
     clearDebugger();
@@ -227,21 +281,17 @@ const editorChange = async function () {
 };
 
 const localSave = function () {
-    const data = editor.getValue();
-    localStorage.squiffy = data;
-    processFile(data);
-};
-
-const autoSave = function () {
     // TODO
-    console.log("TODO: autoSave");
+    console.log("TODO: localSave");
+    // localStorage.squiffy = editor.getValue();
 };
 
 const setInfo = function (text: string) {
     el<HTMLElement>("info").innerHTML = text;
 };
 
-const processFile = function (data: string) {
+const processFile = function () {
+    const data = editor.getValue();
     const titleRegex = /^@title (.*)$/;
     const sectionRegex = /^\[\[(.*)\]\]:$/;
     const passageRegex = /^\[(.*)\]:$/;
@@ -327,8 +377,8 @@ const editorLoad = async function (data: string) {
     loading = true;
     editor.setValue(data);
     loading = false;
-    localStorage.squiffy = data;
-    processFile(data);
+    localSave();
+    processFile();
     await initialCompile();
 };
 
@@ -398,21 +448,23 @@ const updateTitle = function (title: string) {
     document.title = title + " - Squiffy Editor";
 };
 
-const init = async function (data: string) {
+const init = async function () {
     userSettings.initUserSettings();
     populateSettingsDialog();
 
     editor.init(editorChange, cursorMoved);
     editor.setFontSize(userSettings.getFontSize());
-
-    await editorLoad(data);
-    cursorMoved();
+    setOnOpen(editorLoad);
 
     onClick("restart", restart);
     onClick("back", goBack);
-    onClick("file-new", () => editorLoad(""));
-    onClick("open", () => openFile(editorLoad));
+    onClick("file-new", () => {
+        clearCurrentFile();
+        editorLoad(initialScript);
+    });
+    onClick("open", openFile);
     onClick("save", () => saveFile(editor.getValue()));
+    onClick("save-as", () => saveFileAs(editor.getValue()));
 
     onClick("download-squiffy-script", downloadSquiffyScript);
     onClick("export-html-js", downloadZip);
@@ -421,6 +473,9 @@ const init = async function (data: string) {
     onClick("preview", preview);
 
     onClick("settings", showSettings);
+    onClick("show-welcome", () => showWelcome(true));
+    onClick("welcome-create-new", handleWelcomeCreateNew);
+    onClick("welcome-open-file", handleWelcomeOpenFile);
     onClick("add-section", addSection);
     onClick("add-passage", addPassage);
     onClick("collapse-all", editor.collapseAll);
@@ -438,10 +493,13 @@ const init = async function (data: string) {
     $("#sections").on("change", sectionChanged);
     $("#passages").on("change", passageChanged);
     $("#sections, #passages").chosen({ width: "100%" });
+
+    // Show welcome screen after all event handlers are registered
+    await showWelcome();
 };
 
 const setBackButtonEnabled = function(enabled: boolean) {
-    const backButton = document.getElementById("back") as HTMLButtonElement | null;
+    const backButton = el<HTMLButtonElement>("back");
     if (!backButton) return;
     backButton.disabled = !enabled;
 };
@@ -455,12 +513,6 @@ const onSet = function (attribute: string, value: string) {
     if (attribute.indexOf("_") === 0) return;
 
     logToDebugger(`${attribute} = ${value}`);
-};
-
-const logToDebugger = function (text: string) {
-    const debuggerEl = el<HTMLElement>("debugger");
-    debuggerEl.innerHTML += `${text}<br>`;
-    debuggerEl.scrollTop = debuggerEl.scrollHeight;
 };
 
 const compile = async function(forExportPackage: boolean) {
@@ -540,21 +592,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
     [...tooltipTriggerList].map(tooltipTriggerEl => new Tooltip(tooltipTriggerEl));
 
-    const saved = localStorage.squiffy;
-    if (saved) {
-        await init(localStorage.squiffy);
-    } else {
-        await init("@title New Game\n\n" +
-            "Start writing! You can delete all of this text, or play around with it if you're new to Squiffy.\n\n" +
-            "Each choice is represented by a [[new section]]. You can create links to new sections by surrounding them " +
-            "in double square brackets.\n\n" +
-            "[[new section]]:\n\nIn addition to sections, Squiffy has the concept of passages. These are sections of " +
-            "text that don't advance the story. Passage links use single square brackets. For example, you can click this [passage link], and this [other passage " +
-            "link], but the story won't advance until you click this [[section link]].\n\n" +
-            "[passage link]:\n\nThis is the text for the first passage link.\n\n" +
-            "[other passage link]:\n\nThis is the text for the second passage link.\n\n" +
-            "[[section link]]:\n\nWhen a new section appears, any unclicked passage links from the previous section are disabled.");
-    }
+    // const saved = localStorage.squiffy;
+    // if (saved) {
+    //     await init(localStorage.squiffy);
+    // } else {
+        await init();
+    // }
 });
 
 Split(["#left-pane", "#right-pane"]);

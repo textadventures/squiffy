@@ -263,3 +263,51 @@ ul.dropdown-menu a {
     background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAFAQMAAABo7865AAAABlBMVEVHcEzMzMzyAv2sAAAAAXRSTlMAQObYZgAAABBJREFUeF5jOAMEEAIEEFwAn3kMwcB6I2AAAAAASUVORK5CYII=');
     cursor: row-resize;
 }
+
+/* Welcome Screen Styles */
+#welcome-dialog .modal-body {
+    padding: 2rem;
+}
+
+#welcome-dialog .btn-lg {
+    font-size: 1.1rem;
+    padding: 0.75rem 1.5rem;
+}
+
+#welcome-dialog img {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#welcome-recent-files {
+    margin-top: 1rem;
+}
+
+#welcome-recent-files h6 {
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.75rem;
+}
+
+#welcome-recent-files-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+#welcome-recent-files-list .list-group-item {
+    text-align: left;
+    padding: 0.75rem 1rem;
+    border-color: #dee2e6;
+    cursor: pointer;
+    font-size: 0.95rem;
+}
+
+#welcome-recent-files-list .list-group-item:hover {
+    background-color: #f8f9fa;
+}
+
+#welcome-recent-files-list .list-group-item:active {
+    background-color: #e9ecef;
+}

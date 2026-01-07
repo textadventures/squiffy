@@ -25,6 +25,7 @@
                     <li><button class="dropdown-item" id="save-as">Save as...</button></li>
                     <li><hr class="dropdown-divider"></li>
                     <li><button class="dropdown-item" id="settings">Settings...</button></li>
+                    <li><button class="dropdown-item" id="show-welcome">Welcome Screen...</button></li>
                     <li><hr class="dropdown-divider"></li>
                     <li><button class="dropdown-item" id="download-squiffy-script">Download Squiffy script</button></li>
                     <li><button class="dropdown-item" id="export-html-js">Export HTML and JavaScript</button></li>
@@ -103,6 +104,39 @@
             </div>
         </div>
     </div>
+
+    <div class="modal" id="welcome-dialog" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Welcome to Squiffy</h5>
+                    <button type="button" class="btn-close" id="welcome-close" data-bs-dismiss="modal" aria-label="Close" style="display: none;"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <img src="/squiffy.png" alt="Squiffy Logo" class="mb-4" style="max-width: 200px;">
+                    <div class="alert alert-danger" id="welcome-error" style="display: none;" role="alert"></div>
+                    <div class="d-grid gap-3">
+                        <button type="button" class="btn btn-primary btn-lg" id="welcome-create-new">
+                            Create New Game
+                        </button>
+                        <button type="button" class="btn btn-outline-primary btn-lg" id="welcome-open-file">
+                            Open File...
+                        </button>
+                    </div>
+                    <div id="welcome-recent-files" style="display: none;">
+                        <hr class="my-3">
+                        <h6 class="text-muted mb-2">Recent Files</h6>
+                        <div class="list-group" id="welcome-recent-files-list">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden file input for Safari fallback -->
+    <input type="file" id="file-input-fallback" accept=".squiffy" style="display: none;">
 
 </body>
 
