@@ -4,6 +4,19 @@
   "type": "module",
   "main": "dist/squiffy.runtime.js",
   "types": "dist/squiffy.runtime.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/squiffy.runtime.d.ts",
+      "default": "./dist/squiffy.runtime.js"
+    },
+    "./squiffy.runtime.css": "./dist/squiffy.runtime.css",
+    "./dist/squiffy.runtime.global.js": "./dist/squiffy.runtime.global.js",
+    "./dist/squiffy.runtime.css": "./dist/squiffy.runtime.css",
+    "./dist/events": {
+      "types": "./dist/events.d.ts",
+      "default": "./dist/events.js"
+    }
+  },
   "scripts": {
     "dev": "vitest",
     "test": "vitest --run",

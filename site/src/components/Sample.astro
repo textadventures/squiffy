@@ -5,6 +5,7 @@ interface Props {
 }
 
 import Split from "./Split.astro";
+import "squiffy-runtime/squiffy.runtime.css";
 
 const { script, alwaysShowRestart } = Astro.props;
 
@@ -12,38 +13,11 @@ const restartClass = "sample-button restart" + (!alwaysShowRestart ? " hidden" :
 ---
 
 <style is:global>
+    /* Override runtime CSS link colors with theme colors */
     a.squiffy-link
     {
-        text-decoration: underline;
         text-decoration-color: var(--sl-color-text-accent);
         color: var(--sl-color-text-accent);
-        cursor: pointer;
-        transition: color 0.4s ease-in-out, text-decoration-color 0.4s ease-in-out;
-    }
-    a.squiffy-link.disabled,
-    div.squiffy-output-section:not(:last-child) a.squiffy-link,
-    div.squiffy-output-section.links-disabled a.squiffy-link
-    {
-        text-decoration: inherit;
-        text-decoration-color: transparent;
-        color: inherit !important;
-        cursor: inherit;
-        pointer-events: none;
-    }
-    div.squiffy-output-block:not(:last-child),
-    div.squiffy-output-passage:not(:last-child),
-    div.squiffy-output-section:not(:last-child)
-    {
-        margin-bottom: 1em;
-        border-bottom: 1px solid #ccc;
-    }
-    .fade-out {
-        opacity: 0;
-        transition: opacity 200ms;
-    }
-    .fade-in {
-        opacity: 1;
-        transition: opacity 200ms;
     }
     .viewer-container {
         padding: 0.5em;
