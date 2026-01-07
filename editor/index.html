@@ -58,7 +58,7 @@
             <button id="add-passage" class="btn btn-outline-dark">Add passage</button>
             <button id="collapse-all" class="btn btn-outline-dark" data-bs-toggle="tooltip" title="Collapse all sections and passages"><i class="bi bi-arrows-collapse"></i></button>
             <button id="uncollapse-all" class="btn btn-outline-dark" data-bs-toggle="tooltip" title="Expand all sections and passages"><i class="bi bi-arrows-expand"></i></button>
-            <span id="info"></span>
+            <span id="unsaved-indicator" class="badge bg-warning text-dark ms-2" style="display: none;"><i class="bi bi-pencil-fill"></i> Unsaved changes</span>
             <div style="float: right">
                 <button id="back" class="btn btn-outline-success"><i class="bi bi-box-arrow-in-left"></i> Back</button>
                 <button id="restart" class="btn btn-outline-success"><i class="bi bi-arrow-clockwise"></i> Restart</button>
@@ -123,6 +123,19 @@
                             Open File...
                         </button>
                     </div>
+                    <div id="welcome-autosave" style="display: none;">
+                        <hr class="my-3">
+                        <h6 class="text-muted mb-2">Unsaved Work</h6>
+                        <button type="button" class="btn btn-warning w-100" id="welcome-resume-autosave">
+                            <i class="bi bi-clock-history"></i> Resume Unsaved Work
+                            <br>
+                            <small class="text-muted">
+                                <span id="welcome-autosave-filename" style="display: none;"></span>
+                                <span id="welcome-autosave-separator" style="display: none;"> - </span>
+                                Last saved: <span id="welcome-autosave-time"></span>
+                            </small>
+                        </button>
+                    </div>
                     <div id="welcome-recent-files" style="display: none;">
                         <hr class="my-3">
                         <h6 class="text-muted mb-2">Recent Files</h6>
@@ -137,6 +150,25 @@
 
     <!-- Hidden file input for Safari fallback -->
     <input type="file" id="file-input-fallback" accept=".squiffy" style="display: none;">
+
+    <div class="modal" id="unsaved-changes-dialog" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Unsaved Changes</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>You have unsaved changes. If you continue, your changes will be lost.</p>
+                    <p>Do you want to continue?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="unsaved-changes-confirm">Discard Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
 </body>
 
