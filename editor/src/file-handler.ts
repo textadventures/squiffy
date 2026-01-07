@@ -19,11 +19,24 @@ export const clearCurrentFile = () => {
     currentFileName = null;
 };
 
-const openFileFallback = async (): Promise<void> => {
-    return new Promise((resolve, reject) => {
+export const getCurrentFileHandle = (): FileSystemFileHandle | null => {
+    return fileHandle;
+};
+
+export const getCurrentFileName = (): string | null => {
+    return currentFileName;
+};
+
+export const setCurrentFile = (handle: FileSystemFileHandle | null, fileName: string | null) => {
+    fileHandle = handle;
+    currentFileName = fileName;
+};
+
+const openFileFallback = async (): Promise<boolean> => {
+    return new Promise((resolve) => {
         const input = document.getElementById("file-input-fallback") as HTMLInputElement;
         if (!input) {
-            reject(new Error("File input element not found"));
+            resolve(false);
             return;
         }
 
@@ -40,13 +53,13 @@ const openFileFallback = async (): Promise<void> => {
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     onOpen(e.target?.result as string);
-                    resolve();
+                    resolve(true);
                 };
-                reader.onerror = () => reject(reader.error);
+                reader.onerror = () => resolve(false);
                 reader.readAsText(file);
             } else {
                 // User cancelled
-                reject(new Error("No file selected"));
+                resolve(false);
             }
 
             // Clean up listener
@@ -58,17 +71,23 @@ const openFileFallback = async (): Promise<void> => {
     });
 };
 
-export const openFile = async () => {
+export const openFile = async (): Promise<boolean> => {
     // TODO: Check for unsaved changes first
 
-    if (hasFileSystemAccess()) {
-        // Modern API - Chrome, Edge
-        [fileHandle] = await window.showOpenFilePicker();
-        await addToRecentFiles(fileHandle);
-        await openFileHandle();
-    } else {
-        // Fallback for Safari, Firefox
-        await openFileFallback();
+    try {
+        if (hasFileSystemAccess()) {
+            // Modern API - Chrome, Edge
+            [fileHandle] = await window.showOpenFilePicker();
+            await addToRecentFiles(fileHandle);
+            const success = await openFileHandle();
+            return success;
+        } else {
+            // Fallback for Safari, Firefox
+            return await openFileFallback();
+        }
+    } catch {
+        // User cancelled or permission denied
+        return false;
     }
 };
 

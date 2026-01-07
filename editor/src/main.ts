@@ -6,7 +6,8 @@ import "./jquery-globals";
 import "chosen-js/chosen.jquery.js";
 import { Modal, Tab, Tooltip } from "bootstrap";
 import { compile as squiffyCompile, CompileError } from "squiffy-compiler";
-import { openFile, saveFile, saveFileAs, setOnOpen, getRecentFiles, openRecentFile, clearCurrentFile } from "./file-handler";
+import { openFile, saveFile, saveFileAs, setOnOpen, getRecentFiles, openRecentFile, clearCurrentFile, getCurrentFileHandle, getCurrentFileName, setCurrentFile } from "./file-handler";
+import { get, set, del } from "idb-keyval";
 import * as editor from "./editor";
 import { init as runtimeInit, SquiffyApi } from "squiffy-runtime";
 import { SquiffyEventHandler } from "squiffy-runtime/dist/events";
@@ -72,12 +73,10 @@ const goBack = function () {
 };
 
 const downloadSquiffyScript = function () {
-    localSave();
     downloadString(editor.getValue(), title + ".squiffy");
 };
 
 const downloadZip = async function () {
-    localSave();
     const result = await compile(true);
 
     if (result.success) {
@@ -90,7 +89,6 @@ const downloadZip = async function () {
 };
 
 const downloadJavascript = async function () {
-    localSave();
     const result = await compile(true);
 
     if (result.success) {
@@ -193,6 +191,30 @@ const showWelcome = async function (dismissable = false) {
     errorDiv.style.display = "none";
     errorDiv.textContent = "";
 
+    // Check for autosaved work
+    const autoSave = await getAutoSave();
+    const autoSaveContainer = el<HTMLElement>("welcome-autosave");
+
+    if (autoSave) {
+        autoSaveContainer.style.display = "block";
+        const autoSaveTime = el<HTMLElement>("welcome-autosave-time");
+        const date = new Date(autoSave.timestamp);
+        autoSaveTime.textContent = date.toLocaleString();
+
+        const autoSaveFileName = el<HTMLElement>("welcome-autosave-filename");
+        const autoSaveSeparator = el<HTMLElement>("welcome-autosave-separator");
+        if (autoSave.fileName) {
+            autoSaveFileName.textContent = autoSave.fileName;
+            autoSaveFileName.style.display = "inline";
+            autoSaveSeparator.style.display = "inline";
+        } else {
+            autoSaveFileName.style.display = "none";
+            autoSaveSeparator.style.display = "none";
+        }
+    } else {
+        autoSaveContainer.style.display = "none";
+    }
+
     // Populate recent files list
     const recentFiles = await getRecentFiles();
     const recentFilesContainer = el<HTMLElement>("welcome-recent-files");
@@ -239,21 +261,34 @@ const handleRecentFileClick = async function (fileName: string) {
     }
 };
 
+const handleWelcomeResumeAutoSave = async function () {
+    clearWelcomeError();
+    const autoSave = await getAutoSave();
+    if (autoSave) {
+        // Restore the file context (handle and name) if available
+        setCurrentFile(autoSave.fileHandle || null, autoSave.fileName || null);
+        await editorLoad(autoSave.content);
+        welcomeModal?.hide();
+    }
+};
+
 const handleWelcomeCreateNew = async function () {
     clearWelcomeError();
+    await clearAutoSave();
     await editorLoad(initialScript);
     welcomeModal?.hide();
 };
 
 const handleWelcomeOpenFile = async function () {
     clearWelcomeError();
-    try {
-        await openFile();
+    const success = await openFile();
+    if (success) {
+        // Clear autosave when opening a file from disk
+        await clearAutoSave();
         // Only hide modal if file was successfully opened
         welcomeModal?.hide();
-    } catch {
-        // Modal stays visible, no message needed (user cancelled)
     }
+    // If not successful, modal stays visible (user cancelled)
 };
 
 let localSaveTimeout: NodeJS.Timeout | undefined;
@@ -280,10 +315,32 @@ const editorChange = async function () {
     }
 };
 
-const localSave = function () {
-    // TODO
-    console.log("TODO: localSave");
-    // localStorage.squiffy = editor.getValue();
+interface AutoSave {
+    content: string;
+    timestamp: number;
+    title?: string;
+    fileHandle?: FileSystemFileHandle;
+    fileName?: string;
+}
+
+const localSave = async function () {
+    const content = editor.getValue();
+    const autoSave: AutoSave = {
+        content,
+        timestamp: Date.now(),
+        title: title,
+        fileHandle: getCurrentFileHandle() || undefined,
+        fileName: getCurrentFileName() || undefined
+    };
+    await set("autosave", autoSave);
+};
+
+const getAutoSave = async function (): Promise<AutoSave | undefined> {
+    return await get("autosave");
+};
+
+const clearAutoSave = async function () {
+    await del("autosave");
 };
 
 const setInfo = function (text: string) {
@@ -377,7 +434,6 @@ const editorLoad = async function (data: string) {
     loading = true;
     editor.setValue(data);
     loading = false;
-    localSave();
     processFile();
     await initialCompile();
 };
@@ -458,13 +514,29 @@ const init = async function () {
 
     onClick("restart", restart);
     onClick("back", goBack);
-    onClick("file-new", () => {
+    onClick("file-new", async () => {
         clearCurrentFile();
-        editorLoad(initialScript);
+        await clearAutoSave();
+        await editorLoad(initialScript);
     });
-    onClick("open", openFile);
-    onClick("save", () => saveFile(editor.getValue()));
-    onClick("save-as", () => saveFileAs(editor.getValue()));
+    onClick("open", async () => {
+        const success = await openFile();
+        if (success) {
+            await clearAutoSave();
+        }
+    });
+    onClick("save", async () => {
+        const success = await saveFile(editor.getValue());
+        if (success) {
+            await clearAutoSave();
+        }
+    });
+    onClick("save-as", async () => {
+        const success = await saveFileAs(editor.getValue());
+        if (success) {
+            await clearAutoSave();
+        }
+    });
 
     onClick("download-squiffy-script", downloadSquiffyScript);
     onClick("export-html-js", downloadZip);
@@ -476,6 +548,7 @@ const init = async function () {
     onClick("show-welcome", () => showWelcome(true));
     onClick("welcome-create-new", handleWelcomeCreateNew);
     onClick("welcome-open-file", handleWelcomeOpenFile);
+    onClick("welcome-resume-autosave", handleWelcomeResumeAutoSave);
     onClick("add-section", addSection);
     onClick("add-passage", addPassage);
     onClick("collapse-all", editor.collapseAll);
@@ -592,12 +665,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
     [...tooltipTriggerList].map(tooltipTriggerEl => new Tooltip(tooltipTriggerEl));
 
-    // const saved = localStorage.squiffy;
-    // if (saved) {
-    //     await init(localStorage.squiffy);
-    // } else {
-        await init();
-    // }
+    await init();
 });
 
 Split(["#left-pane", "#right-pane"]);
