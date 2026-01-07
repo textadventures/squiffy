@@ -72,8 +72,6 @@ const openFileFallback = async (): Promise<boolean> => {
 };
 
 export const openFile = async (): Promise<boolean> => {
-    // TODO: Check for unsaved changes first
-
     try {
         if (hasFileSystemAccess()) {
             // Modern API - Chrome, Edge
