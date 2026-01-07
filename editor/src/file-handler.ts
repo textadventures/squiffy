@@ -79,8 +79,7 @@ export const openFile = async (): Promise<boolean> => {
             // Modern API - Chrome, Edge
             [fileHandle] = await window.showOpenFilePicker();
             await addToRecentFiles(fileHandle);
-            const success = await openFileHandle();
-            return success;
+            return await openFileHandle();
         } else {
             // Fallback for Safari, Firefox
             return await openFileFallback();
