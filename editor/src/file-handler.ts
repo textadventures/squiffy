@@ -174,11 +174,11 @@ export const saveFileAs = async (data: string): Promise<boolean> => {
             const options = {
                 types: [
                     {
-                        description: 'Squiffy Files',
-                        accept: { 'text/plain': ['.squiffy'] },
+                        description: "Squiffy Files",
+                        accept: { "text/plain": [".squiffy"] },
                     },
                 ],
-                suggestedName: currentFileName || 'game.squiffy',
+                suggestedName: currentFileName || "game.squiffy",
             };
 
             fileHandle = await window.showSaveFilePicker(options);
@@ -199,7 +199,7 @@ export const saveFileAs = async (data: string): Promise<boolean> => {
         }
     } else {
         // Fallback - prompt for filename and download
-        const newFileName = prompt('Save as:', currentFileName || 'game.squiffy');
+        const newFileName = prompt("Save as:", currentFileName || "game.squiffy");
         if (newFileName) {
             currentFileName = newFileName;
             downloadString(data, newFileName);
