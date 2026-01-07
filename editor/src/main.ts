@@ -172,7 +172,7 @@ const showWelcome = async function (dismissable = false) {
         welcomeModal.dispose();
     }
 
-    const welcomeDialog = document.getElementById("welcome-dialog");
+    const welcomeDialog = el<HTMLElement>("welcome-dialog");
     if (!welcomeDialog) {
         console.error("Welcome dialog element not found");
         return;
@@ -499,7 +499,7 @@ const init = async function () {
 };
 
 const setBackButtonEnabled = function(enabled: boolean) {
-    const backButton = document.getElementById("back") as HTMLButtonElement | null;
+    const backButton = el<HTMLButtonElement>("back");
     if (!backButton) return;
     backButton.disabled = !enabled;
 };
