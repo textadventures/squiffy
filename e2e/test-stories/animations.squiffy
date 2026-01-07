@@ -1,0 +1,18 @@
+@title Animation Tests
+
+{{#animate "typewriter"}}This text should animate character by character.{{/animate}}
+
++++Continue...
+
+{{#animate "typewriter" loop=true}}This loops forever.{{/animate}}
+
++++More...
+
+{{#animate "typewriter" interval=200}}This is slower.{{/animate}}
+
++++Link trigger...
+
+{{#animate "typewriter" trigger="link"}}[Click to animate this]{{/animate}}
+
+[Click to animate this]:
+Animation triggered!

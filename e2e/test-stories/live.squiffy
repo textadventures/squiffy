@@ -1,0 +1,32 @@
+@title Live Update Tests
+
+@set score = 0
+@set status = waiting
+
+Score: {{live "score"}}
+Status: {{live "status"}}
+
+[Increase score]
+[Change status]
+
+[Increase score]:
+@set score = 100
+Score increased!
+
+[Change status]:
+@set status = completed
+Status changed!
+
++++Test live with sections
+
+[[status_section]]:
+You have {score} points. Status: {status}
+
+Status display: {{live "score" section="status_section"}}
+
+[Update both]
+
+[Update both]:
+@set score = 999
+@set status = finished
+Both updated!
