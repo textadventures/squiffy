@@ -153,7 +153,7 @@ test.describe("Live Update Plugin", () => {
     await expect(page.locator(".squiffy-live").filter({ hasText: "completed" })).toBeVisible();
   });
 
-  test.skip("should update live section content", async ({ page }) => {
+  test.skip("should update live section content", async () => {
     // Skipped: Live section embedding is complex and may need adjustments
     // The basic live updates work (tested in other tests)
   });

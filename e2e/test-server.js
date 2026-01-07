@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* global URL, console, process */
 
 import http from "http";
 import { compile } from "../compiler/dist/compiler.js";

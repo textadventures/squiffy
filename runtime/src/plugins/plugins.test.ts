@@ -1,4 +1,4 @@
-import { expect, test, beforeEach, afterEach, vi } from "vitest";
+import { expect, test, beforeEach, afterEach } from "vitest";
 import globalJsdom from "global-jsdom";
 import { init } from "../squiffy.runtime.js";
 import { compile as squiffyCompile } from "squiffy-compiler";

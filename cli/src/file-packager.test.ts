@@ -21,7 +21,7 @@ afterEach(async () => {
     // Clean up all test files
     try {
         await fs.rm(TEST_DIR, { recursive: true, force: true });
-    } catch (e) {
+    } catch {
         // Ignore cleanup errors
     }
 });
