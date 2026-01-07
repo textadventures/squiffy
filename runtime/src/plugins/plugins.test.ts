@@ -75,8 +75,8 @@ let cleanup: { (): void };
 beforeEach(() => {
     cleanup = globalJsdom(html);
     // Mock document.fonts for animations
-    Object.defineProperty(document, 'fonts', {
-        value: { status: 'loaded' },
+    Object.defineProperty(document, "fonts", {
+        value: { status: "loaded" },
         writable: true,
         configurable: true
     });
