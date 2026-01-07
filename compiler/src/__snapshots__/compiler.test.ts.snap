@@ -1,5 +1,60 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`animate/animate.squiffy 1`] = `
+"export const story = {};
+story.id = "animate.squiffy";
+story.uiJsIndex = 0;
+story.start = "_default";
+story.sections = {
+    "_default": {
+        "text": "Hello world.\\n\\n{{#animate \\"typewriter\\" loop=true}}This is animated.{{/animate}}\\n\\n{{#animate \\"typewriter\\" start=2000}}This is some much longer text which is also animated, but not looped.{{/animate}}\\n\\nCheck out {{#animate \\"typewriter\\" trigger=\\"link\\"}}{{passage \\"this animation\\"}}{{/animate}}.\\n\\n{{section \\"_continue1\\" text=\\"Continue...\\"}}",
+        "passages": {
+            "this animation": {
+                "text": "Cool huh?\\n"
+            }
+        }
+    },
+    "_continue1": {
+        "text": "{{#animate \\"typewriter\\" interval=500}}This is a bit slower.{{/animate}}\\n\\n{{section \\"_continue2\\" text=\\"Would you like some toast?\\"}}"
+    },
+    "_continue2": {
+        "text": "{{#animate \\"toast\\"}}This text appears word by word with a toast effect.{{/animate}}\\n\\n{{section \\"_continue3\\" text=\\"Custom animation\\"}}"
+    },
+    "_continue3": {
+        "text": "{{#animate \\"custom-animation\\"}}This text appears with a custom animation defined in ui.js.{{/animate}}"
+    }
+};
+story.js = [
+	(squiffy, get, set) => {
+		squiffy.registerAnimation('custom-animation', function(el, params, onComplete, loop) {
+    // Based on the sample in the animejs docs: https://animejs.com/documentation/animation
+    const { animate, stagger, text } = squiffy.import.animejs;
+
+    const { chars } = text.split(el, { words: false, chars: true });
+
+    animate(chars, {
+        // Property keyframes
+        y: [
+            { to: '-2.75rem', ease: 'outExpo', duration: 600 },
+            { to: 0, ease: 'outBounce', duration: 800, delay: 100 }
+        ],
+        // Property specific parameters
+        rotate: {
+            from: '-1turn',
+            delay: 0
+        },
+        delay: stagger(50),
+        ease: 'inOutCirc',
+        loopDelay: 1000,
+        loop: loop,
+        onComplete: onComplete
+    });
+});
+
+	},
+];"
+`;
+
 exports[`attributes/attributes.squiffy 1`] = `
 "export const story = {};
 story.id = "attributes.squiffy";
@@ -219,6 +274,28 @@ story.js = [
 ];"
 `;
 
+exports[`input/input.squiffy 1`] = `
+"export const story = {};
+story.id = "input.squiffy";
+story.start = "_default";
+story.sections = {
+    "_default": {
+        "text": "Enter some text in the box:\\n\\n<input type=\\"text\\" data-attribute=\\"name\\" placeholder=\\"Type here...\\">\\n\\n{{section \\"_continue1\\" text=\\"Continue...\\"}}"
+    },
+    "_continue1": {
+        "text": "You entered: {{name}}.\\n\\nNow type some more...\\n\\n<textarea data-attribute=\\"some-text\\"></textarea>\\n\\n{{section \\"_continue2\\" text=\\"Continue...\\"}}"
+    },
+    "_continue2": {
+        "text": "You entered: {{some-text}}.\\n\\n<div contenteditable=\\"true\\" data-attribute=\\"some-content\\">\\nThis is editable content.\\n</div>\\n\\n{{section \\"_continue3\\" text=\\"Continue...\\"}}"
+    },
+    "_continue3": {
+        "text": "You entered: {{some-content}}."
+    }
+};
+story.js = [
+];"
+`;
+
 exports[`last/last.squiffy 1`] = `
 "export const story = {};
 story.id = "last.squiffy";
@@ -262,6 +339,67 @@ story.sections = {
                 "text": "You saw all passages!"
             }
         }
+    }
+};
+story.js = [
+];"
+`;
+
+exports[`link-attributes/link-attributes.squiffy 1`] = `
+"export const story = {};
+story.id = "link-attributes.squiffy";
+story.start = "_default";
+story.sections = {
+    "_default": {
+        "text": "Hello.\\n\\nChoose {{section \\"next\\" text=\\"one\\" set=\\" t=1,  c+=1\\"}}, {{section \\"next\\" text=\\"two\\" set=\\" t=2,  even=true,  c+=1\\"}} or {{section \\"next\\" text=\\"three\\" set=\\" t=3,  c+=1\\"}}.\\n",
+        "attributes": [
+            "not even",
+            "c = 1"
+        ]
+    },
+    "next": {
+        "text": "You selected: {{t}}.\\n\\n{{#if even}}\\nYou selected an even number.\\n{{else}}\\nYou selected an odd number.\\n{{/if}}\\n\\nc = {{c}}.\\n\\n{{section \\"_continue1\\" text=\\"Continue...\\"}}"
+    },
+    "_continue1": {
+        "text": "Now using helpers...\\n\\n\\nChoose\\n{{section \\"next2\\" text=\\"one\\" set=\\"t=1, c+=1\\"}},\\n{{section \\"next2\\" text=\\"two\\" set=\\"t=2, even=true, c+=1\\"}}\\nor\\n{{section \\"next2\\" text=\\"three\\" set=\\"t=3, c+=1\\"}}\\n",
+        "attributes": [
+            "not even",
+            "c = 1"
+        ]
+    },
+    "next2": {
+        "text": "You selected: {{t}}.\\n\\n{{#if even}}\\nYou selected an even number.\\n{{else}}\\nYou selected an odd number.\\n{{/if}}\\n\\nc = {{c}}."
+    }
+};
+story.js = [
+];"
+`;
+
+exports[`live/live.squiffy 1`] = `
+"export const story = {};
+story.id = "live.squiffy";
+story.start = "_default";
+story.sections = {
+    "_default": {
+        "text": "This is static: {{count}}.\\n\\nThis is live: {{live \\"count\\"}}.\\n\\nAnd so is this: {{live \\"count\\" section=\\"embedded\\"}}\\n\\n{{section \\"_continue1\\" text=\\"Continue\\"}}",
+        "attributes": [
+            "count = 0"
+        ]
+    },
+    "_continue1": {
+        "text": "Now count is {{count}}.\\n\\n{{section \\"_continue2\\" text=\\"Continue\\"}}",
+        "attributes": [
+            "count+=1"
+        ]
+    },
+    "_continue2": {
+        "text": "Now count is {{count}}.\\n",
+        "attributes": [
+            "count+=1"
+        ]
+    },
+    "embedded": {
+        "text": "Text from a section, and count is {{count}}."
     }
 };
 story.js = [

@@ -15,8 +15,10 @@ const externalFiles = (inputFilename: string) => {
             return result.filter((filename: string) => !includedFiles.includes(filename));
         },
         getContent: async (filename: string): Promise<string> => {
-            includedFiles.push(filename);
-            return (await fs.readFile(filename)).toString();
+            // Resolve relative paths against basePath
+            const resolvedPath = path.isAbsolute(filename) ? filename : path.join(basePath, filename);
+            includedFiles.push(resolvedPath);
+            return (await fs.readFile(resolvedPath)).toString();
         },
         getLocalFilename(filename: string): string {
             return path.relative(basePath, filename);
@@ -55,12 +57,16 @@ test("Blank game should compile", async () => {
 });
 
 const examples = [
+    "animate/animate.squiffy",
     "attributes/attributes.squiffy",
     "clearscreen/clearscreen.squiffy",
     "continue/continue.squiffy",
     "helloworld/helloworld.squiffy",
     "import/test.squiffy",
+    "input/input.squiffy",
     "last/last.squiffy",
+    "link-attributes/link-attributes.squiffy",
+    "live/live.squiffy",
     "master/master.squiffy",
     "replace/replace.squiffy",
     "rotate/rotate.squiffy",
@@ -111,7 +117,71 @@ for (const example of warningExamples) {
             script: script,
             onWarning: (message) => warnings.push(message)
         });
-        
+
         expect(warnings).toMatchSnapshot();
     });
 }
+
+test("Error: passage without section", async () => {
+    const script = `
+[my passage]:
+This is a passage without a section.
+`;
+
+    const result = await compile({
+        scriptBaseFilename: "test.squiffy",
+        script: script,
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+        expect(result.errors.length).toBe(1);
+        expect(result.errors[0]).toContain("Can't add passage");
+        expect(result.errors[0]).toContain("my passage");
+        expect(result.errors[0]).toContain("no section has been created");
+    }
+});
+
+test("Error: unexpected text in @ui block", async () => {
+    const script = `
+@ui
+    console.log("valid js");
+This text should not be here
+---
+
+Some content
+`;
+
+    const result = await compile({
+        scriptBaseFilename: "test.squiffy",
+        script: script,
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+        expect(result.errors.length).toBe(1);
+        expect(result.errors[0]).toContain("Unexpected text in @ui block");
+    }
+});
+
+test("Compiler stops at first error", async () => {
+    const script = `
+[passage1]:
+No section for this passage
+
+[passage2]:
+Another orphaned passage
+`;
+
+    const result = await compile({
+        scriptBaseFilename: "test.squiffy",
+        script: script,
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+        // Compiler stops at first error, so only passage1 error is reported
+        expect(result.errors.length).toBe(1);
+        expect(result.errors[0]).toContain("passage1");
+    }
+});

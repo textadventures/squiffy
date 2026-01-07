@@ -18,9 +18,10 @@ const html = `
 </html>
 `;
 
-const compile = async (script: string) => {
+const compile = async (script: string, scriptBaseFilename?: string) => {
     const compileResult = await squiffyCompile({
         script: script,
+        scriptBaseFilename: scriptBaseFilename,
     });
 
     if (!compileResult.success) {
@@ -674,4 +675,452 @@ Done.
     // Should match snapshot, where the previous text is visible again
     expect(element.innerHTML).toMatchSnapshot();
     expect(squiffyApi.get("test")).toBe(789);
+});
+
+// State Persistence Tests
+test("State persistence: attributes saved to localStorage", async () => {
+    const script = `
+[[start]]:
+@set score = 100
+@set name = Player
+Score: {score}, Name: {name}
+`;
+
+    const element = document.getElementById("squiffy")!;
+    const compileResult = await compile(script, "test-story-123.squiffy");
+
+    // Initialize with persistence enabled
+    const squiffyApi = await init({
+        element: element,
+        story: compileResult.story,
+        persist: true,
+    });
+
+    await squiffyApi.begin();
+
+    // Verify attributes are set
+    expect(squiffyApi.get("score")).toBe(100);
+    expect(squiffyApi.get("name")).toBe("Player");
+
+    // Verify localStorage contains the values with correct prefixes
+    expect(localStorage["test-story-123.squiffy-score"]).toBe("100");
+    expect(localStorage["test-story-123.squiffy-name"]).toBe('"Player"');
+
+    // Clean up localStorage
+    localStorage.clear();
+});
+
+test("State persistence: load state from localStorage", async () => {
+    const script = `
+[[start]]:
+Score: {score}, Name: {name}
+`;
+
+    // Pre-populate localStorage with state
+    localStorage["persist-load-test.squiffy-score"] = "250";
+    localStorage["persist-load-test.squiffy-name"] = '"SavedPlayer"';
+    localStorage["persist-load-test.squiffy-level"] = "5";
+
+    const element = document.getElementById("squiffy")!;
+    const compileResult = await compile(script, "persist-load-test.squiffy");
+
+    // Initialize with persistence enabled - should load from localStorage
+    const squiffyApi = await init({
+        element: element,
+        story: compileResult.story,
+        persist: true,
+    });
+
+    await squiffyApi.begin();
+
+    // Verify state was loaded from localStorage
+    expect(squiffyApi.get("score")).toBe(250);
+    expect(squiffyApi.get("name")).toBe("SavedPlayer");
+    expect(squiffyApi.get("level")).toBe(5);
+
+    // Clean up localStorage
+    localStorage.clear();
+});
+
+test("State persistence: restart clears localStorage", async () => {
+    const script = `
+[[start]]:
+@set data = important
+Content here.
+`;
+
+    const element = document.getElementById("squiffy")!;
+    const compileResult = await compile(script, "reset-test.squiffy");
+
+    const squiffyApi = await init({
+        element: element,
+        story: compileResult.story,
+        persist: true,
+    });
+
+    await squiffyApi.begin();
+
+    // Verify state is set in localStorage
+    expect(localStorage["reset-test.squiffy-data"]).toBe('"important"');
+    expect(squiffyApi.get("data")).toBe("important");
+
+    // Restart the story
+    squiffyApi.restart();
+
+    // Verify localStorage is cleared
+    expect(localStorage["reset-test.squiffy-data"]).toBeUndefined();
+    expect(squiffyApi.get("data")).toBe(null);
+
+    // Clean up localStorage
+    localStorage.clear();
+});
+
+test("State persistence: disabled when persist is false", async () => {
+    const script = `
+[[start]]:
+@set value = 42
+Value: {value}
+`;
+
+    const element = document.getElementById("squiffy")!;
+    const compileResult = await compile(script, "no-persist-test.squiffy");
+
+    // Initialize with persistence disabled
+    const squiffyApi = await init({
+        element: element,
+        story: compileResult.story,
+        persist: false,
+    });
+
+    await squiffyApi.begin();
+
+    // Verify attribute is set in memory
+    expect(squiffyApi.get("value")).toBe(42);
+
+    // Verify nothing is saved to localStorage
+    expect(localStorage["no-persist-test.squiffy-value"]).toBeUndefined();
+
+    // Clean up localStorage
+    localStorage.clear();
+});
+
+test("State persistence: complex objects serialized correctly", async () => {
+    const script = `
+[[start]]:
+Content here.
+`;
+
+    const element = document.getElementById("squiffy")!;
+    const compileResult = await compile(script, "complex-persist.squiffy");
+
+    const squiffyApi = await init({
+        element: element,
+        story: compileResult.story,
+        persist: true,
+    });
+
+    await squiffyApi.begin();
+
+    // Set complex objects via the API
+    squiffyApi.set("inventory", ["sword", "shield", "potion"]);
+    squiffyApi.set("player", { health: 100, mana: 50 });
+
+    // Verify complex objects are saved and can be retrieved
+    const inventory = squiffyApi.get("inventory");
+    expect(inventory).toEqual(["sword", "shield", "potion"]);
+
+    const player = squiffyApi.get("player");
+    expect(player).toEqual({ health: 100, mana: 50 });
+
+    // Verify localStorage contains serialized JSON
+    expect(JSON.parse(localStorage["complex-persist.squiffy-inventory"])).toEqual(["sword", "shield", "potion"]);
+    expect(JSON.parse(localStorage["complex-persist.squiffy-player"])).toEqual({ health: 100, mana: 50 });
+
+    // Clean up localStorage
+    localStorage.clear();
+});
+
+test("State persistence: seen sections tracked correctly", async () => {
+    const script = `
+[[start]]:
+Go to: [[section1]], [[section2]]
+
+[[section1]]:
+Section 1 content.
+
+[[section2]]:
+Section 2 content.
+`;
+
+    const element = document.getElementById("squiffy")!;
+    const compileResult = await compile(script, "seen-persist.squiffy");
+
+    const squiffyApi = await init({
+        element: element,
+        story: compileResult.story,
+        persist: true,
+    });
+
+    await squiffyApi.begin();
+
+    // Click section1
+    const link1 = findLink(element, "section", "section1");
+    await squiffyApi.clickLink(link1);
+
+    // Verify section1 is marked as seen
+    const seenSections = squiffyApi.get("_seen_sections");
+    expect(seenSections).toContain("section1");
+
+    // Verify it's saved to localStorage
+    expect(localStorage["seen-persist.squiffy-_seen_sections"]).toBeDefined();
+    const storedSeen = JSON.parse(localStorage["seen-persist.squiffy-_seen_sections"]);
+    expect(storedSeen).toContain("section1");
+
+    // Clean up localStorage
+    localStorage.clear();
+});
+
+test("State persistence: state isolation between different storyIds", async () => {
+    const scriptA = `
+[[start]]:
+Content.
+`;
+
+    const scriptB = `
+[[start]]:
+Content.
+`;
+
+    const element = document.getElementById("squiffy")!;
+    const compileResultA = await compile(scriptA, "story-A.squiffy");
+
+    // Initialize first story
+    const api1 = await init({
+        element: element,
+        story: compileResultA.story,
+        persist: true,
+    });
+
+    await api1.begin();
+    api1.set("shared", "Story A value");
+
+    // Verify localStorage for story A
+    expect(localStorage["story-A.squiffy-shared"]).toBe('"Story A value"');
+
+    // Reset and initialize second story with different storyId
+    element.innerHTML = "";
+    const compileResultB = await compile(scriptB, "story-B.squiffy");
+    const api2 = await init({
+        element: element,
+        story: compileResultB.story,
+        persist: true,
+    });
+
+    await api2.begin();
+    api2.set("shared", "Story B value");
+
+    // Verify localStorage for story B
+    expect(localStorage["story-B.squiffy-shared"]).toBe('"Story B value"');
+
+    // Verify both stories have independent state
+    expect(localStorage["story-A.squiffy-shared"]).toBe('"Story A value"');
+    expect(localStorage["story-B.squiffy-shared"]).toBe('"Story B value"');
+
+    // Clean up localStorage
+    localStorage.clear();
+});
+
+test("State persistence: restart only clears current storyId", async () => {
+    // Pre-populate localStorage with data from multiple stories
+    localStorage["story1.squiffy-data"] = '"story1 value"';
+    localStorage["story2.squiffy-data"] = '"story2 value"';
+    localStorage["other-key"] = '"unrelated"';
+
+    const script = "[[start]]:";
+    const element = document.getElementById("squiffy")!;
+    const compileResult = await compile(script, "story1.squiffy");
+
+    const squiffyApi = await init({
+        element: element,
+        story: compileResult.story,
+        persist: true,
+    });
+
+    await squiffyApi.begin();
+
+    // Restart story1
+    squiffyApi.restart();
+
+    // Verify only story1 data is cleared
+    expect(localStorage["story1.squiffy-data"]).toBeUndefined();
+    expect(localStorage["story2.squiffy-data"]).toBe('"story2 value"');
+    expect(localStorage["other-key"]).toBe('"unrelated"');
+
+    // Clean up localStorage
+    localStorage.clear();
+});
+
+// Edge Case Tests
+test("Edge case: Unicode and emoji in content", async () => {
+    const script = `
+[[start]]:
+Hello! 你好! مرحبا! 🌍🎉
+
+Click here: [[next]]
+
+[[next]]:
+More unicode: ñ, é, ü, ö, ß
+Emoji: 👍 💯 🚀
+`;
+
+    const { squiffyApi, element } = await initScript(script);
+
+    const content = getSectionContent(element, "start");
+    expect(content).toContain("你好");
+    expect(content).toContain("🌍🎉");
+
+    const link = findLink(element, "section", "next");
+    await squiffyApi.clickLink(link);
+
+    const nextContent = getSectionContent(element, "next");
+    expect(nextContent).toContain("ñ, é, ü, ö, ß");
+    expect(nextContent).toContain("👍 💯 🚀");
+});
+
+test("Edge case: Special characters in section names", async () => {
+    const script = `
+[[start]]:
+Go to: [[section-with-dashes]], [[section_with_underscores]], [[section with spaces]]
+
+[[section-with-dashes]]:
+Dashes work!
+
+[[section_with_underscores]]:
+Underscores work!
+
+[[section with spaces]]:
+Spaces work!
+`;
+
+    const { squiffyApi, element } = await initScript(script);
+
+    const link1 = findLink(element, "section", "section-with-dashes");
+    await squiffyApi.clickLink(link1);
+    expect(getSectionContent(element, "section-with-dashes")).toBe("Dashes work!");
+});
+
+test("Edge case: Empty sections and passages", async () => {
+    const script = `
+[[start]]:
+[empty passage]
+
+[[empty section]]:
+
+[empty passage]:
+`;
+
+    const { element } = await initScript(script);
+
+    // Empty section should be rendered
+    expect(element.querySelector('[data-section="empty section"]')).toBeDefined();
+});
+
+test("Edge case: Very long attribute values", async () => {
+    const longString = "a".repeat(10000);
+
+    const script = `
+[[start]]:
+Content here.
+`;
+
+    const { squiffyApi } = await initScript(script);
+
+    // Set a very long attribute value
+    squiffyApi.set("longValue", longString);
+
+    // Verify it can be retrieved
+    const retrieved = squiffyApi.get("longValue");
+    expect(retrieved.length).toBe(10000);
+    expect(retrieved).toBe(longString);
+});
+
+test("Edge case: Attributes with underscores", async () => {
+    const script = `
+[[start]]:
+@set test_value = 123
+@set another_test = 456
+Value: {test_value} and {another_test}
+`;
+
+    const { squiffyApi } = await initScript(script);
+
+    expect(squiffyApi.get("test_value")).toBe(123);
+    expect(squiffyApi.get("another_test")).toBe(456);
+});
+
+test("Edge case: Multiple consecutive link clicks", async () => {
+    const script = `
+[[start]]:
+Click: [a], [b], [c]
+
+[a]:
+A clicked
+
+[b]:
+B clicked
+
+[c]:
+C clicked
+`;
+
+    const { squiffyApi, element } = await initScript(script);
+
+    // Click all three passages in quick succession
+    const linkA = findLink(element, "passage", "a");
+    const linkB = findLink(element, "passage", "b");
+    const linkC = findLink(element, "passage", "c");
+
+    await squiffyApi.clickLink(linkA);
+    await squiffyApi.clickLink(linkB);
+    await squiffyApi.clickLink(linkC);
+
+    // All three should be present (they're in the "start" section, not "_default")
+    expect(getPassageContent(element, "start", "a")).toBe("A clicked");
+    expect(getPassageContent(element, "start", "b")).toBe("B clicked");
+    expect(getPassageContent(element, "start", "c")).toBe("C clicked");
+});
+
+test("Edge case: Attribute with null and undefined values", async () => {
+    const script = `
+[[start]]:
+Content.
+`;
+
+    const { squiffyApi } = await initScript(script);
+
+    // Get non-existent attribute
+    expect(squiffyApi.get("nonexistent")).toBe(null);
+
+    // Set attribute to undefined (should convert to true)
+    squiffyApi.set("testAttr", undefined);
+    expect(squiffyApi.get("testAttr")).toBe(true);
+});
+
+test("Edge case: Section with only whitespace", async () => {
+    const script = `
+[[start]]:
+Go to: [[whitespace]]
+
+[[whitespace]]:
+
+`;
+
+    const { squiffyApi, element } = await initScript(script);
+
+    const link = findLink(element, "section", "whitespace");
+    await squiffyApi.clickLink(link);
+
+    // Section should exist even if empty
+    const section = element.querySelector('[data-section="whitespace"]');
+    expect(section).not.toBeNull();
 });

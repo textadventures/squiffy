@@ -1,0 +1,13 @@
+@title Replace Label Tests
+
+Your score is {{#label "score"}}0{{/label}}.
+
+[Increase to 50]
+
+[Increase to 50]:
+{{#replace "score"}}50{{/replace}}
+Score updated! [Increase to 100]
+
+[Increase to 100]:
+{{#replace "score"}}100{{/replace}}
+Maximum score reached!
