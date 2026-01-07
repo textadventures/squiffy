@@ -171,7 +171,7 @@ export const saveFileAs = async (data: string): Promise<boolean> => {
     if (hasFileSystemAccess()) {
         // Modern API - show save file picker
         try {
-            const options = {
+            const options: SaveFilePickerOptions = {
                 types: [
                     {
                         description: "Squiffy Files",
@@ -193,7 +193,7 @@ export const saveFileAs = async (data: string): Promise<boolean> => {
             currentFileName = file.name;
 
             return true;
-        } catch (error) {
+        } catch {
             // User cancelled
             return false;
         }
