@@ -318,6 +318,7 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
             else if (textStarted || stripLine.length > 0) {
                 if (inUiBlock) {
                     errors.push(`ERROR: ${inputFilename} line ${lineCount}: Unexpected text in @ui block.`);
+                    return false;
                 }
                 else if (!passage) {
                     section = ensureThisSectionExists();
