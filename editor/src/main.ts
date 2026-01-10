@@ -193,8 +193,10 @@ const showWelcome = async function (dismissable = false) {
     errorDiv.style.display = "none";
     errorDiv.textContent = "";
 
-    // Check for autosaved work
-    const autoSave = await getAutoSave();
+    // Check for autosaved work (but not when dismissable, as that means we're
+    // showing the welcome screen from the File menu and the autosave is the
+    // current file's unsaved changes)
+    const autoSave = dismissable ? null : await getAutoSave();
     const autoSaveContainer = el<HTMLElement>("welcome-autosave");
 
     if (autoSave) {
@@ -543,9 +545,29 @@ const updateTitle = function (title: string) {
     document.title = title + " - Squiffy Editor";
 };
 
+const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
+const modKey = isMac ? "⌘" : "Ctrl+";
+
+const populateShortcutKeys = function () {
+    const shortcuts: Record<string, string> = {
+        "open": `${modKey}O`,
+        "save": `${modKey}S`,
+        "save-as": `${modKey}⇧S`,
+    };
+
+    for (const [id, shortcut] of Object.entries(shortcuts)) {
+        const button = el<HTMLElement>(id);
+        const span = button.querySelector(".shortcut-key");
+        if (span) {
+            span.textContent = shortcut;
+        }
+    }
+};
+
 const init = async function () {
     userSettings.initUserSettings();
     populateSettingsDialog();
+    populateShortcutKeys();
 
     editor.init(editorChange, cursorMoved);
     editor.setFontSize(userSettings.getFontSize());
@@ -624,9 +646,38 @@ const init = async function () {
         }
     });
 
+    // Ensure backdrop appears above welcome modal when unsaved changes dialog is shown
+    unsavedChangesDialog.addEventListener("shown.bs.modal", () => {
+        const backdrop = document.querySelector(".modal-backdrop:last-child") as HTMLElement;
+        if (backdrop) {
+            backdrop.style.zIndex = "1057";
+        }
+    });
+
     $("#sections").on("change", sectionChanged);
     $("#passages").on("change", passageChanged);
     $("#sections, #passages").chosen({ width: "100%" });
+
+    // Keyboard shortcuts
+    document.addEventListener("keydown", async (e) => {
+        const modKeyPressed = isMac ? e.metaKey : e.ctrlKey;
+        if (!modKeyPressed) return;
+
+        switch (e.key.toLowerCase()) {
+            case "o":
+                e.preventDefault();
+                el<HTMLElement>("open").click();
+                break;
+            case "s":
+                e.preventDefault();
+                if (e.shiftKey) {
+                    el<HTMLElement>("save-as").click();
+                } else {
+                    el<HTMLElement>("save").click();
+                }
+                break;
+        }
+    });
 
     // Show welcome screen after all event handlers are registered
     await showWelcome();
