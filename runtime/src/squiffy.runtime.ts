@@ -159,7 +159,6 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
 
     async function go(sectionName: string) {
         const oldCanGoBack = canGoBack();
-        newSection(sectionName);
         currentSection = story.sections[sectionName];
         if (!currentSection) return;
         set("_section", sectionName);
@@ -168,6 +167,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         if (master?.clear || currentSection.clear) {
             clearScreen();
         }
+        newSection(sectionName);
         if (master) {
             await run(master, "[[]]");
         }
