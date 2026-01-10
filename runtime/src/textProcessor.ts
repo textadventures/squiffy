@@ -28,6 +28,33 @@ export class TextProcessor {
 
         this.handlebars.registerHelper("seen", (name: string) => this.state.getSeen(name));
         this.handlebars.registerHelper("get", (attribute: string) => this.state.get(attribute));
+
+        // State modification helpers (side effects, no output)
+        // These execute at render time, so they respect {{#if}} conditions
+        this.handlebars.registerHelper("set", (attribute: string, value: any) => {
+            this.state.set(attribute, value);
+            return "";
+        });
+
+        this.handlebars.registerHelper("unset", (attribute: string) => {
+            this.state.set(attribute, false);
+            return "";
+        });
+
+        this.handlebars.registerHelper("inc", (attribute: string, options: any) => {
+            const amount = typeof options === "number" ? options : 1;
+            const currentValue = this.state.get(attribute) || 0;
+            this.state.set(attribute, currentValue + amount);
+            return "";
+        });
+
+        this.handlebars.registerHelper("dec", (attribute: string, options: any) => {
+            const amount = typeof options === "number" ? options : 1;
+            const currentValue = this.state.get(attribute) || 0;
+            this.state.set(attribute, currentValue - amount);
+            return "";
+        });
+
         this.handlebars.registerHelper("and", (...args) => args.slice(0,-1).every(Boolean));
         this.handlebars.registerHelper("or",  (...args) => args.slice(0,-1).some(Boolean));
         this.handlebars.registerHelper("not", (v) => !v);

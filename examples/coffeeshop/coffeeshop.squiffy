@@ -181,14 +181,13 @@ You bring Maya her oat milk latte. She's staring at her screen with intense focu
 
 "How's the writing?"
 
-{{#if (seen "The woman with the laptop")}}She looks up, and her expression softens. "Honestly? Terrifying. But yesterday, when you asked about it... I don't know. It made me feel like someone cared. Even if it was just small talk."
+{{#if (seen "The woman with the laptop")}}{{inc "maya"}}She looks up, and her expression softens. "Honestly? Terrifying. But yesterday, when you asked about it... I don't know. It made me feel like someone cared. Even if it was just small talk."
 
 She laughs. "That sounds pathetic, doesn't it?"
 
 "It sounds human."
 
 "Same thing, sometimes." She smiles—a real one. "Thanks, {{player_name}}. For asking."
-@inc maya
 {{else}}She looks up, distracted. "Hmm? Oh, fine. It's fine. Everything's fine."
 
 She immediately returns to the screen. You get the sense she's not really in the mood to talk.{{/if}}
@@ -198,7 +197,7 @@ You approach Ellis with the coffee pot. "Refill?"
 
 "Please." He watches you pour, then speaks, almost reluctantly.
 
-{{#if (seen "The older man by the window")}}
+{{#if (seen "The older man by the window")}}{{inc "ellis"}}
 "My wife and I used to come here every morning. Forty-three years." He stares at the coffee. "She'd have the hazelnut thing. Too sweet. I always told her it was too sweet."
 
 He's quiet for a long moment.
@@ -208,7 +207,6 @@ He's quiet for a long moment.
 You don't say anything. Sometimes there's nothing to say. But you stand there, and that seems to be enough.
 
 "Thank you," Ellis says finally. "For listening."
-@inc ellis
 {{else}}
 "Good coffee," he says. That's all.
 
@@ -229,7 +227,7 @@ You bring over their usual red-eye and slide into the seat across from them for 
 
 "You okay?"
 
-Sam blinks, like the question doesn't compute. {{#if (seen "Bring them a menu")}}"You asked me that yesterday too."
+Sam blinks, like the question doesn't compute. {{#if (seen "Bring them a menu")}}{{inc "sam"}}"You asked me that yesterday too."
 
 "You looked like you needed it yesterday too."
 
@@ -238,7 +236,6 @@ Something in their expression shifts. They reach into their bag and pull out the
 It's a drawing of the coffee shop. But now there's a figure behind the counter—you, rendered in careful detail.
 
 "I don't usually show people," Sam says quietly. "But you actually seem like you see people. You know?"
-@inc sam
 {{else}}They shrug. "Just tired. It's nothing."
 
 But they don't put their headphones back on, and you take that as a good sign.{{/if}}

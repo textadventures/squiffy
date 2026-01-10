@@ -239,6 +239,47 @@ Or to increase or decrease by other amounts:
 @dec health 5
 ```
 
+### Conditional attribute changes
+
+The `@set`, `@inc`, `@dec`, and `@unset` directives run when a section or passage loads—they always execute regardless of any `{{#if}}` conditions in the text.
+
+If you want to change an attribute **conditionally** (only when an `{{#if}}` condition is true), use the helper versions instead:
+
+```
+{{#if (seen "helped the wizard")}}
+{{inc "reputation"}}
+The wizard remembers your kindness.
+{{else}}
+The wizard eyes you suspiciously.
+{{/if}}
+```
+
+The available helpers are:
+
+- `{{set "attribute" value}}` — set an attribute to a value
+- `{{unset "attribute"}}` — set an attribute to false
+- `{{inc "attribute"}}` — increase a number attribute by 1
+- `{{inc "attribute" 5}}` — increase by a specific amount
+- `{{dec "attribute"}}` — decrease by 1
+- `{{dec "attribute" 3}}` — decrease by a specific amount
+
+These helpers produce no visible output—they only modify the attribute. The key difference from the `@` directives is that they execute at render time, so they respect `{{#if}}` conditions.
+
+<Sample script="@set score = 0
+
+    Choose your reward: [Gold] or [Silver]
+
+    [Gold]:
+    {{#if (seen &quot;helped someone&quot;)}}{{inc &quot;score&quot; 10}}You get bonus gold for being kind!{{else}}{{inc &quot;score&quot; 5}}You take the gold.{{/if}}
+    Score: {{score}}
+
+    [Silver]:
+    {{inc &quot;score&quot; 3}}You take the silver.
+    Score: {{score}}
+
+    [helped someone]:
+    You helped someone earlier."></Sample>
+
 You can also set an attribute value from a link:
 
 ```

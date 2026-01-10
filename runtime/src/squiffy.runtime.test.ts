@@ -1124,3 +1124,192 @@ Go to: [[whitespace]]
     const section = element.querySelector('[data-section="whitespace"]');
     expect(section).not.toBeNull();
 });
+
+// State modification helper tests
+test("{{set}} helper sets attribute value", async () => {
+    const script = `
+[[start]]:
+{{set "score" 100}}
+Score is {{score}}.
+`;
+
+    const { squiffyApi } = await initScript(script);
+    expect(squiffyApi.get("score")).toBe(100);
+});
+
+test("{{set}} helper with string value", async () => {
+    const script = `
+[[start]]:
+{{set "name" "Alice"}}
+Name is {{name}}.
+`;
+
+    const { squiffyApi } = await initScript(script);
+    expect(squiffyApi.get("name")).toBe("Alice");
+});
+
+test("{{unset}} helper sets attribute to false", async () => {
+    const script = `
+[[start]]:
+@set flag
+{{unset "flag"}}
+Done.
+`;
+
+    const { squiffyApi } = await initScript(script);
+    expect(squiffyApi.get("flag")).toBe(false);
+});
+
+test("{{inc}} helper increments attribute by 1", async () => {
+    const script = `
+[[start]]:
+@set counter = 5
+{{inc "counter"}}
+Counter is {{counter}}.
+`;
+
+    const { squiffyApi } = await initScript(script);
+    expect(squiffyApi.get("counter")).toBe(6);
+});
+
+test("{{inc}} helper increments by specified amount", async () => {
+    const script = `
+[[start]]:
+@set counter = 10
+{{inc "counter" 5}}
+Counter is {{counter}}.
+`;
+
+    const { squiffyApi } = await initScript(script);
+    expect(squiffyApi.get("counter")).toBe(15);
+});
+
+test("{{inc}} helper starts from 0 for unset attributes", async () => {
+    const script = `
+[[start]]:
+{{inc "newCounter"}}
+Counter is {{newCounter}}.
+`;
+
+    const { squiffyApi } = await initScript(script);
+    expect(squiffyApi.get("newCounter")).toBe(1);
+});
+
+test("{{dec}} helper decrements attribute by 1", async () => {
+    const script = `
+[[start]]:
+@set counter = 10
+{{dec "counter"}}
+Counter is {{counter}}.
+`;
+
+    const { squiffyApi } = await initScript(script);
+    expect(squiffyApi.get("counter")).toBe(9);
+});
+
+test("{{dec}} helper decrements by specified amount", async () => {
+    const script = `
+[[start]]:
+@set counter = 20
+{{dec "counter" 7}}
+Counter is {{counter}}.
+`;
+
+    const { squiffyApi } = await initScript(script);
+    expect(squiffyApi.get("counter")).toBe(13);
+});
+
+test("{{inc}} inside {{#if}} only executes when condition is true", async () => {
+    const script = `
+[[start]]:
+@set score = 0
+@set condition
+{{#if condition}}{{inc "score"}}Condition was true.{{/if}}
+Score is {{score}}.
+`;
+
+    const { squiffyApi } = await initScript(script);
+    expect(squiffyApi.get("score")).toBe(1);
+});
+
+test("{{inc}} inside {{#if}} does NOT execute when condition is false", async () => {
+    const script = `
+[[start]]:
+@set score = 0
+@set not condition
+{{#if condition}}{{inc "score"}}Condition was true.{{/if}}
+Score is {{score}}.
+`;
+
+    const { squiffyApi } = await initScript(script);
+    expect(squiffyApi.get("score")).toBe(0);
+});
+
+test("{{set}} inside {{#if}} only executes when condition is true", async () => {
+    const script = `
+[[start]]:
+@set flag
+{{#if flag}}{{set "result" "yes"}}{{else}}{{set "result" "no"}}{{/if}}
+Result: {{result}}.
+`;
+
+    const { squiffyApi } = await initScript(script);
+    expect(squiffyApi.get("result")).toBe("yes");
+});
+
+test("{{set}} inside {{else}} executes when condition is false", async () => {
+    const script = `
+[[start]]:
+@set not flag
+{{#if flag}}{{set "result" "yes"}}{{else}}{{set "result" "no"}}{{/if}}
+Result: {{result}}.
+`;
+
+    const { squiffyApi } = await initScript(script);
+    expect(squiffyApi.get("result")).toBe("no");
+});
+
+test("State modification helpers produce no output", async () => {
+    const script = `
+[[start]]:
+Before{{set "x" 1}}{{inc "y"}}{{dec "z"}}{{unset "w"}}After
+`;
+
+    const { element } = await initScript(script);
+    const content = getSectionContent(element, "start");
+    expect(content).toBe("BeforeAfter");
+});
+
+test("Multiple {{inc}} calls accumulate correctly", async () => {
+    const script = `
+[[start]]:
+@set counter = 0
+{{inc "counter"}}{{inc "counter"}}{{inc "counter"}}
+Counter is {{counter}}.
+`;
+
+    const { squiffyApi } = await initScript(script);
+    expect(squiffyApi.get("counter")).toBe(3);
+});
+
+test("{{inc}} with seen() condition in practical example", async () => {
+    const script = `
+[[start]]:
+@set relationship = 0
+Talk to [friend].
+
+[friend]:
+{{#if (seen "previous chat")}}{{inc "relationship"}}You talked before!{{else}}First time meeting.{{/if}}
+Relationship: {{relationship}}.
+
+[previous chat]:
+Had a chat.
+`;
+
+    const { squiffyApi, element } = await initScript(script);
+
+    // Click friend link - should NOT increment (haven't seen "previous chat")
+    const friendLink = findLink(element, "passage", "friend");
+    await squiffyApi.clickLink(friendLink);
+    expect(squiffyApi.get("relationship")).toBe(0);
+});
