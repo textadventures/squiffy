@@ -20,9 +20,9 @@ export class TextProcessor {
         this.handlebars.registerHelper("embed", (name: string) => {
             const currentSection = this.getCurrentSection();
             if (currentSection.passages && name in currentSection.passages) {
-                return this.process(currentSection.passages[name].text || "", true);
+                return new Handlebars.SafeString(this.process(currentSection.passages[name].text || "", true));
             } else if (name in this.story.sections) {
-                return this.process(this.story.sections[name].text || "", true);
+                return new Handlebars.SafeString(this.process(this.story.sections[name].text || "", true));
             }
         });
 
