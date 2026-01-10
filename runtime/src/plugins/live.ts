@@ -53,9 +53,8 @@ export function LivePlugin(): SquiffyPlugin {
                 await Promise.all(promises);
             };
 
-            let setQueue: Promise<void> = Promise.resolve();
-            squiffy.on("set", (e) => {
-                setQueue = setQueue.then(() => onSet(e));
+            squiffy.on("set", async (e) => {
+                await onSet(e);
             });
         },
         onWrite(element: HTMLElement) {
