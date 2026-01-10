@@ -3,6 +3,14 @@ import Handlebars from "handlebars";
 import type { SafeString } from "handlebars";
 
 export function RotateSequencePlugin() : SquiffyPlugin {
+    const escapeHtml = (str: string) => {
+        return str.replace(/&/g, '&amp;')
+                  .replace(/'/g, '&#39;')
+                  .replace(/"/g, '&quot;')
+                  .replace(/</g, '&lt;')
+                  .replace(/>/g, '&gt;');
+    };
+
     const rotateSequence = (squiffy: PluginHost, type: string, items: (string | SafeString)[], options: any) => {
         const stringItems = items.map(i => i.toString());
         const rotation = rotate(stringItems, null);
@@ -10,9 +18,9 @@ export function RotateSequencePlugin() : SquiffyPlugin {
         if (attribute) {
             squiffy.set(attribute, rotation[0]);
         }
-        const optionsString = JSON.stringify(rotation.slice(1)) || "";
+        const optionsString = escapeHtml(JSON.stringify(rotation.slice(1)) || "");
         const text = options.hash.show == "next" ? rotation[1] : rotation[0];
-        return new Handlebars.SafeString(`<a class="squiffy-link" data-handler="${type}" data-value="${rotation[0]}" data-show="${options.hash.show || ""}" data-options='${optionsString}' data-attribute="${attribute}" role="link">${text}</a>`);
+        return new Handlebars.SafeString(`<a class="squiffy-link" data-handler="${type}" data-value="${escapeHtml(rotation[0])}" data-show="${options.hash.show || ""}" data-options='${optionsString}' data-attribute="${attribute}" role="link">${text}</a>`);
     };
 
     const handleLink = (squiffy: PluginHost, link: HTMLElement, isRotate: boolean) => {
