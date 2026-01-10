@@ -40,15 +40,6 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
                 currentBlockOutputElement = null;
                 await showPassage(passage);
             }
-            const turnPassage = "@" + get("_turncount");
-            if (currentSection.passages) {
-                if (turnPassage in currentSection.passages) {
-                    await showPassage(turnPassage);
-                }
-                if ("@last" in currentSection.passages && get("_turncount") >= (currentSection.passageCount || 0)) {
-                    await showPassage("@last");
-                }
-            }
 
             emitter.emit("linkClick", { linkType: "passage" });
             return true;
@@ -266,6 +257,20 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         passages.push(passage);
         runFns.push(() => run(passage, `[[${get("_section")}]][${passageName}]`));
 
+        const turnPassageName = "@" + get("_turncount");
+        if (currentSection.passages) {
+            if (turnPassageName in currentSection.passages) {
+                const turnPassage = currentSection.passages[turnPassageName];
+                passages.push(turnPassage);
+                runFns.push(() => run(turnPassage, `[[${get("_section")}]][${turnPassageName}]`));
+            }
+            if ("@last" in currentSection.passages && get("_turncount") >= (currentSection.passageCount || 0)) {
+                const turnPassage = currentSection.passages["@last"];
+                passages.push(turnPassage);
+                runFns.push(() => run(turnPassage, `[[${get("_section")}]][${turnPassageName}]`));
+            }
+        }
+
         if (passages.some(p => p.clear)) {
             clearScreen();
             createSectionElement();
@@ -276,7 +281,6 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         currentPassageElement.setAttribute("data-passage", `${passageName}`);
 
         currentSectionElement.appendChild(currentPassageElement);
-        currentBlockOutputElement = null;
 
         for (const fn of runFns) {
             await fn();
