@@ -267,17 +267,19 @@ These helpers produce no visible output—they only modify the attribute. The ke
 
 <Sample script="@set score = 0
 
+    Score: {{live &quot;score&quot;}}
+
+    Did you [help someone] earlier in the game?
+
     Choose your reward: [Gold] or [Silver]
 
     [Gold]:
-    {{#if (seen &quot;helped someone&quot;)}}{{inc &quot;score&quot; 10}}You get bonus gold for being kind!{{else}}{{inc &quot;score&quot; 5}}You take the gold.{{/if}}
-    Score: {{score}}
+    {{#if (seen &quot;help someone&quot;)}}{{inc &quot;score&quot; 10}}You get bonus gold for being kind!{{else}}{{inc &quot;score&quot; 5}}You take the gold.{{/if}}
 
     [Silver]:
     {{inc &quot;score&quot; 3}}You take the silver.
-    Score: {{score}}
 
-    [helped someone]:
+    [help someone]:
     You helped someone earlier."></Sample>
 
 You can also set an attribute value from a link:
