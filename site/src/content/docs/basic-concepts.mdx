@@ -84,7 +84,7 @@ This is [how to use custom link text](passage1).
 
 ## Continue links
 
-Where you have a section with one link that simply goes to the following section, you can automatically create a "Continue" link like this:
+When you want a simple link that moves to the next part of your story, use `+++` followed by the link text. This creates both the link and a new section in one step.
 
 <Sample script="This is the first part of my story.
 
@@ -95,6 +95,38 @@ Where you have a section with one link that simply goes to the following section
             +++I want to hear more...
 
             Very well. Here is the third part."></Sample>
+
+The `+++` syntax is a shorthand. Instead of writing:
+
+```
+This is the first part.
+
+[[Continue...]](second part)
+
+[[second part]]:
+This is the second part.
+```
+
+You can simply write:
+
+```
+This is the first part.
+
++++Continue...
+
+This is the second part.
+```
+
+Everything after `+++Continue...` until the next `+++` or `[[section]]:` becomes the content of the new section.
+
+You can use directives like `@clear` or `@set` immediately after the `+++` line:
+
+```
++++Next chapter...
+@clear
+
+The screen clears and this text appears fresh.
+```
 
 ## JavaScript
 
