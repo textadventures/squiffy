@@ -285,3 +285,8 @@ ul.dropdown-menu a {
 #welcome-recent-files-list .list-group-item:active {
     background-color: #e9ecef;
 }
+
+/* Ensure unsaved changes modal appears above welcome modal */
+#unsaved-changes-dialog {
+    z-index: 1060;
+}

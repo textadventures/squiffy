@@ -626,6 +626,14 @@ const init = async function () {
         }
     });
 
+    // Ensure backdrop appears above welcome modal when unsaved changes dialog is shown
+    unsavedChangesDialog.addEventListener("shown.bs.modal", () => {
+        const backdrop = document.querySelector(".modal-backdrop:last-child") as HTMLElement;
+        if (backdrop) {
+            backdrop.style.zIndex = "1057";
+        }
+    });
+
     $("#sections").on("change", sectionChanged);
     $("#passages").on("change", passageChanged);
     $("#sections, #passages").chosen({ width: "100%" });
