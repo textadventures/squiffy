@@ -92,8 +92,6 @@ The morning settles into a rhythm. You make drinks, you wipe tables, you learn t
 By afternoon, the shop is quiet. Carla sends you home early. "Rest up. Evening shifts are different."
 
 +++That evening...
-
-[[That evening...]]:
 @clear
 
 # Day One — Evening
@@ -156,8 +154,6 @@ As you're locking up, Carla pokes her head out from the back. "Good first day?"
 Carla smiles. "Give it time. They're both."
 
 +++Day Two
-
-[[Day Two]]:
 @clear
 
 # Day Two — Morning
@@ -278,8 +274,6 @@ The bell above the door jingles. Carla's back from her errands.
 "How was day two?"
 
 +++Reflect
-
-[[Reflect]]:
 
 {{#if (and (gt maya 1) (and (gt ellis 1) (gt sam 1)))}}
 "I think I'm going to like it here," you say.
