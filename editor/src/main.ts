@@ -193,8 +193,10 @@ const showWelcome = async function (dismissable = false) {
     errorDiv.style.display = "none";
     errorDiv.textContent = "";
 
-    // Check for autosaved work
-    const autoSave = await getAutoSave();
+    // Check for autosaved work (but not when dismissable, as that means we're
+    // showing the welcome screen from the File menu and the autosave is the
+    // current file's unsaved changes)
+    const autoSave = dismissable ? null : await getAutoSave();
     const autoSaveContainer = el<HTMLElement>("welcome-autosave");
 
     if (autoSave) {
