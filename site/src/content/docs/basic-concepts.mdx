@@ -267,8 +267,6 @@ These helpers produce no visible output—they only modify the attribute. The ke
 
 <Sample script="@set score = 0
 
-    Score: {{live &quot;score&quot;}}
-
     Did you [help someone] earlier in the game?
 
     Choose your reward: [Gold] or [Silver]
@@ -276,8 +274,12 @@ These helpers produce no visible output—they only modify the attribute. The ke
     [Gold]:
     {{#if (seen &quot;help someone&quot;)}}{{inc &quot;score&quot; 10}}You get bonus gold for being kind!{{else}}{{inc &quot;score&quot; 5}}You take the gold.{{/if}}
 
+    Score: {{score}}
+
     [Silver]:
     {{inc &quot;score&quot; 3}}You take the silver.
+
+    Score: {{score}}
 
     [help someone]:
     You helped someone earlier."></Sample>

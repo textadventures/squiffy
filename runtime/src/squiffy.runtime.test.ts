@@ -1313,3 +1313,33 @@ Had a chat.
     await squiffyApi.clickLink(friendLink);
     expect(squiffyApi.get("relationship")).toBe(0);
 });
+
+test("{{attribute}} reflects changes from {{inc}} in same render pass", async () => {
+    const script = `
+[[start]]:
+@set score = 0
+{{inc "score" 5}}
+Score is now {{score}}.
+`;
+
+    const { squiffyApi, element } = await initScript(script);
+
+    // The score should be 5, and the text should reflect the updated value
+    expect(squiffyApi.get("score")).toBe(5);
+    const content = getSectionContent(element, "start");
+    expect(content).toBe("Score is now 5.");
+});
+
+test("Multiple {{inc}} and {{attribute}} reads work correctly in sequence", async () => {
+    const script = `
+[[start]]:
+@set x = 0
+Start: {{x}}. {{inc "x"}}After first inc: {{x}}. {{inc "x" 10}}After second inc: {{x}}.
+`;
+
+    const { squiffyApi, element } = await initScript(script);
+
+    expect(squiffyApi.get("x")).toBe(11);
+    const content = getSectionContent(element, "start");
+    expect(content).toBe("Start: 0. After first inc: 1. After second inc: 11.");
+});

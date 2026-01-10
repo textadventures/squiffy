@@ -57,7 +57,25 @@ export class State {
     }
 
     getStore() {
-        return structuredClone(this.store);
+        // Return a Proxy that reads from the current state dynamically.
+        // This allows {{attribute}} in templates to reflect changes made
+        // by helpers like {{inc}} during the same render pass.
+        return new Proxy({} as Record<string, any>, {
+            get: (_, prop) => this.get(String(prop)),
+            has: (_, prop) => String(prop) in this.store,
+            ownKeys: () => Object.keys(this.store),
+            getOwnPropertyDescriptor: (_, prop) => {
+                const key = String(prop);
+                if (key in this.store) {
+                    return {
+                        enumerable: true,
+                        configurable: true,
+                        value: this.get(key)
+                    };
+                }
+                return undefined;
+            }
+        });
     }
 
     load() {
