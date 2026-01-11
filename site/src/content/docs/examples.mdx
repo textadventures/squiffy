@@ -1,0 +1,35 @@
+---
+title: Examples
+sidebar:
+    order: 3
+---
+
+import Sample from "@components/Sample.astro";
+import { coffeeshop, gameshow } from "../../examples";
+
+Here are some complete example stories that demonstrate Squiffy's capabilities.
+
+## Coffee Shop Story
+
+A narrative-driven story about your first two days working at a coffee shop called "The Daily Grind". This example demonstrates:
+
+- Text input for player customization
+- Variable tracking with `@set` and `@inc`
+- Conditional text based on player choices
+- Relationship tracking with multiple characters
+- Multiple story endings
+
+<Sample script={coffeeshop} alwaysShowRestart={true} />
+
+## Game Show
+
+"The Wheel of Dubious Fortune" - an interactive game show hosted by the chaotic Hank. This example demonstrates:
+
+- Animations (`{{#animate "typewriter"}}` and `{{#animate "toast"}}`)
+- Live updates (`{{live "score"}}`)
+- Randomization (`{{random}}`)
+- Complex state tracking (score, rounds, patience)
+- Nested conditional logic
+- Dynamic scoring system
+
+<Sample script={gameshow} alwaysShowRestart={true} />
