@@ -1343,3 +1343,51 @@ Start: {{x}}. {{inc "x"}}After first inc: {{x}}. {{inc "x" 10}}After second inc:
     const content = getSectionContent(element, "start");
     expect(content).toBe("Start: 0. After first inc: 1. After second inc: 11.");
 });
+
+test("{{at}} helper returns true when at specified section", async () => {
+    const script = `
+[[start]]:
+{{#if (at "start")}}Currently at start.{{else}}Not at start.{{/if}}
+Go to [[next]].
+
+[[next]]:
+{{#if (at "start")}}At start.{{else}}Not at start anymore.{{/if}}
+{{#if (at "next")}}Now at next.{{/if}}
+`;
+
+    const { squiffyApi, element } = await initScript(script);
+
+    let content = getSectionContent(element, "start");
+    expect(content).toContain("Currently at start.");
+
+    const nextLink = findLink(element, "section", "next");
+    await squiffyApi.clickLink(nextLink);
+
+    content = getSectionContent(element, "next");
+    expect(content).toContain("Not at start anymore.");
+    expect(content).toContain("Now at next.");
+});
+
+test("{{at}} helper with array returns true when at any of specified sections", async () => {
+    const script = `
+[[start]]:
+{{#if (at (array "start" "other"))}}At start or other.{{else}}Elsewhere.{{/if}}
+Go to [[next]].
+
+[[next]]:
+{{#if (at (array "start" "other"))}}At start or other.{{else}}Not at start or other.{{/if}}
+{{#if (at (array "next" "another"))}}At next or another.{{/if}}
+`;
+
+    const { squiffyApi, element } = await initScript(script);
+
+    let content = getSectionContent(element, "start");
+    expect(content).toContain("At start or other.");
+
+    const nextLink = findLink(element, "section", "next");
+    await squiffyApi.clickLink(nextLink);
+
+    content = getSectionContent(element, "next");
+    expect(content).toContain("Not at start or other.");
+    expect(content).toContain("At next or another.");
+});
