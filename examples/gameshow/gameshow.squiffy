@@ -76,13 +76,14 @@ It lands on... {{#animate "toast"}}{{sequence (array "GENERAL KNOWLEDGE" "SCIENC
 
 **What is the capital of France?**
 
-Your answer: {{rotate (array "Paris" "London" "A baguette" "France doesn't exist") set="gk_answer"}}
+Your answer: {{#label "answer"}}{{rotate (array "Paris" "London" "A baguette" "France doesn't exist") set="gk_answer"}}{{/label}}
 
 Status: {{#label "status"}}Waiting for answer...{{/label}}
 
 [Lock in answer]
 
 [Lock in answer]:
+{{#replace "answer"}}**{{gk_answer}}**{{/replace}}
 {{#replace "status"}}**LOCKED IN!**{{/replace}}
 
 {{#if (eq gk_answer "Paris")}}
