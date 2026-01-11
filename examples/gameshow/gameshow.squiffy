@@ -37,10 +37,13 @@ The audience—three people and a cardboard cutout—applauds uncertainly.
 {{#if (not player_name)}}{{set "player_name" "Mystery Contestant"}}{{/if}}
 @set round = 1
 
+{{#animate "fadeIn"}}
 "Welcome, {{player_name}}! Or as I like to call you... {{player_name}}!"
 
 Hank pauses, waiting for laughter. None comes.
+{{/animate}}
 
+{{#animate "fadeIn"}}
 {{embed "catchphrase"}}
 
 "Now then! Let's spin... {{#animate "typewriter"}}THE WHEEL OF DUBIOUS FORTUNE!{{/animate}}"
@@ -48,6 +51,7 @@ Hank pauses, waiting for laughter. None comes.
 A rusty wheel descends from the ceiling, wobbling dangerously. It has several questionable categories painted on it.
 
 [[Spin the wheel!]]
+{{/animate}}
 
 [catchphrase]:
 "Remember our motto: _'Whose Fortune Is It Anyway? (Legally Speaking, Ours)'_"
