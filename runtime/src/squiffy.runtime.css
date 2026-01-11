@@ -10,6 +10,12 @@ a.squiffy-link
     transition: color 0.4s ease-in-out, text-decoration-color 0.4s ease-in-out;
 }
 
+/* Rotate/sequence links - visually distinct as they update in-place rather than advancing the story */
+a.squiffy-link[data-handler="rotate"],
+a.squiffy-link[data-handler="sequence"] {
+    text-decoration-style: dotted;
+}
+
 /* Disabled link states */
 a.squiffy-link.disabled,
 div.squiffy-output-section:not(:last-child) a.squiffy-link,
