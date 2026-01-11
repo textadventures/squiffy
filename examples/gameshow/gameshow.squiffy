@@ -1,0 +1,494 @@
+@title The Wheel of Dubious Fortune
+@start intro
+
+[[]]:
+@clear
+**SCORE: {{live "score"}}** | **ROUND: {{live "round"}}** | Host Patience: {{live "patience" section="patience display"}}
+
+[[patience display]]:
+{{#if (gte patience 3)}}_Cheerful_{{else}}{{#if (gte patience 1)}}_Strained_{{else}}_Murderous_{{/if}}{{/if}}
+
+[[intro]]:
+@set score = 0
+@set round = 0
+@set patience = 3
+
+**{{#animate "typewriter" interval=200}}WELCOME TO...{{/animate}}**
+
+{{#animate "toast" interval=200}}THE WHEEL OF _DUBIOUS_ FORTUNE!{{/animate}}
+
+{{#animate "fadeIn" duration=2000}}
+The studio lights flicker ominously. A man in a sequined jacket stumbles onto the stage, holding cue cards upside down.
+
+"Hello and welcome! I'm your host, Chuck Wheelsworth!" He squints at the cards. "No wait, that's not right. I'm Hank Spinneroni. Definitely Hank."
+
+The audience—three people and a cardboard cutout—applauds uncertainly.
+
+"And YOU are our lucky contestant! What's your name?"
+
+<input type="text" data-attribute="player_name" placeholder="Enter your name...">
+
+[[Let's play!]]
+{{/animate}}
+
+[[Let's play!]]:
+@set round = 1
+
+"Welcome, {{player_name}}! Or as I like to call you... {{player_name}}!"
+
+Hank pauses, waiting for laughter. None comes.
+
+{{embed "catchphrase"}}
+
+"Now then! Let's spin... {{#animate "typewriter"}}THE WHEEL OF DUBIOUS FORTUNE!{{/animate}}"
+
+A rusty wheel descends from the ceiling, wobbling dangerously. It has several questionable categories painted on it.
+
+[[Spin the wheel!]]
+
+[catchphrase]:
+"Remember our motto: _'Whose Fortune Is It Anyway? (Legally Speaking, Ours)'_"
+
+[[Spin the wheel!]]:
+The wheel creaks to life, spinning with a sound like a shopping cart hitting a pothole.
+
+It lands on... {{#animate "toast"}}{{sequence (array "GENERAL KNOWLEDGE" "SCIENCE with PROFESSOR BOOM" "MYSTERY BOX" "THE AUDIENCE DECIDES") set="category"}}!{{/animate}}
+
+{{#if (eq category "GENERAL KNOWLEDGE")}}[[General Knowledge Round]]{{/if}}
+{{#if (eq category "SCIENCE with PROFESSOR BOOM")}}[[Science Round]]{{/if}}
+{{#if (eq category "MYSTERY BOX")}}[[Mystery Box Round]]{{/if}}
+{{#if (eq category "THE AUDIENCE DECIDES")}}[[Audience Round]]{{/if}}
+
+[[General Knowledge Round]]:
+"Ah, General Knowledge! The knowledge of generals! Or... general... people." Hank shuffles his cards.
+
+"Here's your question, {{player_name}}:"
+
+**What is the capital of France?**
+
+Your answer: {{rotate (array "Paris" "London" "A baguette" "France doesn't exist") set="gk_answer"}}
+
+Status: {{#label "status"}}Waiting for answer...{{/label}}
+
+[Lock in answer]
+
+[Lock in answer]:
+{{#replace "status"}}**LOCKED IN!**{{/replace}}
+
+{{#if (eq gk_answer "Paris")}}
+{{#animate "toast"}}CORRECT!{{/animate}}
+
+"That's right! Paris! City of lights, city of love, city of... bread?" Hank looks confused but happy.
+
+{{inc "score" 100}}
+{{else}}
+{{#if (eq gk_answer "A baguette")}}
+{{dec "patience"}}
+"A baguette? A BAGUETTE?!" Hank's eye twitches. "That's not even a city, {{player_name}}!"
+
+The audience cardboard cutout falls over.
+{{else}}
+{{#if (eq gk_answer "France doesn't exist")}}
+{{dec "patience"}}{{dec "patience"}}
+Hank stares at you for a very long time.
+
+"Security, please note that {{player_name}} is a 'flight risk.'"
+{{else}}
+"London? LONDON?!" Hank throws his cue cards in the air. "That's in... that's in a whole other country!"
+{{dec "patience"}}
+{{/if}}
+{{/if}}
+{{/if}}
+
+[[Next Round]]
+
+[[Science Round]]:
+@set stability = 100
+
+The lights flicker and a trapdoor opens in the floor. Smoke billows out.
+
+{{#animate "typewriter"}}PROFESSOR BOOM has entered the chat.{{/animate}}
+
+A wild-haired scientist emerges, goggles askew, lab coat singed.
+
+"GREETINGS, QUIZ PARTICIPANT! I am Professor Boom, and THIS—" he holds up a beaker of bubbling green liquid "—is SCIENCE!"
+
+Hank backs away nervously. "Professor, we talked about bringing chemicals on set..."
+
+"SILENCE, TELEVISION MAN! The contestant must answer... {{#animate "toast"}}A SCIENCE QUESTION!{{/animate}}"
+
+**What is the chemical symbol for Gold?**
+
+Lab Stability: {{live "stability"}}%
+
+Choose your answer:
+- [Answer: Au]
+- [Answer: Go]
+- [Answer: Gd]
+- [Drink the beaker]
+
+[@1]:
+{{dec "stability" 10}}
+The beaker bubbles more aggressively.
+
+[@2]:
+{{dec "stability" 15}}
+Professor Boom: "HURRY! The compound is becoming... UNSTABLE!"
+
+[@3]:
+{{dec "stability" 25}}
+{{#animate "toast"}}WARNING: CRITICAL INSTABILITY{{/animate}}
+
+Small explosions begin occurring around the lab set.
+
+[Answer: Au]:
+{{#animate "toast"}}CORRECT!{{/animate}}
+
+"AU! YES! Gold! Aurum! The element of CHAMPIONS!" Professor Boom throws the beaker in the air and catches it. "You have pleased me, {{player_name}}!"
+
+{{inc "score" 200}}
+
+[[Professor Exit]]
+
+[Answer: Go]:
+"GO?! That's not even— that's just the word GO!" Professor Boom's hair somehow becomes more wild.
+
+{{dec "stability" 30}}
+{{dec "patience"}}
+
+{{#if (lte stability 30)}}
+{{#animate "toast"}}BOOM!{{/animate}}
+
+A small explosion singes Hank's eyebrows.
+
+"MY EYEBROWS! Those were RENTED!"
+{{/if}}
+
+[[Professor Exit]]
+
+[Answer: Gd]:
+"Gd is GADOLINIUM! An honest mistake for a FOOL!"
+
+{{dec "stability" 20}}
+{{dec "patience"}}
+
+[[Professor Exit]]
+
+[Drink the beaker]:
+You grab the beaker and drink it before anyone can stop you.
+
+Professor Boom: "WAIT! That's my lunch!"
+
+{{#animate "toast"}}It tastes like... chicken soup?{{/animate}}
+
+"I was heating up my soup with SCIENCE. Now I have no lunch AND no science demonstration."
+
+{{inc "score" 50}}
+The audience (including the cardboard) applauds your boldness.
+
+[[Professor Exit]]
+
+[[Professor Exit]]:
+Professor Boom descends back through the trapdoor, cackling.
+
+"UNTIL NEXT TIME, QUIZ PARTICIPANT! REMEMBER: SCIENCE IS JUST EXPLOSIONS IN A LAB COAT!"
+
+The trapdoor slams shut. Hank pats out a small fire on his jacket.
+
+"Right. Well. That happened."
+
+[[Next Round]]
+
+[[Mystery Box Round]]:
+A golden box descends from the ceiling on a frayed rope.
+
+"Ooh, the Mystery Box!" Hank claps his hands. "This could contain ANYTHING! A prize! A question! A live animal! We genuinely don't know—the intern who loaded it quit this morning!"
+
+The box rattles ominously.
+
+[Open the box carefully]
+[Shake the box first]
+[Refuse to open it]
+
+[Open the box carefully]:
+You lift the lid slowly...
+
+{{random (array "prize" "bees" "another_box" "philosophy") set="box_contents"}}
+
+{{#if (eq box_contents "prize")}}
+{{#animate "toast"}}JACKPOT!{{/animate}}
+
+Inside is a solid gold trophy shaped like a wheel! It's spray-painted gold, but still!
+
+{{inc "score" 300}}
+
+"Congratulations! You've won our grand prize: a trophy AND the satisfaction of not being attacked by whatever else could have been in there!"
+{{/if}}
+
+{{#if (eq box_contents "bees")}}
+{{#animate "toast"}}BEES!{{/animate}}
+
+The box is full of bees. They seem confused but not aggressive.
+
+"Oh no, NOT AGAIN!" Hank runs in circles. "WHO KEEPS PUTTING BEES IN THE MYSTERY BOX?!"
+
+{{dec "patience"}}
+
+A bee lands on your nose, considers its life choices, and flies away. You feel oddly respected.
+
+{{inc "score" 50}}
+{{/if}}
+
+{{#if (eq box_contents "another_box")}}
+Inside the box is... another, smaller box.
+
+"Ah, the recursive box!" Hank nods sagely. "Open it!"
+
+Inside THAT box is a note that says: "{{player_name}} wins 100 points!"
+
+{{inc "score" 100}}
+
+{{#animate "toast"}}Congratulations, somehow!{{/animate}}
+{{/if}}
+
+{{#if (eq box_contents "philosophy")}}
+Inside is a small scroll. It reads:
+
+_"What IS a prize, really? Is not the true prize the friends we made along the way? Also here's 75 points."_
+
+{{inc "score" 75}}
+
+Hank wipes away a single tear. "Beautiful."
+{{/if}}
+
+[[Next Round]]
+
+[Shake the box first]:
+You shake the box vigorously. Something inside goes "CLANG" and then "moo?"
+
+{{dec "patience"}}
+
+"Please don't shake the— you know what, fine. Open it."
+
+[Open the box carefully]
+
+[Refuse to open it]:
+{{dec "patience"}}{{dec "patience"}}
+
+"You HAVE to open it! It's the MYSTERY BOX! The mystery is legally required to be resolved!"
+
+Hank is sweating now.
+
+[Open the box carefully]
+
+[[Audience Round]]:
+"THE AUDIENCE DECIDES!" Hank gestures grandly at the three people and cardboard cutout.
+
+"Audience members, what challenge should {{player_name}} face?"
+
+The audience confers. One of them is asleep. The cardboard cutout offers no input.
+
+Finally, a woman in the front row shouts: "MAKE THEM {{random (array "SING" "DANCE" "DO AN IMPRESSION OF A BLENDER" "JUST GIVE THEM POINTS FOR FREE")}}!"
+
+{{#if (eq _last_random "SING")}}
+"You heard her! SING, {{player_name}}! Sing like your points depend on it! Because they do!"
+
+[Sing beautifully]
+[Sing terribly on purpose]
+{{/if}}
+
+{{#if (eq _last_random "DANCE")}}
+"DANCE! Show us your moves!"
+
+[Dance with enthusiasm]
+[Do the robot]
+{{/if}}
+
+{{#if (eq _last_random "DO AN IMPRESSION OF A BLENDER")}}
+"A BLENDER! Do a blender impression! This is normal television!"
+
+[WHIRRRRRR]
+[Refuse on grounds of dignity]
+{{/if}}
+
+{{#if (eq _last_random "JUST GIVE THEM POINTS FOR FREE")}}
+"Free points?! That's not how—" Hank checks his cards. "Actually, that IS an option apparently."
+
+{{inc "score" 150}}
+{{#animate "toast"}}FREE POINTS!{{/animate}}
+
+"Well! That was anticlimactic! Moving on!"
+
+[[Next Round]]
+{{/if}}
+
+[Sing beautifully]:
+You belt out an operatic rendition of the show's theme song (which you're making up as you go).
+
+The audience is moved. One of them wakes up specifically to applaud.
+
+{{inc "score" 150}}
+{{#animate "toast"}}STANDING OVATION!{{/animate}}
+
+[[Next Round]]
+
+[Sing terribly on purpose]:
+You screech like a cat in a tumble dryer. On purpose. For art.
+
+{{dec "patience"}}
+
+Hank: "That was... that was really something. Moving on quickly."
+
+{{inc "score" 25}}
+
+[[Next Round]]
+
+[Dance with enthusiasm]:
+You dance like nobody's watching, except everyone is watching, and also there are cameras.
+
+{{inc "score" 125}}
+The cardboard cutout falls over again, but in an approving way.
+
+[[Next Round]]
+
+[Do the robot]:
+You do the robot so convincingly that a stagehand tries to unplug you.
+
+{{inc "score" 100}}
+{{#animate "toast"}}BEEP BOOP{{/animate}}
+
+[[Next Round]]
+
+[WHIRRRRRR]:
+You spin around making blender noises. It's deeply unsettling.
+
+{{inc "score" 175}}
+
+Professor Boom's voice echoes from below: "MAGNIFICENT!"
+
+[[Next Round]]
+
+[Refuse on grounds of dignity]:
+"I'm not doing that."
+
+{{dec "patience"}}
+
+Hank: "Fair enough. Moving on with your dignity intact but your score unchanged."
+
+[[Next Round]]
+
+[[Next Round]]:
+@inc round
+
+{{#if (gte round 3)}}
+[[Final Round]]
+{{else}}
+Hank shuffles his cards. "Alright, {{player_name}}, ready for round {{round}}?"
+
+The wheel looms above you, creaking expectantly.
+
+[[Spin the wheel!]]
+{{/if}}
+
+[[Final Round]]:
+The studio lights go RED. Dramatic music plays (someone is humming aggressively in the background).
+
+{{#animate "typewriter"}}THE FINAL ROUND{{/animate}}
+
+"This is it, {{player_name}}! The FINAL ROUND!" Hank is vibrating with excitement or possibly caffeine.
+
+"You have {{score}} points! But this last question is worth... {{#animate "toast"}}DOUBLE OR NOTHING!{{/animate}}"
+
+The audience gasps. The cardboard cutout gasps (the AC kicked in).
+
+"Here is your FINAL QUESTION:"
+
+{{#animate "typewriter"}}**What is the name of your host?**{{/animate}}
+
+[Hank Spinneroni]
+[Chuck Wheelsworth]
+[I genuinely don't remember]
+
+[Hank Spinneroni]:
+"CORRECT! I AM HANK SPINNERONI! Probably!"
+
+{{set "score" (score * 2)}}
+{{#animate "toast"}}SCORE DOUBLED!{{/animate}}
+
+[[Ending]]
+
+[Chuck Wheelsworth]:
+"That was my FIRST name! The WRONG first name! But you remembered SOMETHING!"
+
+{{inc "score" 50}}
+
+"Close enough! I'll allow it because I'm tired!"
+
+[[Ending]]
+
+[I genuinely don't remember]:
+{{#if (lte patience 1)}}
+Hank stares at you. A vein throbs in his forehead.
+
+"It's... it's HANK. My name is HANK. I said it at the START."
+
+He takes a deep breath.
+
+"You know what? You still win. I just want to go home."
+
+{{inc "score" 25}}
+{{else}}
+Hank laughs. "Honestly? I respect the honesty!"
+
+{{inc "score" 75}}
+
+"The real prize was the confusion we shared along the way!"
+{{/if}}
+
+[[Ending]]
+
+[[Ending]]:
+
+{{#if (gte score 500)}}
+{{#animate "toast"}}GRAND CHAMPION!{{/animate}}
+
+Balloons fall from the ceiling. Confetti explodes. Professor Boom emerges to set off celebratory fireworks (indoors, against regulations).
+
+"{{player_name}}, you are our GRAND CHAMPION with {{score}} points!"
+
+Hank hands you an oversized novelty check. It bounces.
+
+"Congratulations! You've won fame, glory, and whatever prizes we can legally give you after the lawyers review the footage!"
+
+The audience carries you out on their shoulders. The cardboard cutout leads the parade.
+
+**THE END — GRAND CHAMPION**
+{{else}}
+{{#if (gte score 200)}}
+{{#animate "toast"}}WINNER!{{/animate}}
+
+"{{player_name}}, you finished with {{score}} points! That's... that's actually pretty good!"
+
+Hank shakes your hand. "You've won a lovely parting gift!"
+
+A stagehand hands you a gift basket containing: one (1) cheese, a coupon for 10% off at a store that closed in 2019, and a sincere thank-you note from Hank.
+
+"Come back anytime! Assuming we're not cancelled by then!"
+
+**THE END — WINNER**
+{{else}}
+"{{player_name}}... you finished with {{score}} points."
+
+Hank looks at his cards. Looks at you. Looks at the audience.
+
+"You know what? You showed up. You tried. And in the end, isn't that what matters?"
+
+{{embed "catchphrase"}}
+
+"No, actually, points are what matter. But good effort!"
+
+He hands you a single balloon. It's already deflating.
+
+**THE END — PARTICIPANT**
+{{/if}}
+{{/if}}

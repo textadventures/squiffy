@@ -7,7 +7,7 @@ story.uiJsIndex = 0;
 story.start = "_default";
 story.sections = {
     "_default": {
-        "text": "Hello world.\\n\\n{{#animate \\"typewriter\\" loop=true}}This is animated.{{/animate}}\\n\\n{{#animate \\"typewriter\\" start=2000}}This is some much longer text which is also animated, but not looped.{{/animate}}\\n\\nCheck out {{#animate \\"typewriter\\" trigger=\\"link\\"}}{{passage \\"this animation\\"}}{{/animate}}.\\n\\n{{section \\"_continue1\\" text=\\"Continue...\\"}}",
+        "text": "Hello world.\\n\\n{{#animate \\"typewriter\\" loop=true}}This is animated.{{/animate}}\\n\\n{{#animate \\"typewriter\\" start=2000}}This is some much longer text which is also animated, but not looped.{{/animate}}\\n\\n{{#animate \\"typewriter\\"}}More typewriter text.{{/animate}}\\n\\nCheck out {{#animate \\"typewriter\\" trigger=\\"link\\"}}{{passage \\"this animation\\"}}{{/animate}}.\\n\\n{{section \\"_continue1\\" text=\\"Continue...\\"}}",
         "passages": {
             "this animation": {
                 "text": "Cool huh?\\n"

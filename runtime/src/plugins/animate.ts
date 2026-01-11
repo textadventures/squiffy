@@ -1,5 +1,6 @@
 import { PluginHost, SquiffyPlugin } from "../types.plugins.js";
 import Handlebars from "handlebars";
+import * as marked from "marked";
 
 export function AnimatePlugin(): SquiffyPlugin {
     let squiffy: PluginHost;
@@ -31,7 +32,12 @@ export function AnimatePlugin(): SquiffyPlugin {
             if (!params.content) {
                 continue;
             }
-            el.innerHTML = params.content;
+            const isBlock = params.content.includes("\n\n");
+            if (isBlock) {
+                el.innerHTML = marked.parse(params.content, { async: false }).trim();
+            } else {
+                el.innerHTML = marked.parseInline(params.content, { async: false }).trim();
+            }
 
             if (!params.name) {
                 continue;
@@ -41,9 +47,16 @@ export function AnimatePlugin(): SquiffyPlugin {
                 if (params.loop) {
                     squiffy.animation.runAnimation(params.name, el, params, () => {}, true);
                 } else {
+                    if (squiffy.animation.isInitiallyHidden(params.name)) {
+                        el.style.opacity = "0";
+                    }
                     squiffy.addTransition(() => {
                         return new Promise<void>((resolve) => {
                             const currentContent = el.innerHTML;
+
+                            // Reset opacity so the animation can control visibility
+                            el.style.opacity = "";
+
                             squiffy.animation.runAnimation(params.name, el, params, () => {
                                 el.classList.remove("squiffy-animate");
                                 el.innerHTML = currentContent;
@@ -84,7 +97,9 @@ export function AnimatePlugin(): SquiffyPlugin {
                     )
                     .join("");
 
-                return new Handlebars.SafeString(`<span class="squiffy-animate"${attrs}></span>`);
+                const isBlock = content.includes("\n\n");
+                const tag = isBlock ? "div" : "span";
+                return new Handlebars.SafeString(`<${tag} class="squiffy-animate"${attrs}></${tag}>`);
             });
         },
         onWrite(element: HTMLElement) {

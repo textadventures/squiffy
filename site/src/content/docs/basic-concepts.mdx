@@ -84,7 +84,7 @@ This is [how to use custom link text](passage1).
 
 ## Continue links
 
-Where you have a section with one link that simply goes to the following section, you can automatically create a "Continue" link like this:
+When you want a simple link that moves to the next part of your story, use `+++` followed by the link text. This creates both the link and a new section in one step.
 
 <Sample script="This is the first part of my story.
 
@@ -95,6 +95,38 @@ Where you have a section with one link that simply goes to the following section
             +++I want to hear more...
 
             Very well. Here is the third part."></Sample>
+
+The `+++` syntax is a shorthand. Instead of writing:
+
+```
+This is the first part.
+
+[[Continue...]](second part)
+
+[[second part]]:
+This is the second part.
+```
+
+You can simply write:
+
+```
+This is the first part.
+
++++Continue...
+
+This is the second part.
+```
+
+Everything after `+++Continue...` until the next `+++` or `[[section]]:` becomes the content of the new section.
+
+You can use directives like `@clear` or `@set` immediately after the `+++` line:
+
+```
++++Next chapter...
+@clear
+
+The screen clears and this text appears fresh.
+```
 
 ## JavaScript
 
@@ -206,6 +238,51 @@ Or to increase or decrease by other amounts:
 @inc score 100
 @dec health 5
 ```
+
+### Conditional attribute changes
+
+The `@set`, `@inc`, `@dec`, and `@unset` directives run when a section or passage loads—they always execute regardless of any `{{#if}}` conditions in the text.
+
+If you want to change an attribute **conditionally** (only when an `{{#if}}` condition is true), use the helper versions instead:
+
+```
+{{#if (seen "helped the wizard")}}
+{{inc "reputation"}}
+The wizard remembers your kindness.
+{{else}}
+The wizard eyes you suspiciously.
+{{/if}}
+```
+
+The available helpers are:
+
+- `{{set "attribute" value}}` — set an attribute to a value
+- `{{unset "attribute"}}` — set an attribute to false
+- `{{inc "attribute"}}` — increase a number attribute by 1
+- `{{inc "attribute" 5}}` — increase by a specific amount
+- `{{dec "attribute"}}` — decrease by 1
+- `{{dec "attribute" 3}}` — decrease by a specific amount
+
+These helpers produce no visible output—they only modify the attribute. The key difference from the `@` directives is that they execute at render time, so they respect `{{#if}}` conditions.
+
+<Sample script="@set score = 0
+
+    Did you [help someone] earlier in the game?
+
+    Choose your reward: [Gold] or [Silver]
+
+    [Gold]:
+    {{#if (seen &quot;help someone&quot;)}}{{inc &quot;score&quot; 10}}You get bonus gold for being kind!{{else}}{{inc &quot;score&quot; 5}}You take the gold.{{/if}}
+
+    Score: {{score}}
+
+    [Silver]:
+    {{inc &quot;score&quot; 3}}You take the silver.
+
+    Score: {{score}}
+
+    [help someone]:
+    You helped someone earlier."></Sample>
 
 You can also set an attribute value from a link:
 
