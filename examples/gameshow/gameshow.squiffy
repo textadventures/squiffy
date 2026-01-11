@@ -34,6 +34,7 @@ The audience—three people and a cardboard cutout—applauds uncertainly.
 {{/animate}}
 
 [[Let's play!]]:
+{{#if (not player_name)}}{{set "player_name" "Mystery Contestant"}}{{/if}}
 @set round = 1
 
 "Welcome, {{player_name}}! Or as I like to call you... {{player_name}}!"
