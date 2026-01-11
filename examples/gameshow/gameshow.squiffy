@@ -13,11 +13,11 @@
 @set round = 0
 @set patience = 3
 
-**{{#animate "typewriter"}}WELCOME TO...{{/animate}}**
+**{{#animate "typewriter" interval=200}}WELCOME TO...{{/animate}}**
 
-{{#animate "toast"}}THE WHEEL OF _DUBIOUS_ FORTUNE!{{/animate}}
+{{#animate "toast" interval=200}}THE WHEEL OF _DUBIOUS_ FORTUNE!{{/animate}}
 
-{{#animate "fadeIn"}}
+{{#animate "fadeIn" duration=2000}}
 The studio lights flicker ominously. A man in a sequined jacket stumbles onto the stage, holding cue cards upside down.
 
 "Hello and welcome! I'm your host, Chuck Wheelsworth!" He squints at the cards. "No wait, that's not right. I'm Hank Spinneroni. Definitely Hank."
