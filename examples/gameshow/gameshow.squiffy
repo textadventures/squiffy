@@ -89,7 +89,9 @@ Status: {{#label "status"}}Waiting for answer...{{/label}}
 {{#if (eq gk_answer "Paris")}}
 {{#animate "toast"}}CORRECT!{{/animate}}
 
+{{#animate "fadeIn"}}
 "That's right! Paris! City of lights, city of love, city of... bread?" Hank looks confused but happy.
+{{/animate}}
 
 {{inc "score" 100}}
 {{else}}
