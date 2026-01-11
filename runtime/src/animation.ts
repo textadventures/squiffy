@@ -79,5 +79,18 @@ export class Animation {
                 onComplete: onComplete
             });
         }, { initiallyHidden: true });
+
+        this.registerAnimation("fadeIn", function(el, params, onComplete, loop) {
+            const duration = params.duration || 500;   // ms for the fade
+
+            animate(el, {
+                opacity: [0, 1],
+                easing: params.easing || "easeOutQuad",
+                duration: duration,
+                delay: params.start || 0,
+                loop: loop,
+                onComplete: onComplete
+            });
+        }, { initiallyHidden: true });
     }
 }

@@ -15,8 +15,9 @@
 
 **{{#animate "typewriter"}}WELCOME TO...{{/animate}}**
 
-{{#animate "toast"}}THE WHEEL OF DUBIOUS FORTUNE!{{/animate}}
+{{#animate "toast"}}THE WHEEL OF _DUBIOUS_ FORTUNE!{{/animate}}
 
+{{#animate "fadeIn"}}
 The studio lights flicker ominously. A man in a sequined jacket stumbles onto the stage, holding cue cards upside down.
 
 "Hello and welcome! I'm your host, Chuck Wheelsworth!" He squints at the cards. "No wait, that's not right. I'm Hank Spinneroni. Definitely Hank."
@@ -28,6 +29,7 @@ The audience—three people and a cardboard cutout—applauds uncertainly.
 <input type="text" data-attribute="player_name" placeholder="Enter your name...">
 
 [[Let's play!]]
+{{/animate}}
 
 [[Let's play!]]:
 @set round = 1
