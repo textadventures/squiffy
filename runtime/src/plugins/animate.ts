@@ -41,9 +41,16 @@ export function AnimatePlugin(): SquiffyPlugin {
                 if (params.loop) {
                     squiffy.animation.runAnimation(params.name, el, params, () => {}, true);
                 } else {
+                    if (squiffy.animation.isInitiallyHidden(params.name)) {
+                        el.style.opacity = "0";
+                    }
                     squiffy.addTransition(() => {
                         return new Promise<void>((resolve) => {
                             const currentContent = el.innerHTML;
+
+                            // Reset opacity so the animation can control visibility
+                            el.style.opacity = "";
+
                             squiffy.animation.runAnimation(params.name, el, params, () => {
                                 el.classList.remove("squiffy-animate");
                                 el.innerHTML = currentContent;

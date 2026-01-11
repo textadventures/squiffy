@@ -6,6 +6,8 @@ Hello world.
 
 {{#animate "typewriter" start=2000}}This is some much longer text which is also animated, but not looped.{{/animate}}
 
+{{#animate "typewriter"}}More typewriter text.{{/animate}}
+
 Check out {{#animate "typewriter" trigger="link"}}[this animation]{{/animate}}.
 
 [this animation]:
