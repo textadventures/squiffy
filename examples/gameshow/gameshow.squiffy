@@ -3,7 +3,9 @@
 
 [[]]:
 @clear
+{{#if (not (at "intro"))}}
 **SCORE: {{live "score"}}** | **ROUND: {{live "round"}}** | Host Patience: {{live "patience" section="patience display"}}
+{{/if}}
 
 [[patience display]]:
 {{#if (gte patience 3)}}_Cheerful_{{else}}{{#if (gte patience 1)}}_Strained_{{else}}_Murderous_{{/if}}{{/if}}
