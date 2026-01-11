@@ -57,6 +57,9 @@ The wheel creaks to life, spinning with a sound like a shopping cart hitting a p
 
 It lands on... {{#animate "toast"}}{{sequence (array "GENERAL KNOWLEDGE" "SCIENCE with PROFESSOR BOOM" "MYSTERY BOX" "THE AUDIENCE DECIDES") set="category"}}!{{/animate}}
 
+{{live "category" section="showCategory"}}
+
+[[showCategory]]:
 {{#if (eq category "GENERAL KNOWLEDGE")}}[[General Knowledge Round]]{{/if}}
 {{#if (eq category "SCIENCE with PROFESSOR BOOM")}}[[Science Round]]{{/if}}
 {{#if (eq category "MYSTERY BOX")}}[[Mystery Box Round]]{{/if}}
