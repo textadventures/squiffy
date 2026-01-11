@@ -30,10 +30,10 @@ The audience—three people and a cardboard cutout—applauds uncertainly.
 
 <input type="text" data-attribute="player_name" placeholder="Enter your name...">
 
-[[Let's play!]]
+[[Let's play!>]]
 {{/animate}}
 
-[[Let's play!]]:
+---
 {{#if (not player_name)}}{{set "player_name" "Mystery Contestant"}}{{/if}}
 @set round = 1
 
@@ -50,7 +50,7 @@ Hank pauses, waiting for laughter. None comes.
 {{#animate "fadeIn"}}
 A rusty wheel descends from the ceiling, wobbling dangerously. It has several questionable categories painted on it.
 
-[[Spin the wheel!]]
+[[Spin the wheel!>]]
 {{/animate}}
 
 [catchphrase]:

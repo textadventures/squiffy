@@ -376,6 +376,40 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
     }
 
     async function processText(input: string, section: Section, passage: Passage | null) {
+        // Helper to get the next section name
+        const getNextSectionName = (): string | null => {
+            const sectionNames = Object.keys(story.sections);
+            const currentIndex = sectionNames.indexOf(section.name);
+            return sectionNames[currentIndex + 1] || null;
+        };
+
+        // nextSectionLinkRegex matches [[text>]] - a link to the next section
+        const nextSectionLinkRegex = /\[\[([^\]]*?)>\]\]/g;
+
+        input = input.replace(nextSectionLinkRegex, (_match, text) => {
+            const nextSectionName = getNextSectionName();
+            if (!nextSectionName) {
+                settings.onWarning?.(`WARNING: ${section.filename} line ${section.line}: In section '${section.name}', there is a [[${text}>]] link but no following section exists`);
+                return `[[${text}]]`; // fallback
+            }
+            return `{{section "${nextSectionName}" text="${text}"}}`;
+        });
+
+        // namedNextSectionLinkRegex matches [[text]](>) or [[text]](>, setter=value)
+        // - a named link where target starts with >
+        const namedNextSectionLinkRegex = /\[\[([^\]]*?)\]\]\(>(.*?)\)/g;
+
+        input = input.replace(namedNextSectionLinkRegex, (_match, text, rest) => {
+            const nextSectionName = getNextSectionName();
+            if (!nextSectionName) {
+                settings.onWarning?.(`WARNING: ${section.filename} line ${section.line}: In section '${section.name}', there is a [[${text}]](>) link but no following section exists`);
+                return `[[${text}]]`; // fallback
+            }
+            // rest could be empty or ", setter=value"
+            const parsedName = getAdditionalLinkParameters(nextSectionName + rest);
+            return `{{section "${parsedName.target}" text="${text}"${parsedName.additionalParameters}}}`;
+        });
+
         // namedSectionLinkRegex matches:
         //   open [[
         //   any text - the link text
