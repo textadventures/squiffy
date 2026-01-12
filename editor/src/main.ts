@@ -17,6 +17,7 @@ import * as userSettings from "./user-settings.ts";
 import initialScript from "./init.squiffy?raw";
 import { clearDebugger, logToDebugger } from "./debugger.ts";
 import { el, downloadString, downloadUint8Array } from "./util.ts";
+import { registerServiceWorker, onUpdateAvailable, applyUpdate } from "./sw-registration.ts";
 
 Object.assign(window, { $: $, jQuery: $ });
 
@@ -44,6 +45,7 @@ let squiffyApi: SquiffyApi | null;
 let welcomeModal: Modal | null = null;
 let unsavedChangesModal: Modal | null = null;
 let unsavedChangesCallback: ((confirm: boolean) => void) | null = null;
+let updateAvailable = false;
 
 function onClick(id: string, fn: () => void) {
     const element = el<HTMLElement>(id);
@@ -192,6 +194,10 @@ const showWelcome = async function (dismissable = false) {
     const errorDiv = el<HTMLElement>("welcome-error");
     errorDiv.style.display = "none";
     errorDiv.textContent = "";
+
+    // Show update available notification if applicable
+    const updateDiv = el<HTMLElement>("welcome-update-available");
+    updateDiv.style.display = updateAvailable ? "block" : "none";
 
     // Check for autosaved work (but not when dismissable, as that means we're
     // showing the welcome screen from the File menu and the autosave is the
@@ -569,6 +575,17 @@ const init = async function () {
     populateSettingsDialog();
     populateShortcutKeys();
 
+    // Register service worker and set up update detection
+    onUpdateAvailable(() => {
+        updateAvailable = true;
+        // If welcome dialog is currently showing, update it
+        const updateDiv = document.getElementById("welcome-update-available");
+        if (updateDiv) {
+            updateDiv.style.display = "block";
+        }
+    });
+    registerServiceWorker();
+
     editor.init(editorChange, cursorMoved);
     editor.setFontSize(userSettings.getFontSize());
     setOnOpen(editorLoad);
@@ -616,6 +633,7 @@ const init = async function () {
     onClick("welcome-create-new", handleWelcomeCreateNew);
     onClick("welcome-open-file", handleWelcomeOpenFile);
     onClick("welcome-resume-autosave", handleWelcomeResumeAutoSave);
+    onClick("welcome-update-button", applyUpdate);
     onClick("add-section", addSection);
     onClick("add-passage", addPassage);
     onClick("collapse-all", editor.collapseAll);
