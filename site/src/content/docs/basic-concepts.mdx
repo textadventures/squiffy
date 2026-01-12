@@ -128,6 +128,52 @@ You can use directives like `@clear` or `@set` immediately after the `+++` line:
 The screen clears and this text appears fresh.
 ```
 
+## Section dividers and next-section links
+
+Sometimes you need to link to the next section from inside a block helper like `{{#animate}}`. The `+++` syntax won't work there because it would split the section before the closing `{{/animate}}`.
+
+For these cases, use `---` to start a new anonymous section, and `[[text>]]` to create a link that points to whatever section comes next.
+
+<Sample script="{{#animate &quot;fadeIn&quot;}}
+Welcome to the story!
+
+[[Begin>]]
+{{/animate}}
+
+---
+
+The adventure starts here.
+
+[[Continue>]]
+
+---
+
+And the story continues..."></Sample>
+
+The `>` at the end of the link text means "link to the next section". This is equivalent to:
+
+```
+{{#animate "fadeIn"}}
+Welcome to the story!
+
+[[Begin]](section2)
+{{/animate}}
+
+[[section2]]:
+The adventure starts here.
+
+[[Continue]](section3)
+
+[[section3]]:
+And the story continues...
+```
+
+You can also use the explicit form `[[link text]](>)` if you prefer, or if you need to set attributes:
+
+```
+[[Begin]](>, score=10)
+```
+
 ## JavaScript
 
 Any section or passage can call some JavaScript when it is displayed. Simply indent with four spaces or a tab, before the text.

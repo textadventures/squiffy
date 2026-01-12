@@ -43,6 +43,31 @@ So below, we need to use `{{get "weather"}}` in the same section where we set it
 
 Squiffy includes [Anime.js](https://animejs.com/), and you can define your own custom animations by setting them up in a `@ui` section. See the [example on GitHub](https://github.com/textadventures/squiffy/tree/main/examples/animate).
 
+### Click to continue
+
+Animations are queued and play sequentially. Sometimes you want to pause the queue and let the reader control when to continue. The `continue` animation displays text as a clickable link that resumes the animation queue when clicked.
+
+<Sample alwaysShowRestart={true} script="The door creaked open slowly...
+
+    {{#animate &quot;continue&quot;}}Step inside{{/animate}}
+
+    {{#animate &quot;fadeIn&quot;}}You enter a dark room. Shadows dance on the walls.{{/animate}}
+"></Sample>
+
+The `continue` animation supports different visual styles via the `style` parameter:
+
+- `pulse` (default) - the text fades in and out
+- `glow` - a pulsing blue glow effect
+- `bounce` - subtle vertical bouncing
+- `wave` - opacity ripples through each character
+
+<Sample alwaysShowRestart={true} script="Choose your adventure...
+
+    {{#animate &quot;continue&quot; style=&quot;wave&quot;}}Enter the cave{{/animate}}
+
+    {{#animate &quot;typewriter&quot;}}You venture into the darkness...{{/animate}}
+"></Sample>
+
 ## Replace
 
 By creating labels, you can replace existing output when a link is clicked or when a passage or section is displayed. In the example below, we create a label called "1" using `{{#label}}`, and in the next passage we replace the text inside that label:

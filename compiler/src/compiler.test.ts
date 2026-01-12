@@ -61,6 +61,7 @@ const examples = [
     "attributes/attributes.squiffy",
     "clearscreen/clearscreen.squiffy",
     "continue/continue.squiffy",
+    "gameshow/gameshow.squiffy",
     "helloworld/helloworld.squiffy",
     "import/test.squiffy",
     "input/input.squiffy",
@@ -184,4 +185,118 @@ Another orphaned passage
         expect(result.errors.length).toBe(1);
         expect(result.errors[0]).toContain("passage1");
     }
+});
+
+test("Next-section link [[text>]] should link to section after ---", async () => {
+    const script = `
+[[intro]]:
+Welcome!
+
+[[Continue>]]
+
+---
+
+This is the second section.
+`;
+
+    const result = await compile({
+        scriptBaseFilename: "test.squiffy",
+        script: script,
+    });
+
+    assertSuccess(result);
+    // Should have two sections: intro and _continue1
+    expect(Object.keys(result.output.story.sections)).toEqual(["intro", "_continue1"]);
+    // The intro section should have a link to _continue1
+    expect(result.output.story.sections.intro.text).toContain('{{section "_continue1" text="Continue"}}');
+});
+
+test("Named next-section link [[text]](>) should link to section after ---", async () => {
+    const script = `
+[[start]]:
+Begin here.
+
+[[Go forward]](>)
+
+---
+
+You moved forward.
+`;
+
+    const result = await compile({
+        scriptBaseFilename: "test.squiffy",
+        script: script,
+    });
+
+    assertSuccess(result);
+    expect(Object.keys(result.output.story.sections)).toEqual(["start", "_continue1"]);
+    expect(result.output.story.sections.start.text).toContain('{{section "_continue1" text="Go forward"}}');
+});
+
+test("Named next-section link [[text]](>, attr=value) should set attributes", async () => {
+    const script = `
+[[start]]:
+Choose wisely.
+
+[[Take the gold]](>, treasure=gold)
+
+---
+
+You took the gold!
+`;
+
+    const result = await compile({
+        scriptBaseFilename: "test.squiffy",
+        script: script,
+    });
+
+    assertSuccess(result);
+    // Note: space before setter is preserved from the original syntax ", treasure=gold"
+    expect(result.output.story.sections.start.text).toContain('{{section "_continue1" text="Take the gold" set=" treasure=gold"}}');
+});
+
+test("Warning when [[text>]] has no following section", async () => {
+    const script = `
+[[only]]:
+This is the only section.
+
+[[Nowhere to go>]]
+`;
+
+    const warnings: string[] = [];
+    const result = await compile({
+        scriptBaseFilename: "test.squiffy",
+        script: script,
+        onWarning: (message) => warnings.push(message),
+    });
+
+    assertSuccess(result);
+    // First warning is about the [[text>]] link, second is from the fallback [[text]]
+    expect(warnings.length).toBeGreaterThanOrEqual(1);
+    const nextSectionWarning = warnings.find(w => w.includes("[[Nowhere to go>]]"));
+    expect(nextSectionWarning).toBeDefined();
+    expect(nextSectionWarning).toContain("no following section exists");
+});
+
+test("Warning when [[text]](>) has no following section", async () => {
+    const script = `
+[[only]]:
+This is the only section.
+
+[[Dead end]](>)
+`;
+
+    const warnings: string[] = [];
+    const result = await compile({
+        scriptBaseFilename: "test.squiffy",
+        script: script,
+        onWarning: (message) => warnings.push(message),
+    });
+
+    assertSuccess(result);
+    // First warning is about the [[text]](>) link, second is from the fallback [[text]]
+    expect(warnings.length).toBeGreaterThanOrEqual(1);
+    const nextSectionWarning = warnings.find(w => w.includes("[[Dead end]](>)"));
+    expect(nextSectionWarning).toBeDefined();
+    expect(nextSectionWarning).toContain("no following section exists");
 });

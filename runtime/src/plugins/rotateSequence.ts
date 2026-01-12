@@ -40,6 +40,9 @@ export function RotateSequencePlugin() : SquiffyPlugin {
             squiffy.set(attribute, link.getAttribute("data-value"));
         }
 
+        // Clear any text selection caused by rapid clicking
+        window.getSelection()?.removeAllRanges();
+
         return result;
     };
 

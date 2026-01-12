@@ -92,5 +92,51 @@ export class Animation {
                 onComplete: onComplete
             });
         }, { initiallyHidden: true });
+
+        this.registerAnimation("continue", function(el, params, onComplete) {
+            // Make it look and behave like a link
+            el.classList.add("squiffy-continue");
+
+            const style = params.style || "pulse";
+            let waveAnimation: ReturnType<typeof animate> | null = null;
+            let chars: HTMLElement[] | null = null;
+
+            if (style === "wave") {
+                // Wave style needs JS animation - split into chars and animate opacity
+                el.classList.add("squiffy-continue-wave");
+                const split = text.split(el, { words: false, chars: true });
+                chars = split.chars as HTMLElement[];
+
+                waveAnimation = animate(chars, {
+                    opacity: [1, 0.3, 1],
+                    easing: "easeInOutSine",
+                    duration: 1200,
+                    delay: stagger(80),
+                    loop: true
+                });
+            } else {
+                // CSS-based styles (pulse, glow, bounce)
+                el.classList.add(`squiffy-continue-${style}`);
+            }
+
+            const handleClick = () => {
+                el.classList.remove("squiffy-continue", "squiffy-continue-wave", `squiffy-continue-${style}`);
+                el.removeEventListener("click", handleClick);
+
+                if (waveAnimation) {
+                    waveAnimation.pause();
+                    // Restore chars to full opacity
+                    if (chars) {
+                        for (const char of chars) {
+                            char.style.opacity = "1";
+                        }
+                    }
+                }
+
+                onComplete();
+            };
+
+            el.addEventListener("click", handleClick);
+        });
     }
 }

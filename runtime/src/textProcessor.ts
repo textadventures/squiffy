@@ -28,6 +28,13 @@ export class TextProcessor {
 
         this.handlebars.registerHelper("seen", (name: string) => this.state.getSeen(name));
         this.handlebars.registerHelper("get", (attribute: string) => this.state.get(attribute));
+        this.handlebars.registerHelper("at", (section: string | string[]) => {
+            const currentSection = this.state.get("_section");
+            if (Array.isArray(section)) {
+                return section.includes(currentSection);
+            }
+            return currentSection === section;
+        });
 
         // State modification helpers (side effects, no output)
         // These execute at render time, so they respect {{#if}} conditions
