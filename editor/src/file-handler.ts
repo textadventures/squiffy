@@ -32,11 +32,16 @@ export const setCurrentFile = (handle: FileSystemFileHandle | null, fileName: st
     currentFileName = fileName;
 };
 
-const openFileFallback = async (): Promise<boolean> => {
+export interface FileSelection {
+    content: string;
+    fileName: string;
+}
+
+const selectFileFallback = async (): Promise<FileSelection | null> => {
     return new Promise((resolve) => {
         const input = document.getElementById("file-input-fallback") as HTMLInputElement;
         if (!input) {
-            resolve(false);
+            resolve(null);
             return;
         }
 
@@ -49,17 +54,18 @@ const openFileFallback = async (): Promise<boolean> => {
             const file = target.files?.[0];
 
             if (file) {
-                currentFileName = file.name;
                 const reader = new FileReader();
                 reader.onload = (e) => {
-                    onOpen(e.target?.result as string);
-                    resolve(true);
+                    resolve({
+                        content: e.target?.result as string,
+                        fileName: file.name
+                    });
                 };
-                reader.onerror = () => resolve(false);
+                reader.onerror = () => resolve(null);
                 reader.readAsText(file);
             } else {
                 // User cancelled
-                resolve(false);
+                resolve(null);
             }
 
             // Clean up listener
@@ -71,21 +77,41 @@ const openFileFallback = async (): Promise<boolean> => {
     });
 };
 
-export const openFile = async (): Promise<boolean> => {
+export const selectFile = async (): Promise<FileSelection | null> => {
     try {
         if (hasFileSystemAccess()) {
             // Modern API - Chrome, Edge
             [fileHandle] = await window.showOpenFilePicker();
             await addToRecentFiles(fileHandle);
-            return await openFileHandle();
+
+            if (!await ensurePermission(fileHandle)) {
+                return null;
+            }
+            const file = await fileHandle.getFile();
+            currentFileName = file.name;
+            const content = await file.text();
+            return { content, fileName: file.name };
         } else {
             // Fallback for Safari, Firefox
-            return await openFileFallback();
+            const selection = await selectFileFallback();
+            if (selection) {
+                currentFileName = selection.fileName;
+            }
+            return selection;
         }
     } catch {
         // User cancelled or permission denied
-        return false;
+        return null;
     }
+};
+
+export const openFile = async (): Promise<boolean> => {
+    const selection = await selectFile();
+    if (selection) {
+        onOpen(selection.content);
+        return true;
+    }
+    return false;
 };
 
 interface RecentFile {

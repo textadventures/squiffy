@@ -6,7 +6,7 @@ import "./jquery-globals";
 import "chosen-js/chosen.jquery.js";
 import { Modal, Tab, Tooltip } from "bootstrap";
 import { compile as squiffyCompile, CompileError } from "squiffy-compiler";
-import { openFile, saveFile, saveFileAs, setOnOpen, getRecentFiles, openRecentFile, clearCurrentFile, getCurrentFileHandle, getCurrentFileName, setCurrentFile } from "./file-handler";
+import { saveFile, saveFileAs, setOnOpen, getRecentFiles, openRecentFile, clearCurrentFile, getCurrentFileHandle, getCurrentFileName, setCurrentFile, selectFile } from "./file-handler";
 import { get, set, del } from "idb-keyval";
 import * as editor from "./editor";
 import { init as runtimeInit, SquiffyApi } from "squiffy-runtime";
@@ -300,17 +300,19 @@ const handleWelcomeCreateNew = async function () {
 
 const handleWelcomeOpenFile = async function () {
     clearWelcomeError();
+
+    // Select file first (within user gesture for iOS Safari compatibility)
+    const fileSelection = await selectFile();
+    if (!fileSelection) return; // User cancelled
+
+    // Now check for unsaved changes
     const confirm = await confirmDiscardUnsavedChanges();
     if (!confirm) return;
 
-    const success = await openFile();
-    if (success) {
-        // Clear autosave when opening a file from disk
-        await clearAutoSave();
-        // Only hide modal if file was successfully opened
-        welcomeModal?.hide();
-    }
-    // If not successful, modal stays visible (user cancelled)
+    // Load the selected file
+    await editorLoad(fileSelection.content);
+    await clearAutoSave();
+    welcomeModal?.hide();
 };
 
 let localSaveTimeout: NodeJS.Timeout | undefined;
@@ -601,13 +603,17 @@ const init = async function () {
         }
     });
     onClick("open", async () => {
+        // Select file first (within user gesture for iOS Safari compatibility)
+        const fileSelection = await selectFile();
+        if (!fileSelection) return; // User cancelled
+
+        // Now check for unsaved changes
         const confirm = await confirmDiscardUnsavedChanges();
         if (!confirm) return;
 
-        const success = await openFile();
-        if (success) {
-            await clearAutoSave();
-        }
+        // Load the selected file
+        await editorLoad(fileSelection.content);
+        await clearAutoSave();
     });
     onClick("save", async () => {
         const success = await saveFile(editor.getValue());
