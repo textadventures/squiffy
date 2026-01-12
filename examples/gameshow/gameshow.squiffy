@@ -3,7 +3,9 @@
 
 [[]]:
 @clear
+{{#if (not (at "intro"))}}
 **SCORE: {{live "score"}}** | **ROUND: {{live "round"}}** | Host Patience: {{live "patience" section="patience display"}}
+{{/if}}
 
 [[patience display]]:
 {{#if (gte patience 3)}}_Cheerful_{{else}}{{#if (gte patience 1)}}_Strained_{{else}}_Murderous_{{/if}}{{/if}}
@@ -28,10 +30,11 @@ The audience—three people and a cardboard cutout—applauds uncertainly.
 
 <input type="text" data-attribute="player_name" placeholder="Enter your name...">
 
-[[Let's play!]]
+[[Let's play!>]]
 {{/animate}}
 
-[[Let's play!]]:
+---
+{{#if (not player_name)}}{{set "player_name" "Mystery Contestant"}}{{/if}}
 @set round = 1
 
 "Welcome, {{player_name}}! Or as I like to call you... {{player_name}}!"
@@ -40,11 +43,15 @@ Hank pauses, waiting for laughter. None comes.
 
 {{embed "catchphrase"}}
 
-"Now then! Let's spin... {{#animate "typewriter"}}THE WHEEL OF DUBIOUS FORTUNE!{{/animate}}"
+"Now then! {{#animate "continue" style="wave"}}Let's spin...{{/animate}}"
 
+{{#animate "typewriter"}}THE WHEEL OF DUBIOUS FORTUNE!{{/animate}}
+
+{{#animate "fadeIn"}}
 A rusty wheel descends from the ceiling, wobbling dangerously. It has several questionable categories painted on it.
 
-[[Spin the wheel!]]
+[[Spin the wheel!>]]
+{{/animate}}
 
 [catchphrase]:
 "Remember our motto: _'Whose Fortune Is It Anyway? (Legally Speaking, Ours)'_"
@@ -54,6 +61,9 @@ The wheel creaks to life, spinning with a sound like a shopping cart hitting a p
 
 It lands on... {{#animate "toast"}}{{sequence (array "GENERAL KNOWLEDGE" "SCIENCE with PROFESSOR BOOM" "MYSTERY BOX" "THE AUDIENCE DECIDES") set="category"}}!{{/animate}}
 
+{{live "category" section="showCategory"}}
+
+[[showCategory]]:
 {{#if (eq category "GENERAL KNOWLEDGE")}}[[General Knowledge Round]]{{/if}}
 {{#if (eq category "SCIENCE with PROFESSOR BOOM")}}[[Science Round]]{{/if}}
 {{#if (eq category "MYSTERY BOX")}}[[Mystery Box Round]]{{/if}}
@@ -66,19 +76,22 @@ It lands on... {{#animate "toast"}}{{sequence (array "GENERAL KNOWLEDGE" "SCIENC
 
 **What is the capital of France?**
 
-Your answer: {{rotate (array "Paris" "London" "A baguette" "France doesn't exist") set="gk_answer"}}
+Your answer: {{#label "answer"}}{{rotate (array "Paris" "London" "A baguette" "France doesn't exist") set="gk_answer"}}{{/label}}
 
 Status: {{#label "status"}}Waiting for answer...{{/label}}
 
 [Lock in answer]
 
 [Lock in answer]:
+{{#replace "answer"}}**{{gk_answer}}**{{/replace}}
 {{#replace "status"}}**LOCKED IN!**{{/replace}}
 
 {{#if (eq gk_answer "Paris")}}
 {{#animate "toast"}}CORRECT!{{/animate}}
 
+{{#animate "fadeIn"}}
 "That's right! Paris! City of lights, city of love, city of... bread?" Hank looks confused but happy.
+{{/animate}}
 
 {{inc "score" 100}}
 {{else}}
