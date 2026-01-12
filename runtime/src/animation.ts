@@ -93,7 +93,7 @@ export class Animation {
             });
         }, { initiallyHidden: true });
 
-        this.registerAnimation("continue", function(el, params, onComplete, _loop) {
+        this.registerAnimation("continue", function(el, params, onComplete) {
             // Make it look and behave like a link
             el.classList.add("squiffy-continue");
 

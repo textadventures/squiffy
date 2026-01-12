@@ -251,7 +251,7 @@ story.sections = {
         ]
     },
     "_continue1": {
-        "text": "{{#if (not player_name)}}{{set \\"player_name\\" \\"Mystery Contestant\\"}}{{/if}}\\n\\n\\"Welcome, {{player_name}}! Or as I like to call you... {{player_name}}!\\"\\n\\nHank pauses, waiting for laughter. None comes.\\n\\n{{embed \\"catchphrase\\"}}\\n\\n\\"Now then! Let's spin...\\"\\n\\n{{#animate \\"typewriter\\" start=3000}}THE WHEEL OF DUBIOUS FORTUNE!{{/animate}}\\n\\n{{#animate \\"fadeIn\\"}}\\nA rusty wheel descends from the ceiling, wobbling dangerously. It has several questionable categories painted on it.\\n\\n{{section \\"Spin the wheel!\\" text=\\"Spin the wheel!\\"}}\\n{{/animate}}\\n",
+        "text": "{{#if (not player_name)}}{{set \\"player_name\\" \\"Mystery Contestant\\"}}{{/if}}\\n\\n\\"Welcome, {{player_name}}! Or as I like to call you... {{player_name}}!\\"\\n\\nHank pauses, waiting for laughter. None comes.\\n\\n{{embed \\"catchphrase\\"}}\\n\\n\\"Now then! {{#animate \\"continue\\" style=\\"wave\\"}}Let's spin...{{/animate}}\\"\\n\\n{{#animate \\"typewriter\\"}}THE WHEEL OF DUBIOUS FORTUNE!{{/animate}}\\n\\n{{#animate \\"fadeIn\\"}}\\nA rusty wheel descends from the ceiling, wobbling dangerously. It has several questionable categories painted on it.\\n\\n{{section \\"Spin the wheel!\\" text=\\"Spin the wheel!\\"}}\\n{{/animate}}\\n",
         "attributes": [
             "round = 1"
         ],
