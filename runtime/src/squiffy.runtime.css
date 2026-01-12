@@ -58,3 +58,48 @@ div.squiffy-output-section:not(:last-child)
     opacity: 1;
     transition: opacity 200ms;
 }
+
+/* Continue animation - click to proceed */
+.squiffy-continue {
+    text-decoration: underline;
+    text-decoration-color: Blue;
+    color: Blue;
+    cursor: pointer;
+}
+
+/* Style: pulse - fades in and out */
+.squiffy-continue-pulse {
+    animation: squiffy-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes squiffy-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+/* Style: glow - pulsing glow effect */
+.squiffy-continue-glow {
+    animation: squiffy-glow 1.5s ease-in-out infinite;
+}
+
+@keyframes squiffy-glow {
+    0%, 100% { text-shadow: 0 0 4px rgba(0, 0, 255, 0.5); }
+    50% { text-shadow: 0 0 12px rgba(0, 0, 255, 0.8), 0 0 20px rgba(0, 0, 255, 0.4); }
+}
+
+/* Style: bounce - subtle vertical bounce */
+.squiffy-continue-bounce {
+    display: inline-block;
+    animation: squiffy-bounce 0.6s ease-in-out infinite;
+}
+
+@keyframes squiffy-bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+}
+
+/* Style: wave - character spans need special handling for underline */
+.squiffy-continue-wave {
+    text-decoration: none;
+    border-bottom: 1px solid Blue;
+}

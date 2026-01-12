@@ -43,9 +43,9 @@ Hank pauses, waiting for laughter. None comes.
 
 {{embed "catchphrase"}}
 
-"Now then! Let's spin..."
+"Now then! {{#animate "continue" style="wave"}}Let's spin...{{/animate}}"
 
-{{#animate "typewriter" start=3000}}THE WHEEL OF DUBIOUS FORTUNE!{{/animate}}
+{{#animate "typewriter"}}THE WHEEL OF DUBIOUS FORTUNE!{{/animate}}
 
 {{#animate "fadeIn"}}
 A rusty wheel descends from the ceiling, wobbling dangerously. It has several questionable categories painted on it.
