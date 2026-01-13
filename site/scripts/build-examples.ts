@@ -29,8 +29,10 @@ const externalFiles = (inputFilename: string): ExternalFiles => {
             return result.filter((filename: string) => !includedFiles.includes(filename));
         },
         getContent: async (filename: string): Promise<string> => {
-            includedFiles.push(filename);
-            return (await fs.promises.readFile(filename)).toString();
+            // Resolve relative paths against the base path
+            const resolvedPath = path.isAbsolute(filename) ? filename : path.join(basePath, filename);
+            includedFiles.push(resolvedPath);
+            return (await fs.promises.readFile(resolvedPath)).toString();
         },
         getLocalFilename(filename: string): string {
             return path.relative(basePath, filename);
