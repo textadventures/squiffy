@@ -28,3 +28,6 @@ dev-dist
 test-results/
 playwright-report/
 playwright/.cache/
+
+# Built examples (generated during site build)
+site/public/examples/
