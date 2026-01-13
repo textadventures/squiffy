@@ -4,6 +4,7 @@ import { fileURLToPath } from "url";
 import { glob } from "glob";
 import { compile } from "squiffy-compiler";
 import { createPackage } from "@textadventures/squiffy-packager";
+import { externalFiles } from "@textadventures/squiffy-cli";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -12,33 +13,6 @@ const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, "../..");
 const examplesDir = path.join(rootDir, "examples");
 const outputDir = path.join(__dirname, "../public/examples");
-
-interface ExternalFiles {
-    getMatchingFilenames(pattern: string): Promise<string[]>;
-    getContent(filename: string): Promise<string>;
-    getLocalFilename(filename: string): string;
-}
-
-const externalFiles = (inputFilename: string): ExternalFiles => {
-    const includedFiles = [path.resolve(inputFilename)];
-    const basePath = path.resolve(path.dirname(inputFilename));
-    return {
-        getMatchingFilenames: async (pattern: string): Promise<string[]> => {
-            const filenames = path.join(basePath, pattern);
-            const result = await glob(filenames);
-            return result.filter((filename: string) => !includedFiles.includes(filename));
-        },
-        getContent: async (filename: string): Promise<string> => {
-            // Resolve relative paths against the base path
-            const resolvedPath = path.isAbsolute(filename) ? filename : path.join(basePath, filename);
-            includedFiles.push(resolvedPath);
-            return (await fs.promises.readFile(resolvedPath)).toString();
-        },
-        getLocalFilename(filename: string): string {
-            return path.relative(basePath, filename);
-        }
-    };
-};
 
 async function packageExample(inputPath: string, exampleName: string) {
     console.log(`\nPackaging ${exampleName}...`);
