@@ -28,7 +28,7 @@ The audience—three people and a cardboard cutout—applauds uncertainly.
 
 "And YOU are our lucky contestant! What's your name?"
 
-<input type="text" data-attribute="player_name" placeholder="Enter your name...">
+<input type="text" data-attribute="player_name" placeholder="Enter your name..." required minlength="2" maxlength="30">
 
 [[Let's play!>]]
 {{/animate}}

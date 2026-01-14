@@ -21,13 +21,81 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     const emitter = new Emitter<SquiffyEventMap>();
     const transitions: (() => Promise<void>)[] = [];
     let runningTransitions = false;
-    
+
+    function areInputsValid(): boolean {
+        if (!currentSectionElement) return true;
+
+        // Check all input, textarea, and select elements in the current section
+        const inputs = currentSectionElement.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(
+            "input:not([disabled]), textarea:not([disabled]), select:not([disabled])"
+        );
+
+        for (const input of inputs) {
+            if (!input.checkValidity()) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    function updateLinkStates() {
+        if (!currentSectionElement) return;
+
+        const isValid = areInputsValid();
+        const links = currentSectionElement.querySelectorAll<HTMLElement>("a.squiffy-link[data-section], a.squiffy-link[data-passage]");
+
+        for (const link of links) {
+            if (isValid) {
+                link.classList.remove("validation-disabled");
+                link.removeAttribute("aria-disabled");
+            } else {
+                link.classList.add("validation-disabled");
+                link.setAttribute("aria-disabled", "true");
+            }
+        }
+    }
+
+    function setupInputValidation() {
+        if (!currentSectionElement) return;
+
+        const inputs = currentSectionElement.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(
+            "input:not([disabled]), textarea:not([disabled]), select:not([disabled])"
+        );
+
+        for (const input of inputs) {
+            // Listen for input changes
+            input.addEventListener("input", updateLinkStates);
+            input.addEventListener("change", updateLinkStates);
+
+            // Mark invalid inputs
+            input.addEventListener("invalid", (e) => {
+                e.preventDefault(); // Prevent default browser validation UI
+                input.classList.add("squiffy-invalid");
+            });
+
+            input.addEventListener("input", () => {
+                if (input.checkValidity()) {
+                    input.classList.remove("squiffy-invalid");
+                }
+            });
+        }
+
+        // Initial state update
+        updateLinkStates();
+    }
+
     async function handleLink(link: HTMLElement): Promise<boolean> {
         if (runningTransitions) return false;
         const outputSection = link.closest(".squiffy-output-section");
         if (outputSection !== currentSectionElement) return false;
 
         if (link.classList.contains("disabled")) return false;
+
+        // Check if all inputs in the current section are valid before allowing navigation
+        if (!areInputsValid()) {
+            return false;
+        }
 
         const passage = link.getAttribute("data-passage");
         const section = link.getAttribute("data-section");
@@ -286,6 +354,9 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             await fn();
         }
 
+        // Setup validation for any inputs added by passages
+        setupInputValidation();
+
         writeUndoLog();
         save();
         const newCanGoBack = canGoBack();
@@ -343,6 +414,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         currentSection = story.sections[get("_section")];
         runUiJs();
         pluginManager.onLoad();
+        setupInputValidation();
         return true;
     }
 
@@ -458,6 +530,10 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             div.innerHTML = html;
             pluginManager.onWrite(div);
             currentBlockOutputElement.appendChild(div);
+
+            // Setup validation for any new inputs that were just added
+            setupInputValidation();
+
             ui.scrollToEnd();
         },
         clearScreen: () => {

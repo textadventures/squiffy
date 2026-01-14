@@ -28,6 +28,44 @@ div.squiffy-output-section.links-disabled a.squiffy-link
     pointer-events: none;
 }
 
+/* Links disabled due to input validation */
+a.squiffy-link.validation-disabled
+{
+    text-decoration: inherit;
+    text-decoration-color: transparent;
+    color: #999 !important;
+    cursor: not-allowed;
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+/* Invalid input field states */
+input.squiffy-invalid,
+textarea.squiffy-invalid,
+select.squiffy-invalid
+{
+    border-color: #dc3545 !important;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+/* Valid input field states (optional, provides positive feedback) */
+input:not([disabled]):valid,
+textarea:not([disabled]):valid,
+select:not([disabled]):valid
+{
+    border-color: #28a745;
+}
+
+/* Focus state for invalid inputs */
+input.squiffy-invalid:focus,
+textarea.squiffy-invalid:focus,
+select.squiffy-invalid:focus
+{
+    outline: none;
+    border-color: #dc3545 !important;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.5);
+}
+
 /* Header button styles */
 button.squiffy-header-button
 {
