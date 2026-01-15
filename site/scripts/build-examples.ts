@@ -23,7 +23,14 @@ interface ExamplesManifest {
     examples: ExampleConfig[];
 }
 
-async function packageExample(inputPath: string, exampleName: string) {
+interface BuiltExample {
+    name: string;
+    title: string;
+    description?: string;
+    featured?: boolean;
+}
+
+async function packageExample(inputPath: string, exampleName: string, config: ExampleConfig): Promise<BuiltExample | null> {
     console.log(`\nPackaging ${exampleName}...`);
 
     try {
@@ -62,7 +69,7 @@ async function packageExample(inputPath: string, exampleName: string) {
         }
 
         console.log(`  ✓ Packaged to public/examples/${exampleName}/`);
-        return { name: exampleName, title };
+        return { name: exampleName, title, description: config.description, featured: config.featured };
     } catch (error) {
         console.error(`  ✗ Error packaging ${exampleName}:`);
         console.error(`    ${error instanceof Error ? error.message : String(error)}`);
@@ -70,7 +77,7 @@ async function packageExample(inputPath: string, exampleName: string) {
     }
 }
 
-function generateIndexPage(examples: Array<{ name: string; title: string }>) {
+function generateIndexPage(examples: BuiltExample[]) {
     const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -124,11 +131,35 @@ function generateIndexPage(examples: Array<{ name: string; title: string }>) {
             box-shadow: 0 2px 8px rgba(52, 152, 219, 0.2);
             transform: translateY(-2px);
         }
+        .example-card.featured {
+            border-color: #f39c12;
+            background: linear-gradient(to right, #fffbf0, white);
+        }
+        .example-card.featured:hover {
+            border-color: #e67e22;
+            box-shadow: 0 2px 8px rgba(243, 156, 18, 0.3);
+        }
         .example-title {
             font-size: 1.1rem;
             font-weight: 600;
             color: #2c3e50;
             margin-bottom: 0.25rem;
+        }
+        .featured-badge {
+            display: inline-block;
+            background: #f39c12;
+            color: white;
+            font-size: 0.7rem;
+            padding: 0.1rem 0.4rem;
+            border-radius: 3px;
+            margin-left: 0.5rem;
+            vertical-align: middle;
+            font-weight: 500;
+        }
+        .example-description {
+            font-size: 0.9rem;
+            color: #555;
+            margin-bottom: 0.5rem;
         }
         .example-path {
             font-size: 0.875rem;
@@ -158,8 +189,9 @@ function generateIndexPage(examples: Array<{ name: string; title: string }>) {
         <p class="subtitle">${examples.length} packaged example${examples.length !== 1 ? 's' : ''} ready to play</p>
 
         <div class="example-grid">
-${examples.map(ex => `            <a href="${ex.name}/index.html" class="example-card">
-                <div class="example-title">${ex.title}</div>
+${examples.map(ex => `            <a href="${ex.name}/index.html" class="example-card${ex.featured ? ' featured' : ''}">
+                <div class="example-title">${ex.title}${ex.featured ? '<span class="featured-badge">Featured</span>' : ''}</div>
+                ${ex.description ? `<div class="example-description">${ex.description}</div>` : ''}
                 <div class="example-path">${ex.name}/</div>
             </a>`).join('\n')}
         </div>
@@ -199,14 +231,14 @@ async function buildAllExamples() {
 
     let successCount = 0;
     let failCount = 0;
-    const builtExamples: Array<{ name: string; title: string }> = [];
+    const builtExamples: BuiltExample[] = [];
 
     for (const config of exampleConfigs) {
         const inputPath = path.join(examplesDir, config.path);
         // Get the example name from the directory name
         const exampleName = path.dirname(config.path);
 
-        const result = await packageExample(inputPath, exampleName);
+        const result = await packageExample(inputPath, exampleName, config);
         if (result) {
             successCount++;
             builtExamples.push(result);
@@ -219,8 +251,12 @@ async function buildAllExamples() {
 
     // Generate index page for successfully built examples
     if (builtExamples.length > 0) {
-        // Sort examples alphabetically by name
-        builtExamples.sort((a, b) => a.name.localeCompare(b.name));
+        // Sort examples: featured first, then alphabetically by name
+        builtExamples.sort((a, b) => {
+            if (a.featured && !b.featured) return -1;
+            if (!a.featured && b.featured) return 1;
+            return a.name.localeCompare(b.name);
+        });
         generateIndexPage(builtExamples);
     }
 
