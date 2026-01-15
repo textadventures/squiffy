@@ -48,3 +48,30 @@ npm run build           # Full site build (includes examples)
 ```
 
 Packaged examples are output to `site/public/examples/` as standalone HTML/JS/CSS files.
+
+### Configuration
+
+The `examples.json` file controls which examples are built and published:
+
+```json
+{
+  "examples": [
+    {
+      "path": "coffeeshop/coffeeshop.squiffy",
+      "description": "Full story: working at The Daily Grind coffee shop",
+      "featured": true
+    }
+  ]
+}
+```
+
+**Adding a new example:**
+1. Create your `.squiffy` file in a subdirectory (e.g., `myexample/myexample.squiffy`)
+2. Add an entry to `examples.json` with the path relative to the `examples/` directory
+3. Run `npm run build:examples` from the `site/` directory to build it
+
+**Why this approach?**
+- Excludes test/internal examples (like `warnings/`)
+- Handles multi-file examples correctly (like `import/test.squiffy`)
+- Allows adding metadata like descriptions and featured flags
+- Gives explicit control over what's published to the site

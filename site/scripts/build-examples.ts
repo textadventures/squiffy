@@ -1,7 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
 import { fileURLToPath } from "url";
-import { glob } from "glob";
 import { compile } from "squiffy-compiler";
 import { createPackage } from "@textadventures/squiffy-packager";
 import { externalFiles } from "@textadventures/squiffy-cli";
@@ -13,6 +12,16 @@ const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, "../..");
 const examplesDir = path.join(rootDir, "examples");
 const outputDir = path.join(__dirname, "../public/examples");
+
+interface ExampleConfig {
+    path: string;
+    description?: string;
+    featured?: boolean;
+}
+
+interface ExamplesManifest {
+    examples: ExampleConfig[];
+}
 
 async function packageExample(inputPath: string, exampleName: string) {
     console.log(`\nPackaging ${exampleName}...`);
@@ -173,25 +182,29 @@ async function buildAllExamples() {
     console.log(`Examples directory: ${examplesDir}`);
     console.log(`Output directory: ${outputDir}`);
 
-    // Find all .squiffy files in examples directory
-    const exampleFiles = await glob("**/*.squiffy", { cwd: examplesDir });
+    // Read examples manifest
+    const manifestPath = path.join(examplesDir, "examples.json");
+    const manifestContent = fs.readFileSync(manifestPath, "utf-8");
+    const manifest: ExamplesManifest = JSON.parse(manifestContent);
 
-    if (exampleFiles.length === 0) {
-        console.log("No example files found.");
+    const exampleConfigs = manifest.examples;
+
+    if (exampleConfigs.length === 0) {
+        console.log("No examples configured in examples.json");
         return;
     }
 
-    console.log(`Found ${exampleFiles.length} example(s):`);
-    exampleFiles.forEach(file => console.log(`  - ${file}`));
+    console.log(`Found ${exampleConfigs.length} configured example(s):`);
+    exampleConfigs.forEach(config => console.log(`  - ${config.path}`));
 
     let successCount = 0;
     let failCount = 0;
     const builtExamples: Array<{ name: string; title: string }> = [];
 
-    for (const file of exampleFiles) {
-        const inputPath = path.join(examplesDir, file);
+    for (const config of exampleConfigs) {
+        const inputPath = path.join(examplesDir, config.path);
         // Get the example name from the directory name
-        const exampleName = path.dirname(file);
+        const exampleName = path.dirname(config.path);
 
         const result = await packageExample(inputPath, exampleName);
         if (result) {
@@ -206,14 +219,9 @@ async function buildAllExamples() {
 
     // Generate index page for successfully built examples
     if (builtExamples.length > 0) {
-        // Deduplicate by directory name (keep first occurrence of each directory)
-        const uniqueExamples = builtExamples.filter((example, index, self) =>
-            index === self.findIndex(e => e.name === example.name)
-        );
-
         // Sort examples alphabetically by name
-        uniqueExamples.sort((a, b) => a.name.localeCompare(b.name));
-        generateIndexPage(uniqueExamples);
+        builtExamples.sort((a, b) => a.name.localeCompare(b.name));
+        generateIndexPage(builtExamples);
     }
 
     // Only fail the build if no examples succeeded
