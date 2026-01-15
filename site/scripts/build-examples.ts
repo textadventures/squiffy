@@ -165,22 +165,21 @@ function generateIndexPage(examples: BuiltExample[]) {
 <body>
     <div class="container">
         <h1>Squiffy Examples</h1>
-        <p class="subtitle">${examples.length} packaged example${examples.length !== 1 ? 's' : ''} ready to play</p>
+        <p class="subtitle">${examples.length} example${examples.length !== 1 ? "s" : ""}</p>
 
         <div class="example-grid">
 ${examples.map(ex => `            <div class="example-card">
                 <div class="example-title">${ex.title}</div>
-                ${ex.description ? `<div class="example-description">${ex.description}</div>` : ''}
+                ${ex.description ? `<div class="example-description">${ex.description}</div>` : ""}
                 <div class="example-links">
                     <a href="${ex.name}/index.html">Play</a>
                     <a href="https://github.com/textadventures/squiffy/tree/main/examples/${ex.name}" target="_blank">View Source</a>
                 </div>
-            </div>`).join('\n')}
+            </div>`).join("\n")}
         </div>
 
         <div class="footer">
-            <p>Built with <a href="https://squiffystory.com" target="_blank">Squiffy</a> |
-            <a href="https://squiffystory.com/examples/" target="_blank">View Documentation</a></p>
+            <p><a href="https://squiffystory.com" target="_blank">Squiffy Documentation</a></p>
         </div>
     </div>
 </body>
