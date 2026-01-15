@@ -149,7 +149,7 @@ function generateIndexPage(examples: Array<{ name: string; title: string }>) {
         <p class="subtitle">${examples.length} packaged example${examples.length !== 1 ? 's' : ''} ready to play</p>
 
         <div class="example-grid">
-${examples.map(ex => `            <a href="${ex.name}/" class="example-card">
+${examples.map(ex => `            <a href="${ex.name}/index.html" class="example-card">
                 <div class="example-title">${ex.title}</div>
                 <div class="example-path">${ex.name}/</div>
             </a>`).join('\n')}
@@ -206,9 +206,14 @@ async function buildAllExamples() {
 
     // Generate index page for successfully built examples
     if (builtExamples.length > 0) {
+        // Deduplicate by directory name (keep first occurrence of each directory)
+        const uniqueExamples = builtExamples.filter((example, index, self) =>
+            index === self.findIndex(e => e.name === example.name)
+        );
+
         // Sort examples alphabetically by name
-        builtExamples.sort((a, b) => a.name.localeCompare(b.name));
-        generateIndexPage(builtExamples);
+        uniqueExamples.sort((a, b) => a.name.localeCompare(b.name));
+        generateIndexPage(uniqueExamples);
     }
 
     // Only fail the build if no examples succeeded
