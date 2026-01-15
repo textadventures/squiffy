@@ -16,7 +16,7 @@ import { getStoryFromCompilerOutput } from "./compiler-helper.ts";
 import * as userSettings from "./user-settings.ts";
 import initialScript from "./init.squiffy?raw";
 import { clearDebugger, logToDebugger } from "./debugger.ts";
-import { el, downloadString, downloadUint8Array } from "./util.ts";
+import { el, downloadString, downloadUint8Array, getVersionString } from "./util.ts";
 import { registerServiceWorker, onUpdateAvailable, applyUpdate } from "./sw-registration.ts";
 
 Object.assign(window, { $: $, jQuery: $ });
@@ -166,6 +166,15 @@ const addSectionOrPassage = function (isSection: boolean) {
 
 const showSettings = function () {
     new Modal("#settings-dialog").show();
+};
+
+const showAbout = function () {
+    el<HTMLElement>("about-version").textContent = getVersionString();
+    new Modal("#about-dialog").show();
+};
+
+const openExternalLink = function (url: string) {
+    window.open(url, "_blank", "noopener,noreferrer");
 };
 
 const showWelcome = async function (dismissable = false) {
@@ -653,6 +662,13 @@ const init = async function () {
     onClick("edit-select-all", editor.selectAll);
     onClick("edit-find", editor.find);
     onClick("edit-replace", editor.replace);
+
+    onClick("help-docs", () => openExternalLink("https://squiffystory.com"));
+    onClick("help-examples", () => openExternalLink("https://squiffystory.com/featured-examples/"));
+    onClick("help-report-issue", () => openExternalLink("https://github.com/textadventures/squiffy/issues"));
+    onClick("help-github", () => openExternalLink("https://github.com/textadventures/squiffy"));
+    onClick("help-discord", () => openExternalLink("https://textadventures.co.uk/community/discord"));
+    onClick("help-about", showAbout);
 
     onClick("unsaved-changes-confirm", () => {
         if (unsavedChangesCallback) {
