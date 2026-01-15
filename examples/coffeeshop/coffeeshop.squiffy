@@ -8,7 +8,7 @@ It's a small independent coffee shop—mismatched furniture, local art on the wa
 
 Behind the counter, your new boss Carla gives you a wave. "You must be the new hire! Welcome aboard. What's your name?"
 
-<input type="text" data-attribute="player_name" placeholder="Enter your name...">
+<input type="text" data-attribute="player_name" placeholder="Enter your name..." required minlength="2" maxlength="30">
 
 [[Begin your first shift]]
 

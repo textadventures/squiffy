@@ -470,6 +470,76 @@ This syntax also accepts wildcards, so you can include all .squiffy files in a d
 @import *.squiffy
 ```
 
+## User Input
+
+You can capture text input from players using HTML input elements. The value will be stored in an attribute that you can reference later in your story.
+
+<Sample script="What is your name?
+
+&lt;input type=&quot;text&quot; data-attribute=&quot;player_name&quot; placeholder=&quot;Enter your name...&quot;&gt;
+
+[[Begin the adventure]]
+
+[[Begin the adventure]]:
+Welcome, {{player_name}}! Your adventure begins now."></Sample>
+
+The `data-attribute` specifies which attribute will store the input value. You can then reference it using `{{player_name}}` or `{{get "player_name"}}`.
+
+### Input Validation
+
+Squiffy supports HTML5 input validation attributes. When validation attributes are present, section and passage links will be automatically disabled until all inputs pass validation.
+
+Supported validation attributes include:
+- `required` - field must be filled
+- `minlength` / `maxlength` - text length constraints
+- `min` / `max` - numeric constraints
+- `pattern` - regular expression validation
+- `type` - format validation (email, url, number, etc.)
+
+<Sample script="Please tell us about yourself:
+
+Name: &lt;input type=&quot;text&quot; data-attribute=&quot;name&quot; required minlength=&quot;2&quot; placeholder=&quot;At least 2 characters&quot;&gt;
+
+Age: &lt;input type=&quot;number&quot; data-attribute=&quot;age&quot; required min=&quot;1&quot; max=&quot;120&quot;&gt;
+
+Email: &lt;input type=&quot;email&quot; data-attribute=&quot;email&quot; required&gt;
+
+[[Submit]]
+
+[[Submit]]:
+Thank you, {{name}}! We've recorded your information.
+
+Age: {{age}}
+
+Email: {{email}}"></Sample>
+
+In this example, the [[Submit]] link will be disabled (grayed out and unclickable) until:
+- The name is at least 2 characters long
+- The age is a number between 1 and 120
+- The email is in a valid email format
+
+Invalid inputs are highlighted with a red border, while valid inputs show a green border. As the player types, the validation updates in real-time, and links automatically become clickable once all inputs are valid.
+
+You can use other HTML input types as well:
+
+<Sample script="Choose your preferences:
+
+Difficulty: &lt;select data-attribute=&quot;difficulty&quot; required&gt;
+    &lt;option value=&quot;&quot;&gt;-- Select --&lt;/option&gt;
+    &lt;option value=&quot;easy&quot;&gt;Easy&lt;/option&gt;
+    &lt;option value=&quot;normal&quot;&gt;Normal&lt;/option&gt;
+    &lt;option value=&quot;hard&quot;&gt;Hard&lt;/option&gt;
+&lt;/select&gt;
+
+Comments: &lt;textarea data-attribute=&quot;comments&quot; rows=&quot;3&quot; maxlength=&quot;200&quot;&gt;&lt;/textarea&gt;
+
+[[Start game]]
+
+[[Start game]]:
+Starting game on {{difficulty}} difficulty.
+
+{{#if comments}}Your comment: {{comments}}{{/if}}"></Sample>
+
 ## Custom HTML and CSS
 
 The `index.template.html` and `story.template.css` files are customisable. It is better not to edit the ones in your Squiffy directory - you can copy them to the same directory as your .squiffy story script file, and make edits there instead.
