@@ -664,7 +664,7 @@ const init = async function () {
     onClick("edit-replace", editor.replace);
 
     onClick("help-docs", () => openExternalLink("https://squiffystory.com"));
-    onClick("help-examples", () => openExternalLink("https://squiffystory.com/examples/"));
+    onClick("help-examples", () => openExternalLink("https://squiffystory.com/featured-examples/"));
     onClick("help-report-issue", () => openExternalLink("https://github.com/textadventures/squiffy/issues"));
     onClick("help-github", () => openExternalLink("https://github.com/textadventures/squiffy"));
     onClick("help-discord", () => openExternalLink("https://textadventures.co.uk/community/discord"));
