@@ -121,23 +121,6 @@ function generateIndexPage(examples: BuiltExample[]) {
             border: 1px solid #e0e0e0;
             border-radius: 4px;
             padding: 1.25rem;
-            transition: all 0.2s;
-            text-decoration: none;
-            color: inherit;
-            display: block;
-        }
-        .example-card:hover {
-            border-color: #3498db;
-            box-shadow: 0 2px 8px rgba(52, 152, 219, 0.2);
-            transform: translateY(-2px);
-        }
-        .example-card.featured {
-            border-color: #f39c12;
-            background: linear-gradient(to right, #fffbf0, white);
-        }
-        .example-card.featured:hover {
-            border-color: #e67e22;
-            box-shadow: 0 2px 8px rgba(243, 156, 18, 0.3);
         }
         .example-title {
             font-size: 1.1rem;
@@ -145,26 +128,22 @@ function generateIndexPage(examples: BuiltExample[]) {
             color: #2c3e50;
             margin-bottom: 0.25rem;
         }
-        .featured-badge {
-            display: inline-block;
-            background: #f39c12;
-            color: white;
-            font-size: 0.7rem;
-            padding: 0.1rem 0.4rem;
-            border-radius: 3px;
-            margin-left: 0.5rem;
-            vertical-align: middle;
-            font-weight: 500;
-        }
         .example-description {
             font-size: 0.9rem;
             color: #555;
             margin-bottom: 0.5rem;
         }
-        .example-path {
+        .example-links {
             font-size: 0.875rem;
-            color: #7f8c8d;
-            font-family: 'Monaco', 'Courier New', monospace;
+            display: flex;
+            gap: 1rem;
+        }
+        .example-links a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .example-links a:hover {
+            text-decoration: underline;
         }
         .footer {
             margin-top: 2rem;
@@ -189,11 +168,14 @@ function generateIndexPage(examples: BuiltExample[]) {
         <p class="subtitle">${examples.length} packaged example${examples.length !== 1 ? 's' : ''} ready to play</p>
 
         <div class="example-grid">
-${examples.map(ex => `            <a href="${ex.name}/index.html" class="example-card${ex.featured ? ' featured' : ''}">
-                <div class="example-title">${ex.title}${ex.featured ? '<span class="featured-badge">Featured</span>' : ''}</div>
+${examples.map(ex => `            <div class="example-card">
+                <div class="example-title">${ex.title}</div>
                 ${ex.description ? `<div class="example-description">${ex.description}</div>` : ''}
-                <div class="example-path">${ex.name}/</div>
-            </a>`).join('\n')}
+                <div class="example-links">
+                    <a href="${ex.name}/index.html">Play</a>
+                    <a href="https://github.com/textadventures/squiffy/tree/main/examples/${ex.name}" target="_blank">View Source</a>
+                </div>
+            </div>`).join('\n')}
         </div>
 
         <div class="footer">
