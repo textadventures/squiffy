@@ -16,10 +16,8 @@ import { getStoryFromCompilerOutput } from "./compiler-helper.ts";
 import * as userSettings from "./user-settings.ts";
 import initialScript from "./init.squiffy?raw";
 import { clearDebugger, logToDebugger } from "./debugger.ts";
-import { el, downloadString, downloadUint8Array } from "./util.ts";
+import { el, downloadString, downloadUint8Array, getVersionString } from "./util.ts";
 import { registerServiceWorker, onUpdateAvailable, applyUpdate } from "./sw-registration.ts";
-import pkg from "../package.json" with { type: "json" };
-import buildInfo from "./build-info.json";
 
 Object.assign(window, { $: $, jQuery: $ });
 
@@ -171,13 +169,7 @@ const showSettings = function () {
 };
 
 const showAbout = function () {
-    const version = pkg.version;
-    const commitsSince = buildInfo.commitsSince;
-    let versionInfo = `Squiffy ${version}`;
-    if (commitsSince > 0) {
-        versionInfo += `.${commitsSince}`;
-    }
-    el<HTMLElement>("about-version").textContent = versionInfo;
+    el<HTMLElement>("about-version").textContent = getVersionString();
     new Modal("#about-dialog").show();
 };
 
