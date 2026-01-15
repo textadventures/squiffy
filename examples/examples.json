@@ -1,0 +1,86 @@
+{
+  "examples": [
+    {
+      "path": "animate/animate.squiffy",
+      "description": "Animation effects (typewriter, toast, custom)"
+    },
+    {
+      "path": "attributes/attributes.squiffy",
+      "description": "Using attributes to track state"
+    },
+    {
+      "path": "clearscreen/clearscreen.squiffy",
+      "description": "Clearing the screen between sections"
+    },
+    {
+      "path": "coffeeshop/coffeeshop.squiffy",
+      "description": "Full story: working at The Daily Grind coffee shop",
+      "featured": true
+    },
+    {
+      "path": "continue/continue.squiffy",
+      "description": "Continue links for pacing"
+    },
+    {
+      "path": "gameshow/gameshow.squiffy",
+      "description": "Full game: The Wheel of Dubious Fortune",
+      "featured": true
+    },
+    {
+      "path": "helloworld/helloworld.squiffy",
+      "description": "Simple hello world example"
+    },
+    {
+      "path": "import/test.squiffy",
+      "description": "Importing external .squiffy files"
+    },
+    {
+      "path": "input/input.squiffy",
+      "description": "Text input from the player"
+    },
+    {
+      "path": "last/last.squiffy",
+      "description": "Tracking the last visited section"
+    },
+    {
+      "path": "link-attributes/link-attributes.squiffy",
+      "description": "Adding attributes to links"
+    },
+    {
+      "path": "live/live.squiffy",
+      "description": "Live-updating text"
+    },
+    {
+      "path": "master/master.squiffy",
+      "description": "Master sections for repeated content"
+    },
+    {
+      "path": "replace/replace.squiffy",
+      "description": "Replacing text dynamically"
+    },
+    {
+      "path": "rotate/rotate.squiffy",
+      "description": "Rotating through different text options"
+    },
+    {
+      "path": "sectiontrack/sectiontrack.squiffy",
+      "description": "Tracking visited sections"
+    },
+    {
+      "path": "start/start.squiffy",
+      "description": "Setting a custom start section"
+    },
+    {
+      "path": "textprocessor/textprocessor.squiffy",
+      "description": "Custom text processing functions"
+    },
+    {
+      "path": "transitions/transitions.squiffy",
+      "description": "Transition effects between sections"
+    },
+    {
+      "path": "turncount/turncount.squiffy",
+      "description": "Tracking turn count"
+    }
+  ]
+}
