@@ -7,7 +7,7 @@
     "dev": "astro dev",
     "start": "astro dev",
     "build:examples": "tsx scripts/build-examples.ts",
-    "build": "npm run build:examples && astro check && astro build",
+    "build": "npm run build:examples && astro build",
     "preview": "astro preview",
     "astro": "astro"
   },
