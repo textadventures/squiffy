@@ -381,6 +381,12 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
                 if (attribute) set(attribute, el.value);
                 el.disabled = true;
             });
+
+            currentSectionElement.querySelectorAll("select").forEach(el => {
+                const attribute = el.getAttribute("data-attribute") || el.id;
+                if (attribute) set(attribute, el.value);
+                el.disabled = true;
+            });
         }
 
         currentPassageElement = null;
