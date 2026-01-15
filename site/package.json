@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
-    "build": "astro check && astro build",
+    "build:examples": "tsx scripts/build-examples.ts",
+    "build": "npm run build:examples && astro build",
     "preview": "astro preview",
     "astro": "astro"
   },
@@ -14,6 +15,8 @@
     "@astrojs/check": "^0.9.4",
     "@astrojs/mdx": "^4.3.4",
     "@astrojs/starlight": "^0.35.2",
+    "@textadventures/squiffy-cli": "^6.0.0-alpha.20",
+    "@textadventures/squiffy-packager": "^6.0.0-alpha.20",
     "astro": "^5.13.2",
     "bootstrap": "^5.3.7",
     "codemirror": "^6.0.2",
@@ -21,6 +24,7 @@
     "sass": "^1.90.0",
     "squiffy-compiler": "^6.0.0-alpha.20",
     "squiffy-runtime": "^6.0.0-alpha.20",
+    "tsx": "^4.19.2",
     "typescript": "^5.9.2"
   }
 }
