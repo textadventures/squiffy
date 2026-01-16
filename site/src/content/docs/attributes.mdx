@@ -161,12 +161,14 @@ You walk past. Reputation: {{reputation}}"></Sample>
 
 ## Reading attributes
 
-You can display the value of an attribute using `{{name}}` (if the attribute name is all one word), or `{{get "attribute name"}}` for multi-word attributes or when reading in the same section where it was set by a helper.
+You can display the value of an attribute using `{{name}}` (if the attribute name is all one word), or `{{get "attribute name"}}` for multi-word attributes or when the attribute name comes from an expression.
 
 ```
 You chose {{gender}}.
 Your full name is {{get "player name"}}.
 ```
+
+Both `{{attribute}}` and `{{get "attribute"}}` always return the latest value, even if the attribute was just modified by a helper in the same section.
 
 <Sample script="@set player_name = Alice
 @set favorite_color = blue
@@ -175,24 +177,20 @@ Hello, {{player_name}}!
 
 Your favorite color is {{favorite_color}}."></Sample>
 
-### When to use `{{get}}`
+The main use for `{{get}}` is when you need to:
+- Read attributes with multi-word names (containing spaces)
+- Read an attribute whose name is determined by an expression (e.g., `{{get someVariable}}`)
 
-If you need to refer to an attribute value in the _same_ passage or section where it was modified by a helper like `{{inc}}`, `{{dec}}`, or `{{set}}`, you must use `{{get "attribute"}}` rather than just `{{attribute}}`.
-
-This is because attribute values that can be accessed by name alone are captured once before rendering begins. Helpers that modify attributes during rendering update the internal state, but those changes won't be visible via the simple `{{attribute}}` syntax until the next section or passage.
-
-```
-@set score = 0
+<Sample script="@set score = 0
 
 [collect coin]:
 {{inc "score" 10}}
 You collected a coin!
-Score: {{get "score"}}   // Use {{get}} here since we just modified it
+Score: {{score}}
 
 +++Continue...
 
-Score: {{score}}   // Now we can use the simple syntax
-```
+Score is still {{score}}."></Sample>
 
 You can also read a value using JavaScript:
 

@@ -16,15 +16,11 @@ For a complete reference of all available helpers, including attribute helpers, 
 Use the `{{random}}` helper to insert random text. You can provide a list of options using the `array` function.
 To store the result in an [attribute](/attributes), use the `set` option.
 
-Note that if you need to refer to the stored value in the _same_ passage or section, you need to use `{{get}}` rather
-than just the attribute name. This is because the values that helpers can read by name are only set once, before rendering.
-So below, we need to use `{{get "weather"}}` in the same section where we set it, but in the subsequent section we can just use `{{weather}}`.
-
 <Sample script="It's another {{random (array &quot;Monday&quot; &quot;Tuesday&quot; &quot;Wednesday&quot; &quot;Thursday&quot; &quot;Friday&quot; &quot;Saturday&quot; &quot;Sunday&quot;)}} in the city.
-    
+
     The weather is {{random (array &quot;sunny&quot; &quot;cloudy&quot; &quot;rainy&quot; &quot;windy&quot; &quot;snowy&quot;) set=&quot;weather&quot;}}.
 
-    It feels like it's always {{get &quot;weather&quot;}} here.
+    It feels like it's always {{weather}} here.
 
     +++Continue...
 

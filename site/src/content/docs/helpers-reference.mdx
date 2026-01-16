@@ -24,8 +24,8 @@ See [Attributes](/attributes) for detailed documentation and examples.
 
 | Helper | Description | Example |
 |--------|-------------|---------|
-| `{{attribute}}` | Display attribute value (single-word names) | `{{score}}` |
-| `{{get "name"}}` | Get attribute value (any name, or when reading value set by helper in same section) | `{{get "player name"}}` |
+| `{{attribute}}` | Display attribute value (single-word names, always gets latest value) | `{{score}}` |
+| `{{get "name"}}` | Get attribute value (for multi-word names or dynamic attribute names from expressions) | `{{get "player name"}}` |
 
 ### Modifying attributes
 
