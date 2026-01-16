@@ -239,139 +239,31 @@ Any section or passage can clear the screen using @clear on a line on its own:
 My first reaction to the explosion was...
 ```
 
-## Set attributes
+## Attributes
 
-<Aside type="caution">TODO: Create a separate page for Attributes</Aside>
+Attributes are variables that store information about your story's state, such as scores, inventory, player choices, and any other data that changes during gameplay.
 
-<Aside type="caution">TODO: Need a full interactive sample here (e.g. choosing from a food menu)</Aside>
-
-You can set an attribute within a section or passage like this:
+You can set an attribute using the `@set` directive:
 
 ```
-@set score = 1000
+@set score = 100
+@set player_name = Alice
 ```
 
-If the value is a number, it will be stored as a number. Otherwise, it will be stored as a string.
-
-For boolean (true/false) values, to set as true:
+And read it using double curly braces:
 
 ```
-@set my_true_value
+Your score is {{score}}.
+Hello, {{player_name}}!
 ```
 
-and to set as false:
-
-```
-@set not my_false_value
-```
-
-or alternatively:
-
-```
-@unset my_false_value
-```
-
-For number values, you can increase or decrease the value by 1:
-
-```
-@inc score
-@dec health
-```
-
-Or to increase or decrease by other amounts:
-
-```
-@inc score 100
-@dec health 5
-```
-
-### Conditional attribute changes
-
-The `@set`, `@inc`, `@dec`, and `@unset` directives run when a section or passage loads—they always execute regardless of any `{{#if}}` conditions in the text.
-
-If you want to change an attribute **conditionally** (only when an `{{#if}}` condition is true), use the helper versions instead:
-
-```
-{{#if (seen "helped the wizard")}}
-{{inc "reputation"}}
-The wizard remembers your kindness.
-{{else}}
-The wizard eyes you suspiciously.
-{{/if}}
-```
-
-The available helpers are:
-
-- `{{set "attribute" value}}` — set an attribute to a value
-- `{{unset "attribute"}}` — set an attribute to false
-- `{{inc "attribute"}}` — increase a number attribute by 1
-- `{{inc "attribute" 5}}` — increase by a specific amount
-- `{{dec "attribute"}}` — decrease by 1
-- `{{dec "attribute" 3}}` — decrease by a specific amount
-
-These helpers produce no visible output—they only modify the attribute. The key difference from the `@` directives is that they execute at render time, so they respect `{{#if}}` conditions.
-
-<Sample script="@set score = 0
-
-    Did you [help someone] earlier in the game?
-
-    Choose your reward: [Gold] or [Silver]
-
-    [Gold]:
-    {{#if (seen &quot;help someone&quot;)}}{{inc &quot;score&quot; 10}}You get bonus gold for being kind!{{else}}{{inc &quot;score&quot; 5}}You take the gold.{{/if}}
-
-    Score: {{score}}
-
-    [Silver]:
-    {{inc &quot;score&quot; 3}}You take the silver.
-
-    Score: {{score}}
-
-    [help someone]:
-    You helped someone earlier."></Sample>
-
-You can also set an attribute value from a link:
+You can also set attributes directly from links:
 
 ```
 Are you [[male]](start, gender=male) or [[female]](start, gender=female)?
-
-[[start]]:
-Your choice has been recorded.
 ```
 
-And you can also set a value in JavaScript:
-
-```
-    squiffy.set("gender", "female");
-```
-
-## Read attributes
-
-You can display the value of an attribute using `{{name}}` (if the attribute name is all one word), or `{{get "attribute name"}}`.
-
-```
-You chose {{gender}}.
-```
-
-You can also read a value using JavaScript:
-
-```
-    var gender = squiffy.get("gender");
-```
-
-You can conditionally display text depending on the value of a boolean attribute using `{{#if (get "attribute name")}}`.
-
-<Aside type="caution">TODO: Comparing string attributes. The following examples are out of date.</Aside>
-
-```
-{if gender=male:You are a man.}{else:You are a woman.}
-```
-
-To compare two attributes, add an `@` before the second attribute name:
-
-```
-{if a=@b:attribute value a and attribute value b are equal.}{else:They are different.}
-```
+For a complete guide to attributes, including comparisons, conditionals, incrementing/decrementing values, and advanced features, see the [Attributes](/attributes) documentation.
 
 ## Embed text
 

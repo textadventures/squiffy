@@ -5,11 +5,16 @@ sidebar:
 ---
 
 import Sample from "@components/Sample.astro"
+import {Aside} from "@astrojs/starlight/components"
+
+<Aside type="tip">
+For a complete reference of all available helpers, including attribute helpers, comparison helpers, and logic helpers, see the [Helpers reference](/helpers-reference) page.
+</Aside>
 
 ## Random
 
 Use the `{{random}}` helper to insert random text. You can provide a list of options using the `array` function.
-To store the result in an attribute, use the `set` option.
+To store the result in an [attribute](/attributes), use the `set` option.
 
 Note that if you need to refer to the stored value in the _same_ passage or section, you need to use `{{get}}` rather
 than just the attribute name. This is because the values that helpers can read by name are only set once, before rendering.
@@ -100,7 +105,7 @@ For a text link that replaces itself each time it is clicked:
 
 <Sample script="{{rotate (array &quot;one&quot; &quot;two&quot; &quot;three&quot;)}}"></Sample>
 
-You can store the result in an attribute:
+You can store the result in an [attribute](/attributes):
 
 <Sample script="Please choose: {{rotate (array &quot;small&quot; &quot;medium&quot; &quot;large&quot;) set=&quot;size&quot;}}
 
@@ -133,7 +138,7 @@ As a variation on this, you can use a section link as the final option in a sequ
 
 ## Live
 
-Using `{{live}}`, you can change text that is already on-screen when an attribute value changes.
+Using `{{live}}`, you can change text that is already on-screen when an [attribute](/attributes) value changes.
 
 In this example, notice how the static `{{count}}` does not change, but the live `{{live "count"}}` does as the `count` attribute is incremented.
 
