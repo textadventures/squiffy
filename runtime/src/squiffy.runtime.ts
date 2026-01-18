@@ -621,7 +621,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             // Use explicit storyId if provided
             storageKey = options.storyId;
         } else if (window.location.protocol === "file:") {
-            // For games opened from file system, use story.id (the filename from compilation)
+            // For games opened from file system, use story.id (a GUID generated at compile time)
             // This prevents issues with file:// localStorage sharing in Chrome
             storageKey = story.id || "";
         } else {

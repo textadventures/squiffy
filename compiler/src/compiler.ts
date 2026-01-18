@@ -62,7 +62,7 @@ export interface CompileError {
 }
 
 export async function compile(settings: CompilerSettings): Promise<CompileSuccess | CompileError> {
-    const story = new Story(settings.scriptBaseFilename);
+    const story = new Story();
     const errors: string[] = [];
     let autoSectionCount = 0;
 
@@ -563,8 +563,10 @@ class Story {
     id: string | null = null;
     uiJs: string[] = [];
 
-    constructor(inputFilename?: string) {
-        this.id = inputFilename || null;
+    constructor() {
+        // Generate a unique GUID for this story to use as localStorage key
+        // This is stable (generated once at compile time) and doesn't expose internal filenames
+        this.id = crypto.randomUUID();
     }
 
     addSection(name: string, filename: string | undefined, line: number): Section {

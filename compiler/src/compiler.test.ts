@@ -1,9 +1,17 @@
-import { expect, test } from "vitest";
+import { expect, test, vi, beforeAll } from "vitest";
 import * as fs from "fs/promises";
 import { glob } from "glob";
 import * as path from "path";
 
 import { compile, CompileSuccess } from "./compiler.js";
+
+// Mock crypto.randomUUID() to return a stable value for snapshot tests
+beforeAll(() => {
+    const mockUUID = "00000000-0000-0000-0000-000000000000";
+    vi.stubGlobal("crypto", {
+        randomUUID: () => mockUUID
+    });
+});
 
 const externalFiles = (inputFilename: string) => {
     const includedFiles = [path.resolve(inputFilename)];
