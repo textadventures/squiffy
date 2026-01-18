@@ -1,8 +1,16 @@
-import { expect, test, beforeEach, afterEach, vi } from "vitest";
+import { expect, test, beforeEach, afterEach, beforeAll, vi } from "vitest";
 import fs from "fs/promises";
 import globalJsdom from "global-jsdom";
 import { init } from "./squiffy.runtime.js";
-import { compile as squiffyCompile } from "squiffy-compiler"; 
+import { compile as squiffyCompile } from "squiffy-compiler";
+
+// Mock crypto.randomUUID() to return a stable value for tests
+beforeAll(() => {
+    const mockUUID = "00000000-0000-0000-0000-000000000000";
+    vi.stubGlobal("crypto", {
+        randomUUID: () => mockUUID
+    });
+});
 
 const html = `
 <!DOCTYPE html>
@@ -689,12 +697,12 @@ Score: {score}, Name: {name}
     const element = document.getElementById("squiffy")!;
     const compileResult = await compile(script, "test-story-123.squiffy");
 
-    // Initialize with persistence enabled
+    // Initialize with persistence enabled (using GUID like file:// protocol games would)
     const squiffyApi = await init({
         element: element,
         story: compileResult.story,
         persist: true,
-        storyId: "test-story-123.squiffy",
+        storyId: "00000000-0000-0000-0000-000000000000",
     });
 
     await squiffyApi.begin();
@@ -703,9 +711,9 @@ Score: {score}, Name: {name}
     expect(squiffyApi.get("score")).toBe(100);
     expect(squiffyApi.get("name")).toBe("Player");
 
-    // Verify localStorage contains the values with correct prefixes
-    expect(localStorage["test-story-123.squiffy-score"]).toBe("100");
-    expect(localStorage["test-story-123.squiffy-name"]).toBe('"Player"');
+    // Verify localStorage contains the values with correct prefixes (using the GUID from story.id)
+    expect(localStorage["00000000-0000-0000-0000-000000000000-score"]).toBe("100");
+    expect(localStorage["00000000-0000-0000-0000-000000000000-name"]).toBe('"Player"');
 
     // Clean up localStorage
     localStorage.clear();
@@ -717,20 +725,20 @@ test("State persistence: load state from localStorage", async () => {
 Score: {score}, Name: {name}
 `;
 
-    // Pre-populate localStorage with state
-    localStorage["persist-load-test.squiffy-score"] = "250";
-    localStorage["persist-load-test.squiffy-name"] = '"SavedPlayer"';
-    localStorage["persist-load-test.squiffy-level"] = "5";
+    // Pre-populate localStorage with state (using the mocked GUID)
+    localStorage["00000000-0000-0000-0000-000000000000-score"] = "250";
+    localStorage["00000000-0000-0000-0000-000000000000-name"] = '"SavedPlayer"';
+    localStorage["00000000-0000-0000-0000-000000000000-level"] = "5";
 
     const element = document.getElementById("squiffy")!;
     const compileResult = await compile(script, "persist-load-test.squiffy");
 
-    // Initialize with persistence enabled - should load from localStorage
+    // Initialize with persistence enabled - should load from localStorage (using GUID like file:// protocol games would)
     const squiffyApi = await init({
         element: element,
         story: compileResult.story,
         persist: true,
-        storyId: "persist-load-test.squiffy",
+        storyId: "00000000-0000-0000-0000-000000000000",
     });
 
     await squiffyApi.begin();
@@ -758,20 +766,20 @@ Content here.
         element: element,
         story: compileResult.story,
         persist: true,
-        storyId: "reset-test.squiffy",
+        storyId: "00000000-0000-0000-0000-000000000000",
     });
 
     await squiffyApi.begin();
 
-    // Verify state is set in localStorage
-    expect(localStorage["reset-test.squiffy-data"]).toBe('"important"');
+    // Verify state is set in localStorage (using the GUID)
+    expect(localStorage["00000000-0000-0000-0000-000000000000-data"]).toBe('"important"');
     expect(squiffyApi.get("data")).toBe("important");
 
     // Restart the story
     squiffyApi.restart();
 
     // Verify localStorage is cleared
-    expect(localStorage["reset-test.squiffy-data"]).toBeUndefined();
+    expect(localStorage["00000000-0000-0000-0000-000000000000-data"]).toBeUndefined();
     expect(squiffyApi.get("data")).toBe(null);
 
     // Clean up localStorage
@@ -820,7 +828,7 @@ Content here.
         element: element,
         story: compileResult.story,
         persist: true,
-        storyId: "complex-persist.squiffy",
+        storyId: "00000000-0000-0000-0000-000000000000",
     });
 
     await squiffyApi.begin();
@@ -836,9 +844,9 @@ Content here.
     const player = squiffyApi.get("player");
     expect(player).toEqual({ health: 100, mana: 50 });
 
-    // Verify localStorage contains serialized JSON
-    expect(JSON.parse(localStorage["complex-persist.squiffy-inventory"])).toEqual(["sword", "shield", "potion"]);
-    expect(JSON.parse(localStorage["complex-persist.squiffy-player"])).toEqual({ health: 100, mana: 50 });
+    // Verify localStorage contains serialized JSON (using the GUID from story.id)
+    expect(JSON.parse(localStorage["00000000-0000-0000-0000-000000000000-inventory"])).toEqual(["sword", "shield", "potion"]);
+    expect(JSON.parse(localStorage["00000000-0000-0000-0000-000000000000-player"])).toEqual({ health: 100, mana: 50 });
 
     // Clean up localStorage
     localStorage.clear();
@@ -863,7 +871,7 @@ Section 2 content.
         element: element,
         story: compileResult.story,
         persist: true,
-        storyId: "seen-persist.squiffy",
+        storyId: "00000000-0000-0000-0000-000000000000",
     });
 
     await squiffyApi.begin();
@@ -876,9 +884,9 @@ Section 2 content.
     const seenSections = squiffyApi.get("_seen_sections");
     expect(seenSections).toContain("section1");
 
-    // Verify it's saved to localStorage
-    expect(localStorage["seen-persist.squiffy-_seen_sections"]).toBeDefined();
-    const storedSeen = JSON.parse(localStorage["seen-persist.squiffy-_seen_sections"]);
+    // Verify it's saved to localStorage (using the GUID)
+    expect(localStorage["00000000-0000-0000-0000-000000000000-_seen_sections"]).toBeDefined();
+    const storedSeen = JSON.parse(localStorage["00000000-0000-0000-0000-000000000000-_seen_sections"]);
     expect(storedSeen).toContain("section1");
 
     // Clean up localStorage
