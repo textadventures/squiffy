@@ -614,9 +614,24 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         onSet: options.onSet || (() => {})
     };
 
-    if (options.persist === true && !story.id) {
-        console.warn("Persist is set to true in Squiffy runtime options, but no story id has been set. Persist will be disabled.");
-        settings.persist = false;
+    // Determine the storage key to use for localStorage
+    let storageKey = "";
+    if (settings.persist) {
+        if (options.storyId !== undefined) {
+            // If explicitly provided, use it
+            storageKey = options.storyId;
+        } else if (story.id) {
+            // Use story.id from compilation (backward compatibility)
+            storageKey = story.id;
+        } else {
+            // For published games without a story.id, use the URL path as the storage key
+            storageKey = window.location.pathname;
+        }
+
+        if (!storageKey) {
+            console.warn("Persist is set to true in Squiffy runtime options, but no storage key could be determined. Persist will be disabled.");
+            settings.persist = false;
+        }
     }
 
     if (settings.scroll === "element") {
@@ -651,7 +666,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         }
     };
 
-    const state = new State(settings.persist, story.id || "", settings.onSet, emitter, onSet);
+    const state = new State(settings.persist, storageKey, settings.onSet, emitter, onSet);
     const get = state.get.bind(state);
     const set = state.set.bind(state);
 
