@@ -694,6 +694,7 @@ Score: {score}, Name: {name}
         element: element,
         story: compileResult.story,
         persist: true,
+        storyId: "test-story-123.squiffy",
     });
 
     await squiffyApi.begin();
@@ -729,6 +730,7 @@ Score: {score}, Name: {name}
         element: element,
         story: compileResult.story,
         persist: true,
+        storyId: "persist-load-test.squiffy",
     });
 
     await squiffyApi.begin();
@@ -756,6 +758,7 @@ Content here.
         element: element,
         story: compileResult.story,
         persist: true,
+        storyId: "reset-test.squiffy",
     });
 
     await squiffyApi.begin();
@@ -817,6 +820,7 @@ Content here.
         element: element,
         story: compileResult.story,
         persist: true,
+        storyId: "complex-persist.squiffy",
     });
 
     await squiffyApi.begin();
@@ -859,6 +863,7 @@ Section 2 content.
         element: element,
         story: compileResult.story,
         persist: true,
+        storyId: "seen-persist.squiffy",
     });
 
     await squiffyApi.begin();
@@ -899,6 +904,7 @@ Content.
         element: element,
         story: compileResultA.story,
         persist: true,
+        storyId: "story-A.squiffy",
     });
 
     await api1.begin();
@@ -914,6 +920,7 @@ Content.
         element: element,
         story: compileResultB.story,
         persist: true,
+        storyId: "story-B.squiffy",
     });
 
     await api2.begin();
@@ -944,6 +951,7 @@ test("State persistence: restart only clears current storyId", async () => {
         element: element,
         story: compileResult.story,
         persist: true,
+        storyId: "story1.squiffy",
     });
 
     await squiffyApi.begin();
