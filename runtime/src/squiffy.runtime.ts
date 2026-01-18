@@ -617,8 +617,17 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     // Determine the storage key to use for localStorage
     let storageKey = "";
     if (settings.persist) {
-        // Use explicit storyId if provided, otherwise use URL path
-        storageKey = options.storyId !== undefined ? options.storyId : window.location.pathname;
+        if (options.storyId !== undefined) {
+            // Use explicit storyId if provided
+            storageKey = options.storyId;
+        } else if (window.location.protocol === "file:") {
+            // For games opened from file system, use story.id (the filename from compilation)
+            // This prevents issues with file:// localStorage sharing in Chrome
+            storageKey = story.id || "";
+        } else {
+            // For games served via HTTP(S), use the URL path
+            storageKey = window.location.pathname;
+        }
 
         if (!storageKey) {
             console.warn("Persist is set to true in Squiffy runtime options, but no storage key could be determined. Persist will be disabled.");
