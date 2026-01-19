@@ -9,7 +9,8 @@
     "packager",
     "runtime",
     "site",
-    "types"
+    "types",
+    "vite-plugin"
   ],
   "scripts": {
     "build": "lerna run build",
