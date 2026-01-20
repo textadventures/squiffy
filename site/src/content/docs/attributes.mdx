@@ -372,50 +372,37 @@ You chose {{choice}} and received {{coins}} coins!"></Sample>
 Here's a complete example showing how attributes can work together to create a food ordering system:
 
 <Sample script="@set total_cost = 0
-@set ordered = false
 
 **Restaurant Menu**
 
 Please select your meal:
 
 **Main Course:**
-- [Order Chicken Curry](order_main, main=Chicken Curry, cost=12)
-- [Order Vegetable Stir-Fry](order_main, main=Vegetable Stir-Fry, cost=10)
-- [Order Beef Burger](order_main, main=Beef Burger, cost=14)
+- [[Chicken Curry ($12)]](add_drink, main=Chicken Curry, cost=12)
+- [[Vegetable Stir-Fry ($10)]](add_drink, main=Vegetable Stir-Fry, cost=10)
+- [[Beef Burger ($14)]](add_drink, main=Beef Burger, cost=14)
 
-[order_main]:
-{{#if (not ordered)}}
-{{set &quot;ordered&quot; true}}
+[[add_drink]]:
 {{set &quot;total_cost&quot; cost}}
 You ordered: **{{main}}** - ${{cost}}
 
-Would you like to add a [drink] or [dessert]?
+**Add a drink?**
+- [[Soda ($3)]](add_dessert, drink=Soda, drink_cost=3)
+- [[Juice ($4)]](add_dessert, drink=Juice, drink_cost=4)
+- [[Water (free)]](add_dessert, drink=Water, drink_cost=0)
+- [[No thanks]](add_dessert)
 
-[drink]:
-**Drinks:**
-- [Soda](add_drink, drink=Soda, drink_cost=3)
-- [Juice](add_drink, drink=Juice, drink_cost=4)
-- [Water](add_drink, drink=Water, drink_cost=0)
+[[add_dessert]]:
+{{#if drink}}{{inc &quot;total_cost&quot; drink_cost}}You added: {{drink}} {{#if (gt drink_cost 0)}}(${{drink_cost}}){{else}}(free!){{/if}}{{/if}}
 
-[add_drink]:
-{{inc &quot;total_cost&quot; drink_cost}}
-Added {{drink}} {{#if (gt drink_cost 0)}}(${{drink_cost}}){{else}}(free!){{/if}}
+**Add a dessert?**
+- [[Ice Cream ($6)]](finish, dessert=Ice Cream, dessert_cost=6)
+- [[Cake ($7)]](finish, dessert=Cake, dessert_cost=7)
+- [[Fruit ($4)]](finish, dessert=Fruit, dessert_cost=4)
+- [[No thanks]](finish)
 
-Would you like [dessert]?
-
-[dessert]:
-**Desserts:**
-- [Ice Cream](add_dessert, dessert=Ice Cream, dessert_cost=6)
-- [Cake](add_dessert, dessert=Cake, dessert_cost=7)
-- [Fruit](add_dessert, dessert=Fruit, dessert_cost=4)
-
-[add_dessert]:
-{{inc &quot;total_cost&quot; dessert_cost}}
-Added {{dessert}} (${{dessert_cost}})
-
-[[Finish order>]]
-
----
+[[finish]]:
+{{#if dessert}}{{inc &quot;total_cost&quot; dessert_cost}}You added: {{dessert}} (${{dessert_cost}}){{/if}}
 
 **Your Order:**
 - Main: {{main}} (${{cost}})
@@ -430,7 +417,6 @@ Wow, you're hungry! That's a big order.
 A nice balanced meal!
 {{else}}
 A light meal today.
-{{/if}}
 {{/if}}"></Sample>
 
 ## Using attributes in JavaScript
