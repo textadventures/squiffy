@@ -184,7 +184,7 @@ The main use for `{{get}}` is when you need to:
 <Sample script="@set score = 0
 
 [collect coin]:
-{{inc "score" 10}}
+{{inc &quot;score&quot; 10}}
 You collected a coin!
 Score: {{score}}
 
@@ -222,10 +222,10 @@ An interesting choice!
 
 For number values, you can use:
 
-- `{{gt a b}}` — greater than (a > b)
-- `{{gte a b}}` — greater than or equal (a >= b)
-- `{{lt a b}}` — less than (a < b)
-- `{{lte a b}}` — less than or equal (a <= b)
+- `{{gt a b}}` — greater than (`a > b`)
+- `{{gte a b}}` — greater than or equal (`a >= b`)
+- `{{lt a b}}` — less than (`a < b`)
+- `{{lte a b}}` — less than or equal (`a <= b`)
 
 <Sample script="@set score = 75
 
