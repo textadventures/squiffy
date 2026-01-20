@@ -635,7 +635,7 @@ Your score is {{score}}.`;
 });
 
 test("Adding @set directive updates text", async () => {
-    const script = `Your score is {{score}}.`;
+    const script = "Your score is {{score}}.";
 
     const { squiffyApi, element } = await initScript(script);
 
@@ -664,7 +664,7 @@ Your score is {{score}}.`;
 
     // Note: Removing the @set doesn't unset the variable, but the text should still re-render
     // with whatever the current state is (still 75 in this case since we didn't unset it)
-    const script2 = `Your score is {{score}}.`;
+    const script2 = "Your score is {{score}}.";
     const update2 = await compile(script2);
     squiffyApi.update(update2.story);
 
