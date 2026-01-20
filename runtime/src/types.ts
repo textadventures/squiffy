@@ -5,6 +5,7 @@ export interface SquiffyInitOptions {
     story: Story;
     scroll?: string,
     persist?: boolean,
+    storyId?: string,
     onSet?: (attribute: string, value: any) => void,
 }
 

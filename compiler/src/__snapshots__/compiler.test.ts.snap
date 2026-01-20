@@ -2,7 +2,7 @@
 
 exports[`animate/animate.squiffy 1`] = `
 "export const story = {};
-story.id = "animate.squiffy";
+story.id = "00000000-0000-0000-0000-000000000000";
 story.uiJsIndex = 0;
 story.start = "_default";
 story.sections = {
@@ -57,7 +57,7 @@ story.js = [
 
 exports[`attributes/attributes.squiffy 1`] = `
 "export const story = {};
-story.id = "attributes.squiffy";
+story.id = "00000000-0000-0000-0000-000000000000";
 story.start = "_default";
 story.sections = {
     "_default": {
@@ -174,7 +174,7 @@ story.js = [
 
 exports[`clearscreen/clearscreen.squiffy 1`] = `
 "export const story = {};
-story.id = "clearscreen.squiffy";
+story.id = "00000000-0000-0000-0000-000000000000";
 story.start = "_default";
 story.sections = {
     "_default": {
@@ -203,7 +203,7 @@ story.js = [
 
 exports[`continue/continue.squiffy 1`] = `
 "export const story = {};
-story.id = "continue.squiffy";
+story.id = "00000000-0000-0000-0000-000000000000";
 story.start = "_default";
 story.sections = {
     "_default": {
@@ -232,7 +232,7 @@ story.js = [
 
 exports[`gameshow/gameshow.squiffy 1`] = `
 "export const story = {};
-story.id = "gameshow.squiffy";
+story.id = "00000000-0000-0000-0000-000000000000";
 story.start = "intro";
 story.sections = {
     "": {
@@ -374,7 +374,7 @@ story.js = [
 
 exports[`helloworld/helloworld.squiffy 1`] = `
 "export const story = {};
-story.id = "helloworld.squiffy";
+story.id = "00000000-0000-0000-0000-000000000000";
 story.start = "_default";
 story.sections = {
     "_default": {
@@ -387,7 +387,7 @@ story.js = [
 
 exports[`import/test.squiffy 1`] = `
 "export const story = {};
-story.id = "test.squiffy";
+story.id = "00000000-0000-0000-0000-000000000000";
 story.start = "_default";
 story.sections = {
     "_default": {
@@ -418,7 +418,7 @@ story.js = [
 
 exports[`input/input.squiffy 1`] = `
 "export const story = {};
-story.id = "input.squiffy";
+story.id = "00000000-0000-0000-0000-000000000000";
 story.start = "_default";
 story.sections = {
     "_default": {
@@ -440,7 +440,7 @@ story.js = [
 
 exports[`last/last.squiffy 1`] = `
 "export const story = {};
-story.id = "last.squiffy";
+story.id = "00000000-0000-0000-0000-000000000000";
 story.start = "_default";
 story.sections = {
     "_default": {
@@ -489,7 +489,7 @@ story.js = [
 
 exports[`link-attributes/link-attributes.squiffy 1`] = `
 "export const story = {};
-story.id = "link-attributes.squiffy";
+story.id = "00000000-0000-0000-0000-000000000000";
 story.start = "_default";
 story.sections = {
     "_default": {
@@ -519,7 +519,7 @@ story.js = [
 
 exports[`live/live.squiffy 1`] = `
 "export const story = {};
-story.id = "live.squiffy";
+story.id = "00000000-0000-0000-0000-000000000000";
 story.start = "_default";
 story.sections = {
     "_default": {
@@ -550,7 +550,7 @@ story.js = [
 
 exports[`master/master.squiffy 1`] = `
 "export const story = {};
-story.id = "master.squiffy";
+story.id = "00000000-0000-0000-0000-000000000000";
 story.start = "intro";
 story.sections = {
     "": {
@@ -604,7 +604,7 @@ story.js = [
 
 exports[`replace/replace.squiffy 1`] = `
 "export const story = {};
-story.id = "replace.squiffy";
+story.id = "00000000-0000-0000-0000-000000000000";
 story.start = "_default";
 story.sections = {
     "_default": {
@@ -639,7 +639,7 @@ story.js = [
 
 exports[`rotate/rotate.squiffy 1`] = `
 "export const story = {};
-story.id = "rotate.squiffy";
+story.id = "00000000-0000-0000-0000-000000000000";
 story.start = "_default";
 story.sections = {
     "_default": {
@@ -667,7 +667,7 @@ story.js = [
 
 exports[`sectiontrack/sectiontrack.squiffy 1`] = `
 "export const story = {};
-story.id = "sectiontrack.squiffy";
+story.id = "00000000-0000-0000-0000-000000000000";
 story.start = "_default";
 story.sections = {
     "_default": {
@@ -694,7 +694,7 @@ story.js = [
 
 exports[`start/start.squiffy 1`] = `
 "export const story = {};
-story.id = "start.squiffy";
+story.id = "00000000-0000-0000-0000-000000000000";
 story.start = "the start section";
 story.sections = {
     "not the start section": {
@@ -710,7 +710,7 @@ story.js = [
 
 exports[`test/example.squiffy 1`] = `
 "export const story = {};
-story.id = "example.squiffy";
+story.id = "00000000-0000-0000-0000-000000000000";
 story.start = "Introduction";
 story.sections = {
     "Introduction": {
@@ -795,7 +795,7 @@ story.js = [
 
 exports[`textprocessor/textprocessor.squiffy 1`] = `
 "export const story = {};
-story.id = "textprocessor.squiffy";
+story.id = "00000000-0000-0000-0000-000000000000";
 story.start = "_default";
 story.sections = {
     "_default": {
@@ -822,7 +822,7 @@ story.js = [
 
 exports[`transitions/transitions.squiffy 1`] = `
 "export const story = {};
-story.id = "transitions.squiffy";
+story.id = "00000000-0000-0000-0000-000000000000";
 story.start = "_default";
 story.sections = {
     "_default": {
@@ -885,7 +885,7 @@ story.js = [
 
 exports[`turncount/turncount.squiffy 1`] = `
 "export const story = {};
-story.id = "turncount.squiffy";
+story.id = "00000000-0000-0000-0000-000000000000";
 story.start = "_default";
 story.sections = {
     "_default": {
