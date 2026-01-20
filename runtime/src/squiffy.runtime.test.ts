@@ -91,6 +91,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+    localStorage.clear();
     cleanup();
 });
 
