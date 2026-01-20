@@ -301,7 +301,9 @@ You can also use JavaScript:
 
 ### The `{{at}}` helper
 
-The `{{at}}` helper checks if you're currently at a specific section. It can take a single section name or an array of section names:
+The `{{at}}` helper checks if you're currently at a specific section. It can take a single section name or an array of section names.
+
+This helper is particularly useful in master sections or passages (see [Master sections and passages](/basic-concepts#master-sections-and-passages)), where you want to display different content depending on which section the player is in. It can also be useful when embedding text from another section.
 
 <Sample script="[[section1]]:
 This is section 1.
@@ -310,10 +312,9 @@ This is section 1.
 You are currently in section 1.
 {{/if}}
 
-[[Continue>]]
+[[Continue to section 2>section2]]
 
----
-
+[[section2]]:
 This is section 2.
 
 {{#if (at (array &quot;section1&quot; &quot;section2&quot;))}}
