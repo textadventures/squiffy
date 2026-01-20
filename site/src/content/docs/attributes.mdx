@@ -177,20 +177,25 @@ Hello, {{player_name}}!
 
 Your favorite color is {{favorite_color}}."></Sample>
 
-The main use for `{{get}}` is when you need to:
-- Read attributes with multi-word names (containing spaces)
-- Read an attribute whose name is determined by an expression (e.g., `{{get someVariable}}`)
+The main use for `{{get}}` is when you need to read an attribute whose name is stored in another variable. This enables dynamic attribute lookup:
 
-<Sample script="@set score = 0
+<Sample script="@set room = kitchen
+@set kitchen = A cozy room with a stove.
+@set garden = A sunny outdoor space.
 
-[collect coin]:
-{{inc &quot;score&quot; 10}}
-You collected a coin!
-Score: {{score}}
+You are in the {{room}}.
 
-+++Continue...
+{{get room}}
 
-Score is still {{score}}."></Sample>
+[[Go to the garden]](garden)
+
+[[garden]]:
+@set room = garden
+You are now in the {{room}}.
+
+{{get room}}"></Sample>
+
+In this example, `{{get room}}` looks up the value of `room` (e.g., "kitchen"), then uses that as the name of another attribute to retrieve (getting the description stored in the `kitchen` attribute).
 
 You can also read a value using JavaScript:
 
