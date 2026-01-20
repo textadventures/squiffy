@@ -587,6 +587,113 @@ This is the new start section`;
     expect(output).toBe("This is the new start section");
 });
 
+test("Update @set directive in section re-renders text", async () => {
+    const script = `@set score = 75
+
+Your score is {{score}}.`;
+
+    const { squiffyApi, element } = await initScript(script);
+
+    let output = getSectionContent(element, "_default");
+    expect(output).toBe("Your score is 75.");
+
+    const script2 = `@set score = 100
+
+Your score is {{score}}.`;
+    const update2 = await compile(script2);
+    squiffyApi.update(update2.story);
+
+    output = getSectionContent(element, "_default");
+    expect(output).toBe("Your score is 100.");
+});
+
+test("Update @set directive in passage re-renders text", async () => {
+    const script = `Click [here]
+
+[here]:
+@set score = 75
+Your score is {{score}}.`;
+
+    const { squiffyApi, element } = await initScript(script);
+
+    const link = findLink(element, "passage", "here");
+    await squiffyApi.clickLink(link);
+
+    let output = getPassageContent(element, "_default", "here");
+    expect(output).toBe("Your score is 75.");
+
+    const script2 = `Click [here]
+
+[here]:
+@set score = 100
+Your score is {{score}}.`;
+    const update2 = await compile(script2);
+    squiffyApi.update(update2.story);
+
+    output = getPassageContent(element, "_default", "here");
+    expect(output).toBe("Your score is 100.");
+});
+
+test("Adding @set directive updates text", async () => {
+    const script = `Your score is {{score}}.`;
+
+    const { squiffyApi, element } = await initScript(script);
+
+    let output = getSectionContent(element, "_default");
+    expect(output).toBe("Your score is .");
+
+    const script2 = `@set score = 50
+
+Your score is {{score}}.`;
+    const update2 = await compile(script2);
+    squiffyApi.update(update2.story);
+
+    output = getSectionContent(element, "_default");
+    expect(output).toBe("Your score is 50.");
+});
+
+test("Removing @set directive updates text", async () => {
+    const script = `@set score = 75
+
+Your score is {{score}}.`;
+
+    const { squiffyApi, element } = await initScript(script);
+
+    let output = getSectionContent(element, "_default");
+    expect(output).toBe("Your score is 75.");
+
+    // Note: Removing the @set doesn't unset the variable, but the text should still re-render
+    // with whatever the current state is (still 75 in this case since we didn't unset it)
+    const script2 = `Your score is {{score}}.`;
+    const update2 = await compile(script2);
+    squiffyApi.update(update2.story);
+
+    output = getSectionContent(element, "_default");
+    expect(output).toBe("Your score is 75.");
+});
+
+test("Update multiple @set directives", async () => {
+    const script = `@set name = Alice
+@set score = 100
+
+Hello {{name}}, your score is {{score}}.`;
+
+    const { squiffyApi, element } = await initScript(script);
+
+    let output = getSectionContent(element, "_default");
+    expect(output).toBe("Hello Alice, your score is 100.");
+
+    const script2 = `@set name = Bob
+@set score = 200
+
+Hello {{name}}, your score is {{score}}.`;
+    const update2 = await compile(script2);
+    squiffyApi.update(update2.story);
+
+    output = getSectionContent(element, "_default");
+    expect(output).toBe("Hello Bob, your score is 200.");
+});
+
 test("Going back handling @clear and attribute changes", async () => {
     const script = `
 Choose: [a], [b]

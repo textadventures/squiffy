@@ -515,7 +515,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             return;
         }
 
-        updateStory(story, newStory, outputElement, ui, disableLink);
+        updateStory(story, newStory, outputElement, ui, disableLink, (attrs) => processAttributes(attrs));
 
         story = newStory;
 
