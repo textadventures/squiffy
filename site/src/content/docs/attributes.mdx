@@ -1,0 +1,463 @@
+---
+title: Attributes
+sidebar:
+    order: 1.5
+---
+
+import Sample from "@components/Sample.astro";
+import {Aside} from "@astrojs/starlight/components";
+
+Attributes are variables that store information about your story's state. You can use them to track things like player choices, scores, inventory, character relationships, and any other data that changes as the story progresses.
+
+## Setting attributes
+
+### Using directives
+
+The simplest way to set an attribute is using the `@set` directive:
+
+```
+@set score = 1000
+@set player_name = Alice
+```
+
+If the value is a number, it will be stored as a number. Otherwise, it will be stored as a string.
+
+For boolean (true/false) values, to set as true:
+
+```
+@set has_key
+```
+
+and to set as false:
+
+```
+@set not has_key
+```
+
+or alternatively:
+
+```
+@unset has_key
+```
+
+For number values, you can increase or decrease by 1:
+
+```
+@inc score
+@dec health
+```
+
+Or increase or decrease by other amounts:
+
+```
+@inc score 100
+@dec health 5
+```
+
+<Sample script="@set score = 0
+@set health = 100
+
+Your initial stats:
+- Score: {{score}}
+- Health: {{health}}
+
+Click some links: [collect coin], [collect treasure], [take damage]
+
+[collect coin]:
+@inc score 10
+
+You found a coin! Score: {{score}}
+
+[collect treasure]:
+@inc score 50
+
+You found treasure! Score: {{score}}
+
+[take damage]:
+@dec health 20
+
+Ouch! Health: {{health}}"></Sample>
+
+### Setting from links
+
+You can set attribute values directly from section and passage links using a comma-separated list of assignments:
+
+<Sample script="Choose your character class:
+
+[[Warrior]](game_start, class=warrior, strength=10, health=100)
+[[Mage]](game_start, class=mage, intelligence=10, health=60)
+[[Rogue]](game_start, class=rogue, dexterity=10, health=80)
+
+[[game_start]]:
+You are a {{class}}.
+
+{{#if (eq class &quot;warrior&quot;)}}
+Strength: {{strength}}, Health: {{health}}
+{{else if (eq class &quot;mage&quot;)}}
+Intelligence: {{intelligence}}, Health: {{health}}
+{{else if (eq class &quot;rogue&quot;)}}
+Dexterity: {{dexterity}}, Health: {{health}}
+{{/if}}"></Sample>
+
+You can also use increment (`+=`) and decrement (`-=`) operators in link attributes:
+
+<Sample script="@set coins = 10
+
+You have {{coins}} coins.
+
+What will you do? [[Buy apple]](shop, coins-=3) or [[Sell gem]](shop, coins+=5)?
+
+[[shop]]:
+You now have {{coins}} coins."></Sample>
+
+### Conditional attribute changes
+
+The `@set`, `@inc`, `@dec`, and `@unset` directives run when a section or passage loads—they always execute regardless of any `{{#if}}` conditions in the text.
+
+If you want to change an attribute **conditionally** (only when an `{{#if}}` condition is true), use the helper versions instead:
+
+```
+{{#if (seen "helped the wizard")}}
+{{inc "reputation"}}
+The wizard remembers your kindness.
+{{else}}
+The wizard eyes you suspiciously.
+{{/if}}
+```
+
+The available helpers are:
+
+- `{{set "attribute" value}}` — set an attribute to a value
+- `{{unset "attribute"}}` — set an attribute to false
+- `{{inc "attribute"}}` — increase a number attribute by 1
+- `{{inc "attribute" 5}}` — increase by a specific amount
+- `{{dec "attribute"}}` — decrease by 1
+- `{{dec "attribute" 3}}` — decrease by a specific amount
+
+These helpers produce no visible output—they only modify the attribute. The key difference from the `@` directives is that they execute at render time, so they respect `{{#if}}` conditions.
+
+<Sample script="@set reputation = 0
+
+Did you [help the old lady] cross the street?
+
+Choose your next action: [Help someone] or [Ignore them]
+
+[help the old lady]:
+You helped an old lady cross the street earlier.
+
+[Help someone]:
+{{#if (seen &quot;help the old lady&quot;)}}
+{{inc &quot;reputation&quot; 20}}
+Your earlier kindness inspires you to help again!
+{{else}}
+{{inc &quot;reputation&quot; 5}}
+You help someone.
+{{/if}}
+
+Reputation: {{reputation}}
+
+[Ignore them]:
+You walk past. Reputation: {{reputation}}"></Sample>
+
+## Reading attributes
+
+You can display the value of an attribute using `{{name}}` (if the attribute name is all one word), or `{{get "attribute name"}}` for multi-word attributes or when the attribute name comes from an expression.
+
+```
+You chose {{gender}}.
+Your full name is {{get "player name"}}.
+```
+
+Both `{{attribute}}` and `{{get "attribute"}}` always return the latest value, even if the attribute was just modified by a helper in the same section.
+
+<Sample script="@set player_name = Alice
+@set favorite_color = blue
+
+Hello, {{player_name}}!
+
+Your favorite color is {{favorite_color}}."></Sample>
+
+The main use for `{{get}}` is when you need to read an attribute whose name is stored in another variable. This enables dynamic attribute lookup:
+
+<Sample script="@set room = kitchen
+@set kitchen = A cozy room with a stove.
+@set garden = A sunny outdoor space.
+
+You are in the {{room}}.
+
+{{get room}}
+
+[[Go to the garden]](garden)
+
+[[garden]]:
+@set room = garden
+You are now in the {{room}}.
+
+{{get room}}"></Sample>
+
+In this example, `{{get room}}` looks up the value of `room` (e.g., "kitchen"), then uses that as the name of another attribute to retrieve (getting the description stored in the `kitchen` attribute).
+
+You can also read a value using JavaScript:
+
+```
+    var gender = squiffy.get("gender");
+```
+
+## Comparing attributes
+
+Squiffy provides comparison helpers for working with attribute values in conditionals.
+
+### Equality comparisons
+
+Use `{{eq}}` to check if two values are equal, and `{{ne}}` to check if they're not equal:
+
+<Sample script="@set choice = red
+
+You chose {{choice}}.
+
+{{#if (eq choice &quot;red&quot;)}}
+Red is a bold choice!
+{{else if (eq choice &quot;blue&quot;)}}
+Blue is a calm choice.
+{{else}}
+An interesting choice!
+{{/if}}"></Sample>
+
+### Numeric comparisons
+
+For number values, you can use:
+
+- `{{gt a b}}` — greater than (`a > b`)
+- `{{gte a b}}` — greater than or equal (`a >= b`)
+- `{{lt a b}}` — less than (`a < b`)
+- `{{lte a b}}` — less than or equal (`a <= b`)
+
+<Sample script="@set score = 75
+
+Your score is {{score}}.
+
+{{#if (gte score 90)}}
+Excellent work! You got an A.
+{{else if (gte score 80)}}
+Great job! You got a B.
+{{else if (gte score 70)}}
+Good work! You got a C.
+{{else if (gte score 60)}}
+You passed with a D.
+{{else}}
+You need to study more.
+{{/if}}"></Sample>
+
+### Logic helpers
+
+You can combine conditions using logic helpers:
+
+- `{{and ...}}` — returns true if all arguments are truthy
+- `{{or ...}}` — returns true if any argument is truthy
+- `{{not value}}` — negates a boolean value
+
+<Sample script="@set has_key = true
+@set has_map = true
+@set door_locked = true
+
+{{#if (and has_key door_locked)}}
+You use the key to unlock the door.
+{{else if door_locked}}
+The door is locked. You need a key.
+{{else}}
+The door is already open.
+{{/if}}
+
+{{#if (and has_key has_map)}}
+With both the key and the map, you're ready for adventure!
+{{/if}}"></Sample>
+
+## Tracking sections and passages
+
+### The `{{seen}}` helper
+
+You can check if the player has visited a section or passage using the `{{seen}}` helper:
+
+<Sample script="You can see a [cupboard]. Maybe you should [open] it?
+
+[open]:
+You open the cupboard.
+
+[cupboard]:
+The cupboard is
+{{#if (seen &quot;open&quot;)}}
+    open, and there are empty bottles inside.
+{{else}}
+    closed.
+{{/if}}"></Sample>
+
+You can also use JavaScript:
+
+```
+    if (squiffy.story.seen("passage3")) {
+        alert("You have seen passage3!");
+    }
+```
+
+### The `{{at}}` helper
+
+The `{{at}}` helper checks if you're currently at a specific section. It can take a single section name or an array of section names.
+
+This helper is particularly useful in master sections or passages (see [Master sections and passages](/basic-concepts/#master-sections-and-passages)), where you want to display different content depending on which section the player is in. It can also be useful when embedding text from another section.
+
+<Sample script="[[section1]]:
+This is section 1.
+
+{{#if (at &quot;section1&quot;)}}
+You are currently in section 1.
+{{/if}}
+
+[[Continue to section 2]](section2)
+
+[[section2]]:
+This is section 2.
+
+{{#if (at (array &quot;section1&quot; &quot;section2&quot;))}}
+You are in section 1 or section 2.
+{{/if}}"></Sample>
+
+## Embedding text
+
+You can embed text from another section, or from a passage in the current section, using `{{embed "section or passage name"}}`.
+
+This is useful for reusing descriptions or text that appears in multiple places:
+
+<Sample script="[[section1]]:
+Here is some text from the next section: {{embed &quot;section2&quot;}}
+
+Here is some text from a passage in this section: {{embed &quot;passage&quot;}}
+
+[passage]:
+Text from passage.
+
+[[section2]]:
+Text from next section."></Sample>
+
+## Creating links with helpers
+
+In addition to the standard link syntax, you can create links programmatically using the `{{section}}` and `{{passage}}` helpers.
+
+### The `{{section}}` helper
+
+Creates a link to a section with optional custom text and attribute settings:
+
+```
+{{section "section_name" text="Link text" set="attribute=value, count+=1"}}
+```
+
+### The `{{passage}}` helper
+
+Creates a link to a passage with optional custom text and attribute settings:
+
+```
+{{passage "passage_name" text="Link text" set="visited=true"}}
+```
+
+<Sample script="Choose your reward:
+
+{{section &quot;reward&quot; text=&quot;Gold&quot; set=&quot;choice=gold, coins+=100&quot;}},
+{{section &quot;reward&quot; text=&quot;Silver&quot; set=&quot;choice=silver, coins+=50&quot;}}, or
+{{section &quot;reward&quot; text=&quot;Bronze&quot; set=&quot;choice=bronze, coins+=25&quot;}}
+
+[[reward]]:
+You chose {{choice}} and received {{coins}} coins!"></Sample>
+
+## Interactive example: Food menu
+
+Here's a complete example showing how attributes can work together to create a food ordering system:
+
+<Sample script="@set total_cost = 0
+
+**Restaurant Menu**
+
+Please select your meal:
+
+**Main Course:**
+- [[Chicken Curry ($12)]](add_drink, main=Chicken Curry, cost=12)
+- [[Vegetable Stir-Fry ($10)]](add_drink, main=Vegetable Stir-Fry, cost=10)
+- [[Beef Burger ($14)]](add_drink, main=Beef Burger, cost=14)
+
+[[add_drink]]:
+{{set &quot;total_cost&quot; cost}}
+You ordered: **{{main}}** - ${{cost}}
+
+**Add a drink?**
+- [[Soda ($3)]](add_dessert, drink=Soda, drink_cost=3)
+- [[Juice ($4)]](add_dessert, drink=Juice, drink_cost=4)
+- [[Water (free)]](add_dessert, drink=Water, drink_cost=0)
+- [[No thanks]](add_dessert)
+
+[[add_dessert]]:
+{{#if drink}}{{inc &quot;total_cost&quot; drink_cost}}You added: {{drink}} {{#if (gt drink_cost 0)}}(${{drink_cost}}){{else}}(free!){{/if}}{{/if}}
+
+**Add a dessert?**
+- [[Ice Cream ($6)]](finish, dessert=Ice Cream, dessert_cost=6)
+- [[Cake ($7)]](finish, dessert=Cake, dessert_cost=7)
+- [[Fruit ($4)]](finish, dessert=Fruit, dessert_cost=4)
+- [[No thanks]](finish)
+
+[[finish]]:
+{{#if dessert}}{{inc &quot;total_cost&quot; dessert_cost}}You added: {{dessert}} (${{dessert_cost}}){{/if}}
+
+**Your Order:**
+- Main: {{main}} (${{cost}})
+{{#if drink}}- Drink: {{drink}} {{#if (gt drink_cost 0)}}(${{drink_cost}}){{else}}(free){{/if}}{{/if}}
+{{#if dessert}}- Dessert: {{dessert}} (${{dessert_cost}}){{/if}}
+
+**Total: ${{total_cost}}**
+
+{{#if (gte total_cost 20)}}
+Wow, you're hungry! That's a big order.
+{{else if (gte total_cost 15)}}
+A nice balanced meal!
+{{else}}
+A light meal today.
+{{/if}}"></Sample>
+
+## Using attributes in JavaScript
+
+You can interact with attributes using JavaScript in any section or passage:
+
+### Setting values
+
+```
+    squiffy.set("attribute_name", value);
+    squiffy.set("score", 100);
+    squiffy.set("has_key", true);
+```
+
+### Getting values
+
+```
+    var score = squiffy.get("score");
+    var hasKey = squiffy.get("has_key");
+```
+
+### Example with JavaScript
+
+<Sample script="@set health = 100
+
+Health: {{health}}
+
+[Use JavaScript to modify health]
+
+[Use JavaScript to modify health]:
+&#32;&#32;&#32;&#32;squiffy.set(&quot;health&quot;, squiffy.get(&quot;health&quot;) - 15);
+&#32;&#32;&#32;&#32;squiffy.ui.write(&quot;Health reduced by JavaScript! New health: &quot; + squiffy.get(&quot;health&quot;));
+"></Sample>
+
+## Advanced: Arrays and complex data
+
+You can use the `{{array}}` helper to create arrays for use with other helpers like `{{random}}`, `{{rotate}}`, and `{{at}}`:
+
+```
+{{random (array "option1" "option2" "option3")}}
+{{at (array "section1" "section2" "section3")}}
+```
+
+See [Dynamic text](/dynamic-text/) for more information on using arrays with dynamic content helpers.

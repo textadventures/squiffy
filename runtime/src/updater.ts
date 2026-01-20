@@ -1,10 +1,18 @@
 import { Story } from "./types.js";
 
+function arraysEqual(a: string[] | undefined, b: string[] | undefined): boolean {
+    if (!a && !b) return true;
+    if (!a || !b) return false;
+    if (a.length !== b.length) return false;
+    return a.every((val, idx) => val === b[idx]);
+}
+
 export function updateStory(oldStory: Story,
                             newStory: Story,
                             outputElement: HTMLElement,
                             ui: any,
-                            disableLink: (link: Element) => void) {
+                            disableLink: (link: Element) => void,
+                            processAttributes: (attributes: string[]) => void) {
 
     function safeQuerySelector(name: string) {
         return name.replace(/'/g, "\\'");
@@ -44,10 +52,21 @@ export function updateStory(oldStory: Story,
                     parentOutputSection.remove();
                 }
             }
-            else if (newSection.text != oldStory.sections[existingSection].text) {
-                // section has been updated
-                for (const element of elements) {
-                    updateElementTextPreservingDisabledPassageLinks(element, ui.processText(newSection.text, false));
+            else {
+                const oldSection = oldStory.sections[existingSection];
+                const attributesChanged = !arraysEqual(oldSection.attributes, newSection.attributes);
+                const textChanged = newSection.text != oldSection.text;
+
+                if (attributesChanged) {
+                    // Re-process the new attributes to update state
+                    processAttributes(newSection.attributes || []);
+                }
+
+                if (textChanged || attributesChanged) {
+                    // Re-render text (attributes may affect text output via helpers)
+                    for (const element of elements) {
+                        updateElementTextPreservingDisabledPassageLinks(element, ui.processText(newSection.text, false));
+                    }
                 }
             }
         }
@@ -66,10 +85,21 @@ export function updateStory(oldStory: Story,
                     parentOutputPassage.remove();
                 }
             }
-            else if (newPassage.text && newPassage.text != oldStory.sections[existingSection].passages[existingPassage].text) {
-                // passage has been updated
-                for (const element of elements) {
-                    updateElementTextPreservingDisabledPassageLinks(element, ui.processText(newPassage.text, false));
+            else {
+                const oldPassage = oldStory.sections[existingSection].passages[existingPassage];
+                const attributesChanged = !arraysEqual(oldPassage.attributes, newPassage.attributes);
+                const textChanged = newPassage.text != oldPassage.text;
+
+                if (attributesChanged) {
+                    // Re-process the new attributes to update state
+                    processAttributes(newPassage.attributes || []);
+                }
+
+                if (textChanged || attributesChanged) {
+                    // Re-render text (attributes may affect text output via helpers)
+                    for (const element of elements) {
+                        updateElementTextPreservingDisabledPassageLinks(element, ui.processText(newPassage.text, false));
+                    }
                 }
             }
         }
