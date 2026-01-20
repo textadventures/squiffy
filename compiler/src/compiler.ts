@@ -564,8 +564,6 @@ class Story {
     uiJs: string[] = [];
 
     constructor() {
-        // Generate a unique GUID for this story to use as localStorage key
-        // This is stable (generated once at compile time) and doesn't expose internal filenames
         this.id = crypto.randomUUID();
     }
 
