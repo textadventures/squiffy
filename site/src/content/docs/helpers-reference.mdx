@@ -1,0 +1,227 @@
+---
+title: Helpers reference
+sidebar:
+    order: 10
+---
+
+import {Aside} from "@astrojs/starlight/components";
+
+Squiffy uses Handlebars as its text processing engine, providing a powerful set of helpers for dynamic content. This page is a quick reference for all available helpers.
+
+## Text processing
+
+Squiffy processes all text through Handlebars, which means you can use:
+- Double curly braces `{{}}` to output values and call helpers
+- Block helpers with `{{#helper}}...{{/helper}}` syntax
+- Comments with `{{! comment text }}`
+- Markdown formatting (converted to HTML automatically)
+
+## Attribute helpers
+
+See [Attributes](/attributes/) for detailed documentation and examples.
+
+### Reading attributes
+
+| Helper | Description | Example |
+|--------|-------------|---------|
+| `{{attribute}}` | Display attribute value (single-word names, always gets latest value) | `{{score}}` |
+| `{{get "name"}}` | Get attribute value (for multi-word names or dynamic attribute names from expressions) | `{{get "player name"}}` |
+
+### Modifying attributes
+
+| Helper | Parameters | Description | Example |
+|--------|------------|-------------|---------|
+| `{{set}}` | `"attribute" value` | Set attribute to a value | `{{set "score" 100}}` |
+| `{{unset}}` | `"attribute"` | Set attribute to false | `{{unset "has_key"}}` |
+| `{{inc}}` | `"attribute" [amount]` | Increment by 1 or specified amount | `{{inc "score"}}` or `{{inc "score" 10}}` |
+| `{{dec}}` | `"attribute" [amount]` | Decrement by 1 or specified amount | `{{dec "health"}}` or `{{dec "health" 5}}` |
+
+<Aside>
+These helpers execute at render time and respect `{{#if}}` conditions, unlike `@set`, `@inc`, `@dec`, and `@unset` directives which always execute when a section/passage loads.
+</Aside>
+
+## Comparison helpers
+
+See [Attributes](/attributes/#comparing-attributes) for examples.
+
+| Helper | Description | Example |
+|--------|-------------|---------|
+| `{{eq a b}}` | Returns true if a equals b | `{{#if (eq status "complete")}}Done{{/if}}` |
+| `{{ne a b}}` | Returns true if a not equals b | `{{#if (ne health 0)}}Still alive{{/if}}` |
+| `{{gt a b}}` | Returns true if `a > b` | `{{#if (gt score 100)}}High score!{{/if}}` |
+| `{{gte a b}}` | Returns true if `a >= b` | `{{#if (gte level 5)}}Advanced{{/if}}` |
+| `{{lt a b}}` | Returns true if `a < b` | `{{#if (lt health 20)}}Low health{{/if}}` |
+| `{{lte a b}}` | Returns true if `a <= b` | `{{#if (lte age 18)}}Minor{{/if}}` |
+
+## Logic helpers
+
+See [Attributes](/attributes/#logic-helpers) for examples.
+
+| Helper | Description | Example |
+|--------|-------------|---------|
+| `{{and ...}}` | Returns true if all arguments are truthy | `{{#if (and has_key door_locked)}}Can unlock{{/if}}` |
+| `{{or ...}}` | Returns true if any argument is truthy | `{{#if (or is_admin is_moderator)}}Has powers{{/if}}` |
+| `{{not value}}` | Negates a boolean value | `{{#if (not game_over)}}Continue{{/if}}` |
+
+## Navigation helpers
+
+See [Attributes](/attributes/#tracking-sections-and-passages) for examples.
+
+| Helper | Parameters | Description | Example |
+|--------|------------|-------------|---------|
+| `{{seen}}` | `"name"` | Check if section/passage has been visited | `{{#if (seen "intro")}}Welcome back{{/if}}` |
+| `{{at}}` | `"name"` or `(array ...)` | Check if currently at a specific section | `{{#if (at "ending")}}Game over{{/if}}` |
+
+## Link helpers
+
+See [Attributes](/attributes/#creating-links-with-helpers) for examples.
+
+| Helper | Parameters | Description |
+|--------|------------|-------------|
+| `{{section}}` | `"name" [text="..."] [set="..."]` | Create a section link with optional custom text and attribute changes |
+| `{{passage}}` | `"name" [text="..."] [set="..."]` | Create a passage link with optional custom text and attribute changes |
+
+Example:
+```
+{{section "next_room" text="Enter" set="visited=true, count+=1"}}
+```
+
+## Content helpers
+
+| Helper | Parameters | Description | Example |
+|--------|------------|-------------|---------|
+| `{{embed}}` | `"name"` | Embed text from another section or passage | `{{embed "description"}}` |
+| `{{array}}` | `item1 item2 ...` | Create an array for use with other helpers | `{{array "red" "green" "blue"}}` |
+
+See [Attributes](/attributes/#embedding-text) for embed examples.
+
+## Dynamic content helpers
+
+See [Dynamic text](/dynamic-text/) for detailed documentation and examples.
+
+### Random text
+
+| Helper | Parameters | Description |
+|--------|------------|-------------|
+| `{{random}}` | `(array ...) [set="attribute"]` | Select a random item from an array, optionally storing the result |
+
+Example:
+```
+The weather is {{random (array "sunny" "cloudy" "rainy") set="weather"}}.
+```
+
+### Animation
+
+| Helper | Parameters | Description |
+|--------|------------|-------------|
+| `{{#animate}}...{{/animate}}` | `"effect" [trigger="link"] [style="..."] [loop=true]` | Animate text with visual effects |
+
+Available effects:
+- `typewriter` - Text appears character by character
+- `toast` - Text slides in from bottom
+- `fadeIn` - Text fades in
+- `continue` - Clickable link that pauses animation queue
+
+Example:
+```
+{{#animate "typewriter"}}This text appears gradually.{{/animate}}
+```
+
+### Labels and replacement
+
+| Helper | Parameters | Description |
+|--------|------------|-------------|
+| `{{#label}}...{{/label}}` | `"name"` | Create a labeled span that can be replaced later |
+| `{{replace}}` | `"label" [text]` | Replace the content of a labeled span |
+
+Example:
+```
+I bought {{#label "item"}}milk{{/label}}.
+
+[change]:
+{{replace "item"}}bread{{/replace}}
+```
+
+### Rotating and sequence links
+
+| Helper | Parameters | Description |
+|--------|------------|-------------|
+| `{{rotate}}` | `(array ...) [set="attribute"] [show="next"]` | Create a cycling link that rotates through options infinitely |
+| `{{sequence}}` | `(array ...) [set="attribute"] [show="next"]` | Create a sequence link that disables after the last option |
+
+Example:
+```
+Size: {{rotate (array "small" "medium" "large") set="size"}}
+```
+
+### Live updating
+
+| Helper | Parameters | Description |
+|--------|------------|-------------|
+| `{{live}}` | `"attribute" [section="name"] [passage="name"]` | Display attribute value that updates automatically when the attribute changes |
+
+Example:
+```
+Score: {{live "score"}}
+```
+
+The `section` and `passage` parameters let you display processed content from another section/passage that updates when the attribute changes:
+
+```
+{{live "category" section="categoryDescription"}}
+```
+
+## Standard Handlebars helpers
+
+In addition to Squiffy's custom helpers, you have access to standard Handlebars block helpers:
+
+| Helper | Description | Example |
+|--------|-------------|---------|
+| `{{#if}}...{{/if}}` | Conditional content | `{{#if has_key}}You have a key{{/if}}` |
+| `{{#if}}...{{else}}...{{/if}}` | Conditional with fallback | `{{#if alive}}Living{{else}}Dead{{/if}}` |
+| `{{#if}}...{{else if}}...{{/if}}` | Multiple conditions | `{{#if (gt score 100)}}High{{else if (gt score 50)}}Medium{{else}}Low{{/if}}` |
+| `{{#unless}}...{{/unless}}` | Inverted conditional | `{{#unless game_over}}Keep playing{{/unless}}` |
+| `{{#each}}...{{/each}}` | Iterate over arrays (advanced usage) | Not commonly used in Squiffy |
+
+## Helper vs Directive
+
+Squiffy has two ways to modify attributes:
+
+### Directives (with `@`)
+
+Execute when a section or passage **loads**, before any rendering:
+
+```
+@set score = 100
+@inc counter
+@dec health
+@unset flag
+```
+
+- **Always execute**, regardless of any `{{#if}}` conditions in the text
+- Run once when the section/passage loads
+- Cannot be used inside conditionals
+
+### Helpers (with `{{}}`)
+
+Execute during **rendering**, at the point where they appear in the text:
+
+```
+{{set "score" 100}}
+{{inc "counter"}}
+{{dec "health"}}
+{{unset "flag"}}
+```
+
+- **Respect `{{#if}}` conditions** - only execute if the condition is true
+- Run at render time, when that part of the text is processed
+- Can be used inside conditionals and helpers
+
+**When to use each:**
+
+- Use **directives** for unconditional changes when a section/passage loads
+- Use **helpers** for conditional changes that depend on `{{#if}}` or other conditions
+
+## Creating custom helpers
+
+Advanced users can define custom Handlebars helpers in the `@ui` section using JavaScript. See the [examples directory](https://github.com/textadventures/squiffy/tree/main/examples/animate) for examples of custom animations and helpers.
