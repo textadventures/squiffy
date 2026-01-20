@@ -1391,3 +1391,410 @@ Go to [[next]].
     expect(content).toContain("Not at start or other.");
     expect(content).toContain("At next or another.");
 });
+
+test("Input validation: links are disabled when required input is empty", async () => {
+    const script = `
+Enter your name: <input type="text" data-attribute="player_name" required>
+
+[[Continue]]
+
+[[Continue]]:
+Hello, {{player_name}}!
+`;
+
+    const { squiffyApi, element } = await initScript(script);
+
+    // Find the section link
+    const continueLink = findLink(element, "section", "Continue", true);
+
+    // Initially link should be disabled because required input is empty
+    expect(continueLink.classList.contains("validation-disabled")).toBe(true);
+    expect(continueLink.getAttribute("aria-disabled")).toBe("true");
+
+    // Try to click - should not navigate
+    await squiffyApi.clickLink(continueLink);
+    expect(element.querySelectorAll(".squiffy-output-section").length).toBe(1);
+});
+
+test("Input validation: links are enabled when required input is filled", async () => {
+    const script = `
+Enter your name: <input type="text" data-attribute="player_name" required>
+
+[[Continue]]
+
+[[Continue]]:
+Hello, {{player_name}}!
+`;
+
+    const { squiffyApi, element } = await initScript(script);
+
+    // Find the input and link
+    const input = element.querySelector('input[data-attribute="player_name"]') as HTMLInputElement;
+    const continueLink = findLink(element, "section", "Continue", true);
+
+    // Fill the input
+    input.value = "Alice";
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+
+    // Link should now be enabled
+    expect(continueLink.classList.contains("validation-disabled")).toBe(false);
+    expect(continueLink.hasAttribute("aria-disabled")).toBe(false);
+
+    // Click should work
+    await squiffyApi.clickLink(continueLink);
+    expect(element.querySelectorAll(".squiffy-output-section").length).toBe(2);
+    expect(getSectionContent(element, "Continue")).toContain("Hello, Alice!");
+});
+
+test("Input validation: clearing input re-disables links", async () => {
+    const script = `
+Enter your name: <input type="text" data-attribute="player_name" required>
+
+[[Continue]]
+
+[[Continue]]:
+Hello, {{player_name}}!
+`;
+
+    const { squiffyApi, element } = await initScript(script);
+
+    const input = element.querySelector('input[data-attribute="player_name"]') as HTMLInputElement;
+    const continueLink = findLink(element, "section", "Continue", true);
+
+    // Fill the input
+    input.value = "Test";
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+
+    // Link should be enabled
+    expect(continueLink.classList.contains("validation-disabled")).toBe(false);
+
+    // Clear the input
+    input.value = "";
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+
+    // Link should be disabled again
+    expect(continueLink.classList.contains("validation-disabled")).toBe(true);
+
+    // Try to click - should not navigate
+    await squiffyApi.clickLink(continueLink);
+    expect(element.querySelectorAll(".squiffy-output-section").length).toBe(1);
+});
+
+test("Input validation: passage links are also validated", async () => {
+    const script = `
+Enter your name: <input type="text" data-attribute="player_name" required>
+
+You can [look around] or [check inventory].
+
+[look around]:
+You see a room.
+
+[check inventory]:
+Your pockets are empty.
+`;
+
+    const { squiffyApi, element } = await initScript(script);
+
+    const input = element.querySelector('input[data-attribute="player_name"]') as HTMLInputElement;
+
+    // Find passage links
+    const lookLink = findLink(element, "passage", "look around");
+    const inventoryLink = findLink(element, "passage", "check inventory");
+
+    // Initially both should be disabled
+    expect(lookLink.classList.contains("validation-disabled")).toBe(true);
+    expect(inventoryLink.classList.contains("validation-disabled")).toBe(true);
+
+    // Try to click - should not work
+    await squiffyApi.clickLink(lookLink);
+    expect(element.querySelectorAll(".squiffy-output-passage").length).toBe(0);
+
+    // Fill the input
+    input.value = "Bob";
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+
+    // Links should now be enabled
+    expect(lookLink.classList.contains("validation-disabled")).toBe(false);
+    expect(inventoryLink.classList.contains("validation-disabled")).toBe(false);
+
+    // Click should work
+    await squiffyApi.clickLink(lookLink);
+    expect(element.querySelectorAll(".squiffy-output-passage").length).toBe(1);
+});
+
+test("Input validation: multiple inputs all must be valid", async () => {
+    const script = `
+Name: <input type="text" data-attribute="name" required>
+Age: <input type="number" data-attribute="age" required min="1" max="120">
+
+[[Continue]]
+
+[[Continue]]:
+Name: {{name}}, Age: {{age}}
+`;
+
+    const { squiffyApi, element } = await initScript(script);
+
+    const nameInput = element.querySelector('input[data-attribute="name"]') as HTMLInputElement;
+    const ageInput = element.querySelector('input[data-attribute="age"]') as HTMLInputElement;
+    const continueLink = findLink(element, "section", "Continue", true);
+
+    // Initially disabled
+    expect(continueLink.classList.contains("validation-disabled")).toBe(true);
+
+    // Fill only name
+    nameInput.value = "Charlie";
+    nameInput.dispatchEvent(new Event("input", { bubbles: true }));
+
+    // Still disabled because age is empty
+    expect(continueLink.classList.contains("validation-disabled")).toBe(true);
+
+    // Fill age with invalid value
+    ageInput.value = "150";
+    ageInput.dispatchEvent(new Event("input", { bubbles: true }));
+
+    // Still disabled because age is out of range
+    expect(continueLink.classList.contains("validation-disabled")).toBe(true);
+
+    // Fill age with valid value
+    ageInput.value = "25";
+    ageInput.dispatchEvent(new Event("input", { bubbles: true }));
+
+    // Now should be enabled
+    expect(continueLink.classList.contains("validation-disabled")).toBe(false);
+
+    // Click should work
+    await squiffyApi.clickLink(continueLink);
+    expect(element.querySelectorAll(".squiffy-output-section").length).toBe(2);
+});
+
+test("Input validation: validation resets when moving to new section", async () => {
+    const script = `
+Name: <input type="text" data-attribute="name" required>
+
+[[Continue]]
+
+[[Continue]]:
+Email: <input type="email" data-attribute="email" required>
+
+[[Finish]]
+
+[[Finish]]:
+Done!
+`;
+
+    const { squiffyApi, element } = await initScript(script);
+
+    // Fill first input and navigate
+    const nameInput = element.querySelector('input[data-attribute="name"]') as HTMLInputElement;
+    nameInput.value = "Dave";
+    nameInput.dispatchEvent(new Event("input", { bubbles: true }));
+
+    const continueLink = findLink(element, "section", "Continue", true);
+    await squiffyApi.clickLink(continueLink);
+
+    // In second section, new input should block navigation
+    const finishLink = findLink(element, "section", "Finish", true);
+    expect(finishLink.classList.contains("validation-disabled")).toBe(true);
+
+    // Fill email and continue
+    const emailInput = element.querySelector('input[data-attribute="email"]') as HTMLInputElement;
+    emailInput.value = "dave@example.com";
+    emailInput.dispatchEvent(new Event("input", { bubbles: true }));
+
+    expect(finishLink.classList.contains("validation-disabled")).toBe(false);
+
+    await squiffyApi.clickLink(finishLink);
+    expect(getSectionContent(element, "Finish")).toContain("Done!");
+});
+
+test("Input validation: disabled inputs are ignored", async () => {
+    const script = `
+Active: <input type="text" data-attribute="active" required>
+Disabled: <input type="text" data-attribute="disabled" required disabled>
+
+[[Continue]]
+
+[[Continue]]:
+Done!
+`;
+
+    const { squiffyApi, element } = await initScript(script);
+
+    const activeInput = element.querySelector('input[data-attribute="active"]') as HTMLInputElement;
+    const continueLink = findLink(element, "section", "Continue", true);
+
+    // Fill only the active input (disabled one should be ignored)
+    activeInput.value = "test";
+    activeInput.dispatchEvent(new Event("input", { bubbles: true }));
+
+    // Link should be enabled (disabled input doesn't count)
+    expect(continueLink.classList.contains("validation-disabled")).toBe(false);
+
+    await squiffyApi.clickLink(continueLink);
+    expect(element.querySelectorAll(".squiffy-output-section").length).toBe(2);
+});
+
+test("Input validation: select element with required attribute", async () => {
+    const script = `
+Choose difficulty: <select data-attribute="difficulty" required>
+    <option value="">-- Select --</option>
+    <option value="easy">Easy</option>
+    <option value="normal">Normal</option>
+    <option value="hard">Hard</option>
+</select>
+
+[[Start]]
+
+[[Start]]:
+You selected {{difficulty}} mode.
+`;
+
+    const { squiffyApi, element } = await initScript(script);
+
+    const select = element.querySelector('select[data-attribute="difficulty"]') as HTMLSelectElement;
+    const startLink = findLink(element, "section", "Start", true);
+
+    // Initially link should be disabled because no option is selected
+    expect(startLink.classList.contains("validation-disabled")).toBe(true);
+    expect(startLink.getAttribute("aria-disabled")).toBe("true");
+
+    // Try to click - should not navigate
+    await squiffyApi.clickLink(startLink);
+    expect(element.querySelectorAll(".squiffy-output-section").length).toBe(1);
+
+    // Select an option
+    select.value = "normal";
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+
+    // Link should now be enabled
+    expect(startLink.classList.contains("validation-disabled")).toBe(false);
+    expect(startLink.hasAttribute("aria-disabled")).toBe(false);
+
+    // Click should work
+    await squiffyApi.clickLink(startLink);
+    expect(element.querySelectorAll(".squiffy-output-section").length).toBe(2);
+    expect(getSectionContent(element, "Start")).toContain("You selected normal mode.");
+});
+
+test("Input validation: select element value is stored in attribute", async () => {
+    const script = `
+Choose difficulty: <select data-attribute="difficulty" required>
+    <option value="">-- Select --</option>
+    <option value="easy">Easy</option>
+    <option value="normal">Normal</option>
+    <option value="hard">Hard</option>
+</select>
+
+[[Start]]
+
+[[Start]]:
+Difficulty: {{difficulty}}
+`;
+
+    const { squiffyApi, element } = await initScript(script);
+
+    const select = element.querySelector('select[data-attribute="difficulty"]') as HTMLSelectElement;
+    const startLink = findLink(element, "section", "Start", true);
+
+    // Select an option
+    select.value = "hard";
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+
+    // Navigate
+    await squiffyApi.clickLink(startLink);
+
+    // Check that the value was stored correctly
+    expect(squiffyApi.get("difficulty")).toBe("hard");
+    expect(getSectionContent(element, "Start")).toContain("Difficulty: hard");
+});
+
+test("Input validation: changing select back to empty re-disables links", async () => {
+    const script = `
+Choose: <select data-attribute="choice" required>
+    <option value="">-- Select --</option>
+    <option value="a">Option A</option>
+    <option value="b">Option B</option>
+</select>
+
+[[Continue]]
+
+[[Continue]]:
+Done!
+`;
+
+    const { squiffyApi, element } = await initScript(script);
+
+    const select = element.querySelector('select[data-attribute="choice"]') as HTMLSelectElement;
+    const continueLink = findLink(element, "section", "Continue", true);
+
+    // Select an option
+    select.value = "a";
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+
+    // Link should be enabled
+    expect(continueLink.classList.contains("validation-disabled")).toBe(false);
+
+    // Change back to empty
+    select.value = "";
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+
+    // Link should be disabled again
+    expect(continueLink.classList.contains("validation-disabled")).toBe(true);
+
+    // Try to click - should not navigate
+    await squiffyApi.clickLink(continueLink);
+    expect(element.querySelectorAll(".squiffy-output-section").length).toBe(1);
+});
+
+test("Input validation: select combined with other inputs", async () => {
+    const script = `
+Name: <input type="text" data-attribute="name" required>
+Level: <select data-attribute="level" required>
+    <option value="">-- Select --</option>
+    <option value="1">Level 1</option>
+    <option value="2">Level 2</option>
+</select>
+
+[[Continue]]
+
+[[Continue]]:
+{{name}} at level {{level}}
+`;
+
+    const { squiffyApi, element } = await initScript(script);
+
+    const nameInput = element.querySelector('input[data-attribute="name"]') as HTMLInputElement;
+    const levelSelect = element.querySelector('select[data-attribute="level"]') as HTMLSelectElement;
+    const continueLink = findLink(element, "section", "Continue", true);
+
+    // Initially disabled
+    expect(continueLink.classList.contains("validation-disabled")).toBe(true);
+
+    // Fill only name
+    nameInput.value = "Player";
+    nameInput.dispatchEvent(new Event("input", { bubbles: true }));
+
+    // Still disabled because select is empty
+    expect(continueLink.classList.contains("validation-disabled")).toBe(true);
+
+    // Select level but clear name
+    levelSelect.value = "1";
+    levelSelect.dispatchEvent(new Event("change", { bubbles: true }));
+    nameInput.value = "";
+    nameInput.dispatchEvent(new Event("input", { bubbles: true }));
+
+    // Still disabled because name is empty
+    expect(continueLink.classList.contains("validation-disabled")).toBe(true);
+
+    // Fill both
+    nameInput.value = "Hero";
+    nameInput.dispatchEvent(new Event("input", { bubbles: true }));
+
+    // Now should be enabled
+    expect(continueLink.classList.contains("validation-disabled")).toBe(false);
+
+    // Click should work
+    await squiffyApi.clickLink(continueLink);
+    expect(getSectionContent(element, "Continue")).toContain("Hero at level 1");
+});
