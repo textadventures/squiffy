@@ -303,7 +303,7 @@ You can also use JavaScript:
 
 The `{{at}}` helper checks if you're currently at a specific section. It can take a single section name or an array of section names.
 
-This helper is particularly useful in master sections or passages (see [Master sections and passages](/basic-concepts#master-sections-and-passages)), where you want to display different content depending on which section the player is in. It can also be useful when embedding text from another section.
+This helper is particularly useful in master sections or passages (see [Master sections and passages](/basic-concepts/#master-sections-and-passages)), where you want to display different content depending on which section the player is in. It can also be useful when embedding text from another section.
 
 <Sample script="[[section1]]:
 This is section 1.
@@ -447,8 +447,8 @@ Health: {{health}}
 [Use JavaScript to modify health]
 
 [Use JavaScript to modify health]:
-    squiffy.set(&quot;health&quot;, squiffy.get(&quot;health&quot;) - 15);
-    squiffy.ui.write(&quot;Health reduced by JavaScript! New health: &quot; + squiffy.get(&quot;health&quot;));
+&#32;&#32;&#32;&#32;squiffy.set(&quot;health&quot;, squiffy.get(&quot;health&quot;) - 15);
+&#32;&#32;&#32;&#32;squiffy.ui.write(&quot;Health reduced by JavaScript! New health: &quot; + squiffy.get(&quot;health&quot;));
 "></Sample>
 
 ## Advanced: Arrays and complex data
@@ -460,4 +460,4 @@ You can use the `{{array}}` helper to create arrays for use with other helpers l
 {{at (array "section1" "section2" "section3")}}
 ```
 
-See [Dynamic text](/dynamic-text) for more information on using arrays with dynamic content helpers.
+See [Dynamic text](/dynamic-text/) for more information on using arrays with dynamic content helpers.
