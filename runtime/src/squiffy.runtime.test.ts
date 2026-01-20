@@ -694,6 +694,93 @@ Hello {{name}}, your score is {{score}}.`;
     expect(output).toBe("Hello Bob, your score is 200.");
 });
 
+test("Update boolean @set directive from true to false", async () => {
+    const script = `@set has_key = true
+
+{{#if has_key}}
+You have the key.
+{{else}}
+You don't have the key.
+{{/if}}`;
+
+    const { squiffyApi, element } = await initScript(script);
+
+    let output = getSectionContent(element, "_default");
+    expect(output).toBe("You have the key.");
+
+    const script2 = `@set has_key = false
+
+{{#if has_key}}
+You have the key.
+{{else}}
+You don't have the key.
+{{/if}}`;
+    const update2 = await compile(script2);
+    squiffyApi.update(update2.story);
+
+    output = getSectionContent(element, "_default");
+    expect(output).toBe("You don't have the key.");
+});
+
+test("Update boolean @set directive from false to true", async () => {
+    const script = `@set has_key = false
+
+{{#if has_key}}
+You have the key.
+{{else}}
+You don't have the key.
+{{/if}}`;
+
+    const { squiffyApi, element } = await initScript(script);
+
+    let output = getSectionContent(element, "_default");
+    expect(output).toBe("You don't have the key.");
+
+    const script2 = `@set has_key = true
+
+{{#if has_key}}
+You have the key.
+{{else}}
+You don't have the key.
+{{/if}}`;
+    const update2 = await compile(script2);
+    squiffyApi.update(update2.story);
+
+    output = getSectionContent(element, "_default");
+    expect(output).toBe("You have the key.");
+});
+
+test("Boolean values work correctly with logic helpers", async () => {
+    const script = `@set has_key = true
+@set door_locked = true
+
+{{#if (and has_key door_locked)}}
+You unlock the door.
+{{else}}
+Cannot unlock.
+{{/if}}`;
+
+    const { squiffyApi, element } = await initScript(script);
+
+    let output = getSectionContent(element, "_default");
+    expect(output).toBe("You unlock the door.");
+
+    // Change has_key to false
+    const script2 = `@set has_key = false
+@set door_locked = true
+
+{{#if (and has_key door_locked)}}
+You unlock the door.
+{{else}}
+Cannot unlock.
+{{/if}}`;
+    const update2 = await compile(script2);
+    squiffyApi.update(update2.story);
+
+    output = getSectionContent(element, "_default");
+    expect(output).toBe("Cannot unlock.");
+});
+
 test("Going back handling @clear and attribute changes", async () => {
     const script = `
 Choose: [a], [b]

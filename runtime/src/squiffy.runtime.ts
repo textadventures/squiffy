@@ -118,8 +118,14 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         const setMatch = setRegex.exec(expr);
         if (setMatch) {
             const lhs = setMatch[1];
-            let rhs = setMatch[2];
-            if (isNaN(rhs as any)) {
+            let rhs: any = setMatch[2];
+            if (rhs === "true") {
+                set(lhs, true);
+            }
+            else if (rhs === "false") {
+                set(lhs, false);
+            }
+            else if (isNaN(rhs as any)) {
                 if (rhs.startsWith("@")) rhs = get(rhs.substring(1));
                 set(lhs, rhs);
             }
