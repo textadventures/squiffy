@@ -16,6 +16,60 @@ Squiffy processes all text through Handlebars, which means you can use:
 - Comments with `{{! comment text }}`
 - Markdown formatting (converted to HTML automatically)
 
+### Understanding parentheses vs double brackets
+
+When working with helpers, you'll encounter two different bracket types:
+
+**Double brackets `{{}}` - Output values or call helpers:**
+```
+{{score}}                    - Display an attribute
+{{set "score" 100}}          - Call a helper
+{{#if has_key}}...{{/if}}    - Block helper
+```
+
+**Parentheses `()` - Subexpressions (helper arguments):**
+
+When you need to pass the *result* of one helper as an argument to another helper, use parentheses:
+
+```
+{{#if (and has_key door_locked)}}Can unlock{{/if}}
+{{random (array "red" "green" "blue")}}
+{{#if (eq status "complete")}}Done{{/if}}
+```
+
+In these examples:
+- `(and has_key door_locked)` - The `and` helper returns true/false, which becomes the condition for `if`
+- `(array "red" "green" "blue")` - The `array` helper creates an array, which is passed to `random`
+- `(eq status "complete")` - The `eq` helper returns true/false for the `if` condition
+
+**Why not `{{#if {{and ...}}}}`?**
+
+You cannot nest `{{}}` inside `{{}}` - that's invalid Handlebars syntax. Use parentheses for subexpressions:
+
+```
+❌ Wrong:  {{#if {{and has_key door_locked}}}}...{{/if}}
+✅ Right:  {{#if (and has_key door_locked)}}...{{/if}}
+
+❌ Wrong:  {{random {{array "a" "b" "c"}}}}
+✅ Right:  {{random (array "a" "b" "c")}}
+```
+
+**Nesting subexpressions:**
+
+You can nest parentheses to combine multiple helpers:
+
+```
+{{#if (and (gt score 100) (not game_over))}}
+    You have a high score and the game is still running!
+{{/if}}
+```
+
+Here, `(gt score 100)` and `(not game_over)` are evaluated first, then their results are passed to `and`, and finally the result of `and` is passed to `if`.
+
+<Aside type="tip">
+**Quick rule:** Use `{{}}` to call a helper directly. Use `()` when a helper's result needs to be passed to another helper.
+</Aside>
+
 ## Attribute helpers
 
 See [Attributes](/attributes/) for detailed documentation and examples.
