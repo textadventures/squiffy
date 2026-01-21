@@ -97,7 +97,7 @@ const downloadJavascript = async function () {
 
     if (result.success) {
         const js = await result.getJs();
-        downloadString(js, title + ".js");
+        downloadString(js, "story.js");
     }
 };
 
