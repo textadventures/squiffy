@@ -19,11 +19,19 @@ export class TextProcessor {
 
         this.handlebars.registerHelper("embed", (name: string) => {
             const currentSection = this.getCurrentSection();
+            console.log(`[embed] Looking for "${name}"`);
+            console.log(`[embed] Current section: "${currentSection.name || 'unknown'}"`);
+            console.log(`[embed] Available sections:`, Object.keys(this.story.sections));
+            console.log(`[embed] Available passages:`, currentSection.passages ? Object.keys(currentSection.passages) : 'none');
+
             if (currentSection.passages && name in currentSection.passages) {
+                console.log(`[embed] ✓ Found "${name}" in passages`);
                 return new Handlebars.SafeString(this.process(currentSection.passages[name].text || "", true));
             } else if (name in this.story.sections) {
+                console.log(`[embed] ✓ Found "${name}" in sections`);
                 return new Handlebars.SafeString(this.process(this.story.sections[name].text || "", true));
             }
+            console.log(`[embed] ✗ "${name}" NOT FOUND`);
         });
 
         this.handlebars.registerHelper("seen", (name: string) => this.state.getSeen(name));
