@@ -101,6 +101,15 @@ const downloadJavascript = async function () {
     }
 };
 
+const downloadInlineHtml = async function () {
+    const result = await compile(true);
+
+    if (result.success) {
+        const pkg = await createPackage(result, { inlineHtml: true });
+        downloadString(pkg.files["index.html"], (title || "story") + ".html");
+    }
+};
+
 const preview = async function () {
     window.open("/preview.html", "_blank");
 };
@@ -639,6 +648,7 @@ const init = async function () {
 
     onClick("download-squiffy-script", downloadSquiffyScript);
     onClick("export-html-js", downloadZip);
+    onClick("export-html-inline", downloadInlineHtml);
     onClick("export-js", downloadJavascript);
 
     onClick("preview", preview);

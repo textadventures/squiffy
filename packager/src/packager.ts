@@ -4,6 +4,7 @@ import { CompileSuccess } from "squiffy-compiler";
 import squiffyRuntime from "squiffy-runtime/dist/squiffy.runtime.global.js?raw";
 import runtimeCss from "squiffy-runtime/dist/squiffy.runtime.css?raw";
 import htmlTemplateFile from "./index.template.html?raw";
+import htmlInlineTemplateFile from "./index.inline.template.html?raw";
 import cssTemplateFile from "./style.template.css?raw";
 
 import pkg from "../package.json" with {type: "json"};
@@ -15,30 +16,55 @@ export interface Package {
     zip?: Uint8Array;
 }
 
-export const createPackage = async (input: CompileSuccess, createZip: boolean): Promise<Package> => {
+export interface PackageOptions {
+    createZip?: boolean;
+    inlineHtml?: boolean;
+}
+
+export const createPackage = async (input: CompileSuccess, createZipOrOptions: boolean | PackageOptions = false): Promise<Package> => {
+    // Handle both old boolean signature and new options object
+    const options: PackageOptions = typeof createZipOrOptions === "boolean"
+        ? { createZip: createZipOrOptions }
+        : createZipOrOptions;
+
     const output: Record<string, string> = {};
-
-    output["story.js"] = await input.getJs();
-    output["squiffy.runtime.global.js"] = squiffyRuntime;
-
     const uiInfo = input.getUiInfo();
 
-    let htmlData = htmlTemplateFile.toString();
-    htmlData = htmlData.replace("<!-- INFO -->", `<!--\n\nCreated with Squiffy ${version}\n\nhttps://squiffystory.com\nhttps://github.com/textadventures/squiffy\n\n-->`);
-    htmlData = htmlData.replace("<!-- TITLE -->", uiInfo.title);
+    const infoComment = `<!--\n\nCreated with Squiffy ${version}\n\nhttps://squiffystory.com\nhttps://github.com/textadventures/squiffy\n\n-->`;
     const scriptData = uiInfo.externalScripts.map(script => `<script src="${script}"></script>`).join("\n");
-    htmlData = htmlData.replace("<!-- SCRIPTS -->", scriptData);
-
     const stylesheetData = uiInfo.externalStylesheets.map(sheet => `<link rel="stylesheet" href="${sheet}"/>`).join("\n");
-    htmlData = htmlData.replace("<!-- STYLESHEETS -->", stylesheetData);
+    const combinedCss = runtimeCss.toString() + "\n\n" + cssTemplateFile.toString();
 
-    output["index.html"] = htmlData;
-    // Combine runtime CSS with application-specific container styles
-    output["style.css"] = runtimeCss.toString() + "\n\n" + cssTemplateFile.toString();
+    if (options.inlineHtml) {
+        // Create a single HTML file with everything inlined
+        let htmlData = htmlInlineTemplateFile.toString();
+        htmlData = htmlData.replace("<!-- INFO -->", infoComment);
+        htmlData = htmlData.replace("<!-- TITLE -->", uiInfo.title);
+        htmlData = htmlData.replace("<!-- SCRIPTS -->", scriptData);
+        htmlData = htmlData.replace("<!-- STYLESHEETS -->", stylesheetData);
+        htmlData = htmlData.replace("<!-- STYLE -->", combinedCss);
+        htmlData = htmlData.replace("<!-- RUNTIME -->", squiffyRuntime);
+        htmlData = htmlData.replace("<!-- STORY -->", await input.getJs());
+
+        output["index.html"] = htmlData;
+    } else {
+        // Create separate files (original behavior)
+        output["story.js"] = await input.getJs();
+        output["squiffy.runtime.global.js"] = squiffyRuntime;
+
+        let htmlData = htmlTemplateFile.toString();
+        htmlData = htmlData.replace("<!-- INFO -->", infoComment);
+        htmlData = htmlData.replace("<!-- TITLE -->", uiInfo.title);
+        htmlData = htmlData.replace("<!-- SCRIPTS -->", scriptData);
+        htmlData = htmlData.replace("<!-- STYLESHEETS -->", stylesheetData);
+
+        output["index.html"] = htmlData;
+        output["style.css"] = combinedCss;
+    }
 
     return {
         files: output,
-        zip: !createZip ? undefined : zipSync(
+        zip: !options.createZip ? undefined : zipSync(
             Object.fromEntries(
                 Object.entries(output).map(([name, text]) => [name, strToU8(text)])
             )

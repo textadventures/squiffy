@@ -19,6 +19,7 @@ const argv = yargs(hideBin(process.argv))
     .describe("p", "Port for HTTP server (only with --serve)")
     .describe("scriptonly", "Only generate JavaScript file (and optionally specify a name)")
     .describe("zip", "Create zip file")
+    .describe("inline", "Create single HTML file with everything inlined")
     .version(version)
     .parseSync();
 
@@ -27,7 +28,8 @@ console.log("Squiffy " + version);
 const options = {
     serve: argv.s,
     scriptOnly: argv.scriptonly,
-    zip: argv.zip
+    zip: argv.zip,
+    inline: argv.inline
 };
 
 const inputFilename = argv._[0] as string;
@@ -38,7 +40,10 @@ if (options.scriptOnly) {
     await writeScriptFile(inputFilename, outputPath, outputFilename);
 }
 else {
-    const result = await createPackageFiles(inputFilename, outputPath, !!options.zip);
+    const result = await createPackageFiles(inputFilename, outputPath, {
+        createZip: !!options.zip,
+        inlineHtml: !!options.inline
+    });
 
     if (result && options.serve) {
         const port = (argv.p as number) || 8282;
