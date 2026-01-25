@@ -104,7 +104,7 @@ This is a complete story.
 You clicked!
 `);
 
-        const result = await createPackageFiles(testStory, OUTPUT_DIR, false);
+        const result = await createPackageFiles(testStory, OUTPUT_DIR, {});
 
         expect(result).toBe(true);
 
@@ -133,7 +133,7 @@ You clicked!
 Content for zip test.
 `);
 
-        const result = await createPackageFiles(testStory, OUTPUT_DIR, true);
+        const result = await createPackageFiles(testStory, OUTPUT_DIR, { createZip: true });
 
         expect(result).toBe(true);
 
@@ -156,7 +156,7 @@ Some content.
 This should fail - text in @ui block
 `);
 
-        const result = await createPackageFiles(testStory, OUTPUT_DIR, false);
+        const result = await createPackageFiles(testStory, OUTPUT_DIR, {});
 
         expect(result).toBe(false);
 

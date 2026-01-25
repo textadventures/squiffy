@@ -1,0 +1,287 @@
+---
+title: Embedding Squiffy in a custom page
+sidebar:
+    order: 17
+---
+
+If you want more control over how your Squiffy story is presented, you can embed it in your own HTML page. This allows you to customize the layout, add your own styling, or integrate the story into an existing website.
+
+## Basic setup
+
+First, export your story using the CLI with `--scriptonly`:
+
+```
+npx @textadventures/squiffy-cli mygame.squiffy --scriptonly
+```
+
+This creates `story.js` containing your compiled story.
+
+You'll also need the Squiffy runtime. You can either:
+- Run a full export first and keep `squiffy.runtime.global.js`
+- Or use a CDN (when available)
+
+Here's a minimal HTML page that runs a Squiffy story:
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>My Story</title>
+    <script src="squiffy.runtime.global.js"></script>
+    <script src="story.js"></script>
+</head>
+<body>
+    <div id="squiffy"></div>
+    <script>
+        document.addEventListener('DOMContentLoaded', async function () {
+            const squiffyApi = await squiffyRuntime.init({
+                element: document.getElementById('squiffy'),
+                story: story,
+            });
+            await squiffyApi.begin();
+        });
+    </script>
+</body>
+</html>
+```
+
+## Initialization options
+
+The `squiffyRuntime.init()` function accepts an options object:
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `element` | `HTMLElement` | (required) | The container element for the story output |
+| `story` | `Story` | (required) | The compiled story object (from `story.js`) |
+| `persist` | `boolean` | `true` | Whether to save state to localStorage |
+| `storyId` | `string` | URL path | Key used for localStorage (allows multiple stories on same domain) |
+| `scroll` | `string` | `"body"` | Scroll behavior: `"body"`, `"element"`, or `"none"` |
+| `onSet` | `function` | - | Callback when an attribute is set |
+
+### Persistence
+
+By default, Squiffy saves the player's progress to localStorage, so they can return to where they left off. The `storyId` option determines the storage key:
+
+```javascript
+const squiffyApi = await squiffyRuntime.init({
+    element: document.getElementById('squiffy'),
+    story: story,
+    persist: true,
+    storyId: 'my-unique-story-id',
+});
+```
+
+Set `persist: false` to disable saving:
+
+```javascript
+const squiffyApi = await squiffyRuntime.init({
+    element: document.getElementById('squiffy'),
+    story: story,
+    persist: false,
+});
+```
+
+### Scroll behavior
+
+The `scroll` option controls how the page scrolls when new content appears:
+
+- `"body"` (default) - Scrolls the page body
+- `"element"` - Scrolls within the container element (useful for fixed-height containers)
+- `"none"` - No automatic scrolling
+
+```javascript
+const squiffyApi = await squiffyRuntime.init({
+    element: document.getElementById('squiffy'),
+    story: story,
+    scroll: 'element',
+});
+```
+
+## API methods
+
+The `init()` function returns a `SquiffyApi` object with these methods:
+
+### begin()
+
+Starts or resumes the story. Call this after initialization:
+
+```javascript
+await squiffyApi.begin();
+```
+
+### restart()
+
+Restarts the story from the beginning, clearing saved state:
+
+```javascript
+squiffyApi.restart();
+```
+
+### get(attribute)
+
+Gets the value of a story attribute:
+
+```javascript
+const score = squiffyApi.get('score');
+const hasKey = squiffyApi.get('hasKey');
+```
+
+### set(attribute, value)
+
+Sets a story attribute:
+
+```javascript
+squiffyApi.set('score', 100);
+squiffyApi.set('playerName', 'Alice');
+```
+
+### goBack()
+
+Goes back to the previous section or passage (undo):
+
+```javascript
+squiffyApi.goBack();
+```
+
+## Events
+
+You can listen for events using `on()`, `off()`, and `once()`:
+
+### linkClick
+
+Fired when a story link is clicked:
+
+```javascript
+squiffyApi.on('linkClick', (event) => {
+    console.log('Link type:', event.linkType); // "section" or "passage"
+});
+```
+
+### set
+
+Fired when an attribute value changes:
+
+```javascript
+squiffyApi.on('set', (event) => {
+    console.log(`${event.attribute} = ${event.value}`);
+});
+```
+
+### canGoBackChanged
+
+Fired when the ability to go back changes:
+
+```javascript
+squiffyApi.on('canGoBackChanged', (event) => {
+    backButton.disabled = !event.canGoBack;
+});
+```
+
+### Unsubscribing
+
+The `on()` method returns an unsubscribe function:
+
+```javascript
+const unsubscribe = squiffyApi.on('linkClick', handler);
+
+// Later, to stop listening:
+unsubscribe();
+```
+
+Or use `off()`:
+
+```javascript
+squiffyApi.off('linkClick', handler);
+```
+
+## Complete example
+
+Here's a more complete example with custom controls:
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>My Story</title>
+    <script src="squiffy.runtime.global.js"></script>
+    <script src="story.js"></script>
+    <style>
+        #controls {
+            padding: 10px;
+            background: #f0f0f0;
+            margin-bottom: 20px;
+        }
+        #squiffy {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        button:disabled {
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <button id="restart">Restart</button>
+        <button id="back" disabled>Back</button>
+        <span id="status"></span>
+    </div>
+    <div id="squiffy"></div>
+    <script>
+        document.addEventListener('DOMContentLoaded', async function () {
+            const squiffyApi = await squiffyRuntime.init({
+                element: document.getElementById('squiffy'),
+                story: story,
+                persist: true,
+                storyId: window.location.pathname,
+            });
+
+            const backButton = document.getElementById('back');
+            const statusEl = document.getElementById('status');
+
+            // Restart button
+            document.getElementById('restart').addEventListener('click', function () {
+                if (confirm('Are you sure you want to restart?')) {
+                    squiffyApi.restart();
+                }
+            });
+
+            // Back button
+            backButton.addEventListener('click', function () {
+                squiffyApi.goBack();
+            });
+
+            // Update back button state
+            squiffyApi.on('canGoBackChanged', (event) => {
+                backButton.disabled = !event.canGoBack;
+            });
+
+            // Show score changes
+            squiffyApi.on('set', (event) => {
+                if (event.attribute === 'score') {
+                    statusEl.textContent = `Score: ${event.value}`;
+                }
+            });
+
+            await squiffyApi.begin();
+        });
+    </script>
+</body>
+</html>
+```
+
+## Styling
+
+Squiffy adds CSS classes to its output that you can style:
+
+- `.squiffy-output-section` - Container for each section
+- `.squiffy-output-passage` - Container for each passage
+- `.squiffy-link` - All clickable links
+- `.squiffy-link.disabled` - Links that have been clicked/disabled
+
+You can include the default styles from a full export (`style.css`) and customize from there, or write your own styles from scratch.

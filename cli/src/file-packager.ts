@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { compile } from "squiffy-compiler";
 import { externalFiles } from "./external-files.js";
-import { createPackage } from "@textadventures/squiffy-packager";
+import { createPackage, PackageOptions } from "@textadventures/squiffy-packager";
 
 async function getCompileResult(inputFilename: string) {
     const inputFile = fs.readFileSync(inputFilename);
@@ -30,7 +30,7 @@ export const writeScriptFile = async(inputFilename: string, outputPath: string, 
     fs.writeFileSync(path.join(outputPath, outputFilename), await result.getJs());
 };
 
-export const createPackageFiles = async (inputFilename: string, outputPath: string, createZip: boolean) => {
+export const createPackageFiles = async (inputFilename: string, outputPath: string, options: PackageOptions = {}) => {
     console.log("Loading " + inputFilename);
 
     const result = await getCompileResult(inputFilename);
@@ -40,7 +40,7 @@ export const createPackageFiles = async (inputFilename: string, outputPath: stri
         return false;
     }
 
-    const pkg = await createPackage(result, createZip);
+    const pkg = await createPackage(result, options);
     const files = pkg.files;
 
     for (const file of Object.keys(files)) {
@@ -48,7 +48,7 @@ export const createPackageFiles = async (inputFilename: string, outputPath: stri
         fs.writeFileSync(path.join(outputPath, file), files[file]);
     }
 
-    if (createZip && pkg.zip) {
+    if (options.createZip && pkg.zip) {
         console.log("Writing output.zip");
         fs.writeFileSync(path.join(outputPath, "output.zip"), pkg.zip);
     }

@@ -155,3 +155,60 @@ test("Package all files are strings", async () => {
         }
     }
 });
+
+test("Create inline HTML package", async () => {
+    const script = `@title Inline Story
+
+Hello world!`;
+    const compileResult = await compile({ script });
+
+    if (!compileResult.success) {
+        throw new Error("Compile failed");
+    }
+
+    const pkg = await createPackage(compileResult, { inlineHtml: true });
+
+    // Should only have one file
+    expect(Object.keys(pkg.files).length).toBe(1);
+    expect(pkg.files["index.html"]).toBeDefined();
+
+    // Should NOT have separate files
+    expect(pkg.files["style.css"]).toBeUndefined();
+    expect(pkg.files["story.js"]).toBeUndefined();
+    expect(pkg.files["squiffy.runtime.global.js"]).toBeUndefined();
+
+    const html = pkg.files["index.html"];
+
+    // Should contain inline style
+    expect(html).toContain("<style>");
+    expect(html).toContain("</style>");
+
+    // Should contain inline scripts with content (not src references)
+    expect(html).not.toContain('src="squiffy.runtime.global.js"');
+    expect(html).not.toContain('src="story.js"');
+    expect(html).not.toContain('href="style.css"');
+
+    // Should contain the story content inline
+    expect(html).toContain("Hello world!");
+
+    // Should contain the title
+    expect(html).toContain("<title>Inline Story</title>");
+
+    // Should contain squiffyRuntime (the runtime code)
+    expect(html).toContain("squiffyRuntime");
+});
+
+test("Inline HTML package with zip", async () => {
+    const script = "Test story";
+    const compileResult = await compile({ script });
+
+    if (!compileResult.success) {
+        throw new Error("Compile failed");
+    }
+
+    const pkg = await createPackage(compileResult, { inlineHtml: true, createZip: true });
+
+    expect(Object.keys(pkg.files).length).toBe(1);
+    expect(pkg.zip).toBeDefined();
+    expect(pkg.zip).toBeInstanceOf(Uint8Array);
+});
