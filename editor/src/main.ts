@@ -654,6 +654,32 @@ const init = async function () {
     onClick("collapse-all", editor.collapseAll);
     onClick("uncollapse-all", editor.uncollapseAll);
 
+    // Mobile pane toggle
+    onClick("mobile-pane-toggle", () => {
+        const editorContainer = el<HTMLElement>("squiffy-editor");
+        const isShowingPreview = editorContainer.classList.toggle("mobile-show-preview");
+
+        // Update toggle button icons and label
+        const iconCode = el<HTMLElement>("toggle-icon-code");
+        const iconPreview = el<HTMLElement>("toggle-icon-preview");
+        const label = el<HTMLElement>("toggle-label");
+
+        if (isShowingPreview) {
+            iconPreview.classList.add("d-none");
+            iconCode.classList.remove("d-none");
+            label.textContent = "Code";
+        } else {
+            iconPreview.classList.remove("d-none");
+            iconCode.classList.add("d-none");
+            label.textContent = "Preview";
+        }
+
+        // Trigger editor resize in case we're switching to code view
+        if (!isShowingPreview) {
+            editor.resize();
+        }
+    });
+
     onClick("edit-undo", editor.undo);
     onClick("edit-redo", editor.redo);
     onClick("edit-cut", editor.cut);
