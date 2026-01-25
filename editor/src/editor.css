@@ -290,3 +290,50 @@ ul.dropdown-menu a {
 #unsaved-changes-dialog {
     z-index: 1060;
 }
+
+/* Responsive layout for mobile devices */
+@media (max-width: 767.98px) {
+    /* Hide the split.js gutter on mobile */
+    .gutter.gutter-horizontal {
+        display: none !important;
+    }
+
+    /* Make panes full width on mobile */
+    #left-pane,
+    #right-pane {
+        width: 100% !important;
+        flex: none !important;
+    }
+
+    /* Default: show code pane, hide preview pane */
+    #right-pane {
+        display: none !important;
+    }
+
+    /* When showing preview pane */
+    .mobile-show-preview #left-pane {
+        display: none !important;
+    }
+
+    .mobile-show-preview #right-pane {
+        display: flex !important;
+    }
+
+    /* Adjust toolbar for mobile - wrap buttons */
+    .p-1.border-bottom {
+        flex-wrap: wrap;
+        gap: 0.25rem;
+    }
+
+    /* Hide some less essential buttons on very small screens */
+    #collapse-all,
+    #uncollapse-all {
+        display: none !important;
+    }
+
+    /* Back/Restart buttons container - make it not float on mobile */
+    .p-1.border-bottom > div[style*="float: right"] {
+        float: none !important;
+        margin-left: auto;
+    }
+}
