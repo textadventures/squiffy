@@ -1,76 +1,81 @@
 ---
-title: Squiffy
+title: Create Interactive Stories
 description: A simple way to write interactive fiction
+head:
+  - tag: title
+    content: Squiffy - Create interactive stories
+template: splash
 sidebar:
-    order: 0
+    hidden: true
+prev: false
+next:
+    link: /getting-started/
+    label: Getting Started
+hero:
+  title: Create interactive stories
+  tagline: A simple, free tool for writing multiple-choice games and interactive fiction. No coding required.
+  image:
+    file: ../../assets/squiffy.png
+  actions:
+    - text: Get Started
+      link: /getting-started/
+      icon: right-arrow
+    - text: Open the Editor
+      link: https://app.squiffystory.com/
+      icon: external
+      variant: secondary
+      attrs:
+        target: _blank
 ---
 
-import Sample from "@components/Sample.astro"
+import { Card, CardGrid } from '@astrojs/starlight/components';
 
-Squiffy is a tool for creating interactive fiction - that is,
-multiple choice games that focus on text and story. Players
-navigate through the game or story by clicking links.
+## Why Squiffy?
 
-Squiffy is free and open source. It creates HTML and JavaScript,
-so you can upload it to your own website, or to a site like
-<a href="https://textadventures.co.uk">textadventures.co.uk</a>
-or <a href="https://itch.io/">itch.io</a>.
+<CardGrid>
+  <Card title="Easy to Learn" icon="pencil">
+    Write your story using simple text markup. Create links with `[[double brackets]]` for sections and `[single brackets]` for passages. No programming knowledge needed.
+  </Card>
+  <Card title="Publish Anywhere" icon="rocket">
+    Squiffy generates pure HTML, CSS and JavaScript. Upload to your own website, itch.io, textadventures.co.uk, or anywhere that hosts static files.
+  </Card>
+  <Card title="Works Offline" icon="laptop">
+    The editor runs entirely in your browser with no account required. Your work is automatically saved to your device.
+  </Card>
+  <Card title="Free and Open Source" icon="open-book">
+    Squiffy is completely free to use. The source code is available on GitHub under the MIT license.
+  </Card>
+</CardGrid>
 
-A player's state is automatically saved to their browser's local
-storage, so they can always pick up from where they left off
-just by going back to the same web page.
+## Features
 
-The Squiffy Editor runs entirely in your browser.
-All your data is saved locally on your device, automatically.
+<CardGrid>
+  <Card title="Sections and Passages" icon="document">
+    Structure your story with **sections** that advance the narrative and **passages** that let players explore without moving forward.
+  </Card>
+  <Card title="Variables and State" icon="setting">
+    Track player choices with attributes. Use conditionals to show different text based on what the player has done.
+  </Card>
+  <Card title="Animations" icon="star">
+    Bring your story to life with fade, slide, and other animation effects when new text appears.
+  </Card>
+  <Card title="Dynamic Text" icon="random">
+    Use random text, rotating sequences, and text replacement to add variety and replayability to your stories.
+  </Card>
+  <Card title="Player Input" icon="comment-alt">
+    Capture text input from players with built-in validation. Ask for names, numbers, or any custom data.
+  </Card>
+  <Card title="JavaScript Integration" icon="seti:javascript">
+    Extend your story with custom JavaScript for advanced game mechanics, calculations, or integrations.
+  </Card>
+  <Card title="Markdown Support" icon="seti:markdown">
+    Format your text with Markdown. Add **bold**, *italics*, lists, links, and more. You can also use HTML for complete control.
+  </Card>
+  <Card title="Auto-Save" icon="approve-check-circle">
+    Player progress is automatically saved to their browser. They can close the tab and return later to continue where they left off.
+  </Card>
+</CardGrid>
 
-Using Squiffy
--------------
+## Get Started
 
-You can find Squiffy at [app.squiffystory.com](https://app.squiffystory.com/).
-
-Example
--------
-
-This documentation features _editable examples_. Edit the example on the left,
-and play it on the right.
-
-<Sample script="Squiffy is a tool for creating interactive stories.
-
-    You write your story in a text file. Each choice is represented by a [[new section]]. You can create links to new sections by surrounding them in double square brackets.
-
-    [[new section]]:
-
-    In addition to sections, Squiffy has the concept of passages. These are sections of text that don't advance the story. For example, you can click this [passage link], and this [other passage link], but the story won't advance until you click this [[section link]].
-
-    [passage link]:
-
-    This is the text for the first passage link.
-
-    [other passage link]:
-
-    This is the text for the second passage link.
-
-    [[section link]]:
-
-    When a new section appears, any unclicked passage links from the previous section are disabled."></Sample>
-
-Publishing your game
---------------------
-
-Squiffy creates HTML, CSS and JavaScript files, which you can upload anywhere. You don't need to distribute your source `.squiffy` file - everything that is needed for the game to run is contained in the HTML and JavaScript.
-
-If you're using the web version, just hit the Publish button to share your game on textadventures.co.uk. You can also choose "Export HTML and JavaScript" from the Download menu, which will give you a ZIP file you can upload to any website.
-
-If you're using the app for Windows, MacOS or Linux, hit the Build button to create the HTML, CSS and JavaScript files in the same directory as the game file. This will also open the results in your web browser for you to preview.
-
-Contributing
-------------
-
-[Squiffy GitHub repository](https://github.com/textadventures/squiffy)
-
-If you find a bug, please log an [issue](https://github.com/textadventures/squiffy/issues).
-
-You can discuss Squiffy
-on [Discord](https://textadventures.co.uk/community/discord),
-at [GitHub Discussions](https://github.com/textadventures/squiffy/discussions),
-or at [infiction.org](https://intfiction.org/tag/squiffy) (using the `squiffy` tag).
+Ready to create your first interactive story? Head over to the [Getting Started](/getting-started/) guide to learn the basics, or jump straight into the [editor](https://app.squiffystory.com/) and start writing.
