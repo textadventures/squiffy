@@ -325,6 +325,16 @@ ul.dropdown-menu a {
         gap: 0.25rem;
     }
 
+    /* In preview mode, don't wrap toolbar (fewer buttons visible) */
+    .mobile-show-preview .p-1.border-bottom {
+        flex-wrap: nowrap;
+    }
+
+    /* Keep Back/Restart container inline in preview mode */
+    .mobile-show-preview .p-1.border-bottom > div[style*="float: right"] {
+        display: contents;
+    }
+
     /* Hide some less essential buttons on very small screens */
     #collapse-all,
     #uncollapse-all {
@@ -335,5 +345,23 @@ ul.dropdown-menu a {
     .p-1.border-bottom > div[style*="float: right"] {
         float: none !important;
         margin-left: auto;
+    }
+
+    /* Hide Back/Restart when viewing code (default state) */
+    #back,
+    #restart {
+        display: none !important;
+    }
+
+    /* Show Back/Restart when viewing preview */
+    .mobile-show-preview #back,
+    .mobile-show-preview #restart {
+        display: inline-block !important;
+    }
+
+    /* Hide Add section/passage when viewing preview */
+    .mobile-show-preview #add-section,
+    .mobile-show-preview #add-passage {
+        display: none !important;
     }
 }
