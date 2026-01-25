@@ -291,10 +291,18 @@ ul.dropdown-menu a {
     z-index: 1060;
 }
 
+/* Hide unsaved indicator at narrow desktop widths to prevent toolbar wrapping */
+@media (max-width: 1012px) {
+    #unsaved-indicator {
+        display: none !important;
+    }
+}
+
 /* Hide collapse/expand buttons at narrow desktop widths to prevent toolbar wrapping */
 @media (max-width: 862px) {
     #collapse-all,
-    #uncollapse-all {
+    #uncollapse-all,
+    #unsaved-indicator {
         display: none !important;
     }
 }
@@ -346,22 +354,11 @@ ul.dropdown-menu a {
         flex-wrap: nowrap;
     }
 
-    /* Keep Back/Restart container inline in preview mode */
-    .mobile-show-preview .p-1.border-bottom > div[style*="float: right"] {
-        display: contents;
-    }
-
     /* Hide some less essential buttons on mobile */
     #collapse-all,
     #uncollapse-all,
     #preview {
         display: none !important;
-    }
-
-    /* Back/Restart buttons container - make it not float on mobile */
-    .p-1.border-bottom > div[style*="float: right"] {
-        float: none !important;
-        margin-left: auto;
     }
 
     /* Hide Back/Restart when viewing code (default state) */
