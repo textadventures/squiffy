@@ -43,6 +43,11 @@ export function AnimatePlugin(): SquiffyPlugin {
                 continue;
             }
 
+            // Capture content now, before setupInputValidation modifies the links
+            // with validation-disabled classes. This ensures when we restore the
+            // innerHTML after animation, users can still interact with the links.
+            const originalContent = el.innerHTML;
+
             const runAnimation = () => {
                 if (params.loop) {
                     squiffy.animation.runAnimation(params.name, el, params, () => {}, true);
@@ -52,14 +57,12 @@ export function AnimatePlugin(): SquiffyPlugin {
                     }
                     squiffy.addTransition(() => {
                         return new Promise<void>((resolve) => {
-                            const currentContent = el.innerHTML;
-
                             // Reset opacity so the animation can control visibility
                             el.style.opacity = "";
 
                             squiffy.animation.runAnimation(params.name, el, params, () => {
                                 el.classList.remove("squiffy-animate");
-                                el.innerHTML = currentContent;
+                                el.innerHTML = originalContent;
                                 resolve();
                             }, false);
                         });

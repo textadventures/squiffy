@@ -184,6 +184,10 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             await run(master, "[[]]");
         }
         await run(currentSection, `[[${sectionName}]]`);
+
+        // Setup validation after transitions complete (animations may have replaced DOM elements)
+        setupInputValidation(currentSectionElement);
+
         // The JS might have changed which section we're in
         if (get("_section") == sectionName) {
             set("_turncount", 0);
