@@ -290,3 +290,92 @@ ul.dropdown-menu a {
 #unsaved-changes-dialog {
     z-index: 1060;
 }
+
+/* Hide unsaved indicator at narrow desktop widths to prevent toolbar wrapping */
+@media (max-width: 1012px) {
+    #unsaved-indicator {
+        display: none !important;
+    }
+}
+
+/* Hide collapse/expand buttons at narrow desktop widths to prevent toolbar wrapping */
+@media (max-width: 862px) {
+    #collapse-all,
+    #uncollapse-all,
+    #unsaved-indicator {
+        display: none !important;
+    }
+}
+
+/* Hide add section/passage buttons at narrower widths */
+@media (max-width: 590px) {
+    #add-section,
+    #add-passage {
+        display: none !important;
+    }
+}
+
+/* Responsive layout for mobile devices */
+@media (max-width: 767.98px) {
+    /* Hide the split.js gutter on mobile */
+    .gutter.gutter-horizontal {
+        display: none !important;
+    }
+
+    /* Make panes full width on mobile */
+    #left-pane,
+    #right-pane {
+        width: 100% !important;
+        flex: none !important;
+    }
+
+    /* Default: show code pane, hide preview pane */
+    #right-pane {
+        display: none !important;
+    }
+
+    /* When showing preview pane */
+    .mobile-show-preview #left-pane {
+        display: none !important;
+    }
+
+    .mobile-show-preview #right-pane {
+        display: flex !important;
+    }
+
+    /* Adjust toolbar for mobile - wrap buttons */
+    .p-1.border-bottom {
+        flex-wrap: wrap;
+        gap: 0.25rem;
+    }
+
+    /* In preview mode, don't wrap toolbar (fewer buttons visible) */
+    .mobile-show-preview .p-1.border-bottom {
+        flex-wrap: nowrap;
+    }
+
+    /* Hide some less essential buttons on mobile */
+    #collapse-all,
+    #uncollapse-all,
+    #preview {
+        display: none !important;
+    }
+
+    /* Hide Back/Restart when viewing code (default state) */
+    #back,
+    #restart {
+        display: none !important;
+    }
+
+    /* Show Back/Restart when viewing preview */
+    .mobile-show-preview #back,
+    .mobile-show-preview #restart {
+        display: inline-block !important;
+    }
+
+    /* Hide Add section/passage when viewing preview */
+    .mobile-show-preview #add-section,
+    .mobile-show-preview #add-passage {
+        display: none !important;
+    }
+}
