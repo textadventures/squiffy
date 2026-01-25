@@ -1,6 +1,9 @@
 ---
-title: Squiffy
+title: Create Interactive Stories
 description: A simple way to write interactive fiction
+head:
+  - tag: title
+    content: Squiffy - Create interactive stories
 template: splash
 sidebar:
     hidden: true
@@ -9,18 +12,20 @@ next:
     link: /getting-started/
     label: Getting Started
 hero:
-  title: Create Interactive Stories
+  title: Create interactive stories
   tagline: A simple, free tool for writing multiple-choice games and interactive fiction. No coding required.
   image:
     file: ../../assets/squiffy.png
   actions:
-    - text: Open the Editor
-      link: https://app.squiffystory.com/
-      icon: external
-      variant: primary
     - text: Get Started
       link: /getting-started/
       icon: right-arrow
+    - text: Open the Editor
+      link: https://app.squiffystory.com/
+      icon: external
+      variant: secondary
+      attrs:
+        target: _blank
 ---
 
 import { Card, CardGrid } from '@astrojs/starlight/components';
