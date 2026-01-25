@@ -291,6 +291,22 @@ ul.dropdown-menu a {
     z-index: 1060;
 }
 
+/* Hide collapse/expand buttons at narrow desktop widths to prevent toolbar wrapping */
+@media (max-width: 862px) {
+    #collapse-all,
+    #uncollapse-all {
+        display: none !important;
+    }
+}
+
+/* Hide add section/passage buttons at narrower widths */
+@media (max-width: 590px) {
+    #add-section,
+    #add-passage {
+        display: none !important;
+    }
+}
+
 /* Responsive layout for mobile devices */
 @media (max-width: 767.98px) {
     /* Hide the split.js gutter on mobile */
@@ -335,9 +351,10 @@ ul.dropdown-menu a {
         display: contents;
     }
 
-    /* Hide some less essential buttons on very small screens */
+    /* Hide some less essential buttons on mobile */
     #collapse-all,
-    #uncollapse-all {
+    #uncollapse-all,
+    #preview {
         display: none !important;
     }
 
