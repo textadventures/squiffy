@@ -665,12 +665,12 @@ const init = async function () {
         const label = el<HTMLElement>("toggle-label");
 
         if (isShowingPreview) {
-            iconCode.classList.add("d-none");
-            iconPreview.classList.remove("d-none");
+            iconPreview.classList.add("d-none");
+            iconCode.classList.remove("d-none");
             label.textContent = "Code";
         } else {
-            iconCode.classList.remove("d-none");
-            iconPreview.classList.add("d-none");
+            iconPreview.classList.remove("d-none");
+            iconCode.classList.add("d-none");
             label.textContent = "Preview";
         }
 
