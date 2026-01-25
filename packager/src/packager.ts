@@ -37,14 +37,17 @@ export const createPackage = async (input: CompileSuccess, createZipOrOptions: b
 
     if (options.inlineHtml) {
         // Create a single HTML file with everything inlined
+        // Note: We use arrow functions as replacements to prevent $-pattern interpretation
+        // (e.g., $& or ${...} in the replacement string would otherwise be treated specially)
+        const storyJs = await input.getJs();
         let htmlData = htmlInlineTemplateFile.toString();
-        htmlData = htmlData.replace("<!-- INFO -->", infoComment);
-        htmlData = htmlData.replace("<!-- TITLE -->", uiInfo.title);
-        htmlData = htmlData.replace("<!-- SCRIPTS -->", scriptData);
-        htmlData = htmlData.replace("<!-- STYLESHEETS -->", stylesheetData);
-        htmlData = htmlData.replace("<!-- STYLE -->", combinedCss);
-        htmlData = htmlData.replace("<!-- RUNTIME -->", squiffyRuntime);
-        htmlData = htmlData.replace("<!-- STORY -->", await input.getJs());
+        htmlData = htmlData.replace("<!-- INFO -->", () => infoComment);
+        htmlData = htmlData.replace("<!-- TITLE -->", () => uiInfo.title);
+        htmlData = htmlData.replace("<!-- SCRIPTS -->", () => scriptData);
+        htmlData = htmlData.replace("<!-- STYLESHEETS -->", () => stylesheetData);
+        htmlData = htmlData.replace("<!-- STYLE -->", () => combinedCss);
+        htmlData = htmlData.replace("<!-- RUNTIME -->", () => squiffyRuntime);
+        htmlData = htmlData.replace("<!-- STORY -->", () => storyJs);
 
         output["index.html"] = htmlData;
     } else {
