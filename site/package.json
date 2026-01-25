@@ -12,12 +12,12 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/check": "^0.9.4",
-    "@astrojs/mdx": "^4.3.4",
-    "@astrojs/starlight": "^0.35.2",
+    "@astrojs/check": "^0.9.6",
+    "@astrojs/mdx": "^4.3.13",
+    "@astrojs/starlight": "^0.37.4",
     "@textadventures/squiffy-cli": "^6.0.0-alpha.20",
     "@textadventures/squiffy-packager": "^6.0.0-alpha.20",
-    "astro": "^5.13.2",
+    "astro": "^5.16.15",
     "bootstrap": "^5.3.7",
     "codemirror": "^6.0.2",
     "debounce": "^2.2.0",
