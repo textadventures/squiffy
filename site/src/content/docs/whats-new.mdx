@@ -1,0 +1,206 @@
+---
+title: What's New in Squiffy v6
+description: A complete overview of new features, improvements, and upgrade guide for Squiffy v6
+sidebar:
+    order: 20
+---
+
+Squiffy v6 is a major update, representing a complete rewrite of the codebase since v5 was released in 2015. This page covers what's new for story authors, plus guidance for those upgrading from earlier versions.
+
+## For Story Authors
+
+### Breaking Change: Text Processor
+
+The most significant change in v6 is the replacement of the text processor. Squiffy v5 used a custom syntax for dynamic text, which has been replaced by [Handlebars](https://handlebarsjs.com/).
+
+If your v5 story used dynamic text features like `{if}`, `{else}`, or text replacement, you will need to update your syntax. See the [Dynamic Text](/dynamic-text/) and [Helpers Reference](/helpers-reference/) pages for the new syntax.
+
+Basic stories that only use sections, passages, links, and simple attributes should work without changes.
+
+### No More Desktop App
+
+The downloadable desktop application has been replaced by a Progressive Web App (PWA) at [app.squiffystory.com](https://app.squiffystory.com/). The PWA works offline and can be installed to your device, giving a desktop app-like experience without needing to download and install anything.
+
+For the best experience, use **Chrome** or **Edge**. These browsers support the File System Access API, which lets the editor save directly to files on your computer. You can grant permission for the editor to access a file, and then save using the File menu or Ctrl+S (Cmd+S on Mac) - just like a desktop app.
+
+### No More Account Required
+
+The previous web-based editor required you to log in with a textadventures.co.uk account and synced your stories to the server. This is no longer the case - the new editor works entirely with files on your own computer.
+
+Your work is stored locally in your browser, so if you accidentally close the tab or your browser crashes, you won't lose unsaved changes. When you return to the editor, you can pick up where you left off.
+
+### Editor Features
+
+- **Responsive design** - Works on mobile devices and tablets
+- **Offline support** - Install as a PWA and work without an internet connection
+- **Live preview** - See your changes as you type
+- **New export options** - Download as a single self-contained HTML file, or a ZIP with separate files
+- **Go back button** - Navigate backwards through your story while testing, without having to restart
+
+### New Helpers
+
+v6 introduces some new Handlebars helpers:
+
+#### Live text
+
+Use `{{#live}}` to display text that automatically updates when an attribute changes:
+
+```
+You have {{#live}}{{score}}{{/live}} points.
+
+[[Get points]](, score+=10)
+```
+
+When the player clicks the link, the score updates in place without needing to display new text.
+
+#### Setting attributes in conditions
+
+You can now modify attributes directly within `{{#if}}` blocks using `{{set}}`, `{{inc}}`, and `{{dec}}` - reducing the need to write JavaScript for conditional logic:
+
+```
+{{#if (gt score 100)}}
+    {{set rank="expert"}}
+    You've reached expert level!
+{{/if}}
+```
+
+See the [Dynamic Text](/dynamic-text/) and [Helpers Reference](/helpers-reference/) pages for more details.
+
+### Animation Effects
+
+Text can now appear with animations using the `{{#animate}}` helper:
+
+- **typewriter** - Text appears character by character
+- **toast** - Text slides in from the bottom
+- **fadeIn** - Text fades in smoothly
+- **continue** - Clickable link that pauses the animation queue
+
+Example:
+```
+{{#animate "typewriter"}}This text appears letter by letter.{{/animate}}
+```
+
+You can define custom animations using JavaScript in a `@ui` section. See the [animate example](https://github.com/textadventures/squiffy/tree/main/examples/animate) for details.
+
+### Player Input
+
+Players can enter text using HTML input elements with the `data-attribute` attribute:
+
+```
+What is your name?
+<input type="text" data-attribute="name" placeholder="Enter your name...">
+
++++Continue...
+
+Hello, {{name}}!
+```
+
+You can also use `<textarea>` for longer text, or any element with `contenteditable="true"`.
+
+### Input Validation
+
+Input fields support HTML5 validation attributes. Links are automatically disabled until all inputs in the current section are valid.
+
+```
+<input type="text" data-attribute="name" required minlength="2">
+
++++Continue...
+```
+
+Available validation attributes include:
+- `required` - Field must not be empty
+- `minlength` / `maxlength` - Minimum/maximum text length
+- `pattern` - Regular expression pattern to match
+- `min` / `max` - Minimum/maximum values for number inputs
+- `type="email"` / `type="url"` - Built-in format validation
+
+### Single-File Export
+
+You can now export your story as a single self-contained HTML file. This is ideal for:
+
+- Easy sharing (just send one file)
+- Platforms that only accept a single HTML file
+- Offline distribution
+- Email attachments
+
+Use the "Export HTML (single file)" option in the editor's Download menu, or use `--inline` with the CLI:
+
+```bash
+npx @textadventures/squiffy-cli mygame.squiffy --inline
+```
+
+---
+
+## For Developers
+
+The entire codebase has been rewritten in TypeScript. This provides full type safety, better IDE support and autocompletion, and improved maintainability.
+
+Squiffy is now organized as a monorepo with separate npm packages:
+
+| Package | npm Name | Purpose |
+|---------|----------|---------|
+| `compiler` | `squiffy-compiler` | Converts `.squiffy` files to JavaScript |
+| `runtime` | `squiffy-runtime` | Browser library that runs compiled stories |
+| `packager` | `squiffy-packager` | Bundles compiler output + runtime into deployable files |
+| `cli` | `@textadventures/squiffy-cli` | Command-line interface |
+
+All packages use ES modules (`import`/`export`) instead of CommonJS (`require`).
+
+---
+
+## Upgrading from v5
+
+### For Story Authors
+
+Basic stories using sections, passages, links, and simple attributes should work without changes.
+
+If your story uses dynamic text features, you'll need to update to the new Handlebars syntax. The key differences:
+
+| v5 Syntax | v6 Syntax |
+|-----------|-----------|
+| `{attribute}` | `{{attribute}}` |
+| `{if gender=male:You are male.}` | `{{#if (eq gender "male")}}You are male.{{/if}}` |
+| `{if condition:text}{else:other text}` | `{{#if condition}}text{{else}}other text{{/if}}` |
+| `{@b+=1}` (in conditions) | `{{inc "b"}}` |
+
+To test your story:
+
+1. Open your story in the new editor at [app.squiffystory.com](https://app.squiffystory.com/)
+2. Use "Open" to load your `.squiffy` file
+3. Run it to verify everything works
+4. Update any dynamic text syntax as needed
+5. Export using your preferred format
+
+If you encounter any issues, please [report them on GitHub](https://github.com/textadventures/squiffy/issues).
+
+### For CLI Users
+
+The npm package name has changed. Use npx to run the CLI:
+
+```bash
+# v5
+squiffy mygame.squiffy
+
+# v6
+npx @textadventures/squiffy-cli mygame.squiffy
+```
+
+CLI options remain similar, with some additions:
+
+| Option | Description |
+|--------|-------------|
+| `-s, --serve` | Start HTTP server after compiling |
+| `-p, --port` | Port for HTTP server (default: 8282) |
+| `--scriptonly [filename]` | Only generate JavaScript file |
+| `--zip` | Create zip file |
+| `--inline` | **New:** Create single self-contained HTML file |
+
+---
+
+## Getting Help
+
+- **Documentation**: Browse the other pages in this documentation
+- **GitHub Issues**: [Report bugs or request features](https://github.com/textadventures/squiffy/issues)
+- **GitHub Discussions**: [Ask questions and share ideas](https://github.com/textadventures/squiffy/discussions)
+- **Discord**: [Join the community](https://textadventures.co.uk/community/discord)
+- **IntFiction Forum**: [Discuss at intfiction.org](https://intfiction.org/tag/squiffy) (use the `squiffy` tag)
