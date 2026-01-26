@@ -134,7 +134,7 @@ Hank backs away nervously. "Professor, we talked about bringing chemicals on set
 Lab Stability: {{live "stability"}}%
 
 Choose your answer:
-- [Answer: Au]
+- [[Answer: Au]]
 - [Answer: Go]
 - [Answer: Gd]
 - [Drink the beaker]
@@ -153,15 +153,6 @@ Professor Boom: "HURRY! The compound is becoming... UNSTABLE!"
 
 Small explosions begin occurring around the lab set.
 
-[Answer: Au]:
-{{#animate "toast"}}CORRECT!{{/animate}}
-
-"AU! YES! Gold! Aurum! The element of CHAMPIONS!" Professor Boom throws the beaker in the air and catches it. "You have pleased me, {{player_name}}!"
-
-{{inc "score" 200}}
-
-[[Professor Exit]]
-
 [Answer: Go]:
 "GO?! That's not even— that's just the word GO!" Professor Boom's hair somehow becomes more wild.
 
@@ -176,15 +167,11 @@ A small explosion singes Hank's eyebrows.
 "MY EYEBROWS! Those were RENTED!"
 {{/if}}
 
-[[Professor Exit]]
-
 [Answer: Gd]:
 "Gd is GADOLINIUM! An honest mistake for a FOOL!"
 
 {{dec "stability" 20}}
 {{dec "patience"}}
-
-[[Professor Exit]]
 
 [Drink the beaker]:
 You grab the beaker and drink it before anyone can stop you.
@@ -198,9 +185,15 @@ Professor Boom: "WAIT! That's my lunch!"
 {{inc "score" 50}}
 The audience (including the cardboard) applauds your boldness.
 
-[[Professor Exit]]
+[[Answer: Au]]:
+{{#animate "toast"}}CORRECT!{{/animate}}
 
-[[Professor Exit]]:
+"AU! YES! Gold! Aurum! The element of CHAMPIONS!" Professor Boom throws the beaker in the air and catches it. "You have pleased me, {{player_name}}!"
+
+{{inc "score" 200}}
+
++++Continue...
+
 Professor Boom descends back through the trapdoor, cackling.
 
 "UNTIL NEXT TIME, QUIZ PARTICIPANT! REMEMBER: SCIENCE IS JUST EXPLOSIONS IN A LAB COAT!"
