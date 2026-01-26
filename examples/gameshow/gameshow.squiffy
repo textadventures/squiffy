@@ -414,11 +414,11 @@ The audience gasps. The cardboard cutout gasps (the AC kicked in).
 
 {{#animate "typewriter"}}**What is the name of your host?**{{/animate}}
 
-- [Hank Spinneroni]
-- [Chuck Wheelsworth]
-- [I genuinely don't remember]
+- [[Hank Spinneroni]]
+- [[Chuck Wheelsworth]]
+- [[I genuinely don't remember]]
 
-[Hank Spinneroni]:
+[[Hank Spinneroni]]:
 "CORRECT! I AM HANK SPINNERONI! Probably!"
 
 {{set "score" (score * 2)}}
@@ -426,7 +426,7 @@ The audience gasps. The cardboard cutout gasps (the AC kicked in).
 
 [[Ending]]
 
-[Chuck Wheelsworth]:
+[[Chuck Wheelsworth]]:
 "That was my FIRST name! The WRONG first name! But you remembered SOMETHING!"
 
 {{inc "score" 50}}
@@ -435,7 +435,7 @@ The audience gasps. The cardboard cutout gasps (the AC kicked in).
 
 [[Ending]]
 
-[I genuinely don't remember]:
+[[I genuinely don't remember]]:
 {{#if (lte patience 1)}}
 Hank stares at you. A vein throbs in his forehead.
 
