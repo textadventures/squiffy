@@ -39,6 +39,10 @@ export class TextProcessor {
         // State modification helpers (side effects, no output)
         // These execute at render time, so they respect {{#if}} conditions
         this.handlebars.registerHelper("set", (attribute: string, value: any) => {
+            // Unwrap SafeString if needed (e.g., from subexpressions like {{set "x" (random ...)}})
+            if (value && typeof value === "object" && typeof value.toString === "function") {
+                value = value.toString();
+            }
             this.state.set(attribute, value);
             return "";
         });

@@ -58,7 +58,7 @@ A rusty wheel descends from the ceiling, wobbling dangerously. It has several qu
 [[Spin the wheel!]]:
 The wheel creaks to life, spinning with a sound like a shopping cart hitting a pothole.
 
-It lands on... {{#animate "toast"}}{{sequence (array "GENERAL KNOWLEDGE" "SCIENCE with PROFESSOR BOOM" "MYSTERY BOX" "THE AUDIENCE DECIDES") set="category"}}!{{/animate}}
+It lands on... {{#animate "toast"}}{{rotate (array "GENERAL KNOWLEDGE" "SCIENCE with PROFESSOR BOOM" "MYSTERY BOX" "THE AUDIENCE DECIDES") set="category"}}!{{/animate}}
 
 {{live "category" section="showCategory"}}
 
@@ -211,14 +211,14 @@ A golden box descends from the ceiling on a frayed rope.
 
 The box rattles ominously.
 
-[Open the box carefully]
-[Shake the box first]
-[Refuse to open it]
+- [[Open the box carefully]]
+- [[Shake the box first]]
+- [[Refuse to open it]]
 
-[Open the box carefully]:
+[[Open the box carefully]]:
 You lift the lid slowly...
 
-{{random (array "prize" "bees" "another_box" "philosophy") set="box_contents"}}
+{{set "box_contents" (random (array "prize" "bees" "another_box" "philosophy"))}}
 
 {{#if (eq box_contents "prize")}}
 {{#animate "toast"}}JACKPOT!{{/animate}}
@@ -268,23 +268,23 @@ Hank wipes away a single tear. "Beautiful."
 
 [[Next Round]]
 
-[Shake the box first]:
+[[Shake the box first]]:
 You shake the box vigorously. Something inside goes "CLANG" and then "moo?"
 
 {{dec "patience"}}
 
 "Please don't shake the— you know what, fine. Open it."
 
-[Open the box carefully]
+[[Open the box carefully]]
 
-[Refuse to open it]:
+[[Refuse to open it]]:
 {{dec "patience"}}{{dec "patience"}}
 
 "You HAVE to open it! It's the MYSTERY BOX! The mystery is legally required to be resolved!"
 
 Hank is sweating now.
 
-[Open the box carefully]
+[[Open the box carefully]]
 
 [[Audience Round]]:
 "THE AUDIENCE DECIDES!" Hank gestures grandly at the three people and cardboard cutout.
