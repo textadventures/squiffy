@@ -34,7 +34,6 @@ The audience—three people and a cardboard cutout—applauds uncertainly.
 {{/animate}}
 
 ---
-{{#if (not player_name)}}{{set "player_name" "Mystery Contestant"}}{{/if}}
 @set round = 1
 
 "Welcome, {{player_name}}! Or as I like to call you... {{player_name}}!"
@@ -301,30 +300,30 @@ Hank is sweating now.
 
 The audience confers. One of them is asleep. The cardboard cutout offers no input.
 
-Finally, a woman in the front row shouts: "MAKE THEM {{random (array "SING" "DANCE" "DO AN IMPRESSION OF A BLENDER" "JUST GIVE THEM POINTS FOR FREE")}}!"
+Finally, a woman in the front row shouts: "MAKE THEM {{random (array "SING" "DANCE" "DO AN IMPRESSION OF A BLENDER" "JUST GIVE THEM POINTS FOR FREE") set="make_them"}}!"
 
-{{#if (eq _last_random "SING")}}
+{{#if (eq make_them "SING")}}
 "You heard her! SING, {{player_name}}! Sing like your points depend on it! Because they do!"
 
-[Sing beautifully]
-[Sing terribly on purpose]
+- [Sing beautifully]
+- [Sing terribly on purpose]
 {{/if}}
 
-{{#if (eq _last_random "DANCE")}}
+{{#if (eq make_them "DANCE")}}
 "DANCE! Show us your moves!"
 
-[Dance with enthusiasm]
-[Do the robot]
+- [Dance with enthusiasm]
+- [Do the robot]
 {{/if}}
 
-{{#if (eq _last_random "DO AN IMPRESSION OF A BLENDER")}}
+{{#if (eq make_them "DO AN IMPRESSION OF A BLENDER")}}
 "A BLENDER! Do a blender impression! This is normal television!"
 
-[WHIRRRRRR]
-[Refuse on grounds of dignity]
+- [WHIRRRRRR]
+- [Refuse on grounds of dignity]
 {{/if}}
 
-{{#if (eq _last_random "JUST GIVE THEM POINTS FOR FREE")}}
+{{#if (eq make_them "JUST GIVE THEM POINTS FOR FREE")}}
 "Free points?! That's not how—" Hank checks his cards. "Actually, that IS an option apparently."
 
 {{inc "score" 150}}
