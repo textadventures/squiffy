@@ -186,14 +186,20 @@ export class TextProcessor {
     }
 
     process(text: string, inline: boolean) {
-        const template = this.handlebars.compile(text);
-        text = template(this.state.getStore());
+        try {
+            const template = this.handlebars.compile(text);
+            text = template(this.state.getStore());
 
-        if (inline) {
-            return marked.parseInline(text, { async: false }).trim();
-        }
-        else {
-            return marked.parse(text, { async: false }).trim();
+            if (inline) {
+                return marked.parseInline(text, { async: false }).trim();
+            }
+            else {
+                return marked.parse(text, { async: false }).trim();
+            }
+        } catch (e) {
+            const errorMessage = e instanceof Error ? e.message : String(e);
+            console.error("Squiffy template error:", errorMessage);
+            return `<div class="squiffy-error" style="color: red; background: #ffe0e0; padding: 8px; border: 1px solid red; margin: 4px 0; font-family: monospace; white-space: pre-wrap;"><strong>Template error:</strong> ${errorMessage}</div>`;
         }
     }
 }

@@ -2224,3 +2224,33 @@ Done.
     const { squiffyApi } = await initScript(script);
     expect(squiffyApi.get("rounds")).toEqual(["General Knowledge", "Mystery"]);
 });
+
+// Template error handling tests
+
+test("Template error displays error message instead of failing silently", async () => {
+    const script = `
+[[start]]:
+{{invalid * syntax}}
+`;
+
+    const { element } = await initScript(script);
+
+    // Should display an error message
+    const errorDiv = element.querySelector(".squiffy-error");
+    expect(errorDiv).not.toBeNull();
+    expect(errorDiv?.textContent).toContain("Template error:");
+});
+
+test("Template error preserves monospace styling", async () => {
+    const script = `
+[[start]]:
+{{broken (expression}}
+`;
+
+    const { element } = await initScript(script);
+
+    const errorDiv = element.querySelector(".squiffy-error") as HTMLElement;
+    expect(errorDiv).not.toBeNull();
+    expect(errorDiv.style.fontFamily).toBe("monospace");
+    expect(errorDiv.style.whiteSpace).toBe("pre-wrap");
+});
