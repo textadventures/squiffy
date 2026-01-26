@@ -421,7 +421,7 @@ The audience gasps. The cardboard cutout gasps (the AC kicked in).
 [[Hank Spinneroni]]:
 "CORRECT! I AM HANK SPINNERONI! Probably!"
 
-{{set "score" (score * 2)}}
+{{inc "score" score}}
 {{#animate "toast"}}SCORE DOUBLED!{{/animate}}
 
 [[Ending]]
