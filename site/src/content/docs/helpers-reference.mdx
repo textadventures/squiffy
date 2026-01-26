@@ -153,22 +153,26 @@ See [Attributes](/attributes/#embedding-text) for embed examples.
 
 These helpers let you manage arrays stored in attributes - useful for tracking items, available options, or game state.
 
+<Aside type="note">
+The `"attribute"` parameter is the **name** of an attribute that stores an array (e.g., `"inventory"`). It must be a quoted string. The helper reads and modifies the array stored in that attribute.
+</Aside>
+
 ### Creating and modifying arrays
 
 | Helper | Parameters | Description | Example |
 |--------|------------|-------------|---------|
 | `{{array}}` | `item1 item2 ...` | Create an array | `{{set "items" (array "a" "b" "c")}}` |
-| `{{append}}` | `"listVar" value` | Add element(s) to end of array | `{{append "inventory" "sword"}}` |
-| `{{prepend}}` | `"listVar" value` | Add element(s) to start of array | `{{prepend "queue" "urgent"}}` |
-| `{{pop}}` | `"listVar"` | Remove and return first element | `{{set "next" (pop "queue")}}` |
-| `{{remove}}` | `"listVar" value` | Remove first matching value | `{{remove "inventory" "key"}}` |
+| `{{append}}` | `"attribute" value` | Append value to array stored in attribute | `{{append "inventory" "sword"}}` |
+| `{{prepend}}` | `"attribute" value` | Prepend value to array stored in attribute | `{{prepend "queue" "urgent"}}` |
+| `{{pop}}` | `"attribute"` | Remove and return first element from array | `{{set "next" (pop "queue")}}` |
+| `{{remove}}` | `"attribute" value` | Remove first matching value from array | `{{remove "inventory" "key"}}` |
 
 ### Querying arrays
 
 | Helper | Parameters | Description | Example |
 |--------|------------|-------------|---------|
-| `{{contains}}` | `"listVar" value` or `(array ...) value` | Check if array contains value | `{{#if (contains "inventory" "key")}}...{{/if}}` |
-| `{{length}}` | `"listVar"` or `(array ...)` | Get number of elements in array | `{{length "inventory"}}` |
+| `{{contains}}` | `"attribute" value` or `(array ...) value` | Check if array contains value | `{{#if (contains "inventory" "key")}}...{{/if}}` |
+| `{{length}}` | `"attribute"` or `(array ...)` | Get number of elements in array | `{{length "inventory"}}` |
 
 ### Examples
 
