@@ -14,6 +14,7 @@
 @set score = 0
 @set round = 0
 @set patience = 3
+{{set "availableRounds" (array "GENERAL KNOWLEDGE" "SCIENCE with PROFESSOR BOOM" "MYSTERY BOX" "THE AUDIENCE DECIDES")}}
 
 **{{#animate "typewriter" interval=200}}WELCOME TO...{{/animate}}**
 
@@ -58,7 +59,10 @@ A rusty wheel descends from the ceiling, wobbling dangerously. It has several qu
 [[Spin the wheel!]]:
 The wheel creaks to life, spinning with a sound like a shopping cart hitting a pothole.
 
-It lands on... {{#animate "toast"}}{{rotate (array "GENERAL KNOWLEDGE" "SCIENCE with PROFESSOR BOOM" "MYSTERY BOX" "THE AUDIENCE DECIDES") set="category"}}!{{/animate}}
+{{set "category" (random availableRounds)}}
+{{remove "availableRounds" category}}
+
+It lands on... {{#animate "toast"}}{{category}}!{{/animate}}
 
 {{live "category" section="showCategory"}}
 
@@ -385,7 +389,7 @@ Hank: "Fair enough. Moving on with your dignity intact but your score unchanged.
 [[Next Round]]:
 @inc round
 
-{{#if (gte round 3)}}
+{{#if (eq (length "availableRounds") 0)}}
 [[Final Round]]
 {{else}}
 Hank shuffles his cards. "Alright, {{player_name}}, ready for round {{round}}?"

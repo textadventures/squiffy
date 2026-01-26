@@ -2009,3 +2009,218 @@ Level: <select data-attribute="level" required>
     await squiffyApi.clickLink(continueLink);
     expect(getSectionContent(element, "Continue")).toContain("Hero at level 1");
 });
+
+// Array management helper tests
+
+test("{{append}} helper adds element to end of array", async () => {
+    const script = `
+[[start]]:
+{{set "items" (array "a" "b")}}
+{{append "items" "c"}}
+Done.
+`;
+
+    const { squiffyApi } = await initScript(script);
+    expect(squiffyApi.get("items")).toEqual(["a", "b", "c"]);
+});
+
+test("{{append}} helper adds array of elements to end", async () => {
+    const script = `
+[[start]]:
+{{set "items" (array "a" "b")}}
+{{append "items" (array "c" "d")}}
+Done.
+`;
+
+    const { squiffyApi } = await initScript(script);
+    expect(squiffyApi.get("items")).toEqual(["a", "b", "c", "d"]);
+});
+
+test("{{append}} helper creates array if variable doesn't exist", async () => {
+    const script = `
+[[start]]:
+{{append "items" "first"}}
+Done.
+`;
+
+    const { squiffyApi } = await initScript(script);
+    expect(squiffyApi.get("items")).toEqual(["first"]);
+});
+
+test("{{prepend}} helper adds element to start of array", async () => {
+    const script = `
+[[start]]:
+{{set "items" (array "b" "c")}}
+{{prepend "items" "a"}}
+Done.
+`;
+
+    const { squiffyApi } = await initScript(script);
+    expect(squiffyApi.get("items")).toEqual(["a", "b", "c"]);
+});
+
+test("{{prepend}} helper adds array of elements to start", async () => {
+    const script = `
+[[start]]:
+{{set "items" (array "c" "d")}}
+{{prepend "items" (array "a" "b")}}
+Done.
+`;
+
+    const { squiffyApi } = await initScript(script);
+    expect(squiffyApi.get("items")).toEqual(["a", "b", "c", "d"]);
+});
+
+test("{{pop}} helper removes and returns first element", async () => {
+    const script = `
+[[start]]:
+{{set "items" (array "first" "second" "third")}}
+{{set "removed" (pop "items")}}
+Done.
+`;
+
+    const { squiffyApi } = await initScript(script);
+    expect(squiffyApi.get("removed")).toBe("first");
+    expect(squiffyApi.get("items")).toEqual(["second", "third"]);
+});
+
+test("{{pop}} helper returns empty string for empty array", async () => {
+    const script = `
+[[start]]:
+{{set "items" (array)}}
+{{set "removed" (pop "items")}}
+Done.
+`;
+
+    const { squiffyApi } = await initScript(script);
+    expect(squiffyApi.get("removed")).toBe("");
+    expect(squiffyApi.get("items")).toEqual([]);
+});
+
+test("{{remove}} helper removes first matching value from array", async () => {
+    const script = `
+[[start]]:
+{{set "items" (array "a" "b" "c" "b" "d")}}
+{{remove "items" "b"}}
+Done.
+`;
+
+    const { squiffyApi } = await initScript(script);
+    expect(squiffyApi.get("items")).toEqual(["a", "c", "b", "d"]);
+});
+
+test("{{remove}} helper does nothing if value not found", async () => {
+    const script = `
+[[start]]:
+{{set "items" (array "a" "b" "c")}}
+{{remove "items" "x"}}
+Done.
+`;
+
+    const { squiffyApi } = await initScript(script);
+    expect(squiffyApi.get("items")).toEqual(["a", "b", "c"]);
+});
+
+test("{{contains}} helper returns true when array contains value", async () => {
+    const script = `
+[[start]]:
+{{set "items" (array "apple" "banana" "cherry")}}
+{{#if (contains "items" "banana")}}Found banana!{{else}}Not found.{{/if}}
+`;
+
+    const { element } = await initScript(script);
+    expect(element.textContent).toContain("Found banana!");
+});
+
+test("{{contains}} helper returns false when array doesn't contain value", async () => {
+    const script = `
+[[start]]:
+{{set "items" (array "apple" "banana" "cherry")}}
+{{#if (contains "items" "mango")}}Found mango!{{else}}Not found.{{/if}}
+`;
+
+    const { element } = await initScript(script);
+    expect(element.textContent).toContain("Not found.");
+});
+
+test("{{contains}} helper works with inline array", async () => {
+    const script = `
+[[start]]:
+{{#if (contains (array "a" "b" "c") "b")}}Found!{{else}}Not found.{{/if}}
+`;
+
+    const { element } = await initScript(script);
+    expect(element.textContent).toContain("Found!");
+});
+
+test("{{length}} helper returns array length from variable", async () => {
+    const script = `
+[[start]]:
+{{set "items" (array "a" "b" "c")}}
+Length is {{length "items"}}.
+`;
+
+    const { element } = await initScript(script);
+    expect(element.textContent).toContain("Length is 3.");
+});
+
+test("{{length}} helper returns 0 for empty array", async () => {
+    const script = `
+[[start]]:
+{{set "items" (array)}}
+Length is {{length "items"}}.
+`;
+
+    const { element } = await initScript(script);
+    expect(element.textContent).toContain("Length is 0.");
+});
+
+test("{{length}} helper returns 0 for non-existent variable", async () => {
+    const script = `
+[[start]]:
+Length is {{length "nonexistent"}}.
+`;
+
+    const { element } = await initScript(script);
+    expect(element.textContent).toContain("Length is 0.");
+});
+
+test("{{length}} helper works with inline array", async () => {
+    const script = `
+[[start]]:
+Length is {{length (array "x" "y")}}.
+`;
+
+    const { element } = await initScript(script);
+    expect(element.textContent).toContain("Length is 2.");
+});
+
+test("Array helpers work together for game round tracking", async () => {
+    const script = `
+[[start]]:
+{{set "rounds" (array "Round A" "Round B" "Round C")}}
+{{set "played" (pop "rounds")}}
+Played: {{played}}. Remaining: {{length "rounds"}}.
+{{#if (gt (length "rounds") 0)}}More rounds available.{{else}}No more rounds.{{/if}}
+`;
+
+    const { squiffyApi, element } = await initScript(script);
+    expect(squiffyApi.get("played")).toBe("Round A");
+    expect(squiffyApi.get("rounds")).toEqual(["Round B", "Round C"]);
+    expect(element.textContent).toContain("Played: Round A.");
+    expect(element.textContent).toContain("Remaining: 2.");
+    expect(element.textContent).toContain("More rounds available.");
+});
+
+test("{{remove}} helper with value from subexpression", async () => {
+    const script = `
+[[start]]:
+{{set "rounds" (array "General Knowledge" "Science" "Mystery")}}
+{{set "current" "Science"}}
+{{remove "rounds" current}}
+Done.
+`;
+
+    const { squiffyApi } = await initScript(script);
+    expect(squiffyApi.get("rounds")).toEqual(["General Knowledge", "Mystery"]);
+});

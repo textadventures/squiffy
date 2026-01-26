@@ -149,6 +149,78 @@ Example:
 
 See [Attributes](/attributes/#embedding-text) for embed examples.
 
+## Array management helpers
+
+These helpers let you manage arrays stored in attributes - useful for tracking items, available options, or game state.
+
+### Creating and modifying arrays
+
+| Helper | Parameters | Description | Example |
+|--------|------------|-------------|---------|
+| `{{array}}` | `item1 item2 ...` | Create an array | `{{set "items" (array "a" "b" "c")}}` |
+| `{{append}}` | `"listVar" value` | Add element(s) to end of array | `{{append "inventory" "sword"}}` |
+| `{{prepend}}` | `"listVar" value` | Add element(s) to start of array | `{{prepend "queue" "urgent"}}` |
+| `{{pop}}` | `"listVar"` | Remove and return first element | `{{set "next" (pop "queue")}}` |
+| `{{remove}}` | `"listVar" value` | Remove first matching value | `{{remove "inventory" "key"}}` |
+
+### Querying arrays
+
+| Helper | Parameters | Description | Example |
+|--------|------------|-------------|---------|
+| `{{contains}}` | `"listVar" value` or `(array ...) value` | Check if array contains value | `{{#if (contains "inventory" "key")}}...{{/if}}` |
+| `{{length}}` | `"listVar"` or `(array ...)` | Get number of elements in array | `{{length "inventory"}}` |
+
+### Examples
+
+**Track available game rounds:**
+```
+{{!-- Initialize available rounds --}}
+{{set "rounds" (array "Quiz" "Challenge" "Bonus")}}
+
+{{!-- Pick a random round --}}
+{{set "current" (random rounds)}}
+You're playing: {{current}}
+
+{{!-- Remove it so it can't be picked again --}}
+{{remove "rounds" current}}
+
+{{!-- Check if more rounds remain --}}
+{{#if (gt (length "rounds") 0)}}
+    [[Play next round]]
+{{else}}
+    [[Final round]]
+{{/if}}
+```
+
+**Manage an inventory:**
+```
+{{set "inventory" (array)}}
+
+[pick up sword]:
+{{append "inventory" "sword"}}
+You picked up the sword.
+
+[use key]:
+{{#if (contains "inventory" "key")}}
+    {{remove "inventory" "key"}}
+    You used the key.
+{{else}}
+    You don't have a key.
+{{/if}}
+```
+
+**Process a queue:**
+```
+{{set "tasks" (array "Task A" "Task B" "Task C")}}
+
+[next task]:
+{{#if (gt (length "tasks") 0)}}
+    Now doing: {{pop "tasks"}}
+{{else}}
+    All tasks complete!
+{{/if}}
+```
+
 ## Dynamic content helpers
 
 See [Dynamic text](/dynamic-text/) for detailed documentation and examples.

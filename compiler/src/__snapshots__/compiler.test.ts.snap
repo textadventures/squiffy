@@ -243,7 +243,7 @@ story.sections = {
         "text": "{{#if (gte patience 3)}}_Cheerful_{{else}}{{#if (gte patience 1)}}_Strained_{{else}}_Murderous_{{/if}}{{/if}}\\n"
     },
     "intro": {
-        "text": "**{{#animate \\"typewriter\\" interval=200}}WELCOME TO...{{/animate}}**\\n\\n{{#animate \\"toast\\" interval=200}}THE WHEEL OF _DUBIOUS_ FORTUNE!{{/animate}}\\n\\n{{#animate \\"fadeIn\\" duration=2000}}\\nThe studio lights flicker ominously. A man in a sequined jacket stumbles onto the stage, holding cue cards upside down.\\n\\n\\"Hello and welcome! I'm your host, Chuck Wheelsworth!\\" He squints at the cards. \\"No wait, that's not right. I'm Hank Spinneroni. Definitely Hank.\\"\\n\\nThe audience—three people and a cardboard cutout—applauds uncertainly.\\n\\n\\"And YOU are our lucky contestant! What's your name?\\"\\n\\n<input type=\\"text\\" data-attribute=\\"player_name\\" placeholder=\\"Enter your name...\\" required minlength=\\"2\\" maxlength=\\"30\\">\\n\\n{{section \\"_continue1\\" text=\\"Let's play!\\"}}\\n{{/animate}}\\n",
+        "text": "{{set \\"availableRounds\\" (array \\"GENERAL KNOWLEDGE\\" \\"SCIENCE with PROFESSOR BOOM\\" \\"MYSTERY BOX\\" \\"THE AUDIENCE DECIDES\\")}}\\n\\n**{{#animate \\"typewriter\\" interval=200}}WELCOME TO...{{/animate}}**\\n\\n{{#animate \\"toast\\" interval=200}}THE WHEEL OF _DUBIOUS_ FORTUNE!{{/animate}}\\n\\n{{#animate \\"fadeIn\\" duration=2000}}\\nThe studio lights flicker ominously. A man in a sequined jacket stumbles onto the stage, holding cue cards upside down.\\n\\n\\"Hello and welcome! I'm your host, Chuck Wheelsworth!\\" He squints at the cards. \\"No wait, that's not right. I'm Hank Spinneroni. Definitely Hank.\\"\\n\\nThe audience—three people and a cardboard cutout—applauds uncertainly.\\n\\n\\"And YOU are our lucky contestant! What's your name?\\"\\n\\n<input type=\\"text\\" data-attribute=\\"player_name\\" placeholder=\\"Enter your name...\\" required minlength=\\"2\\" maxlength=\\"30\\">\\n\\n{{section \\"_continue1\\" text=\\"Let's play!\\"}}\\n{{/animate}}\\n",
         "attributes": [
             "score = 0",
             "round = 0",
@@ -251,7 +251,7 @@ story.sections = {
         ]
     },
     "_continue1": {
-        "text": "{{#if (not player_name)}}{{set \\"player_name\\" \\"Mystery Contestant\\"}}{{/if}}\\n\\n\\"Welcome, {{player_name}}! Or as I like to call you... {{player_name}}!\\"\\n\\nHank pauses, waiting for laughter. None comes.\\n\\n{{embed \\"catchphrase\\"}}\\n\\n\\"Now then! {{#animate \\"continue\\" style=\\"wave\\"}}Let's spin...{{/animate}}\\"\\n\\n{{#animate \\"typewriter\\"}}THE WHEEL OF DUBIOUS FORTUNE!{{/animate}}\\n\\n{{#animate \\"fadeIn\\"}}\\nA rusty wheel descends from the ceiling, wobbling dangerously. It has several questionable categories painted on it.\\n\\n{{section \\"Spin the wheel!\\" text=\\"Spin the wheel!\\"}}\\n{{/animate}}\\n",
+        "text": "\\"Welcome, {{player_name}}! Or as I like to call you... {{player_name}}!\\"\\n\\nHank pauses, waiting for laughter. None comes.\\n\\n{{embed \\"catchphrase\\"}}\\n\\n\\"Now then! {{#animate \\"continue\\" style=\\"wave\\"}}Let's spin...{{/animate}}\\"\\n\\n{{#animate \\"typewriter\\"}}THE WHEEL OF DUBIOUS FORTUNE!{{/animate}}\\n\\n{{#animate \\"fadeIn\\"}}\\nA rusty wheel descends from the ceiling, wobbling dangerously. It has several questionable categories painted on it.\\n\\n{{section \\"Spin the wheel!\\" text=\\"Spin the wheel!\\"}}\\n{{/animate}}\\n",
         "attributes": [
             "round = 1"
         ],
@@ -262,7 +262,7 @@ story.sections = {
         }
     },
     "Spin the wheel!": {
-        "text": "The wheel creaks to life, spinning with a sound like a shopping cart hitting a pothole.\\n\\nIt lands on... {{#animate \\"toast\\"}}{{sequence (array \\"GENERAL KNOWLEDGE\\" \\"SCIENCE with PROFESSOR BOOM\\" \\"MYSTERY BOX\\" \\"THE AUDIENCE DECIDES\\") set=\\"category\\"}}!{{/animate}}\\n\\n{{live \\"category\\" section=\\"showCategory\\"}}\\n"
+        "text": "The wheel creaks to life, spinning with a sound like a shopping cart hitting a pothole.\\n\\n{{set \\"category\\" (random availableRounds)}}\\n{{remove \\"availableRounds\\" category}}\\n\\nIt lands on... {{#animate \\"toast\\"}}{{category}}!{{/animate}}\\n\\n{{live \\"category\\" section=\\"showCategory\\"}}\\n"
     },
     "showCategory": {
         "text": "{{#if (eq category \\"GENERAL KNOWLEDGE\\")}}{{section \\"General Knowledge Round\\"}}{{/if}}\\n{{#if (eq category \\"SCIENCE with PROFESSOR BOOM\\")}}{{section \\"Science Round\\"}}{{/if}}\\n{{#if (eq category \\"MYSTERY BOX\\")}}{{section \\"Mystery Box Round\\"}}{{/if}}\\n{{#if (eq category \\"THE AUDIENCE DECIDES\\")}}{{section \\"Audience Round\\"}}{{/if}}\\n"
@@ -276,7 +276,7 @@ story.sections = {
         }
     },
     "Science Round": {
-        "text": "The lights flicker and a trapdoor opens in the floor. Smoke billows out.\\n\\n{{#animate \\"typewriter\\"}}PROFESSOR BOOM has entered the chat.{{/animate}}\\n\\nA wild-haired scientist emerges, goggles askew, lab coat singed.\\n\\n\\"GREETINGS, QUIZ PARTICIPANT! I am Professor Boom, and THIS—\\" he holds up a beaker of bubbling green liquid \\"—is SCIENCE!\\"\\n\\nHank backs away nervously. \\"Professor, we talked about bringing chemicals on set...\\"\\n\\n\\"SILENCE, TELEVISION MAN! The contestant must answer... {{#animate \\"toast\\"}}A SCIENCE QUESTION!{{/animate}}\\"\\n\\n**What is the chemical symbol for Gold?**\\n\\nLab Stability: {{live \\"stability\\"}}%\\n\\nChoose your answer:\\n- {{passage \\"Answer: Au\\"}}\\n- {{passage \\"Answer: Go\\"}}\\n- {{passage \\"Answer: Gd\\"}}\\n- {{passage \\"Drink the beaker\\"}}\\n",
+        "text": "The lights flicker and a trapdoor opens in the floor. Smoke billows out.\\n\\n{{#animate \\"typewriter\\"}}PROFESSOR BOOM has entered the chat.{{/animate}}\\n\\nA wild-haired scientist emerges, goggles askew, lab coat singed.\\n\\n\\"GREETINGS, QUIZ PARTICIPANT! I am Professor Boom, and THIS—\\" he holds up a beaker of bubbling green liquid \\"—is SCIENCE!\\"\\n\\nHank backs away nervously. \\"Professor, we talked about bringing chemicals on set...\\"\\n\\n\\"SILENCE, TELEVISION MAN! The contestant must answer... {{#animate \\"toast\\"}}A SCIENCE QUESTION!{{/animate}}\\"\\n\\n**What is the chemical symbol for Gold?**\\n\\nLab Stability: {{live \\"stability\\"}}%\\n\\nChoose your answer:\\n- {{section \\"Answer: Au\\"}}\\n- {{passage \\"Answer: Go\\"}}\\n- {{passage \\"Answer: Gd\\"}}\\n- {{passage \\"Drink the beaker\\"}}\\n",
         "attributes": [
             "stability = 100"
         ],
@@ -290,39 +290,37 @@ story.sections = {
             "@3": {
                 "text": "{{dec \\"stability\\" 25}}\\n{{#animate \\"toast\\"}}WARNING: CRITICAL INSTABILITY{{/animate}}\\n\\nSmall explosions begin occurring around the lab set.\\n"
             },
-            "Answer: Au": {
-                "text": "{{#animate \\"toast\\"}}CORRECT!{{/animate}}\\n\\n\\"AU! YES! Gold! Aurum! The element of CHAMPIONS!\\" Professor Boom throws the beaker in the air and catches it. \\"You have pleased me, {{player_name}}!\\"\\n\\n{{inc \\"score\\" 200}}\\n\\n{{section \\"Professor Exit\\"}}\\n"
-            },
             "Answer: Go": {
-                "text": "\\"GO?! That's not even— that's just the word GO!\\" Professor Boom's hair somehow becomes more wild.\\n\\n{{dec \\"stability\\" 30}}\\n{{dec \\"patience\\"}}\\n\\n{{#if (lte stability 30)}}\\n{{#animate \\"toast\\"}}BOOM!{{/animate}}\\n\\nA small explosion singes Hank's eyebrows.\\n\\n\\"MY EYEBROWS! Those were RENTED!\\"\\n{{/if}}\\n\\n{{section \\"Professor Exit\\"}}\\n"
+                "text": "\\"GO?! That's not even— that's just the word GO!\\" Professor Boom's hair somehow becomes more wild.\\n\\n{{dec \\"stability\\" 30}}\\n{{dec \\"patience\\"}}\\n\\n{{#if (lte stability 30)}}\\n{{#animate \\"toast\\"}}BOOM!{{/animate}}\\n\\nA small explosion singes Hank's eyebrows.\\n\\n\\"MY EYEBROWS! Those were RENTED!\\"\\n{{/if}}\\n"
             },
             "Answer: Gd": {
-                "text": "\\"Gd is GADOLINIUM! An honest mistake for a FOOL!\\"\\n\\n{{dec \\"stability\\" 20}}\\n{{dec \\"patience\\"}}\\n\\n{{section \\"Professor Exit\\"}}\\n"
+                "text": "\\"Gd is GADOLINIUM! An honest mistake for a FOOL!\\"\\n\\n{{dec \\"stability\\" 20}}\\n{{dec \\"patience\\"}}\\n"
             },
             "Drink the beaker": {
-                "text": "You grab the beaker and drink it before anyone can stop you.\\n\\nProfessor Boom: \\"WAIT! That's my lunch!\\"\\n\\n{{#animate \\"toast\\"}}It tastes like... chicken soup?{{/animate}}\\n\\n\\"I was heating up my soup with SCIENCE. Now I have no lunch AND no science demonstration.\\"\\n\\n{{inc \\"score\\" 50}}\\nThe audience (including the cardboard) applauds your boldness.\\n\\n{{section \\"Professor Exit\\"}}\\n"
+                "text": "You grab the beaker and drink it before anyone can stop you.\\n\\nProfessor Boom: \\"WAIT! That's my lunch!\\"\\n\\n{{#animate \\"toast\\"}}It tastes like... chicken soup?{{/animate}}\\n\\n\\"I was heating up my soup with SCIENCE. Now I have no lunch AND no science demonstration.\\"\\n\\n{{inc \\"score\\" 50}}\\nThe audience (including the cardboard) applauds your boldness.\\n"
             }
         }
     },
-    "Professor Exit": {
+    "Answer: Au": {
+        "text": "{{#animate \\"toast\\"}}CORRECT!{{/animate}}\\n\\n\\"AU! YES! Gold! Aurum! The element of CHAMPIONS!\\" Professor Boom throws the beaker in the air and catches it. \\"You have pleased me, {{player_name}}!\\"\\n\\n{{inc \\"score\\" 200}}\\n\\n{{section \\"_continue2\\" text=\\"Continue...\\"}}"
+    },
+    "_continue2": {
         "text": "Professor Boom descends back through the trapdoor, cackling.\\n\\n\\"UNTIL NEXT TIME, QUIZ PARTICIPANT! REMEMBER: SCIENCE IS JUST EXPLOSIONS IN A LAB COAT!\\"\\n\\nThe trapdoor slams shut. Hank pats out a small fire on his jacket.\\n\\n\\"Right. Well. That happened.\\"\\n\\n{{section \\"Next Round\\"}}\\n"
     },
     "Mystery Box Round": {
-        "text": "A golden box descends from the ceiling on a frayed rope.\\n\\n\\"Ooh, the Mystery Box!\\" Hank claps his hands. \\"This could contain ANYTHING! A prize! A question! A live animal! We genuinely don't know—the intern who loaded it quit this morning!\\"\\n\\nThe box rattles ominously.\\n\\n{{passage \\"Open the box carefully\\"}}\\n{{passage \\"Shake the box first\\"}}\\n{{passage \\"Refuse to open it\\"}}\\n",
-        "passages": {
-            "Open the box carefully": {
-                "text": "You lift the lid slowly...\\n\\n{{random (array \\"prize\\" \\"bees\\" \\"another_box\\" \\"philosophy\\") set=\\"box_contents\\"}}\\n\\n{{#if (eq box_contents \\"prize\\")}}\\n{{#animate \\"toast\\"}}JACKPOT!{{/animate}}\\n\\nInside is a solid gold trophy shaped like a wheel! It's spray-painted gold, but still!\\n\\n{{inc \\"score\\" 300}}\\n\\n\\"Congratulations! You've won our grand prize: a trophy AND the satisfaction of not being attacked by whatever else could have been in there!\\"\\n{{/if}}\\n\\n{{#if (eq box_contents \\"bees\\")}}\\n{{#animate \\"toast\\"}}BEES!{{/animate}}\\n\\nThe box is full of bees. They seem confused but not aggressive.\\n\\n\\"Oh no, NOT AGAIN!\\" Hank runs in circles. \\"WHO KEEPS PUTTING BEES IN THE MYSTERY BOX?!\\"\\n\\n{{dec \\"patience\\"}}\\n\\nA bee lands on your nose, considers its life choices, and flies away. You feel oddly respected.\\n\\n{{inc \\"score\\" 50}}\\n{{/if}}\\n\\n{{#if (eq box_contents \\"another_box\\")}}\\nInside the box is... another, smaller box.\\n\\n\\"Ah, the recursive box!\\" Hank nods sagely. \\"Open it!\\"\\n\\nInside THAT box is a note that says: \\"{{player_name}} wins 100 points!\\"\\n\\n{{inc \\"score\\" 100}}\\n\\n{{#animate \\"toast\\"}}Congratulations, somehow!{{/animate}}\\n{{/if}}\\n\\n{{#if (eq box_contents \\"philosophy\\")}}\\nInside is a small scroll. It reads:\\n\\n_\\"What IS a prize, really? Is not the true prize the friends we made along the way? Also here's 75 points.\\"_\\n\\n{{inc \\"score\\" 75}}\\n\\nHank wipes away a single tear. \\"Beautiful.\\"\\n{{/if}}\\n\\n{{section \\"Next Round\\"}}\\n"
-            },
-            "Shake the box first": {
-                "text": "You shake the box vigorously. Something inside goes \\"CLANG\\" and then \\"moo?\\"\\n\\n{{dec \\"patience\\"}}\\n\\n\\"Please don't shake the— you know what, fine. Open it.\\"\\n\\n{{passage \\"Open the box carefully\\"}}\\n"
-            },
-            "Refuse to open it": {
-                "text": "{{dec \\"patience\\"}}{{dec \\"patience\\"}}\\n\\n\\"You HAVE to open it! It's the MYSTERY BOX! The mystery is legally required to be resolved!\\"\\n\\nHank is sweating now.\\n\\n{{passage \\"Open the box carefully\\"}}\\n"
-            }
-        }
+        "text": "A golden box descends from the ceiling on a frayed rope.\\n\\n\\"Ooh, the Mystery Box!\\" Hank claps his hands. \\"This could contain ANYTHING! A prize! A question! A live animal! We genuinely don't know—the intern who loaded it quit this morning!\\"\\n\\nThe box rattles ominously.\\n\\n- {{section \\"Open the box carefully\\"}}\\n- {{section \\"Shake the box first\\"}}\\n- {{section \\"Refuse to open it\\"}}\\n"
+    },
+    "Open the box carefully": {
+        "text": "You lift the lid slowly...\\n\\n{{set \\"box_contents\\" (random (array \\"prize\\" \\"bees\\" \\"another_box\\" \\"philosophy\\"))}}\\n\\n{{#if (eq box_contents \\"prize\\")}}\\n{{#animate \\"toast\\"}}JACKPOT!{{/animate}}\\n\\nInside is a solid gold trophy shaped like a wheel! It's spray-painted gold, but still!\\n\\n{{inc \\"score\\" 300}}\\n\\n\\"Congratulations! You've won our grand prize: a trophy AND the satisfaction of not being attacked by whatever else could have been in there!\\"\\n{{/if}}\\n\\n{{#if (eq box_contents \\"bees\\")}}\\n{{#animate \\"toast\\"}}BEES!{{/animate}}\\n\\nThe box is full of bees. They seem confused but not aggressive.\\n\\n\\"Oh no, NOT AGAIN!\\" Hank runs in circles. \\"WHO KEEPS PUTTING BEES IN THE MYSTERY BOX?!\\"\\n\\n{{dec \\"patience\\"}}\\n\\nA bee lands on your nose, considers its life choices, and flies away. You feel oddly respected.\\n\\n{{inc \\"score\\" 50}}\\n{{/if}}\\n\\n{{#if (eq box_contents \\"another_box\\")}}\\nInside the box is... another, smaller box.\\n\\n\\"Ah, the recursive box!\\" Hank nods sagely. \\"Open it!\\"\\n\\nInside THAT box is a note that says: \\"{{player_name}} wins 100 points!\\"\\n\\n{{inc \\"score\\" 100}}\\n\\n{{#animate \\"toast\\"}}Congratulations, somehow!{{/animate}}\\n{{/if}}\\n\\n{{#if (eq box_contents \\"philosophy\\")}}\\nInside is a small scroll. It reads:\\n\\n_\\"What IS a prize, really? Is not the true prize the friends we made along the way? Also here's 75 points.\\"_\\n\\n{{inc \\"score\\" 75}}\\n\\nHank wipes away a single tear. \\"Beautiful.\\"\\n{{/if}}\\n\\n{{section \\"Next Round\\"}}\\n"
+    },
+    "Shake the box first": {
+        "text": "You shake the box vigorously. Something inside goes \\"CLANG\\" and then \\"moo?\\"\\n\\n{{dec \\"patience\\"}}\\n\\n\\"Please don't shake the— you know what, fine. Open it.\\"\\n\\n{{section \\"Open the box carefully\\"}}\\n"
+    },
+    "Refuse to open it": {
+        "text": "{{dec \\"patience\\"}}{{dec \\"patience\\"}}\\n\\n\\"You HAVE to open it! It's the MYSTERY BOX! The mystery is legally required to be resolved!\\"\\n\\nHank is sweating now.\\n\\n{{section \\"Open the box carefully\\"}}\\n"
     },
     "Audience Round": {
-        "text": "\\"THE AUDIENCE DECIDES!\\" Hank gestures grandly at the three people and cardboard cutout.\\n\\n\\"Audience members, what challenge should {{player_name}} face?\\"\\n\\nThe audience confers. One of them is asleep. The cardboard cutout offers no input.\\n\\nFinally, a woman in the front row shouts: \\"MAKE THEM {{random (array \\"SING\\" \\"DANCE\\" \\"DO AN IMPRESSION OF A BLENDER\\" \\"JUST GIVE THEM POINTS FOR FREE\\")}}!\\"\\n\\n{{#if (eq _last_random \\"SING\\")}}\\n\\"You heard her! SING, {{player_name}}! Sing like your points depend on it! Because they do!\\"\\n\\n{{passage \\"Sing beautifully\\"}}\\n{{passage \\"Sing terribly on purpose\\"}}\\n{{/if}}\\n\\n{{#if (eq _last_random \\"DANCE\\")}}\\n\\"DANCE! Show us your moves!\\"\\n\\n{{passage \\"Dance with enthusiasm\\"}}\\n{{passage \\"Do the robot\\"}}\\n{{/if}}\\n\\n{{#if (eq _last_random \\"DO AN IMPRESSION OF A BLENDER\\")}}\\n\\"A BLENDER! Do a blender impression! This is normal television!\\"\\n\\n{{passage \\"WHIRRRRRR\\"}}\\n{{passage \\"Refuse on grounds of dignity\\"}}\\n{{/if}}\\n\\n{{#if (eq _last_random \\"JUST GIVE THEM POINTS FOR FREE\\")}}\\n\\"Free points?! That's not how—\\" Hank checks his cards. \\"Actually, that IS an option apparently.\\"\\n\\n{{inc \\"score\\" 150}}\\n{{#animate \\"toast\\"}}FREE POINTS!{{/animate}}\\n\\n\\"Well! That was anticlimactic! Moving on!\\"\\n\\n{{section \\"Next Round\\"}}\\n{{/if}}\\n",
+        "text": "\\"THE AUDIENCE DECIDES!\\" Hank gestures grandly at the three people and cardboard cutout.\\n\\n\\"Audience members, what challenge should {{player_name}} face?\\"\\n\\nThe audience confers. One of them is asleep. The cardboard cutout offers no input.\\n\\nFinally, a woman in the front row shouts: \\"MAKE THEM {{random (array \\"SING\\" \\"DANCE\\" \\"DO AN IMPRESSION OF A BLENDER\\" \\"JUST GIVE THEM POINTS FOR FREE\\") set=\\"make_them\\"}}!\\"\\n\\n{{#if (eq make_them \\"SING\\")}}\\n\\"You heard her! SING, {{player_name}}! Sing like your points depend on it! Because they do!\\"\\n\\n- {{passage \\"Sing beautifully\\"}}\\n- {{passage \\"Sing terribly on purpose\\"}}\\n{{/if}}\\n\\n{{#if (eq make_them \\"DANCE\\")}}\\n\\"DANCE! Show us your moves!\\"\\n\\n- {{passage \\"Dance with enthusiasm\\"}}\\n- {{passage \\"Do the robot\\"}}\\n{{/if}}\\n\\n{{#if (eq make_them \\"DO AN IMPRESSION OF A BLENDER\\")}}\\n\\"A BLENDER! Do a blender impression! This is normal television!\\"\\n\\n- {{passage \\"WHIRRRRRR\\"}}\\n- {{passage \\"Refuse on grounds of dignity\\"}}\\n{{/if}}\\n\\n{{#if (eq make_them \\"JUST GIVE THEM POINTS FOR FREE\\")}}\\n\\"Free points?! That's not how—\\" Hank checks his cards. \\"Actually, that IS an option apparently.\\"\\n\\n{{inc \\"score\\" 150}}\\n{{#animate \\"toast\\"}}FREE POINTS!{{/animate}}\\n\\n\\"Well! That was anticlimactic! Moving on!\\"\\n\\n{{section \\"Next Round\\"}}\\n{{/if}}\\n",
         "passages": {
             "Sing beautifully": {
                 "text": "You belt out an operatic rendition of the show's theme song (which you're making up as you go).\\n\\nThe audience is moved. One of them wakes up specifically to applaud.\\n\\n{{inc \\"score\\" 150}}\\n{{#animate \\"toast\\"}}STANDING OVATION!{{/animate}}\\n\\n{{section \\"Next Round\\"}}\\n"
@@ -345,7 +343,7 @@ story.sections = {
         }
     },
     "Next Round": {
-        "text": "{{#if (gte round 3)}}\\n{{section \\"Final Round\\"}}\\n{{else}}\\nHank shuffles his cards. \\"Alright, {{player_name}}, ready for round {{round}}?\\"\\n\\nThe wheel looms above you, creaking expectantly.\\n\\n{{section \\"Spin the wheel!\\"}}\\n{{/if}}\\n",
+        "text": "{{#if (eq (length \\"availableRounds\\") 0)}}\\n{{section \\"Final Round\\"}}\\n{{else}}\\nHank shuffles his cards. \\"Alright, {{player_name}}, ready for round {{round}}?\\"\\n\\nThe wheel looms above you, creaking expectantly.\\n\\n{{section \\"Spin the wheel!\\"}}\\n{{/if}}\\n",
         "attributes": [
             "round+=1"
         ]
