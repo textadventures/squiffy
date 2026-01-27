@@ -302,22 +302,22 @@ Finally, a woman in the front row shouts: "MAKE THEM {{random (array "SING" "DAN
 {{#if (eq make_them "SING")}}
 "You heard her! SING, {{player_name}}! Sing like your points depend on it! Because they do!"
 
-- [Sing beautifully]
-- [Sing terribly on purpose]
+- [[Sing beautifully]]
+- [[Sing terribly on purpose]]
 {{/if}}
 
 {{#if (eq make_them "DANCE")}}
 "DANCE! Show us your moves!"
 
-- [Dance with enthusiasm]
-- [Do the robot]
+- [[Dance with enthusiasm]]
+- [[Do the robot]]
 {{/if}}
 
 {{#if (eq make_them "DO AN IMPRESSION OF A BLENDER")}}
 "A BLENDER! Do a blender impression! This is normal television!"
 
-- [WHIRRRRRR]
-- [Refuse on grounds of dignity]
+- [[WHIRRRRRR]]
+- [[Refuse on grounds of dignity]]
 {{/if}}
 
 {{#if (eq make_them "JUST GIVE THEM POINTS FOR FREE")}}
@@ -331,7 +331,7 @@ Finally, a woman in the front row shouts: "MAKE THEM {{random (array "SING" "DAN
 [[Next Round]]
 {{/if}}
 
-[Sing beautifully]:
+[[Sing beautifully]]:
 You belt out an operatic rendition of the show's theme song (which you're making up as you go).
 
 The audience is moved. One of them wakes up specifically to applaud.
@@ -341,7 +341,7 @@ The audience is moved. One of them wakes up specifically to applaud.
 
 [[Next Round]]
 
-[Sing terribly on purpose]:
+[[Sing terribly on purpose]]:
 You screech like a cat in a tumble dryer. On purpose. For art.
 
 {{dec "patience"}}
@@ -352,7 +352,7 @@ Hank: "That was... that was really something. Moving on quickly."
 
 [[Next Round]]
 
-[Dance with enthusiasm]:
+[[Dance with enthusiasm]]:
 You dance like nobody's watching, except everyone is watching, and also there are cameras.
 
 {{inc "score" 125}}
@@ -360,7 +360,7 @@ The cardboard cutout falls over again, but in an approving way.
 
 [[Next Round]]
 
-[Do the robot]:
+[[Do the robot]]:
 You do the robot so convincingly that a stagehand tries to unplug you.
 
 {{inc "score" 100}}
@@ -368,7 +368,7 @@ You do the robot so convincingly that a stagehand tries to unplug you.
 
 [[Next Round]]
 
-[WHIRRRRRR]:
+[[WHIRRRRRR]]:
 You spin around making blender noises. It's deeply unsettling.
 
 {{inc "score" 175}}
@@ -377,7 +377,7 @@ Professor Boom's voice echoes from below: "MAGNIFICENT!"
 
 [[Next Round]]
 
-[Refuse on grounds of dignity]:
+[[Refuse on grounds of dignity]]:
 "I'm not doing that."
 
 {{dec "patience"}}
