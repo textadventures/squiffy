@@ -36,10 +36,18 @@ export class TextProcessor {
             return currentSection === section;
         });
 
+        // Unwrap SafeString values from subexpressions, but preserve arrays
+        const unwrapValue = (value: any): any => {
+            if (value && typeof value === "object" && typeof value.toString === "function" && !Array.isArray(value)) {
+                return value.toString();
+            }
+            return value;
+        };
+
         // State modification helpers (side effects, no output)
         // These execute at render time, so they respect {{#if}} conditions
         this.handlebars.registerHelper("set", (attribute: string, value: any) => {
-            this.state.set(attribute, value);
+            this.state.set(attribute, unwrapValue(value));
             return "";
         });
 
@@ -76,6 +84,87 @@ export class TextProcessor {
             return args;
         });
 
+        // Array management helpers
+
+        this.handlebars.registerHelper("append", (listVar: string, value: any) => {
+            const currentArray = this.state.get(listVar) || [];
+            const arr = Array.isArray(currentArray) ? [...currentArray] : [currentArray];
+            const unwrappedValue = unwrapValue(value);
+            if (Array.isArray(unwrappedValue)) {
+                arr.push(...unwrappedValue.map(unwrapValue));
+            } else {
+                arr.push(unwrappedValue);
+            }
+            this.state.set(listVar, arr);
+            return "";
+        });
+
+        this.handlebars.registerHelper("prepend", (listVar: string, value: any) => {
+            const currentArray = this.state.get(listVar) || [];
+            const arr = Array.isArray(currentArray) ? [...currentArray] : [currentArray];
+            const unwrappedValue = unwrapValue(value);
+            if (Array.isArray(unwrappedValue)) {
+                arr.unshift(...unwrappedValue.map(unwrapValue));
+            } else {
+                arr.unshift(unwrappedValue);
+            }
+            this.state.set(listVar, arr);
+            return "";
+        });
+
+        this.handlebars.registerHelper("pop", (listVar: string) => {
+            const currentArray = this.state.get(listVar) || [];
+            if (!Array.isArray(currentArray) || currentArray.length === 0) {
+                return "";
+            }
+            const arr = [...currentArray];
+            const item = arr.shift();
+            this.state.set(listVar, arr);
+            return item;
+        });
+
+        this.handlebars.registerHelper("remove", (listVar: string, value: any) => {
+            const currentArray = this.state.get(listVar) || [];
+            if (!Array.isArray(currentArray)) {
+                return "";
+            }
+            const unwrappedValue = unwrapValue(value);
+            const index = currentArray.findIndex(item => unwrapValue(item) === unwrappedValue);
+            if (index !== -1) {
+                const arr = [...currentArray];
+                arr.splice(index, 1);
+                this.state.set(listVar, arr);
+            }
+            return "";
+        });
+
+        this.handlebars.registerHelper("contains", (listOrVar: any, value: any) => {
+            let arr: any[];
+            if (typeof listOrVar === "string") {
+                const stored = this.state.get(listOrVar);
+                arr = Array.isArray(stored) ? stored : [];
+            } else if (Array.isArray(listOrVar)) {
+                arr = listOrVar;
+            } else {
+                return false;
+            }
+            const unwrappedValue = unwrapValue(value);
+            return arr.some(item => unwrapValue(item) === unwrappedValue);
+        });
+
+        this.handlebars.registerHelper("length", (listOrVar: any) => {
+            let arr: any[];
+            if (typeof listOrVar === "string") {
+                const stored = this.state.get(listOrVar);
+                arr = Array.isArray(stored) ? stored : [];
+            } else if (Array.isArray(listOrVar)) {
+                arr = listOrVar;
+            } else {
+                return 0;
+            }
+            return arr.length;
+        });
+
         const addAdditionalParameters = (options: any) => {
             let result = "";
             const setters = options.hash.set as string || "";
@@ -97,14 +186,20 @@ export class TextProcessor {
     }
 
     process(text: string, inline: boolean) {
-        const template = this.handlebars.compile(text);
-        text = template(this.state.getStore());
+        try {
+            const template = this.handlebars.compile(text);
+            text = template(this.state.getStore());
 
-        if (inline) {
-            return marked.parseInline(text, { async: false }).trim();
-        }
-        else {
-            return marked.parse(text, { async: false }).trim();
+            if (inline) {
+                return marked.parseInline(text, { async: false }).trim();
+            }
+            else {
+                return marked.parse(text, { async: false }).trim();
+            }
+        } catch (e) {
+            const errorMessage = e instanceof Error ? e.message : String(e);
+            console.error("Squiffy template error:", errorMessage);
+            return `<div class="squiffy-error" style="color: red; background: #ffe0e0; padding: 8px; border: 1px solid red; margin: 4px 0; font-family: monospace; white-space: pre-wrap;"><strong>Template error:</strong> ${errorMessage}</div>`;
         }
     }
 }

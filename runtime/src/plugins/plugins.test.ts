@@ -115,6 +115,33 @@ test("Random plugin: set attribute", async () => {
     expect(["apple", "banana", "orange"]).toContain(fruit);
 });
 
+test("Random plugin: use as subexpression with set helper", async () => {
+    const script = `
+{{set "fruit" (random (array "apple" "banana" "orange"))}}
+
+Fruit is: {{fruit}}
+
+{{#if (eq fruit "apple")}}It's an apple!{{/if}}
+{{#if (eq fruit "banana")}}It's a banana!{{/if}}
+{{#if (eq fruit "orange")}}It's an orange!{{/if}}
+`;
+
+    const { squiffyApi, element } = await initScript(script);
+    const fruit = squiffyApi.get("fruit");
+    const text = element.textContent || "";
+
+    // The attribute should be set to one of the random values (as a string, not an object)
+    expect(["apple", "banana", "orange"]).toContain(fruit);
+    expect(typeof fruit).toBe("string");
+
+    // The output should show the fruit value, not [object Object]
+    expect(text).toMatch(/Fruit is: (apple|banana|orange)/);
+    expect(text).not.toContain("[object Object]");
+
+    // One of the conditionals should have matched
+    expect(text).toMatch(/It's an? (apple|banana|orange)!/);
+});
+
 // ===== ReplaceLabel Tests =====
 
 test("Label plugin: create labeled span", async () => {

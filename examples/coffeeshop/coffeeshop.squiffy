@@ -30,13 +30,13 @@ In the corner booth, a woman in her late twenties hunches over a laptop, occasio
 
 Who do you approach first?
 
-[The woman with the laptop]
+[[The woman with the laptop]]
 
-[The older man by the window]
+[[The older man by the window]]
 
-[Wait for someone to come to you]
+[[Wait for someone to come to you]]
 
-[The woman with the laptop]:
+[[The woman with the laptop]]:
 @inc maya
 You approach the corner booth. The woman looks up, startled, then breaks into a sheepish grin.
 
@@ -52,7 +52,7 @@ She grins. "Exactly. You're going to fit in fine here."
 
 [[Continue morning]](morning continues)
 
-[The older man by the window]:
+[[The older man by the window]]:
 @inc ellis
 You approach the window table. The man looks up—early seventies, neatly dressed, with the kind of face that suggests he's forgotten how to smile but remembers that he used to.
 
@@ -68,7 +68,7 @@ You're not sure what to say to that.
 
 [[Continue morning]](morning continues)
 
-[Wait for someone to come to you]:
+[[Wait for someone to come to you]]:
 You busy yourself wiping down the already-clean counter. After a few minutes, the older man by the window raises his empty cup, catching your eye.
 
 You head over. He's early seventies, neatly dressed.
@@ -100,11 +100,11 @@ The Daily Grind transforms at night. The overhead lights dim, fairy lights come 
 
 You spot a new face: early twenties, headphones around their neck, dark circles under their eyes. They're sketching something in a worn notebook, barely looking at the page.
 
-[Bring them a menu]
+[[Bring them a menu]]
 
-[Wait for them to come up]
+[[Wait for them to come up]]
 
-[Bring them a menu]:
+[[Bring them a menu]]:
 @inc sam
 You grab a menu and head over. They look up, startled—then pull out an earbud.
 
@@ -126,7 +126,7 @@ Sam immediately flips the notebook closed. "It's nothing. Just... keeps my hands
 
 [[End of day one]]
 
-[Wait for them to come up]:
+[[Wait for them to come up]]:
 Eventually they shuffle to the counter, headphones still half-on.
 
 "Most caffeinated thing you have. Please."
@@ -218,11 +218,11 @@ You're wiping down tables when the door opens. Sam shuffles in, looking exhauste
 
 {{#if (gt sam 0)}}"{{player_name}}." They manage a tired smile. "Please tell me you have coffee. And maybe a will to live. I'll take either."{{else}}"Coffee. Strongest you've got." They collapse into a chair.{{/if}}
 
-[Check on Sam]
+[[Check on Sam]]
 
-[Give them space]
+[[Give them space]]
 
-[Check on Sam]:
+[[Check on Sam]]:
 You bring over their usual red-eye and slide into the seat across from them for a moment.
 
 "You okay?"
@@ -242,7 +242,7 @@ But they don't put their headphones back on, and you take that as a good sign.{{
 
 [[Closing time]]
 
-[Give them space]:
+[[Give them space]]:
 You leave the coffee and step away. Some people need space more than conversation.
 
 Sam catches your eye as you walk away and nods once—a small acknowledgment. They understand.
