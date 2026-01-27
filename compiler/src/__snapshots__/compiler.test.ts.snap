@@ -320,27 +320,25 @@ story.sections = {
         "text": "{{dec \\"patience\\"}}{{dec \\"patience\\"}}\\n\\n\\"You HAVE to open it! It's the MYSTERY BOX! The mystery is legally required to be resolved!\\"\\n\\nHank is sweating now.\\n\\n{{section \\"Open the box carefully\\"}}\\n"
     },
     "Audience Round": {
-        "text": "\\"THE AUDIENCE DECIDES!\\" Hank gestures grandly at the three people and cardboard cutout.\\n\\n\\"Audience members, what challenge should {{player_name}} face?\\"\\n\\nThe audience confers. One of them is asleep. The cardboard cutout offers no input.\\n\\nFinally, a woman in the front row shouts: \\"MAKE THEM {{random (array \\"SING\\" \\"DANCE\\" \\"DO AN IMPRESSION OF A BLENDER\\" \\"JUST GIVE THEM POINTS FOR FREE\\") set=\\"make_them\\"}}!\\"\\n\\n{{#if (eq make_them \\"SING\\")}}\\n\\"You heard her! SING, {{player_name}}! Sing like your points depend on it! Because they do!\\"\\n\\n- {{passage \\"Sing beautifully\\"}}\\n- {{passage \\"Sing terribly on purpose\\"}}\\n{{/if}}\\n\\n{{#if (eq make_them \\"DANCE\\")}}\\n\\"DANCE! Show us your moves!\\"\\n\\n- {{passage \\"Dance with enthusiasm\\"}}\\n- {{passage \\"Do the robot\\"}}\\n{{/if}}\\n\\n{{#if (eq make_them \\"DO AN IMPRESSION OF A BLENDER\\")}}\\n\\"A BLENDER! Do a blender impression! This is normal television!\\"\\n\\n- {{passage \\"WHIRRRRRR\\"}}\\n- {{passage \\"Refuse on grounds of dignity\\"}}\\n{{/if}}\\n\\n{{#if (eq make_them \\"JUST GIVE THEM POINTS FOR FREE\\")}}\\n\\"Free points?! That's not how—\\" Hank checks his cards. \\"Actually, that IS an option apparently.\\"\\n\\n{{inc \\"score\\" 150}}\\n{{#animate \\"toast\\"}}FREE POINTS!{{/animate}}\\n\\n\\"Well! That was anticlimactic! Moving on!\\"\\n\\n{{section \\"Next Round\\"}}\\n{{/if}}\\n",
-        "passages": {
-            "Sing beautifully": {
-                "text": "You belt out an operatic rendition of the show's theme song (which you're making up as you go).\\n\\nThe audience is moved. One of them wakes up specifically to applaud.\\n\\n{{inc \\"score\\" 150}}\\n{{#animate \\"toast\\"}}STANDING OVATION!{{/animate}}\\n\\n{{section \\"Next Round\\"}}\\n"
-            },
-            "Sing terribly on purpose": {
-                "text": "You screech like a cat in a tumble dryer. On purpose. For art.\\n\\n{{dec \\"patience\\"}}\\n\\nHank: \\"That was... that was really something. Moving on quickly.\\"\\n\\n{{inc \\"score\\" 25}}\\n\\n{{section \\"Next Round\\"}}\\n"
-            },
-            "Dance with enthusiasm": {
-                "text": "You dance like nobody's watching, except everyone is watching, and also there are cameras.\\n\\n{{inc \\"score\\" 125}}\\nThe cardboard cutout falls over again, but in an approving way.\\n\\n{{section \\"Next Round\\"}}\\n"
-            },
-            "Do the robot": {
-                "text": "You do the robot so convincingly that a stagehand tries to unplug you.\\n\\n{{inc \\"score\\" 100}}\\n{{#animate \\"toast\\"}}BEEP BOOP{{/animate}}\\n\\n{{section \\"Next Round\\"}}\\n"
-            },
-            "WHIRRRRRR": {
-                "text": "You spin around making blender noises. It's deeply unsettling.\\n\\n{{inc \\"score\\" 175}}\\n\\nProfessor Boom's voice echoes from below: \\"MAGNIFICENT!\\"\\n\\n{{section \\"Next Round\\"}}\\n"
-            },
-            "Refuse on grounds of dignity": {
-                "text": "\\"I'm not doing that.\\"\\n\\n{{dec \\"patience\\"}}\\n\\nHank: \\"Fair enough. Moving on with your dignity intact but your score unchanged.\\"\\n\\n{{section \\"Next Round\\"}}\\n"
-            }
-        }
+        "text": "\\"THE AUDIENCE DECIDES!\\" Hank gestures grandly at the three people and cardboard cutout.\\n\\n\\"Audience members, what challenge should {{player_name}} face?\\"\\n\\nThe audience confers. One of them is asleep. The cardboard cutout offers no input.\\n\\nFinally, a woman in the front row shouts: \\"MAKE THEM {{random (array \\"SING\\" \\"DANCE\\" \\"DO AN IMPRESSION OF A BLENDER\\" \\"JUST GIVE THEM POINTS FOR FREE\\") set=\\"make_them\\"}}!\\"\\n\\n{{#if (eq make_them \\"SING\\")}}\\n\\"You heard her! SING, {{player_name}}! Sing like your points depend on it! Because they do!\\"\\n\\n- {{section \\"Sing beautifully\\"}}\\n- {{section \\"Sing terribly on purpose\\"}}\\n{{/if}}\\n\\n{{#if (eq make_them \\"DANCE\\")}}\\n\\"DANCE! Show us your moves!\\"\\n\\n- {{section \\"Dance with enthusiasm\\"}}\\n- {{section \\"Do the robot\\"}}\\n{{/if}}\\n\\n{{#if (eq make_them \\"DO AN IMPRESSION OF A BLENDER\\")}}\\n\\"A BLENDER! Do a blender impression! This is normal television!\\"\\n\\n- {{section \\"WHIRRRRRR\\"}}\\n- {{section \\"Refuse on grounds of dignity\\"}}\\n{{/if}}\\n\\n{{#if (eq make_them \\"JUST GIVE THEM POINTS FOR FREE\\")}}\\n\\"Free points?! That's not how—\\" Hank checks his cards. \\"Actually, that IS an option apparently.\\"\\n\\n{{inc \\"score\\" 150}}\\n{{#animate \\"toast\\"}}FREE POINTS!{{/animate}}\\n\\n\\"Well! That was anticlimactic! Moving on!\\"\\n\\n{{section \\"Next Round\\"}}\\n{{/if}}\\n"
+    },
+    "Sing beautifully": {
+        "text": "You belt out an operatic rendition of the show's theme song (which you're making up as you go).\\n\\nThe audience is moved. One of them wakes up specifically to applaud.\\n\\n{{inc \\"score\\" 150}}\\n{{#animate \\"toast\\"}}STANDING OVATION!{{/animate}}\\n\\n{{section \\"Next Round\\"}}\\n"
+    },
+    "Sing terribly on purpose": {
+        "text": "You screech like a cat in a tumble dryer. On purpose. For art.\\n\\n{{dec \\"patience\\"}}\\n\\nHank: \\"That was... that was really something. Moving on quickly.\\"\\n\\n{{inc \\"score\\" 25}}\\n\\n{{section \\"Next Round\\"}}\\n"
+    },
+    "Dance with enthusiasm": {
+        "text": "You dance like nobody's watching, except everyone is watching, and also there are cameras.\\n\\n{{inc \\"score\\" 125}}\\nThe cardboard cutout falls over again, but in an approving way.\\n\\n{{section \\"Next Round\\"}}\\n"
+    },
+    "Do the robot": {
+        "text": "You do the robot so convincingly that a stagehand tries to unplug you.\\n\\n{{inc \\"score\\" 100}}\\n{{#animate \\"toast\\"}}BEEP BOOP{{/animate}}\\n\\n{{section \\"Next Round\\"}}\\n"
+    },
+    "WHIRRRRRR": {
+        "text": "You spin around making blender noises. It's deeply unsettling.\\n\\n{{inc \\"score\\" 175}}\\n\\nProfessor Boom's voice echoes from below: \\"MAGNIFICENT!\\"\\n\\n{{section \\"Next Round\\"}}\\n"
+    },
+    "Refuse on grounds of dignity": {
+        "text": "\\"I'm not doing that.\\"\\n\\n{{dec \\"patience\\"}}\\n\\nHank: \\"Fair enough. Moving on with your dignity intact but your score unchanged.\\"\\n\\n{{section \\"Next Round\\"}}\\n"
     },
     "Next Round": {
         "text": "{{#if (eq (length \\"availableRounds\\") 0)}}\\n{{section \\"Final Round\\"}}\\n{{else}}\\nHank shuffles his cards. \\"Alright, {{player_name}}, ready for round {{round}}?\\"\\n\\nThe wheel looms above you, creaking expectantly.\\n\\n{{section \\"Spin the wheel!\\"}}\\n{{/if}}\\n",
@@ -349,18 +347,16 @@ story.sections = {
         ]
     },
     "Final Round": {
-        "text": "The studio lights go RED. Dramatic music plays (someone is humming aggressively in the background).\\n\\n{{#animate \\"typewriter\\"}}THE FINAL ROUND{{/animate}}\\n\\n\\"This is it, {{player_name}}! The FINAL ROUND!\\" Hank is vibrating with excitement or possibly caffeine.\\n\\n\\"You have {{score}} points! But this last question is worth... {{#animate \\"toast\\"}}DOUBLE OR NOTHING!{{/animate}}\\"\\n\\nThe audience gasps. The cardboard cutout gasps (the AC kicked in).\\n\\n\\"Here is your FINAL QUESTION:\\"\\n\\n{{#animate \\"typewriter\\"}}**What is the name of your host?**{{/animate}}\\n\\n{{passage \\"Hank Spinneroni\\"}}\\n{{passage \\"Chuck Wheelsworth\\"}}\\n{{passage \\"I genuinely don't remember\\"}}\\n",
-        "passages": {
-            "Hank Spinneroni": {
-                "text": "\\"CORRECT! I AM HANK SPINNERONI! Probably!\\"\\n\\n{{set \\"score\\" (score * 2)}}\\n{{#animate \\"toast\\"}}SCORE DOUBLED!{{/animate}}\\n\\n{{section \\"Ending\\"}}\\n"
-            },
-            "Chuck Wheelsworth": {
-                "text": "\\"That was my FIRST name! The WRONG first name! But you remembered SOMETHING!\\"\\n\\n{{inc \\"score\\" 50}}\\n\\n\\"Close enough! I'll allow it because I'm tired!\\"\\n\\n{{section \\"Ending\\"}}\\n"
-            },
-            "I genuinely don't remember": {
-                "text": "{{#if (lte patience 1)}}\\nHank stares at you. A vein throbs in his forehead.\\n\\n\\"It's... it's HANK. My name is HANK. I said it at the START.\\"\\n\\nHe takes a deep breath.\\n\\n\\"You know what? You still win. I just want to go home.\\"\\n\\n{{inc \\"score\\" 25}}\\n{{else}}\\nHank laughs. \\"Honestly? I respect the honesty!\\"\\n\\n{{inc \\"score\\" 75}}\\n\\n\\"The real prize was the confusion we shared along the way!\\"\\n{{/if}}\\n\\n{{section \\"Ending\\"}}\\n"
-            }
-        }
+        "text": "The studio lights go RED. Dramatic music plays (someone is humming aggressively in the background).\\n\\n{{#animate \\"typewriter\\"}}THE FINAL ROUND{{/animate}}\\n\\n\\"This is it, {{player_name}}! The FINAL ROUND!\\" Hank is vibrating with excitement or possibly caffeine.\\n\\n\\"You have {{score}} points! But this last question is worth... {{#animate \\"toast\\"}}DOUBLE OR NOTHING!{{/animate}}\\"\\n\\nThe audience gasps. The cardboard cutout gasps (the AC kicked in).\\n\\n\\"Here is your FINAL QUESTION:\\"\\n\\n{{#animate \\"typewriter\\"}}**What is the name of your host?**{{/animate}}\\n\\n- {{section \\"Hank Spinneroni\\"}}\\n- {{section \\"Chuck Wheelsworth\\"}}\\n- {{section \\"I genuinely don't remember\\"}}\\n"
+    },
+    "Hank Spinneroni": {
+        "text": "\\"CORRECT! I AM HANK SPINNERONI! Probably!\\"\\n\\n{{inc \\"score\\" score}}\\n{{#animate \\"toast\\"}}SCORE DOUBLED!{{/animate}}\\n\\n{{section \\"Ending\\"}}\\n"
+    },
+    "Chuck Wheelsworth": {
+        "text": "\\"That was my FIRST name! The WRONG first name! But you remembered SOMETHING!\\"\\n\\n{{inc \\"score\\" 50}}\\n\\n\\"Close enough! I'll allow it because I'm tired!\\"\\n\\n{{section \\"Ending\\"}}\\n"
+    },
+    "I genuinely don't remember": {
+        "text": "{{#if (lte patience 1)}}\\nHank stares at you. A vein throbs in his forehead.\\n\\n\\"It's... it's HANK. My name is HANK. I said it at the START.\\"\\n\\nHe takes a deep breath.\\n\\n\\"You know what? You still win. I just want to go home.\\"\\n\\n{{inc \\"score\\" 25}}\\n{{else}}\\nHank laughs. \\"Honestly? I respect the honesty!\\"\\n\\n{{inc \\"score\\" 75}}\\n\\n\\"The real prize was the confusion we shared along the way!\\"\\n{{/if}}\\n\\n{{section \\"Ending\\"}}\\n"
     },
     "Ending": {
         "text": "{{#if (gte score 500)}}\\n{{#animate \\"toast\\"}}GRAND CHAMPION!{{/animate}}\\n\\nBalloons fall from the ceiling. Confetti explodes. Professor Boom emerges to set off celebratory fireworks (indoors, against regulations).\\n\\n\\"{{player_name}}, you are our GRAND CHAMPION with {{score}} points!\\"\\n\\nHank hands you an oversized novelty check. It bounces.\\n\\n\\"Congratulations! You've won fame, glory, and whatever prizes we can legally give you after the lawyers review the footage!\\"\\n\\nThe audience carries you out on their shoulders. The cardboard cutout leads the parade.\\n\\n**THE END — GRAND CHAMPION**\\n{{else}}\\n{{#if (gte score 200)}}\\n{{#animate \\"toast\\"}}WINNER!{{/animate}}\\n\\n\\"{{player_name}}, you finished with {{score}} points! That's... that's actually pretty good!\\"\\n\\nHank shakes your hand. \\"You've won a lovely parting gift!\\"\\n\\nA stagehand hands you a gift basket containing: one (1) cheese, a coupon for 10% off at a store that closed in 2019, and a sincere thank-you note from Hank.\\n\\n\\"Come back anytime! Assuming we're not cancelled by then!\\"\\n\\n**THE END — WINNER**\\n{{else}}\\n\\"{{player_name}}... you finished with {{score}} points.\\"\\n\\nHank looks at his cards. Looks at you. Looks at the audience.\\n\\n\\"You know what? You showed up. You tried. And in the end, isn't that what matters?\\"\\n\\n{{embed \\"catchphrase\\"}}\\n\\n\\"No, actually, points are what matter. But good effort!\\"\\n\\nHe hands you a single balloon. It's already deflating.\\n\\n**THE END — PARTICIPANT**\\n{{/if}}\\n{{/if}}\\n"
