@@ -1,6 +1,6 @@
 {
   "name": "@textadventures/squiffy-cli",
-  "version": "6.0.0-alpha.20",
+  "version": "6.0.0-beta.0",
   "publishConfig": {
     "access": "public"
   },
@@ -30,12 +30,12 @@
     "squiffy-packager": "dist/squiffy.js"
   },
   "dependencies": {
-    "@textadventures/squiffy-packager": "^6.0.0-alpha.20",
+    "@textadventures/squiffy-packager": "^6.0.0-beta.0",
     "finalhandler": "^2.1.0",
     "glob": "^11.0.3",
     "serve-static": "^2.2.0",
-    "squiffy-compiler": "^6.0.0-alpha.20",
-    "squiffy-runtime": "^6.0.0-alpha.20",
+    "squiffy-compiler": "^6.0.0-beta.0",
+    "squiffy-runtime": "^6.0.0-beta.0",
     "yargs": "^18.0.0"
   },
   "devDependencies": {
