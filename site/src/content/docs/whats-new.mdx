@@ -46,7 +46,8 @@ v6 introduces some new Handlebars helpers:
 Use `{{#live}}` to display text that automatically updates when an attribute changes:
 
 ```
-You have {{#live}}{{score}}{{/live}} points.
+@set score = 0
+You have {{live "score"}} points.
 
 [[Get points]](, score+=10)
 ```
