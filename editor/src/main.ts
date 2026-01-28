@@ -132,9 +132,9 @@ const populateTextBlocksSettings = function () {
     list.querySelectorAll(".delete-block").forEach(btn => {
         btn.addEventListener("click", (e) => {
             const name = (e.currentTarget as HTMLElement).dataset.name!;
-            let blocks = userSettings.getTextBlocks();
-            blocks = blocks.filter((b: userSettings.TextBlock) => b.name !== name);
-            userSettings.setTextBlocks(blocks);
+            const blocks = userSettings.getTextBlocks(); // Lint fix: const
+            const filteredBlocks = blocks.filter((b: userSettings.TextBlock) => b.name !== name); // Lint fix: separate variable
+            userSettings.setTextBlocks(filteredBlocks);
             populateTextBlocksSettings();
             populateInsertMenu();
         });
@@ -146,7 +146,7 @@ const addTextBlock = function () {
     const contentInput = el<HTMLTextAreaElement>("new-block-content");
     if (!nameInput.value || !contentInput.value) return;
 
-    let blocks = userSettings.getTextBlocks();
+    const blocks = userSettings.getTextBlocks(); // Lint fix: const
     const existingIndex = blocks.findIndex((b: userSettings.TextBlock) => b.name === nameInput.value);
 
     if (existingIndex !== -1) {
@@ -159,7 +159,6 @@ const addTextBlock = function () {
 
     populateTextBlocksSettings();
     populateInsertMenu();
-    // Keep the content visible as requested
 };
 
 const populateInsertMenu = function () {
@@ -239,7 +238,7 @@ const downloadInlineHtml = async function () {
     const result = await compile(true);
 
     if (result.success) {
-        const pkg = await createPackage(result, { inlineHtml: true });
+        const pkg = await createPackage(result, false);
         downloadString(pkg.files["index.html"], (title || "story") + ".html");
     }
 };
@@ -888,7 +887,7 @@ const init = async function () {
                     el<HTMLElement>("save").click();
                 }
                 break;
-            default:
+            default: {
                 const digitMatch = e.code.match(/Digit(\d)/);
                 if (e.shiftKey && digitMatch) {
                     const slot = digitMatch[1];
@@ -900,6 +899,7 @@ const init = async function () {
                     }
                 }
                 break;
+            }
         }
     });
 
