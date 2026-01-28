@@ -14,73 +14,113 @@
     <div id="squiffy-editor" class="d-flex flex-column vh-100">
         <div class="p-1 border-bottom">
             <span class="dropdown">
-                <button id="file" class="btn btn-primary dropdown-toggle"
-                    data-bs-toggle="dropdown" aria-expanded="false">
+                <button id="file" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown"
+                    aria-expanded="false">
                     File
                 </button>
                 <ul class="dropdown-menu">
                     <li><button class="dropdown-item" id="file-new">New</button></li>
-                    <li><button class="dropdown-item d-flex justify-content-between" id="open">Open... <span class="text-muted ms-3 shortcut-key"></span></button></li>
-                    <li><button class="dropdown-item d-flex justify-content-between" id="save">Save <span class="text-muted ms-3 shortcut-key"></span></button></li>
-                    <li><button class="dropdown-item d-flex justify-content-between" id="save-as">Save as... <span class="text-muted ms-3 shortcut-key"></span></button></li>
-                    <li><hr class="dropdown-divider"></li>
+                    <li><button class="dropdown-item d-flex justify-content-between" id="open">Open... <span
+                                class="text-muted ms-3 shortcut-key"></span></button></li>
+                    <li><button class="dropdown-item d-flex justify-content-between" id="save">Save <span
+                                class="text-muted ms-3 shortcut-key"></span></button></li>
+                    <li><button class="dropdown-item d-flex justify-content-between" id="save-as">Save as... <span
+                                class="text-muted ms-3 shortcut-key"></span></button></li>
+                    <li>
+                        <hr class="dropdown-divider">
+                    </li>
                     <li><button class="dropdown-item" id="settings">Settings...</button></li>
                     <li><button class="dropdown-item" id="show-welcome">Welcome Screen...</button></li>
-                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <hr class="dropdown-divider">
+                    </li>
                     <li><button class="dropdown-item" id="download-squiffy-script">Download Squiffy script</button></li>
                     <li><button class="dropdown-item" id="export-html-js">Export HTML and JavaScript</button></li>
                     <li><button class="dropdown-item" id="export-html-inline">Export HTML (single file)</button></li>
                     <li><button class="dropdown-item" id="export-js">Export JavaScript only</button></li>
                 </ul>
             </span>
+            </span>
 
             <span class="dropdown">
-                <button id="edit-dropdown" class="btn btn-outline-primary dropdown-toggle"
-                        data-bs-toggle="dropdown" aria-expanded="false">
+                <button id="edit-dropdown" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown"
+                    aria-expanded="false">
                     Edit
                 </button>
                 <ul class="dropdown-menu">
                     <li><button class="dropdown-item" id="edit-undo">Undo</button></li>
                     <li><button class="dropdown-item" id="edit-redo">Redo</button></li>
-                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <hr class="dropdown-divider">
+                    </li>
                     <li><button class="dropdown-item" id="edit-cut">Cut</button></li>
                     <li><button class="dropdown-item" id="edit-copy">Copy</button></li>
                     <li><button class="dropdown-item" id="edit-paste">Paste</button></li>
-                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <hr class="dropdown-divider">
+                    </li>
                     <li><button class="dropdown-item" id="edit-select-all">Select all</button></li>
-                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <hr class="dropdown-divider">
+                    </li>
                     <li><button class="dropdown-item" id="edit-find">Find</button></li>
                     <li><button class="dropdown-item" id="edit-replace">Replace</button></li>
                 </ul>
             </span>
 
             <span class="dropdown">
-                <button id="help-dropdown" class="btn btn-outline-primary dropdown-toggle"
-                        data-bs-toggle="dropdown" aria-expanded="false">
+                <button id="help-dropdown" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown"
+                    aria-expanded="false">
                     Help
                 </button>
                 <ul class="dropdown-menu">
                     <li><button class="dropdown-item" id="help-docs">Documentation</button></li>
                     <li><button class="dropdown-item" id="help-examples">Examples</button></li>
                     <li><button class="dropdown-item" id="help-report-issue">Report an Issue</button></li>
-                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <hr class="dropdown-divider">
+                    </li>
                     <li><button class="dropdown-item" id="help-github">GitHub Repository</button></li>
                     <li><button class="dropdown-item" id="help-discord">Discord Community</button></li>
-                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <hr class="dropdown-divider">
+                    </li>
                     <li><button class="dropdown-item" id="help-about">About Squiffy</button></li>
                 </ul>
             </span>
 
             <button id="preview" class="btn btn-outline-primary"><i class="bi bi-eye-fill"></i> Preview</button>
-            <button id="add-section" class="btn btn-outline-dark">Add section</button>
-            <button id="add-passage" class="btn btn-outline-dark">Add passage</button>
-            <button id="collapse-all" class="btn btn-outline-dark" data-bs-toggle="tooltip" title="Collapse all sections and passages"><i class="bi bi-arrows-collapse"></i></button>
-            <button id="uncollapse-all" class="btn btn-outline-dark" data-bs-toggle="tooltip" title="Expand all sections and passages"><i class="bi bi-arrows-expand"></i></button>
-            <span id="unsaved-indicator" class="badge bg-warning text-dark ms-2" style="display: none;"><i class="bi bi-pencil-fill"></i> Unsaved changes</span>
+            <span class="dropdown">
+                <button id="add-dropdown" class="btn btn-outline-dark dropdown-toggle" data-bs-toggle="dropdown"
+                    aria-expanded="false">
+                    Add ...
+                </button>
+                <ul class="dropdown-menu">
+                    <li><button class="dropdown-item" id="add-section">Section</button></li>
+                    <li><button class="dropdown-item" id="add-passage">Passage</button></li>
+                    <li id="insert-block-divider">
+                        <hr class="dropdown-divider">
+                    </li>
+                    <li id="insert-block-header">
+                        <h6 class="dropdown-header">Add Block ...</h6>
+                    </li>
+                    <div id="insert-block-menu">
+                        <li><button class="dropdown-item disabled">No text blocks defined</button></li>
+                    </div>
+                </ul>
+            </span>
+            <button id="collapse-all" class="btn btn-outline-dark" data-bs-toggle="tooltip"
+                title="Collapse all sections and passages"><i class="bi bi-arrows-collapse"></i></button>
+            <button id="uncollapse-all" class="btn btn-outline-dark" data-bs-toggle="tooltip"
+                title="Expand all sections and passages"><i class="bi bi-arrows-expand"></i></button>
+            <span id="unsaved-indicator" class="badge bg-warning text-dark ms-2" style="display: none;"><i
+                    class="bi bi-pencil-fill"></i> Unsaved changes</span>
             <div style="float: right">
                 <button id="back" class="btn btn-outline-success"><i class="bi bi-box-arrow-in-left"></i> Back</button>
-                <button id="restart" class="btn btn-outline-success"><i class="bi bi-arrow-clockwise"></i> Restart</button>
-                <button id="mobile-pane-toggle" class="btn btn-outline-secondary d-md-none" data-bs-toggle="tooltip" title="Toggle Code/Preview">
+                <button id="restart" class="btn btn-outline-success"><i class="bi bi-arrow-clockwise"></i>
+                    Restart</button>
+                <button id="mobile-pane-toggle" class="btn btn-outline-secondary d-md-none" data-bs-toggle="tooltip"
+                    title="Toggle Code/Preview">
                     <i class="bi bi-eye-fill" id="toggle-icon-preview"></i>
                     <i class="bi bi-code-slash d-none" id="toggle-icon-code"></i>
                     <span id="toggle-label">Preview</span>
@@ -118,8 +158,43 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <label for="font-size" class="form-label">Font Size</label>
-                    <input type="number" class="form-control" id="font-size" />
+                    <div class="mb-3">
+                        <label for="font-size" class="form-label">Font Size</label>
+                        <input type="number" class="form-control" id="font-size" />
+                    </div>
+                    <hr>
+                    <h6>Text Blocks</h6>
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Content</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="text-blocks-list">
+                        </tbody>
+                    </table>
+                    <div class="mb-2">
+                        <label for="new-block-name" class="form-label">Slot</label>
+                        <select id="new-block-name" class="form-select">
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                            <option value="7">7</option>
+                            <option value="8">8</option>
+                            <option value="9">9</option>
+                            <option value="0">0</option>
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label for="new-block-content" class="form-label">Content</label>
+                        <textarea id="new-block-content" class="form-control" rows="3" placeholder="Content"></textarea>
+                    </div>
+                    <button class="btn btn-primary w-100" id="add-text-block">Save to Slot</button>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -133,14 +208,16 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Welcome to Squiffy</h5>
-                    <button type="button" class="btn-close" id="welcome-close" data-bs-dismiss="modal" aria-label="Close" style="display: none;"></button>
+                    <button type="button" class="btn-close" id="welcome-close" data-bs-dismiss="modal"
+                        aria-label="Close" style="display: none;"></button>
                 </div>
                 <div class="modal-body text-center">
                     <img src="/squiffy.png" alt="Squiffy Logo" class="mb-4" style="max-width: 200px;">
                     <div class="alert alert-danger" id="welcome-error" style="display: none;" role="alert"></div>
                     <div class="alert alert-info" id="welcome-update-available" style="display: none;" role="alert">
                         <i class="bi bi-arrow-repeat"></i> A new version of Squiffy is available.
-                        <button type="button" class="btn btn-sm btn-info ms-2" id="welcome-update-button">Update now</button>
+                        <button type="button" class="btn btn-sm btn-info ms-2" id="welcome-update-button">Update
+                            now</button>
                     </div>
                     <div class="d-grid gap-3">
                         <button type="button" class="btn btn-primary btn-lg" id="welcome-create-new">
@@ -210,7 +287,8 @@
                     <p class="small">
                         <a href="https://github.com/textadventures/squiffy" target="_blank" rel="noopener">GitHub</a>
                         •
-                        <a href="https://github.com/textadventures/squiffy/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
+                        <a href="https://github.com/textadventures/squiffy/blob/main/LICENSE" target="_blank"
+                            rel="noopener">MIT License</a>
                     </p>
                 </div>
                 <div class="modal-footer">

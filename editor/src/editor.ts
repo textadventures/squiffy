@@ -67,3 +67,4 @@ export const selectAll = () => editor.selection.selectAll();
 export const find = () => editor.execCommand("find");
 export const replace = () => editor.execCommand("replace");
 export const resize = () => editor.resize();
+export const insertText = (text: string) => editor.insert(text);

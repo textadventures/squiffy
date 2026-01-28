@@ -55,7 +55,7 @@ function onClick(id: string, fn: () => void) {
 const populateSettingsDialog = function () {
     const fontSizeElement = el<HTMLFormElement>("font-size");
     if (!fontSizeElement) return;
-    
+
     fontSizeElement.value = userSettings.getFontSize();
     fontSizeElement.addEventListener("change", () => {
         let val = fontSizeElement.value;
@@ -63,6 +63,140 @@ const populateSettingsDialog = function () {
         editor.setFontSize(val);
         userSettings.setFontSize(val);
         fontSizeElement.value = val;
+    });
+
+    const slotDropdown = el<HTMLSelectElement>("new-block-name");
+    slotDropdown.addEventListener("change", () => {
+        updateSlotContent();
+    });
+
+    populateTextBlocksSettings();
+    updateSlotContent();
+};
+
+const updateSlotContent = function () {
+    const slotDropdown = el<HTMLSelectElement>("new-block-name");
+    const contentInput = el<HTMLTextAreaElement>("new-block-content");
+    const blocks = userSettings.getTextBlocks();
+    const block = blocks.find((b: userSettings.TextBlock) => b.name === slotDropdown.value);
+    contentInput.value = block ? block.content : "";
+};
+
+const populateTextBlocksSettings = function () {
+    const list = el<HTMLElement>("text-blocks-list");
+    if (!list) return;
+    list.innerHTML = "";
+    const blocks = userSettings.getTextBlocks();
+    // Sort blocks by name (which is the slot number)
+    blocks.sort((a: userSettings.TextBlock, b: userSettings.TextBlock) => {
+        const aNum = a.name === "0" ? 10 : parseInt(a.name);
+        const bNum = b.name === "0" ? 10 : parseInt(b.name);
+        return aNum - bNum;
+    });
+
+    blocks.forEach((block: userSettings.TextBlock) => {
+        const row = document.createElement("tr");
+        row.style.cursor = "pointer";
+
+        const nameCell = document.createElement("td");
+        nameCell.className = "block-data";
+        nameCell.textContent = block.name;
+
+        const contentCell = document.createElement("td");
+        contentCell.className = "block-data text-truncate";
+        contentCell.style.maxWidth = "250px";
+        contentCell.textContent = block.content.replace(/\n/g, " ");
+
+        const actionCell = document.createElement("td");
+        const deleteBtn = document.createElement("button");
+        deleteBtn.className = "btn btn-sm btn-danger delete-block";
+        deleteBtn.dataset.name = block.name;
+        deleteBtn.innerHTML = '<i class="bi bi-trash"></i>';
+        actionCell.appendChild(deleteBtn);
+
+        row.appendChild(nameCell);
+        row.appendChild(contentCell);
+        row.appendChild(actionCell);
+
+        list.appendChild(row);
+
+        row.querySelectorAll(".block-data").forEach(cell => {
+            cell.addEventListener("click", () => {
+                const slotDropdown = el<HTMLSelectElement>("new-block-name");
+                slotDropdown.value = block.name;
+                updateSlotContent();
+            });
+        });
+    });
+
+    list.querySelectorAll(".delete-block").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+            const name = (e.currentTarget as HTMLElement).dataset.name!;
+            let blocks = userSettings.getTextBlocks();
+            blocks = blocks.filter((b: userSettings.TextBlock) => b.name !== name);
+            userSettings.setTextBlocks(blocks);
+            populateTextBlocksSettings();
+            populateInsertMenu();
+        });
+    });
+};
+
+const addTextBlock = function () {
+    const nameInput = el<HTMLSelectElement>("new-block-name");
+    const contentInput = el<HTMLTextAreaElement>("new-block-content");
+    if (!nameInput.value || !contentInput.value) return;
+
+    let blocks = userSettings.getTextBlocks();
+    const existingIndex = blocks.findIndex((b: userSettings.TextBlock) => b.name === nameInput.value);
+
+    if (existingIndex !== -1) {
+        blocks[existingIndex].content = contentInput.value;
+    } else {
+        blocks.push({ name: nameInput.value, content: contentInput.value });
+    }
+
+    userSettings.setTextBlocks(blocks);
+
+    populateTextBlocksSettings();
+    populateInsertMenu();
+    // Keep the content visible as requested
+};
+
+const populateInsertMenu = function () {
+    const menu = el<HTMLElement>("insert-block-menu");
+    if (!menu) return;
+    menu.innerHTML = "";
+    const blocks = userSettings.getTextBlocks();
+    const divider = el<HTMLElement>("insert-block-divider");
+    const header = el<HTMLElement>("insert-block-header");
+
+    if (blocks.length === 0) {
+        if (divider) divider.style.display = "none";
+        if (header) header.style.display = "none";
+        menu.style.display = "none";
+        return;
+    }
+
+    if (divider) divider.style.display = "block";
+    if (header) header.style.display = "block";
+    menu.style.display = "block";
+
+    blocks.sort((a: userSettings.TextBlock, b: userSettings.TextBlock) => {
+        const aNum = a.name === "0" ? 10 : parseInt(a.name);
+        const bNum = b.name === "0" ? 10 : parseInt(b.name);
+        return aNum - bNum;
+    });
+
+    blocks.forEach((block: userSettings.TextBlock) => {
+        const li = document.createElement("li");
+        const btn = document.createElement("button");
+        btn.className = "dropdown-item";
+        btn.textContent = block.name;
+        btn.addEventListener("click", () => {
+            editor.insertText(block.content);
+        });
+        li.appendChild(btn);
+        menu.appendChild(li);
     });
 };
 
@@ -345,7 +479,7 @@ const editorChange = async function () {
     }, 50);
 
     clearDebugger();
-    
+
     if (squiffyApi) {
         const result = await compile(false);
 
@@ -593,7 +727,9 @@ const populateShortcutKeys = function () {
 const init = async function () {
     userSettings.initUserSettings();
     populateSettingsDialog();
+    populateInsertMenu();
     populateShortcutKeys();
+    onClick("add-text-block", addTextBlock);
 
     // Register service worker and set up update detection
     onUpdateAvailable(() => {
@@ -752,6 +888,18 @@ const init = async function () {
                     el<HTMLElement>("save").click();
                 }
                 break;
+            default:
+                const digitMatch = e.code.match(/Digit(\d)/);
+                if (e.shiftKey && digitMatch) {
+                    const slot = digitMatch[1];
+                    const blocks = userSettings.getTextBlocks();
+                    const block = blocks.find((b: userSettings.TextBlock) => b.name === slot);
+                    if (block) {
+                        e.preventDefault();
+                        editor.insertText(block.content);
+                    }
+                }
+                break;
         }
     });
 
@@ -759,13 +907,13 @@ const init = async function () {
     await showWelcome();
 };
 
-const setBackButtonEnabled = function(enabled: boolean) {
+const setBackButtonEnabled = function (enabled: boolean) {
     const backButton = el<HTMLButtonElement>("back");
     if (!backButton) return;
     backButton.disabled = !enabled;
 };
 
-const onCanGoBackChanged : SquiffyEventHandler<"canGoBackChanged"> = function (p) {
+const onCanGoBackChanged: SquiffyEventHandler<"canGoBackChanged"> = function (p) {
     setBackButtonEnabled(p.canGoBack);
 };
 
@@ -776,7 +924,7 @@ const onSet = function (attribute: string, value: string) {
     logToDebugger(`${attribute} = ${value}`);
 };
 
-const compile = async function(forExportPackage: boolean) {
+const compile = async function (forExportPackage: boolean) {
     const script = editor.getValue();
     const warnings: string[] = [];
 
