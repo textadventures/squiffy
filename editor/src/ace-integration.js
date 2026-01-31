@@ -81,7 +81,7 @@ export const init = () => {
                     },
                     {
                         token: "string",
-                        regex: /\{\{(.*)\}\}/
+                        regex: /\{\{.*?\}\}/
                     },
                     {
                         token: "support.other",
@@ -96,6 +96,10 @@ export const init = () => {
             };
 
             this.embedRules(JsHighlightRules, "js-", [{
+                token: "empty",
+                regex: /^(?!\t| {4})/,
+                next: "start"
+            }, {
                 token: "keyword",
                 regex: "$",
                 next: "start"
