@@ -23,5 +23,8 @@
   },
   "license": "MIT",
   "bin": "./squiffy.js",
-  "preferGlobal": true
+  "preferGlobal": true,
+  "scripts": {
+    "start": "node server.js"
+  }
 }
