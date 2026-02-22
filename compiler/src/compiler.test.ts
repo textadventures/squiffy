@@ -309,6 +309,93 @@ This is the only section.
     expect(nextSectionWarning).toContain("no following section exists");
 });
 
+test("Snippet block is stripped from compiled output", async () => {
+    const script = `
+[snippet: Heal player]:
+{{set "health" (+ (get "health") 1)}}
+
+[[intro]]:
+Normal section content here.
+`;
+
+    const result = await compile({
+        scriptBaseFilename: "test.squiffy",
+        script: script,
+    });
+
+    assertSuccess(result);
+    // No section called "snippet: Heal player" should exist
+    expect(Object.keys(result.output.story.sections)).not.toContain("snippet: Heal player");
+    expect(Object.keys(result.output.story.sections)).toContain("intro");
+    // Snippet content should not appear in compiled output
+    expect(result.output.story.sections.intro.text).not.toContain("health");
+});
+
+test("Text after snippet block compiles correctly", async () => {
+    const script = `
+[[start]]:
+Start content.
+
+[snippet: My snippet]:
+snippet content here
+
+[[next]]:
+Next content.
+`;
+
+    const result = await compile({
+        scriptBaseFilename: "test.squiffy",
+        script: script,
+    });
+
+    assertSuccess(result);
+    expect(Object.keys(result.output.story.sections)).toEqual(["start", "next"]);
+    expect(result.output.story.sections.start.text).toBe("Start content.\n");
+    expect(result.output.story.sections.next.text).toBe("Next content.\n");
+});
+
+test("Snippet between two sections doesn't affect either section", async () => {
+    const script = `
+[[section1]]:
+Content of section 1.
+
+[snippet: My snippet]:
+This should be ignored.
+
+[[section2]]:
+Content of section 2.
+`;
+
+    const result = await compile({
+        scriptBaseFilename: "test.squiffy",
+        script: script,
+    });
+
+    assertSuccess(result);
+    expect(Object.keys(result.output.story.sections)).toEqual(["section1", "section2"]);
+    expect(result.output.story.sections.section1.text).toBe("Content of section 1.\n");
+    expect(result.output.story.sections.section2.text).toBe("Content of section 2.\n");
+});
+
+test("Snippet at end of file compiles cleanly", async () => {
+    const script = `
+[[intro]]:
+Introduction here.
+
+[snippet: Trailing snippet]:
+This content should be ignored.
+`;
+
+    const result = await compile({
+        scriptBaseFilename: "test.squiffy",
+        script: script,
+    });
+
+    assertSuccess(result);
+    expect(Object.keys(result.output.story.sections)).toEqual(["intro"]);
+    expect(result.output.story.sections.intro.text).toBe("Introduction here.\n");
+});
+
 test("No warning when section name contains a comma", async () => {
     const script = `
 [[start]]:

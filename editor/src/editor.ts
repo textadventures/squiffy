@@ -41,8 +41,8 @@ export const replaceLine = (line: number, text: string) => {
     editor.session.replace(range, text);
 };
 
-export const collapseAll = () => editor.session.foldAll();
-export const uncollapseAll = () => editor.session.unfold(null, true);
+export const collapseAll = () => { editor.session.foldAll(); editor.focus(); };
+export const uncollapseAll = () => { editor.session.unfold(null, true); editor.focus(); };
 
 export const moveTo = function (row: number, column?: number) {
     column = column || 0;
@@ -52,9 +52,9 @@ export const moveTo = function (row: number, column?: number) {
     editor.focus();
 };
 
-export const undo = () => editor.undo();
-export const redo = () => editor.redo();
-export const cut = () => editor.execCommand("cut");
+export const undo = () => { editor.undo(); editor.focus(); };
+export const redo = () => { editor.redo(); editor.focus(); };
+export const cut = () => { editor.execCommand("cut"); editor.focus(); };
 export const copy = async () => {
     const text = editor.getCopyText();
     await navigator.clipboard.writeText(text);
@@ -62,8 +62,10 @@ export const copy = async () => {
 export const paste = async () => {
     const text = await navigator.clipboard.readText();
     editor.insert(text);
+    editor.focus();
 };
-export const selectAll = () => editor.selection.selectAll();
+export const selectAll = () => { editor.selection.selectAll(); editor.focus(); };
 export const find = () => editor.execCommand("find");
 export const replace = () => editor.execCommand("replace");
 export const resize = () => editor.resize();
+export const insert = (text: string) => { editor.insert(text); editor.focus(); };

@@ -307,10 +307,10 @@ ul.dropdown-menu a {
     }
 }
 
-/* Hide add section/passage buttons at narrower widths */
+/* Hide add and snippets dropdowns at narrower widths */
 @media (max-width: 590px) {
-    #add-section,
-    #add-passage {
+    #add-dropdown,
+    #snippets-dropdown {
         display: none !important;
     }
 }
@@ -373,9 +373,11 @@ ul.dropdown-menu a {
         display: inline-block !important;
     }
 
-    /* Hide Add section/passage when viewing preview */
-    .mobile-show-preview #add-section,
-    .mobile-show-preview #add-passage {
+    /* Hide Add, Snippets, Edit and Help dropdowns when viewing preview */
+    .mobile-show-preview #add-dropdown,
+    .mobile-show-preview #snippets-dropdown,
+    .mobile-show-preview #edit-dropdown,
+    .mobile-show-preview #help-dropdown {
         display: none !important;
     }
 }

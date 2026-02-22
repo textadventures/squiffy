@@ -72,8 +72,23 @@
             </span>
 
             <button id="preview" class="btn btn-outline-primary"><i class="bi bi-eye-fill"></i> Preview</button>
-            <button id="add-section" class="btn btn-outline-dark">Add section</button>
-            <button id="add-passage" class="btn btn-outline-dark">Add passage</button>
+            <span class="dropdown" id="add-dropdown">
+                <button class="btn btn-outline-dark dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    Add
+                </button>
+                <ul class="dropdown-menu">
+                    <li><button class="dropdown-item" id="add-section">Section</button></li>
+                    <li><button class="dropdown-item" id="add-passage">Passage</button></li>
+                </ul>
+            </span>
+            <span class="dropdown" id="snippets-dropdown">
+                <button id="snippets-btn" class="btn btn-outline-dark dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    Snippets
+                </button>
+                <ul class="dropdown-menu" id="snippets-menu">
+                    <!-- populated by JS -->
+                </ul>
+            </span>
             <button id="collapse-all" class="btn btn-outline-dark" data-bs-toggle="tooltip" title="Collapse all sections and passages"><i class="bi bi-arrows-collapse"></i></button>
             <button id="uncollapse-all" class="btn btn-outline-dark" data-bs-toggle="tooltip" title="Expand all sections and passages"><i class="bi bi-arrows-expand"></i></button>
             <span id="unsaved-indicator" class="badge bg-warning text-dark ms-2" style="display: none;"><i class="bi bi-pencil-fill"></i> Unsaved changes</span>

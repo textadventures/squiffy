@@ -170,6 +170,7 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
 
     const regexes: Record<string, RegExp> = {
         section: /^\[\[(.*)\]\]:$/,
+        snippet: /^\[snippet:\s*(.+)\]:$/,
         passage: /^\[(.*)\]:$/,
         title: /^@title (.*)$/,
         import: /^@import (.*)$/,
@@ -191,6 +192,7 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         let passage = null as Passage | null;   // annotated differently to section, as a workaround for TypeScript "Property does not exist on type never"
         let textStarted = false;
         let inUiBlock = false;
+        let inSnippet = false;
         const ensureThisSectionExists = () => {
             return ensureSectionExists(section, isFirst, inputFilename, lineCount);
         };
@@ -217,10 +219,20 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
                 }
             }
 
-            if (match.section) {
+            if (match.snippet) {
+                inSnippet = true;
+                section = null;
+                passage = null;
+                textStarted = false;
+            }
+            else if (match.section) {
+                inSnippet = false;
                 section = story.addSection(match.section[1], inputFilename, lineCount);
                 passage = null;
                 textStarted = false;
+            }
+            else if (inSnippet) {
+                // skip all content inside snippet blocks
             }
             else if (match.passage) {
                 if (!section) {
