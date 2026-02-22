@@ -18,6 +18,7 @@ import initialScript from "./init.squiffy?raw";
 import { clearDebugger, logToDebugger } from "./debugger.ts";
 import { el, downloadString, downloadUint8Array, getVersionString } from "./util.ts";
 import { registerServiceWorker, onUpdateAvailable, applyUpdate } from "./sw-registration.ts";
+import { builtInSnippets } from "./snippets.ts";
 
 Object.assign(window, { $: $, jQuery: $ });
 
@@ -35,9 +36,15 @@ interface Passage {
     end?: number;
 }
 
+interface UserSnippet {
+    name: string;
+    content: string;
+}
+
 let title: string | undefined;
 let loading: boolean;
 let sourceMap: Section[];
+let userSnippets: UserSnippet[] = [];
 let currentRow: any;
 let currentSection: Section | null;
 let currentPassage: Passage | null;
@@ -414,10 +421,58 @@ const confirmDiscardUnsavedChanges = async function (): Promise<boolean> {
     });
 };
 
+const insertSnippet = function (content: string) {
+    editor.insert(content);
+};
+
+const populateSnippetsMenu = function () {
+    const menu = el<HTMLElement>("snippets-menu");
+    if (!menu) return;
+
+    // Clear everything after the built-in header (first li)
+    // Rebuild the whole menu
+    menu.innerHTML = "";
+
+    const builtInHeader = document.createElement("li");
+    builtInHeader.innerHTML = '<h6 class="dropdown-header">Built-in</h6>';
+    menu.appendChild(builtInHeader);
+
+    for (const snippet of builtInSnippets) {
+        const li = document.createElement("li");
+        const btn = document.createElement("button");
+        btn.className = "dropdown-item";
+        btn.textContent = snippet.name;
+        btn.addEventListener("click", () => insertSnippet(snippet.content));
+        li.appendChild(btn);
+        menu.appendChild(li);
+    }
+
+    if (userSnippets.length > 0) {
+        const dividerLi = document.createElement("li");
+        dividerLi.innerHTML = '<hr class="dropdown-divider">';
+        menu.appendChild(dividerLi);
+
+        const userHeader = document.createElement("li");
+        userHeader.innerHTML = '<h6 class="dropdown-header">My snippets</h6>';
+        menu.appendChild(userHeader);
+
+        for (const snippet of userSnippets) {
+            const li = document.createElement("li");
+            const btn = document.createElement("button");
+            btn.className = "dropdown-item";
+            btn.textContent = snippet.name;
+            btn.addEventListener("click", () => insertSnippet(snippet.content));
+            li.appendChild(btn);
+            menu.appendChild(li);
+        }
+    }
+};
+
 const processFile = function () {
     const data = editor.getValue();
     const titleRegex = /^@title (.*)$/;
     const sectionRegex = /^\[\[(.*)\]\]:$/;
+    const snippetRegex = /^\[snippet:\s*(.+)\]:$/;
     const passageRegex = /^\[(.*)\]:$/;
     let newTitle;
 
@@ -435,6 +490,9 @@ const processFile = function () {
         }
     ];
 
+    userSnippets = [];
+    let currentSnippet: UserSnippet | null = null;
+
     const lines = data.replace(/\r/g, "").split("\n");
 
     const currentSection = function () {
@@ -447,17 +505,32 @@ const processFile = function () {
         previousPassage.end = index;
     };
 
+    const closeCurrentSnippet = function () {
+        if (currentSnippet) {
+            // trim trailing blank lines from snippet content
+            currentSnippet.content = currentSnippet.content.replace(/\n+$/, "");
+            userSnippets.push(currentSnippet);
+            currentSnippet = null;
+        }
+    };
+
     lines.forEach(function (line, index) {
         const stripLine = line.trim();
         const titleMatch = titleRegex.exec(stripLine);
         const sectionMatch = sectionRegex.exec(stripLine);
-        const passageMatch = passageRegex.exec(stripLine);
+        const snippetMatch = snippetRegex.exec(stripLine);
+        const passageMatch = snippetMatch ? null : passageRegex.exec(stripLine);
 
         if (titleMatch) {
             newTitle = titleMatch[1];
         }
 
-        if (sectionMatch) {
+        if (snippetMatch) {
+            closeCurrentSnippet();
+            currentSnippet = { name: snippetMatch[1].trim(), content: "" };
+        }
+        else if (sectionMatch) {
+            closeCurrentSnippet();
             endPassage(index);
             currentSection().end = index;
             const newSection = {
@@ -472,6 +545,10 @@ const processFile = function () {
             };
             sourceMap.push(newSection);
         }
+        else if (currentSnippet !== null) {
+            // accumulate content lines into the current snippet
+            currentSnippet.content += (currentSnippet.content ? "\n" : "") + line;
+        }
         else if (passageMatch) {
             endPassage(index);
             const newPassage = {
@@ -481,6 +558,8 @@ const processFile = function () {
             currentSection().passages.push(newPassage);
         }
     });
+
+    closeCurrentSnippet();
 
     if (!title || title !== newTitle) {
         title = newTitle || "Untitled";
@@ -494,6 +573,7 @@ const processFile = function () {
         selectSection.append($("<option />").val(name).text(name));
     });
 
+    populateSnippetsMenu();
     cursorMoved(true);
 };
 

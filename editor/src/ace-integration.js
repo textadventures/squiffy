@@ -16,6 +16,11 @@ export const init = () => {
                 color: #0066cc;
                 text-decoration: underline;
             }
+            /* snippet headers */
+            .ace-squiffy .ace_markup.ace_heading.ace_snippet {
+                color: #2e7d32;
+                font-weight: bold;
+            }
         `;
     });
 
@@ -27,7 +32,7 @@ export const init = () => {
         exports.FoldMode = FoldMode;
 
         (function () {
-            this.foldingStartMarker = /^(?:\[\[(.*)\]\]:|\[(.*)\]:)$/;
+            this.foldingStartMarker = /^(?:\[\[(.*)\]\]:|\[snippet:\s*(.+)\]:|\[(.*)\]:)$/;
         }).call(FoldMode.prototype);
     });
 
@@ -51,6 +56,10 @@ export const init = () => {
                     {
                         token: "markup.heading.section",
                         regex: /^\[\[(.*)\]\]:$/
+                    },
+                    {
+                        token: "markup.heading.snippet",
+                        regex: /^\[snippet:\s*(.+)\]:$/
                     },
                     {
                         token: "markup.heading.passage",
