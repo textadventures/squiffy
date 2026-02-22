@@ -1,0 +1,96 @@
+---
+title: Snippets
+sidebar:
+    order: 5
+---
+
+import Sample from "@components/Sample.astro";
+import {Aside} from "@astrojs/starlight/components";
+
+Snippets let you insert commonly-used patterns into your story with a single click. The editor provides two kinds: **built-in snippets** for frequent Squiffy and Handlebars patterns, and **user-defined snippets** you declare in your `.squiffy` file for patterns specific to your game.
+
+## Built-in snippets
+
+The **Snippets** dropdown button in the editor toolbar contains a set of ready-made templates for the most common patterns.
+
+| Snippet | Inserts |
+|---|---|
+| If block | `{{#if condition}}…{{/if}}` |
+| If/else block | `{{#if condition}}…{{else}}…{{/if}}` |
+| If (check variable) | `{{#if (eq (get "variable") "value")}}…{{/if}}` |
+| If (seen section) | `{{#if (seen "section")}}…{{/if}}` |
+| Set variable | `{{set "variable" "value"}}` |
+| Increment | `{{inc "variable"}}` |
+| Decrement | `{{dec "variable"}}` |
+| Section link | `{{section "name" text="label"}}` |
+| Passage link | `{{passage "name" text="label"}}` |
+| Embed | `{{embed "name"}}` |
+
+Click a snippet to insert it at the current cursor position, then edit the placeholder values as needed.
+
+## User-defined snippets
+
+For patterns you use repeatedly in a particular game, you can define your own snippets directly in your `.squiffy` file using the `[snippet: name]:` syntax:
+
+```
+[snippet: Heal player]:
+{{set "health" (+ (get "health") 1)}}
+
+[snippet: Quest complete]:
+{{set "quest_done" true}}{{inc "score"}}
+[[Quest completed]](questbook)
+```
+
+User-defined snippets appear under **My snippets** in the Snippets dropdown, below the built-in snippets.
+
+<Aside>
+Snippet blocks are stripped out by the compiler and never appear in the compiled output. They exist only in the editor as reusable text templates — you insert them, then edit the content in place.
+</Aside>
+
+### Placement
+
+Snippet blocks can appear anywhere in your file — before, between, or after sections. They don't belong to any section or passage, and their content is ignored by the compiler.
+
+```
+[[intro]]:
+You wake up in a forest.
+
+Your health is {{health}}.
+
+[snippet: Heal player]:
+{{set "health" (+ (get "health") 1)}}
+
+[snippet: Take damage]:
+{{set "health" (- (get "health") 1)}}
+
+[[clearing]]:
+You find a clearing.
+```
+
+### Example: health system
+
+Here's an example of a game that uses the patterns you might store as user-defined snippets:
+
+<Sample script="@set health = 10
+@set max_health = 10
+
+[[forest]]:
+You are in the forest. Health: {{health}}/{{max_health}}
+
+Do you [rest by the stream] or [venture deeper]?
+
+[rest by the stream]:
+{{set &quot;health&quot; (+ (get &quot;health&quot;) 2)}}
+
+You rest and recover. Health: {{health}}/{{max_health}}
+
+[venture deeper]:
+{{set &quot;health&quot; (- (get &quot;health&quot;) 3)}}
+
+A wolf attacks! Health: {{health}}/{{max_health}}
+
+{{#if (lte (get &quot;health&quot;) 0)}}
+You have been defeated.
+{{else}}
+You survive, but you're wounded.
+{{/if}}"></Sample>
