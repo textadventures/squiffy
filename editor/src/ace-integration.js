@@ -18,7 +18,7 @@ export const init = () => {
             }
             /* snippet headers */
             .ace-squiffy .ace_markup.ace_heading.ace_snippet {
-                color: #2e7d32;
+                color: #7b1fa2;
                 font-weight: bold;
             }
         `;
