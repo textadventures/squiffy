@@ -69,12 +69,18 @@ You find a clearing.
 
 ### Example: health system
 
-Here's an example of a game that uses the patterns you might store as user-defined snippets:
+Here's an example with two user-defined snippets — `Heal player` and `Take damage` — alongside the sections that use them. The snippet definitions are stripped by the compiler; the `{{inc}}` and `{{dec}}` calls inside each passage are what was inserted from those snippets:
 
-<Sample script="@set health = 10
-@set max_health = 10
+<Sample script="[snippet: Heal player]:
+{{inc &quot;health&quot; 2}}
+
+[snippet: Take damage]:
+{{dec &quot;health&quot; 3}}
 
 [[forest]]:
+@set health = 10
+@set max_health = 10
+
 You are in the forest. Health: {{health}}/{{max_health}}
 
 Do you [rest by the stream] or [venture deeper]?
