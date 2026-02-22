@@ -1,0 +1,766 @@
+@title The Lighthouse at the Edge of Sleep
+@start arrival
+
+[[arrival]]:
+@set courage = 0
+@set curiosity = 0
+@set compassion = 0
+
+The ferry left you on the dock two hours ago, and already the mainland feels like something you dreamed. Marre Island is a quarter mile of granite and sea grass, pinned to the Atlantic by stubbornness alone. At its peak stands the lighthouse --- white-walled, iron-boned, its lantern dark for the first time in ninety years.
+
+You are here to relight it.
+
+The Maritime Commission's letter was sparse: *Keeper needed. Remote posting. Prior experience preferred but not required.* What the letter did not mention was the silence. It is the kind of silence that has texture, that settles against your skin like cold linen.
+
+Your predecessor left no forwarding address. Only a logbook, a ring of brass keys, and a note pinned to the door of the keeper's cottage:
+
+*Do not climb the tower after dark. Not until you understand what the light keeps out.*
+
+You pull the note free. The paper is soft with damp, the handwriting shaky.
+
+[[Enter the cottage]] or [[Climb the tower first]]
+
+[[Enter the cottage]]:
+@set explored_cottage
+@inc curiosity
+
+The cottage is a single room with ideas above its station. Someone has tried to make it livable --- a wool blanket on the narrow cot, dried lavender in a jar on the windowsill, books stacked on every surface. The books are mostly tide tables and maritime law, but wedged between them you find a battered copy of Rilke's poems with passages underlined in pencil.
+
+The logbook sits on the desk. Its leather cover is cracked and swollen with salt air.
+
+[Read the logbook] or [Examine the walls]
+
+[Read the logbook]:
+@inc curiosity
+@set read_logbook
+
+The entries span decades, written by different hands. Most are mundane --- wind speeds, lamp hours, supply requests. But the final pages, written by your predecessor, grow strange.
+
+*March 3 --- Fog again. Third night running. The beam cuts through it fine but something in the fog cuts back. A counter-light. Pale. Rhythmic. I have reported this to the Commission. They have not replied.*
+
+*March 9 --- She came to the glass again last night. I say "she" but I don't know why. The shape is wrong for a person. Too tall. Too patient.*
+
+*March 14 --- I understand now. The light doesn't warn ships away from the rocks. It warns something in the water away from us.*
+
+The final entry is a single line: *I am going down to the shore to ask her what she wants.*
+
+[Examine the walls]:
+@set examined_walls
+
+The walls are whitewashed stone, but beneath the paint someone has scratched lines --- hundreds of them, grouped in clusters of five. Tally marks. You trace them with your finger and count as far as you can bear. Three hundred and twelve days, at least.
+
+Near the floor, half-hidden by the cot, a different kind of mark: a drawing. It is crude but deliberate --- a figure standing in water up to its waist, arms raised, with something like light radiating from its open hands. Above the figure, someone has written a single word: *Elowen.*
+
+[@last]:
+
+Outside, the wind shifts. The afternoon light is already thinning, the sun sinking toward a horizon bruised with cloud. You have perhaps two hours before dark.
+
+[[Light the lamp before sunset]] or [[Walk to the shore]]
+
+[[Climb the tower first]]:
+@inc courage
+@set climbed_early
+
+The tower door resists, then yields with a groan that rises through the stairwell like a voice. Inside, the spiral staircase winds upward into gloom --- 127 steps, according to the Commission's paperwork. The iron treads ring beneath your boots, each step a small bell, and the sound multiplies against the stone walls until it seems you are climbing alongside a dozen ghosts.
+
+At the top, the lantern room opens around you like a glass crown. The Fresnel lens dominates the space --- a jewel of hand-ground crystal, taller than you, nested in rings of brass. Even unlit, it catches the grey afternoon light and fractures it into faint rainbows on the walls.
+
+The lamp mechanism is old but well-maintained. Whale oil has long given way to kerosene, and the clockwork rotation system looks recently serviced. Your predecessor, whatever drove them away, took care of this light.
+
+From up here, you can see the whole island. The cottage below. The dock where the ferry left you. And to the north, where the granite shelf drops into deep water, something else ---
+
+[Look closer at the northern shore]
+
+[Look closer at the northern shore]:
+@inc curiosity
+@set saw_shore_figure
+
+Stones, arranged in a pattern. From this height, they look deliberate --- a spiral, maybe, or a series of concentric circles. They are only visible at low tide, and the tide is going out now, revealing them slowly, like a secret the ocean regrets keeping.
+
+At the spiral's center, something catches the light. Metal, perhaps, or glass. You cannot tell from here.
+
+The wind picks up. A bank of fog sits on the horizon like a grey wall, waiting.
+
++++Descend the tower
+
+You climb back down, your footsteps ringing in the hollow dark, and step outside. The air smells of salt and rust and something else --- something faintly sweet, like flowers blooming out of season.
+
+[[Light the lamp before sunset]] or [[Walk to the shore]]
+
+[[Light the lamp before sunset]]:
+@clear
+@inc courage
+@set lamp_lit
+
+The mechanism is simpler than you feared. Kerosene from the reservoir, a wick trimmed to the proper length, the clockwork wound and set to rotate. When the flame catches, the Fresnel lens takes that small fire and turns it into something immense --- a blade of light that sweeps the darkening sea in slow, steady arcs.
+
+You stand in the lantern room and watch the beam carve through the dusk. It is beautiful. It is, you realize, the oldest kind of promise: *I am here. I will not let you founder in the dark.*
+
+{{#if climbed_early}}The stone spiral on the northern shore has vanished beneath the rising tide. Whatever gleamed at its center is underwater now, waiting for the next low tide.{{/if}}
+
+Below you, the island shrinks to a dark thumbprint on a darker sea. The mainland is a string of distant lights, impossibly far away.
+
+Then the fog arrives.
+
+It does not drift in. It *advances*, a solid wall of grey that swallows the horizon and keeps coming. Within minutes, the beam is cutting through something as thick as cotton, and the world beyond the glass has been erased.
+
+And in the fog --- you see it. A faint pulse of light, answering your beam. Not a reflection. Something with its own rhythm, its own intent.
+
+[[Watch the light in the fog]] or [[Go below and lock the door]]
+
+[[Walk to the shore]]:
+@clear
+@inc curiosity
+@set visited_shore
+
+The path down to the northern shore is narrow and treacherous, cut into granite that has been worn smooth by centuries of wind and rain. You pick your way carefully, the sea grass whipping at your legs, until the rocks flatten into a shelf that slopes gently into the water.
+
+{{#if saw_shore_figure}}The stone spiral is more impressive up close. The stones are smooth, dark, each one the size of a fist, and they are arranged with a precision that speaks of ritual, not accident. At the center, half-buried in wet sand, you find a glass bottle. Inside it, a lock of dark hair tied with red thread, and a folded piece of paper.{{else}}At the waterline, you notice something: stones, arranged in a deliberate spiral pattern. They are smooth and dark, each one placed with care. At the spiral's center, half-buried in wet sand, you find a glass bottle. Inside it, a lock of dark hair tied with red thread, and a folded piece of paper.{{/if}}
+
+[Open the bottle] or [Leave it undisturbed]
+
+[Open the bottle]:
+@set has_bottle
+@inc curiosity
+
+The cork crumbles in your fingers. You shake the contents into your palm --- the lock of hair, surprisingly soft, and the paper, which unfolds to reveal a single sentence in faded ink:
+
+*My name is Elowen Voss and I am not drowned.*
+
+The date below it is from 1893.
+
+[Leave it undisturbed]:
+@inc courage
+
+Some things should stay sealed. You press the bottle back into the sand and stand, brushing the grit from your hands.
+
+But you remember the shape of the writing visible through the glass --- the careful loops, the determined slant of someone with something important to say.
+
+[@last]:
+
+The tide is turning now. The water creeps toward you with a patience that feels personal. As you turn to climb back, something makes you look out to sea one last time.
+
+There --- far out, where the water darkens from grey to black --- a shape. It could be a seal. It could be driftwood. But it holds still against the current, and you cannot shake the feeling that it is watching you.
+
+The sun touches the horizon. The fog is coming.
+
+[[Hurry back and light the lamp]] or [[Call out to the shape in the water]]
+
+[[Hurry back and light the lamp]]:
+@clear
+@set lamp_lit
+@inc courage
+
+You take the tower steps two at a time, lungs burning, and light the lamp just as the last sliver of sun vanishes. The beam spins to life, and the fog that was advancing halts --- or seems to halt --- at the edge of the light's reach.
+
+Your hands are shaking. You tell yourself it is the cold.
+
+From the lantern room, you can see nothing but fog and the rhythmic sweep of your own light. But there, in the spaces between each pass of the beam, you catch it: a faint answering pulse. A counter-light in the deep fog.
+
+[[Watch the light in the fog]] or [[Go below and lock the door]]
+
+[[Call out to the shape in the water]]:
+@clear
+@inc compassion
+@set called_out
+
+"Hello?"
+
+Your voice sounds small against the immensity of the sea. The shape does not move.
+
+"Are you all right? Do you need help?"
+
+Nothing. The waves. The wind. And then --- so faintly you might be imagining it --- a sound. Not a voice, exactly. More like the memory of a voice, carried on the salt air. A single word, stretched thin by distance:
+
+*Come.*
+
+The water is at your ankles now. You did not notice the tide reaching you. It is shockingly cold, and the cold brings clarity: you are standing in the rising sea, in failing light, calling out to something you cannot see.
+
+[[Wade deeper]] or [[Turn back to the lighthouse]]
+
+[[Wade deeper]]:
+@clear
+@inc compassion
+@inc compassion
+@set waded_deep
+
+The water rises to your knees, then your waist. The cold is a living thing, wrapping around you, pressing the breath from your lungs in white plumes. Your boots fill and drag. Every rational part of your mind is screaming, but your legs keep moving, drawn forward by that voice, that sound, that ache in the air like a bell struck underwater.
+
+And then she is there.
+
+She rises from the water ten feet ahead of you --- not climbing out of it but *assembling* from it, the sea gathering itself into the shape of a woman. She is tall, taller than anyone should be, and her hair floats around her like dark kelp. Her eyes are the color of deep water, and they hold no malice --- only an exhaustion so profound it makes your chest hurt.
+
+She opens her mouth. The sound that comes out is not language but you understand it the way you understand grief, or longing, or the pull of the tide.
+
+*I have been waiting. The light keeps me here. I cannot rest while it burns.*
+
+"Who are you?"
+
+*I am the one who came before. The first keeper. I lit the lamp and the lamp lit me and I have been burning ever since.*
+
+{{#if has_bottle}}You think of the note in the bottle. *My name is Elowen Voss and I am not drowned.* She was right. She is not drowned. She is something else entirely.{{/if}}
+
+"What do you want?"
+
+*To stop keeping watch. To let the dark be dark. To sleep.*
+
+The water is at your chest now. The fog has closed around you both, and the lighthouse beam sweeps overhead, each pass illuminating her face in brief, stark flashes.
+
+[[Promise to help her]] or [[Tell her you cannot]]
+
+[[Turn back to the lighthouse]]:
+@clear
+@inc courage
+@set lamp_lit
+
+You wrench yourself free of the water's pull and scramble back up the rocks, soaked and shaking. The tower is a dark finger against the last light, and you climb it gasping, hands slipping on the iron rails, and light the lamp with fingers that will not stop trembling.
+
+The beam sweeps out into the gathering fog. And there, in the fog, the answering light pulses.
+
+[[Watch the light in the fog]]
+
+[[Watch the light in the fog]]:
+@clear
+@inc curiosity
+
+You stand at the glass and watch.
+
+The counter-light pulses with a rhythm that is almost, but not quite, in sync with your beam. It is dimmer, cooler --- where your light is warm kerosene amber, this is the blue-white of moonlight on ice. And it is getting closer.
+
+With each rotation of the lens, it advances. A hundred yards. Fifty. Twenty.
+
+Then it stops, just at the edge of where your beam is strongest, and you see her.
+
+She is standing on the water. Not floating, not swimming --- *standing*, as if the sea were a floor. She is tall and strange and wrapped in something that might be fog or might be hair or might be light itself. Her face is turned up toward you, and even through the glass and the dark and the distance, you feel the weight of her gaze.
+
+{{#if read_logbook}}You think of the logbook: *She came to the glass again last night.* Your predecessor saw this. Saw her. And in the end, went down to meet her.{{/if}}
+
+{{#if examined_walls}}The drawing on the cottage wall flashes in your mind --- the figure in the water, arms raised, light pouring from open hands. *Elowen.*{{/if}}
+
+She raises one hand, palm outward. Not a wave. Not a threat. A question.
+
+[[Go down to the shore to meet her]] or [[Stay in the tower and keep the light burning]]
+
+[[Go below and lock the door]]:
+@clear
+@inc courage
+@set stayed_inside
+
+You descend the tower stairs and bolt the cottage door. The iron latch is cold under your fingers. You build a fire in the small stove, wrap yourself in the wool blanket, and sit on the cot with your back against the wall.
+
+The wind rises through the night, and the lighthouse beam sweeps above you in its tireless arc, and somewhere in the fog, the counter-light pulses on and on and on.
+
+You do not sleep. Not because of fear --- though there is fear --- but because of the sound. It begins around midnight: a low, resonant hum that seems to come from everywhere and nowhere, that vibrates in your teeth and your bones and the stones of the walls. It is not mechanical. It is not natural. It is the sound of something immeasurably patient, waiting to be heard.
+
+{{#if read_logbook}}The logbook said your predecessor endured this for months. You understand now why the tally marks on the wall were so precise. Each one was a night survived.{{/if}}
+
+By dawn, the fog has lifted. The counter-light is gone. You open the door to a morning so clear and bright it feels like an apology.
+
+But on the doorstep, where nothing was before, you find a glass bottle. Inside it: a lock of dark hair, a folded paper, and the words *Please. I am so tired.*
+
+[[Go to the northern shore at low tide]] or [[Stay the course and tend the light]]
+
+[[Go down to the shore to meet her]]:
+@clear
+@inc compassion
+@set met_her
+
+You descend the 127 steps. You cross the dark island. The fog parts before you like a curtain, as if something wants you to find the way, and closes behind you, as if something wants to make sure you cannot go back.
+
+At the waterline, she is waiting.
+
+Up close, she is less terrifying and more *sad* --- a sadness so deep it has its own gravity. Her features are hard to fix: they shift and blur like a reflection in troubled water. But her eyes are steady, and they are the dark green of the deep Atlantic, and they are full of a loneliness that spans centuries.
+
+"You are the new keeper," she says. Her voice is the sound the sea makes inside a shell.
+
+"Yes."
+
+"The others always come eventually. They see my light and they come down. Some out of fear. Some out of pity. One or two out of something like love." She tilts her head. "Why did you come?"
+
+[[I came because you asked]] or [[I came because I want to understand]]
+
+[[Stay in the tower and keep the light burning]]:
+@clear
+@inc courage
+@inc courage
+
+You press your hand to the cold glass and you do not look away. This is your charge. This is why you are here --- not to understand the mystery, but to hold the line against it.
+
+"I'm sorry," you whisper. And you are. Whatever she is, whatever she wants, the loneliness in her gaze is real.
+
+She holds your eyes for a long moment. Then she lowers her hand. The counter-light dims. She turns and walks into the fog, and the fog closes around her, and she is gone.
+
+You tend the light until dawn. When the sun rises, the fog burns away to reveal a sea so calm it looks painted. On the northern shore, the stone spiral gleams with morning light.
+
+You will stay. You will keep the lamp. You will not go down to the water after dark. But every night, when the fog comes, you will watch for her light, and you will whisper your apology into the glass, and you will wonder if she hears.
+
++++Epilogue
+
+{{#if read_logbook}}You begin a new logbook. Your entries are careful, precise, honest. You record the fog, the counter-light, the figure on the water. You record everything, so that the next keeper will not be afraid. Or at least, will not be afraid alone.{{/if}}
+
+{{#if (not read_logbook)}}You buy a leather logbook from the supply boat and begin to write. If you cannot help her, you can at least bear witness. You record everything --- the fog, the light, the shape on the water --- so that the next keeper will know.{{/if}}
+
+Months pass. The Commission sends you letters asking for weather reports. You send them weather reports. You do not mention the rest.
+
+On the longest night of the year, the counter-light does not appear. You stand at the glass, waiting, watching, and the fog is dark and empty. You tell yourself this is what you wanted. You tell yourself the light is enough.
+
+You press your hand to the glass. The cold bites your palm.
+
+"I'm still here," you say to no one.
+
+The beam sweeps on.
+
+**THE END --- The Faithful Keeper**
+
+[[Go to the northern shore at low tide]]:
+@clear
+@inc curiosity
+@set investigated_shore
+
+Morning reveals what the night concealed. You walk to the northern shore at low tide and find the stone spiral exposed, gleaming with seawater.
+
+{{#if saw_shore_figure}}You saw the spiral from the tower yesterday, but up close it is different --- larger, more complex, and at its center, where you saw something gleam, there is a flat stone engraved with words worn almost to nothing by the tides.{{else}}The spiral is larger than you expected, and at its center, a flat stone bears an engraving worn almost to nothing.{{/if}}
+
+You kneel and trace the letters with your fingers: *Elowen Voss, Keeper of Marre Light, 1891-1893. She kept the flame. The flame kept her.*
+
+Not a gravestone. A memorial for someone whose body was never found.
+
+In the cottage, you search the books and find, tucked inside the Rilke, a yellowed newspaper clipping: *MARRE ISLAND KEEPER VANISHES. Miss Elowen Voss, 26, appointed first keeper of the Marre Island Light in 1891, has been declared missing after the supply vessel found the lighthouse unmanned and the keeper's cottage empty. The lamp was still burning. Her personal effects were undisturbed. No note was found.*
+
+1893. Over a hundred years, and the light has been burning ever since. Keeper after keeper, each one drawn here, each one eventually leaving.
+
+All except Elowen, who never left at all.
+
+[[Wait for nightfall and the fog]] or [[Stay the course and tend the light]]
+
+[[Stay the course and tend the light]]:
+@clear
+@inc courage
+
+You choose the simple answer. You are a lighthouse keeper. You keep the light.
+
+Days fold into weeks. You learn the rhythms of the island --- the tides, the weather, the way the fog rolls in most evenings and retreats by dawn. You learn to sleep through the hum. You learn not to look too long at the counter-light.
+
+You are not brave. You are not a hero. You are simply someone who showed up and stayed, and sometimes that is enough.
+
++++One year later
+
+The Commission sends a letter: your annual review. *Satisfactory performance. Lamp operational 364 of 365 days.* The one dark night was a storm that tore the roof off the keeper's cottage. You fixed it yourself.
+
+The supply boat captain asks if you want to transfer to the mainland. Better pay. Fewer storms. No fog.
+
+You think about it. You think about the counter-light, and the shape on the water, and the hum in the walls.
+
+"I'll stay," you say.
+
+He looks at you the way everyone looks at lighthouse keepers --- with a mixture of pity and awe. "Your call," he says.
+
+That night, the fog comes, and the counter-light pulses, and you stand at the glass with your hand pressed to the cold surface. A year of nights. A year of watching.
+
+She is out there, standing on the water. She raises her hand, palm outward. The same question she has asked every night.
+
+And tonight, for the first time, you raise your hand in return.
+
+Not an answer. Just an acknowledgment. *I see you. I know you are there.*
+
+The counter-light flares --- just for a moment --- brighter than you have ever seen it. Then it dims to its usual pulse, and she turns, and the fog takes her.
+
+But you could swear, just before she vanished, that she smiled.
+
+**THE END --- The Long Watch**
+
+[[Wait for nightfall and the fog]]:
+@clear
+@inc curiosity
+@inc compassion
+@set waited_for_fog
+
+You spend the day preparing. You light the lamp early, while the sun is still up, and make sure the clockwork is wound tight. You eat. You read the Rilke --- the underlined passages are about solitude, about patience, about the courage it takes to stand in the dark and wait for something you cannot name.
+
+Then you descend to the shore and you wait.
+
+The fog comes with the dark, rolling in like a tide of its own, and with it, the counter-light. It pulses at the waterline --- closer tonight, as if sensing your intention.
+
+She assembles from the mist. Standing on the wet rocks, not in the water. Closer than she has ever come to the shore. To the land. To you.
+
+"You found my name," she says.
+
+"Elowen."
+
+Something in her face breaks open. Not grief, exactly --- something older than grief, something that has been compressed by decades into a diamond-hard point of pure longing.
+
+"No one has said it in so long. I had almost forgotten the sound."
+
+"What happened to you?"
+
+"I kept the light. I kept it so well that it kept me. I became the watching, the warning, the beam in the dark. And when the light didn't need me anymore, I found I couldn't stop."
+
+[[Ask her what she needs]] or [[Offer to extinguish the light]]
+
+[[I came because you asked]]:
+@clear
+@inc compassion
+
+"I came because you asked."
+
+She is quiet for a moment. The fog eddies around her, and the beam from the tower sweeps overhead, illuminating nothing but grey.
+
+"I have asked every keeper. Most pretend they cannot hear. The kind ones come down, and they listen, and they go back. One stayed too long and became part of the fog herself --- I see her sometimes, drifting, confused. I tried to warn her."
+
+"What are you asking for?"
+
+She closes her eyes. When she opens them, they are luminous.
+
+"I was the first keeper of this light. 1891. I was twenty-four years old. I came here because no one on the mainland would hire a woman for anything that mattered, and the Commission was desperate, and I was stubborn."
+
+{{#if has_bottle}}*My name is Elowen Voss and I am not drowned.* The note in the bottle was not a message. It was a declaration. A refusal to disappear.{{/if}}
+
+"I loved this work. The light, the sea, the solitude. I loved it so completely that when a storm came --- a storm that should have killed me --- the light held on to me. Or I held on to it. I have never been sure which."
+
+"You have been here for over a hundred years."
+
+"I have been *here* for over a hundred years. Watching. Warning. Unable to stop. Unable to rest." Her voice breaks like a wave on stone. "I am so tired."
+
+[[Promise to help her]] or [[Tell her you cannot]]
+
+[[I came because I want to understand]]:
+@clear
+@inc curiosity
+@inc curiosity
+
+"I came because I want to understand."
+
+She almost smiles. "That is the most dangerous reason of all. Understanding is a door that only opens one way."
+
+"Tell me anyway."
+
+And she does.
+
+She tells you about 1891, when she arrived on this island as a young woman with something to prove and a lamp to light. She tells you about the storms that tried to sweep the tower into the sea, and the calm nights when the stars were so close she felt she could extinguish them with her breath. She tells you about the loneliness that became, in time, a kind of companion --- not comfortable, but familiar.
+
+She tells you about the night in 1893 when the worst storm in living memory hit the island. The tower shook. The glass cracked. The flame guttered. And she climbed those 127 steps in the howling dark and she held the light steady with her bare hands, and something in the desperate bargain she struck with the storm --- *take anything, take everything, but not the light* --- was answered.
+
+The storm took everything. It took her body. It took her name. It took her place in the world of living things. But it did not take the light.
+
+"I became the keeping," she says simply. "Not the keeper. The keeping itself. The vigilance. The flame."
+
+"And you've been here ever since."
+
+"I have been *everywhere* since. I am in every lighthouse beam on every coast. But I am *here* most of all. This is where I began. This is where I might end --- if someone helps me."
+
+[[Promise to help her]] or [[Tell her you cannot]]
+
+[[Promise to help her]]:
+@clear
+@set promised
+@inc compassion
+
+"Tell me how."
+
+She looks at you, and her expression is so raw, so grateful, that you have to look away.
+
+"The light must go dark. Not by storm, not by accident, but by choice. A keeper must choose to let the dark in. Not out of neglect --- out of mercy."
+
+"If I extinguish the lamp---"
+
+"I can rest. But the dark will be real. There will be no light on this coast, and the sea does not forgive. Ships will founder. Lives might be lost."
+
+"There must be another way."
+
+"There is." She hesitates. The fog presses close. "Someone must take my place. Not forever. Just long enough for me to let go. A single night of willing sacrifice --- one soul standing in the gap between the light and the dark --- and I will be free."
+
+{{#if (gte courage 3)}}You think of every night you have chosen to stay, to endure, to face the dark instead of hiding from it. This is no different. This is just one more night.{{/if}}
+
+{{#if (gte curiosity 3)}}You have spent your whole life wanting to understand the mysteries at the edges of things. Here, at last, is a mystery that asks to be understood from the inside.{{/if}}
+
+"What would it mean? To take your place?"
+
+"For one night, you would be the light. Not holding it --- *being* it. You would feel every ship on the black water, every soul that needs guidance. You would burn, and it would hurt, and when the sun rose, you would be yourself again."
+
+"And you?"
+
+"I would sleep. For the first time in a hundred and thirty-three years, I would sleep."
+
+[[Take her place for one night]] or [[Offer to find another way]]
+
+[[Tell her you cannot]]:
+@clear
+
+The words are heavy in your mouth, but you say them.
+
+"I cannot help you. I don't know how. I'm just a lighthouse keeper."
+
+She does not look angry. She looks like someone who has heard this before --- many times, from many keepers, across many decades.
+
+"I know," she says softly. "But you came down. That is more than most."
+
+The fog shifts. She begins to lose definition, her edges blurring into the grey.
+
+"Will you do one thing for me?"
+
+"If I can."
+
+"Keep the light burning. Not for the ships --- they have GPS now, radar, satellite. Keep it burning for me. So I know someone is up there. So I know I am not alone in the dark."
+
+[[Promise to keep the light]] or [[Ask her to wait --- you need time to think]]
+
+[[Offer to extinguish the light]]:
+@clear
+@inc compassion
+
+"What if I just... turn it off? Let the lamp go dark?"
+
+She flinches. Actually flinches, as if the idea causes her physical pain.
+
+"You cannot simply extinguish it. The light is not just fire and glass. It is a compact --- a promise made between the keeper and the sea. If the lamp goes dark without release, without someone standing in the gap, the compact breaks. And what the light keeps back..."
+
+She trails off. The fog pulses.
+
+"What does the light keep back?"
+
+"The things that hunt in dark water. They are old, and they are patient, and they have been waiting a very long time."
+
+"So the light truly is a warning."
+
+"The light is a *wall*. And I am the mortar."
+
+[[Ask her what she needs]] or [[Promise to find a way]]
+
+[[Ask her what she needs]]:
+@clear
+@inc compassion
+
+"What do you need, Elowen? Not what the light needs. What do *you* need?"
+
+The question seems to stun her. She stands there, a figure of fog and memory, and for a moment she looks exactly like what she is: a young woman, barely more than a girl, who gave everything she had and was never released from the giving.
+
+"I need someone to take my place. Just for one night. One night of willing vigil, and the compact will release me."
+
+"What happens to the person who takes your place?"
+
+"For one night, they become the light. They burn. They see every ship, every soul on the dark water. It is painful and it is beautiful and when the sun rises, they return to themselves."
+
+"And you?"
+
+"I sleep. I finally, finally sleep."
+
+She looks at you with those deep-water eyes.
+
+"I would not ask if I were not desperate. I have been the light for a hundred and thirty-three years. I have watched seventeen keepers come and go. I have kept every ship on this coast safe. I have earned my rest. But I cannot take it alone."
+
+[[Take her place for one night]] or [[Offer to find another way]]
+
+[[Promise to find a way]]:
+@clear
+@inc courage
+@inc compassion
+
+"I will find a way," you say. "I don't know how yet. But I will."
+
+She searches your face. "Others have said that."
+
+"I mean it."
+
+"They meant it too."
+
+But something in her expression softens. Perhaps it is enough, tonight, to be believed. To have someone stand on the shore and say *I will try*.
+
+"Come back tomorrow night," she says. "I will be here. I am always here."
+
+The fog swallows her by degrees --- first her edges, then her form, then the last faint pulse of her light. You stand on the rocks until the cold drives you inside.
+
++++The next morning
+
+You spend the day reading everything: the logbook, the Rilke, the newspaper clipping. You search the cottage from floor to ceiling and find, hidden in a gap between the stones of the chimney, a journal --- Elowen's own, written in the same careful hand as the note in the bottle.
+
+The final entry reads: *The compact is simple. The light requires a keeper. The keeper becomes the light. But a willing substitute, standing one night in the keeper's place, can break the chain. I tried to tell the Commission. They sent a man who did not believe in ghosts. He lasted four months.*
+
+You know what you must do.
+
+[[Take her place for one night]]
+
+[[Take her place for one night]]:
+@clear
+
+"Yes."
+
+The word leaves you like a breath held too long. It is the simplest thing you have ever said and the bravest.
+
+{{#if (gte compassion 3)}}She reaches out and touches your face. Her fingers are cold --- ocean cold, stone cold --- but gentle. "Thank you," she whispers, and the whisper carries the weight of a century of waiting.{{/if}}
+
+{{#if (lt compassion 3)}}She nods, and in her eyes you see something you did not expect: not just gratitude, but recognition. She sees in you what she once saw in herself --- the willingness to stand in the gap.{{/if}}
+
+"When the beam next passes over you, close your eyes and step into it. The light will do the rest."
+
+You climb the rocks to where the beam sweeps the shore. The fog parts for it each time, a brief corridor of clarity in the grey, and then closes again. You count the rhythm. Three seconds of light, nine seconds of dark.
+
+You close your eyes.
+
+The beam touches you and the world ignites.
+
++++Becoming
+
+@clear
+
+You are the light.
+
+You are not holding it or standing in it or watching it. You *are* it --- every photon, every wave, every bright blade cutting through the dark. You expand outward from the lens at 186,000 miles per second and you are everywhere, touching everything, seeing everything.
+
+You see the fishing boats in the harbor thirty miles south, their crews sleeping below decks. You see the container ship rounding the cape, its navigator checking instruments that confirm what you already know: the coast is here, the rocks are here, steer clear. You see the kayaker who set out too late and is now lost in the fog, and you reach for her, you bend toward her, and she looks up and sees your light and turns her bow toward safe water.
+
+You see all of this, and you feel all of this, and it is agony and ecstasy in equal measure --- the pain of being stretched across miles of dark ocean, the joy of being the thing that brings them home.
+
+And you understand, finally, what Elowen meant. This is not a punishment. It is a purpose so vast it consumed her. She did not become a ghost. She became a *guardian*, and the becoming was so total she forgot where the guardian ended and the woman began.
+
++++Dawn
+
+@clear
+
+The sun rises.
+
+It is the most beautiful thing you have ever seen, because you see it from the inside --- the first photons cresting the horizon, the way they interact with your own fading light, the handshake between the old watch and the new.
+
+You collapse on the rocks, gasping, human again, your body a strange and heavy thing after a night of being weightless. Every muscle aches. Your eyes stream with tears that might be from the wind or might be from something else entirely.
+
+The fog is gone.
+
+The sea is still.
+
+And there, on the flat stone at the center of the spiral --- where there was only an engraving before --- a woman is sleeping.
+
+She is young. Dark hair. A face that might have been stern if it were not, in sleep, so utterly peaceful. She is wearing a keeper's uniform from another century, salt-stained and sun-faded, and she is breathing.
+
+She is breathing.
+
+{{#if has_bottle}}In your pocket, you feel the weight of the glass bottle. The note inside reads *My name is Elowen Voss and I am not drowned.* You were right, Elowen. You were never drowned. You were just waiting for someone to pull you to shore.{{/if}}
+
+[Sit beside her and wait for her to wake]
+
+[Sit beside her and wait for her to wake]:
+
+You sit on the wet rocks and you wait. The lighthouse stands above you, its lamp dark now in the morning sun, no longer needed until nightfall. The beam will sweep again tonight --- but tonight, for the first time in a hundred and thirty-three years, it will be just a light. Just fire and glass and clockwork. The compact is fulfilled.
+
+Elowen stirs. Her eyes open --- not the deep-water green of the ghost on the waves, but a warm, human brown. She blinks at the sky like someone waking from a long illness.
+
+"Is it morning?" she asks.
+
+"Yes."
+
+"Real morning? With a real sun?"
+
+"Yes."
+
+She sits up slowly, touching the rocks, the water, her own face, as if making sure they are solid. Then she looks at you, and she smiles, and it is the most human thing you have ever seen.
+
+"Thank you," she says. "I had forgotten what it felt like. Being warm."
+
+You sit together on the rocks as the sun climbs. The sea is impossibly blue. Somewhere on the mainland, a church bell rings --- carried across the water, clear as a voice.
+
+You will have questions later. So will she. There will be the matter of explaining a woman from 1893 to the modern world, and the matter of a lighthouse that no longer needs a supernatural keeper, and the matter of your own life, which has been permanently altered by a single night of burning.
+
+But for now, there is the sun, and the sea, and the silence that is no longer empty.
+
+For now, that is enough.
+
+**THE END --- The Light Sleeps**
+
+[[Offer to find another way]]:
+@clear
+@inc curiosity
+
+"There must be another way. Something that doesn't require anyone to suffer."
+
+"I have had a hundred and thirty-three years to think about it," she says, and the patience in her voice is devastating. "There is no other way. The compact demands a substitute. One night. One willing soul."
+
+"What if the substitute doesn't come back? What if they get trapped the way you did?"
+
+"They won't. The compact was forged in the storm of 1893, and it was forged with *me*. A substitute stands in my place, not their own. When dawn comes, the compact is fulfilled, and they return to themselves."
+
+"You are certain?"
+
+"I am certain of nothing. I am a dead woman standing in the ocean, talking to a lighthouse keeper about magic. But I believe it. I believe it the way I believe in the tide: not because I understand it, but because I have watched it happen, over and over, and it has never lied."
+
+[[Take her place for one night]] or [[Ask for one more day to decide]]
+
+[[Ask for one more day to decide]]:
+@clear
+
+"Give me one more day. Let me think."
+
+She nods. "I have waited a century. I can wait one more day."
+
+The fog takes her. You climb back to the lighthouse, soaked and trembling, and you sit in the lantern room and watch the beam sweep the empty sea.
+
+You think about courage. You think about purpose. You think about a woman who loved her work so much it swallowed her whole.
+
+You think about the note in the bottle, and the tally marks on the wall, and the seventeen keepers who came before you, each one faced with this same impossible choice.
+
+And you realize that the choice was made the moment you stepped onto the ferry. The moment you read the Commission's letter and felt something stir --- not ambition, not desperation, but recognition. You are the kind of person who walks toward the dark.
+
+You have always been the kind of person who walks toward the dark.
+
+[[Take her place for one night]]
+
+[[Promise to keep the light]]:
+@clear
+@inc courage
+
+"I promise."
+
+She smiles. It is faint and sad and grateful, and it is the most human expression you have seen on her strange, shifting face.
+
+"Then I will see you tomorrow night. And the night after. And every night until the sea dries up or the light goes out or someone braver than both of us finds a better way."
+
+She steps backward into the fog. The counter-light flares once --- warm, almost golden --- and fades.
+
+You climb back to the tower. You check the lamp, the clockwork, the wick. Everything is in order. Everything is as it should be.
+
+You press your hand to the glass. Below, the fog churns, and somewhere in it, a faint light pulses.
+
+"Good night, Elowen," you say.
+
+The light pulses once, as if in answer.
+
++++Six months later
+
+@clear
+
+You have become, without meaning to, the longest-serving keeper Marre Island has had in decades. The Commission is pleased. The supply boat captain has stopped asking if you want to transfer.
+
+Every night, the fog comes, and the counter-light appears, and you stand at the glass and keep watch together --- you from inside the tower, she from the dark water. Two keepers, separated by glass and time and the thin membrane between the living and the dead.
+
+Some nights she is closer. Some nights she is barely a glimmer on the horizon. But she is always there, and you are always here, and the ships pass safely, and the light burns on.
+
+You have started underlining passages in the Rilke:
+
+*Perhaps all the dragons in our lives are princesses who are only waiting to see us act, just once, with beauty and courage.*
+
+You have not yet found the courage. But you have found the beauty, and perhaps, in time, one will lead to the other.
+
+The beam sweeps on. The fog glows. The night is long, but you are not alone.
+
+**THE END --- Two Lights Burning**
+
+[[Ask her to wait --- you need time to think]]:
+@clear
+@inc curiosity
+
+"Wait. Please. I need to think."
+
+"Of course." There is no judgment in her voice. Only the infinite patience of someone who has waited longer than you have been alive. "I will be here. I am always here."
+
+She dissolves into the fog like salt into water. The counter-light lingers a moment longer, then fades.
+
+You sit on the rocks until the cold drives you inside. In the cottage, you light the stove and sit with the Rilke and think.
+
+You think about what it means to choose. Not the grand, dramatic choices of stories --- the sword or the grail, the door or the window --- but the small, real ones. The choice to stay or go. The choice to help or to protect yourself. The choice to believe a ghost, or to call it the wind.
+
+{{#if read_logbook}}Seventeen keepers. Seventeen people who sat in this same cottage and faced this same impossible question. Some stayed. Some fled. One went down to the water and never came back. None of them chose what she asked.{{/if}}
+
+The night passes. Dawn arrives, as it always does, indifferent to your indecision.
+
+But as the light changes and the fog retreats, you feel something settle in your chest --- not certainty, not yet, but the faint, stubborn beginning of it. Like a flame catching. Like a wick taking the spark.
+
+Tomorrow night. You will have your answer by tomorrow night.
+
+[[Take her place for one night]] or [[Promise to keep the light]]

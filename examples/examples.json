@@ -43,6 +43,11 @@
       "description": "Tracking the last visited section"
     },
     {
+      "path": "lighthouse/lighthouse.squiffy",
+      "description": "Full story: a haunting tale of a lighthouse keeper and the ghost who keeps the flame",
+      "featured": true
+    },
+    {
       "path": "link-attributes/link-attributes.squiffy",
       "description": "Adding attributes to links"
     },
