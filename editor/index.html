@@ -72,8 +72,15 @@
             </span>
 
             <button id="preview" class="btn btn-outline-primary"><i class="bi bi-eye-fill"></i> Preview</button>
-            <button id="add-section" class="btn btn-outline-dark">Add section</button>
-            <button id="add-passage" class="btn btn-outline-dark">Add passage</button>
+            <span class="dropdown">
+                <button class="btn btn-outline-dark dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    Add
+                </button>
+                <ul class="dropdown-menu">
+                    <li><button class="dropdown-item" id="add-section">Section</button></li>
+                    <li><button class="dropdown-item" id="add-passage">Passage</button></li>
+                </ul>
+            </span>
             <span class="dropdown">
                 <button id="snippets-btn" class="btn btn-outline-dark dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
                     Snippets
