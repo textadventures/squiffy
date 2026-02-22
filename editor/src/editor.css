@@ -356,7 +356,8 @@ ul.dropdown-menu a {
     /* Hide some less essential buttons on mobile */
     #collapse-all,
     #uncollapse-all,
-    #preview {
+    #preview,
+    #snippets-dropdown {
         display: none !important;
     }
 
@@ -372,8 +373,9 @@ ul.dropdown-menu a {
         display: inline-block !important;
     }
 
-    /* Hide Add dropdown when viewing preview */
-    .mobile-show-preview #add-dropdown {
+    /* Hide Add and Snippets dropdowns when viewing preview */
+    .mobile-show-preview #add-dropdown,
+    .mobile-show-preview #snippets-dropdown {
         display: none !important;
     }
 }
