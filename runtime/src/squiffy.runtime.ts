@@ -180,20 +180,30 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             clearScreen();
         }
         newSection(sectionName);
+        const sectionElement = currentSectionElement;
         if (master) {
             await run(master, "[[]]");
+            if (get("_section") !== sectionName) {
+                // JS in the master section navigated away; clean up the empty element we created.
+                sectionElement.remove();
+                return;
+            }
         }
         await run(currentSection, `[[${sectionName}]]`);
+
+        if (get("_section") !== sectionName) {
+            // JS in this section navigated away; clean up the empty element we created.
+            sectionElement.remove();
+            return;
+        }
 
         // Setup validation after transitions complete (animations may have replaced DOM elements)
         setupInputValidation(currentSectionElement);
 
-        // The JS might have changed which section we're in
-        if (get("_section") == sectionName) {
-            set("_turncount", 0);
-            writeUndoLog();
-            save();
-        }
+        set("_turncount", 0);
+        writeUndoLog();
+        save();
+
         const newCanGoBack = canGoBack();
         if (newCanGoBack != oldCanGoBack) {
             emitter.emit("canGoBackChanged", { canGoBack: newCanGoBack });
@@ -224,7 +234,13 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             await processAttributes(section.attributes);
         }
         if (section.jsIndex !== undefined) {
+            const sectionBefore = get("_section");
             runJs(section.jsIndex);
+            if (get("_section") !== sectionBefore) {
+                // JS called squiffy.story.go() and navigated away; the destination
+                // section will handle rendering its own content.
+                return;
+            }
         }
 
         ui.write(section.text || "", source);
