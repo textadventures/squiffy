@@ -2,7 +2,7 @@
   "name": "@textadventures/squiffystory.com",
   "type": "module",
   "private": true,
-  "version": "6.0.0-beta.1",
+  "version": "6.0.0-beta.2",
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
@@ -15,15 +15,15 @@
     "@astrojs/check": "^0.9.6",
     "@astrojs/mdx": "^4.3.13",
     "@astrojs/starlight": "^0.37.4",
-    "@textadventures/squiffy-cli": "^6.0.0-beta.1",
-    "@textadventures/squiffy-packager": "^6.0.0-beta.1",
+    "@textadventures/squiffy-cli": "^6.0.0-beta.2",
+    "@textadventures/squiffy-packager": "^6.0.0-beta.2",
     "astro": "^5.16.15",
     "bootstrap": "^5.3.7",
     "codemirror": "^6.0.2",
     "debounce": "^2.2.0",
     "sass": "^1.90.0",
-    "squiffy-compiler": "^6.0.0-beta.1",
-    "squiffy-runtime": "^6.0.0-beta.1",
+    "squiffy-compiler": "^6.0.0-beta.2",
+    "squiffy-runtime": "^6.0.0-beta.2",
     "tsx": "^4.19.2",
     "typescript": "^5.9.2"
   }
