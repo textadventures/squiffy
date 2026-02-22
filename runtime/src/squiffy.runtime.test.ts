@@ -100,6 +100,27 @@ test('"Hello world" script should run', async () => {
     expect(element.innerHTML).toMatchSnapshot();
 });
 
+test("squiffy.story.go() in section JS navigates without showing original section content", async () => {
+    // Regression test for https://github.com/textadventures/squiffy/issues/179
+    // Note: the 4-space indent on the next line is the squiffy JS syntax - don't trim it!
+    const script = `    squiffy.story.go('destination');
+Default section text that should not appear.
+
+[[destination]]:
+Destination section text.`;
+
+    const { element } = await initScript(script);
+
+    // Only the destination section content should be visible
+    const html = element.innerHTML;
+    expect(html).toContain("Destination section text.");
+    expect(html).not.toContain("Default section text that should not appear.");
+
+    // The destination section should be the only section element (no empty default section)
+    expect(element.querySelectorAll(".squiffy-output-section").length).toBe(1);
+    expect(element.querySelector(".squiffy-output-section")?.getAttribute("data-section")).toBe("destination");
+});
+
 test("Click a section link", async () => {
     const script = await fs.readFile("../examples/test/example.squiffy", "utf-8");
     const { squiffyApi, element } = await initScript(script);
