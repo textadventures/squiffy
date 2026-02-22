@@ -308,3 +308,23 @@ This is the only section.
     expect(nextSectionWarning).toBeDefined();
     expect(nextSectionWarning).toContain("no following section exists");
 });
+
+test("No warning when section name contains a comma", async () => {
+    const script = `
+[[start]]:
+Go to [[section has a comma, for example]].
+
+[[section has a comma, for example]]:
+You made it.
+`;
+
+    const warnings: string[] = [];
+    const result = await compile({
+        scriptBaseFilename: "test.squiffy",
+        script: script,
+        onWarning: (message) => warnings.push(message),
+    });
+
+    assertSuccess(result);
+    expect(warnings.length).toBe(0);
+});

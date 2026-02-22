@@ -493,9 +493,16 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         // Link destination data may look like:
         //   passageName
         //   passageName, my_attribute=2
+        //   passage name with a comma, in the name
         // We're only interested in checking if the named passage or section exists.
 
-        const linkDestination = link.split(",")[0];
+        // First check if the full link is a valid destination (handles names containing commas).
+        const trimmedLink = link.trim();
+        if (Object.keys(keys).includes(trimmedLink)) {
+            return true;
+        }
+        // Otherwise, assume a comma separates the destination from setters.
+        const linkDestination = trimmedLink.split(",")[0].trim();
         return Object.keys(keys).includes(linkDestination);
     }
 
