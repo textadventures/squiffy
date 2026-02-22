@@ -34,7 +34,7 @@ For patterns you use repeatedly in a particular game, you can define your own sn
 
 ```
 [snippet: Heal player]:
-{{set "health" (+ (get "health") 1)}}
+{{inc "health"}}
 
 [snippet: Quest complete]:
 {{set "quest_done" true}}{{inc "score"}}
@@ -58,10 +58,10 @@ You wake up in a forest.
 Your health is {{health}}.
 
 [snippet: Heal player]:
-{{set "health" (+ (get "health") 1)}}
+{{inc "health"}}
 
 [snippet: Take damage]:
-{{set "health" (- (get "health") 1)}}
+{{dec "health"}}
 
 [[clearing]]:
 You find a clearing.
@@ -80,16 +80,16 @@ You are in the forest. Health: {{health}}/{{max_health}}
 Do you [rest by the stream] or [venture deeper]?
 
 [rest by the stream]:
-{{set &quot;health&quot; (+ (get &quot;health&quot;) 2)}}
+{{inc &quot;health&quot; 2}}
 
 You rest and recover. Health: {{health}}/{{max_health}}
 
 [venture deeper]:
-{{set &quot;health&quot; (- (get &quot;health&quot;) 3)}}
+{{dec &quot;health&quot; 3}}
 
 A wolf attacks! Health: {{health}}/{{max_health}}
 
-{{#if (lte (get &quot;health&quot;) 0)}}
+{{#if (lte health 0)}}
 You have been defeated.
 {{else}}
 You survive, but you're wounded.
