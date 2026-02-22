@@ -373,9 +373,11 @@ ul.dropdown-menu a {
         display: inline-block !important;
     }
 
-    /* Hide Add and Snippets dropdowns when viewing preview */
+    /* Hide Add, Snippets, Edit and Help dropdowns when viewing preview */
     .mobile-show-preview #add-dropdown,
-    .mobile-show-preview #snippets-dropdown {
+    .mobile-show-preview #snippets-dropdown,
+    .mobile-show-preview #edit-dropdown,
+    .mobile-show-preview #help-dropdown {
         display: none !important;
     }
 }
