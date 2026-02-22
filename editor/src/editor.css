@@ -307,9 +307,10 @@ ul.dropdown-menu a {
     }
 }
 
-/* Hide add dropdown at narrower widths */
+/* Hide add and snippets dropdowns at narrower widths */
 @media (max-width: 590px) {
-    #add-dropdown {
+    #add-dropdown,
+    #snippets-dropdown {
         display: none !important;
     }
 }
@@ -356,8 +357,7 @@ ul.dropdown-menu a {
     /* Hide some less essential buttons on mobile */
     #collapse-all,
     #uncollapse-all,
-    #preview,
-    #snippets-dropdown {
+    #preview {
         display: none !important;
     }
 
