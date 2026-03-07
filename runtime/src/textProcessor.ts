@@ -174,14 +174,16 @@ export class TextProcessor {
             return result;
         };
 
+        const escapeAttr = (s: string) => s.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+
         this.handlebars.registerHelper("section", (section: string, options) => {
             const text = options.hash.text as string || section;
-            return new Handlebars.SafeString(`<a class="squiffy-link link-section" data-section="${section}"${addAdditionalParameters(options)} role="link" tabindex="0">${text}</a>`);
+            return new Handlebars.SafeString(`<a class="squiffy-link link-section" data-section="${escapeAttr(section)}"${addAdditionalParameters(options)} role="link" tabindex="0">${text}</a>`);
         });
 
         this.handlebars.registerHelper("passage", (passage: string, options) => {
             const text = options.hash.text as string || passage;
-            return new Handlebars.SafeString(`<a class="squiffy-link link-passage" data-passage="${passage}"${addAdditionalParameters(options)} role="link" tabindex="0">${text}</a>`);
+            return new Handlebars.SafeString(`<a class="squiffy-link link-passage" data-passage="${escapeAttr(passage)}"${addAdditionalParameters(options)} role="link" tabindex="0">${text}</a>`);
         });
     }
 

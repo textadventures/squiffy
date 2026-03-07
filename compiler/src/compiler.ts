@@ -387,6 +387,10 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         };
     }
 
+    function escapeForHandlebarsString(s: string): string {
+        return s.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+    }
+
     async function processText(input: string, section: Section, passage: Passage | null) {
         // Helper to get the next section name
         const getNextSectionName = (): string | null => {
@@ -404,7 +408,7 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
                 settings.onWarning?.(`WARNING: ${section.filename} line ${section.line}: In section '${section.name}', there is a [[${text}>]] link but no following section exists`);
                 return `[[${text}]]`; // fallback
             }
-            return `{{section "${nextSectionName}" text="${text}"}}`;
+            return `{{section "${escapeForHandlebarsString(nextSectionName)}" text="${escapeForHandlebarsString(text)}"}}`;
         });
 
         // namedNextSectionLinkRegex matches [[text]](>) or [[text]](>, setter=value)
@@ -419,7 +423,7 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
             }
             // rest could be empty or ", setter=value"
             const parsedName = getAdditionalLinkParameters(nextSectionName + rest);
-            return `{{section "${parsedName.target}" text="${text}"${parsedName.additionalParameters}}}`;
+            return `{{section "${escapeForHandlebarsString(parsedName.target)}" text="${escapeForHandlebarsString(text)}"${parsedName.additionalParameters}}}`;
         });
 
         // namedSectionLinkRegex matches:
@@ -436,7 +440,7 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
 
         input = input.replace(namedSectionLinkRegex, (_match, text /* $1 */, name/* $2 */) => {
             const parsedName = getAdditionalLinkParameters(name);
-            return `{{section "${parsedName.target}" text="${text}"${parsedName.additionalParameters}}}`;
+            return `{{section "${escapeForHandlebarsString(parsedName.target)}" text="${escapeForHandlebarsString(text)}"${parsedName.additionalParameters}}}`;
         });
 
         // namedPassageLinkRegex matches:
@@ -453,7 +457,7 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
 
         input = input.replace(namedPassageLinkRegex, (_match, text /* $1 */, name/* $2 */) => {
             const parsedName = getAdditionalLinkParameters(name);
-            return `{{passage "${parsedName.target}" text="${text}"${parsedName.additionalParameters}}}`;
+            return `{{passage "${escapeForHandlebarsString(parsedName.target)}" text="${escapeForHandlebarsString(text)}"${parsedName.additionalParameters}}}`;
         });
 
         // unnamedSectionLinkRegex matches:
@@ -465,7 +469,7 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         links = allMatchesForGroup(input, unnamedSectionLinkRegex, 1);
         checkSectionLinks(links, section, passage);
 
-        input = input.replace(unnamedSectionLinkRegex, '{{section "$1"}}');
+        input = input.replace(unnamedSectionLinkRegex, (_match, name) => `{{section "${escapeForHandlebarsString(name)}"}}`);
 
         // unnamedPassageLinkRegex matches:
         //   open [
@@ -477,7 +481,7 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         links = allMatchesForGroup(input, unnamedPassageLinkRegex, 1);
         checkPassageLinks(links, section, passage);
 
-        input = input.replace(unnamedPassageLinkRegex, '{{passage "$1"}}$2');
+        input = input.replace(unnamedPassageLinkRegex, (_match, name, suffix) => `{{passage "${escapeForHandlebarsString(name)}"}}${suffix}`);
 
         return input;
     }

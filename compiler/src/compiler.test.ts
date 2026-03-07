@@ -396,6 +396,42 @@ This content should be ignored.
     expect(result.output.story.sections.intro.text).toBe("Introduction here.\n");
 });
 
+test("Section name containing double quotes is properly escaped in template", async () => {
+    const script = `
+[[start]]:
+Go to [[my "section"]].
+
+[[my "section"]]:
+You made it.
+`;
+
+    const result = await compile({
+        scriptBaseFilename: "test.squiffy",
+        script: script,
+    });
+
+    assertSuccess(result);
+    expect(result.output.story.sections.start.text).toContain('{{section "my \\"section\\""}}');
+});
+
+test("Passage name containing double quotes is properly escaped in template", async () => {
+    const script = `
+[[start]]:
+Click [my "passage"].
+
+[my "passage"]:
+Passage content.
+`;
+
+    const result = await compile({
+        scriptBaseFilename: "test.squiffy",
+        script: script,
+    });
+
+    assertSuccess(result);
+    expect(result.output.story.sections.start.text).toContain('{{passage "my \\"passage\\""}}');
+});
+
 test("No warning when section name contains a comma", async () => {
     const script = `
 [[start]]:
