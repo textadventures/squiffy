@@ -711,7 +711,7 @@ story.sections = {
         "text": "# Squiffy Test\\nThis is [a website link](http://textadventures.co.uk).\\n\\nThis should be {{passage \\"passage\\" text=\\"a link to a passage\\"}}. Here's {{passage \\"passage2\\" text=\\"another one\\"}}.\\n\\nYou don't need to specify a name - for example, this {{passage \\"link\\"}} and this {{section \\"section\\"}}.\\n\\nAnd this goes to the {{section \\"section2\\" text=\\"next section\\"}}.\\n\\nThis line has links to {{section \\"section 3\\"}} and {{section \\"section four\\" text=\\"section 4\\"}}.\\n\\nThis line has links to {{passage \\"passage 3\\"}} and {{passage \\"passage four\\" text=\\"passage 4\\"}}.\\n\\nOh look - {{passage \\"it's a passage with an apostrophe\\"}}.\\n",
         "passages": {
             "passage": {
-                "text": "Here's some text for the passage.\\n"
+                "text": "Here's some text for the passage.\\n\\nThis passage has a picture in it. It's by [Lars Blankers](https://unsplash.com/@lmablankers?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText) on [Unsplash](https://unsplash.com/photos/brown-potato-lot-B0s3Xndk6tw?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText).\\n\\n![](lars-blankers-B0s3Xndk6tw-unsplash.jpg)\\n"
             },
             "passage2": {
                 "text": "This is the text for the second passage.\\n",
