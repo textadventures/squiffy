@@ -26,7 +26,9 @@ exports[`Click a passage link 2`] = `
 <p>And this goes to the <a class="squiffy-link link-section" data-section="section2" role="link" tabindex="0">next section</a>.</p>
 <p>This line has links to <a class="squiffy-link link-section" data-section="section 3" role="link" tabindex="0">section 3</a> and <a class="squiffy-link link-section" data-section="section four" role="link" tabindex="0">section 4</a>.</p>
 <p>This line has links to <a class="squiffy-link link-passage" data-passage="passage 3" role="link" tabindex="0">passage 3</a> and <a class="squiffy-link link-passage" data-passage="passage four" role="link" tabindex="0">passage 4</a>.</p>
-<p>Oh look - <a class="squiffy-link link-passage" data-passage="it's a passage with an apostrophe" role="link" tabindex="0">it's a passage with an apostrophe</a>.</p></div></div><div class="squiffy-output-passage" data-passage="passage" data-undo="{&quot;_turncount&quot;:0,&quot;_seen_sections&quot;:[&quot;Introduction&quot;]}"><div class="squiffy-output-block"><div data-source="[[Introduction]][passage]"><p>Here's some text for the passage.</p></div></div></div></div></div>"
+<p>Oh look - <a class="squiffy-link link-passage" data-passage="it's a passage with an apostrophe" role="link" tabindex="0">it's a passage with an apostrophe</a>.</p></div></div><div class="squiffy-output-passage" data-passage="passage" data-undo="{&quot;_turncount&quot;:0,&quot;_seen_sections&quot;:[&quot;Introduction&quot;]}"><div class="squiffy-output-block"><div data-source="[[Introduction]][passage]"><p>Here's some text for the passage.</p>
+<p>This passage has a picture in it. It's by <a href="https://unsplash.com/@lmablankers?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText">Lars Blankers</a> on <a href="https://unsplash.com/photos/brown-potato-lot-B0s3Xndk6tw?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText">Unsplash</a>.</p>
+<p><img src="lars-blankers-B0s3Xndk6tw-unsplash.jpg" alt=""></p></div></div></div></div></div>"
 `;
 
 exports[`Click a passage link and go back 1`] = `

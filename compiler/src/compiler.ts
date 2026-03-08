@@ -444,13 +444,14 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         });
 
         // namedPassageLinkRegex matches:
+        //   not preceded by ! (to avoid matching image links like ![alt](src))
         //   open [
         //   any text - the link text
         //   closing ]
         //   open bracket, but not http(s):// after it
         //   any text - the name of the passage
         //   closing bracket
-        const namedPassageLinkRegex = /\[([^\]]*?)\]\(((?!https?:\/\/).*?)\)/g;
+        const namedPassageLinkRegex = /(?<!!)\[([^\]]*?)\]\(((?!https?:\/\/).*?)\)/g;
 
         links = allMatchesForGroup(input, namedPassageLinkRegex, 2);
         checkPassageLinks(links, section, passage);
@@ -472,11 +473,12 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         input = input.replace(unnamedSectionLinkRegex, (_match, name) => `{{section "${escapeForHandlebarsString(name)}"}}`);
 
         // unnamedPassageLinkRegex matches:
+        //   not preceded by ! (to avoid matching image links like ![alt])
         //   open [
         //   any text - the link text
         //   closing ]
         //   no bracket after
-        const unnamedPassageLinkRegex = /\[(.*?)\]([^(]|$)/g;
+        const unnamedPassageLinkRegex = /(?<!!)\[(.*?)\]([^(]|$)/g;
 
         links = allMatchesForGroup(input, unnamedPassageLinkRegex, 1);
         checkPassageLinks(links, section, passage);

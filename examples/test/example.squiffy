@@ -19,6 +19,10 @@ Oh look - [it's a passage with an apostrophe].
 [passage]:
 Here's some text for the passage.
 
+This passage has a picture in it. It's by [Lars Blankers](https://unsplash.com/@lmablankers?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText) on [Unsplash](https://unsplash.com/photos/brown-potato-lot-B0s3Xndk6tw?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText).
+
+![](lars-blankers-B0s3Xndk6tw-unsplash.jpg)
+
 [passage2]:
 	alert ("This passage has some JavaScript");
 

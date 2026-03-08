@@ -18,3 +18,7 @@ div#squiffy
 {
     font-size: 18px;
 }
+div#squiffy img
+{
+    max-width: 100%;
+}
