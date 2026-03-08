@@ -451,3 +451,27 @@ You made it.
     assertSuccess(result);
     expect(warnings.length).toBe(0);
 });
+
+test("Image links are not mistaken for passage links", async () => {
+    const script = `
+[[start]]:
+Here is an image: ![a cat](cat.png).
+And another: ![](logo.jpg).
+`;
+
+    const warnings: string[] = [];
+    const result = await compile({
+        scriptBaseFilename: "test.squiffy",
+        script: script,
+        onWarning: (message) => warnings.push(message),
+    });
+
+    assertSuccess(result);
+    // Image markdown should be passed through unchanged
+    expect(result.output.story.sections.start.text).toContain("![a cat](cat.png)");
+    expect(result.output.story.sections.start.text).toContain("![](logo.jpg)");
+    // No passage templates should be generated from the image links
+    expect(result.output.story.sections.start.text).not.toContain('{{passage "cat.png"');
+    expect(result.output.story.sections.start.text).not.toContain('{{passage "logo.jpg"');
+    expect(warnings.length).toBe(0);
+});
