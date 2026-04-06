@@ -17,7 +17,7 @@
     "@vite-pwa/assets-generator": "^1.0.1",
     "sass": "^1.93.2",
     "typescript": "^5.9.3",
-    "vite": "^7.1.8",
+    "vite": "^7.3.2",
     "vite-plugin-pwa": "^1.0.3",
     "workbox-window": "^7.3.0"
   },
