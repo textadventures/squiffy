@@ -1,0 +1,5 @@
+/manifest.webmanifest
+  Content-Type: application/manifest+json
+
+/assets/*
+  cache-control: max-age=31536000, immutable
