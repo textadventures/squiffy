@@ -16,7 +16,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     let story: Story;
     let currentSection: Section;
     let currentSectionElement: HTMLElement;
-    let currentPassageElement: HTMLElement;
+    let currentPassageElement: HTMLElement | null;
     let currentBlockOutputElement: HTMLElement | null;
     let scrollPosition = 0;
     const emitter = new Emitter<SquiffyEventMap>();
@@ -462,6 +462,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
 
     function unClearScreen() {
         const clearStack = getClearStack();
+        if (!clearStack) return;
         for (const child of [...outputElement.children]) {
             if (child !== clearStack) {
                 child.remove();
@@ -499,7 +500,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
 
             div.innerHTML = html;
             pluginManager.onWrite(div);
-            currentBlockOutputElement.appendChild(div);
+            currentBlockOutputElement!.appendChild(div);
 
             // Setup validation for any new inputs that were just added
             setupInputValidation(currentSectionElement);
@@ -515,7 +516,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
                 // do nothing
             }
             else if (settings.scroll === "element") {
-                outputElement.lastElementChild.scrollIntoView({ block: "end", inline: "nearest", behavior: "smooth" });
+                outputElement.lastElementChild?.scrollIntoView({ block: "end", inline: "nearest", behavior: "smooth" });
             }
             else {
                 let scrollTo = scrollPosition;
@@ -555,7 +556,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         const allSectionElements = outputElement.querySelectorAll<HTMLElement>(".squiffy-output-section:last-child");
         currentSectionElement = allSectionElements[allSectionElements.length - 1];
         const sectionName = currentSectionElement.getAttribute("data-section");
-        currentSection = story.sections[sectionName];
+        currentSection = story.sections[sectionName!];
     }
 
     function setCurrentPassageElement() {

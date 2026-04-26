@@ -30,7 +30,7 @@ export function updateStory(oldStory: Story,
         // Record which passage links are disabled
         const disabledPassages = Array.from(element
             .querySelectorAll("a.link-passage.disabled"))
-            .map((el: HTMLElement) => el.getAttribute("data-passage"));
+            .map((el: Element) => el.getAttribute("data-passage"));
 
         element.innerHTML = text;
 
@@ -49,7 +49,7 @@ export function updateStory(oldStory: Story,
                 // section has been deleted
                 for (const element of elements) {
                     const parentOutputSection = element.closest(".squiffy-output-section");
-                    parentOutputSection.remove();
+                    parentOutputSection?.remove();
                 }
             }
             else {
@@ -82,7 +82,7 @@ export function updateStory(oldStory: Story,
                 // passage has been deleted
                 for (const element of elements) {
                     const parentOutputPassage = element.closest(".squiffy-output-passage");
-                    parentOutputPassage.remove();
+                    parentOutputPassage?.remove();
                 }
             }
             else {
