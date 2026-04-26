@@ -12,12 +12,12 @@
   "devDependencies": {
     "@types/ace": "^0.0.52",
     "@types/bootstrap": "^5.2.10",
-    "@types/jquery": "^3.5.33",
+    "@types/jquery": "^4.0.0",
     "@types/wicg-file-system-access": "^2023.10.6",
     "@vite-pwa/assets-generator": "^1.0.1",
-    "sass": "^1.93.2",
-    "typescript": "^5.9.3",
-    "vite": "^7.1.8",
+    "sass": "^1.99.0",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.10",
     "vite-plugin-pwa": "^1.0.3",
     "workbox-window": "^7.3.0"
   },
@@ -34,8 +34,8 @@
     "bootstrap-icons": "^1.13.1",
     "chosen-js": "^1.8.7",
     "idb-keyval": "^6.2.2",
-    "jquery": "^3.7.1",
-    "marked": "^16.3.0",
+    "jquery": "^4.0.0",
+    "marked": "^18.0.2",
     "split.js": "^1.6.5",
     "squiffy-compiler": "^6.0.0-beta.2",
     "squiffy-runtime": "^6.0.0-beta.2"
