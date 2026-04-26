@@ -25,7 +25,7 @@ export function RotateSequencePlugin() : SquiffyPlugin {
 
     const handleLink = (squiffy: PluginHost, link: HTMLElement, isRotate: boolean) => {
         const result: HandleLinkResult = {};
-        const options = JSON.parse(link.getAttribute("data-options")) as string[] || [];
+        const options = JSON.parse(link.getAttribute("data-options") ?? "[]") as string[] || [];
 
         const rotateResult = rotate(options, isRotate ? link.getAttribute("data-value") : "");
 

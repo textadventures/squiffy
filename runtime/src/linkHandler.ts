@@ -13,6 +13,6 @@ export class LinkHandler {
         if (handler) {
             return [true, type, handler(link)];
         }
-        return [false, type, null];
+        return [false, type, {}];
     }
 }

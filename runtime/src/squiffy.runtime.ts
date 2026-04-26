@@ -17,7 +17,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     let currentSection: Section;
     let currentSectionElement: HTMLElement;
     let currentPassageElement: HTMLElement;
-    let currentBlockOutputElement: HTMLElement;
+    let currentBlockOutputElement: HTMLElement | null;
     let scrollPosition = 0;
     const emitter = new Emitter<SquiffyEventMap>();
     const transitions: (() => Promise<void>)[] = [];

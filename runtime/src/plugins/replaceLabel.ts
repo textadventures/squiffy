@@ -7,10 +7,10 @@ export function ReplaceLabel() : SquiffyPlugin {
     return {
         name: "replaceLabel",
         init(squiffy: PluginHost) {
-            squiffy.registerHelper("label", function(name: string, options) {
+            squiffy.registerHelper("label", function(this: any, name: string, options) {
                 return new Handlebars.SafeString(`<span class="squiffy-label-${name}">${options.fn(this)}</span>`);
             });
-            squiffy.registerHelper("replace", function(name: string, options) {
+            squiffy.registerHelper("replace", function(this: any, name: string, options) {
                 const result = options.fn(this);
                 const element = squiffy.outputElement.querySelector<HTMLElement>(`.squiffy-label-${name}`);
                 if (element) {

@@ -86,7 +86,7 @@ export function AnimatePlugin(): SquiffyPlugin {
         init(sq: PluginHost) {
             squiffy = sq;
 
-            squiffy.registerHelper("animate", function(name: string, options) {
+            squiffy.registerHelper("animate", function(this: any, name: string, options) {
                 const content = options.fn(this);
                 const dataset: Record<string, any> = {
                     name,
