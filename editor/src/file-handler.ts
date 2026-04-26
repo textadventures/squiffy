@@ -1,3 +1,4 @@
+/// <reference types="wicg-file-system-access" />
 import { get, set } from "idb-keyval";
 import { downloadString } from "./util";
 
@@ -81,13 +82,14 @@ export const selectFile = async (): Promise<FileSelection | null> => {
     try {
         if (hasFileSystemAccess()) {
             // Modern API - Chrome, Edge
-            [fileHandle] = await window.showOpenFilePicker();
-            await addToRecentFiles(fileHandle);
+            const [handle] = await window.showOpenFilePicker();
+            fileHandle = handle;
+            await addToRecentFiles(handle);
 
-            if (!await ensurePermission(fileHandle)) {
+            if (!await ensurePermission(handle)) {
                 return null;
             }
-            const file = await fileHandle.getFile();
+            const file = await handle.getFile();
             currentFileName = file.name;
             const content = await file.text();
             return { content, fileName: file.name };
@@ -223,15 +225,16 @@ export const saveFileAs = async (data: string): Promise<boolean> => {
                 suggestedName: currentFileName || "game.squiffy",
             };
 
-            fileHandle = await window.showSaveFilePicker(options);
-            await addToRecentFiles(fileHandle);
+            const handle = await window.showSaveFilePicker(options);
+            fileHandle = handle;
+            await addToRecentFiles(handle);
 
-            const writable = await fileHandle.createWritable();
+            const writable = await handle.createWritable();
             await writable.write(data);
             await writable.close();
 
             // Update current filename
-            const file = await fileHandle.getFile();
+            const file = await handle.getFile();
             currentFileName = file.name;
 
             return true;

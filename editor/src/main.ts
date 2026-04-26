@@ -340,7 +340,7 @@ const handleWelcomeOpenFile = async function () {
     welcomeModal?.hide();
 };
 
-let localSaveTimeout: NodeJS.Timeout | undefined;
+let localSaveTimeout: ReturnType<typeof setTimeout> | undefined;
 
 const editorChange = async function () {
     if (loading) return;

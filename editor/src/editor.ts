@@ -1,3 +1,4 @@
+/// <reference types="ace" />
 import * as userSettings from "./user-settings.ts";
 import { init as initAce } from "./ace-integration";
 
