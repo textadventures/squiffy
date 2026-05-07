@@ -11,11 +11,7 @@
     },
     "./squiffy.runtime.css": "./dist/squiffy.runtime.css",
     "./dist/squiffy.runtime.global.js": "./dist/squiffy.runtime.global.js",
-    "./dist/squiffy.runtime.css": "./dist/squiffy.runtime.css",
-    "./dist/events": {
-      "types": "./dist/src/events.d.ts",
-      "default": "./dist/squiffy.runtime.js"
-    }
+    "./dist/squiffy.runtime.css": "./dist/squiffy.runtime.css"
   },
   "scripts": {
     "dev": "vitest",

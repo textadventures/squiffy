@@ -11,6 +11,7 @@ import { imports } from "./import.js";
 import { areInputsValid, setupInputValidation } from "./inputValidation.js";
 
 export type { SquiffyApi } from "./types.js";
+export type { SquiffyEventHandler, SquiffyEventMap } from "./events.js";
 
 export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => {
     let story: Story;
