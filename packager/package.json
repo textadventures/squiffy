@@ -27,8 +27,8 @@
   "devDependencies": {
     "tsx": "^4.20.4",
     "typescript": "^6.0.3",
-    "vite": "^8.0.10",
-    "vite-plugin-dts": "^4.5.4",
+    "vite": "^8.0.11",
+    "vite-plugin-dts": "^5.0.0",
     "vitest": "^4.1.5"
   },
   "files": [
