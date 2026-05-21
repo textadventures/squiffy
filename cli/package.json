@@ -40,12 +40,12 @@
   },
   "devDependencies": {
     "@types/finalhandler": "^1.2.4",
-    "@types/node": "^25.7.0",
+    "@types/node": "^25.9.1",
     "@types/serve-static": "^2.2.0",
     "@types/yargs": "^17.0.33",
-    "tsx": "^4.21.1",
+    "tsx": "^4.22.3",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.6"
+    "vitest": "^4.1.7"
   },
   "files": [
     "dist"
