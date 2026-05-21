@@ -15,10 +15,10 @@
   "license": "MIT",
   "preferGlobal": true,
   "devDependencies": {
-    "@types/node": "^25.7.0",
+    "@types/node": "^25.9.1",
     "glob": "^13.0.6",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.6"
+    "vitest": "^4.1.7"
   },
   "scripts": {
     "test": "vitest --run",
