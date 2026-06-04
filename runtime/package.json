@@ -34,8 +34,8 @@
     "jsdom": "^29.1.1",
     "squiffy-compiler": "^6.0.0-beta.2",
     "typescript": "^6.0.3",
-    "vite": "^8.0.14",
-    "vite-plugin-dts": "^5.0.1"
+    "vite": "^8.0.16",
+    "vite-plugin-dts": "^5.0.2"
   },
   "dependencies": {
     "animejs": "^4.4.1",
