@@ -13,18 +13,18 @@
   },
   "dependencies": {
     "@astrojs/check": "^0.9.9",
-    "@astrojs/mdx": "^6.0.1",
-    "@astrojs/starlight": "^0.39.2",
+    "@astrojs/mdx": "^6.0.2",
+    "@astrojs/starlight": "^0.39.3",
     "@textadventures/squiffy-cli": "^6.0.0-beta.2",
     "@textadventures/squiffy-packager": "^6.0.0-beta.2",
-    "astro": "^6.3.6",
+    "astro": "^6.4.4",
     "bootstrap": "^5.3.7",
     "codemirror": "^6.0.2",
     "debounce": "^3.0.0",
     "sass": "^1.100.0",
     "squiffy-compiler": "^6.0.0-beta.2",
     "squiffy-runtime": "^6.0.0-beta.2",
-    "tsx": "^4.22.3",
+    "tsx": "^4.22.4",
     "typescript": "^6.0.3"
   }
 }
