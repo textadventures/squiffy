@@ -12,7 +12,7 @@
   "devDependencies": {
     "@types/ace": "^0.0.52",
     "@types/bootstrap": "^5.2.11",
-    "@types/jquery": "^4.0.0",
+    "@types/jquery": "^4.0.1",
     "@types/wicg-file-system-access": "^2023.10.6",
     "@vite-pwa/assets-generator": "^1.0.1",
     "sass": "^1.100.0",
@@ -35,7 +35,7 @@
     "chosen-js": "^1.8.7",
     "idb-keyval": "^6.2.5",
     "jquery": "^4.0.0",
-    "marked": "^18.0.4",
+    "marked": "^18.0.5",
     "split.js": "^1.6.5",
     "squiffy-compiler": "^6.0.0-beta.2",
     "squiffy-runtime": "^6.0.0-beta.2"
