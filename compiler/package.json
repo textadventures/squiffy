@@ -15,7 +15,7 @@
   "license": "MIT",
   "preferGlobal": true,
   "devDependencies": {
-    "@types/node": "^25.9.1",
+    "@types/node": "^25.9.3",
     "glob": "^13.0.6",
     "typescript": "^6.0.3",
     "vitest": "^4.1.8"
