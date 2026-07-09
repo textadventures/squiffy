@@ -27,7 +27,7 @@
     "@playwright/test": "^1.49.1",
     "eslint": "^10.2.1",
     "lerna": "^9.0.3",
-    "typescript": "^6.0.3",
+    "typescript": "^7.0.2",
     "typescript-eslint": "^8.51.0"
   }
 }
