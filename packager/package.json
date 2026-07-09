@@ -25,6 +25,7 @@
     "squiffy-runtime": "^6.0.0-beta.2"
   },
   "devDependencies": {
+    "esbuild": "^0.28.1",
     "tsx": "^4.22.4",
     "typescript": "^6.0.3",
     "vite": "^8.1.3",
