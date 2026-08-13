@@ -26,7 +26,7 @@
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.49.1",
     "eslint": "^10.2.1",
-    "lerna": "^9.0.3",
+    "lerna": "^10.0.0",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.51.0"
   }
