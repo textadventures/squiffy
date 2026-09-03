@@ -40,10 +40,10 @@
   },
   "devDependencies": {
     "@types/finalhandler": "^1.2.4",
-    "@types/node": "^26.2.0",
+    "@types/node": "^26.4.0",
     "@types/serve-static": "^2.2.0",
     "@types/yargs": "^17.0.33",
-    "tsx": "^4.23.12",
+    "tsx": "^4.23.13",
     "typescript": "^6.0.3",
     "vitest": "^4.1.11"
   },
