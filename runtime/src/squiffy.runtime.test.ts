@@ -580,6 +580,51 @@ Updated text from a passage.
     expect(output).toBe("Here is an updated script with text from a passage: Text from a passage.");
 });
 
+test("Section link to a random section", async () => {
+    const script = `
+[[start]]:
+{{section (random (array "a" "b" "c"))}}
+
+[[a]]:
+A
+
+[[b]]:
+B
+
+[[c]]:
+C
+`;
+
+    const { element } = await initScript(script);
+
+    expect(element.textContent).not.toContain("Template error");
+    const link = element.querySelector("a.squiffy-link.link-section");
+    expect(link).not.toBeNull();
+    const section = link!.getAttribute("data-section");
+    expect(["a", "b", "c"]).toContain(section);
+    expect(link!.textContent).toBe(section);
+});
+
+test("Section link to a random section with link text", async () => {
+    const script = `
+[[start]]:
+{{section (random (array "a" "b")) text="Go through the door"}}
+
+[[a]]:
+A
+
+[[b]]:
+B
+`;
+
+    const { element } = await initScript(script);
+
+    expect(element.textContent).not.toContain("Template error");
+    const link = findLink(element, "section", "Go through the door");
+    expect(link).toBeDefined();
+    expect(["a", "b"]).toContain(link.getAttribute("data-section"));
+});
+
 test("Clear entire script, then update", async () => {
     const script = "Original content";
 

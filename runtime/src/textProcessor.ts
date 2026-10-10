@@ -175,7 +175,7 @@ export class TextProcessor {
             return result;
         };
 
-        const escapeAttr = (s: string) => s.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+        const escapeAttr = (s: unknown) => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;");
 
         this.handlebars.registerHelper("section", (section: string, options) => {
             const text = options.hash.text as string || section;
