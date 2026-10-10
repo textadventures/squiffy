@@ -544,9 +544,10 @@ Updated text from next section.
     squiffyApi.update(updated.story);
     output = getSectionContent(element, "section1");
 
-    // NOTE: The embedded text does not currently get updated. We would need to track where the embedded
-    // text has been written.
-    expect(output).toBe("Here is an updated script with text from the next section: Text from next section.");
+    // section1 changed, so it is re-rendered using the new section2 text.
+    // NOTE: If only section2 changed, the embedded text would not currently get updated. We would need to
+    // track where the embedded text has been written.
+    expect(output).toBe("Here is an updated script with text from the next section: Updated text from next section.");
 });
 
 test("Update passage with embedded text", async () => {
@@ -575,9 +576,95 @@ Updated text from a passage.
     squiffyApi.update(updated.story);
     output = getSectionContent(element, "section1");
 
-    // NOTE: The embedded text does not currently get updated. We would need to track where the embedded
-    // text has been written.
-    expect(output).toBe("Here is an updated script with text from a passage: Text from a passage.");
+    // section1 changed, so it is re-rendered using the new passage text.
+    // NOTE: If only the passage changed, the embedded text would not currently get updated. We would need to
+    // track where the embedded text has been written.
+    expect(output).toBe("Here is an updated script with text from a passage: Updated text from a passage.");
+});
+
+test("Update section to embed a newly added passage", async () => {
+    const script = `
+[[section1]]:
+Here is some text from a passage: {{embed "passage"}}
+`;
+
+    const { squiffyApi, element } = await initScript(script);
+
+    let output = getSectionContent(element, "section1");
+    expect(output).toBe("Here is some text from a passage: ");
+
+    const script2 = `
+[[section1]]:
+Here is updated text from a passage: {{embed "passage"}}
+
+[passage]:
+Text from a passage.
+`;
+
+    const updated = await compile(script2);
+    squiffyApi.update(updated.story);
+    output = getSectionContent(element, "section1");
+
+    expect(output).toBe("Here is updated text from a passage: Text from a passage.");
+});
+
+test("Update passage to embed a newly added passage", async () => {
+    const script = `
+[[section1]]:
+Click [a passage].
+
+[a passage]:
+Embedded: {{embed "other"}}
+`;
+
+    const { squiffyApi, element } = await initScript(script);
+
+    await squiffyApi.clickLink(findLink(element, "passage", "a passage"));
+    let output = getPassageContent(element, "section1", "a passage");
+    expect(output).toBe("Embedded: ");
+
+    const script2 = `
+[[section1]]:
+Click [a passage].
+
+[a passage]:
+Updated embedded: {{embed "other"}}
+
+[other]:
+Other passage text.
+`;
+
+    const updated = await compile(script2);
+    squiffyApi.update(updated.story);
+    output = getPassageContent(element, "section1", "a passage");
+
+    expect(output).toBe("Updated embedded: Other passage text.");
+});
+
+test("Update section to embed a newly added section", async () => {
+    const script = `
+[[section1]]:
+Here is some text from the next section: {{embed "section2"}}
+`;
+
+    const { squiffyApi, element } = await initScript(script);
+
+    let output = getSectionContent(element, "section1");
+    expect(output).toBe("Here is some text from the next section: ");
+
+    const script2 = `
+[[section1]]:
+Here is updated text from the next section: {{embed "section2"}}
+
+[[section2]]:
+Text from next section.
+`;
+
+    const updated = await compile(script2);
+    squiffyApi.update(updated.story);
+    output = getSectionContent(element, "section1");
+
+    expect(output).toBe("Here is updated text from the next section: Text from next section.");
 });
 
 test("Section link to a random section", async () => {
