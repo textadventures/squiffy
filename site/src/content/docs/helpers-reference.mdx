@@ -380,4 +380,60 @@ Execute during **rendering**, at the point where they appear in the text:
 
 ## Creating custom helpers
 
-Advanced users can define custom Handlebars helpers in the `@ui` section using JavaScript. See the [examples directory](https://github.com/textadventures/squiffy/tree/main/examples/animate) for examples of custom animations and helpers.
+You can add your own helpers by calling `squiffy.registerHelper` from JavaScript in a `@ui` block. A `@ui` block goes at the top of your story, and the JavaScript in it runs once when the story starts, before any text is displayed. End the block with `---`:
+
+```
+@ui
+    squiffy.registerHelper("shout", (text) => text.toUpperCase() + "!");
+---
+
+Welcome to the story. {{shout "hello"}}
+```
+
+This displays "Welcome to the story. HELLO!".
+
+`registerHelper` takes the helper's name and a function. Arguments written after the helper name are passed to the function in order. Named `key=value` arguments are passed in `options.hash` (`options` is always the last argument).
+
+### Returning HTML
+
+Text returned from a helper is escaped, so any `<` or `>` characters are displayed as-is rather than treated as HTML. To return HTML, wrap it in `squiffy.SafeString`. For example, this helper embeds a YouTube video:
+
+```
+@ui
+    squiffy.registerHelper("youtube", (id, options) => {
+        const width = options.hash.width || 560;
+        const height = options.hash.height || 315;
+        return new squiffy.SafeString(
+            `<iframe width="${width}" height="${height}" src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}" ` +
+            `title="YouTube video" frameborder="0" allowfullscreen></iframe>`);
+    });
+---
+
+Here's a video:
+
+{{youtube "dQw4w9WgXcQ" width=480 height=270}}
+```
+
+Only use `SafeString` for HTML you've built yourself. If part of the HTML comes from a player's input, escape it first.
+
+### Using attributes in a helper
+
+Inside a helper you can use `squiffy.get` and `squiffy.set` to read and change attributes, just as you can in a section's JavaScript. For example, this helper shows different text each time it's displayed, and then keeps showing the last one. It uses an attribute to count how many times it has been shown:
+
+```
+@ui
+    squiffy.registerHelper("visit", (attribute, ...args) => {
+        const items = args.slice(0, -1); // the last argument is "options"
+        const count = squiffy.get(attribute) || 0;
+        squiffy.set(attribute, count + 1);
+        return items[Math.min(count, items.length - 1)];
+    });
+---
+
+[[tutor]]:
+{{visit "tutorvisits" "“And you are?…”" "“Ahh, here you are…”" "“You again!”"}}
+
+[[Visit the tutor again]](tutor)
+```
+
+You can also put the JavaScript in a separate file with `@ui filename.js`. See the [text processor example](https://github.com/textadventures/squiffy/tree/main/examples/textprocessor) for both of these helpers, and the [animate example](https://github.com/textadventures/squiffy/tree/main/examples/animate) for custom animations, which are registered the same way using `squiffy.registerAnimation`.
