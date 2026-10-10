@@ -52,7 +52,7 @@ cd compiler && npm run dev
 cd runtime && npm run dev
 ```
 
-The runtime tests use jsdom environment (configured in `runtime/vitest.config.ts`).
+The runtime tests run in the `node` environment, and each test creates a fresh DOM with `global-jsdom` (so use `window.Event` etc. rather than the Node globals).
 
 ## Linting
 
