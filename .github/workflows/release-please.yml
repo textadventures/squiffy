@@ -1,0 +1,45 @@
+name: release-please
+
+# Maintains an up-to-date "release PR" that bumps every package's version and
+# CHANGELOG.md from Conventional Commits-formatted PR titles merged to main.
+# Merging that release PR is the release: this job tags it directly (e.g.
+# v6.0.0-beta.3), which in turn triggers npm-publish.yml.
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      # RELEASE_PAT rather than GITHUB_TOKEN: a tag pushed with GITHUB_TOKEN
+      # doesn't trigger other workflows, so npm-publish.yml would never run.
+      - uses: googleapis/release-please-action@v5
+        id: release
+        with:
+          token: ${{ secrets.RELEASE_PAT }}
+
+      - uses: actions/checkout@v7
+        if: ${{ steps.release.outputs.release_created }}
+        with:
+          sparse-checkout: .github/scripts
+
+      # release-please-config.json sets prerelease: true so the "prerelease"
+      # versioning strategy keeps bumping the trailing beta.N instead of
+      # graduating out of it (that config key drives both the version-bump
+      # logic and the GitHub Release's prerelease flag). For a stable release
+      # (one cut with a Release-As footer), un-flag the release itself here so
+      # it can hold "Latest".
+      - name: Un-prerelease the release if it's stable
+        if: ${{ steps.release.outputs.release_created }}
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PAT }}
+          TAG: ${{ steps.release.outputs.tag_name }}
+        run: |
+          if [ "$(.github/scripts/release-channel.sh "$TAG")" == "stable" ]; then
+            gh release edit "$TAG" --prerelease=false --latest --repo ${{ github.repository }}
+          fi

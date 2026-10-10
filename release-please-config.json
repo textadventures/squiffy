@@ -1,0 +1,99 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "include-component-in-tag": false,
+  "packages": {
+    ".": {
+      "release-type": "node",
+      "versioning": "prerelease",
+      "prerelease-type": "beta",
+      "prerelease": true,
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "lerna.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "compiler/package.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "runtime/package.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "packager/package.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "cli/package.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "editor/package.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "site/package.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "types/package.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "compiler/package.json",
+          "jsonpath": "$[dependencies,devDependencies][?(@property.startsWith('squiffy-') || @property.startsWith('@textadventures/squiffy-'))]"
+        },
+        {
+          "type": "json",
+          "path": "runtime/package.json",
+          "jsonpath": "$[dependencies,devDependencies][?(@property.startsWith('squiffy-') || @property.startsWith('@textadventures/squiffy-'))]"
+        },
+        {
+          "type": "json",
+          "path": "packager/package.json",
+          "jsonpath": "$[dependencies,devDependencies][?(@property.startsWith('squiffy-') || @property.startsWith('@textadventures/squiffy-'))]"
+        },
+        {
+          "type": "json",
+          "path": "cli/package.json",
+          "jsonpath": "$[dependencies,devDependencies][?(@property.startsWith('squiffy-') || @property.startsWith('@textadventures/squiffy-'))]"
+        },
+        {
+          "type": "json",
+          "path": "editor/package.json",
+          "jsonpath": "$[dependencies,devDependencies][?(@property.startsWith('squiffy-') || @property.startsWith('@textadventures/squiffy-'))]"
+        },
+        {
+          "type": "json",
+          "path": "site/package.json",
+          "jsonpath": "$[dependencies,devDependencies][?(@property.startsWith('squiffy-') || @property.startsWith('@textadventures/squiffy-'))]"
+        },
+        {
+          "type": "json",
+          "path": "types/package.json",
+          "jsonpath": "$[dependencies,devDependencies][?(@property.startsWith('squiffy-') || @property.startsWith('@textadventures/squiffy-'))]"
+        },
+        {
+          "type": "json",
+          "path": "package-lock.json",
+          "jsonpath": "$.packages[compiler,runtime,packager,cli,editor,site,types].version"
+        },
+        {
+          "type": "json",
+          "path": "package-lock.json",
+          "jsonpath": "$.packages[compiler,runtime,packager,cli,editor,site,types][dependencies,devDependencies][?(@property.startsWith('squiffy-') || @property.startsWith('@textadventures/squiffy-'))]"
+        }
+      ]
+    }
+  }
+}

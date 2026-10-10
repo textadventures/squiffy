@@ -1,0 +1,64 @@
+name: Publish to npm
+
+# Publishes the public packages (compiler, runtime, packager, cli, types) when
+# release-please tags a release. `lerna publish from-package` only publishes
+# versions that aren't already on the registry, so re-running is safe.
+on:
+  push:
+    tags: ['v*']
+  # Manual escape hatch, e.g. to retry after NPM_TOKEN expired. Dispatch
+  # against the existing tag itself (`gh workflow run npm-publish.yml --ref
+  # vX.Y.Z`) so GITHUB_REF_NAME below still resolves to that tag.
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Use Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Verify tag matches package.json version
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          FILE_VERSION="$(node -p "require('./package.json').version")"
+          if [ "$TAG_VERSION" != "$FILE_VERSION" ]; then
+            echo "❌ Tag $GITHUB_REF_NAME does not match package.json version ($FILE_VERSION)"
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm test
+
+      # An explicit dist-tag is needed: npm refuses to guess one for a
+      # prerelease-looking version. Until 6.0.0 ships there's no stable 6.x
+      # release for `latest` to protect, and the docs tell people to run
+      # `npx @textadventures/squiffy-cli`, so prereleases go to `latest` too.
+      # Once 6.0.0 is out, change the prerelease branch to DIST_TAG=beta (as
+      # in textadventures/quest) so betas stop reaching stable users.
+      - name: Determine the dist-tag
+        run: |
+          if [ "$(.github/scripts/release-channel.sh "$GITHUB_REF_NAME")" == "stable" ]; then
+            echo "DIST_TAG=latest" >> $GITHUB_ENV
+          else
+            # TODO: beta, once 6.0.0 has shipped (see above).
+            echo "DIST_TAG=latest" >> $GITHUB_ENV
+          fi
+
+      - name: Publish to npm
+        run: npx lerna publish from-package --no-private --dist-tag ${{ env.DIST_TAG }} --yes
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
