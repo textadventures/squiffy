@@ -1,7 +1,7 @@
-// ambient declaration for imports like `import { story } from './game.squiffy'`
+// Ambient declaration for imports like `import { story } from "./game.squiffy"`,
+// as provided by @textadventures/vite-plugin-squiffy
 declare module "*.squiffy" {
     export const story: any;
-    const _default: unknown;
-    export default _default;
+    export const title: string;
+    export default story;
 }
-export {}; // ensure module, avoids TS trimming
