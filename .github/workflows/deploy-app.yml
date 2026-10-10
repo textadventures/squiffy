@@ -1,0 +1,67 @@
+name: Deploy app.squiffystory.com
+
+# Deploys the editor to the squiffy-app Cloudflare Pages project when
+# release-please tags a release, so app.squiffystory.com only ever runs a
+# released version. Runs alongside npm-publish.yml off the same tag.
+#
+# squiffy-app is still connected to GitHub, for the preview deployments on
+# PRs and pushes (its "Cloudflare Pages: squiffy-app" check is required on
+# main), but its automatic production branch deployments are turned off in
+# the Cloudflare dashboard. This workflow's upload to --branch=main, the
+# project's production branch, is what goes live.
+on:
+  push:
+    tags: ['v*']
+  # Manual escape hatch, e.g. to retry a failed deploy or roll back. Dispatch
+  # against a release tag (`gh workflow run deploy-app.yml --ref vX.Y.Z`):
+  # a run from a branch is refused, so production can't get an unreleased
+  # build.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Refuse to deploy anything but a release tag
+        if: github.ref_type != 'tag'
+        run: |
+          echo "::error::Run this workflow against a release tag (gh workflow run deploy-app.yml --ref vX.Y.Z), not a branch."
+          exit 1
+
+      # Full history and tags: the editor's prebuild step counts commits since
+      # the last tag for its version string, which is 0 for a release tag.
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Use Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Verify tag matches package.json version
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          FILE_VERSION="$(node -p "require('./package.json').version")"
+          if [ "$TAG_VERSION" != "$FILE_VERSION" ]; then
+            echo "❌ Tag $GITHUB_REF_NAME does not match package.json version ($FILE_VERSION)"
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build the editor and the packages it uses
+        run: npx lerna run build --scope @textadventures/squiffy-editor --include-dependencies
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy editor/dist --project-name=squiffy-app --branch=main
