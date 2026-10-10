@@ -10,7 +10,8 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/textadventures/squiffy.git"
+    "url": "git+https://github.com/textadventures/squiffy.git",
+    "directory": "compiler"
   },
   "license": "MIT",
   "preferGlobal": true,

@@ -72,7 +72,7 @@ The `prerelease` versioning strategy means every release just increments the tra
 
 `.github/scripts/release-channel.sh` says whether a tag is `stable` or a `prerelease`. A stable release is un-flagged as a prerelease on GitHub and marked Latest. On npm, prereleases still go to the `latest` dist-tag until 6.0.0 ships (see the comment in `npm-publish.yml`).
 
-release-please pushes using the `RELEASE_PAT` repo secret (a PAT with Contents and Pull requests read/write), since tags pushed with `GITHUB_TOKEN` don't trigger other workflows. `npm-publish.yml` needs the `NPM_TOKEN` secret.
+release-please pushes using the `RELEASE_PAT` repo secret (a PAT with Contents and Pull requests read/write), since tags pushed with `GITHUB_TOKEN` don't trigger other workflows. `npm-publish.yml` needs no secret: it uses npm trusted publishing, which each package must have configured on npmjs.com (trusting `textadventures/squiffy` and `npm-publish.yml`). Lerna then adds provenance, which needs every published package.json to have a `repository.url` pointing at this repo.
 
 `npm run publish` still works as a manual fallback (it publishes whatever versions are in the package.json files and aren't on npm yet).
 

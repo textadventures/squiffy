@@ -3,13 +3,23 @@ name: Publish to npm
 # Publishes the public packages (compiler, runtime, packager, cli, types) when
 # release-please tags a release. `lerna publish from-package` only publishes
 # versions that aren't already on the registry, so re-running is safe.
+#
+# Authenticates with npm trusted publishing, not a token: each package's
+# settings on npmjs.com trust this workflow file in textadventures/squiffy,
+# and lerna exchanges the job's GitHub OIDC token for a short-lived publish
+# token. It also attaches provenance, which needs each package.json's
+# repository.url to match this repo.
 on:
   push:
     tags: ['v*']
-  # Manual escape hatch, e.g. to retry after NPM_TOKEN expired. Dispatch
+  # Manual escape hatch, e.g. to retry a failed publish. Dispatch
   # against the existing tag itself (`gh workflow run npm-publish.yml --ref
   # vX.Y.Z`) so GITHUB_REF_NAME below still resolves to that tag.
   workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
 
 jobs:
   publish:
@@ -23,7 +33,6 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          registry-url: 'https://registry.npmjs.org'
 
       - name: Verify tag matches package.json version
         run: |
@@ -60,5 +69,3 @@ jobs:
 
       - name: Publish to npm
         run: npx lerna publish from-package --no-private --dist-tag ${{ env.DIST_TAG }} --yes
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
