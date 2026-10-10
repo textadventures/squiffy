@@ -91,11 +91,11 @@ You can set attribute values directly from section and passage links using a com
 [[game_start]]:
 You are a {{class}}.
 
-{{#if (eq class &quot;warrior&quot;)}}
+{{#if class = &quot;warrior&quot;}}
 Strength: {{strength}}, Health: {{health}}
-{{else if (eq class &quot;mage&quot;)}}
+{{else if class = &quot;mage&quot;}}
 Intelligence: {{intelligence}}, Health: {{health}}
-{{else if (eq class &quot;rogue&quot;)}}
+{{else if class = &quot;rogue&quot;}}
 Dexterity: {{dexterity}}, Health: {{health}}
 {{/if}}"></Sample>
 
@@ -395,7 +395,7 @@ You ordered: **{{main}}** - ${{cost}}
 - [[No thanks]](add_dessert)
 
 [[add_dessert]]:
-{{#if drink}}{{inc &quot;total_cost&quot; drink_cost}}You added: {{drink}} {{#if (gt drink_cost 0)}}(${{drink_cost}}){{else}}(free!){{/if}}{{/if}}
+{{#if drink}}{{inc &quot;total_cost&quot; drink_cost}}You added: {{drink}} {{#if drink_cost > 0}}(${{drink_cost}}){{else}}(free!){{/if}}{{/if}}
 
 **Add a dessert?**
 - [[Ice Cream ($6)]](finish, dessert=Ice Cream, dessert_cost=6)
@@ -408,14 +408,14 @@ You ordered: **{{main}}** - ${{cost}}
 
 **Your Order:**
 - Main: {{main}} (${{cost}})
-{{#if drink}}- Drink: {{drink}} {{#if (gt drink_cost 0)}}(${{drink_cost}}){{else}}(free){{/if}}{{/if}}
+{{#if drink}}- Drink: {{drink}} {{#if drink_cost > 0}}(${{drink_cost}}){{else}}(free){{/if}}{{/if}}
 {{#if dessert}}- Dessert: {{dessert}} (${{dessert_cost}}){{/if}}
 
 **Total: ${{total_cost}}**
 
-{{#if (gte total_cost 20)}}
+{{#if total_cost >= 20}}
 Wow, you're hungry! That's a big order.
-{{else if (gte total_cost 15)}}
+{{else if total_cost >= 15}}
 A nice balanced meal!
 {{else}}
 A light meal today.

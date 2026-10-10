@@ -3,12 +3,12 @@
 
 [[]]:
 @clear
-{{#if (not (at "intro"))}}
+{{#if not (at "intro")}}
 **SCORE: {{live "score"}}** | **ROUND: {{live "round"}}** | Host Patience: {{live "patience" section="patience display"}}
 {{/if}}
 
 [[patience display]]:
-{{#if (gte patience 3)}}_Cheerful_{{else}}{{#if (gte patience 1)}}_Strained_{{else}}_Murderous_{{/if}}{{/if}}
+{{#if patience >= 3}}_Cheerful_{{else if patience >= 1}}_Strained_{{else}}_Murderous_{{/if}}
 
 [[intro]]:
 @set score = 0
@@ -67,10 +67,10 @@ It lands on... {{#animate "toast"}}{{category}}!{{/animate}}
 {{live "category" section="showCategory"}}
 
 [[showCategory]]:
-{{#if (eq category "GENERAL KNOWLEDGE")}}[[General Knowledge Round]]{{/if}}
-{{#if (eq category "SCIENCE with PROFESSOR BOOM")}}[[Science Round]]{{/if}}
-{{#if (eq category "MYSTERY BOX")}}[[Mystery Box Round]]{{/if}}
-{{#if (eq category "THE AUDIENCE DECIDES")}}[[Audience Round]]{{/if}}
+{{#if category = "GENERAL KNOWLEDGE"}}[[General Knowledge Round]]{{/if}}
+{{#if category = "SCIENCE with PROFESSOR BOOM"}}[[Science Round]]{{/if}}
+{{#if category = "MYSTERY BOX"}}[[Mystery Box Round]]{{/if}}
+{{#if category = "THE AUDIENCE DECIDES"}}[[Audience Round]]{{/if}}
 
 [[General Knowledge Round]]:
 "Ah, General Knowledge! The knowledge of generals! Or... general... people." Hank shuffles his cards.
@@ -89,7 +89,7 @@ Status: {{#label "status"}}Waiting for answer...{{/label}}
 {{#replace "answer"}}**{{gk_answer}}**{{/replace}}
 {{#replace "status"}}**LOCKED IN!**{{/replace}}
 
-{{#if (eq gk_answer "Paris")}}
+{{#if gk_answer = "Paris"}}
 {{#animate "toast"}}CORRECT!{{/animate}}
 
 {{#animate "fadeIn"}}
@@ -98,13 +98,13 @@ Status: {{#label "status"}}Waiting for answer...{{/label}}
 
 {{inc "score" 100}}
 {{else}}
-{{#if (eq gk_answer "A baguette")}}
+{{#if gk_answer = "A baguette"}}
 {{dec "patience"}}
 "A baguette? A BAGUETTE?!" Hank's eye twitches. "That's not even a city, {{player_name}}!"
 
 The audience cardboard cutout falls over.
 {{else}}
-{{#if (eq gk_answer "France doesn't exist")}}
+{{#if gk_answer = "France doesn't exist"}}
 {{dec "patience"}}{{dec "patience"}}
 Hank stares at you for a very long time.
 
@@ -163,7 +163,7 @@ Small explosions begin occurring around the lab set.
 {{dec "stability" 30}}
 {{dec "patience"}}
 
-{{#if (lte stability 30)}}
+{{#if stability <= 30}}
 {{#animate "toast"}}BOOM!{{/animate}}
 
 A small explosion singes Hank's eyebrows.
@@ -224,7 +224,7 @@ You lift the lid slowly...
 
 {{set "box_contents" (random (array "prize" "bees" "another_box" "philosophy"))}}
 
-{{#if (eq box_contents "prize")}}
+{{#if box_contents = "prize"}}
 {{#animate "toast"}}JACKPOT!{{/animate}}
 
 Inside is a solid gold trophy shaped like a wheel! It's spray-painted gold, but still!
@@ -234,7 +234,7 @@ Inside is a solid gold trophy shaped like a wheel! It's spray-painted gold, but 
 "Congratulations! You've won our grand prize: a trophy AND the satisfaction of not being attacked by whatever else could have been in there!"
 {{/if}}
 
-{{#if (eq box_contents "bees")}}
+{{#if box_contents = "bees"}}
 {{#animate "toast"}}BEES!{{/animate}}
 
 The box is full of bees. They seem confused but not aggressive.
@@ -248,7 +248,7 @@ A bee lands on your nose, considers its life choices, and flies away. You feel o
 {{inc "score" 50}}
 {{/if}}
 
-{{#if (eq box_contents "another_box")}}
+{{#if box_contents = "another_box"}}
 Inside the box is... another, smaller box.
 
 "Ah, the recursive box!" Hank nods sagely. "Open it!"
@@ -260,7 +260,7 @@ Inside THAT box is a note that says: "{{player_name}} wins 100 points!"
 {{#animate "toast"}}Congratulations, somehow!{{/animate}}
 {{/if}}
 
-{{#if (eq box_contents "philosophy")}}
+{{#if box_contents = "philosophy"}}
 Inside is a small scroll. It reads:
 
 _"What IS a prize, really? Is not the true prize the friends we made along the way? Also here's 75 points."_
@@ -299,28 +299,28 @@ The audience confers. One of them is asleep. The cardboard cutout offers no inpu
 
 Finally, a woman in the front row shouts: "MAKE THEM {{random (array "SING" "DANCE" "DO AN IMPRESSION OF A BLENDER" "JUST GIVE THEM POINTS FOR FREE") set="make_them"}}!"
 
-{{#if (eq make_them "SING")}}
+{{#if make_them = "SING"}}
 "You heard her! SING, {{player_name}}! Sing like your points depend on it! Because they do!"
 
 - [[Sing beautifully]]
 - [[Sing terribly on purpose]]
 {{/if}}
 
-{{#if (eq make_them "DANCE")}}
+{{#if make_them = "DANCE"}}
 "DANCE! Show us your moves!"
 
 - [[Dance with enthusiasm]]
 - [[Do the robot]]
 {{/if}}
 
-{{#if (eq make_them "DO AN IMPRESSION OF A BLENDER")}}
+{{#if make_them = "DO AN IMPRESSION OF A BLENDER"}}
 "A BLENDER! Do a blender impression! This is normal television!"
 
 - [[WHIRRRRRR]]
 - [[Refuse on grounds of dignity]]
 {{/if}}
 
-{{#if (eq make_them "JUST GIVE THEM POINTS FOR FREE")}}
+{{#if make_them = "JUST GIVE THEM POINTS FOR FREE"}}
 "Free points?! That's not how—" Hank checks his cards. "Actually, that IS an option apparently."
 
 {{inc "score" 150}}
@@ -389,7 +389,7 @@ Hank: "Fair enough. Moving on with your dignity intact but your score unchanged.
 [[Next Round]]:
 @inc round
 
-{{#if (eq (length "availableRounds") 0)}}
+{{#if (length "availableRounds") = 0}}
 [[Final Round]]
 {{else}}
 Hank shuffles his cards. "Alright, {{player_name}}, ready for round {{round}}?"
@@ -436,7 +436,7 @@ The audience gasps. The cardboard cutout gasps (the AC kicked in).
 [[Ending]]
 
 [[I genuinely don't remember]]:
-{{#if (lte patience 1)}}
+{{#if patience <= 1}}
 Hank stares at you. A vein throbs in his forehead.
 
 "It's... it's HANK. My name is HANK. I said it at the START."
@@ -458,7 +458,7 @@ Hank laughs. "Honestly? I respect the honesty!"
 
 [[Ending]]:
 
-{{#if (gte score 500)}}
+{{#if score >= 500}}
 {{#animate "toast"}}GRAND CHAMPION!{{/animate}}
 
 Balloons fall from the ceiling. Confetti explodes. Professor Boom emerges to set off celebratory fireworks (indoors, against regulations).
@@ -473,7 +473,7 @@ The audience carries you out on their shoulders. The cardboard cutout leads the 
 
 **THE END — GRAND CHAMPION**
 {{else}}
-{{#if (gte score 200)}}
+{{#if score >= 200}}
 {{#animate "toast"}}WINNER!{{/animate}}
 
 "{{player_name}}, you finished with {{score}} points! That's... that's actually pretty good!"

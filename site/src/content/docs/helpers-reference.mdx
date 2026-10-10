@@ -60,23 +60,23 @@ When working with helpers, you'll encounter two different bracket types:
 When you need to pass the *result* of one helper as an argument to another helper, use parentheses:
 
 ```
-{{#if (and has_key door_locked)}}Can unlock{{/if}}
+{{#if (seen "intro")}}Welcome back{{/if}}
 {{random (array "red" "green" "blue")}}
-{{#if (eq status "complete")}}Done{{/if}}
+{{#if (length "inventory") > 3}}Your bag is getting heavy{{/if}}
 ```
 
 In these examples:
-- `(and has_key door_locked)` - The `and` helper returns true/false, which becomes the condition for `if`
+- `(seen "intro")` - The `seen` helper returns true/false, which becomes the condition for `if`
 - `(array "red" "green" "blue")` - The `array` helper creates an array, which is passed to `random`
-- `(eq status "complete")` - The `eq` helper returns true/false for the `if` condition
+- `(length "inventory")` - The `length` helper returns a number, which is compared with 3
 
-**Why not `{{#if {{and ...}}}}`?**
+**Why not `{{#if {{seen ...}}}}`?**
 
 You cannot nest `{{}}` inside `{{}}` - that's invalid Handlebars syntax. Use parentheses for subexpressions:
 
 ```
-❌ Wrong:  {{#if {{and has_key door_locked}}}}...{{/if}}
-✅ Right:  {{#if (and has_key door_locked)}}...{{/if}}
+❌ Wrong:  {{#if {{seen "intro"}}}}...{{/if}}
+✅ Right:  {{#if (seen "intro")}}...{{/if}}
 
 ❌ Wrong:  {{random {{array "a" "b" "c"}}}}
 ✅ Right:  {{random (array "a" "b" "c")}}
@@ -87,14 +87,10 @@ You cannot nest `{{}}` inside `{{}}` - that's invalid Handlebars syntax. Use par
 You can nest parentheses to combine multiple helpers:
 
 ```
-{{#if (and (gt score 100) (not game_over))}}
-    You have a high score and the game is still running!
-{{/if}}
+{{set "next_round" (random (array "music" "sport" "history"))}}
 ```
 
-Here, `(gt score 100)` and `(not game_over)` are evaluated first, then their results are passed to `and`, and finally the result of `and` is passed to `if`.
-
-In a condition, the same thing can be written more simply as `{{#if score > 100 and not game_over}}` (see [Conditions](#conditions)).
+Here, `(array "music" "sport" "history")` is evaluated first, then its result is passed to `random`, and finally the result of `random` is passed to `set`.
 
 <Aside type="tip">
 **Quick rule:** Use `{{}}` to call a helper directly. Use `()` when a helper's result needs to be passed to another helper.
@@ -219,7 +215,7 @@ You're playing: {{current}}
 {{remove "rounds" current}}
 
 {{!-- Check if more rounds remain --}}
-{{#if (gt (length "rounds") 0)}}
+{{#if (length "rounds") > 0}}
     [[Play next round]]
 {{else}}
     [[Final round]]
@@ -248,7 +244,7 @@ You picked up the sword.
 {{set "tasks" (array "Task A" "Task B" "Task C")}}
 
 [next task]:
-{{#if (gt (length "tasks") 0)}}
+{{#if (length "tasks") > 0}}
     Now doing: {{pop "tasks"}}
 {{else}}
     All tasks complete!

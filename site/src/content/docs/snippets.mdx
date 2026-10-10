@@ -17,7 +17,7 @@ The **Snippets** dropdown button in the editor toolbar contains a set of ready-m
 |---|---|
 | If block | `{{#if condition}}…{{/if}}` |
 | If/else block | `{{#if condition}}…{{else}}…{{/if}}` |
-| If (check variable) | `{{#if (eq (get "variable") "value")}}…{{/if}}` |
+| If (check variable) | `{{#if variable = "value"}}…{{/if}}` |
 | If (seen section) | `{{#if (seen "section")}}…{{/if}}` |
 | Set variable | `{{set "variable" "value"}}` |
 | Increment | `{{inc "variable"}}` |
@@ -95,7 +95,7 @@ You rest and recover. Health: {{health}}/{{max_health}}
 
 A wolf attacks! Health: {{health}}/{{max_health}}
 
-{{#if (lte health 0)}}
+{{#if health <= 0}}
 You have been defeated.
 {{else}}
 You survive, but you're wounded.
