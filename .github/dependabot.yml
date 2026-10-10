@@ -1,8 +1,8 @@
 version: 2
-# The npm group takes only minor and patch updates, so dependabot-automerge.yml
-# can merge it once CI passes. Major updates arrive as one PR per package for
-# a human to review: lumped into a group, one breaking major fails CI for every
-# other update in it, and stops the whole group from auto-merging.
+# Minor and patch updates are grouped separately from majors, so
+# dependabot-automerge.yml can merge the minor/patch group once CI passes
+# without one breaking major holding it up. Majors arrive in their own group
+# for a human to review.
 #
 # The chore prefix gives Dependabot's PRs a Conventional Commits title, so they
 # pass pr-title-lint.yml and stay out of the release-please changelog.
@@ -18,6 +18,11 @@ updates:
         update-types:
           - "minor"
           - "patch"
+      dependencies-major:
+        patterns:
+          - "*"
+        update-types:
+          - "major"
     ignore:
       - dependency-name: "typescript"
         update-types: ["version-update:semver-major"]

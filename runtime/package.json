@@ -41,11 +41,11 @@
     "squiffy-compiler": "^6.0.0-beta.2",
     "typescript": "^6.0.3",
     "vite": "^8.2.2",
-    "vite-plugin-dts": "^5.0.3"
+    "vite-plugin-dts": "^5.1.0"
   },
   "dependencies": {
     "animejs": "^4.5.0",
     "handlebars": "^4.7.8",
-    "marked": "^18.0.10"
+    "marked": "^18.0.11"
   }
 }
