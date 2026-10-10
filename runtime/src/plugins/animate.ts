@@ -48,6 +48,43 @@ export function AnimatePlugin(): SquiffyPlugin {
             // innerHTML after animation, users can still interact with the links.
             const originalContent = el.innerHTML;
 
+            // For trigger="link", the links in el that run the animation when clicked.
+            let triggerLinks: HTMLElement[] = [];
+            const registerTriggerLinks = () => {
+                for (const link of triggerLinks) {
+                    squiffy.animation.removeLinkAnimation(link);
+                }
+                triggerLinks = [...el.querySelectorAll<HTMLElement>("a")];
+                for (const link of triggerLinks) {
+                    squiffy.animation.addLinkAnimation(link, runAnimation);
+                }
+            };
+
+            const restoreContent = () => {
+                if (params.trigger !== "link") {
+                    el.innerHTML = originalContent;
+                    return;
+                }
+
+                // Restoring the content replaces the links, so carry over the state
+                // (e.g. "disabled" from the click that triggered the animation) to the new
+                // links, and make sure they still trigger the animation if re-enabled.
+                const oldLinks = triggerLinks;
+                el.innerHTML = originalContent;
+                registerTriggerLinks();
+                triggerLinks.forEach((link, i) => {
+                    const oldLink = oldLinks[i];
+                    if (!oldLink) return;
+                    if (oldLink.classList.contains("disabled")) {
+                        link.classList.add("disabled");
+                    }
+                    const tabindex = oldLink.getAttribute("tabindex");
+                    if (tabindex !== null) {
+                        link.setAttribute("tabindex", tabindex);
+                    }
+                });
+            };
+
             const runAnimation = () => {
                 if (params.loop) {
                     squiffy.animation.runAnimation(params.name, el, params, () => {}, true);
@@ -62,7 +99,7 @@ export function AnimatePlugin(): SquiffyPlugin {
 
                             squiffy.animation.runAnimation(params.name, el, params, () => {
                                 el.classList.remove("squiffy-animate");
-                                el.innerHTML = originalContent;
+                                restoreContent();
                                 resolve();
                             }, false);
                         });
@@ -71,10 +108,7 @@ export function AnimatePlugin(): SquiffyPlugin {
             };
 
             if (params.trigger === "link") {
-                const links = el.querySelectorAll("a");
-                for (const link of links) {
-                    squiffy.animation.addLinkAnimation(link, runAnimation);
-                }
+                registerTriggerLinks();
             } else {
                 runAnimation();
             }

@@ -37,6 +37,10 @@ export class Animation {
         this.linkAnimations.set(link, fn);
     }
 
+    removeLinkAnimation(link: HTMLElement) {
+        this.linkAnimations.delete(link);
+    }
+
     runLinkAnimation(link: HTMLElement) {
         const fn = this.linkAnimations.get(link);
         if (fn) {

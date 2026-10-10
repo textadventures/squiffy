@@ -1,0 +1,6 @@
+@title Link Animation Tests
+
+{{#animate "typewriter" interval=50 trigger="link"}}[Animate this link]{{/animate}}
+
+[Animate this link]:
+Link passage shown.
