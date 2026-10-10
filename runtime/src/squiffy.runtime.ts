@@ -545,9 +545,24 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             return;
         }
 
-        updateStory(story, newStory, outputElement, ui, disableLink, (attrs) => processAttributes(attrs));
-
+        // Switch to the new story before re-rendering, so that text processing (e.g. {{embed}})
+        // sees sections that were added in this update.
+        const oldStory = story;
         story = newStory;
+
+        // When re-rendering a section or passage, {{embed}} should look up passages in the
+        // (new version of the) section being rendered.
+        const processTextInSection = (text: string, section: Section) => {
+            const previousSection = currentSection;
+            currentSection = section;
+            try {
+                return ui.processText(text, false);
+            } finally {
+                currentSection = previousSection;
+            }
+        };
+
+        updateStory(oldStory, newStory, outputElement, processTextInSection, disableLink, (attrs) => processAttributes(attrs));
 
         setCurrentSectionElement();
         setCurrentPassageElement();
@@ -721,7 +736,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     const get = state.get.bind(state);
     const set = state.set.bind(state);
 
-    const textProcessor = new TextProcessor(story, state, () => currentSection);
+    const textProcessor = new TextProcessor(() => story, state, () => currentSection);
     const linkHandler = new LinkHandler();
 
     const getSectionText = (sectionName: string) => {

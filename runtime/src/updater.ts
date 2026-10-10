@@ -1,4 +1,4 @@
-import { Story } from "./types.js";
+import { Section, Story } from "./types.js";
 
 function arraysEqual(a: string[] | undefined, b: string[] | undefined): boolean {
     if (!a && !b) return true;
@@ -10,7 +10,7 @@ function arraysEqual(a: string[] | undefined, b: string[] | undefined): boolean 
 export function updateStory(oldStory: Story,
                             newStory: Story,
                             outputElement: HTMLElement,
-                            ui: any,
+                            processText: (text: string, section: Section) => string,
                             disableLink: (link: Element) => void,
                             processAttributes: (attributes: string[]) => void) {
 
@@ -65,7 +65,7 @@ export function updateStory(oldStory: Story,
                 if (textChanged || attributesChanged) {
                     // Re-render text (attributes may affect text output via helpers)
                     for (const element of elements) {
-                        updateElementTextPreservingDisabledPassageLinks(element, ui.processText(newSection.text, false));
+                        updateElementTextPreservingDisabledPassageLinks(element, processText(newSection.text || "", newSection));
                     }
                 }
             }
@@ -98,7 +98,7 @@ export function updateStory(oldStory: Story,
                 if (textChanged || attributesChanged) {
                     // Re-render text (attributes may affect text output via helpers)
                     for (const element of elements) {
-                        updateElementTextPreservingDisabledPassageLinks(element, ui.processText(newPassage.text, false));
+                        updateElementTextPreservingDisabledPassageLinks(element, processText(newPassage.text || "", newStory.sections[existingSection]));
                     }
                 }
             }

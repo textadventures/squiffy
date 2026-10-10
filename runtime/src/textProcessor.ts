@@ -5,15 +5,15 @@ import { State } from "./state.js";
 import { rewriteInfixExpressions } from "./infixExpressions.js";
 
 export class TextProcessor {
-    story: Story;
+    getStory: () => Story;
     state: State;
     getCurrentSection: () => Section;
     handlebars: typeof Handlebars;
 
-    constructor (story: Story,
+    constructor (story: () => Story,
                  state: State,
                  currentSection: () => Section) {
-        this.story = story;
+        this.getStory = story;
         this.state = state;
         this.getCurrentSection = currentSection;
         this.handlebars = Handlebars.create();
@@ -22,8 +22,10 @@ export class TextProcessor {
             const currentSection = this.getCurrentSection();
             if (currentSection.passages && name in currentSection.passages) {
                 return new Handlebars.SafeString(this.process(currentSection.passages[name].text || "", true));
-            } else if (name in this.story.sections) {
-                return new Handlebars.SafeString(this.process(this.story.sections[name].text || "", true));
+            }
+            const story = this.getStory();
+            if (name in story.sections) {
+                return new Handlebars.SafeString(this.process(story.sections[name].text || "", true));
             }
         });
 
