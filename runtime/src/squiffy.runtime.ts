@@ -393,28 +393,25 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     
     function newSection(sectionName?: string) {
         if (currentSectionElement) {
-            currentSectionElement.querySelectorAll("input").forEach(el => {
-                const attribute = el.getAttribute("data-attribute") || el.id;
-                if (attribute) set(attribute, el.value);
-                el.disabled = true;
+            // Inputs we disable are marked with data-squiffy-disabled, so goBack() can re-enable them
+            // without touching any that the author disabled themselves.
+            currentSectionElement.querySelectorAll("input, textarea, select").forEach(el => {
+                const input = el as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
+                const attribute = input.getAttribute("data-attribute") || input.id;
+                if (attribute) set(attribute, input.value);
+                if (!input.disabled) {
+                    input.disabled = true;
+                    input.setAttribute("data-squiffy-disabled", "");
+                }
             });
-    
+
             currentSectionElement.querySelectorAll("[contenteditable]").forEach(el => {
                 const attribute = el.getAttribute("data-attribute") || el.id;
                 if (attribute) set(attribute, el.innerHTML);
-                (el as HTMLElement).contentEditable = "false";
-            });
-    
-            currentSectionElement.querySelectorAll("textarea").forEach(el => {
-                const attribute = el.getAttribute("data-attribute") || el.id;
-                if (attribute) set(attribute, el.value);
-                el.disabled = true;
-            });
-
-            currentSectionElement.querySelectorAll("select").forEach(el => {
-                const attribute = el.getAttribute("data-attribute") || el.id;
-                if (attribute) set(attribute, el.value);
-                el.disabled = true;
+                if (el.getAttribute("contenteditable") !== "false") {
+                    el.setAttribute("contenteditable", "false");
+                    el.setAttribute("data-squiffy-disabled", "");
+                }
             });
         }
 
@@ -593,12 +590,26 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         return sectionPassageCount + clearStack.children.length;
     }
 
+    function enableInputs(sectionElement: Element) {
+        sectionElement.querySelectorAll("[data-squiffy-disabled]").forEach(el => {
+            if (el.hasAttribute("contenteditable")) {
+                el.setAttribute("contenteditable", "true");
+            }
+            else {
+                (el as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement).disabled = false;
+            }
+            el.removeAttribute("data-squiffy-disabled");
+        });
+    }
+
     function canGoBack() {
         return getHistoryCount() > 1;
     }
 
     function goBack() {
-        if (!canGoBack()) {
+        // Like link clicks, ignore this while transitions are running. The section or passage being shown
+        // hasn't written its undo log yet, and would write it to the wrong element once it resumed.
+        if (runningTransitions || !canGoBack()) {
             return;
         }
 
@@ -659,6 +670,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
 
             setCurrentSectionElement();
             setCurrentPassageElement();
+            enableInputs(currentSectionElement);
         }
 
         if (!canGoBack()) {
