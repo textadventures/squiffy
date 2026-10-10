@@ -1,0 +1,13 @@
+[[stairs]]:
+You climb the spiral stairs to the lamp room. The great lamp is dark.
+
+{{#if has_matches}}
+[[Light the lamp]].
+{{else}}
+You have nothing to light it with. Perhaps the [[keeper's room]] has something.
+{{/if}}
+
+[[Light the lamp]]:
+The lamp flares into life, and its beam sweeps out across the water. Somewhere out there, a ship turns towards safety.
+
+**The End**

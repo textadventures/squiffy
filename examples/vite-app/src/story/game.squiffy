@@ -1,0 +1,8 @@
+@title The Lighthouse
+
+[[start]]:
+The storm has driven you to the old lighthouse. The door creaks open.
+
+You could climb the [[stairs]], or look around the [[keeper's room]].
+
+@import rooms/*.squiffy

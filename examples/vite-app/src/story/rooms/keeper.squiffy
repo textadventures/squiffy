@@ -1,0 +1,10 @@
+[[keeper's room]]:
+A narrow bed, a cold stove and a table covered in charts.
+
+There's a box of [matches] on the table.
+
+Go back and climb the [[stairs]].
+
+[matches]:
+@set has_matches
+You pocket the matches.

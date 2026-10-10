@@ -47,6 +47,44 @@ Here's a minimal HTML page that runs a Squiffy story:
 </html>
 ```
 
+## Using Vite
+
+If you're building a web app with [Vite](https://vite.dev), the Squiffy Vite plugin lets you import `.squiffy` files directly. They're compiled as part of your build, so there's no separate export step:
+
+```
+npm install --save-dev @textadventures/vite-plugin-squiffy
+npm install squiffy-runtime
+```
+
+Add the plugin to `vite.config.ts`:
+
+```ts
+import { defineConfig } from "vite";
+import squiffy from "@textadventures/vite-plugin-squiffy";
+
+export default defineConfig({
+    plugins: [squiffy()],
+});
+```
+
+Then import your story and pass it to `init()`:
+
+```ts
+import { init } from "squiffy-runtime";
+import "squiffy-runtime/squiffy.runtime.css";
+import { story } from "./mygame.squiffy";
+
+const squiffyApi = await init({
+    element: document.getElementById("squiffy")!,
+    story,
+});
+await squiffyApi.begin();
+```
+
+While Vite's dev server is running, it recompiles the story whenever you save a `.squiffy` file, including files pulled in with `@import`. With a few more lines, you can update the running story without losing the player's progress. See the [plugin's README](https://github.com/textadventures/squiffy/tree/main/vite-plugin) for that, and for TypeScript setup. There's a complete example in [`examples/vite-app`](https://github.com/textadventures/squiffy/tree/main/examples/vite-app).
+
+The options and API below are the same whichever way you load the story. With Vite, `init` is imported from `squiffy-runtime` rather than called as `squiffyRuntime.init`.
+
 ## Initialization options
 
 The `squiffyRuntime.init()` function accepts an options object:

@@ -126,7 +126,8 @@ CLI options:
   - Two entry points: `index.html` (editor) and `preview.html` (story preview)
   - PWA-enabled with offline support
 - **site**: Marketing/documentation site at squiffystory.com (Astro + Starlight)
-- **types**: Type definitions for Vite plugin
+- **types**: Type definitions for `.squiffy` imports, used by the Vite plugin
+- **vite-plugin**: Vite plugin that compiles `.squiffy` imports, so a story can be built into a web app. `examples/vite-app` is a private workspace that uses it.
 
 ### Key Concepts
 

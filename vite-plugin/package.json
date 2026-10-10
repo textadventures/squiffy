@@ -1,0 +1,53 @@
+{
+  "name": "@textadventures/vite-plugin-squiffy",
+  "version": "6.0.0-beta.3",
+  "description": "Vite plugin that lets you import .squiffy files into a web app",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/textadventures/squiffy.git",
+    "directory": "vite-plugin"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./client": {
+      "types": "./client.d.ts"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "client.d.ts",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest --run",
+    "dev": "vitest"
+  },
+  "author": "Alex Warren",
+  "license": "MIT",
+  "dependencies": {
+    "@textadventures/squiffy-types": "^6.0.0-beta.3",
+    "glob": "^13.0.6",
+    "squiffy-compiler": "^6.0.0-beta.3"
+  },
+  "peerDependencies": {
+    "vite": ">=6.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.4.1",
+    "typescript": "^6.0.3",
+    "vite": "^8.2.2",
+    "vitest": "^5.0.3"
+  }
+}
