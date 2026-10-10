@@ -359,6 +359,8 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             if (story.uiJsIndex !== undefined) {
                 runJs(story.uiJsIndex, {
                     registerAnimation: animation.registerAnimation.bind(animation),
+                    registerHelper: textProcessor.handlebars.registerHelper.bind(textProcessor.handlebars),
+                    SafeString: textProcessor.handlebars.SafeString,
                 });
             }
         };

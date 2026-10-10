@@ -2316,3 +2316,20 @@ test("Malformed infix expression shows a template error", async () => {
     const errorDiv = element.querySelector(".squiffy-error");
     expect(errorDiv?.textContent).toContain("Invalid condition \"score >\": expected a value after '>'");
 });
+
+test("Custom helpers can be registered in @ui", async () => {
+    const script = `
+@ui
+    squiffy.registerHelper("shout", (text) => text.toUpperCase() + "!");
+    squiffy.registerHelper("bold", (text) => new squiffy.SafeString("<b>" + text + "</b>"));
+---
+
+{{shout "hello"}} {{bold "world"}} {{shout "<i>"}}
+`;
+
+    const { element } = await initScript(script);
+    const section = element.querySelector("[data-source='[[_default]]']");
+    expect(section?.textContent).toBe("HELLO! world <I>!");
+    expect(section?.querySelector("b")?.textContent).toBe("world");
+    expect(section?.querySelector("i")).toBeNull();
+});
