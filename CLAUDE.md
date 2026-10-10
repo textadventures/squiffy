@@ -70,7 +70,7 @@ Releases are managed by [release-please](https://github.com/googleapis/release-p
 
 The `prerelease` versioning strategy means every release just increments the trailing `beta.N`, whatever the commit types. To cut a specific version (e.g. `6.0.0`), merge a commit with a `Release-As: 6.0.0` footer (exact wording). The squash merge message has to be edited by hand to include it. Changing `prerelease-type` in the config alone doesn't affect the next release while a numbered prerelease sequence is under way; it needs the same one-off `Release-As` commit.
 
-`.github/scripts/release-channel.sh` says whether a tag is `stable` or a `prerelease`. A stable release is un-flagged as a prerelease on GitHub and marked Latest. On npm, prereleases still go to the `latest` dist-tag until 6.0.0 ships (see the comment in `npm-publish.yml`).
+`.github/scripts/release-channel.sh` says whether a tag is `stable` or a `prerelease`. A stable release is un-flagged as a prerelease on GitHub and marked Latest, and goes to the `latest` dist-tag on npm. Until 6.0.0 ships, prereleases get the same treatment on both, since there is no stable 6.x yet (see the comments in `release-please.yml` and `npm-publish.yml`).
 
 release-please pushes using the `RELEASE_PAT` repo secret (a PAT with Contents and Pull requests read/write), since tags pushed with `GITHUB_TOKEN` don't trigger other workflows. `npm-publish.yml` needs no secret: it uses npm trusted publishing, which each package must have configured on npmjs.com (trusting `textadventures/squiffy` and `npm-publish.yml`). Lerna then adds provenance, which needs every published package.json to have a `repository.url` pointing at this repo.
 
