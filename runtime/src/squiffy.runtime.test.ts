@@ -232,6 +232,221 @@ test("Click a passage link and go back", async () => {
     expect(await squiffyApi.clickLink(linkToPassage)).toBe(true);
 });
 
+test("Turn-count passages share an output block with the passage they follow", async () => {
+    // https://github.com/textadventures/squiffy/issues/123
+    const script = `
+[[start]]:
+Choose [a], [b] or [c]
+
+[a]:
+You chose a.
+
+[b]:
+You chose b.
+
+[c]:
+You chose c.
+
+[@1]:
+Turn one.
+
+[@last]:
+Last turn.
+`;
+    const { squiffyApi, element } = await initScript(script);
+
+    const expectSingleBlock = (passageName: string, expectedText: string[]) => {
+        const passageElement = element.querySelector(`.squiffy-output-passage[data-passage="${passageName}"]`);
+        const blocks = passageElement!.querySelectorAll(".squiffy-output-block");
+        expect(blocks.length).toBe(1);
+        expect(Array.from(blocks[0].children).map(c => c.textContent)).toEqual(expectedText);
+    };
+
+    await squiffyApi.clickLink(findLink(element, "passage", "a"));
+    expectSingleBlock("a", ["You chose a.", "Turn one."]);
+
+    await squiffyApi.clickLink(findLink(element, "passage", "b"));
+    await squiffyApi.clickLink(findLink(element, "passage", "c"));
+    expectSingleBlock("c", ["You chose c.", "Last turn."]);
+});
+
+test("Going back to a section re-enables its inputs", async () => {
+    // https://github.com/textadventures/squiffy/issues/123
+    const script = `
+[[start]]:
+<input type="text" data-attribute="name">
+<textarea data-attribute="bio"></textarea>
+<select data-attribute="colour"><option>red</option><option>blue</option></select>
+<div contenteditable="true" data-attribute="notes"></div>
+<input type="text" data-attribute="fixed" disabled>
+[[next]]
+
+[[next]]:
+Hello {{name}}.
+`;
+    const { squiffyApi, element } = await initScript(script);
+
+    const input = element.querySelector("input[data-attribute='name']") as HTMLInputElement;
+    const textarea = element.querySelector("textarea") as HTMLTextAreaElement;
+    const select = element.querySelector("select") as HTMLSelectElement;
+    const editable = element.querySelector("[contenteditable]") as HTMLElement;
+    const authorDisabled = element.querySelector("input[data-attribute='fixed']") as HTMLInputElement;
+
+    input.value = "Bob";
+    await squiffyApi.clickLink(findLink(element, "section", "next"));
+
+    expect(squiffyApi.get("name")).toBe("Bob");
+    expect(input.disabled).toBe(true);
+    expect(textarea.disabled).toBe(true);
+    expect(select.disabled).toBe(true);
+    expect(editable.getAttribute("contenteditable")).toBe("false");
+
+    squiffyApi.goBack();
+
+    expect(squiffyApi.get("name")).toBe(null);
+    expect(input.disabled).toBe(false);
+    expect(textarea.disabled).toBe(false);
+    expect(select.disabled).toBe(false);
+    expect(editable.getAttribute("contenteditable")).toBe("true");
+    expect(element.querySelectorAll("[data-squiffy-disabled]").length).toBe(0);
+
+    // An input the author disabled stays disabled
+    expect(authorDisabled.disabled).toBe(true);
+
+    // The edited value is picked up when moving on again
+    input.value = "Alice";
+    await squiffyApi.clickLink(findLink(element, "section", "next"));
+    expect(squiffyApi.get("name")).toBe("Alice");
+});
+
+test("Going back is ignored while transitions are running", async () => {
+    // https://github.com/textadventures/squiffy/issues/123
+    let release: () => void = () => {};
+    (window as any).transitionGate = new Promise<void>(resolve => { release = resolve; });
+
+    // Note: the 4-space indent on the transition line is the squiffy JS syntax - don't trim it!
+    const script = `
+[[start]]:
+@set x = 1
+Start. [[slow]]
+
+[[slow]]:
+@set x = 2
+    squiffy.ui.transition(() => window.transitionGate);
+Slow section. [[after]]
+
+[[after]]:
+After.
+`;
+    const { squiffyApi, element } = await initScript(script);
+
+    const clickPromise = squiffyApi.clickLink(findLink(element, "section", "slow"));
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    // Mid-transition: going back does nothing
+    squiffyApi.goBack();
+    expect(element.querySelector(".squiffy-output-section[data-section='slow']")).not.toBeNull();
+
+    release();
+    await clickPromise;
+    expect(squiffyApi.get("_section")).toBe("slow");
+    expect(squiffyApi.get("x")).toBe(2);
+
+    // Once the transition is done, going back fully restores the previous section
+    squiffyApi.goBack();
+    expect(element.querySelector(".squiffy-output-section[data-section='slow']")).toBeNull();
+    expect(squiffyApi.get("_section")).toBe("start");
+    expect(squiffyApi.get("x")).toBe(1);
+    expect(squiffyApi.get("_seen_sections")).toEqual(["start"]);
+});
+
+const visibleText = (element: HTMLElement) =>
+    Array.from(element.querySelector("div")!.children)
+        .filter(child => !child.classList.contains("squiffy-clear-stack"))
+        .map(child => child.textContent)
+        .join(" ")
+        .replace(/\s+/g, " ")
+        .trim();
+
+test("Going back through a cleared section reached via squiffy.story.go()", async () => {
+    // https://github.com/textadventures/squiffy/issues/123
+    // Note: the 4-space indent on the squiffy.story.go line is the squiffy JS syntax - don't trim it!
+    const script = `
+[[start]]:
+@set x = 1
+Start. [[jump]]
+
+[[jump]]:
+@set x = 2
+    squiffy.story.go("cleared");
+Never shown.
+
+[[cleared]]:
+@clear
+@set x = 3
+Cleared. [[next]]
+
+[[next]]:
+@clear
+Next.
+`;
+    const { squiffyApi, element } = await initScript(script);
+
+    await squiffyApi.clickLink(findLink(element, "section", "jump"));
+    expect(visibleText(element)).toBe("Cleared. next");
+    await squiffyApi.clickLink(findLink(element, "section", "next"));
+    expect(visibleText(element)).toBe("Next.");
+
+    squiffyApi.goBack();
+    expect(visibleText(element)).toBe("Cleared. next");
+    expect(squiffyApi.get("_section")).toBe("cleared");
+
+    squiffyApi.goBack();
+    expect(visibleText(element)).toBe("Start. jump");
+    expect(squiffyApi.get("_section")).toBe("start");
+    expect(squiffyApi.get("x")).toBe(1);
+    expect(squiffyApi.get("_seen_sections")).toEqual(["start"]);
+    expect(findLink(element, "section", "jump", true)).toBeDefined();
+});
+
+test("Going back through screens cleared by the master section and a passage", async () => {
+    // https://github.com/textadventures/squiffy/issues/123
+    const script = `
+[[start]]:
+Start. [[two]]
+
+[[]]:
+@clear
+
+[[two]]:
+Two. [a] [[three]]
+
+[a]:
+@clear
+Passage a.
+
+[[three]]:
+Three.
+`;
+    const { squiffyApi, element } = await initScript(script);
+
+    await squiffyApi.clickLink(findLink(element, "section", "two"));
+    expect(visibleText(element)).toBe("Two. a three");
+    await squiffyApi.clickLink(findLink(element, "passage", "a"));
+    expect(visibleText(element)).toBe("Passage a.");
+
+    squiffyApi.goBack();
+    expect(visibleText(element)).toBe("Two. a three");
+    expect(findLink(element, "passage", "a", true)).toBeDefined();
+
+    squiffyApi.goBack();
+    expect(visibleText(element)).toBe("Start. two");
+    expect(squiffyApi.get("_seen_sections")).toEqual(["start"]);
+
+    await squiffyApi.clickLink(findLink(element, "section", "two"));
+    expect(visibleText(element)).toBe("Two. a three");
+});
+
 test("Run JavaScript functions", async () => {
     const script = `
     document.getElementById('test').innerText = 'Initial JavaScript';

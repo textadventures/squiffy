@@ -1,0 +1,27 @@
+@title Back Button Tests
+
+[[start]]:
+@set step = start
+Start. [[animated]]
+
+[[animated]]:
+@set step = animated
+{{#animate "typewriter" interval=100}}This sentence types itself out slowly.{{/animate}}
+
+[[looping]]
+
+[[looping]]:
+@set step = looping
+{{#animate "fadeIn" loop=true}}Looping text.{{/animate}}
+
+{{#animate "typewriter" interval=100 trigger="link"}}[Animate this link]{{/animate}}
+
+Then [[cleared]]
+
+[Animate this link]:
+Link passage shown.
+
+[[cleared]]:
+@clear
+@set step = cleared
+{{#animate "typewriter" interval=50}}Fresh screen.{{/animate}}
