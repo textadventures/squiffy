@@ -1,6 +1,11 @@
 {
   "name": "squiffy-runtime",
   "version": "6.0.0-beta.2",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/textadventures/squiffy.git",
+    "directory": "runtime"
+  },
   "type": "module",
   "main": "dist/squiffy.runtime.js",
   "types": "dist/src/squiffy.runtime.d.ts",
