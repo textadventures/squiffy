@@ -485,7 +485,27 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
 
         input = input.replace(unnamedPassageLinkRegex, (_match, name, suffix) => `{{passage "${escapeForHandlebarsString(name)}"}}${suffix}`);
 
+        checkEmbeds(input, section, passage);
+
         return input;
+    }
+
+    function checkEmbeds(input: string, section: Section, passage: Passage | null) {
+        if (!settings.onWarning) return;
+
+        // embedRegex matches {{embed "name"}} or {{embed 'name'}} with a literal name.
+        // Like the runtime's embed helper, a name can refer to a passage in the
+        // current section or to any section.
+        const embedRegex = /\{\{~?\s*embed\s+(["'])(.*?)\1/g;
+        const embeds = allMatchesForGroup(input, embedRegex, 2);
+        const badEmbeds = embeds.filter(name => !(name in section.passages) && !(name in story.sections));
+
+        for (const badEmbed of badEmbeds) {
+            const location = passage
+                ? `${section.filename} line ${passage.line}: In section '${section.name}', passage '${passage.name}'`
+                : `${section.filename} line ${section.line}: In section '${section.name}'`;
+            settings.onWarning(`WARNING: ${location} there is an embed of {{embed "${badEmbed}"}}, but no section or passage with that name exists`);
+        }
     }
 
     function allMatchesForGroup(input: string, regex: RegExp, groupNumber: number) {

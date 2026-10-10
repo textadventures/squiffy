@@ -1,3 +1,17 @@
 [[test]]:
 
 Another link that [doesn't exist].
+
+This embed exists: {{embed "test"}}
+
+This embed doesn't exist: {{embed "missing"}}
+
+[[other]]:
+
+This embed exists: {{embed "a passage"}}
+
+This embed doesn't exist: {{embed 'missing passage'}}
+
+[a passage]:
+
+Embedding the other section works: {{embed "test"}}
