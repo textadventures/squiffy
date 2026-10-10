@@ -11,6 +11,23 @@ import {Aside} from "@astrojs/starlight/components"
 For a complete reference of all available helpers, including attribute helpers, comparison helpers, and logic helpers, see the [Helpers reference](/helpers-reference/) page.
 </Aside>
 
+## Conditions
+
+Use `{{#if}}` to show text only when a condition is true, with `{{else}}` and `{{else if}}` for alternatives. `{{#unless}}` shows text when a condition is false.
+
+<Sample script="@set score = 120
+@set has_key = true
+
+{{#if score > 100 and has_key}}
+You have a high score and the key!
+{{else if score > 100}}
+You have a high score, but no key.
+{{else}}
+Keep playing.
+{{/if}}"></Sample>
+
+You can compare values with `=`, `!=`, `>`, `>=`, `<` and `<=`, combine conditions with `and`, `or` and `not`, and use parentheses to group them. See [Conditions](/helpers-reference/#conditions) in the helpers reference for details.
+
 ## Random
 
 Use the `{{random}}` helper to insert random text. You can provide a list of options using the `array` function.
@@ -163,10 +180,10 @@ further helpers.
         {{live &quot;colour&quot; section=&quot;colourDescription&quot;}}
 
         [[colourDescription]]:
-        {{#if (eq colour &quot;red&quot;)}}
+        {{#if colour = &quot;red&quot;}}
             The colour of fire and blood.
-        {{else if (eq colour &quot;green&quot;)}}
+        {{else if colour = &quot;green&quot;}}
             The colour of nature and life.
-        {{else if (eq colour &quot;blue&quot;)}}
+        {{else if colour = &quot;blue&quot;}}
             The colour of the sky and the sea.
         {{/if}}"></Sample>

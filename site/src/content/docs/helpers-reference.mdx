@@ -16,6 +16,34 @@ Squiffy processes all text through Handlebars, which means you can use:
 - Comments with `{{! comment text }}`
 - Markdown formatting (converted to HTML automatically)
 
+### Conditions
+
+`{{#if}}`, `{{#unless}}` and `{{else if}}` accept conditions written with familiar operators:
+
+```
+{{#if gender = "male"}}You are male.{{/if}}
+{{#if score > 100 and has_key}}You win!{{else}}Keep trying.{{/if}}
+{{#unless (seen "intro") or count >= 3}}Welcome!{{/unless}}
+```
+
+| Operator | Meaning | Equivalent helper |
+|----------|---------|-------------------|
+| `=` or `==` | equal to | `eq` |
+| `!=` | not equal to | `ne` |
+| `>` | greater than | `gt` |
+| `>=` | greater than or equal to | `gte` |
+| `<` | less than | `lt` |
+| `<=` | less than or equal to | `lte` |
+| `and` or `&&` | both are true | `and` |
+| `or` or `\|\|` | either is true | `or` |
+| `not` or `!` | is not true | `not` |
+
+Values can be attribute names, numbers, quoted strings, `true`/`false`, or helper calls in parentheses such as `(seen "intro")` or `(length "inventory")`. For attribute names containing spaces, use square brackets: `{{#if [player name] = "Bob"}}`.
+
+Comparisons are worked out first, then `not`, then `and`, then `or`. So `not gender = "male"` means `not (gender = "male")`, and `a or b and c` means `a or (b and c)`. Use parentheses to group things differently, e.g. `(a or b) and c`.
+
+Each condition is converted to the equivalent helpers before it runs, so `{{#if score > 100 and has_key}}` is the same as `{{#if (and (gt score 100) has_key)}}`. You can still write conditions in that form if you prefer, and you'll need it when using the comparison or logic helpers anywhere other than a condition, as described below.
+
 ### Understanding parentheses vs double brackets
 
 When working with helpers, you'll encounter two different bracket types:
@@ -66,6 +94,8 @@ You can nest parentheses to combine multiple helpers:
 
 Here, `(gt score 100)` and `(not game_over)` are evaluated first, then their results are passed to `and`, and finally the result of `and` is passed to `if`.
 
+In a condition, the same thing can be written more simply as `{{#if score > 100 and not game_over}}` (see [Conditions](#conditions)).
+
 <Aside type="tip">
 **Quick rule:** Use `{{}}` to call a helper directly. Use `()` when a helper's result needs to be passed to another helper.
 </Aside>
@@ -96,26 +126,26 @@ These helpers execute at render time and respect `{{#if}}` conditions, unlike `@
 
 ## Comparison helpers
 
-See [Attributes](/attributes/#comparing-attributes) for examples.
+See [Attributes](/attributes/#comparing-attributes) for examples. In `{{#if}}` and `{{#unless}}`, you can use the operator instead (see [Conditions](#conditions)).
 
-| Helper | Description | Example |
-|--------|-------------|---------|
-| `{{eq a b}}` | Returns true if a equals b | `{{#if (eq status "complete")}}Done{{/if}}` |
-| `{{ne a b}}` | Returns true if a not equals b | `{{#if (ne health 0)}}Still alive{{/if}}` |
-| `{{gt a b}}` | Returns true if `a > b` | `{{#if (gt score 100)}}High score!{{/if}}` |
-| `{{gte a b}}` | Returns true if `a >= b` | `{{#if (gte level 5)}}Advanced{{/if}}` |
-| `{{lt a b}}` | Returns true if `a < b` | `{{#if (lt health 20)}}Low health{{/if}}` |
-| `{{lte a b}}` | Returns true if `a <= b` | `{{#if (lte age 18)}}Minor{{/if}}` |
+| Helper | Description | Operator | Example |
+|--------|-------------|----------|---------|
+| `{{eq a b}}` | Returns true if a equals b | `a = b` | `{{#if status = "complete"}}Done{{/if}}` |
+| `{{ne a b}}` | Returns true if a not equals b | `a != b` | `{{#if health != 0}}Still alive{{/if}}` |
+| `{{gt a b}}` | Returns true if `a > b` | `a > b` | `{{#if score > 100}}High score!{{/if}}` |
+| `{{gte a b}}` | Returns true if `a >= b` | `a >= b` | `{{#if level >= 5}}Advanced{{/if}}` |
+| `{{lt a b}}` | Returns true if `a < b` | `a < b` | `{{#if health < 20}}Low health{{/if}}` |
+| `{{lte a b}}` | Returns true if `a <= b` | `a <= b` | `{{#if age <= 18}}Minor{{/if}}` |
 
 ## Logic helpers
 
-See [Attributes](/attributes/#logic-helpers) for examples.
+See [Attributes](/attributes/#logic-helpers) for examples. In `{{#if}}` and `{{#unless}}`, you can use the operator instead (see [Conditions](#conditions)).
 
-| Helper | Description | Example |
-|--------|-------------|---------|
-| `{{and ...}}` | Returns true if all arguments are truthy | `{{#if (and has_key door_locked)}}Can unlock{{/if}}` |
-| `{{or ...}}` | Returns true if any argument is truthy | `{{#if (or is_admin is_moderator)}}Has powers{{/if}}` |
-| `{{not value}}` | Negates a boolean value | `{{#if (not game_over)}}Continue{{/if}}` |
+| Helper | Description | Operator | Example |
+|--------|-------------|----------|---------|
+| `{{and ...}}` | Returns true if all arguments are truthy | `a and b` | `{{#if has_key and door_locked}}Can unlock{{/if}}` |
+| `{{or ...}}` | Returns true if any argument is truthy | `a or b` | `{{#if is_admin or is_moderator}}Has powers{{/if}}` |
+| `{{not value}}` | Negates a boolean value | `not a` | `{{#if not game_over}}Continue{{/if}}` |
 
 ## Navigation helpers
 
@@ -309,7 +339,7 @@ In addition to Squiffy's custom helpers, you have access to standard Handlebars 
 |--------|-------------|---------|
 | `{{#if}}...{{/if}}` | Conditional content | `{{#if has_key}}You have a key{{/if}}` |
 | `{{#if}}...{{else}}...{{/if}}` | Conditional with fallback | `{{#if alive}}Living{{else}}Dead{{/if}}` |
-| `{{#if}}...{{else if}}...{{/if}}` | Multiple conditions | `{{#if (gt score 100)}}High{{else if (gt score 50)}}Medium{{else}}Low{{/if}}` |
+| `{{#if}}...{{else if}}...{{/if}}` | Multiple conditions | `{{#if score > 100}}High{{else if score > 50}}Medium{{else}}Low{{/if}}` |
 | `{{#unless}}...{{/unless}}` | Inverted conditional | `{{#unless game_over}}Keep playing{{/unless}}` |
 | `{{#each}}...{{/each}}` | Iterate over arrays (advanced usage) | Not commonly used in Squiffy |
 

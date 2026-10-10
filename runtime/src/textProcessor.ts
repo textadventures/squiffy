@@ -2,6 +2,7 @@ import * as marked from "marked";
 import Handlebars from "handlebars";
 import { Section, Story } from "./types.js";
 import { State } from "./state.js";
+import { rewriteInfixExpressions } from "./infixExpressions.js";
 
 export class TextProcessor {
     story: Story;
@@ -189,7 +190,7 @@ export class TextProcessor {
 
     process(text: string, inline: boolean) {
         try {
-            const template = this.handlebars.compile(text);
+            const template = this.handlebars.compile(rewriteInfixExpressions(text));
             text = template(this.state.getStore());
 
             if (inline) {

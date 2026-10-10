@@ -59,7 +59,7 @@ When the player clicks the link, the score updates in place without needing to d
 You can now modify attributes directly within `{{#if}}` blocks using `{{set}}`, `{{inc}}`, and `{{dec}}` - reducing the need to write JavaScript for conditional logic:
 
 ```
-{{#if (gt score 100)}}
+{{#if score > 100}}
     {{set rank="expert"}}
     You've reached expert level!
 {{/if}}
@@ -160,7 +160,8 @@ If your story uses dynamic text features, you'll need to update to the new Handl
 | v5 Syntax | v6 Syntax |
 |-----------|-----------|
 | `{attribute}` | `{{attribute}}` |
-| `{if gender=male:You are male.}` | `{{#if (eq gender "male")}}You are male.{{/if}}` |
+| `{if gender=male:You are male.}` | `{{#if gender = "male"}}You are male.{{/if}}` |
+| `{if score>100:High score!}` | `{{#if score > 100}}High score!{{/if}}` |
 | `{if condition:text}{else:other text}` | `{{#if condition}}text{{else}}other text{{/if}}` |
 | `{@b+=1}` (in conditions) | `{{inc "b"}}` |
 
