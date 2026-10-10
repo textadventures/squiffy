@@ -1,0 +1,20 @@
+body {
+    font-family: Georgia, serif;
+    max-width: 40em;
+    margin: 0 auto;
+    padding: 1em;
+    line-height: 1.5;
+}
+
+header {
+    display: flex;
+    gap: 0.5em;
+    align-items: center;
+    border-bottom: 1px solid #ccc;
+    margin-bottom: 1em;
+}
+
+header h1 {
+    flex: 1;
+    font-size: 1.4em;
+}
