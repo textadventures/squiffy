@@ -85,9 +85,9 @@ You head over. He's early seventies, neatly dressed.
 
 The morning settles into a rhythm. You make drinks, you wipe tables, you learn that the espresso machine makes a concerning noise that Carla insists is "normal."
 
-{{#if (gt maya 0)}}Maya catches your eye as she's leaving, laptop tucked under her arm. "See you tomorrow, {{player_name}}. Maybe I'll have actually written something by then." She doesn't sound convinced.{{/if}}
+{{#if maya > 0}}Maya catches your eye as she's leaving, laptop tucked under her arm. "See you tomorrow, {{player_name}}. Maybe I'll have actually written something by then." She doesn't sound convinced.{{/if}}
 
-{{#if (gt ellis 0)}}Ellis leaves exact change on the table, plus a single dollar tip. He nods at you on his way out—the smallest possible acknowledgment. It feels like a victory.{{/if}}
+{{#if ellis > 0}}Ellis leaves exact change on the table, plus a single dollar tip. He nods at you on his way out—the smallest possible acknowledgment. It feels like a victory.{{/if}}
 
 By afternoon, the shop is quiet. Carla sends you home early. "Rest up. Evening shifts are different."
 
@@ -164,7 +164,7 @@ Ellis is in his usual spot by the window. {{#if (seen "The older man by the wind
 
 Maya bursts in a few minutes later, laptop bag swinging, looking either excited or panicked—it's hard to tell.
 
-{{#if (gt maya 0)}}"{{player_name}}!" She makes a beeline for you. "Okay, so, I actually wrote something last night. Like, real words. In an order that makes sense. I think you might be good luck."{{else}}"The usual," she says, already heading for her corner booth. "Sorry, I'm in the zone. Maybe. Hopefully."{{/if}}
+{{#if maya > 0}}"{{player_name}}!" She makes a beeline for you. "Okay, so, I actually wrote something last night. Like, real words. In an order that makes sense. I think you might be good luck."{{else}}"The usual," she says, already heading for her corner booth. "Sorry, I'm in the zone. Maybe. Hopefully."{{/if}}
 
 [Talk to Maya]
 
@@ -216,7 +216,7 @@ You sense there's more beneath the surface, but he's not ready to share it—not
 
 You're wiping down tables when the door opens. Sam shuffles in, looking exhausted, still wearing yesterday's clothes.
 
-{{#if (gt sam 0)}}"{{player_name}}." They manage a tired smile. "Please tell me you have coffee. And maybe a will to live. I'll take either."{{else}}"Coffee. Strongest you've got." They collapse into a chair.{{/if}}
+{{#if sam > 0}}"{{player_name}}." They manage a tired smile. "Please tell me you have coffee. And maybe a will to live. I'll take either."{{else}}"Coffee. Strongest you've got." They collapse into a chair.{{/if}}
 
 [[Check on Sam]]
 
@@ -260,11 +260,11 @@ Two days. That's all it's been.
 
 But somehow, it feels like more.
 
-{{#if (gt maya 1)}}You think about Maya, finding her words again. The way she lit up when someone actually asked.{{/if}}
+{{#if maya > 1}}You think about Maya, finding her words again. The way she lit up when someone actually asked.{{/if}}
 
-{{#if (gt ellis 1)}}You think about Ellis, carrying his grief to the same table every morning, finally letting a little of it go.{{/if}}
+{{#if ellis > 1}}You think about Ellis, carrying his grief to the same table every morning, finally letting a little of it go.{{/if}}
 
-{{#if (gt sam 1)}}You think about Sam, exhausted and guarded, choosing to share something they never show anyone.{{/if}}
+{{#if sam > 1}}You think about Sam, exhausted and guarded, choosing to share something they never show anyone.{{/if}}
 
 The bell above the door jingles. Carla's back from her errands.
 
@@ -272,7 +272,7 @@ The bell above the door jingles. Carla's back from her errands.
 
 +++Reflect
 
-{{#if (and (gt maya 1) (and (gt ellis 1) (gt sam 1)))}}
+{{#if maya > 1 and ellis > 1 and sam > 1}}
 "I think I'm going to like it here," you say.
 
 Carla smiles. "They like you too. I can tell. The regulars don't warm up to just anyone."
@@ -283,7 +283,7 @@ She hands you an apron—your own, with your name embroidered on it.
 
 **THE END — The New Regular**
 {{else}}
-{{#if (or (gt maya 1) (or (gt ellis 1) (gt sam 1)))}}
+{{#if maya > 1 or ellis > 1 or sam > 1}}
 "It was good. I think I'm getting the hang of it."
 
 Carla nods. "You've got potential. Some of the regulars are starting to open up to you—that's not easy to earn."

@@ -2275,3 +2275,44 @@ test("Template error preserves monospace styling", async () => {
     expect(errorDiv.style.fontFamily).toBe("monospace");
     expect(errorDiv.style.whiteSpace).toBe("pre-wrap");
 });
+// Infix expressions in {{#if}} / {{#unless}}
+
+test("Infix comparisons in {{#if}}", async () => {
+    const script = `@set gender = male
+@set score = 150
+@set has_key = true
+
+{{#if gender = "male"}}Male.{{/if}}
+{{#if score > 100 and has_key}}High score with key.{{else}}No.{{/if}}
+{{#if score < 100}}Low.{{else if score >= 150}}At least 150.{{else}}Medium.{{/if}}
+{{#unless score != 150}}Exactly 150.{{/unless}}
+{{#if not gender = "female"}}Not female.{{/if}}`;
+
+    const { element } = await initScript(script);
+    const output = getSectionContent(element, "_default");
+    expect(output).toBe("Male.\nHigh score with key.\nAt least 150.\nExactly 150.\nNot female.");
+});
+
+test("Infix expressions combine with existing helpers", async () => {
+    const script = `
+[[start]]:
+@set count = 1
+{{#if not (seen "other") or count >= 3}}Not seen other.{{else}}Seen other.{{/if}}
+{{#if (at "start") && !(seen "other")}}At start.{{/if}}
+`;
+
+    const { element } = await initScript(script);
+    const output = getSectionContent(element, "start");
+    expect(output).toBe("Not seen other.\nAt start.");
+});
+
+test("Malformed infix expression shows a template error", async () => {
+    const script = `
+[[start]]:
+{{#if score >}}Yes{{/if}}
+`;
+
+    const { element } = await initScript(script);
+    const errorDiv = element.querySelector(".squiffy-error");
+    expect(errorDiv?.textContent).toContain("Invalid condition \"score >\": expected a value after '>'");
+});

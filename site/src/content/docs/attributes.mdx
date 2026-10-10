@@ -91,11 +91,11 @@ You can set attribute values directly from section and passage links using a com
 [[game_start]]:
 You are a {{class}}.
 
-{{#if (eq class &quot;warrior&quot;)}}
+{{#if class = &quot;warrior&quot;}}
 Strength: {{strength}}, Health: {{health}}
-{{else if (eq class &quot;mage&quot;)}}
+{{else if class = &quot;mage&quot;}}
 Intelligence: {{intelligence}}, Health: {{health}}
-{{else if (eq class &quot;rogue&quot;)}}
+{{else if class = &quot;rogue&quot;}}
 Dexterity: {{dexterity}}, Health: {{health}}
 {{/if}}"></Sample>
 
@@ -205,19 +205,19 @@ You can also read a value using JavaScript:
 
 ## Comparing attributes
 
-Squiffy provides comparison helpers for working with attribute values in conditionals.
+You can compare attribute values in `{{#if}}` and `{{#unless}}` conditions. See [Conditions](/helpers-reference/#conditions) for the full list of operators.
 
 ### Equality comparisons
 
-Use `{{eq}}` to check if two values are equal, and `{{ne}}` to check if they're not equal:
+Use `=` to check if two values are equal, and `!=` to check if they're not equal:
 
 <Sample script="@set choice = red
 
 You chose {{choice}}.
 
-{{#if (eq choice &quot;red&quot;)}}
+{{#if choice = &quot;red&quot;}}
 Red is a bold choice!
-{{else if (eq choice &quot;blue&quot;)}}
+{{else if choice = &quot;blue&quot;}}
 Blue is a calm choice.
 {{else}}
 An interesting choice!
@@ -227,22 +227,22 @@ An interesting choice!
 
 For number values, you can use:
 
-- `{{gt a b}}` — greater than (`a > b`)
-- `{{gte a b}}` — greater than or equal (`a >= b`)
-- `{{lt a b}}` — less than (`a < b`)
-- `{{lte a b}}` — less than or equal (`a <= b`)
+- `a > b` — greater than
+- `a >= b` — greater than or equal
+- `a < b` — less than
+- `a <= b` — less than or equal
 
 <Sample script="@set score = 75
 
 Your score is {{score}}.
 
-{{#if (gte score 90)}}
+{{#if score >= 90}}
 Excellent work! You got an A.
-{{else if (gte score 80)}}
+{{else if score >= 80}}
 Great job! You got a B.
-{{else if (gte score 70)}}
+{{else if score >= 70}}
 Good work! You got a C.
-{{else if (gte score 60)}}
+{{else if score >= 60}}
 You passed with a D.
 {{else}}
 You need to study more.
@@ -250,17 +250,17 @@ You need to study more.
 
 ### Logic helpers
 
-You can combine conditions using logic helpers:
+You can combine conditions using `and`, `or` and `not`:
 
-- `{{and ...}}` — returns true if all arguments are truthy
-- `{{or ...}}` — returns true if any argument is truthy
-- `{{not value}}` — negates a boolean value
+- `a and b` — true if both are true
+- `a or b` — true if either is true
+- `not a` — true if `a` is not true
 
 <Sample script="@set has_key = true
 @set has_map = true
 @set door_locked = true
 
-{{#if (and has_key door_locked)}}
+{{#if has_key and door_locked}}
 You use the key to unlock the door.
 {{else if door_locked}}
 The door is locked. You need a key.
@@ -268,9 +268,11 @@ The door is locked. You need a key.
 The door is already open.
 {{/if}}
 
-{{#if (and has_key has_map)}}
+{{#if has_key and has_map}}
 With both the key and the map, you're ready for adventure!
 {{/if}}"></Sample>
+
+Each of these operators has an equivalent helper (`eq`, `ne`, `gt`, `gte`, `lt`, `lte`, `and`, `or`, `not`), which you can use anywhere, not just in conditions. For example, `{{#if has_key and door_locked}}` is the same as `{{#if (and has_key door_locked)}}`. See the [Helpers reference](/helpers-reference/) for details.
 
 ## Tracking sections and passages
 
@@ -393,7 +395,7 @@ You ordered: **{{main}}** - ${{cost}}
 - [[No thanks]](add_dessert)
 
 [[add_dessert]]:
-{{#if drink}}{{inc &quot;total_cost&quot; drink_cost}}You added: {{drink}} {{#if (gt drink_cost 0)}}(${{drink_cost}}){{else}}(free!){{/if}}{{/if}}
+{{#if drink}}{{inc &quot;total_cost&quot; drink_cost}}You added: {{drink}} {{#if drink_cost > 0}}(${{drink_cost}}){{else}}(free!){{/if}}{{/if}}
 
 **Add a dessert?**
 - [[Ice Cream ($6)]](finish, dessert=Ice Cream, dessert_cost=6)
@@ -406,14 +408,14 @@ You ordered: **{{main}}** - ${{cost}}
 
 **Your Order:**
 - Main: {{main}} (${{cost}})
-{{#if drink}}- Drink: {{drink}} {{#if (gt drink_cost 0)}}(${{drink_cost}}){{else}}(free){{/if}}{{/if}}
+{{#if drink}}- Drink: {{drink}} {{#if drink_cost > 0}}(${{drink_cost}}){{else}}(free){{/if}}{{/if}}
 {{#if dessert}}- Dessert: {{dessert}} (${{dessert_cost}}){{/if}}
 
 **Total: ${{total_cost}}**
 
-{{#if (gte total_cost 20)}}
+{{#if total_cost >= 20}}
 Wow, you're hungry! That's a big order.
-{{else if (gte total_cost 15)}}
+{{else if total_cost >= 15}}
 A nice balanced meal!
 {{else}}
 A light meal today.

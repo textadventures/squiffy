@@ -10,7 +10,7 @@ Choose a gender:
 [[start]]:
 You chose {{gender}}.
 
-{{#if (eq gender "male")}}
+{{#if gender = "male"}}
 You are a man.
 {{else}}
 You are a woman.
