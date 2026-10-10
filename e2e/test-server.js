@@ -80,8 +80,14 @@ const server = http.createServer(async (req, res) => {
     const ext = fileName.split(".").pop();
     const contentType = contentTypes[ext] || "text/plain";
 
+    let content = files[fileName];
+    if (fileName === "index.html") {
+      // Expose the Squiffy API so tests can call e.g. goBack()
+      content = content.replace("await squiffyApi.begin();", "window.squiffyApi = squiffyApi;\n            await squiffyApi.begin();");
+    }
+
     res.writeHead(200, { "Content-Type": contentType });
-    res.end(files[fileName]);
+    res.end(content);
 
   } catch (error) {
     console.error("Server error:", error);

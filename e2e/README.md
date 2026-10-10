@@ -37,6 +37,7 @@ npm run test:all
 
 Test stories are in `e2e/test-stories/`:
 - `animations.squiffy` - Tests animation plugin
+- `link-animation.squiffy` - Tests link-triggered animations (disabled state, going back)
 - `replace.squiffy` - Tests replace label plugin with fade transitions
 - `live.squiffy` - Tests live update plugin
 
@@ -45,7 +46,7 @@ Test stories are in `e2e/test-stories/`:
 1. `test-server.js` compiles `.squiffy` files on-demand and serves them
 2. Playwright starts the server automatically before tests
 3. Tests navigate to `/story-name/` URLs
-4. Server compiles and packages the story, returns HTML/JS/CSS
+4. Server compiles and packages the story, returns HTML/JS/CSS (exposing the API as `window.squiffyApi`, so tests can call e.g. `goBack()`)
 5. Tests interact with the story in real browsers
 
 ## Writing New Tests
