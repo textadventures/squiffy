@@ -1666,7 +1666,7 @@ Hello, {{player_name}}!
 
     // Fill the input
     input.value = "Alice";
-    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.dispatchEvent(new window.Event("input", { bubbles: true }));
 
     // Link should now be enabled
     expect(continueLink.classList.contains("validation-disabled")).toBe(false);
@@ -1695,14 +1695,14 @@ Hello, {{player_name}}!
 
     // Fill the input
     input.value = "Test";
-    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.dispatchEvent(new window.Event("input", { bubbles: true }));
 
     // Link should be enabled
     expect(continueLink.classList.contains("validation-disabled")).toBe(false);
 
     // Clear the input
     input.value = "";
-    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.dispatchEvent(new window.Event("input", { bubbles: true }));
 
     // Link should be disabled again
     expect(continueLink.classList.contains("validation-disabled")).toBe(true);
@@ -1743,7 +1743,7 @@ Your pockets are empty.
 
     // Fill the input
     input.value = "Bob";
-    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.dispatchEvent(new window.Event("input", { bubbles: true }));
 
     // Links should now be enabled
     expect(lookLink.classList.contains("validation-disabled")).toBe(false);
@@ -1776,21 +1776,21 @@ Name: {{name}}, Age: {{age}}
 
     // Fill only name
     nameInput.value = "Charlie";
-    nameInput.dispatchEvent(new Event("input", { bubbles: true }));
+    nameInput.dispatchEvent(new window.Event("input", { bubbles: true }));
 
     // Still disabled because age is empty
     expect(continueLink.classList.contains("validation-disabled")).toBe(true);
 
     // Fill age with invalid value
     ageInput.value = "150";
-    ageInput.dispatchEvent(new Event("input", { bubbles: true }));
+    ageInput.dispatchEvent(new window.Event("input", { bubbles: true }));
 
     // Still disabled because age is out of range
     expect(continueLink.classList.contains("validation-disabled")).toBe(true);
 
     // Fill age with valid value
     ageInput.value = "25";
-    ageInput.dispatchEvent(new Event("input", { bubbles: true }));
+    ageInput.dispatchEvent(new window.Event("input", { bubbles: true }));
 
     // Now should be enabled
     expect(continueLink.classList.contains("validation-disabled")).toBe(false);
@@ -1820,7 +1820,7 @@ Done!
     // Fill first input and navigate
     const nameInput = element.querySelector('input[data-attribute="name"]') as HTMLInputElement;
     nameInput.value = "Dave";
-    nameInput.dispatchEvent(new Event("input", { bubbles: true }));
+    nameInput.dispatchEvent(new window.Event("input", { bubbles: true }));
 
     const continueLink = findLink(element, "section", "Continue", true);
     await squiffyApi.clickLink(continueLink);
@@ -1832,7 +1832,7 @@ Done!
     // Fill email and continue
     const emailInput = element.querySelector('input[data-attribute="email"]') as HTMLInputElement;
     emailInput.value = "dave@example.com";
-    emailInput.dispatchEvent(new Event("input", { bubbles: true }));
+    emailInput.dispatchEvent(new window.Event("input", { bubbles: true }));
 
     expect(finishLink.classList.contains("validation-disabled")).toBe(false);
 
@@ -1858,7 +1858,7 @@ Done!
 
     // Fill only the active input (disabled one should be ignored)
     activeInput.value = "test";
-    activeInput.dispatchEvent(new Event("input", { bubbles: true }));
+    activeInput.dispatchEvent(new window.Event("input", { bubbles: true }));
 
     // Link should be enabled (disabled input doesn't count)
     expect(continueLink.classList.contains("validation-disabled")).toBe(false);
@@ -1897,7 +1897,7 @@ You selected {{difficulty}} mode.
 
     // Select an option
     select.value = "normal";
-    select.dispatchEvent(new Event("change", { bubbles: true }));
+    select.dispatchEvent(new window.Event("change", { bubbles: true }));
 
     // Link should now be enabled
     expect(startLink.classList.contains("validation-disabled")).toBe(false);
@@ -1931,7 +1931,7 @@ Difficulty: {{difficulty}}
 
     // Select an option
     select.value = "hard";
-    select.dispatchEvent(new Event("change", { bubbles: true }));
+    select.dispatchEvent(new window.Event("change", { bubbles: true }));
 
     // Navigate
     await squiffyApi.clickLink(startLink);
@@ -1962,14 +1962,14 @@ Done!
 
     // Select an option
     select.value = "a";
-    select.dispatchEvent(new Event("change", { bubbles: true }));
+    select.dispatchEvent(new window.Event("change", { bubbles: true }));
 
     // Link should be enabled
     expect(continueLink.classList.contains("validation-disabled")).toBe(false);
 
     // Change back to empty
     select.value = "";
-    select.dispatchEvent(new Event("change", { bubbles: true }));
+    select.dispatchEvent(new window.Event("change", { bubbles: true }));
 
     // Link should be disabled again
     expect(continueLink.classList.contains("validation-disabled")).toBe(true);
@@ -2005,23 +2005,23 @@ Level: <select data-attribute="level" required>
 
     // Fill only name
     nameInput.value = "Player";
-    nameInput.dispatchEvent(new Event("input", { bubbles: true }));
+    nameInput.dispatchEvent(new window.Event("input", { bubbles: true }));
 
     // Still disabled because select is empty
     expect(continueLink.classList.contains("validation-disabled")).toBe(true);
 
     // Select level but clear name
     levelSelect.value = "1";
-    levelSelect.dispatchEvent(new Event("change", { bubbles: true }));
+    levelSelect.dispatchEvent(new window.Event("change", { bubbles: true }));
     nameInput.value = "";
-    nameInput.dispatchEvent(new Event("input", { bubbles: true }));
+    nameInput.dispatchEvent(new window.Event("input", { bubbles: true }));
 
     // Still disabled because name is empty
     expect(continueLink.classList.contains("validation-disabled")).toBe(true);
 
     // Fill both
     nameInput.value = "Hero";
-    nameInput.dispatchEvent(new Event("input", { bubbles: true }));
+    nameInput.dispatchEvent(new window.Event("input", { bubbles: true }));
 
     // Now should be enabled
     expect(continueLink.classList.contains("validation-disabled")).toBe(false);
