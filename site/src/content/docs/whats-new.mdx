@@ -17,11 +17,13 @@ If your v5 story used dynamic text features like `{if}`, `{else}`, or text repla
 
 Basic stories that only use sections, passages, links, and simple attributes should work without changes.
 
-### No More Desktop App
+### An Installable, Offline Editor
 
-The downloadable desktop application has been replaced by a Progressive Web App (PWA) at [app.squiffystory.com](https://app.squiffystory.com/). The PWA works offline and can be installed to your device, giving a desktop app-like experience without needing to download and install anything.
+The editor at [app.squiffystory.com](https://app.squiffystory.com/) is a Progressive Web App (PWA). It works offline, and you can install it to your device so it opens in its own window like any other app - with nothing to download first.
 
-For the best experience, use **Chrome** or **Edge**. These browsers support the File System Access API, which lets the editor save directly to files on your computer. You can grant permission for the editor to access a file, and then save using the File menu or Ctrl+S (Cmd+S on Mac) - just like a desktop app.
+For the best experience, use **Chrome** or **Edge**. These browsers support the File System Access API, which lets the editor save directly to files on your computer. You can grant permission for the editor to access a file, and then save using the File menu or Ctrl+S (Cmd+S on Mac).
+
+Squiffy 6 doesn't include a downloadable desktop app. One is planned for Squiffy 7, built from the same code as the web editor.
 
 ### No More Account Required
 
@@ -35,7 +37,7 @@ Your work is stored locally in your browser, so if you accidentally close the ta
 - **Offline support** - Install as a PWA and work without an internet connection
 - **Live preview** - See your changes as you type
 - **New export options** - Download as a single self-contained HTML file, or a ZIP with separate files
-- **Go back button** - Navigate backwards through your story while testing, without having to restart
+- **Back button** - Step backwards through your story while testing, without having to restart
 
 ### New Helpers
 
@@ -43,16 +45,18 @@ v6 introduces some new Handlebars helpers:
 
 #### Live text
 
-Use `{{#live}}` to display text that automatically updates when an attribute changes:
+Use `{{live}}` to display an attribute that automatically updates when its value changes:
 
 ```
 @set score = 0
 You have {{live "score"}} points.
 
-[[Get points]](, score+=10)
++++Get points
+@inc score 10
+You found 10 points.
 ```
 
-When the player clicks the link, the score updates in place without needing to display new text.
+When the player clicks "Get points", the score shown in the first paragraph updates in place.
 
 #### Setting attributes in conditions
 
@@ -60,7 +64,7 @@ You can now modify attributes directly within `{{#if}}` blocks using `{{set}}`, 
 
 ```
 {{#if score > 100}}
-    {{set rank="expert"}}
+    {{set "rank" "expert"}}
     You've reached expert level!
 {{/if}}
 ```
@@ -124,7 +128,7 @@ You can now export your story as a single self-contained HTML file. This is idea
 - Offline distribution
 - Email attachments
 
-Use the "Export HTML (single file)" option in the editor's Download menu, or use `--inline` with the CLI:
+Use the "Export HTML (single file)" option in the editor's File menu, or use `--inline` with the CLI:
 
 ```bash
 npx @textadventures/squiffy-cli mygame.squiffy --inline
@@ -142,7 +146,7 @@ Squiffy is now organized as a monorepo with separate npm packages:
 |---------|----------|---------|
 | `compiler` | `squiffy-compiler` | Converts `.squiffy` files to JavaScript |
 | `runtime` | `squiffy-runtime` | Browser library that runs compiled stories |
-| `packager` | `squiffy-packager` | Bundles compiler output + runtime into deployable files |
+| `packager` | `@textadventures/squiffy-packager` | Bundles compiler output + runtime into deployable files |
 | `cli` | `@textadventures/squiffy-cli` | Command-line interface |
 
 All packages use ES modules (`import`/`export`) instead of CommonJS (`require`).

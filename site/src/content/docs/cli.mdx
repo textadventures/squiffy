@@ -9,7 +9,7 @@ Installing
 
 As an alternative to the [web editor](https://app.squiffystory.com), Squiffy is also available as a command-line Node package. This runs on Windows, Mac and Linux.
 
-To install the Squiffy compiler, first [install Node.js](http://nodejs.org/).
+To install the Squiffy compiler, first [install Node.js](https://nodejs.org/).
 
 You can then run the CLI directly using `npx`:
 
@@ -32,7 +32,7 @@ sudo npm install @textadventures/squiffy-cli -g
 Usage
 -----
 
-You can create a Squiffy file in any text editor - Notepad, [VS Code](https://code.visualstudio.com/), [Sublime Text](http://www.sublimetext.com/), TextEdit etc.
+You can create a Squiffy file in any text editor - Notepad, [VS Code](https://code.visualstudio.com/), [Sublime Text](https://www.sublimetext.com/), TextEdit etc.
 
 Squiffy files are text files with a `.squiffy` file extension.
 
@@ -54,7 +54,7 @@ This folder of files can now be uploaded anywhere, and it will run entirely loca
 
 The browser's local storage will be used to save the state of the game. This means the player can close their browser, and the next time they go back to that page, the game will resume from where they left off.
 
-**Note: Even if you recompile a game, the previous state will still be loaded.** This means that after making a change to your game, you'll need to click the Restart link at the top of the screen to see your changes.
+**Note: Even if you recompile a game, the previous state will still be loaded.** This means that after making a change to your game, you'll need to click the Restart button at the top of the screen to see your changes.
 
 Output Formats
 --------------
@@ -84,7 +84,7 @@ This creates just one file: `index.html`. This is ideal for:
 
 ### Zip file
 
-Use `--zip` to create a zip archive of the output files:
+Use `--zip` to also create a zip archive of the output files, called `output.zip`:
 
 ```
 npx @textadventures/squiffy-cli mygame.squiffy --zip
@@ -101,7 +101,7 @@ Options
 
 ### HTTP Server
 
-Use `--serve` (or `-s`) to start a local HTTP server after compiling. This opens your game in a browser for testing:
+Use `--serve` (or `-s`) to start a local HTTP server after compiling. Open the address it prints (e.g. `http://localhost:8282/`) in your browser to test your game:
 
 ```
 npx @textadventures/squiffy-cli mygame.squiffy --serve

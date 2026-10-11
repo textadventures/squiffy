@@ -16,9 +16,9 @@ npx @textadventures/squiffy-cli mygame.squiffy --scriptonly
 
 This creates `story.js` containing your compiled story.
 
-You'll also need the Squiffy runtime. You can either:
-- Run a full export first and keep `squiffy.runtime.global.js`
-- Or use a CDN (when available)
+You'll also need the Squiffy runtime and its stylesheet. You can either:
+- Run a full export first and keep `squiffy.runtime.global.js` and `style.css`
+- Or load them from a CDN such as jsDelivr, which serves the [`squiffy-runtime`](https://www.npmjs.com/package/squiffy-runtime) npm package. Use the version number of the Squiffy you compiled your story with, for example `https://cdn.jsdelivr.net/npm/squiffy-runtime@6.0.0-beta.4/dist/squiffy.runtime.global.js` and `https://cdn.jsdelivr.net/npm/squiffy-runtime@6.0.0-beta.4/dist/squiffy.runtime.css`
 
 Here's a minimal HTML page that runs a Squiffy story:
 
@@ -29,6 +29,7 @@ Here's a minimal HTML page that runs a Squiffy story:
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>My Story</title>
+    <link rel="stylesheet" href="style.css">
     <script src="squiffy.runtime.global.js"></script>
     <script src="story.js"></script>
 </head>
@@ -94,7 +95,7 @@ The `squiffyRuntime.init()` function accepts an options object:
 | `element` | `HTMLElement` | (required) | The container element for the story output |
 | `story` | `Story` | (required) | The compiled story object (from `story.js`) |
 | `persist` | `boolean` | `true` | Whether to save state to localStorage |
-| `storyId` | `string` | URL path | Key used for localStorage (allows multiple stories on same domain) |
+| `storyId` | `string` | URL path (or the story's ID when opened from a local file) | Key used for localStorage (allows multiple stories on same domain) |
 | `scroll` | `string` | `"body"` | Scroll behavior: `"body"`, `"element"`, or `"none"` |
 | `onSet` | `function` | - | Callback when an attribute is set |
 
@@ -193,7 +194,7 @@ Fired when a story link is clicked:
 
 ```javascript
 squiffyApi.on('linkClick', (event) => {
-    console.log('Link type:', event.linkType); // "section" or "passage"
+    console.log('Link type:', event.linkType); // "section", "passage", "rotate" or "sequence"
 });
 ```
 
@@ -245,6 +246,7 @@ Here's a more complete example with custom controls:
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>My Story</title>
+    <link rel="stylesheet" href="style.css">
     <script src="squiffy.runtime.global.js"></script>
     <script src="story.js"></script>
     <style>

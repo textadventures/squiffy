@@ -13,7 +13,7 @@ You can write Hello World with no markup at all:
 
 "></Sample>
     
-You can format text using [Markdown](http://daringfireball.net/projects/markdown/syntax), and also use HTML.
+You can format text using [Markdown](https://daringfireball.net/projects/markdown/syntax), and also use HTML.
 
 <Sample script="Here is some **bold text** and some _italic text_.
 
@@ -342,7 +342,7 @@ e.g. to clear the screen before every section, and to increase a global turn cou
 
 ## Importing files
 
-*Importing files only works in the command-line version of Squiffy*
+*Importing files works with the [command-line tool](/cli/) and the [Vite plugin](/embedding/#using-vite), but not in the web editor.*
 
 You can split your script up into multiple files and import them:
 
@@ -354,6 +354,12 @@ You can also use the same syntax to import external JavaScript files:
 
 ```
 @import my_script.js
+```
+
+and CSS files:
+
+```
+@import my_style.css
 ```
 
 This syntax also accepts wildcards, so you can include all .squiffy files in a directory:
@@ -434,4 +440,6 @@ Starting game on {{difficulty}} difficulty.
 
 ## Custom HTML and CSS
 
-The `index.template.html` and `story.template.css` files are customisable. It is better not to edit the ones in your Squiffy directory - you can copy them to the same directory as your .squiffy story script file, and make edits there instead.
+To add your own styles when using the command-line tool, put them in a CSS file and [import](#importing-files) it with `@import my_style.css`. The exported `index.html` links to it after Squiffy's own stylesheet, so your rules take precedence.
+
+For complete control over the HTML page, you can [embed Squiffy in a custom page](/embedding/).
