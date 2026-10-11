@@ -1,7 +1,19 @@
-import { expect, test, beforeEach, afterEach } from "vitest";
+import { expect, test, beforeEach, afterEach, vi } from "vitest";
 import globalJsdom from "global-jsdom";
 import { init } from "../squiffy.runtime.js";
 import { compile as squiffyCompile } from "squiffy-compiler";
+
+// anime.js captures the global document when it's imported, which is before each test
+// sets up jsdom, so it can't run here. Replace it with a stub that completes immediately.
+vi.mock("animejs", () => ({
+    animate: (_targets: unknown, params: { onComplete?: () => void }) => {
+        setTimeout(() => params.onComplete?.());
+    },
+    stagger: () => 0,
+    text: {
+        split: (el: HTMLElement) => ({ chars: [el], words: [el], lines: [el] }),
+    },
+}));
 
 const html = `
 <!DOCTYPE html>
@@ -70,10 +82,39 @@ const findLink = (element: HTMLElement, linkType: string, linkText: string) => {
     return Array.from(links).find(link => link.textContent === linkText) as HTMLElement | undefined;
 };
 
+// jsdom doesn't run CSS transitions, so fadeReplace would wait forever for a
+// "transitionend" event. Fire one whenever a fade class is added instead.
+const completeFadeTransitions = () => {
+    const TransitionEvent = window.Event;
+    const observer = new MutationObserver(mutations => {
+        for (const mutation of mutations) {
+            const el = mutation.target as HTMLElement;
+            const oldClasses = (mutation.oldValue || "").split(" ");
+            for (const fadeClass of ["fade-out", "fade-in"]) {
+                if (el.classList.contains(fadeClass) && !oldClasses.includes(fadeClass)) {
+                    setTimeout(() => el.dispatchEvent(new TransitionEvent("transitionend")));
+                }
+            }
+        }
+    });
+    observer.observe(document.body, {
+        subtree: true,
+        attributes: true,
+        attributeFilter: ["class"],
+        attributeOldValue: true,
+    });
+    return () => observer.disconnect();
+};
+
+const findPassageLink = (element: HTMLElement, passageName: string) =>
+    element.querySelector<HTMLElement>(`a.squiffy-link[data-passage="${passageName}"]`) ?? undefined;
+
 let cleanup: { (): void };
+let stopCompletingTransitions: { (): void };
 
 beforeEach(() => {
     cleanup = globalJsdom(html);
+    stopCompletingTransitions = completeFadeTransitions();
     // Mock document.fonts for animations
     Object.defineProperty(document, "fonts", {
         value: { status: "loaded" },
@@ -83,6 +124,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+    stopCompletingTransitions();
     localStorage.clear();
     cleanup();
 });
@@ -156,9 +198,26 @@ Your score is {{#label "score"}}0{{/label}}.
     expect(labelSpan?.textContent).toBe("0");
 });
 
-test.skip("Replace plugin: replace labeled content", async () => {
-    // Skipped: fadeReplace transition timing is difficult to test reliably in jsdom
-    // The replace plugin works in real browsers but timing-dependent transitions are hard to test
+test("Replace plugin: replace labeled content", async () => {
+    const script = `
+Your score is {{#label "score"}}0{{/label}}.
+
+[Increase score]
+
+[Increase score]:
+{{#replace "score"}}**10**{{/replace}}
+`;
+
+    const { squiffyApi, element } = await initScript(script);
+
+    const link = findPassageLink(element, "Increase score");
+    await squiffyApi.clickLink(link!);
+
+    const labelSpans = element.querySelectorAll(".squiffy-label-score");
+    expect(labelSpans.length).toBe(1);
+    expect(labelSpans[0].innerHTML).toBe("<strong>10</strong>");
+    expect(labelSpans[0].classList.contains("fade-out")).toBe(false);
+    expect(labelSpans[0].classList.contains("fade-in")).toBe(false);
 });
 
 // ===== RotateSequencePlugin Tests =====
@@ -262,31 +321,119 @@ Score: {{live "score"}}.
     expect(liveSpan?.textContent).toBe("0");
 });
 
-test.skip("Live plugin: updates when attribute changes", async () => {
-    // Skipped: fadeReplace transition timing is difficult to test reliably in jsdom
-    // The live plugin works in real browsers but timing-dependent updates are hard to test
+test("Live plugin: updates when attribute changes", async () => {
+    const script = `
+@set score = 0
+
+Score: {{live "score"}}.
+
+[Increase score]
+
+[Increase score]:
+@set score = 10
+`;
+
+    const { squiffyApi, element } = await initScript(script);
+
+    const link = findPassageLink(element, "Increase score");
+    await squiffyApi.clickLink(link!);
+
+    // Live updates run in the background after the attribute is set, so wait for the fade to finish
+    const liveSpan = element.querySelector(".squiffy-live");
+    await vi.waitFor(() => {
+        expect(liveSpan?.textContent).toBe("10");
+        expect(liveSpan?.classList.contains("fade-in")).toBe(false);
+    });
 });
 
-test.skip("Live plugin: embed section content", async () => {
-    // Skipped: Complex integration test that's difficult to set up correctly
-    // The section/passage embedding works in real scenarios
+test("Live plugin: embed section content", async () => {
+    const script = `
+[[start]]:
+@set mood = happy
+
+Status: {{live "mood" section="status"}}
+
+[Cheer up]
+
+[Cheer up]:
+@set mood = ecstatic
+
+[[status]]:
+You are {{mood}}.
+`;
+
+    const { squiffyApi, element } = await initScript(script);
+
+    const liveSpan = element.querySelector(".squiffy-live");
+    expect(liveSpan?.getAttribute("data-section")).toBe("status");
+    expect(liveSpan?.textContent).toBe("You are happy.");
+
+    const link = findPassageLink(element, "Cheer up");
+    await squiffyApi.clickLink(link!);
+
+    await vi.waitFor(() => expect(liveSpan?.textContent).toBe("You are ecstatic."));
 });
 
-test.skip("Live plugin: embed passage content", async () => {
-    // Skipped: Complex integration test that's difficult to set up correctly
-    // The section/passage embedding works in real scenarios
+test("Live plugin: embed passage content", async () => {
+    const script = `
+@set mood = happy
+
+Status: {{live "mood" passage="status"}}
+
+[Cheer up]
+
+[Cheer up]:
+@set mood = ecstatic
+
+[status]:
+You are {{mood}}.
+`;
+
+    const { squiffyApi, element } = await initScript(script);
+
+    const liveSpan = element.querySelector(".squiffy-live");
+    expect(liveSpan?.getAttribute("data-passage")).toBe("status");
+    expect(liveSpan?.textContent).toBe("You are happy.");
+
+    const link = findPassageLink(element, "Cheer up");
+    await squiffyApi.clickLink(link!);
+
+    await vi.waitFor(() => expect(liveSpan?.textContent).toBe("You are ecstatic."));
 });
 
 // ===== AnimatePlugin Tests =====
 
-test.skip("Animate plugin: creates animated span", async () => {
-    // Skipped: anime.js requires document.fonts API which jsdom doesn't provide
-    // The animate plugin works in real browsers but is difficult to test in jsdom
+test("Animate plugin: creates animated span", async () => {
+    const script = `
+{{#animate "typewriter"}}Hello **world**{{/animate}}
+`;
+
+    const { element } = await initScript(script);
+
+    // Once the animation completes, the original content is restored
+    const animateSpan = element.querySelector("span[data-name]");
+    expect(animateSpan).not.toBeNull();
+    expect(animateSpan?.innerHTML).toBe("Hello <strong>world</strong>");
+    expect(animateSpan?.classList.contains("squiffy-animate")).toBe(false);
 });
 
-test.skip("Animate plugin: sets data attributes", async () => {
-    // Skipped: anime.js requires document.fonts API which jsdom doesn't provide
-    // The animate plugin works in real browsers but is difficult to test in jsdom
+test("Animate plugin: sets data attributes", async () => {
+    const script = `
+{{#animate "typewriter" trigger="link" interval=50}}[Click me]{{/animate}}
+
+[Click me]:
+You clicked!
+`;
+
+    const { element } = await initScript(script);
+
+    const animateSpan = element.querySelector<HTMLElement>(".squiffy-animate");
+    expect(animateSpan).not.toBeNull();
+    expect(animateSpan?.tagName).toBe("SPAN");
+    expect(animateSpan?.getAttribute("data-name")).toBe('"typewriter"');
+    expect(JSON.parse(animateSpan!.getAttribute("data-content")!)).toContain('data-passage="Click me"');
+    expect(animateSpan?.getAttribute("data-trigger")).toBe('"link"');
+    expect(animateSpan?.getAttribute("data-interval")).toBe("50");
 });
 
 test("Animate plugin: trigger on link", async () => {
