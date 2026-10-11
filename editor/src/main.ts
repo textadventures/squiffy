@@ -817,8 +817,9 @@ const init = async function () {
     onClick("edit-find", editor.find);
     onClick("edit-replace", editor.replace);
 
-    onClick("help-docs", () => openExternalLink("https://squiffystory.com"));
+    onClick("help-docs", () => openExternalLink("https://squiffystory.com/getting-started/"));
     onClick("help-examples", () => openExternalLink("https://squiffystory.com/featured-examples/"));
+    onClick("help-games", () => openExternalLink("https://textadventures.co.uk/games/platform/squiffy"));
     onClick("help-report-issue", () => openExternalLink("https://github.com/textadventures/squiffy/issues"));
     onClick("help-github", () => openExternalLink("https://github.com/textadventures/squiffy"));
     onClick("help-discord", () => openExternalLink("https://textadventures.co.uk/community/discord"));
