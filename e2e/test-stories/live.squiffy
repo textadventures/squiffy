@@ -20,7 +20,7 @@ Status changed!
 +++Test live with sections
 
 [[status_section]]:
-You have {score} points. Status: {status}
+You have {{score}} points. Status: {{status}}
 
 Status display: {{live "score" section="status_section"}}
 

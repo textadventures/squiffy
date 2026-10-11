@@ -1,12 +1,15 @@
 import * as fs from "fs";
 import * as path from "path";
-import { compile } from "squiffy-compiler";
+import { compile, findV5Syntax } from "squiffy-compiler";
 import { externalFiles } from "./external-files.js";
 import { createPackage, PackageOptions } from "@textadventures/squiffy-packager";
 
 async function getCompileResult(inputFilename: string) {
     const inputFile = fs.readFileSync(inputFilename);
     const inputText = inputFile.toString();
+    if (findV5Syntax(inputText).length > 0) {
+        console.warn("This story looks like it uses Squiffy 5 text processor syntax. Run with --convert-v5 to convert it to Squiffy 6.");
+    }
     return await compile({
         scriptBaseFilename: path.basename(inputFilename),
         script: inputText,

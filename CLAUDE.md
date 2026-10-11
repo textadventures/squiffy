@@ -91,6 +91,7 @@ CLI options:
 - `-p, --port`: Port for HTTP server (default: 8282)
 - `--scriptonly [filename]`: Only generate JavaScript file
 - `--zip`: Create zip file
+- `--convert-v5`: Convert Squiffy 5 text processor syntax to Squiffy 6 (keeps a `.bak` of the original)
 
 ## Architecture
 

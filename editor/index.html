@@ -212,6 +212,25 @@
         </div>
     </div>
 
+    <div class="modal" id="v5-conversion-dialog" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Squiffy 5 Syntax</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>This looks like Squiffy 5 syntax, such as <code>{if x:...}</code> or <code>{x}</code>, which Squiffy 6 doesn't support.</p>
+                    <p>Convert it to Squiffy 6? You can review the changes, and undo them with Undo. Anything that can't be converted automatically will be listed in the output pane.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Not Now</button>
+                    <button type="button" class="btn btn-primary" id="v5-conversion-confirm">Convert</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal" id="about-dialog" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">

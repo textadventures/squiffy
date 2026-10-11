@@ -1,5 +1,9 @@
 import pkg from "../package.json" with { type: "json" };
+import { findV5Syntax } from "./v5.js";
 const version = pkg.version;
+
+export { findV5Syntax, convertV5Syntax } from "./v5.js";
+export type { V5SyntaxMatch, V5ConversionProblem, V5ConversionResult } from "./v5.js";
 
 export interface Output {
     story: OutputStory;
@@ -185,6 +189,8 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
     };
 
     async function processFileText(inputText: string, inputFilename: string | undefined, isFirst: boolean) {
+        warnAboutV5Syntax(inputText, inputFilename);
+
         const inputLines = inputText.replace(/\r/g, "").split("\n");
 
         let lineCount = 0;
@@ -347,6 +353,25 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         }
         
         return true;
+    }
+
+    function warnAboutV5Syntax(inputText: string, inputFilename: string | undefined) {
+        if (!settings.onWarning) return;
+
+        const truncate = (s: string) => s.length > 60 ? s.substring(0, 57) + "..." : s;
+
+        for (const match of findV5Syntax(inputText)) {
+            let warning = `WARNING: ${inputFilename} line ${match.line}: ${truncate(match.text)} looks like Squiffy 5 text processor syntax, which isn't supported in Squiffy 6.`;
+            if (match.suggestion) {
+                warning += match.suggestion.length > 60
+                    ? " Convert it to Handlebars syntax."
+                    : ` Use ${match.suggestion} instead.`;
+            }
+            else if (match.text.startsWith("{else:")) {
+                warning += " Use {{else}} inside an {{#if}} block instead.";
+            }
+            settings.onWarning(warning);
+        }
     }
 
     function ensureSectionExists(section: Section | null, isFirst: boolean, inputFilename: string | undefined, lineCount: number) {

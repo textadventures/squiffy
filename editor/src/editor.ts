@@ -42,6 +42,17 @@ export const replaceLine = (line: number, text: string) => {
     editor.session.replace(range, text);
 };
 
+// Replaces the whole document as a single change, so that it can be undone (unlike setValue)
+export const replaceAll = (text: string) => {
+    const Range = ace.require("ace/range").Range;
+    const doc = editor.session.getDocument();
+    const lastRow = doc.getLength() - 1;
+    const cursor = editor.getCursorPosition();
+    editor.session.replace(new Range(0, 0, lastRow, doc.getLine(lastRow).length), text);
+    editor.moveCursorToPosition(cursor);
+    editor.clearSelection();
+};
+
 export const collapseAll = () => { editor.session.foldAll(); editor.focus(); };
 export const uncollapseAll = () => { editor.session.unfold(null, true); editor.focus(); };
 
