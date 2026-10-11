@@ -121,6 +121,29 @@ Destination section text.`;
     expect(element.querySelector(".squiffy-output-section")?.getAttribute("data-section")).toBe("destination");
 });
 
+test("squiffy.story.seen() in JS reports which sections and passages have been seen", async () => {
+    // Note: the 4-space indent on the JS lines is the squiffy JS syntax - don't trim it!
+    const script = `Click [a] then [check].
+
+[a]:
+Passage a.
+
+[check]:
+    squiffy.set("seen_a", squiffy.story.seen("a"));
+    squiffy.set("seen_b", squiffy.story.seen("b"));
+    squiffy.set("seen_start", squiffy.story.seen("_default"));
+Checked.`;
+
+    const { squiffyApi, element } = await initScript(script);
+
+    await squiffyApi.clickLink(findLink(element, "passage", "a"));
+    await squiffyApi.clickLink(findLink(element, "passage", "check"));
+
+    expect(squiffyApi.get("seen_a")).toBe(true);
+    expect(squiffyApi.get("seen_b")).toBe(false);
+    expect(squiffyApi.get("seen_start")).toBe(true);
+});
+
 test("Click a section link", async () => {
     const script = await fs.readFile("../examples/test/example.squiffy", "utf-8");
     const { squiffyApi, element } = await initScript(script);
