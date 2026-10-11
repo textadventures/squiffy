@@ -703,6 +703,20 @@ Passage in section B.`);
     expect(await squiffyApi.clickLink(linkB1)).toBe(true);
 });
 
+test("Print an array element by index", async () => {
+    const script = `
+[[section1]]:
+    squiffy.set("fruits", ["apple", "banana", "cherry"]);
+
+The second fruit is {{fruits.[1]}}.
+`;
+
+    const { element } = await initScript(script);
+
+    const output = getSectionContent(element, "section1");
+    expect(output).toBe("The second fruit is banana.");
+});
+
 test("Embed text from a section", async () => {
     const script = `
 [[section1]]:

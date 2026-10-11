@@ -399,10 +399,21 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
             return sectionNames[currentIndex + 1] || null;
         };
 
+        // Handlebars expressions can contain square brackets that aren't links, such as
+        // {{someArray.[1]}} or {{someHelper "[x]"}}, so swap each one for a placeholder while
+        // converting links. Text between block helpers like {{#if x}}...{{/if}} is still converted.
+        const mustaches: string[] = [];
+        input = input.replace(/\{\{\{[\s\S]*?\}\}\}|\{\{[\s\S]*?\}\}/g, match => {
+            mustaches.push(match);
+            return `\uE000${mustaches.length - 1}\uE001`;
+        });
+        const restore = (s: string) => s.replace(/\uE000(\d+)\uE001/g, (_match, i) => mustaches[Number(i)]);
+
         // nextSectionLinkRegex matches [[text>]] - a link to the next section
         const nextSectionLinkRegex = /\[\[([^\]]*?)>\]\]/g;
 
         input = input.replace(nextSectionLinkRegex, (_match, text) => {
+            text = restore(text);
             const nextSectionName = getNextSectionName();
             if (!nextSectionName) {
                 settings.onWarning?.(`WARNING: ${section.filename} line ${section.line}: In section '${section.name}', there is a [[${text}>]] link but no following section exists`);
@@ -416,6 +427,8 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         const namedNextSectionLinkRegex = /\[\[([^\]]*?)\]\]\(>(.*?)\)/g;
 
         input = input.replace(namedNextSectionLinkRegex, (_match, text, rest) => {
+            text = restore(text);
+            rest = restore(rest);
             const nextSectionName = getNextSectionName();
             if (!nextSectionName) {
                 settings.onWarning?.(`WARNING: ${section.filename} line ${section.line}: In section '${section.name}', there is a [[${text}]](>) link but no following section exists`);
@@ -435,11 +448,12 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         //   closing bracket
         const namedSectionLinkRegex = /\[\[([^\]]*?)\]\]\((.*?)\)/g;
 
-        let links = allMatchesForGroup(input, namedSectionLinkRegex, 2);
+        let links = allMatchesForGroup(input, namedSectionLinkRegex, 2).map(restore);
         checkSectionLinks(links, section, passage);
 
         input = input.replace(namedSectionLinkRegex, (_match, text /* $1 */, name/* $2 */) => {
-            const parsedName = getAdditionalLinkParameters(name);
+            text = restore(text);
+            const parsedName = getAdditionalLinkParameters(restore(name));
             return `{{section "${escapeForHandlebarsString(parsedName.target)}" text="${escapeForHandlebarsString(text)}"${parsedName.additionalParameters}}}`;
         });
 
@@ -453,11 +467,12 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         //   closing bracket
         const namedPassageLinkRegex = /(?<!!)\[([^\]]*?)\]\(((?!https?:\/\/).*?)\)/g;
 
-        links = allMatchesForGroup(input, namedPassageLinkRegex, 2);
+        links = allMatchesForGroup(input, namedPassageLinkRegex, 2).map(restore);
         checkPassageLinks(links, section, passage);
 
         input = input.replace(namedPassageLinkRegex, (_match, text /* $1 */, name/* $2 */) => {
-            const parsedName = getAdditionalLinkParameters(name);
+            text = restore(text);
+            const parsedName = getAdditionalLinkParameters(restore(name));
             return `{{passage "${escapeForHandlebarsString(parsedName.target)}" text="${escapeForHandlebarsString(text)}"${parsedName.additionalParameters}}}`;
         });
 
@@ -467,10 +482,10 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         //   closing ]]
         const unnamedSectionLinkRegex = /\[\[(.*?)\]\]/g;
 
-        links = allMatchesForGroup(input, unnamedSectionLinkRegex, 1);
+        links = allMatchesForGroup(input, unnamedSectionLinkRegex, 1).map(restore);
         checkSectionLinks(links, section, passage);
 
-        input = input.replace(unnamedSectionLinkRegex, (_match, name) => `{{section "${escapeForHandlebarsString(name)}"}}`);
+        input = input.replace(unnamedSectionLinkRegex, (_match, name) => `{{section "${escapeForHandlebarsString(restore(name))}"}}`);
 
         // unnamedPassageLinkRegex matches:
         //   not preceded by ! (to avoid matching image links like ![alt])
@@ -480,10 +495,12 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         //   no bracket after
         const unnamedPassageLinkRegex = /(?<!!)\[(.*?)\]([^(]|$)/g;
 
-        links = allMatchesForGroup(input, unnamedPassageLinkRegex, 1);
+        links = allMatchesForGroup(input, unnamedPassageLinkRegex, 1).map(restore);
         checkPassageLinks(links, section, passage);
 
-        input = input.replace(unnamedPassageLinkRegex, (_match, name, suffix) => `{{passage "${escapeForHandlebarsString(name)}"}}${suffix}`);
+        input = input.replace(unnamedPassageLinkRegex, (_match, name, suffix) => `{{passage "${escapeForHandlebarsString(restore(name))}"}}${suffix}`);
+
+        input = restore(input);
 
         checkEmbeds(input, section, passage);
 

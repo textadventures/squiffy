@@ -462,4 +462,10 @@ You can use the `{{array}}` helper to create arrays for use with other helpers l
 {{at (array "section1" "section2" "section3")}}
 ```
 
+If an attribute holds an array, you can display one of its elements by index using Handlebars' `.[n]` syntax. Indexes start at 0, so this shows the second element:
+
+```
+The second fruit is {{fruits.[1]}}.
+```
+
 See [Dynamic text](/dynamic-text/) for more information on using arrays with dynamic content helpers.

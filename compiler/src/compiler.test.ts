@@ -475,3 +475,61 @@ And another: ![](logo.jpg).
     expect(result.output.story.sections.start.text).not.toContain('{{passage "logo.jpg"');
     expect(warnings.length).toBe(0);
 });
+test("Square brackets inside Handlebars expressions are not converted to links", async () => {
+    const script = `
+[[start]]:
+Second item: {{someArray.[1]}}.
+Helper: {{someHelper "[x]"}}.
+Triple: {{{someArray.[0]}}}.
+{{#if x}}[[other]]{{/if}}
+{{#if x}}[a]{{/if}}
+
+[a]:
+A passage.
+
+[[other]]:
+Other section.
+`;
+
+    const warnings: string[] = [];
+    const result = await compile({
+        scriptBaseFilename: "test.squiffy",
+        script: script,
+        onWarning: (message) => warnings.push(message),
+    });
+
+    assertSuccess(result);
+    const text = result.output.story.sections.start.text;
+    expect(text).toContain("Second item: {{someArray.[1]}}.");
+    expect(text).toContain('Helper: {{someHelper "[x]"}}.');
+    expect(text).toContain("Triple: {{{someArray.[0]}}}.");
+    expect(text).toContain('{{#if x}}{{section "other"}}{{/if}}');
+    expect(text).toContain('{{#if x}}{{passage "a"}}{{/if}}');
+    expect(warnings).toEqual([]);
+});
+
+test("Handlebars expressions inside link text are preserved", async () => {
+    const script = `
+[[start]]:
+[[Go to {{name}}]](other) or [Read "{{name}}"](a).
+
+[a]:
+A passage.
+
+[[other]]:
+Other section.
+`;
+
+    const warnings: string[] = [];
+    const result = await compile({
+        scriptBaseFilename: "test.squiffy",
+        script: script,
+        onWarning: (message) => warnings.push(message),
+    });
+
+    assertSuccess(result);
+    const text = result.output.story.sections.start.text;
+    expect(text).toContain('{{section "other" text="Go to {{name}}"}}');
+    expect(text).toContain('{{passage "a" text="Read \\"{{name}}\\""}}');
+    expect(warnings).toEqual([]);
+});
