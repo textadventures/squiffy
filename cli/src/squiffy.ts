@@ -4,6 +4,7 @@ import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import { serve } from "./server.js";
 import { createPackageFiles, writeScriptFile } from "./file-packager.js";
+import { convertV5File } from "./convert-v5.js";
 
 import pkg from "../package.json" with { type: "json" };
 import path from "path";
@@ -20,6 +21,8 @@ const argv = yargs(hideBin(process.argv))
     .describe("scriptonly", "Only generate JavaScript file (and optionally specify a name)")
     .describe("zip", "Create zip file")
     .describe("inline", "Create single HTML file with everything inlined")
+    .describe("convert-v5", "Convert Squiffy 5 text processor syntax to Squiffy 6, keeping a backup of the original file")
+    .boolean("convert-v5")
     .version(version)
     .parseSync();
 
@@ -35,7 +38,12 @@ const options = {
 const inputFilename = argv._[0] as string;
 const outputPath = path.resolve(path.dirname(inputFilename));
 
-if (options.scriptOnly) {
+if (argv.convertV5) {
+    if (!convertV5File(inputFilename)) {
+        process.exitCode = 1;
+    }
+}
+else if (options.scriptOnly) {
     const outputFilename = typeof options.scriptOnly === "string" ? options.scriptOnly : "story.js";
     await writeScriptFile(inputFilename, outputPath, outputFilename);
 }

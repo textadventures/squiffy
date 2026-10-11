@@ -128,3 +128,12 @@ You can optionally specify a custom filename:
 ```
 npx @textadventures/squiffy-cli mygame.squiffy --scriptonly myscript.js
 ```
+### Converting from Squiffy 5
+
+Squiffy 6 replaced the Squiffy 5 text processor syntax, such as `{if x:...}` and `{x}`, with [Handlebars](/dynamic-text/). When the CLI sees Squiffy 5 syntax in a story, it warns about it. Use `--convert-v5` to convert it to the Squiffy 6 equivalent:
+
+```
+npx @textadventures/squiffy-cli mygame.squiffy --convert-v5
+```
+
+This updates `mygame.squiffy`, keeping the original as `mygame.squiffy.bak`. Anything that can't be converted reliably is left as it is, and listed with its line number so you can update it by hand. Files included with `@import` aren't converted, so run the CLI on each of them too.

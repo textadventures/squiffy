@@ -5,7 +5,7 @@ import Split from "split.js";
 import "./jquery-globals";
 import "chosen-js/chosen.jquery.js";
 import { Modal, Tab, Tooltip } from "bootstrap";
-import { compile as squiffyCompile, CompileError } from "squiffy-compiler";
+import { compile as squiffyCompile, CompileError, convertV5Syntax, findV5Syntax } from "squiffy-compiler";
 import { saveFile, saveFileAs, setOnOpen, getRecentFiles, openRecentFile, clearCurrentFile, getCurrentFileHandle, getCurrentFileName, setCurrentFile, selectFile } from "./file-handler";
 import { get, set, del } from "idb-keyval";
 import * as editor from "./editor";
@@ -51,6 +51,7 @@ let squiffyApi: SquiffyApi | null;
 let welcomeModal: Modal | null = null;
 let unsavedChangesModal: Modal | null = null;
 let unsavedChangesCallback: ((confirm: boolean) => void) | null = null;
+let v5ConversionModal: Modal | null = null;
 let updateAvailable = false;
 
 function onClick(id: string, fn: () => void) {
@@ -305,7 +306,7 @@ const handleWelcomeResumeAutoSave = async function () {
     if (autoSave) {
         // Restore the file context (handle and name) if available
         setCurrentFile(autoSave.fileHandle || null, autoSave.fileName || null);
-        await editorLoad(autoSave.content);
+        await editorLoad(autoSave.content, false);
         // Show indicator since we're loading unsaved work
         showUnsavedIndicator();
         welcomeModal?.hide();
@@ -576,12 +577,50 @@ const processFile = function () {
     cursorMoved(true);
 };
 
-const editorLoad = async function (data: string) {
+const editorLoad = async function (data: string, offerConversion = true) {
     loading = true;
     editor.setValue(data);
     loading = false;
     processFile();
     await initialCompile();
+    if (offerConversion) {
+        offerV5Conversion();
+    }
+};
+
+const offerV5Conversion = function () {
+    if (findV5Syntax(editor.getValue()).length == 0) return;
+
+    // Wait for the welcome dialog to close, if a file was opened from there
+    const welcomeDialog = el<HTMLElement>("welcome-dialog");
+    if (welcomeDialog.classList.contains("show")) {
+        welcomeDialog.addEventListener("hidden.bs.modal", offerV5Conversion, { once: true });
+        return;
+    }
+
+    if (!v5ConversionModal) {
+        v5ConversionModal = new Modal("#v5-conversion-dialog");
+    }
+    v5ConversionModal.show();
+};
+
+const convertFromV5 = function () {
+    v5ConversionModal?.hide();
+
+    const result = convertV5Syntax(editor.getValue());
+    if (result.converted > 0) {
+        // This triggers editorChange, which clears the output pane and recompiles
+        editor.replaceAll(result.script);
+    }
+
+    const escape = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+    logToDebugger(`Converted ${result.converted} Squiffy 5 text processor command${result.converted == 1 ? "" : "s"}.`);
+    if (result.problems.length > 0) {
+        logToDebugger("These couldn't be converted automatically, so have been left as they are:");
+        for (const problem of result.problems) {
+            logToDebugger(`Line ${problem.line}: ${escape(problem.text)} - ${escape(problem.reason)}`);
+        }
+    }
 };
 
 const cursorMoved = function (force?: boolean) {
@@ -784,6 +823,8 @@ const init = async function () {
     onClick("help-github", () => openExternalLink("https://github.com/textadventures/squiffy"));
     onClick("help-discord", () => openExternalLink("https://textadventures.co.uk/community/discord"));
     onClick("help-about", showAbout);
+
+    onClick("v5-conversion-confirm", convertFromV5);
 
     onClick("unsaved-changes-confirm", () => {
         if (unsavedChangesCallback) {

@@ -155,7 +155,14 @@ All packages use ES modules (`import`/`export`) instead of CommonJS (`require`).
 
 Basic stories using sections, passages, links, and simple attributes should work without changes.
 
-If your story uses dynamic text features, you'll need to update to the new Handlebars syntax. The key differences:
+If your story uses dynamic text features, you'll need to update to the new Handlebars syntax. Squiffy can do most of this for you:
+
+- **Editor:** when you open a story that uses Squiffy 5 syntax in the editor at [app.squiffystory.com](https://app.squiffystory.com/), it offers to convert it. Review the changes afterwards, and use Undo if you want to go back.
+- **CLI:** run with `--convert-v5` to convert the file, keeping a backup of the original. See [Converting from Squiffy 5](/cli/#converting-from-squiffy-5).
+
+Anything that can't be converted reliably, such as an `{else:...}` that doesn't directly follow an `{if ...:...}`, is left as it is and listed with its line number. Squiffy 6 also shows a warning when it compiles a story that still contains Squiffy 5 syntax.
+
+The key differences:
 
 | v5 Syntax | v6 Syntax |
 |-----------|-----------|
@@ -163,14 +170,19 @@ If your story uses dynamic text features, you'll need to update to the new Handl
 | `{if gender=male:You are male.}` | `{{#if gender = "male"}}You are male.{{/if}}` |
 | `{if score>100:High score!}` | `{{#if score > 100}}High score!{{/if}}` |
 | `{if condition:text}{else:other text}` | `{{#if condition}}text{{else}}other text{{/if}}` |
-| `{@b+=1}` (in conditions) | `{{inc "b"}}` |
+| `{@b+=1}` | `{{inc "b"}}` |
+| `{@b=5}` | `{{set "b" 5}}` |
+| `{if seen intro:...}` | `{{#if (seen "intro")}}...{{/if}}` |
+| `{passage name}` (embedding) | `{{embed "passage name"}}` |
+| `{rotate size:small:large}` | `{{rotate (array "small" "large") set="size"}}` |
+| `{label:1=text}` | `{{#label "1"}}text{{/label}}` |
 
 To test your story:
 
 1. Open your story in the new editor at [app.squiffystory.com](https://app.squiffystory.com/)
 2. Use "Open" to load your `.squiffy` file
 3. Run it to verify everything works
-4. Update any dynamic text syntax as needed
+4. Convert or update any dynamic text syntax as needed
 5. Export using your preferred format
 
 If you encounter any issues, please [report them on GitHub](https://github.com/textadventures/squiffy/issues).
@@ -196,6 +208,7 @@ CLI options remain similar, with some additions:
 | `--scriptonly [filename]` | Only generate JavaScript file |
 | `--zip` | Create zip file |
 | `--inline` | **New:** Create single self-contained HTML file |
+| `--convert-v5` | **New:** Convert Squiffy 5 text processor syntax to Squiffy 6 |
 
 ---
 
