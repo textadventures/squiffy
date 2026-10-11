@@ -30,24 +30,13 @@ The easiest way to get started is with the [web editor](https://app.squiffystory
 
 ### Command-line usage
 
-You can also compile Squiffy stories from the command line:
-
-```bash
-npx @textadventures/squiffy-cli story.squiffy
-```
-
-This generates HTML, CSS and JS files. Add `-s` to start a local web server to preview your story:
+You can also compile and preview Squiffy stories from the command line:
 
 ```bash
 npx @textadventures/squiffy-cli story.squiffy -s
 ```
 
-Other CLI options:
-
-- `--port <number>` - port for the local server (default: 8282)
-- `--inline` - create a single self-contained HTML file
-- `--zip` - create a zip file
-- `--scriptonly [filename]` - only generate the JavaScript file
+See [Using Squiffy from the command line](https://squiffystory.com/cli/) for all the options.
 
 ## Features
 
