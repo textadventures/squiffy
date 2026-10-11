@@ -222,6 +222,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             },
             story: {
                 go: go,
+                seen: (sectionOrPassage: string) => state.getSeen(sectionOrPassage),
             },
             element: outputElementContainer,
             import: imports,
