@@ -1,4 +1,6 @@
-/* Application-specific layout and container styles */
+/* Page layout styles. See https://squiffystory.com/styling/ for how to customise these. */
+
+/* Wraps the header and the story: sets the page width and font */
 div#squiffy-container
 {
     max-width: 700px;
@@ -6,15 +8,21 @@ div#squiffy-container
     margin-right: auto;
     font-family: Georgia, serif;
 }
+
+/* The bar above the story containing the Restart button */
 div#squiffy-header
 {
     font-size: 14px;
     text-align: right;
 }
+
+/* The story text */
 div#squiffy
 {
     font-size: 18px;
 }
+
+/* Stop images overflowing the page */
 div#squiffy img
 {
     max-width: 100%;
