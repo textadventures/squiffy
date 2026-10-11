@@ -173,7 +173,7 @@ Example:
 | `{{embed}}` | `"name"` | Embed text from another section or passage | `{{embed "description"}}` |
 | `{{array}}` | `item1 item2 ...` | Create an array for use with other helpers | `{{array "red" "green" "blue"}}` |
 
-See [Attributes](/attributes/#embedding-text) for embed examples.
+See [Embed text](/basic-concepts/#embed-text) for an embed example.
 
 ## Array management helpers
 
@@ -288,14 +288,14 @@ Example:
 | Helper | Parameters | Description |
 |--------|------------|-------------|
 | `{{#label}}...{{/label}}` | `"name"` | Create a labeled span that can be replaced later |
-| `{{replace}}` | `"label" [text]` | Replace the content of a labeled span |
+| `{{#replace}}...{{/replace}}` | `"label"` | Replace the content of a labeled span |
 
 Example:
 ```
 I bought {{#label "item"}}milk{{/label}}.
 
 [change]:
-{{replace "item"}}bread{{/replace}}
+{{#replace "item"}}bread{{/replace}}
 ```
 
 ### Rotating and sequence links

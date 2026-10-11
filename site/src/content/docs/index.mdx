@@ -1,10 +1,11 @@
 ---
-title: Create Interactive Stories
-description: A simple way to write interactive fiction
+title: Squiffy
+description: Create interactive stories and multiple-choice games - free, open source, and no programming required
+template: splash
+editUrl: false
 head:
   - tag: title
     content: Squiffy - Create interactive stories
-template: splash
 sidebar:
     hidden: true
 prev: false
@@ -13,74 +14,135 @@ next:
     label: Getting Started
 hero:
   title: Create interactive stories
-  tagline: A simple, free tool for writing multiple-choice games and interactive fiction. No coding required.
+  tagline: A simple, free tool for writing multiple-choice games and interactive fiction. No programming required.
   image:
+    alt: Squiffy logo
     file: ../../assets/squiffy.png
   actions:
-    - text: Get Started
-      link: /getting-started/
-      icon: right-arrow
-    - text: Open the Editor
+    - text: Start creating
       link: https://app.squiffystory.com/
-      icon: external
+      icon: right-arrow
+      variant: primary
+    - text: Documentation
+      link: /getting-started/
+      icon: open-book
       variant: secondary
-      attrs:
-        target: _blank
+    - text: Play games
+      link: https://textadventures.co.uk/games/platform/squiffy
+      # Lucide's "play" glyph, inlined as in the Quest Viva docs: Starlight's built-in icon set
+      # has no play icon, but a hero action's `icon` is treated as raw HTML when it doesn't
+      # match a built-in name. Filled and sized to match the built-in icons next to it.
+      icon: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="width:1.5rem;height:1.5rem"><path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/></svg>'
+      variant: secondary
+    - text: View on GitHub
+      link: https://github.com/textadventures/squiffy
+      icon: external
+      variant: minimal
 ---
 
-import {Aside, Card, CardGrid} from '@astrojs/starlight/components';
+import { Aside, Card, CardGrid, LinkCard } from "@astrojs/starlight/components";
+import Sample from "@components/Sample.astro";
 
-## Why Squiffy?
+## Try it
+
+This is a complete Squiffy story. Play it on the right, or change the text on the left and watch it update.
+
+<Sample script="You wake up in a small boat, drifting on a calm sea. In the distance you can see an [island], and behind you, [[the open ocean]].
+
+[island]:
+A thin column of smoke rises from the trees. Someone is there. Perhaps you should [[row towards it]].
+
+[[row towards it]]:
+You row until your arms ache, and the boat scrapes onto a sandy beach.
+
+[[the open ocean]]:
+You drift for hours. The island grows smaller, and then it's gone."></Sample>
+
+Links in `[[double brackets]]` move the story on to a new section. Links in `[single brackets]` show a passage, a little more text within the same section. That's all you need to get started.
 
 <CardGrid>
-  <Card title="Easy to Learn" icon="pencil">
-    Write your story using simple text markup. Create links with `[[double brackets]]` for sections and `[single brackets]` for passages. No programming knowledge needed.
-  </Card>
-  <Card title="Publish Anywhere" icon="rocket">
-    Squiffy generates pure HTML, CSS and JavaScript. Upload to your own website, itch.io, textadventures.co.uk, or anywhere that hosts static files.
-  </Card>
-  <Card title="Works Offline" icon="laptop">
-    The editor runs entirely in your browser with no account required. Your work is automatically saved to your device.
-  </Card>
-  <Card title="Free and Open Source" icon="open-book">
-    Squiffy is completely free to use. The source code is available on GitHub under the MIT license.
-  </Card>
+	<Card title="Write in plain text" icon="pencil">
+		Write your story as ordinary text, and add links where the player makes a choice. There's no programming needed.
+
+		Format your text with Markdown, for **bold**, *italics*, lists and more, or use HTML when you need complete control. See [Basic concepts](/basic-concepts/).
+	</Card>
+	<Card title="Choices that matter" icon="setting">
+		Use [attributes](/attributes/) to remember what the player has done, then show different text depending on their choices, their score, or which parts of the story they've already seen.
+
+		Add variety with [random text, rotating links and text that updates itself](/dynamic-text/).
+	</Card>
+	<Card title="Bring your story to life" icon="star">
+		Make text appear with a typewriter effect, fade in, or slide in from below, or let the reader click to continue at their own pace. See [Animation](/dynamic-text/#animation).
+
+		Ask for the player's name, or any other input, with built-in [validation](/basic-concepts/#input-validation).
+	</Card>
+	<Card title="Write anywhere" icon="laptop">
+		[The editor](/editor/) runs in your web browser, with nothing to install and no account to create. Install it to your device and it works offline, too.
+
+		A downloadable desktop app is coming soon, in Squiffy 7.
+
+		Prefer your own text editor? Use the [command-line tool](/cli/) instead.
+	</Card>
+	<Card title="Plays on any device" icon="mobile-android">
+		Your finished story runs in the player's web browser, on phones, tablets and computers alike. There's nothing for them to download or install.
+
+		Players' progress is saved automatically, so they can close the page and come back later to carry on where they left off.
+	</Card>
+	<Card title="Share with the world" icon="rocket">
+		Squiffy creates plain HTML, CSS and JavaScript, so you can [publish your story](/getting-started/#publishing-your-game) to [textadventures.co.uk](https://textadventures.co.uk/), [itch.io](https://itch.io/), your own website, or anywhere else that hosts web pages.
+
+		You can even export it as a single HTML file, to share however you like.
+
+		See what other people are making in the [catalogue of Squiffy games](https://textadventures.co.uk/games/platform/squiffy).
+	</Card>
+	<Card title="Extend with JavaScript" icon="seti:javascript">
+		When you need more, add [JavaScript](/basic-concepts/#javascript) to any section or passage, create your own [helpers](/helpers-reference/#creating-custom-helpers) and animations, or [embed your story](/embedding/) in your own web page or app.
+	</Card>
+	<Card title="It's free - and so are you" icon="heart">
+		Squiffy is free and open source, licensed under the [MIT License](https://github.com/textadventures/squiffy/blob/main/LICENSE).
+
+		The stories you make are yours, to share or to sell. You don't need to ask for permission - you already have it.
+	</Card>
 </CardGrid>
 
-## Features
+## Find your way around
+
+New to Squiffy? Start with **[Getting Started](/getting-started/)**. Coming from Squiffy 5? Start with **[What's New in Squiffy v6](/whats-new/)**.
 
 <CardGrid>
-  <Card title="Sections and Passages" icon="document">
-    Structure your story with **sections** that advance the narrative and **passages** that let players explore without moving forward.
-  </Card>
-  <Card title="Variables and State" icon="setting">
-    Track player choices with attributes. Use conditionals to show different text based on what the player has done.
-  </Card>
-  <Card title="Animations" icon="star">
-    Bring your story to life with fade, slide, and other animation effects when new text appears.
-  </Card>
-  <Card title="Dynamic Text" icon="random">
-    Use random text, rotating sequences, and text replacement to add variety and replayability to your stories.
-  </Card>
-  <Card title="Player Input" icon="comment-alt">
-    Capture text input from players with built-in validation. Ask for names, numbers, or any custom data.
-  </Card>
-  <Card title="JavaScript Integration" icon="seti:javascript">
-    Extend your story with custom JavaScript for advanced game mechanics, calculations, or integrations.
-  </Card>
-  <Card title="Markdown Support" icon="seti:markdown">
-    Format your text with Markdown. Add **bold**, *italics*, lists, links, and more. You can also use HTML for complete control.
-  </Card>
-  <Card title="Auto-Save" icon="approve-check-circle">
-    Player progress is automatically saved to their browser. They can close the tab and return later to continue where they left off.
-  </Card>
+	<LinkCard
+		title="Getting Started"
+		href="/getting-started/"
+		description="What Squiffy is, a first example, and how to publish your story." />
+	<LinkCard
+		title="Using the editor"
+		href="/editor/"
+		description="A tour of the editor: saving, writing tools, testing and exporting." />
+	<LinkCard
+		title="Basic concepts"
+		href="/basic-concepts/"
+		description="Sections, passages, links, and everything else you need to write a story." />
+	<LinkCard
+		title="Attributes"
+		href="/attributes/"
+		description="Remember the player's choices, and show different text depending on them." />
+	<LinkCard
+		title="Dynamic text"
+		href="/dynamic-text/"
+		description="Conditions, random text, animation, rotating links and live updates." />
+	<LinkCard
+		title="Examples"
+		href="/featured-examples/"
+		description="Complete stories to play, and to learn from." />
+	<LinkCard
+		title="Helpers reference"
+		href="/helpers-reference/"
+		description="Every helper, described in one place, and how to write your own." />
+	<LinkCard
+		title="Command line and embedding"
+		href="/cli/"
+		description="Build stories from the command line, or embed them in your own web page or app." />
 </CardGrid>
-
-## Get Started
-
-Ready to create your first interactive story? Head over to the [Getting Started](/getting-started/) guide to learn the basics, or jump straight into the [editor](https://app.squiffystory.com/) and start writing.
-
----
 
 <Aside type="tip" title="Who made this?">
     My name is <a href="https://github.com/alexwarren">Alex Warren</a> (not the singer, I had the name first).

@@ -1,0 +1,60 @@
+---
+title: Using the editor
+description: A tour of the Squiffy editor at app.squiffystory.com
+sidebar:
+    order: 2
+---
+
+The Squiffy editor at [app.squiffystory.com](https://app.squiffystory.com/) runs entirely in your browser, with no account needed. Your story's script is on the left, and a playable version of it is on the right.
+
+## Starting out
+
+When you open the editor, the welcome screen lets you create a new game or open a `.squiffy` file from your computer. It also lists files you've opened recently, and lets you resume any unsaved work.
+
+You can get back to the welcome screen at any time from **File > Welcome Screen...**.
+
+## Installing the editor
+
+The editor is a Progressive Web App (PWA). In browsers that support it, such as Chrome and Edge, you can install it from the address bar, and it then opens in its own window like any other app. Once it's been loaded, the editor works offline.
+
+When a new version of Squiffy is available, the welcome screen shows an **Update now** button.
+
+## Saving your work
+
+The editor saves your work in your browser's storage as you type. If you close the tab or your browser crashes, you can pick up where you left off from the welcome screen.
+
+To save your story as a `.squiffy` file, use **File > Save** or **File > Save as...**, or press Ctrl+S (Cmd+S on Mac). An "Unsaved changes" badge in the toolbar shows when there are changes you haven't saved to the file yet.
+
+For the best experience, use **Chrome** or **Edge**. These browsers support the File System Access API, which lets the editor save straight back to the file you opened. In other browsers, saving downloads a copy of the file instead.
+
+## Writing your story
+
+The two dropdowns above the script list your story's sections, and the passages in the current section. Choose one to jump straight to it.
+
+The toolbar has some shortcuts for writing:
+
+- **Add** inserts a new section or passage. If you select some text first, such as "open the door", that text becomes a link to a new section or passage with the same name.
+- **Snippets** inserts commonly-used patterns, such as `{{#if}}` blocks and links. You can also define your own. See [Snippets](/snippets/).
+- The collapse and expand buttons fold every section and passage in the script, so you can see the outline of your story.
+
+The **Edit** menu has the usual undo, redo, cut, copy and paste commands, plus Find and Replace.
+
+## Testing your story
+
+The right-hand side of the editor plays your story. It updates as you type, so you can see changes straight away without restarting.
+
+- **Back** steps backwards through your story, one section or passage at a time. Use it to try a different choice without playing through from the start.
+- **Restart** starts your story again from the beginning.
+- **Preview** opens your story in a new tab, so you can play it as players will see it.
+
+Below the story, a log shows the Squiffy version, any errors or warnings from your script, and each attribute as it changes. This is useful for checking that your `@set` directives and `{{set}}` helpers are doing what you expect.
+
+On a phone, the editor shows either the script or the story, with a button to switch between them.
+
+## Exporting your story
+
+When your story is ready, use the **File** menu to export it. See [Publishing your game](/getting-started/#publishing-your-game) for the options.
+
+## Opening Squiffy 5 stories
+
+If you open a story that uses the Squiffy 5 text processor syntax, such as `{if x:...}`, the editor offers to convert it to Squiffy 6. Review the changes afterwards, and use Undo if you want to go back. See [Upgrading from v5](/whats-new/#upgrading-from-v5).
