@@ -4,6 +4,9 @@ sidebar:
     order: 17
 ---
 
+import { Code } from "@astrojs/starlight/components";
+import { version } from "../../../package.json";
+
 If you want more control over how your Squiffy story is presented, you can embed it in your own HTML page. This allows you to customize the layout, add your own styling, or integrate the story into an existing website.
 
 ## Basic setup
@@ -18,7 +21,10 @@ This creates `story.js` containing your compiled story.
 
 You'll also need the Squiffy runtime and its stylesheet. You can either:
 - Run a full export first and keep `squiffy.runtime.global.js` and `style.css`
-- Or load them from a CDN such as jsDelivr, which serves the [`squiffy-runtime`](https://www.npmjs.com/package/squiffy-runtime) npm package. Use the version number of the Squiffy you compiled your story with, for example `https://cdn.jsdelivr.net/npm/squiffy-runtime@6.0.0-beta.4/dist/squiffy.runtime.global.js` and `https://cdn.jsdelivr.net/npm/squiffy-runtime@6.0.0-beta.4/dist/squiffy.runtime.css`
+- Or load them from a CDN such as jsDelivr, which serves the [`squiffy-runtime`](https://www.npmjs.com/package/squiffy-runtime) npm package. Use the same version of Squiffy that you compiled your story with. For the current version ({version}), that's:
+
+<Code lang="html" code={`<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/squiffy-runtime@${version}/dist/squiffy.runtime.css">
+<script src="https://cdn.jsdelivr.net/npm/squiffy-runtime@${version}/dist/squiffy.runtime.global.js"></script>`} />
 
 Here's a minimal HTML page that runs a Squiffy story:
 

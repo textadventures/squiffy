@@ -1,7 +1,7 @@
 ---
 title: Basic concepts
 sidebar:
-    order: 2
+    order: 3
 ---
 
 import Sample from "@components/Sample.astro";
@@ -185,6 +185,21 @@ Any section or passage can call some JavaScript when it is displayed. Simply ind
 
     Text for the passage."></Sample>
 
+Your JavaScript can use these functions:
+
+| Function | Description |
+|----------|-------------|
+| `squiffy.get("name")` | Get the value of an [attribute](/attributes/#using-attributes-in-javascript) |
+| `squiffy.set("name", value)` | Set the value of an attribute |
+| `squiffy.story.go("section")` | Go to a section |
+| `squiffy.story.seen("name")` | Returns `true` if the player has seen a section or passage |
+| `squiffy.ui.write("text")` | Write some text, which can include Markdown and `{{...}}` |
+| `squiffy.ui.transition(fn)` | Run a transition effect, such as fading the screen to black. `fn` returns a Promise that resolves when the effect has finished, and links can't be clicked until then. See the [transitions example](https://github.com/textadventures/squiffy/tree/main/examples/transitions) |
+| `squiffy.ui.scrollToEnd()` | Scroll to the end of the story |
+| `squiffy.element` | The HTML element that contains the story |
+
+`get` and `set` are also available on their own, so `get("score")` is the same as `squiffy.get("score")`.
+
 ## Turn counting
 
 You can trigger a passage after the player has made a certain number of clicks within a section. For example, you can display some extra text, to indicate the passage of time. Or, the passage might run some JavaScript to automatically move the player to another section.
@@ -282,30 +297,7 @@ Here is some text from the next section: {{embed &quot;section2&quot;}}
 
 ## Track which sections and passages have been seen
 
-You can tell if the player has seen a passage or section using JavaScript:
-
-```
-    if (squiffy.story.seen("passage3")) alert ("You have seen passage3!");
-```
-
-You can also conditionally display text. Here we're using `{{#if}}` with the
-`seen` helper to check if the passage "open" has been seen.
-Try clicking the "cupboard" link first, to see the description of the closed
-cupboard. Then, Restart the game, and now click "open" first, then "cupboard",
-to see the difference.
-
-<Sample script="You can see a [cupboard]. Maybe you should [open] it?
-
-    [open]:
-    You open the cupboard.
-
-    [cupboard]:
-    The cupboard is
-    {{#if (seen &quot;open&quot;)}}
-    &#32;&#32;&#32;&#32;open, and there are empty bottles inside.
-    {{else}}
-    &#32;&#32;&#32;&#32;closed.
-    {{/if}}"></Sample>
+You can show different text depending on whether the player has seen a particular section or passage. See [Tracking sections and passages](/attributes/#tracking-sections-and-passages).
 
 ## Set the start section
 

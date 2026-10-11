@@ -1,7 +1,7 @@
 ---
 title: Attributes
 sidebar:
-    order: 3
+    order: 4
 ---
 
 import Sample from "@components/Sample.astro";
@@ -109,6 +109,23 @@ What will you do? [[Buy apple]](shop, coins-=3) or [[Sell gem]](shop, coins+=5)?
 
 [[shop]]:
 You now have {{coins}} coins."></Sample>
+
+### More ways to set values
+
+These work both with `@set` and in links:
+
+| Syntax | Meaning | Example |
+|--------|---------|---------|
+| `a += n`, `a -= n` | Add or subtract a number | `@set coins += 5` |
+| `a *= n`, `a /= n` | Multiply or divide by a number | `@set score *= 2` |
+| `a = @b` | Copy the value of another attribute | `@set best_score = @score` |
+| `a := text` | Set to some text, after processing any `{{...}}` in it | `@set greeting := Hello, {{name}}!` |
+
+For example, this link copies the current score into `final_score` and doubles the bonus:
+
+```
+[[Finish]](ending, final_score=@score, bonus*=2)
+```
 
 ### Conditional attribute changes
 
@@ -278,7 +295,7 @@ Each of these operators has an equivalent helper (`eq`, `ne`, `gt`, `gte`, `lt`,
 
 ### The `{{seen}}` helper
 
-You can check if the player has visited a section or passage using the `{{seen}}` helper:
+You can check if the player has visited a section or passage using the `{{seen}}` helper. In this example, try clicking "cupboard" first to see the description of the closed cupboard. Then restart, and click "open" before "cupboard" to see the difference.
 
 <Sample script="You can see a [cupboard]. Maybe you should [open] it?
 
@@ -322,23 +339,6 @@ This is section 2.
 {{#if (at (array &quot;section1&quot; &quot;section2&quot;))}}
 You are in section 1 or section 2.
 {{/if}}"></Sample>
-
-## Embedding text
-
-You can embed text from another section, or from a passage in the current section, using `{{embed "section or passage name"}}`.
-
-This is useful for reusing descriptions or text that appears in multiple places:
-
-<Sample script="[[section1]]:
-Here is some text from the next section: {{embed &quot;section2&quot;}}
-
-Here is some text from a passage in this section: {{embed &quot;passage&quot;}}
-
-[passage]:
-Text from passage.
-
-[[section2]]:
-Text from next section."></Sample>
 
 ## Creating links with helpers
 

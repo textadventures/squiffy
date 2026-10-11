@@ -1,7 +1,7 @@
 ---
 title: Dynamic text
 sidebar:
-    order: 2
+    order: 5
 ---
 
 import Sample from "@components/Sample.astro"
@@ -60,6 +60,29 @@ To store the result in an [attribute](/attributes/), use the `set` option.
 "></Sample>
 
 Squiffy includes [Anime.js](https://animejs.com/), and you can define your own custom animations by setting them up in a `@ui` section. See the [example on GitHub](https://github.com/textadventures/squiffy/tree/main/examples/animate).
+
+### Animation options
+
+You can change how an animation runs by adding options after its name:
+
+| Option | Applies to | Description |
+|--------|------------|-------------|
+| `interval=n` | `typewriter`, `toast` | Milliseconds between each character (`typewriter`, default 100) or word (`toast`, default 200) appearing |
+| `fadeDuration=n` | `typewriter`, `toast` | Milliseconds for each character or word to fade in (default 100) |
+| `duration=n` | `fadeIn` | Milliseconds for the fade (default 500) |
+| `start=n` | `typewriter`, `toast`, `fadeIn` | Milliseconds to wait before starting |
+| `loop=true` | all except `continue` | Repeat the animation forever |
+| `trigger="link"` | all except `continue` | Wait until a link inside the animated text is clicked, instead of running straight away |
+
+<Sample alwaysShowRestart={true} script="{{#animate &quot;typewriter&quot; interval=30}}This text types out quickly.{{/animate}}
+
+    {{#animate &quot;typewriter&quot; interval=300 start=1500}}This text waits, then types slowly.{{/animate}}
+
+    Click {{#animate &quot;fadeIn&quot; trigger=&quot;link&quot; loop=true}}[this link]{{/animate}} to make it pulse.
+
+    [this link]:
+    Clicked!
+"></Sample>
 
 ### Click to continue
 
