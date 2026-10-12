@@ -1,0 +1,58 @@
+# Redirects from the retired Squiffy 5 docs site (docs.textadventures.co.uk/squiffy/).
+#
+# _redirects only matches paths on this Pages project's own hostname, so the
+# old site is redirected here by a Cloudflare Redirect Rule on the
+# textadventures.co.uk zone. That rule strips the /squiffy prefix and the .html
+# suffix, so /squiffy/continue.html arrives here as /continue, and the rules
+# below send it on to the page that now covers the topic.
+#
+# The Spanish pages (*_es) go to the same place as their English twins, since
+# the new docs are English only. Old pages whose name is still a page here
+# (/attributes, /cli, and /index, which Pages serves as the home page) need no
+# rule - a rule would shadow the real page.
+#
+# Cloudflare Pages silently ignores everything past the first 100 rules in this
+# file. scripts/check-redirects.ts (run by `npm run build`) enforces that limit,
+# and checks every path in scripts/legacy-docs-paths.txt resolves to a page.
+
+/index_es                /                                                          301
+/attributes_es           /attributes/                                               301
+/clear                   /basic-concepts/#clear-the-screen                          301
+/clear_es                /basic-concepts/#clear-the-screen                          301
+/cli_es                  /cli/                                                      301
+/install                 /cli/                                                      301
+/install_es              /cli/                                                      301
+/usage                   /cli/                                                      301
+/usage_es                /cli/                                                      301
+/continue                /basic-concepts/#continue-links                            301
+/continue_es             /basic-concepts/#continue-links                            301
+/customise               /styling/                                                  301
+/customise_es            /styling/                                                  301
+/embed                   /basic-concepts/#embed-text                                301
+/embed_es                /basic-concepts/#embed-text                                301
+/import                  /basic-concepts/#importing-files                           301
+/import_es               /basic-concepts/#importing-files                           301
+/javascript              /basic-concepts/#javascript                                301
+/javascript_es           /basic-concepts/#javascript                                301
+/master                  /basic-concepts/#master-sections-and-passages              301
+/master_es               /basic-concepts/#master-sections-and-passages              301
+/replace                 /dynamic-text/#replace                                     301
+/replace_es              /dynamic-text/#replace                                     301
+/roadmap                 /whats-new/                                                301
+/roadmap_es              /whats-new/                                                301
+/rotate-sequence         /dynamic-text/#rotate                                      301
+/rotate-sequence_es      /dynamic-text/#rotate                                      301
+/sections-passages       /basic-concepts/#sections                                  301
+/sections-passages_es    /basic-concepts/#sections                                  301
+/seen                    /basic-concepts/#track-which-sections-and-passages-have-been-seen 301
+/seen_es                 /basic-concepts/#track-which-sections-and-passages-have-been-seen 301
+/start                   /basic-concepts/#set-the-start-section                     301
+/start_es                /basic-concepts/#set-the-start-section                     301
+/title                   /basic-concepts/#set-the-title                             301
+/title_es                /basic-concepts/#set-the-title                             301
+/turncount               /basic-concepts/#turn-counting                             301
+/turncount_es            /basic-concepts/#turn-counting                             301
+
+# The old in-browser ScratchPad is now the editor.
+/scratchpad              https://app.squiffystory.com/                              301
+/scratchpad/*            https://app.squiffystory.com/                              301

@@ -1,0 +1,49 @@
+# Every page of the Squiffy 5 docs site (docs.textadventures.co.uk/squiffy/),
+# as built from the gh-pages branch, with /squiffy and .html removed - the form
+# the Cloudflare Redirect Rule delivers them to this site in. Includes the
+# install/usage pages that jekyll-redirect-from forwarded to cli. Checked by
+# check-redirects.ts.
+/
+/index
+/index_es
+/attributes
+/attributes_es
+/clear
+/clear_es
+/cli
+/cli_es
+/install
+/install_es
+/usage
+/usage_es
+/continue
+/continue_es
+/customise
+/customise_es
+/embed
+/embed_es
+/import
+/import_es
+/javascript
+/javascript_es
+/master
+/master_es
+/replace
+/replace_es
+/roadmap
+/roadmap_es
+/rotate-sequence
+/rotate-sequence_es
+/sections-passages
+/sections-passages_es
+/seen
+/seen_es
+/start
+/start_es
+/title
+/title_es
+/turncount
+/turncount_es
+/scratchpad/
+/scratchpad/index
+/scratchpad/index_es
