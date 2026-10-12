@@ -76,6 +76,8 @@ release-please pushes using the `RELEASE_PAT` repo secret (a PAT with Contents a
 
 **Deployments:** both sites are Cloudflare Pages projects connected to this repo, which build a preview deployment for every PR and push (their checks are required on `main`). squiffystory.com (`squiffy-site`) deploys to production on every push to `main`, so docs changes go out without waiting for a release. app.squiffystory.com (`squiffy-app`) has automatic production deployments turned off in the Cloudflare dashboard: only `deploy-app.yml` deploys it, by uploading a release tag's build with Wrangler (using the `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets). To redeploy or roll back, run `gh workflow run deploy-app.yml --ref vX.Y.Z`.
 
+**Old docs redirects:** the Squiffy 5 docs at docs.textadventures.co.uk/squiffy/ are to be redirected, from the 6.0.0 launch, by a Cloudflare Redirect Rule on the textadventures.co.uk zone, which strips `/squiffy` and `.html` and sends the request to squiffystory.com. `site/public/_redirects` then maps each old page to its new home. `site/scripts/check-redirects.ts` runs as part of the site build and fails if an old page (listed in `site/scripts/legacy-docs-paths.txt`) doesn't resolve, a target `#anchor` is missing (e.g. after a heading rename), or the file goes over Cloudflare Pages' 100-rule limit.
+
 `npm run publish:manual` still works as a manual fallback (it publishes whatever versions are in the package.json files and aren't on npm yet). Don't name a root script `publish`: npm treats that as a lifecycle hook, so `lerna publish` would run it again after publishing and fail.
 
 ## CLI Usage
