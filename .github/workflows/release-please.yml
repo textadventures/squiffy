@@ -3,7 +3,7 @@ name: release-please
 # Maintains an up-to-date "release PR" that bumps every package's version and
 # CHANGELOG.md from Conventional Commits-formatted PR titles merged to main.
 # Merging that release PR is the release: this job tags it directly (e.g.
-# v6.0.0-beta.3), which in turn triggers npm-publish.yml.
+# v6.0.1), which in turn triggers npm-publish.yml and deploy-app.yml.
 on:
   push:
     branches: [main]
@@ -28,18 +28,13 @@ jobs:
         with:
           sparse-checkout: .github/scripts
 
-      # release-please-config.json sets prerelease: true so the "prerelease"
-      # versioning strategy keeps bumping the trailing beta.N instead of
-      # graduating out of it (that config key drives both the version-bump
-      # logic and the GitHub Release's prerelease flag). GitHub never lets a
-      # prerelease hold "Latest", so this step un-flags the release itself
-      # when it should be Latest.
-      #
-      # Until 6.0.0 ships there's no stable 6.x release, so betas are made
-      # Latest too, matching npm-publish.yml's use of the `latest` dist-tag.
-      # Once 6.0.0 is out, drop the prerelease branch (as in
-      # textadventures/quest) so Latest only ever points at a stable release.
-      - name: Make the release Latest
+      # release-please creates every release as a normal (non-prerelease)
+      # GitHub Release, since release-please-config.json no longer sets
+      # prerelease: true. A prerelease cut with a `Release-As: X.Y.Z-beta.N`
+      # footer is flagged as one here, which stops it holding "Latest" (and
+      # matches npm-publish.yml's `beta` dist-tag), so Latest only ever points
+      # at a stable release.
+      - name: Mark the release stable or prerelease
         if: ${{ steps.release.outputs.release_created }}
         env:
           GH_TOKEN: ${{ secrets.RELEASE_PAT }}
@@ -48,6 +43,5 @@ jobs:
           if [ "$(.github/scripts/release-channel.sh "$TAG")" == "stable" ]; then
             gh release edit "$TAG" --prerelease=false --latest --repo ${{ github.repository }}
           else
-            # TODO: leave prereleases alone once 6.0.0 has shipped (see above).
-            gh release edit "$TAG" --prerelease=false --latest --repo ${{ github.repository }}
+            gh release edit "$TAG" --prerelease=true --repo ${{ github.repository }}
           fi
