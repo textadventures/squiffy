@@ -48,6 +48,10 @@ export default defineConfig({
                 globPatterns: ["**/*.{js,css,html,svg,png,ico,woff,woff2,ttf,otf}"],
                 cleanupOutdatedCaches: true,
                 clientsClaim: true,
+                // Bootstrap Icons requests its fonts with a bare hash query
+                // (e.g. bootstrap-icons.woff2?e34853...), so ignore it when
+                // matching the precache, or the icons are missing offline
+                ignoreURLParametersMatching: [/^utm_/, /^fbclid$/, /^[0-9a-f]{32}$/],
             },
 
             devOptions: {
