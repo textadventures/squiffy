@@ -533,3 +533,24 @@ Other section.
     expect(text).toContain('{{passage "a" text="Read \\"{{name}}\\""}}');
     expect(warnings).toEqual([]);
 });
+
+test("Warning: @import and @ui files are ignored without externalFiles", async () => {
+    const script = `@import my_script.js
+@ui ui.js
+
+Some content
+`;
+
+    const warnings: string[] = [];
+    const result = await compile({
+        scriptBaseFilename: "test.squiffy",
+        script: script,
+        onWarning: (message) => warnings.push(message),
+    });
+
+    expect(result.success).toBe(true);
+    expect(warnings).toEqual([
+        "WARNING: test.squiffy line 1: \"@import my_script.js\" was ignored, as other files can't be loaded here",
+        "WARNING: test.squiffy line 2: \"@ui ui.js\" was ignored, as other files can't be loaded here",
+    ]);
+});

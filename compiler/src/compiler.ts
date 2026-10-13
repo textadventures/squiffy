@@ -269,9 +269,14 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
             else if (stripLine == "@ui") {
                 inUiBlock = true;
             }
-            else if (match.ui && settings.externalFiles) {
-                const content = await settings.externalFiles.getContent(match.ui[1]);
-                story.addUiJs(content);
+            else if (match.ui) {
+                if (settings.externalFiles) {
+                    const content = await settings.externalFiles.getContent(match.ui[1]);
+                    story.addUiJs(content);
+                }
+                else {
+                    warnExternalFilesUnavailable(stripLine, inputFilename, lineCount);
+                }
             }
             else if (stripLine == "@clear") {
                 if (!passage) {
@@ -287,6 +292,9 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
             }
             else if (match.start) {
                 story.start = match.start[1];
+            }
+            else if (match.import && !settings.externalFiles) {
+                warnExternalFilesUnavailable(stripLine, inputFilename, lineCount);
             }
             else if (match.import && settings.externalFiles) {
                 const importFilenames = await settings.externalFiles.getMatchingFilenames(match.import[1]);
@@ -353,6 +361,10 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         }
         
         return true;
+    }
+
+    function warnExternalFilesUnavailable(line: string, inputFilename: string | undefined, lineCount: number) {
+        settings.onWarning?.(`WARNING: ${inputFilename} line ${lineCount}: "${line}" was ignored, as other files can't be loaded here`);
     }
 
     function warnAboutV5Syntax(inputText: string, inputFilename: string | undefined) {
