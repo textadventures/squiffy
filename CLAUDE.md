@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Squiffy is a tool for creating multiple-choice interactive stories. This is a Lerna-managed monorepo currently under reconstruction (v6, alpha). The production version is on the `v5` branch.
+Squiffy is a tool for creating multiple-choice interactive stories. This is a Lerna-managed monorepo for Squiffy 6, a complete rewrite of Squiffy 5 (which lives on the `v5` branch).
 
 ## Initial Setup
 
@@ -66,11 +66,11 @@ Releases are managed by [release-please](https://github.com/googleapis/release-p
 
 1. PRs must have a [Conventional Commits](https://www.conventionalcommits.org/)-prefixed title (`fix:`, `feat:`, `chore:`, etc.), enforced by `pr-title-lint.yml`. PRs are squash-merged, so the PR title becomes the commit message on `main` that release-please parses. `fix:` and `feat:` appear in the changelog; `chore:`, `test:`, `docs:` etc. don't, and don't trigger a release on their own. Dependabot PRs use the `chore` prefix.
 2. Every push to `main` updates a standing "release PR" that bumps the version and `CHANGELOG.md` from the commits merged since the last release. The version lives in the root `package.json` and is copied into `lerna.json`, every workspace's `package.json`, the internal `squiffy-*` dependency ranges, and the matching `package-lock.json` entries (the `extra-files` list in `release-please-config.json`; a new workspace or internal dependency must be added there).
-3. Merging that release PR *is* the release: release-please tags it (e.g. `v6.0.0-beta.3`) and creates the GitHub Release, and the tag triggers `npm-publish.yml`, which runs `lerna publish from-package` to publish the non-private packages, and `deploy-app.yml`, which deploys the editor to app.squiffystory.com.
+3. Merging that release PR *is* the release: release-please tags it (e.g. `v6.0.1`) and creates the GitHub Release, and the tag triggers `npm-publish.yml`, which runs `lerna publish from-package` to publish the non-private packages, and `deploy-app.yml`, which deploys the editor to app.squiffystory.com.
 
-The `prerelease` versioning strategy means every release just increments the trailing `beta.N`, whatever the commit types. To cut a specific version (e.g. `6.0.0`), merge a commit with a `Release-As: 6.0.0` footer (exact wording). The squash merge message has to be edited by hand to include it. Changing `prerelease-type` in the config alone doesn't affect the next release while a numbered prerelease sequence is under way; it needs the same one-off `Release-As` commit.
+Versions follow semver from the commit types: `fix:` bumps the patch version and `feat:` the minor. To cut a specific version (e.g. `7.0.0`, or a prerelease such as `6.1.0-beta.1`), merge a commit with a `Release-As: 7.0.0` footer (exact wording). The squash merge message has to be edited by hand to include it. Give each prerelease its own `Release-As`.
 
-`.github/scripts/release-channel.sh` says whether a tag is `stable` or a `prerelease`. A stable release is un-flagged as a prerelease on GitHub and marked Latest, and goes to the `latest` dist-tag on npm. Until 6.0.0 ships, prereleases get the same treatment on both, since there is no stable 6.x yet (see the comments in `release-please.yml` and `npm-publish.yml`).
+`.github/scripts/release-channel.sh` says whether a tag is `stable` or a `prerelease` (anything with a `-`, e.g. `-beta.1`). A stable release is marked Latest on GitHub, goes to the `latest` dist-tag on npm and deploys to app.squiffystory.com. A prerelease is flagged as a prerelease on GitHub, goes to the `beta` dist-tag on npm and deploys to the `beta` preview branch of `squiffy-app` (beta.squiffy-app.pages.dev), so stable users never get it.
 
 release-please pushes using the `RELEASE_PAT` repo secret (a PAT with Contents and Pull requests read/write), since tags pushed with `GITHUB_TOKEN` don't trigger other workflows. `npm-publish.yml` needs no secret: it uses npm trusted publishing, which each package must have configured on npmjs.com (trusting `textadventures/squiffy` and `npm-publish.yml`). Lerna then adds provenance, which needs every published package.json to have a `repository.url` pointing at this repo.
 

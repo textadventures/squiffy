@@ -4,9 +4,6 @@
   "packages": {
     ".": {
       "release-type": "node",
-      "versioning": "prerelease",
-      "prerelease-type": "beta",
-      "prerelease": true,
       "extra-files": [
         {
           "type": "json",
