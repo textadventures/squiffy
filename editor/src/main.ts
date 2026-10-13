@@ -934,18 +934,26 @@ const initialCompile = async function () {
     newOutput.id = "output";
     outputContainer.appendChild(newOutput);
 
-    squiffyApi = await runtimeInit({
-        element: newOutput,
-        scroll: "element",
-        persist: false,
-        onSet: onSet,
-        story: story,
-    });
+    // The story's own JavaScript runs here, so an error in it mustn't escape:
+    // callers such as the welcome dialog would never get to close themselves.
+    try {
+        squiffyApi = await runtimeInit({
+            element: newOutput,
+            scroll: "element",
+            persist: false,
+            onSet: onSet,
+            story: story,
+        });
 
-    setBackButtonEnabled(false);
-    squiffyApi.on("canGoBackChanged", onCanGoBackChanged);
+        setBackButtonEnabled(false);
+        squiffyApi.on("canGoBackChanged", onCanGoBackChanged);
 
-    await squiffyApi.begin();
+        await squiffyApi.begin();
+    } catch (e) {
+        console.error(e);
+        const message = e instanceof Error ? e.message : String(e);
+        logToDebugger(`ERROR: ${message.replace(/&/g, "&amp;").replace(/</g, "&lt;")}`);
+    }
 };
 
 const showErrors = function (result: CompileError) {

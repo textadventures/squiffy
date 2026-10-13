@@ -962,6 +962,7 @@ story.js = [
 
 exports[`warnings/warnings.squiffy 1`] = `
 [
+  "WARNING: warnings.squiffy line 23: "@import warnings2.squiffy" was ignored, as other files can't be loaded here",
   "WARNING: warnings.squiffy line 1: In section '_default' there is a link to a section called [[badsection2]], which doesn't exist",
   "WARNING: warnings.squiffy line 1: In section '_default' there is a link to a section called [[badsection]], which doesn't exist",
   "WARNING: warnings.squiffy line 9: In section 'section' there is a link to a passage called [badpassage2], which doesn't exist",
