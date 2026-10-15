@@ -14,6 +14,6 @@
   "devDependencies": {
     "@textadventures/vite-plugin-squiffy": "^6.0.0",
     "typescript": "^6.0.3",
-    "vite": "^8.2.2"
+    "vite": "^8.3.4"
   }
 }
