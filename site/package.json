@@ -15,17 +15,17 @@
   "dependencies": {
     "@astrojs/check": "^0.9.10",
     "@astrojs/mdx": "^8.0.3",
-    "@astrojs/starlight": "^0.42.0",
+    "@astrojs/starlight": "^0.42.6",
     "@textadventures/squiffy-cli": "^6.0.0",
     "@textadventures/squiffy-packager": "^6.0.0",
-    "astro": "^7.2.9",
+    "astro": "^7.3.8",
     "bootstrap": "^5.3.7",
     "codemirror": "^6.0.2",
     "debounce": "^3.0.0",
-    "sass": "^1.104.0",
+    "sass": "^1.105.1",
     "squiffy-compiler": "^6.0.0",
     "squiffy-runtime": "^6.0.0",
-    "tsx": "^4.23.13",
+    "tsx": "^4.23.15",
     "typescript": "^6.0.3"
   }
 }
