@@ -23,9 +23,15 @@ jobs:
           (steps.metadata.outputs.dependency-type == 'indirect' ||
            steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
            steps.metadata.outputs.update-type == 'version-update:semver-minor')
+        # The merge uses RELEASE_PAT rather than GITHUB_TOKEN: a push made
+        # with GITHUB_TOKEN doesn't trigger other workflows, so release-please
+        # wouldn't run and the release PR would go stale and conflict. Runs
+        # triggered by Dependabot only see Dependabot secrets, so RELEASE_PAT
+        # must be added there as well as to the repo's Actions secrets.
         run: |
-          gh pr review --approve "$PR_URL"
+          GH_TOKEN="$APPROVE_TOKEN" gh pr review --approve "$PR_URL"
           gh pr merge --auto --squash "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APPROVE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.RELEASE_PAT }}
