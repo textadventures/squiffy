@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.1.0](https://github.com/textadventures/squiffy/compare/v6.0.1...v6.1.0) (2026-10-26)
+
+
+### Features
+
+* link squiffystory.com to the rest of textadventures.co.uk ([#323](https://github.com/textadventures/squiffy/issues/323)) ([991949c](https://github.com/textadventures/squiffy/commit/991949cf9b32bfb246a7fd5e45769b37e339dc28))
+
 ## [6.0.1](https://github.com/textadventures/squiffy/compare/v6.0.0...v6.0.1) (2026-10-18)
 
 
