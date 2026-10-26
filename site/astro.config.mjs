@@ -19,6 +19,10 @@ export default defineConfig({
             customCss: [
                 "./src/styles/custom.css",
             ],
+            components: {
+                Header: "./src/components/Header.astro",
+                PageFrame: "./src/components/PageFrame.astro",
+            },
             social: [
                 { icon: "github", label: "GitHub", href: "https://github.com/textadventures/squiffy" },
                 { icon: "discord", label: "Discord", href: "https://textadventures.co.uk/community/discord" }
