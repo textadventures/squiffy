@@ -46,6 +46,6 @@
   "dependencies": {
     "animejs": "^4.5.0",
     "handlebars": "^4.7.10",
-    "marked": "^18.1.1"
+    "marked": "^18.1.2"
   }
 }
