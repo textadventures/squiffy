@@ -38,7 +38,7 @@
   "license": "MIT",
   "dependencies": {
     "@textadventures/squiffy-types": "^6.0.1",
-    "glob": "^13.0.6",
+    "glob": "^14.0.3",
     "squiffy-compiler": "^6.0.1"
   },
   "peerDependencies": {
