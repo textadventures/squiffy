@@ -37,7 +37,7 @@
   "dependencies": {
     "@textadventures/squiffy-packager": "^6.0.1",
     "finalhandler": "^2.1.0",
-    "glob": "^13.0.6",
+    "glob": "^14.0.4",
     "serve-static": "^2.2.0",
     "squiffy-compiler": "^6.0.1",
     "squiffy-runtime": "^6.0.1",
