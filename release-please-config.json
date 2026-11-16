@@ -17,6 +17,11 @@
         },
         {
           "type": "json",
+          "path": "project-fs/package.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
           "path": "runtime/package.json",
           "jsonpath": "$.version"
         },
@@ -78,7 +83,7 @@
         {
           "type": "json",
           "path": "editor/package.json",
-          "jsonpath": "$[dependencies,devDependencies][?(@property.startsWith('squiffy-') || @property.startsWith('@textadventures/squiffy-'))]"
+          "jsonpath": "$[dependencies,devDependencies][?(@property.startsWith('squiffy-') || @property.startsWith('@textadventures/squiffy-') || @property == '@textadventures/project-fs')]"
         },
         {
           "type": "json",
@@ -103,12 +108,12 @@
         {
           "type": "json",
           "path": "package-lock.json",
-          "jsonpath": "$.packages[compiler,runtime,packager,cli,editor,site,types,vite-plugin,examples/vite-app].version"
+          "jsonpath": "$.packages[compiler,project-fs,runtime,packager,cli,editor,site,types,vite-plugin,examples/vite-app].version"
         },
         {
           "type": "json",
           "path": "package-lock.json",
-          "jsonpath": "$.packages[compiler,runtime,packager,cli,editor,site,types,vite-plugin,examples/vite-app][dependencies,devDependencies][?(@property.startsWith('squiffy-') || @property.startsWith('@textadventures/squiffy-') || @property == '@textadventures/vite-plugin-squiffy')]"
+          "jsonpath": "$.packages[compiler,project-fs,runtime,packager,cli,editor,site,types,vite-plugin,examples/vite-app][dependencies,devDependencies][?(@property.startsWith('squiffy-') || @property.startsWith('@textadventures/squiffy-') || @property == '@textadventures/vite-plugin-squiffy' || @property == '@textadventures/project-fs')]"
         }
       ]
     }

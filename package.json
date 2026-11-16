@@ -5,6 +5,7 @@
   "type": "module",
   "workspaces": [
     "compiler",
+    "project-fs",
     "editor",
     "cli",
     "packager",
