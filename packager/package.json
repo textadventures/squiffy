@@ -1,6 +1,6 @@
 {
   "name": "@textadventures/squiffy-packager",
-  "version": "6.0.1",
+  "version": "6.1.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/textadventures/squiffy.git",
@@ -26,8 +26,8 @@
   "description": "",
   "dependencies": {
     "fflate": "^0.8.3",
-    "squiffy-compiler": "^6.0.1",
-    "squiffy-runtime": "^6.0.1"
+    "squiffy-compiler": "^6.1.0",
+    "squiffy-runtime": "^6.1.0"
   },
   "devDependencies": {
     "esbuild": "^0.28.2",
