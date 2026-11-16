@@ -15,3 +15,18 @@ npm test
 - **The code editor** (`src/components/CodeEditor.svelte`, from Quest Viva's) takes its extensions from outside: the highlighting mode in `src/lib/squiffy-lang.ts`, and diagnostics and the outline from `src/lib/language/codemirror.ts`.
 
 Parts copied from Quest Viva's `src/AppShell` are noted in their comments. Fixes to the shared parts (`app.css`, `theme-store.ts`, `CodeEditor.svelte`, `codemirror-theme.ts`, `DropdownMenu.svelte`) may need porting between the two.
+
+## Deployment
+
+Until it replaces `editor/`, the app is its own Cloudflare Pages project, `squiffy-app-next`, connected to this repo like `squiffy-app` and `squiffy-site`, so every PR gets a preview of it. Its settings:
+
+| Setting | Value |
+|---|---|
+| Root directory | (the repo root) |
+| Build command | `npx lerna run build --scope @textadventures/squiffy-app --include-dependencies` |
+| Build output directory | `app/build` |
+| Production branch | `main` |
+
+It has no `404.html`, so Pages serves `index.html` for every path, which the app's client-side routing needs. `static/_headers` caches SvelteKit's hashed assets for a year.
+
+When the app takes over app.squiffystory.com, `deploy-app.yml` builds it instead of `editor/` and uploads it to the `squiffy-app` project, and this project is deleted.
