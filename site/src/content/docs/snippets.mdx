@@ -32,7 +32,7 @@ Click a snippet to insert it at the current cursor position, then edit the place
 
 For patterns you use repeatedly in a particular game, you can define your own snippets directly in your `.squiffy` file using the `[snippet: name]:` syntax:
 
-```
+```squiffy
 [snippet: Heal player]:
 {{inc "health"}}
 
@@ -51,7 +51,7 @@ Snippet blocks are stripped out by the compiler and never appear in the compiled
 
 Snippet blocks can appear anywhere in your file — before, between, or after sections. They don't belong to any section or passage, and their content is ignored by the compiler.
 
-```
+```squiffy
 [[intro]]:
 You wake up in a forest.
 

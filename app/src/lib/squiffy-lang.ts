@@ -5,8 +5,13 @@
 import { StreamLanguage, type StringStream } from "@codemirror/language";
 import { tags as t } from "@lezer/highlight";
 
-// Every line is highlighted on its own, so there's no state to carry between lines
-type State = Record<string, never>;
+// The one thing carried between lines: as in the compiler (compiler/src/parse.ts), a line indented
+// by a tab or four spaces is JavaScript only until the section's or passage's first line of text,
+// and the text in a @ui block doesn't count.
+interface State {
+    textStarted: boolean;
+    inUiBlock: boolean;
+}
 
 const SECTION_HEADER = /^\[\[[^\]]*\]\]:/;
 const PASSAGE_HEADER = /^\[[^\]]*\]:/;
@@ -14,25 +19,32 @@ const SNIPPET_HEADER = /^\[snippet:[^\]]*\]:?/i;
 const DIRECTIVE = /^@\w+/;
 const DIVIDER = /^(\+\+\+|---)/;
 
-function token(stream: StringStream): string | null {
+function token(stream: StringStream, state: State): string | null {
     if (stream.sol()) {
         if (stream.match(SNIPPET_HEADER) || stream.match(SECTION_HEADER)) {
+            state.textStarted = false;
             return "heading";
         }
         if (stream.match(PASSAGE_HEADER)) {
+            state.textStarted = false;
             return "heading2";
         }
         if (stream.match(DIVIDER)) {
+            state.textStarted = false;
+            if (stream.current() == "---") state.inUiBlock = false;
             stream.skipToEnd();
             return "heading";
         }
         if (stream.match(DIRECTIVE)) {
+            if (stream.current() == "@ui" && stream.match(/^\s*$/, false)) state.inUiBlock = true;
             return "keyword";
         }
-        // Lines indented by a tab or four spaces are JavaScript
-        if (stream.match(/^(\t| {4})/, false)) {
+        if (!state.textStarted && stream.match(/^(\t| {4})/, false)) {
             stream.skipToEnd();
             return "monospace";
+        }
+        if (!state.inUiBlock && stream.match(/^\s*\S/, false)) {
+            state.textStarted = true;
         }
     }
 
@@ -45,7 +57,14 @@ function token(stream: StringStream): string | null {
         stream.match(/^\([^)]*\)/);
         return "link";
     }
-    // Text processor: {if ...}, {sequence:...}, {@set ...}, {attribute}
+    // Handlebars: {{! comment }}, {{#if ...}}, {{helper ...}}, {{attribute}}, {{{html}}}
+    if (stream.match(/^\{\{!--.*?--\}\}/) || stream.match(/^\{\{![^}]*\}\}/)) {
+        return "comment";
+    }
+    if (stream.match(/^\{\{\{?[^}]*\}*/)) {
+        return "processingInstruction";
+    }
+    // Squiffy 5's text processor, which the language service offers to convert: {if ...}, {attribute}
     if (stream.match(/^\{[^{}]*/)) {
         stream.eat("}");
         return "processingInstruction";
@@ -65,7 +84,7 @@ function token(stream: StringStream): string | null {
 
 export const squiffyLanguage = StreamLanguage.define<State>({
     name: "squiffy",
-    startState: () => ({}),
+    startState: () => ({ textStarted: false, inUiBlock: false }),
     token,
     tokenTable: {
         heading: t.heading,

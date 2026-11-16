@@ -12,19 +12,19 @@ To install the Squiffy compiler, first [install Node.js](https://nodejs.org/).
 
 You can then run the CLI directly using `npx`:
 
-```
+```bash
 npx @textadventures/squiffy-cli mygame.squiffy
 ```
 
 Alternatively, install it globally:
 
-```
+```bash
 npm install @textadventures/squiffy-cli -g
 ```
 
 **If the install fails:** On a Mac or Linux, if you get an error installing, try using `sudo`:
 
-```
+```bash
 sudo npm install @textadventures/squiffy-cli -g
 ```
 
@@ -36,7 +36,7 @@ Squiffy files are text files with a `.squiffy` file extension.
 
 To transform a Squiffy file into a working browser-based game, go to its directory in a command prompt and type:
 
-```
+```bash
 npx @textadventures/squiffy-cli mygame.squiffy
 ```
 
@@ -58,7 +58,7 @@ The browser's local storage will be used to save the state of the game. This mea
 
 If your script has a problem, Squiffy prints it with the file and line number:
 
-```
+```text
 WARNING: mygame.squiffy line 12: In section 'kitchen' there is a link to a section called [[cellar]], which doesn't exist
 ERROR: mygame.squiffy line 30: Can't add passage "look" as no section has been created.
 ```
@@ -80,7 +80,7 @@ The default output creates four separate files as described above. This is ideal
 
 Use `--inline` to create a single self-contained HTML file with all CSS, JavaScript, and story content embedded:
 
-```
+```bash
 npx @textadventures/squiffy-cli mygame.squiffy --inline
 ```
 
@@ -94,13 +94,13 @@ This creates just one file: `index.html`. This is ideal for:
 
 Use `--zip` to also create a zip archive of the output files, called `output.zip`:
 
-```
+```bash
 npx @textadventures/squiffy-cli mygame.squiffy --zip
 ```
 
 You can combine this with `--inline` to create a zip containing just the single HTML file:
 
-```
+```bash
 npx @textadventures/squiffy-cli mygame.squiffy --inline --zip
 ```
 
@@ -120,13 +120,13 @@ Squiffy looks for file names in your story text and JavaScript with these extens
 
 Use `--serve` (or `-s`) to start a local HTTP server after compiling. Open the address it prints (e.g. `http://localhost:8282/`) in your browser to test your game:
 
-```
+```bash
 npx @textadventures/squiffy-cli mygame.squiffy --serve
 ```
 
 Optionally specify a port using `--port` (or `-p`):
 
-```
+```bash
 npx @textadventures/squiffy-cli mygame.squiffy --serve --port 3000
 ```
 
@@ -136,20 +136,20 @@ The default port is 8282.
 
 Use `--scriptonly` to generate *only* the `story.js` file, without overwriting the other files. This is useful when you've customized `index.html` or `style.css` and only want to update the story:
 
-```
+```bash
 npx @textadventures/squiffy-cli mygame.squiffy --scriptonly
 ```
 
 You can optionally specify a custom filename:
 
-```
+```bash
 npx @textadventures/squiffy-cli mygame.squiffy --scriptonly myscript.js
 ```
 ### Converting from Squiffy 5
 
 Squiffy 6 replaced the Squiffy 5 text processor syntax, such as `{if x:...}` and `{x}`, with [Handlebars](/dynamic-text/). When the CLI sees Squiffy 5 syntax in a story, it warns about it. Use `--convert-v5` to convert it to the Squiffy 6 equivalent:
 
-```
+```bash
 npx @textadventures/squiffy-cli mygame.squiffy --convert-v5
 ```
 

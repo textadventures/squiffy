@@ -20,7 +20,7 @@ Squiffy processes all text through Handlebars, which means you can use:
 
 `{{#if}}`, `{{#unless}}` and `{{else if}}` accept conditions written with familiar operators:
 
-```
+```squiffy
 {{#if gender = "male"}}You are male.{{/if}}
 {{#if score > 100 and has_key}}You win!{{else}}Keep trying.{{/if}}
 {{#unless (seen "intro") or count >= 3}}Welcome!{{/unless}}
@@ -49,7 +49,7 @@ Each condition is converted to the equivalent helpers before it runs, so `{{#if 
 When working with helpers, you'll encounter two different bracket types:
 
 **Double brackets `{{}}` - Output values or call helpers:**
-```
+```squiffy
 {{score}}                    - Display an attribute
 {{set "score" 100}}          - Call a helper
 {{#if has_key}}...{{/if}}    - Block helper
@@ -59,7 +59,7 @@ When working with helpers, you'll encounter two different bracket types:
 
 When you need to pass the *result* of one helper as an argument to another helper, use parentheses:
 
-```
+```squiffy
 {{#if (seen "intro")}}Welcome back{{/if}}
 {{random (array "red" "green" "blue")}}
 {{#if (length "inventory") > 3}}Your bag is getting heavy{{/if}}
@@ -74,7 +74,7 @@ In these examples:
 
 You cannot nest `{{}}` inside `{{}}` - that's invalid Handlebars syntax. Use parentheses for subexpressions:
 
-```
+```squiffy
 ❌ Wrong:  {{#if {{seen "intro"}}}}...{{/if}}
 ✅ Right:  {{#if (seen "intro")}}...{{/if}}
 
@@ -86,7 +86,7 @@ You cannot nest `{{}}` inside `{{}}` - that's invalid Handlebars syntax. Use par
 
 You can nest parentheses to combine multiple helpers:
 
-```
+```squiffy
 {{set "next_round" (random (array "music" "sport" "history"))}}
 ```
 
@@ -162,7 +162,7 @@ See [Attributes](/attributes/#creating-links-with-helpers) for examples.
 | `{{passage}}` | `"name" [text="..."] [set="..."]` | Create a passage link with optional custom text and attribute changes |
 
 Example:
-```
+```squiffy
 {{section "next_room" text="Enter" set="visited=true, count+=1"}}
 ```
 
@@ -203,7 +203,7 @@ The `"attribute"` parameter is the **name** of an attribute that stores an array
 ### Examples
 
 **Track available game rounds:**
-```
+```squiffy
 {{!-- Initialize available rounds --}}
 {{set "rounds" (array "Quiz" "Challenge" "Bonus")}}
 
@@ -223,7 +223,7 @@ You're playing: {{current}}
 ```
 
 **Manage an inventory:**
-```
+```squiffy
 {{set "inventory" (array)}}
 
 [pick up sword]:
@@ -240,7 +240,7 @@ You picked up the sword.
 ```
 
 **Process a queue:**
-```
+```squiffy
 {{set "tasks" (array "Task A" "Task B" "Task C")}}
 
 [next task]:
@@ -262,7 +262,7 @@ See [Dynamic text](/dynamic-text/) for detailed documentation and examples.
 | `{{random}}` | `(array ...) [set="attribute"]` | Select a random item from an array, optionally storing the result |
 
 Example:
-```
+```squiffy
 The weather is {{random (array "sunny" "cloudy" "rainy") set="weather"}}.
 ```
 
@@ -279,7 +279,7 @@ Available effects:
 - `continue` - Clickable link that pauses animation queue
 
 Example:
-```
+```squiffy
 {{#animate "typewriter"}}This text appears gradually.{{/animate}}
 ```
 
@@ -291,7 +291,7 @@ Example:
 | `{{#replace}}...{{/replace}}` | `"label"` | Replace the content of a labeled span |
 
 Example:
-```
+```squiffy
 I bought {{#label "item"}}milk{{/label}}.
 
 [change]:
@@ -306,7 +306,7 @@ I bought {{#label "item"}}milk{{/label}}.
 | `{{sequence}}` | `(array ...) [set="attribute"] [show="next"]` | Create a sequence link that disables after the last option |
 
 Example:
-```
+```squiffy
 Size: {{rotate (array "small" "medium" "large") set="size"}}
 ```
 
@@ -317,13 +317,13 @@ Size: {{rotate (array "small" "medium" "large") set="size"}}
 | `{{live}}` | `"attribute" [section="name"] [passage="name"]` | Display attribute value that updates automatically when the attribute changes |
 
 Example:
-```
+```squiffy
 Score: {{live "score"}}
 ```
 
 The `section` and `passage` parameters let you display processed content from another section/passage that updates when the attribute changes:
 
-```
+```squiffy
 {{live "category" section="categoryDescription"}}
 ```
 
@@ -347,7 +347,7 @@ Squiffy has two ways to modify attributes:
 
 Execute when a section or passage **loads**, before any rendering:
 
-```
+```squiffy
 @set score = 100
 @inc counter
 @dec health
@@ -362,7 +362,7 @@ Execute when a section or passage **loads**, before any rendering:
 
 Execute during **rendering**, at the point where they appear in the text:
 
-```
+```squiffy
 {{set "score" 100}}
 {{inc "counter"}}
 {{dec "health"}}
@@ -382,7 +382,7 @@ Execute during **rendering**, at the point where they appear in the text:
 
 You can add your own helpers by calling `squiffy.registerHelper` from JavaScript in a `@ui` block. A `@ui` block goes at the top of your story, and the JavaScript in it runs once when the story starts, before any text is displayed. End the block with `---`:
 
-```
+```squiffy
 @ui
     squiffy.registerHelper("shout", (text) => text.toUpperCase() + "!");
 ---
@@ -398,7 +398,7 @@ This displays "Welcome to the story. HELLO!".
 
 Text returned from a helper is escaped, so any `<` or `>` characters are displayed as-is rather than treated as HTML. To return HTML, wrap it in `squiffy.SafeString`. For example, this helper embeds a YouTube video:
 
-```
+```squiffy
 @ui
     squiffy.registerHelper("youtube", (id, options) => {
         const width = options.hash.width || 560;
@@ -420,7 +420,7 @@ Only use `SafeString` for HTML you've built yourself. If part of the HTML comes 
 
 Inside a helper you can use `squiffy.get` and `squiffy.set` to read and change attributes, just as you can in a section's JavaScript. For example, this helper shows different text each time it's displayed, and then keeps showing the last one. It uses an attribute to count how many times it has been shown:
 
-```
+```squiffy
 @ui
     squiffy.registerHelper("visit", (attribute, ...args) => {
         const items = args.slice(0, -1); // the last argument is "options"
