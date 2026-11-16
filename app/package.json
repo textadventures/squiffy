@@ -30,6 +30,7 @@
     "@textadventures/project-fs": "^6.0.1",
     "@textadventures/squiffy-packager": "^6.0.1",
     "fflate": "^0.8.3",
+    "idb-keyval": "^6.3.0",
     "squiffy-compiler": "^6.0.1",
     "squiffy-runtime": "^6.0.1"
   },

@@ -6,6 +6,8 @@
     import ConfirmDialog from "#components/ConfirmDialog.svelte";
     import Toast from "#components/Toast.svelte";
     import SettingsModal from "#components/SettingsModal.svelte";
+    import UpdateBanner from "#components/UpdateBanner.svelte";
+    import { registerServiceWorker } from "#lib/updates.svelte.js";
 
     let { children }: { children: Snippet } = $props();
 
@@ -18,10 +20,12 @@
 
     onMount(() => {
         initTheme();
+        void registerServiceWorker();
     });
 </script>
 
 {@render children()}
+<UpdateBanner />
 <ConfirmDialog />
 <Toast />
 <SettingsModal />
