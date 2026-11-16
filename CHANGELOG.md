@@ -1,5 +1,31 @@
 # Changelog
 
+## [7.0.0-beta.1](https://github.com/textadventures/squiffy/compare/v6.0.1...v7.0.0-beta.1) (2026-11-16)
+
+
+### Features
+
+* add a language service, exported as squiffy-compiler/language-service ([#344](https://github.com/textadventures/squiffy/issues/344)) ([2a69c56](https://github.com/textadventures/squiffy/commit/2a69c5695340b04d6f664acf679bbd66d370e67c))
+* add a sandboxed preview page and host helper to squiffy-runtime ([#345](https://github.com/textadventures/squiffy/issues/345)) ([e21d4f9](https://github.com/textadventures/squiffy/commit/e21d4f9ed8e7f90798260745f66862f25e082ed7))
+* add project file system layer for the editor ([#339](https://github.com/textadventures/squiffy/issues/339)) ([f07606f](https://github.com/textadventures/squiffy/commit/f07606f7e88789d8721742f31f1ea4e4becfa93f))
+* asset URL resolution hook and asset bundling ([#277](https://github.com/textadventures/squiffy/issues/277)) ([#337](https://github.com/textadventures/squiffy/issues/337)) ([180da33](https://github.com/textadventures/squiffy/commit/180da33b3cc879ec02b777e18f4cc37505f1aa70))
+* completion, hover, rename, references and quick fixes in the new editor ([#347](https://github.com/textadventures/squiffy/issues/347)) ([4a11d55](https://github.com/textadventures/squiffy/commit/4a11d55015b1c11b73a7375321a20e6fecc36ecc))
+* multi-file projects and images in the new editor ([#349](https://github.com/textadventures/squiffy/issues/349)) ([163b874](https://github.com/textadventures/squiffy/commit/163b874acc7541f8cd70e4ea05dff4cc188d6b3d))
+* publish the story and download the project from the new editor ([#350](https://github.com/textadventures/squiffy/issues/350)) ([ec5d77b](https://github.com/textadventures/squiffy/commit/ec5d77b0817a519061efe536294738c3dcd6c51f))
+* replace the 6.x editor with the new one on app.squiffystory.com ([#353](https://github.com/textadventures/squiffy/issues/353)) ([0b377f1](https://github.com/textadventures/squiffy/commit/0b377f10c0da99c91e77e8fe7d6be03da98b640a))
+* run the story in a preview beside the new editor ([#348](https://github.com/textadventures/squiffy/issues/348)) ([d7798d4](https://github.com/textadventures/squiffy/commit/d7798d4a7c142a8c8f259b554d38ac286f237b6c))
+* split compiler into parse, analyse and emit, with structured diagnostics ([#338](https://github.com/textadventures/squiffy/issues/338)) ([305949d](https://github.com/textadventures/squiffy/commit/305949d356464bd2a12d5cf4620364f384a135f0))
+* start the Squiffy 7 editor rebuild (milestone 1: shell, open/save, diagnostics, outline) ([#346](https://github.com/textadventures/squiffy/issues/346)) ([d7af2ba](https://github.com/textadventures/squiffy/commit/d7af2ba639f450d23a4e1559ee22c604facd9dfe))
+* the 6.x editor's remaining features in the new editor ([#352](https://github.com/textadventures/squiffy/issues/352)) ([f237b17](https://github.com/textadventures/squiffy/commit/f237b1720b30a88bb2fed61417c47d76483f12bc))
+* work offline, update banner and recent folders in the new editor ([#351](https://github.com/textadventures/squiffy/issues/351)) ([77e6568](https://github.com/textadventures/squiffy/commit/77e6568fb2815b0784dfb386ea5706aa4bdbc520))
+
+
+### Bug Fixes
+
+* don't report project-fs's own writes as external changes when the watcher flushes mid-write ([#354](https://github.com/textadventures/squiffy/issues/354)) ([b16d7b3](https://github.com/textadventures/squiffy/commit/b16d7b35c7ab5dcd850d12f96795b1977b1ba862))
+* link the beta docs to the beta editor, and tidy the Run split button ([#355](https://github.com/textadventures/squiffy/issues/355)) ([15cd583](https://github.com/textadventures/squiffy/commit/15cd583834e8513fbb49d98394e53e856322ff22))
+* resolve asset URLs inside animate blocks ([#343](https://github.com/textadventures/squiffy/issues/343)) ([b034dc5](https://github.com/textadventures/squiffy/commit/b034dc5172be50d90a711912a0a7ab0ed9ec748b))
+
 ## [6.0.1](https://github.com/textadventures/squiffy/compare/v6.0.0...v6.0.1) (2026-10-18)
 
 
