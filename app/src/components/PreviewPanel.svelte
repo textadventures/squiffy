@@ -33,6 +33,7 @@
     // Navigations while the story starts are where it starts, not the player clicking
     let following = false;
     let pendingRun: { startAt?: StartAt } | null = null;
+    let pageStarted = false;
     // Updates are compiled one at a time, so an older compile can't land after a newer one
     let updateQueue: Promise<void> = Promise.resolve();
 
@@ -46,9 +47,12 @@
             if (disposed || !iframe) return;
             setUpPreviewFrame(iframe, previewHtml);
             host = createPreviewHost(iframeChannel(iframe), {
-                // Also sent if the page reloads, which loses the story, so start it again
+                // The first is the page starting, when a queued load is sent anyway. A later one
+                // means the page reloaded and lost the story, so start it again. Loading twice
+                // at the start could leave the page blank.
                 onReady: () => {
-                    if (running) void run(startAt);
+                    if (pageStarted && running) void run(startAt);
+                    pageStarted = true;
                 },
                 onLoaded: () => {
                     following = true;
