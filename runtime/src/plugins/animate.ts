@@ -32,12 +32,13 @@ export function AnimatePlugin(): SquiffyPlugin {
             if (!params.content) {
                 continue;
             }
+            // The content is stored unrendered in data-content, so asset URLs in it haven't been
+            // resolved yet. On load it's rendered again, so it picks up the current resolver.
             const isBlock = params.content.includes("\n\n");
-            if (isBlock) {
-                el.innerHTML = marked.parse(params.content, { async: false }).trim();
-            } else {
-                el.innerHTML = marked.parseInline(params.content, { async: false }).trim();
-            }
+            const html = isBlock
+                ? marked.parse(params.content, { async: false })
+                : marked.parseInline(params.content, { async: false });
+            el.innerHTML = squiffy.resolveAssetsInHtml(html.trim());
 
             if (!params.name) {
                 continue;

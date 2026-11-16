@@ -13,6 +13,7 @@ export class PluginManager {
     getSectionText: (name: string) => string | null;
     getPassageText: (name: string) => string | null;
     processText: (text: string, inline: boolean) => string;
+    resolveAssetsInHtml: (html: string) => string;
     addTransition: (fn: () => Promise<void>) => void;
     emitter: Emitter<SquiffyEventMap>;
     plugins: SquiffyPlugin[] = [];
@@ -27,7 +28,8 @@ export class PluginManager {
                 processText: (text: string, inline: boolean) => string,
                 addTransition: (fn: () => Promise<void>) => void,
                 animation: Animation,
-                emitter: Emitter<SquiffyEventMap>) {
+                emitter: Emitter<SquiffyEventMap>,
+                resolveAssetsInHtml: (html: string) => string) {
         this.outputElement = outputElement;
         this.textProcessor = textProcessor;
         this.state = state;
@@ -38,6 +40,7 @@ export class PluginManager {
         this.addTransition = addTransition;
         this.animation = animation;
         this.emitter = emitter;
+        this.resolveAssetsInHtml = resolveAssetsInHtml;
     }
 
     add(plugin: SquiffyPlugin) {
@@ -54,6 +57,7 @@ export class PluginManager {
             getSectionText: this.getSectionText,
             getPassageText: this.getPassageText,
             processText: this.processText,
+            resolveAssetsInHtml: this.resolveAssetsInHtml,
             addTransition: this.addTransition,
             animation: this.animation,
             on: (e, h) => this.emitter.on(e, h),

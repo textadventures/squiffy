@@ -22,6 +22,10 @@ export interface PluginHost {
     getSectionText(name: string): string | null;
     getPassageText(name: string): string | null;
     processText: (text: string, inline: boolean) => string;
+    // Rewrites asset URLs (src, srcset, poster, style url()) in already-rendered HTML using the
+    // resolveAssetUrl init option. Use this for HTML a plugin inserts without going through
+    // processText. Returns the HTML unchanged if no resolveAssetUrl was given.
+    resolveAssetsInHtml: (html: string) => string;
     addTransition: (fn: () => Promise<void>) => void;
     animation: Animation;
     on<E extends keyof SquiffyEventMap>(
