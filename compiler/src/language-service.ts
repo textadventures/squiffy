@@ -648,6 +648,11 @@ export function createLanguageService(options: LanguageServiceOptions): Language
             const index = await getIndex();
             const tree = await getFile(index, path);
             if (!tree) return [];
+            // A section, passage or snippet header names something new, so nothing on its line
+            // is completed: "[my pass" there looks like the start of a passage link, but isn't one
+            const headers = [tree.file.preamble, ...tree.file.sections].flatMap((node): ({ range: Range } | undefined)[] =>
+                node.type == "snippet" ? [node.header] : [node.header, ...node.passages.map(p => p.header)]);
+            if (headers.some(header => header?.range.start.line == position.line)) return [];
             const prefix = (tree.text.replace(/\r/g, "").split("\n")[position.line] ?? "").substring(0, position.character);
             const { section } = containerAt(tree.file, position);
             const sectionName = section && index.nodeNames.get(section);

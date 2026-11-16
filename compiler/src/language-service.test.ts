@@ -281,6 +281,16 @@ describe("completion", () => {
         expect(items.map(i => i.label)).toEqual(["gold", "score", "seen"]);
     });
 
+    test("nothing in a section, passage or snippet header, which names something new", async () => {
+        const files = memoryFiles({ "s.squiffy": "[[a]]:\nSee [p1].\n[my pass]:\n[[new sect]]:\n[snippet:greet]:\nHi" });
+        const ls = createLanguageService({ files, mainFile: "s.squiffy" });
+        expect(await ls.getCompletions("s.squiffy", { line: 2, character: 8 })).toEqual([]);
+        expect(await ls.getCompletions("s.squiffy", { line: 3, character: 10 })).toEqual([]);
+        expect(await ls.getCompletions("s.squiffy", { line: 4, character: 14 })).toEqual([]);
+        // A link is still completed
+        expect((await ls.getCompletions("s.squiffy", { line: 1, character: 7 })).map(i => i.label)).toEqual(["my pass"]);
+    });
+
     test("snippets at the start of a line", async () => {
         const items = await complete("\nde", "");
         expect(items).toMatchObject([{ label: "description", kind: "snippet", insertText: "A damp cellar." }]);
