@@ -57,7 +57,7 @@ jobs:
         run: npm ci
 
       # A prerelease goes to the `beta` preview branch
-      # (beta.squiffy-app.pages.dev, served as app-beta.squiffystory.com)
+      # (beta.squiffy.pages.dev, served as app-beta.squiffystory.com)
       # rather than production, so app.squiffystory.com only ever runs a
       # stable release. Its Help menu links to the beta docs,
       # beta.squiffystory.com, which are built from main.
