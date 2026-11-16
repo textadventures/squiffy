@@ -1,0 +1,355 @@
+// Converts the links in a section's or passage's text into Handlebars helpers, and records
+// where each link and embed was in the original text.
+//
+// The conversion is a series of regex replacements, each running on the output of the one
+// before, and the exact order matters (for example, [[a]](b) has to be converted before [a](b)
+// would match inside it). So rather than parse links some other way, this runs exactly those
+// replacements, and keeps a map from each position in the current string back to the original
+// text, so that what each regex matched can be traced to where it was written.
+
+// A run of the current string that came from original[origStart, origEnd).
+// If copied, it's an unchanged copy, so positions map one to one. Otherwise it's the
+// replacement for that whole range.
+interface Segment {
+    start: number;
+    end: number;
+    origStart: number;
+    origEnd: number;
+    copied: boolean;
+}
+
+interface Replacement {
+    start: number;
+    end: number;
+    text: string;
+}
+
+class MappedString {
+    value: string;
+    private segments: Segment[];
+
+    constructor(private readonly original: string) {
+        this.value = original;
+        this.segments = original.length
+            ? [{ start: 0, end: original.length, origStart: 0, origEnd: original.length, copied: true }]
+            : [];
+    }
+
+    // Like String.replace with a global regex, except the callback gets the match's offset.
+    replace(regex: RegExp, replacer: (match: string[], offset: number) => string) {
+        const replacements: Replacement[] = [];
+        this.value = this.value.replace(regex, (...args) => {
+            // The callback's arguments are the match, the groups, the offset and the whole string.
+            // None of these regexes have named groups, so there's no groups object after those.
+            const offset = args[args.length - 2] as number;
+            const match = args.slice(0, args.length - 2) as string[];
+            const text = replacer(match, offset);
+            replacements.push({ start: offset, end: offset + match[0].length, text });
+            return text;
+        });
+        if (replacements.length) {
+            this.applyToSegments(replacements);
+        }
+    }
+
+    private applyToSegments(replacements: Replacement[]) {
+        const segments: Segment[] = [];
+        let newPos = 0;
+        const copyRange = (from: number, to: number) => {
+            for (const s of this.segments) {
+                const start = Math.max(s.start, from);
+                const end = Math.min(s.end, to);
+                if (start >= end) continue;
+                const length = end - start;
+                segments.push(s.copied
+                    ? { start: newPos, end: newPos + length, origStart: s.origStart + start - s.start, origEnd: s.origStart + end - s.start, copied: true }
+                    : { start: newPos, end: newPos + length, origStart: s.origStart, origEnd: s.origEnd, copied: false });
+                newPos += length;
+            }
+        };
+
+        let oldPos = 0;
+        for (const r of replacements) {
+            copyRange(oldPos, r.start);
+            const origStart = this.mapStart(r.start);
+            const origEnd = this.mapEnd(r.end);
+            if (r.text.length) {
+                segments.push({
+                    start: newPos,
+                    end: newPos + r.text.length,
+                    origStart,
+                    origEnd,
+                    copied: r.text === this.original.substring(origStart, origEnd),
+                });
+                newPos += r.text.length;
+            }
+            oldPos = r.end;
+        }
+        copyRange(oldPos, Infinity);
+        this.segments = segments;
+    }
+
+    // Maps the start of a range in the current string to the original string.
+    mapStart(pos: number): number {
+        const s = this.find(seg => seg.end > pos);
+        if (!s) return this.original.length;
+        if (pos < s.start) return s.origStart;
+        return s.copied ? s.origStart + pos - s.start : s.origStart;
+    }
+
+    // Maps the (exclusive) end of a range in the current string to the original string.
+    mapEnd(pos: number): number {
+        const s = this.find(seg => seg.end >= pos);
+        if (!s) return this.original.length;
+        if (pos <= s.start) return s.origStart;
+        return s.copied ? s.origStart + pos - s.start : s.origEnd;
+    }
+
+    // Binary search for the first segment matching a predicate that's monotonic in segment order.
+    private find(predicate: (seg: Segment) => boolean): Segment | undefined {
+        let low = 0;
+        let high = this.segments.length;
+        while (low < high) {
+            const mid = (low + high) >> 1;
+            if (predicate(this.segments[mid])) high = mid;
+            else low = mid + 1;
+        }
+        return this.segments[low];
+    }
+}
+
+// Offsets below are into the original text.
+export interface TextLink {
+    linkType: "section" | "passage";
+    form: "named" | "unnamed" | "next";
+    text?: string;
+    // The target as written (see LinkNode.target). For next links, the setters after ">".
+    target: string;
+    start: number;
+    end: number;
+    targetStart: number;
+    targetEnd: number;
+}
+
+export interface TextEmbed {
+    name: string;
+    start: number;
+    end: number;
+    nameStart: number;
+    nameEnd: number;
+}
+
+export interface NoNextSection {
+    // The legacy warning shows the link as [[text>]] or [[text]](>)
+    display: string;
+    start: number;
+    end: number;
+}
+
+export interface TransformResult {
+    output: string;
+    // Links in the order the compiler has always checked them: named section links, named
+    // passage links, unnamed section links, then unnamed passage links. Next links come first.
+    links: TextLink[];
+    embeds: TextEmbed[];
+    noNextSection: NoNextSection[];
+}
+
+function extractLinkFunctions(link: string): { target: string, setters: string } {
+    const fragments = link.split(",");
+    return {
+        target: fragments[0].trim(),
+        setters: fragments.slice(1).join(", ")
+    };
+}
+
+function getAdditionalLinkParameters(link: string): { target: string, additionalParameters: string } {
+    const functions = extractLinkFunctions(link);
+    let additionalParameters = "";
+    if (functions.setters.length > 0) {
+        additionalParameters += ` set="${functions.setters}"`;
+    }
+    return {
+        target: functions.target,
+        additionalParameters
+    };
+}
+
+function escapeForHandlebarsString(s: string): string {
+    return s.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+}
+
+// getNextSectionName returns the section after this one, for [[text>]] links, or null if
+// there isn't one.
+export function transformText(text: string, getNextSectionName: () => string | null): TransformResult {
+    const input = new MappedString(text);
+    const links: TextLink[] = [];
+    const embeds: TextEmbed[] = [];
+    const noNextSection: NoNextSection[] = [];
+
+    // Records a link, given the offset of its match and of its target group in the current string.
+    const addLink = (link: Omit<TextLink, "start" | "end" | "targetStart" | "targetEnd">,
+        matchStart: number, matchLength: number, targetStart: number, targetLength: number) => {
+        links.push({
+            ...link,
+            start: input.mapStart(matchStart),
+            end: input.mapEnd(matchStart + matchLength),
+            targetStart: input.mapStart(targetStart),
+            targetEnd: input.mapEnd(targetStart + targetLength),
+        });
+    };
+
+    // Handlebars expressions can contain square brackets that aren't links, such as
+    // {{someArray.[1]}} or {{someHelper "[x]"}}, so swap each one for a placeholder while
+    // converting links. Text between block helpers like {{#if x}}...{{/if}} is still converted.
+    const mustaches: string[] = [];
+    input.replace(/\{\{\{[\s\S]*?\}\}\}|\{\{[\s\S]*?\}\}/g, ([match]) => {
+        mustaches.push(match);
+        return `${mustaches.length - 1}`;
+    });
+    const restore = (s: string) => s.replace(/(\d+)/g, (_match, i) => mustaches[Number(i)]);
+
+    // nextSectionLinkRegex matches [[text>]] - a link to the next section
+    const nextSectionLinkRegex = /\[\[([^\]]*?)>\]\]/g;
+
+    input.replace(nextSectionLinkRegex, ([match, rawText], offset) => {
+        const text = restore(rawText);
+        const nextSectionName = getNextSectionName();
+        if (!nextSectionName) {
+            noNextSection.push({ display: `[[${text}>]]`, start: input.mapStart(offset), end: input.mapEnd(offset + match.length) });
+            return `[[${text}]]`; // fallback
+        }
+        addLink({ linkType: "section", form: "next", text, target: "" }, offset, match.length, offset + 2 + rawText.length, 0);
+        return `{{section "${escapeForHandlebarsString(nextSectionName)}" text="${escapeForHandlebarsString(text)}"}}`;
+    });
+
+    // namedNextSectionLinkRegex matches [[text]](>) or [[text]](>, setter=value)
+    // - a named link where target starts with >
+    const namedNextSectionLinkRegex = /\[\[([^\]]*?)\]\]\(>(.*?)\)/g;
+
+    input.replace(namedNextSectionLinkRegex, ([match, rawText, rawRest], offset) => {
+        const text = restore(rawText);
+        const rest = restore(rawRest);
+        const nextSectionName = getNextSectionName();
+        if (!nextSectionName) {
+            noNextSection.push({ display: `[[${text}]](>)`, start: input.mapStart(offset), end: input.mapEnd(offset + match.length) });
+            return `[[${text}]]`; // fallback
+        }
+        addLink({ linkType: "section", form: "next", text, target: rest }, offset, match.length, offset + 2 + rawText.length + 4, rawRest.length);
+        // rest could be empty or ", setter=value"
+        const parsedName = getAdditionalLinkParameters(nextSectionName + rest);
+        return `{{section "${escapeForHandlebarsString(parsedName.target)}" text="${escapeForHandlebarsString(text)}"${parsedName.additionalParameters}}}`;
+    });
+
+    // namedSectionLinkRegex matches:
+    //   open [[
+    //   any text - the link text
+    //   closing ]]
+    //   open bracket
+    //   any text - the name of the section
+    //   closing bracket
+    const namedSectionLinkRegex = /\[\[([^\]]*?)\]\]\((.*?)\)/g;
+
+    input.replace(namedSectionLinkRegex, ([match, rawText, rawName], offset) => {
+        const text = restore(rawText);
+        const name = restore(rawName);
+        addLink({ linkType: "section", form: "named", text, target: name }, offset, match.length, offset + 2 + rawText.length + 3, rawName.length);
+        const parsedName = getAdditionalLinkParameters(name);
+        return `{{section "${escapeForHandlebarsString(parsedName.target)}" text="${escapeForHandlebarsString(text)}"${parsedName.additionalParameters}}}`;
+    });
+
+    // namedPassageLinkRegex matches:
+    //   not preceded by ! (to avoid matching image links like ![alt](src))
+    //   open [
+    //   any text - the link text
+    //   closing ]
+    //   open bracket, but not http(s):// after it
+    //   any text - the name of the passage
+    //   closing bracket
+    const namedPassageLinkRegex = /(?<!!)\[([^\]]*?)\]\(((?!https?:\/\/).*?)\)/g;
+
+    input.replace(namedPassageLinkRegex, ([match, rawText, rawName], offset) => {
+        const text = restore(rawText);
+        const name = restore(rawName);
+        addLink({ linkType: "passage", form: "named", text, target: name }, offset, match.length, offset + 1 + rawText.length + 2, rawName.length);
+        const parsedName = getAdditionalLinkParameters(name);
+        return `{{passage "${escapeForHandlebarsString(parsedName.target)}" text="${escapeForHandlebarsString(text)}"${parsedName.additionalParameters}}}`;
+    });
+
+    // unnamedSectionLinkRegex matches:
+    //   open [[
+    //   any text - the link text
+    //   closing ]]
+    const unnamedSectionLinkRegex = /\[\[(.*?)\]\]/g;
+
+    input.replace(unnamedSectionLinkRegex, ([match, rawName], offset) => {
+        const name = restore(rawName);
+        addLink({ linkType: "section", form: "unnamed", target: name }, offset, match.length, offset + 2, rawName.length);
+        return `{{section "${escapeForHandlebarsString(name)}"}}`;
+    });
+
+    // unnamedPassageLinkRegex matches:
+    //   not preceded by ! (to avoid matching image links like ![alt])
+    //   open [
+    //   any text - the link text
+    //   closing ]
+    //   no bracket after
+    const unnamedPassageLinkRegex = /(?<!!)\[(.*?)\]([^(]|$)/g;
+
+    input.replace(unnamedPassageLinkRegex, ([match, rawName, suffix], offset) => {
+        const name = restore(rawName);
+        addLink({ linkType: "passage", form: "unnamed", target: name }, offset, match.length - suffix.length, offset + 1, rawName.length);
+        return `{{passage "${escapeForHandlebarsString(name)}"}}${suffix}`;
+    });
+
+    input.replace(/(\d+)/g, ([, i]) => mustaches[Number(i)]);
+
+    // embedRegex matches {{embed "name"}} or {{embed 'name'}} with a literal name.
+    const embedRegex = /\{\{~?\s*embed\s+(["'])(.*?)\1/g;
+    let match;
+    while ((match = embedRegex.exec(input.value))) {
+        const start = match.index;
+        const end = start + match[0].length;
+        const nameEnd = end - 1;
+        const nameStart = nameEnd - match[2].length;
+        embeds.push({
+            name: match[2],
+            start: input.mapStart(start),
+            end: input.mapEnd(end),
+            nameStart: input.mapStart(nameStart),
+            nameEnd: input.mapEnd(nameEnd),
+        });
+    }
+
+    return { output: input.value, links, embeds, noNextSection };
+}
+
+export interface SourceLine {
+    // Zero-based line number in the source file
+    line: number;
+    // Length of the source line. Text added by the compiler (the link a +++ line adds to the
+    // previous section) maps onto the line it came from, clamped to that line's length.
+    length: number;
+}
+
+// Returns a function that converts an offset into lines.join("\n") to a position in the source file.
+export function positionMapper(lines: SourceLine[], lineLengths: number[]): (offset: number) => { line: number; character: number } {
+    const starts: number[] = [];
+    let pos = 0;
+    for (const length of lineLengths) {
+        starts.push(pos);
+        pos += length + 1;
+    }
+    return (offset: number) => {
+        let low = 0;
+        let high = starts.length - 1;
+        while (low < high) {
+            const mid = (low + high + 1) >> 1;
+            if (starts[mid] <= offset) low = mid;
+            else high = mid - 1;
+        }
+        const source = lines[low];
+        if (!source) return { line: 0, character: 0 };
+        return { line: source.line, character: Math.min(offset - starts[low], source.length) };
+    };
+}

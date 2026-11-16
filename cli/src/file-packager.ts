@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
-import { compile, findV5Syntax } from "squiffy-compiler";
+import { compile, findV5Syntax, formatDiagnostic } from "squiffy-compiler";
 import { externalFiles } from "./external-files.js";
 import { createPackage, PackageOptions } from "@textadventures/squiffy-packager";
 
@@ -10,13 +10,21 @@ async function getCompileResult(inputFilename: string) {
     if (findV5Syntax(inputText).length > 0) {
         console.warn("This story looks like it uses Squiffy 5 text processor syntax. Run with --convert-v5 to convert it to Squiffy 6.");
     }
-    return await compile({
+    const result = await compile({
         scriptBaseFilename: path.basename(inputFilename),
         script: inputText,
-        onWarning: console.warn,
         externalFiles: externalFiles(inputFilename),
         globalJs: true,
     });
+    for (const diagnostic of result.diagnostics) {
+        if (diagnostic.severity == "error") {
+            console.error(formatDiagnostic(diagnostic));
+        }
+        else {
+            console.warn(formatDiagnostic(diagnostic));
+        }
+    }
+    return result;
 }
 
 export const writeScriptFile = async(inputFilename: string, outputPath: string, outputFilename: string)=> {
