@@ -2,6 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { compile, findV5Syntax } from "squiffy-compiler";
 import { externalFiles } from "./external-files.js";
+import { findAssets, getStoryText } from "./assets.js";
 import { createPackage, PackageOptions } from "@textadventures/squiffy-packager";
 
 async function getCompileResult(inputFilename: string) {
@@ -43,7 +44,15 @@ export const createPackageFiles = async (inputFilename: string, outputPath: stri
         return false;
     }
 
-    const pkg = await createPackage(result, options);
+    // Asset files (images etc.) referenced by the story. The other package files are written to the
+    // story's folder, alongside these, so they only need to be passed on for the zip or for inlining.
+    const assets = options.assets ?? findAssets(inputFilename, getStoryText(result));
+    const assetPaths = Object.keys(assets);
+    if (assetPaths.length > 0 && (options.createZip || options.inlineHtml)) {
+        console.log(`Including asset${assetPaths.length == 1 ? "" : "s"}: ${assetPaths.join(", ")}`);
+    }
+
+    const pkg = await createPackage(result, { ...options, assets });
     const files = pkg.files;
 
     for (const file of Object.keys(files)) {
