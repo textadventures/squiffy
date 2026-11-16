@@ -24,6 +24,8 @@ export default defineConfig({
             adapter: adapter({ fallback: "index.html" }),
             paths: { base: basePath },
             version: { pollInterval: 0 },
+            // Registered by #lib/updates, so a new version can wait for the update banner
+            serviceWorker: { register: false },
         }),
     ],
     worker: {

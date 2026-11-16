@@ -10,10 +10,11 @@
 // Each open file saves on its own, shortly after typing stops, as in Quest Viva, and Save
 // (Ctrl+S) saves them all at once.
 import {
-    OpfsProjectStore, basename, findFiles, fsaOpener, hasFileSystemAccess, moveFile,
+    DirectoryHandleFileSystem, OpfsProjectStore, basename, findFiles, fsaOpener, hasFileSystemAccess, moveFile,
     type FileEntry, type FileTypeFilter, type ProjectFileSystem,
 } from "@textadventures/project-fs";
 import { chooseDialog } from "./confirm.js";
+import { findRecentFolder, hasPermission, rememberFolder, updateRecentFolder } from "./recent.js";
 
 export const SQUIFFY_FILES: FileTypeFilter[] = [
     { description: "Squiffy stories", extensions: [".squiffy"], mimeType: "text/plain" },
@@ -46,7 +47,8 @@ export interface DraftMeta {
     lastOpened: number;
 }
 
-export type ProjectSource = { kind: "draft"; id: string } | { kind: "folder" };
+// A folder's id is its place in the recent folders list (recent.ts)
+export type ProjectSource = { kind: "draft"; id: string } | { kind: "folder"; id: string };
 
 export const drafts = new OpfsProjectStore<DraftMeta>({ baseDir: "drafts" });
 
@@ -231,9 +233,13 @@ class OpenProject {
         this.onFileChanged?.(path);
     }
 
-    // Records the title, main file and when the draft was last used, in a draft's meta.json
+    // Records the main file and when the project was last used: in a draft's meta.json, with its
+    // title, or in the recent folders list
     async touch() {
-        if (this.source.kind !== "draft") return;
+        if (this.source.kind === "folder") {
+            await updateRecentFolder(this.source.id, this.mainFile);
+            return;
+        }
         await drafts.setMeta(this.source.id, {
             title: this.title,
             mainFile: this.mainFile,
@@ -326,11 +332,40 @@ export async function importFile(file: File): Promise<string> {
     return createDraft(name, text);
 }
 
-// Opens a folder with File System Access, and the main .squiffy file in it. Returns false if the
-// user cancels.
-export async function openFolder(): Promise<boolean> {
+// Opens a folder with File System Access, and the main .squiffy file in it, and adds it to the
+// recent folders. Returns the folder's id there, or null if the user cancels.
+export async function openFolder(): Promise<string | null> {
     const fs = await fsaOpener.openFolder({ id: "squiffy-project" });
+    if (!fs) return null;
+    const mainFile = await chooseMainFile(fs);
+    if (!mainFile) return null;
+    const id = await rememberFolder(fs.root, mainFile);
+    await start(fs, { kind: "folder", id }, mainFile);
+    return id;
+}
+
+// Opens a folder from the recent folders list. With `ask`, the browser may ask for permission
+// again, which must be from a click; without it, this only succeeds if the folder can be used
+// already (e.g. after a reload). Returns false if it can't be opened.
+export async function openRecentFolder(id: string, ask: boolean): Promise<boolean> {
+    const folder = await findRecentFolder(id);
+    if (!folder) return false;
+    const fs = ask ? await fsaOpener.reopen(folder.handle) : (await hasPermission(folder.handle)) ? new DirectoryHandleFileSystem(folder.handle) : null;
     if (!fs) return false;
+    let mainFile: string | null = folder.mainFile;
+    if (!(await fs.exists(mainFile))) {
+        // Moved or deleted since: ask again
+        mainFile = await chooseMainFile(fs);
+        if (!mainFile) return false;
+    }
+    await start(fs, { kind: "folder", id }, mainFile);
+    return true;
+}
+
+export { forgetFolder, listRecentFolders, type RecentFolder } from "./recent.js";
+
+// The main .squiffy file in a folder: the only one, or the one the author picks, or a new one
+async function chooseMainFile(fs: ProjectFileSystem): Promise<string | null> {
     const files = (await findFiles(fs, SQUIFFY_FILES)).map(f => f.path);
     let mainFile: string | null;
     if (files.length === 0) {
@@ -338,7 +373,7 @@ export async function openFolder(): Promise<boolean> {
             { label: "Cancel", value: false },
             { label: `Create ${DEFAULT_MAIN_FILE}`, value: true },
         ]);
-        if (!create) return false;
+        if (!create) return null;
         await fs.write(DEFAULT_MAIN_FILE, NEW_STORY);
         mainFile = DEFAULT_MAIN_FILE;
     } else if (files.length === 1) {
@@ -350,10 +385,8 @@ export async function openFolder(): Promise<boolean> {
             `${fs.name} has more than one .squiffy file. Which is the main one?`,
             sorted.slice(0, 8).map(path => ({ label: path, value: path })),
         );
-        if (!mainFile) return false;
     }
-    await start(fs, { kind: "folder" }, mainFile);
-    return true;
+    return mainFile;
 }
 
 // Downloads a file, with the editor's unsaved text if it's open

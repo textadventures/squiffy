@@ -9,7 +9,7 @@
     import type { DocumentSymbol, Location, WorkspaceEdit } from "squiffy-compiler/language-service";
     import { basename, dirname, guessMimeType, joinPath, parsePath } from "@textadventures/project-fs";
     import { base } from "#lib/base-path.js";
-    import { project, openDraft, downloadFile, storyPath } from "#lib/project.svelte.js";
+    import { project, openDraft, openRecentFolder, downloadFile, storyPath } from "#lib/project.svelte.js";
     import { isAsset, isSquiffyFile, isTextFile } from "#lib/file-types.js";
     import { createLanguageClient, type LanguageClient } from "#lib/language/client.js";
     import { applyEditsToString, applyTextEdits, languageFeatures, toOffset, toPosition } from "#lib/language/codemirror.js";
@@ -60,14 +60,19 @@
     onMount(() => {
         void (async () => {
             const draftId = page.url.searchParams.get("draft");
+            const folderId = page.url.searchParams.get("folder");
             const current = project.current;
-            const isOpen = current?.source.kind === "draft" && current.source.id === draftId;
+            const isOpen = current !== null && current.source.id === (draftId ?? folderId);
             try {
                 if (draftId && !isOpen) await openDraft(draftId);
+                // After a reload: only if the browser still lets us use the folder, since asking
+                // again needs a click. Otherwise it's on the home page's Recent folders.
+                if (folderId && !isOpen && !(await openRecentFolder(folderId, false))) {
+                    showToast("Open the folder again from Recent folders.", "info");
+                }
             } catch (err) {
-                showToast(`Couldn't open the draft: ${err instanceof Error ? err.message : String(err)}`);
+                showToast(`Couldn't open the story: ${err instanceof Error ? err.message : String(err)}`);
             }
-            // A folder can't be reopened from the URL, since the browser has to ask for it again
             if (!project.current) {
                 void goto(`${base}/`, { replaceState: true });
                 return;

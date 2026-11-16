@@ -4,7 +4,8 @@
     import { goto } from "$app/navigation";
     import { base } from "#lib/base-path.js";
     import {
-        canOpenFolders, deleteDraft, importFile, listDrafts, newDraft, openFolder, type DraftMeta,
+        canOpenFolders, deleteDraft, forgetFolder, importFile, listDrafts, listRecentFolders, newDraft, openFolder,
+        openRecentFolder, type DraftMeta, type RecentFolder,
     } from "#lib/project.svelte.js";
     import type { StoredProject } from "@textadventures/project-fs";
     import { confirmDialog } from "#lib/confirm.js";
@@ -14,13 +15,16 @@
     import FolderOpen from "@lucide/svelte/icons/folder-open";
     import FileUp from "@lucide/svelte/icons/file-up";
     import Trash2 from "@lucide/svelte/icons/trash-2";
+    import X from "@lucide/svelte/icons/x";
 
     let draftList = $state<StoredProject<DraftMeta>[] | null>(null);
+    let recentFolders = $state<RecentFolder[]>([]);
     let draftsError = $state<string | null>(null);
     let busy = $state(false);
     let fileInput = $state<HTMLInputElement>();
 
     async function refresh() {
+        if (canOpenFolders) recentFolders = await listRecentFolders();
         try {
             draftList = await listDrafts();
         } catch (err) {
@@ -48,9 +52,23 @@
 
     const handleNew = () => run(async () => editDraft(await newDraft()));
 
+    const editFolder = (id: string) => goto(`${base}/edit?folder=${encodeURIComponent(id)}`);
+
     const handleOpenFolder = () => run(async () => {
-        if (await openFolder()) await goto(`${base}/edit`);
+        const id = await openFolder();
+        if (id) await editFolder(id);
     });
+
+    // The click is what lets the browser ask for permission to the folder again
+    const handleOpenRecent = (folder: RecentFolder) => run(async () => {
+        if (await openRecentFolder(folder.id, true)) await editFolder(folder.id);
+        else showToast(`Couldn't open ${folder.name}. The browser may not have been given permission, or the folder has moved.`, "info");
+    });
+
+    async function handleForget(folder: RecentFolder) {
+        await forgetFolder(folder.id);
+        await refresh();
+    }
 
     function handleFileChosen(e: Event) {
         const input = e.currentTarget as HTMLInputElement;
@@ -103,6 +121,33 @@
             </p>
         {/if}
     </section>
+
+    {#if recentFolders.length > 0}
+        <section aria-labelledby="recent-heading" class="flex flex-col gap-3">
+            <h2 id="recent-heading" class="text-sm font-semibold text-surface-600-400 uppercase tracking-wide">Recent folders</h2>
+            <ul class="card preset-outlined-surface-200-800 divide-y divide-surface-200-800">
+                {#each recentFolders as folder (folder.id)}
+                    <li class="flex items-center gap-2 pr-2">
+                        <button type="button" class="draft-row flex-1 min-w-0 text-left px-4 py-2.5 flex items-center gap-3" disabled={busy} onclick={() => handleOpenRecent(folder)}>
+                            <FolderOpen size={16} class="shrink-0 text-surface-600-400" />
+                            <span class="flex flex-col min-w-0">
+                                <span class="font-medium truncate">{folder.name}</span>
+                                <span class="text-xs text-surface-600-400 truncate">{folder.mainFile} · Last opened {dateFormat.format(folder.lastOpened)}</span>
+                            </span>
+                        </button>
+                        <button
+                            type="button"
+                            class="btn-icon btn-icon-sm"
+                            title="Remove from this list"
+                            aria-label="Remove {folder.name} from recent folders"
+                            disabled={busy}
+                            onclick={() => handleForget(folder)}
+                        ><X size={15} /></button>
+                    </li>
+                {/each}
+            </ul>
+        </section>
+    {/if}
 
     <section aria-labelledby="drafts-heading" class="flex flex-col gap-3">
         <h2 id="drafts-heading" class="text-sm font-semibold text-surface-600-400 uppercase tracking-wide">Drafts</h2>

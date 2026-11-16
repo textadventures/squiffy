@@ -1,2 +1,9 @@
 /_app/immutable/*
   cache-control: max-age=31536000, immutable
+
+/manifest.webmanifest
+  Content-Type: application/manifest+json
+
+# Checked for a new version on every load
+/service-worker.js
+  cache-control: no-cache
