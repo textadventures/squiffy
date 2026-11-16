@@ -148,10 +148,10 @@
             role="menu"
             tabindex="-1"
             style={fixed ? fixedStyle : undefined}
-            class="{fixed ? "" : `absolute ${align === "right" ? "right-0" : "left-0"} top-full mt-1`} z-[999] w-56 bg-surface-50-950 border border-surface-200-800 rounded shadow-lg py-1"
+            class="{fixed ? "" : `absolute ${align === "right" ? "right-0" : "left-0"} top-full mt-1`} z-[999] w-56 max-h-[calc(100dvh-5rem)] overflow-y-auto bg-surface-50-950 border border-surface-200-800 rounded shadow-lg py-1"
             onkeydown={onMenuKeydown}
         >
-            {#each items as item, i (item.label)}
+            {#each items as item, i (i)}
                 {#if item.divider}
                     <div class="my-1 border-t border-surface-200-800"></div>
                 {/if}

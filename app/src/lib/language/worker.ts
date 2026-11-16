@@ -1,7 +1,7 @@
 // The language service, in a Web Worker so analysing a large story never blocks typing. It reads
 // project files by calling back to the app (HostApi), and the app sends it the text of the file
 // being edited with updateFile() as it changes.
-import { emit, formatDiagnostic } from "squiffy-compiler";
+import { convertV5Syntax, emit, findV5Syntax, formatDiagnostic } from "squiffy-compiler";
 import { createLanguageService, type LanguageService } from "squiffy-compiler/language-service";
 import { dirname, resolvePath } from "@textadventures/project-fs";
 import { connect, type Handlers, type Port } from "../rpc.js";
@@ -79,6 +79,8 @@ const handlers: WorkerApi = {
     },
     compile,
     exportStory,
+    countV5Syntax: text => findV5Syntax(text).length,
+    convertV5Syntax: text => convertV5Syntax(text),
     async findSection(section, passage) {
         const symbol = (await current().getAnalysis()).sections.find(s => s.name === section);
         const node = passage ? symbol?.passages.find(p => p.name === passage)?.node : symbol?.node;

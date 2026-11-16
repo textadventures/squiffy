@@ -11,6 +11,7 @@
     import ArrowLeft from "@lucide/svelte/icons/arrow-left";
     import X from "@lucide/svelte/icons/x";
     import TriangleAlert from "@lucide/svelte/icons/triangle-alert";
+    import ChevronRight from "@lucide/svelte/icons/chevron-right";
 
     interface Props {
         // Compiles the story as it is in the editor now
@@ -35,6 +36,9 @@
     let canGoBack = $state(false);
     let compileErrors = $state<string[] | null>(null);
     let runtimeError = $state<string | null>(null);
+    // The story's attributes as it sets them, as the 6.x editor's debugger logs them
+    let attributes = $state<Record<string, unknown>>({});
+    let attributesOpen = $state(false);
     // Navigations while the story starts are where it starts, not the player clicking
     let following = false;
     // Where the story last said it was
@@ -63,6 +67,9 @@
                 },
                 onLoaded: () => {
                     following = true;
+                },
+                onAttributeSet: (name, value) => {
+                    attributes = { ...attributes, [name]: value };
                 },
                 onCanGoBackChanged: value => {
                     canGoBack = value;
@@ -106,6 +113,7 @@
         }
         compileErrors = null;
         runtimeError = null;
+        attributes = {};
         canGoBack = false;
         following = false;
         lastPlace = "";
@@ -171,4 +179,25 @@
     <!-- The story's own page, always light: its default stylesheet doesn't follow the editor's
          theme (#176 covers the game's CSS separately) -->
     <iframe bind:this={iframe} title="Story preview" class="flex-1 w-full bg-white"></iframe>
+    {#if Object.keys(attributes).length > 0}
+        <div class="border-t border-surface-200-800 text-xs">
+            <button
+                type="button"
+                class="w-full flex items-center gap-1 px-2 py-1 text-left font-semibold text-surface-600-400"
+                aria-expanded={attributesOpen}
+                onclick={() => { attributesOpen = !attributesOpen; }}
+            >
+                <ChevronRight size={12} class="transition-transform {attributesOpen ? "rotate-90" : ""}" />
+                Attributes ({Object.keys(attributes).length})
+            </button>
+            {#if attributesOpen}
+                <dl class="max-h-40 overflow-y-auto grid grid-cols-[auto_1fr] gap-x-3 px-3 pb-2 font-mono">
+                    {#each Object.entries(attributes).sort(([a], [b]) => a.localeCompare(b)) as [name, value] (name)}
+                        <dt class="text-surface-600-400">{name}</dt>
+                        <dd class="truncate" title={JSON.stringify(value)}>{JSON.stringify(value)}</dd>
+                    {/each}
+                </dl>
+            {/if}
+        </div>
+    {/if}
 </section>

@@ -3,6 +3,7 @@
     import type { Snippet } from "svelte";
     import { onMount } from "svelte";
     import { initTheme } from "#lib/theme-store.js";
+    import { initSettings } from "#lib/settings.svelte.js";
     import ConfirmDialog from "#components/ConfirmDialog.svelte";
     import Toast from "#components/Toast.svelte";
     import SettingsModal from "#components/SettingsModal.svelte";
@@ -20,6 +21,7 @@
 
     onMount(() => {
         initTheme();
+        initSettings();
         void registerServiceWorker();
     });
 </script>

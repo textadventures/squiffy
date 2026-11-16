@@ -6,8 +6,10 @@
     import { base } from "#lib/base-path.js";
     import { project, closeProject, downloadFile } from "#lib/project.svelte.js";
     import { settings } from "#lib/settings.svelte.js";
+    import { builtInSnippets, type Snippet } from "#lib/snippets.js";
+    import type { EditorCommand } from "#lib/editor-commands.js";
     import { isNarrow } from "#lib/layout.svelte.js";
-    import { DOCS_URL, GITHUB_URL } from "#lib/links.js";
+    import { DISCORD_URL, DOCS_URL, GAMES_URL, GITHUB_URL, ISSUES_URL } from "#lib/links.js";
     import type { ExportKind } from "#lib/language/protocol.js";
     import FolderDown from "@lucide/svelte/icons/folder-down";
     import Globe from "@lucide/svelte/icons/globe";
@@ -30,6 +32,13 @@
     import ImageIcon from "@lucide/svelte/icons/image";
     import StepForward from "@lucide/svelte/icons/step-forward";
     import GithubIcon from "#components/GithubIcon.svelte";
+    import Plus from "@lucide/svelte/icons/plus";
+    import Undo2 from "@lucide/svelte/icons/undo-2";
+    import Redo2 from "@lucide/svelte/icons/redo-2";
+    import Search from "@lucide/svelte/icons/search";
+    import FoldVertical from "@lucide/svelte/icons/fold-vertical";
+    import UnfoldVertical from "@lucide/svelte/icons/unfold-vertical";
+    import Info from "@lucide/svelte/icons/info";
 
     interface Props {
         // On a narrow screen, whether the outline is showing instead of the editor
@@ -43,9 +52,18 @@
         ondownloadproject?: () => void;
         // Publishes the story: HTML, JavaScript and assets as a zip, one HTML file, or the JavaScript
         onexport?: (kind: ExportKind) => void;
+        // Undo, redo, find, fold all and unfold all, in the editor
+        oncommand?: (command: EditorCommand) => void;
+        // Adds a section or passage
+        onadd?: (kind: "section" | "passage") => void;
+        // Inserts a snippet at the cursor
+        onsnippet?: (content: string) => void;
+        // The author's own snippets, from [snippet:...] blocks
+        snippets?: Snippet[];
+        onabout?: () => void;
     }
 
-    let { outlineOpen = false, ontoggleoutline, onrun, onassets, ondownloadproject, onexport }: Props = $props();
+    let { outlineOpen = false, ontoggleoutline, onrun, onassets, ondownloadproject, onexport, oncommand, onadd, onsnippet, snippets = [], onabout }: Props = $props();
 
     const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform);
     const mod = isMac ? "⌘" : "Ctrl+";
@@ -75,15 +93,52 @@
         { label: "JavaScript only", action: () => onexport?.("js"), icon: FileCode },
     ]);
 
+    // Add: a section or passage, or a snippet, as the 6.x editor's Add and Snippets menus
+    let insertMenuItems = $derived<DropdownMenuItem[]>([
+        { label: "Section", action: () => onadd?.("section"), icon: Plus },
+        { label: "Passage", action: () => onadd?.("passage"), icon: Plus },
+        ...builtInSnippets.map((s, i): DropdownMenuItem => ({
+            label: s.name,
+            action: () => onsnippet?.(s.content),
+            ...(i === 0 ? { divider: true, heading: "Snippets" } : {}),
+        })),
+        ...snippets.map((s, i): DropdownMenuItem => ({
+            label: s.name,
+            action: () => onsnippet?.(s.content),
+            ...(i === 0 ? { divider: true, heading: "My snippets" } : {}),
+        })),
+    ]);
+
     let overflowItems = $derived.by((): DropdownMenuItem[] => {
-        const links: DropdownMenuItem[] = [
-            { label: "Documentation", action: () => openLink(DOCS_URL), icon: BookOpen },
-            { label: "GitHub", action: () => openLink(GITHUB_URL), icon: GithubIcon },
-            { label: "Settings", action: () => { settings.open = true; }, icon: SettingsIcon },
+        const edit: DropdownMenuItem[] = [
+            { label: "Undo", action: () => oncommand?.("undo"), icon: Undo2 },
+            { label: "Redo", action: () => oncommand?.("redo"), icon: Redo2 },
         ];
-        if (!isNarrow.current) return links;
-        links[0] = { ...links[0], divider: true };
-        return [...fileMenuItems, { label: "Images and other files", action: () => onassets?.(), icon: ImageIcon }, ...links];
+        const view: DropdownMenuItem[] = [
+            { label: "Find and replace", action: () => oncommand?.("find"), icon: Search },
+            { label: "Collapse all", action: () => oncommand?.("foldAll"), icon: FoldVertical },
+            { label: "Expand all", action: () => oncommand?.("unfoldAll"), icon: UnfoldVertical },
+        ];
+        const help: DropdownMenuItem[] = [
+            { label: "Documentation", action: () => openLink(`${DOCS_URL}/getting-started/`), icon: BookOpen, divider: true, heading: "Help" },
+            { label: "Examples", action: () => openLink(`${DOCS_URL}/featured-examples/`) },
+            { label: "Squiffy games", action: () => openLink(GAMES_URL) },
+            { label: "Report an issue", action: () => openLink(ISSUES_URL) },
+            { label: "GitHub", action: () => openLink(GITHUB_URL), icon: GithubIcon },
+            { label: "Discord", action: () => openLink(DISCORD_URL) },
+            { label: "About Squiffy", action: () => onabout?.(), icon: Info },
+            { label: "Settings", action: () => { settings.open = true; }, icon: SettingsIcon, divider: true },
+        ];
+        if (!isNarrow.current) return [...view, ...help];
+        // On a phone the toolbar's buttons fold into this menu
+        return [
+            ...edit,
+            ...view,
+            { ...fileMenuItems[0], divider: true },
+            ...fileMenuItems.slice(1),
+            { label: "Images and other files", action: () => onassets?.(), icon: ImageIcon, divider: true },
+            ...help,
+        ];
     });
 </script>
 
@@ -129,6 +184,18 @@
         </AppBar.Lead>
         <AppBar.Trail>
             <div class="flex gap-1.5 items-center">
+                <DropdownMenu items={insertMenuItems}>
+                    {#snippet trigger(toggle, open)}
+                        <button
+                            type="button"
+                            class="btn btn-xs preset-outlined-primary-500"
+                            onclick={toggle}
+                            title="Add a section, passage or snippet"
+                            aria-haspopup="menu"
+                            aria-expanded={open}
+                        ><Plus size={14} /> <span class="hidden md:inline">Add</span> <ChevronDown size={12} class="hidden md:inline" /></button>
+                    {/snippet}
+                </DropdownMenu>
                 {#if isNarrow.current}
                     <button
                         type="button"
@@ -139,6 +206,9 @@
                         aria-pressed={outlineOpen}
                     ><ListTree size={16} /></button>
                 {:else}
+                    <button type="button" class="toolbar-icon-btn" onclick={() => oncommand?.("undo")} title="Undo ({mod}Z)" aria-label="Undo"><Undo2 size={16} /></button>
+                    <button type="button" class="toolbar-icon-btn" onclick={() => oncommand?.("redo")} title="Redo ({mod}Shift+Z)" aria-label="Redo"><Redo2 size={16} /></button>
+                    <div class="toolbar-divider"></div>
                     <button type="button" class="toolbar-icon-btn" onclick={onassets} title="Images and other files" aria-label="Images and other files"><ImageIcon size={16} /></button>
                     <DropdownMenu items={fileMenuItems}>
                         {#snippet trigger(toggle, open)}
@@ -201,6 +271,12 @@
     }
     .toolbar-icon-btn:disabled {
         opacity: 0.4;
+    }
+    .toolbar-divider {
+        width: 1px;
+        height: 1.25rem;
+        background-color: var(--color-surface-200-800);
+        margin: 0 0.25rem;
     }
     .save-chip {
         display: inline-flex;

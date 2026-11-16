@@ -13,7 +13,7 @@ export const editorTheme = EditorView.theme({
     "&": {
         backgroundColor: "var(--color-surface-50-950)",
         color: "var(--color-surface-900-100)",
-        fontSize: "var(--text-sm)",
+        fontSize: "var(--editor-font-size, 14px)",
     },
     ".cm-content, .cm-gutters": {
         // Quest Viva uses text-xs for short scripts; a whole story reads better a size up

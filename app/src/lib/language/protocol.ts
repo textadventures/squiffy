@@ -1,5 +1,6 @@
 // What the app and the language service worker call on each other (see rpc.ts).
 import type { LanguageService, Location } from "squiffy-compiler/language-service";
+import type { V5ConversionResult } from "squiffy-compiler";
 
 // The language service's queries, as the worker exposes them
 export type ServiceQueries = Omit<LanguageService, "updateFile" | "fileChanged" | "setMainFile" | "getAnalysis">;
@@ -22,6 +23,10 @@ export interface WorkerApi extends ServiceQueries {
     exportStory(kind: ExportKind, assets: Record<string, Uint8Array>): Promise<ExportResult>;
     // Compiles the story from the language service's latest analysis, for the preview
     compile(): Promise<CompiledStory>;
+    // Squiffy 5 text processor syntax in a file: how much there is, and the file converted to
+    // Squiffy 6's, as the 6.x editor offers when it opens one
+    countV5Syntax(text: string): number;
+    convertV5Syntax(text: string): V5ConversionResult;
     // Where a section, or a passage in it, is defined: for following the preview
     findSection(section: string, passage?: string): Promise<Location | undefined>;
     // Starts (or restarts) the service for a project
