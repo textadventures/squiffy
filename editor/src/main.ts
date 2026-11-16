@@ -817,8 +817,11 @@ const init = async function () {
     onClick("edit-find", editor.find);
     onClick("edit-replace", editor.replace);
 
-    onClick("help-docs", () => openExternalLink("https://squiffystory.com/getting-started/"));
-    onClick("help-examples", () => openExternalLink("https://squiffystory.com/featured-examples/"));
+    // deploy-app.yml builds prereleases with VITE_DOCS_URL set to beta.squiffystory.com, the docs
+    // for the next release.
+    const docsUrl = import.meta.env.VITE_DOCS_URL || "https://squiffystory.com";
+    onClick("help-docs", () => openExternalLink(`${docsUrl}/getting-started/`));
+    onClick("help-examples", () => openExternalLink(`${docsUrl}/featured-examples/`));
     onClick("help-games", () => openExternalLink("https://textadventures.co.uk/games/platform/squiffy"));
     onClick("help-report-issue", () => openExternalLink("https://github.com/textadventures/squiffy/issues"));
     onClick("help-github", () => openExternalLink("https://github.com/textadventures/squiffy"));

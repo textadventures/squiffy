@@ -4,6 +4,7 @@ import { fileURLToPath } from "url";
 import { compile } from "squiffy-compiler";
 import { createPackage } from "@textadventures/squiffy-packager";
 import { externalFiles } from "@textadventures/squiffy-cli";
+import { siteUrl } from "../src/channel.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -179,7 +180,7 @@ ${examples.map(ex => `            <div class="example-card">
         </div>
 
         <div class="footer">
-            <p><a href="https://squiffystory.com" target="_blank">Squiffy Documentation</a></p>
+            <p><a href="${siteUrl}" target="_blank">Squiffy Documentation</a></p>
         </div>
     </div>
 </body>
