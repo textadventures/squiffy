@@ -39,6 +39,10 @@
     import FoldVertical from "@lucide/svelte/icons/fold-vertical";
     import UnfoldVertical from "@lucide/svelte/icons/unfold-vertical";
     import Info from "@lucide/svelte/icons/info";
+    import Library from "@lucide/svelte/icons/library";
+    import Gamepad2 from "@lucide/svelte/icons/gamepad-2";
+    import Bug from "@lucide/svelte/icons/bug";
+    import DiscordIcon from "#components/DiscordIcon.svelte";
 
     interface Props {
         // On a narrow screen, whether the outline is showing instead of the editor
@@ -121,11 +125,11 @@
         ];
         const help: DropdownMenuItem[] = [
             { label: "Documentation", action: () => openLink(`${DOCS_URL}/getting-started/`), icon: BookOpen, divider: true, heading: "Help" },
-            { label: "Examples", action: () => openLink(`${DOCS_URL}/featured-examples/`) },
-            { label: "Squiffy games", action: () => openLink(GAMES_URL) },
-            { label: "Report an issue", action: () => openLink(ISSUES_URL) },
+            { label: "Examples", action: () => openLink(`${DOCS_URL}/featured-examples/`), icon: Library },
+            { label: "Squiffy games", action: () => openLink(GAMES_URL), icon: Gamepad2 },
+            { label: "Report an issue", action: () => openLink(ISSUES_URL), icon: Bug },
             { label: "GitHub", action: () => openLink(GITHUB_URL), icon: GithubIcon },
-            { label: "Discord", action: () => openLink(DISCORD_URL) },
+            { label: "Discord", action: () => openLink(DISCORD_URL), icon: DiscordIcon },
             { label: "About Squiffy", action: () => onabout?.(), icon: Info },
             { label: "Settings", action: () => { settings.open = true; }, icon: SettingsIcon, divider: true },
         ];

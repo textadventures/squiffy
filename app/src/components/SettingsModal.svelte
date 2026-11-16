@@ -48,7 +48,7 @@
             </fieldset>
             <label class="flex flex-col gap-2">
                 <span class="text-sm font-medium">Editor text size</span>
-                <select class="select text-sm" value={settings.fontSize} onchange={e => setFontSize(Number(e.currentTarget.value))}>
+                <select class="select bg-surface-50-950 px-2 py-1 text-sm" value={settings.fontSize} onchange={e => setFontSize(Number(e.currentTarget.value))}>
                     {#each FONT_SIZES as size (size)}
                         <option value={size}>{size}px{size === DEFAULT_FONT_SIZE ? " (default)" : ""}</option>
                     {/each}
