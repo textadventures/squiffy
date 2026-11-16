@@ -8,20 +8,29 @@
   },
   "type": "module",
   "main": "dist/squiffy.runtime.js",
-  "types": "dist/src/squiffy.runtime.d.ts",
+  "types": "dist/squiffy.runtime.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/src/squiffy.runtime.d.ts",
+      "types": "./dist/squiffy.runtime.d.ts",
       "default": "./dist/squiffy.runtime.js"
     },
     "./squiffy.runtime.css": "./dist/squiffy.runtime.css",
     "./dist/squiffy.runtime.global.js": "./dist/squiffy.runtime.global.js",
-    "./dist/squiffy.runtime.css": "./dist/squiffy.runtime.css"
+    "./dist/squiffy.runtime.css": "./dist/squiffy.runtime.css",
+    "./preview-host": {
+      "types": "./dist/preview-host.d.ts",
+      "default": "./dist/preview-host.js"
+    },
+    "./preview-html": {
+      "types": "./dist/preview-html.d.ts",
+      "default": "./dist/preview-html.js"
+    },
+    "./squiffy.preview.html": "./dist/squiffy.preview.html"
   },
   "scripts": {
     "dev": "vitest",
     "test": "vitest --run",
-    "build": "vite build",
+    "build": "vite build && vite build -c vite.preview.config.ts",
     "prepublishOnly": "npm run build && npm run test"
   },
   "author": "Alex Warren",

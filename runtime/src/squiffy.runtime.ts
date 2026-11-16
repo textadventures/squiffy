@@ -1,4 +1,4 @@
-import { SquiffyApi, SquiffyInitOptions, Story, Section, Passage } from "./types.js";
+import { SquiffyApi, SquiffyInitOptions, Story, Section, Passage, StartAt } from "./types.js";
 import { TextProcessor } from "./textProcessor.js";
 import { Emitter, SquiffyEventMap } from "./events.js";
 import { State } from "./state.js";
@@ -96,7 +96,15 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         link.removeAttribute("tabindex");
     }
     
-    async function begin() {
+    async function begin(startAt?: StartAt) {
+        if (startAt && startAt.section in story.sections) {
+            // Start somewhere else in a fresh story, e.g. from the section being edited
+            await go(startAt.section);
+            if (startAt.passage !== undefined && get("_section") == startAt.section) {
+                await showPassage(startAt.passage);
+            }
+            return;
+        }
         if (!load()) {
             await go(story.start);
         }
@@ -210,6 +218,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         if (newCanGoBack != oldCanGoBack) {
             emitter.emit("canGoBackChanged", { canGoBack: newCanGoBack });
         }
+        emitter.emit("navigated", { section: sectionName });
     }
 
     function runJs(index: number, extra: any = null) {
@@ -330,6 +339,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         if (newCanGoBack != oldCanGoBack) {
             emitter.emit("canGoBackChanged", { canGoBack: newCanGoBack });
         }
+        emitter.emit("navigated", { section: get("_section"), passage: passageName });
     }
     
     async function processAttributes(attributes: string[]) {
@@ -683,6 +693,8 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         if (!canGoBack()) {
             emitter.emit("canGoBackChanged", { canGoBack: false });
         }
+        const passage = currentPassageElement?.getAttribute("data-passage");
+        emitter.emit("navigated", passage ? { section: get("_section"), passage } : { section: get("_section") });
     }
 
     // We create a separate div inside the passed-in element. This allows us to clear the text output, but
