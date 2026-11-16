@@ -178,6 +178,12 @@ Starts or resumes the story. Call this after initialization:
 await squiffyApi.begin();
 ```
 
+To start somewhere other than the beginning, pass a section, and optionally a passage in it. This ignores any saved game:
+
+```javascript
+await squiffyApi.begin({ section: 'cellar', passage: 'look around' });
+```
+
 ### restart()
 
 Restarts the story from the beginning, clearing saved state:
@@ -243,6 +249,16 @@ Fired when the ability to go back changes:
 ```javascript
 squiffyApi.on('canGoBackChanged', (event) => {
     backButton.disabled = !event.canGoBack;
+});
+```
+
+### navigated
+
+Fired when a section or passage is shown, and when going back returns to one. `passage` is only set for a passage:
+
+```javascript
+squiffyApi.on('navigated', (event) => {
+    console.log(`Now in ${event.section}`, event.passage);
 });
 ```
 

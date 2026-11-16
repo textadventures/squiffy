@@ -22,8 +22,17 @@ export interface SquiffySettings {
     onSet: (attribute: string, value: any) => void,
 }
 
+// Where to start a story, instead of its start section or a saved game
+export interface StartAt {
+    section: string;
+    // A passage in that section, shown after the section
+    passage?: string;
+}
+
 export interface SquiffyApi {
-    begin: () => Promise<void>;
+    // Starts the story: from startAt if it's given (ignoring any saved game), otherwise from the
+    // saved game, or the story's start section.
+    begin: (startAt?: StartAt) => Promise<void>;
     restart: () => void;
     get: (attribute: string) => any;
     set: (attribute: string, value: any) => void;

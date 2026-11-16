@@ -44,7 +44,7 @@ const resolveSrcset = (srcset: string, resolve: AssetUrlResolver) =>
 
 // CSS url(...) references in inline style attributes.
 const resolveCssUrls = (css: string, resolve: AssetUrlResolver) =>
-    css.replace(/url\(\s*(['"]?)(.*?)\1\s*\)/gi, (whole, quote: string, url: string) => {
+    css.replace(/url\(\s*(['"]?)(.*?)\1\s*\)/gi, (whole, _quote: string, url: string) => {
         const resolved = resolveUrl(url, resolve);
         if (resolved === url) return whole;
         return `url("${resolved.replace(/["\\\n]/g, c => "\\" + (c === "\n" ? "a " : c))}")`;
