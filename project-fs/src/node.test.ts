@@ -1,7 +1,8 @@
 import { mkdtemp, mkdir, readFile, rm, symlink, writeFile, readdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { promises } from "node:fs";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { isProjectFsError } from "./errors.js";
 import { NodeFileSystem } from "./node.js";
 import { runConformance } from "./test/conformance.js";
@@ -100,5 +101,42 @@ describe("NodeFileSystem keeps every path inside the root", () => {
 
     test("the root must be absolute", () => {
         expect(() => new NodeFileSystem("relative/dir")).toThrow(/absolute/);
+    });
+});
+
+describe("NodeFileSystem watch", () => {
+    let dir: string;
+    let fs: NodeFileSystem;
+
+    beforeEach(async () => {
+        dir = await mkdtemp(join(tmpdir(), "project-fs-watch-"));
+        fs = new NodeFileSystem(dir);
+    });
+    afterEach(async () => {
+        vi.restoreAllMocks();
+        fs.close();
+        await rm(dir, { recursive: true, force: true });
+    });
+
+    test("an own write isn't reported when the watcher settles before the write has finished", async () => {
+        const seen: string[] = [];
+        const stop = fs.watch((changes) => seen.push(...changes.map((c) => c.path)));
+        await new Promise((r) => setTimeout(r, 100)); // let the native watcher start
+        // Hold up the write's own stat() of the file (after the data is on disk) past the
+        // watcher's debounce, as a busy machine might.
+        const realStat = promises.stat;
+        let held = false;
+        vi.spyOn(promises, "stat").mockImplementation((async (...args: Parameters<typeof realStat>) => {
+            if (!held && String(args[0]).endsWith("slow.txt")) {
+                held = true;
+                await new Promise((r) => setTimeout(r, 400));
+            }
+            return realStat(...args);
+        }) as typeof realStat);
+        await fs.write("slow.txt", "mine");
+        await new Promise((r) => setTimeout(r, 400));
+        expect(held).toBe(true);
+        expect(seen.filter((p) => p === "slow.txt")).toEqual([]);
+        stop();
     });
 });
