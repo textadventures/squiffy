@@ -782,7 +782,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     const animation = new Animation();
 
     const pluginManager = new PluginManager(outputElement, textProcessor, state, linkHandler,
-        getSectionText, getPassageText, ui.renderHtml, addTransition, animation, emitter);
+        getSectionText, getPassageText, ui.renderHtml, addTransition, animation, emitter, resolveAssetsInHtml);
     pluginManager.add(Plugins.ReplaceLabel());
     pluginManager.add(Plugins.RotateSequencePlugin());
     pluginManager.add(Plugins.RandomPlugin());

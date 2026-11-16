@@ -1,8 +1,20 @@
-import { expect, test, beforeEach, afterEach } from "vitest";
+import { expect, test, beforeEach, afterEach, vi } from "vitest";
 import globalJsdom from "global-jsdom";
 import { init } from "./squiffy.runtime.js";
 import { compile as squiffyCompile } from "squiffy-compiler";
 import { SquiffyInitOptions } from "./types.js";
+
+// anime.js captures the global document when it's imported, which is before each test
+// sets up jsdom, so it can't run here. Replace it with a stub that completes immediately.
+vi.mock("animejs", () => ({
+    animate: (_targets: unknown, params: { onComplete?: () => void }) => {
+        setTimeout(() => params.onComplete?.());
+    },
+    stagger: () => 0,
+    text: {
+        split: (el: HTMLElement) => ({ chars: [el], words: [el], lines: [el] }),
+    },
+}));
 
 const html = `
 <!DOCTYPE html>
@@ -154,4 +166,62 @@ test("Saved output is resolved again when it's loaded", async () => {
     api = await init({ element, story, persist: true, storyId: "assets-test", resolveAssetUrl: p => `blob:new/${p}` });
     await api.begin();
     expect(element.querySelector("img")!.getAttribute("src")).toBe("blob:new/cat.png");
+});
+
+test("Asset paths in animate blocks are unchanged without resolveAssetUrl", async () => {
+    const { element } = await initScript("{{#animate \"typewriter\"}}![A cat](cat.png){{/animate}}");
+    await vi.waitFor(() => expect(element.querySelector(".squiffy-animate")).toBeNull());
+    expect(element.querySelector("img")!.getAttribute("src")).toBe("cat.png");
+    expect(element.innerHTML).not.toContain("data-squiffy-asset");
+});
+
+test("resolveAssetUrl is applied to inline animate content", async () => {
+    const { element } = await initScript("{{#animate \"typewriter\"}}![A cat](cat.png){{/animate}}", { resolveAssetUrl });
+    await vi.waitFor(() => expect(element.querySelector(".squiffy-animate")).toBeNull());
+    // The content is restored after the animation completes, so check it's still resolved
+    expect(element.querySelector("img")!.getAttribute("src")).toBe("blob:test/cat.png");
+});
+
+test("resolveAssetUrl is applied to block animate content", async () => {
+    const { element } = await initScript(`{{#animate "typewriter"}}
+![A cat](cat.png)
+
+<img src="dog.png">
+{{/animate}}`, { resolveAssetUrl });
+    await vi.waitFor(() => expect(element.querySelector(".squiffy-animate")).toBeNull());
+    const srcs = [...element.querySelectorAll("img")].map(img => img.getAttribute("src"));
+    expect(srcs).toEqual(["blob:test/cat.png", "blob:test/dog.png"]);
+});
+
+test("resolveAssetUrl is applied to animate content waiting for a link trigger", async () => {
+    const { element } = await initScript(`{{#animate "typewriter" trigger="link"}}![A cat](cat.png) [next]{{/animate}}
+
+[next]:
+Next`, { resolveAssetUrl });
+    expect(element.querySelector(".squiffy-animate img")!.getAttribute("src")).toBe("blob:test/cat.png");
+});
+
+test("Saved animate content is resolved again when it's loaded", async () => {
+    const script = `{{#animate "typewriter" trigger="link"}}![A cat](cat.png) [next]{{/animate}}
+
+{{#animate "typewriter"}}![A dog](dog.png){{/animate}}
+
+[next]:
+Next`;
+    const story = await compile(script);
+    const srcs = (element: HTMLElement) => [...element.querySelectorAll("img")].map(img => img.getAttribute("src"));
+
+    let element = document.getElementById("squiffy")!;
+    let api = await init({ element, story, persist: true, storyId: "assets-animate-test", resolveAssetUrl: p => `blob:old/${p}` });
+    await api.begin();
+    await vi.waitFor(() => expect(element.querySelectorAll(".squiffy-animate").length).toBe(1));
+    expect(srcs(element)).toEqual(["blob:old/cat.png", "blob:old/dog.png"]);
+
+    // Load the saved output: the pending (link-triggered) animation is rendered again from
+    // its stored content, and the completed one is re-resolved with the rest of the output.
+    element.innerHTML = "";
+    element = document.getElementById("squiffy")!;
+    api = await init({ element, story, persist: true, storyId: "assets-animate-test", resolveAssetUrl: p => `blob:new/${p}` });
+    await api.begin();
+    expect(srcs(element)).toEqual(["blob:new/cat.png", "blob:new/dog.png"]);
 });

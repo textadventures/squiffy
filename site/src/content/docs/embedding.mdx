@@ -157,7 +157,7 @@ const squiffyApi = await squiffyRuntime.init({
 });
 ```
 
-It's applied to `src`, `srcset` and `poster` attributes (so images, audio, video and `<source>` elements), and to `url(...)` in inline `style` attributes. It's called with the path as written in the story, with any `%20`-style encoding decoded. Return the path unchanged to leave it as it is.
+It's applied to `src`, `srcset` and `poster` attributes (so images, audio, video and `<source>` elements), and to `url(...)` in inline `style` attributes, including inside `{{#animate}}` blocks. It's called with the path as written in the story, with any `%20`-style encoding decoded. Return the path unchanged to leave it as it is.
 
 It isn't called for:
 - absolute URLs (`http:`, `https:`, `data:`, `blob:` and other schemes) or protocol-relative ones (`//example.com/...`)
