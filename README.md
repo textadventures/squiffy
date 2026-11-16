@@ -69,7 +69,7 @@ npm install  # run again to register local packages
 | `runtime`     | `squiffy-runtime`                     | Browser library for running compiled stories                                                            |
 | `packager`    | `squiffy-packager`                    | Bundles compiler output + runtime into deployable files                                                 |
 | `cli`         | `@textadventures/squiffy-cli`         | Node.js CLI wrapper around the packager                                                                 |
-| `editor`      | `@textadventures/squiffy-editor`      | Web editor at [app.squiffystory.com](https://app.squiffystory.com)                                      |
+| `app`         | `@textadventures/squiffy-app`         | Web editor at [app.squiffystory.com](https://app.squiffystory.com)                                      |
 | `site`        | `site`                                | Documentation site at [squiffystory.com](https://squiffystory.com)                                      |
 | `types`       | `@textadventures/squiffy-types`       | Type definitions for the Vite plugin                                                                    |
 | `vite-plugin` | `@textadventures/vite-plugin-squiffy` | Vite plugin for importing `.squiffy` files into a web app                                               |

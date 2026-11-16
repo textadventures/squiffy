@@ -5,56 +5,80 @@ sidebar:
     order: 2
 ---
 
-The Squiffy editor at [app.squiffystory.com](https://app.squiffystory.com/) runs entirely in your browser, with no account needed. Your story's script is on the left, and a playable version of it is on the right.
+The Squiffy editor at [app.squiffystory.com](https://app.squiffystory.com/) runs entirely in your browser, with no account needed. Your story's files and outline are on the left, the script in the middle, and a playable version of your story on the right.
 
 ## Starting out
 
-When you open the editor, the welcome screen lets you create a new game or open a `.squiffy` file from your computer. It also lists files you've opened recently, and lets you resume any unsaved work.
+The home page lets you start a new story, open a folder, or open a file.
 
-You can get back to the welcome screen at any time from **File > Welcome Screen...**.
+- **New story** creates a draft, which is kept in your browser.
+- **Open folder** edits a story's files where they are on your computer. This needs **Chrome** or **Edge**, which support the File System Access API. Folders you've opened are listed under **Recent folders**, so you can open them again with a click. Your browser may ask for permission again.
+- **Open file** copies a `.squiffy` file, or a project `.zip`, into a new draft.
+
+Your drafts are listed on the home page too.
+
+## Saving your work
+
+The editor saves as you go, a moment after you stop typing, and the toolbar shows whether everything is saved. Press Ctrl+S (Cmd+S on Mac) to save straight away.
+
+Drafts are kept in your browser's storage, which the browser can clear, and they aren't shared between browsers or devices. To keep a copy of a draft, use **File > Download project (.zip)**. **Open file** brings it back as a new draft. A story in a folder you opened is saved to the files themselves.
 
 ## Installing the editor
 
 The editor is a Progressive Web App (PWA). In browsers that support it, such as Chrome and Edge, you can install it from the address bar, and it then opens in its own window like any other app. Once it's been loaded, the editor works offline.
 
-When a new version of Squiffy is available, the welcome screen shows an **Update now** button.
+When a new version of Squiffy is ready, a message offers to reload into it. Your work is saved first.
 
-## Saving your work
+## Files
 
-The editor saves your work in your browser's storage as you type. If you close the tab or your browser crashes, you can pick up where you left off from the welcome screen.
+A story can be split into several `.squiffy` files. The main file, marked with a star, `@import`s the others. When you create a `.squiffy` file with the **+** button in the files list, the editor adds the `@import` for you.
 
-To save your story as a `.squiffy` file, use **File > Save** or **File > Save as...**, or press Ctrl+S (Cmd+S on Mac). An "Unsaved changes" badge in the toolbar shows when there are changes you haven't saved to the file yet.
-
-For the best experience, use **Chrome** or **Edge**. These browsers support the File System Access API, which lets the editor save straight back to the file you opened. In other browsers, saving downloads a copy of the file instead.
+Each file opens in its own tab. Use a file's **⋯** menu to rename, download or delete it, or to make it the main file.
 
 ## Writing your story
 
-The two dropdowns above the script list your story's sections, and the passages in the current section. Choose one to jump straight to it.
+The **Outline** lists the sections and passages in the current file. Choose one to jump straight to it, or search for one with Ctrl+Shift+O (Cmd+Shift+O on Mac).
 
-The toolbar has some shortcuts for writing:
+The **Add** menu inserts:
 
-- **Add** inserts a new section or passage. If you select some text first, such as "open the door", that text becomes a link to a new section or passage with the same name.
-- **Snippets** inserts commonly-used patterns, such as `{{#if}}` blocks and links. You can also define your own. See [Snippets](/snippets/).
-- The collapse and expand buttons fold every section and passage in the script, so you can see the outline of your story.
+- A new section or passage. If you select some text first, such as "open the door", that text becomes a link to a new section or passage with the same name.
+- Snippets: commonly-used patterns, such as `{{#if}}` blocks and links. You can also define your own. See [Snippets](/snippets/).
 
-The **Edit** menu has the usual undo, redo, cut, copy and paste commands, plus Find and Replace.
+The editor understands your story as you write:
+
+- It underlines problems, such as a link to a section that doesn't exist. Hover over a problem to see what's wrong, and in many cases there's a quick fix, such as creating the missing section.
+- As you type a link, it suggests the names of your sections and passages.
+- Hover over a link to see the start of the section or passage it goes to.
+- Press F12, or Ctrl+click (Cmd+click on Mac), on a link to go to the section or passage. Shift+F12 lists every link to it.
+- Press F2 on a section or passage name, or a link to one, to rename it everywhere.
+
+The ⋯ menu has **Find and replace**, and **Collapse all** and **Expand all**, which fold every section and passage so you can see the shape of your story. Undo and Redo are in the toolbar.
+
+## Images and other files
+
+The image button in the toolbar opens **Images and other files**, where you can add images, sounds and fonts to your story. **Insert** puts an image into your story at the cursor, as an `<img>` tag. These files are included when you publish your story.
 
 ## Testing your story
 
-The right-hand side of the editor plays your story. It updates as you type, so you can see changes straight away without restarting.
+**Run** (Ctrl+Enter, or Cmd+Enter on Mac) plays your story next to the script. It updates as you type, so you can see changes straight away without restarting. When you follow a link in the story, the script moves to that section.
 
+- **Run from this section** (Ctrl+Shift+Enter, or Cmd+Shift+Enter on Mac) starts the story from the section the cursor is in.
 - **Back** steps backwards through your story, one section or passage at a time. Use it to try a different choice without playing through from the start.
-- **Restart** starts your story again from the beginning.
-- **Preview** opens your story in a new tab, so you can play it as players will see it.
+- **Restart** starts your story again.
+- **Play in a new tab** opens your story as players will see it.
 
-Below the story, a log shows the Squiffy version, any errors or warnings from your script, and each attribute as it changes. This is useful for checking that your `@set` directives and `{{set}}` helpers are doing what you expect.
+Below the story, **Attributes** shows the values your story has set. This is useful for checking that your `@set` directives and `{{set}}` helpers are doing what you expect.
 
-On a phone, the editor shows either the script or the story, with a button to switch between them.
+On a phone, the editor shows the script, the outline or the story, with buttons in the toolbar to switch between them.
 
-## Exporting your story
+## Publishing your story
 
-When your story is ready, use the **File** menu to export it. See [Publishing your game](/getting-started/#publishing-your-game) for the options.
+When your story is ready, use the **File** menu to publish it. See [Publishing your game](/getting-started/#publishing-your-game) for the options.
 
 ## Opening Squiffy 5 stories
 
-If you open a story that uses the Squiffy 5 text processor syntax, such as `{if x:...}`, the editor offers to convert it to Squiffy 6. Review the changes afterwards, and use Undo if you want to go back. See [Upgrading from v5](/whats-new/#upgrading-from-v5).
+If you open a story that uses the Squiffy 5 text processor syntax, such as `{if x:...}`, the editor offers to convert it to Squiffy 6's. Review the changes afterwards, and use Undo if you want to go back. Anything that can't be converted automatically is marked as a problem. See [Upgrading from v5](/whats-new/#upgrading-from-v5).
+
+## Settings
+
+**Settings**, in the ⋯ menu, chooses a light or dark theme (or matching your system) and the size of the text in the script.

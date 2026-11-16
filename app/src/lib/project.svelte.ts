@@ -313,6 +313,12 @@ export async function listDrafts() {
     return list.sort((a, b) => (b.meta?.lastOpened ?? 0) - (a.meta?.lastOpened ?? 0));
 }
 
+// A new draft with one .squiffy file, e.g. unsaved work from the 6.x editor. Returns its id.
+export async function draftFromText(fileName: string | undefined, text: string): Promise<string> {
+    const name = fileName && /^[^/\\:*?"<>|]+\.squiffy$/i.test(fileName) ? fileName : DEFAULT_MAIN_FILE;
+    return createDraft(name, text);
+}
+
 // Imports a .squiffy file, or a project zip (from Download project), into a new draft. Returns
 // the draft's id.
 export async function importFile(file: File): Promise<string> {

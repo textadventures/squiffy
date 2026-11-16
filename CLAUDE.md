@@ -26,13 +26,10 @@ cd compiler && npm run build
 cd runtime && npm run build
 cd packager && npm run build
 cd cli && npm run build
-cd editor && npm run build
+cd app && npm run build
 cd site && npm run build
 
 # Run the editor locally
-cd editor && npm run dev
-
-# Run the Squiffy 7 editor rebuild locally
 cd app && npm run dev
 
 # Run the site locally
@@ -69,17 +66,17 @@ Releases are managed by [release-please](https://github.com/googleapis/release-p
 
 1. PRs must have a [Conventional Commits](https://www.conventionalcommits.org/)-prefixed title (`fix:`, `feat:`, `chore:`, etc.), enforced by `pr-title-lint.yml`. PRs are squash-merged, so the PR title becomes the commit message on `main` that release-please parses. `fix:` and `feat:` appear in the changelog; `chore:`, `test:`, `docs:` etc. don't, and don't trigger a release on their own. Dependabot PRs use the `chore` prefix. A PR that only changes `site/` should use `docs:` or `chore:`, not `feat:` or `fix:`: a `feat:` would bump the packages' minor version with nothing new in them. Its docs go live on beta.squiffystory.com straight away, and on squiffystory.com with the next stable release (or sooner, as a docs fix: see "Docs site" below).
 2. Every push to `main` updates a standing "release PR" that bumps the version and `CHANGELOG.md` from the commits merged since the last release. The version lives in the root `package.json` and is copied into `lerna.json`, every workspace's `package.json`, the internal `squiffy-*` dependency ranges, and the matching `package-lock.json` entries (the `extra-files` list in `release-please-config.json`; a new workspace or internal dependency must be added there).
-3. Merging that release PR *is* the release: release-please tags it (e.g. `v6.0.1`) and creates the GitHub Release, and the tag triggers `npm-publish.yml`, which runs `lerna publish from-package` to publish the non-private packages, `deploy-app.yml`, which deploys the editor to app.squiffystory.com, and (for a stable release) `deploy-site.yml`, which deploys that release's docs to squiffystory.com.
+3. Merging that release PR *is* the release: release-please tags it (e.g. `v6.0.1`) and creates the GitHub Release, and the tag triggers `npm-publish.yml`, which runs `lerna publish from-package` to publish the non-private packages, `deploy-app.yml`, which deploys the editor (`app/`) to app.squiffystory.com, and (for a stable release) `deploy-site.yml`, which deploys that release's docs to squiffystory.com.
 
 Versions follow semver from the commit types: `fix:` bumps the patch version and `feat:` the minor. To cut a specific version (e.g. `7.0.0`, or a prerelease such as `6.1.0-beta.1`), merge a commit with a `Release-As: 7.0.0` footer (exact wording). The squash merge message has to be edited by hand to include it. Give each prerelease its own `Release-As`.
 
-`.github/scripts/release-channel.sh` says whether a tag is `stable` or a `prerelease` (anything with a `-`, e.g. `-beta.1`). A stable release is marked Latest on GitHub, goes to the `latest` dist-tag on npm, deploys to app.squiffystory.com and puts its docs on squiffystory.com. A prerelease is flagged as a prerelease on GitHub, goes to the `beta` dist-tag on npm and deploys to the `beta` preview branch of `squiffy-app` (beta.squiffy.pages.dev, served as app-beta.squiffystory.com), so stable users never get it. The beta editor's Help menu links to beta.squiffystory.com (`deploy-app.yml` builds it with `VITE_DOCS_URL`).
+`.github/scripts/release-channel.sh` says whether a tag is `stable` or a `prerelease` (anything with a `-`, e.g. `-beta.1`). A stable release is marked Latest on GitHub, goes to the `latest` dist-tag on npm, deploys to app.squiffystory.com and puts its docs on squiffystory.com. A prerelease is flagged as a prerelease on GitHub, goes to the `beta` dist-tag on npm and deploys to the `beta` preview branch of `squiffy-app` (beta.squiffy.pages.dev, served as app-beta.squiffystory.com), so stable users never get it. The beta editor's Help menu links to beta.squiffystory.com, and its home page says it's the beta (`deploy-app.yml` builds it with `VITE_DOCS_URL` and `VITE_BETA_APP`).
 
 release-please pushes using the `RELEASE_PAT` repo secret (a PAT with Contents and Pull requests read/write), since tags pushed with `GITHUB_TOKEN` don't trigger other workflows. `npm-publish.yml` needs no secret: it uses npm trusted publishing, which each package must have configured on npmjs.com (trusting `textadventures/squiffy` and `npm-publish.yml`). Lerna then adds provenance, which needs every published package.json to have a `repository.url` pointing at this repo.
 
 `dependabot-automerge.yml` also merges with `RELEASE_PAT`, so the merge's push to `main` triggers release-please. Runs triggered by Dependabot can only read Dependabot secrets, so `RELEASE_PAT` must be set under both Settings → Secrets → Actions and Settings → Secrets → Dependabot. If the release PR ever goes stale or conflicts because a push didn't trigger release-please, run `gh workflow run release-please.yml` to regenerate it.
 
-**Deployments:** both sites are Cloudflare Pages projects connected to this repo, which build a preview deployment for every PR and push (their checks are required on `main`). They build with the Node version in `.node-version`, which should match the `node-version` in the GitHub workflows. Both have automatic production deployments turned off in the Cloudflare dashboard, and are deployed to production only by a workflow uploading a release tag's build with Wrangler (using the `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets). app.squiffystory.com (`squiffy-app`) is deployed by `deploy-app.yml`, which uploads stable releases to `--branch=main`, its production branch. To redeploy or roll back, run `gh workflow run deploy-app.yml --ref vX.Y.Z`.
+**Deployments:** both sites are Cloudflare Pages projects connected to this repo, which build a preview deployment for every PR and push (their checks are required on `main`). They build with the Node version in `.node-version`, which should match the `node-version` in the GitHub workflows. Both have automatic production deployments turned off in the Cloudflare dashboard, and are deployed to production only by a workflow uploading a release tag's build with Wrangler (using the `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets). app.squiffystory.com (`squiffy-app`) is deployed by `deploy-app.yml`, which uploads stable releases to `--branch=main`, its production branch. `squiffy-app` builds with `npx lerna run build --scope @textadventures/squiffy-app --include-dependencies`, into `app/build`. To redeploy or roll back, run `gh workflow run deploy-app.yml --ref vX.Y.Z`.
 
 **Docs site:** the docs have two channels, like the editor:
 
@@ -142,11 +139,7 @@ CLI options:
 - **runtime**: Browser-side execution, handles DOM manipulation, state, events
 - **packager**: Combines compiler + runtime, generates output files
 - **cli**: Node.js CLI wrapper around packager, includes file I/O and dev server
-- **editor**: Web-based IDE at app.squiffystory.com (Vite + TypeScript + Bootstrap)
-  - Uses Ace editor for code editing
-  - Two entry points: `index.html` (editor) and `preview.html` (story preview)
-  - PWA-enabled with offline support
-- **app**: Private workspace (`@textadventures/squiffy-app`) with the Squiffy 7 editor rebuild (#278): SvelteKit + Skeleton on Quest Viva's app shell, CodeMirror 6, the language service in a Web Worker, and `@textadventures/project-fs` for files. It replaces `editor/` once it reaches parity. See `app/README.md`.
+- **app**: Private workspace (`@textadventures/squiffy-app`) with the editor at app.squiffystory.com (#278): SvelteKit + Skeleton on Quest Viva's app shell, CodeMirror 6, the language service in a Web Worker, the sandboxed preview from `squiffy-runtime/preview-host`, and `@textadventures/project-fs` for files. A PWA, with offline support. It replaced the 6.x editor (`editor/`, Vite + Bootstrap + Ace) in 7.0. See `app/README.md`.
 - **site**: Marketing/documentation site at squiffystory.com, with a beta channel at beta.squiffystory.com (Astro + Starlight; see "Docs site" above)
 - **project-fs**: Private workspace (`@textadventures/project-fs`) with the editor's file system layer: list/read/write/delete over a rooted project tree, with in-memory, File System Access, OPFS, Node and Electron adapters and a shared conformance suite. No Squiffy imports, so it can become a standalone package later (#215). See `project-fs/README.md`.
 - **types**: Type definitions for `.squiffy` imports, used by the Vite plugin
@@ -163,7 +156,7 @@ CLI options:
 
 ## TypeScript Configuration
 
-Each package has its own `tsconfig.json`. Packages using Vite (runtime, packager, editor) have `vite.config.ts` files.
+Each package has its own `tsconfig.json`. Packages using Vite (runtime, packager, app) have `vite.config.ts` files.
 
 ## File Locations
 
@@ -172,7 +165,7 @@ Each package has its own `tsconfig.json`. Packages using Vite (runtime, packager
 - Runtime plugins: `runtime/src/plugins/`
 - Packager source: `packager/src/packager.ts`
 - CLI source: `cli/src/squiffy.ts`
-- Editor source: `editor/src/main.ts`
+- Editor source: `app/src/routes/edit/+page.svelte` (see `app/README.md`)
 
 ## Development Workflow
 
@@ -183,9 +176,9 @@ When working on the compiler or runtime:
 4. To test integration, rebuild dependent packages (e.g., after changing compiler, rebuild packager)
 
 When working on the editor:
-1. Run `npm run dev` in the editor directory
+1. Run `npm run dev` in the app directory
 2. Changes hot-reload automatically
-3. The editor uses local versions of compiler, runtime, and packager
+3. The editor uses local versions of compiler, runtime, packager and project-fs (rebuild them after changing them)
 
 ## Module System
 

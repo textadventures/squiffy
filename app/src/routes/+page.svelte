@@ -5,12 +5,16 @@
     import { base } from "#lib/base-path.js";
     import {
         canOpenFolders, deleteDraft, forgetFolder, importFile, listDrafts, listRecentFolders, newDraft, openFolder,
-        openRecentFolder, type DraftMeta, type RecentFolder,
+        openRecentFolder, draftFromText, type DraftMeta, type RecentFolder,
     } from "#lib/project.svelte.js";
     import type { StoredProject } from "@textadventures/project-fs";
+    import { clearLegacyAutoSave, getLegacyAutoSave, type LegacyAutoSave } from "#lib/legacy.js";
     import { confirmDialog } from "#lib/confirm.js";
     import { showToast } from "#lib/toast.js";
     import HomeHeader from "#components/HomeHeader.svelte";
+    import BetaBanner from "#components/BetaBanner.svelte";
+
+    const isBeta = import.meta.env.VITE_BETA_APP === "true";
     import FilePlus from "@lucide/svelte/icons/file-plus";
     import FolderOpen from "@lucide/svelte/icons/folder-open";
     import FileUp from "@lucide/svelte/icons/file-up";
@@ -19,6 +23,8 @@
 
     let draftList = $state<StoredProject<DraftMeta>[] | null>(null);
     let recentFolders = $state<RecentFolder[]>([]);
+    // Unsaved work from the 6.x editor, if there is any
+    let legacy = $state<LegacyAutoSave | null>(null);
     let draftsError = $state<string | null>(null);
     let busy = $state(false);
     let fileInput = $state<HTMLInputElement>();
@@ -34,7 +40,22 @@
 
     onMount(() => {
         void refresh();
+        void getLegacyAutoSave().then(saved => { legacy = saved; });
     });
+
+    const handleOpenLegacy = () => run(async () => {
+        if (!legacy) return;
+        const id = await draftFromText(legacy.fileName, legacy.content);
+        await clearLegacyAutoSave();
+        legacy = null;
+        await editDraft(id);
+    });
+
+    async function handleDiscardLegacy() {
+        if (!(await confirmDialog("Discard this unsaved work from the previous editor? This can't be undone.", { confirmLabel: "Discard", danger: true }))) return;
+        await clearLegacyAutoSave();
+        legacy = null;
+    }
 
     async function run(action: () => Promise<void>) {
         if (busy) return;
@@ -89,9 +110,25 @@
     const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" });
 </script>
 
+{#if isBeta}
+    <BetaBanner />
+{/if}
 <HomeHeader />
 
 <main class="max-w-3xl mx-auto px-4 py-6 flex flex-col gap-8">
+    {#if legacy}
+        <section aria-labelledby="legacy-heading" class="card preset-outlined-warning-500 p-4 flex flex-wrap items-center gap-3">
+            <div class="flex-1 basis-64">
+                <h2 id="legacy-heading" class="font-semibold text-sm">Unsaved work from the previous editor</h2>
+                <p class="text-xs text-surface-600-400">
+                    {legacy.title || legacy.fileName || "Untitled"} · Last changed {dateFormat.format(legacy.timestamp)}
+                </p>
+            </div>
+            <button type="button" class="btn btn-sm preset-filled-primary-500" disabled={busy} onclick={handleOpenLegacy}>Open as a draft</button>
+            <button type="button" class="btn btn-sm preset-tonal" disabled={busy} onclick={handleDiscardLegacy}>Discard</button>
+        </section>
+    {/if}
+
     <section aria-labelledby="start-heading" class="flex flex-col gap-3">
         <h2 id="start-heading" class="text-sm font-semibold text-surface-600-400 uppercase tracking-wide">Start</h2>
         <div class="grid gap-3 sm:grid-cols-3">

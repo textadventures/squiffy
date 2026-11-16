@@ -37,11 +37,6 @@
         },
         {
           "type": "json",
-          "path": "editor/package.json",
-          "jsonpath": "$.version"
-        },
-        {
-          "type": "json",
           "path": "app/package.json",
           "jsonpath": "$.version"
         },
@@ -87,11 +82,6 @@
         },
         {
           "type": "json",
-          "path": "editor/package.json",
-          "jsonpath": "$[dependencies,devDependencies][?(@property.startsWith('squiffy-') || @property.startsWith('@textadventures/squiffy-') || @property == '@textadventures/project-fs')]"
-        },
-        {
-          "type": "json",
           "path": "app/package.json",
           "jsonpath": "$[dependencies,devDependencies][?(@property.startsWith('squiffy-') || @property.startsWith('@textadventures/squiffy-') || @property == '@textadventures/project-fs')]"
         },
@@ -118,12 +108,12 @@
         {
           "type": "json",
           "path": "package-lock.json",
-          "jsonpath": "$.packages[compiler,project-fs,runtime,packager,cli,editor,app,site,types,vite-plugin,examples/vite-app].version"
+          "jsonpath": "$.packages[compiler,project-fs,runtime,packager,cli,app,site,types,vite-plugin,examples/vite-app].version"
         },
         {
           "type": "json",
           "path": "package-lock.json",
-          "jsonpath": "$.packages[compiler,project-fs,runtime,packager,cli,editor,app,site,types,vite-plugin,examples/vite-app][dependencies,devDependencies][?(@property.startsWith('squiffy-') || @property.startsWith('@textadventures/squiffy-') || @property == '@textadventures/vite-plugin-squiffy' || @property == '@textadventures/project-fs')]"
+          "jsonpath": "$.packages[compiler,project-fs,runtime,packager,cli,app,site,types,vite-plugin,examples/vite-app][dependencies,devDependencies][?(@property.startsWith('squiffy-') || @property.startsWith('@textadventures/squiffy-') || @property == '@textadventures/vite-plugin-squiffy' || @property == '@textadventures/project-fs')]"
         }
       ]
     }
