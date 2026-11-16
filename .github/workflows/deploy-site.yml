@@ -1,0 +1,118 @@
+name: Deploy squiffystory.com
+
+# Deploys the docs site for the current stable release to the squiffy-site
+# Cloudflare Pages project's production environment (squiffystory.com), when
+# release-please tags a stable release. Runs alongside npm-publish.yml and
+# deploy-app.yml off the same tag.
+#
+# The beta docs, beta.squiffystory.com, are built by Cloudflare itself: the
+# project is still connected to GitHub, and builds `main` (and every PR) as a
+# preview deployment with PUBLIC_BETA_SITE=true. Its production branch is
+# `production`, which isn't a branch in this repo, and automatic production
+# deployments are turned off, so only this workflow's upload to
+# --branch=production goes live. See "Deployments" in CLAUDE.md.
+on:
+  push:
+    # Stable tags only: a prerelease's docs are already on the beta site.
+    # Matches .github/scripts/release-channel.sh, which calls anything with a
+    # `-` a prerelease.
+    tags: ['v*', '!v*-*']
+  # Manual escape hatch, from main (`gh workflow run deploy-site.yml -f ref=...`):
+  #  - ref=vX.Y.Z redeploys a stable release's docs, e.g. to retry or roll back
+  #  - ref=<branch> deploys a docs fix between releases. The branch must
+  #    contain the latest stable release tag and differ from it only under
+  #    site/, so the stable site never documents unreleased changes.
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: A stable release tag (vX.Y.Z), or a branch made from the latest one with docs fixes on top
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-site
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      REF: ${{ inputs.ref || github.ref_name }}
+    steps:
+      # This workflow's own scripts, from the commit it runs from, kept apart
+      # from the ref being deployed, which may be an older tag.
+      - name: Checkout workflow scripts
+        uses: actions/checkout@v7
+        with:
+          path: workflow
+          sparse-checkout: .github/scripts
+
+      - name: Checkout the ref to deploy
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ env.REF }}
+          path: src
+          fetch-depth: 0
+
+      - name: Check the ref is a stable release, or docs fixes on top of the latest one
+        working-directory: src
+        run: |
+          channel() { ../workflow/.github/scripts/release-channel.sh "$1"; }
+
+          if git show-ref --verify --quiet "refs/tags/$REF"; then
+            if [ "$(channel "$REF")" != "stable" ]; then
+              echo "::error::$REF is a prerelease. Its docs are on beta.squiffystory.com, which is built from main."
+              exit 1
+            fi
+            echo "Deploying the docs for $REF"
+            exit 0
+          fi
+
+          LATEST=""
+          for tag in $(git tag -l 'v*' --sort=-v:refname); do
+            if [ "$(channel "$tag")" == "stable" ]; then LATEST="$tag"; break; fi
+          done
+          if [ -z "$LATEST" ]; then
+            echo "::error::No stable release tag found."
+            exit 1
+          fi
+          if ! git merge-base --is-ancestor "$LATEST" HEAD; then
+            echo "::error::$REF doesn't contain $LATEST, the latest stable release. Make the branch from $LATEST (git switch -c <branch> $LATEST) and cherry-pick the docs fixes onto it."
+            exit 1
+          fi
+          OUTSIDE_SITE="$(git diff --name-only "$LATEST" HEAD | grep -v '^site/' || true)"
+          if [ -n "$OUTSIDE_SITE" ]; then
+            echo "::error::$REF changes files outside site/ since $LATEST, so it isn't the $LATEST release:"
+            echo "$OUTSIDE_SITE"
+            exit 1
+          fi
+          echo "Deploying $LATEST's docs with the fixes on $REF:"
+          git log --oneline "$LATEST..HEAD"
+
+      - name: Use Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: src/package-lock.json
+
+      - name: Install dependencies
+        working-directory: src
+        run: npm ci
+
+      # The site's examples are built with the release's own compiler and
+      # packager, so build those first. PUBLIC_BETA_SITE is unset: this is
+      # the stable site.
+      - name: Build the site and the packages it uses
+        working-directory: src
+        run: npx lerna run build --scope @textadventures/squiffystory.com --include-dependencies
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: src
+          command: pages deploy site/dist --project-name=squiffy-site --branch=production
