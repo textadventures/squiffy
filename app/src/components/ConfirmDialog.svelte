@@ -1,12 +1,31 @@
 <script lang="ts">
+    import { tick } from "svelte";
     import { dialogState } from "#lib/confirm.js";
     import { trapFocus } from "#lib/actions/trapFocus.js";
 
     let dialogEl = $state<HTMLDivElement>();
-    $effect(() => { if ($dialogState) dialogEl?.focus(); });
+    let inputEl = $state<HTMLInputElement>();
+    // What's typed in promptDialog()'s text box
+    let text = $state("");
+
+    // Fills the text box when a dialog opens, then focuses it (or the dialog) once it's on screen.
+    // Selecting before the value is rendered would leave the cursor at the end instead.
+    $effect(() => {
+        const state = $dialogState;
+        if (!state) return;
+        text = state.input ?? "";
+        void tick().then(() => {
+            if (state.input === undefined) {
+                dialogEl?.focus();
+            } else {
+                inputEl?.focus();
+                inputEl?.select();
+            }
+        });
+    });
 
     function respond(result: unknown) {
-        $dialogState?.resolve(result);
+        $dialogState?.resolve(result, text);
         dialogState.set(null);
     }
 
@@ -40,6 +59,9 @@
     >
         <div class="card bg-surface-50-950 rounded-xl shadow-xl w-full max-w-sm p-6 flex flex-col gap-4">
             <p class="text-sm whitespace-pre-line">{state.message}</p>
+            {#if state.input !== undefined}
+                <input bind:this={inputEl} bind:value={text} class="input text-sm" type="text" aria-label={state.message} />
+            {/if}
 
             <div class="flex flex-wrap justify-end gap-2">
                 {#each state.choices as choice, i (choice.label)}
