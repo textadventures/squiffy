@@ -93,6 +93,16 @@ You can combine this with `--inline` to create a zip containing just the single 
 npx @textadventures/squiffy-cli mygame.squiffy --inline --zip
 ```
 
+### Images and other files
+
+Images, sounds and other files that your story [refers to](/basic-concepts/#images-and-other-files) are included automatically, as long as they're in the same folder as the `.squiffy` file or a folder below it:
+
+- With the standard output, they're already in the right place, next to `index.html`.
+- With `--zip`, they're added to `output.zip` at the same paths.
+- With `--inline`, they're embedded in `index.html` as data URIs, so the single file still works on its own. This makes the file about a third bigger than the files themselves, so large sound or video files are better shared with `--zip`.
+
+Squiffy looks for file names in your story text and JavaScript with these extensions: `apng`, `avif`, `bmp`, `gif`, `ico`, `jpeg`, `jpg`, `png`, `svg`, `webp`, `aac`, `flac`, `m4a`, `mp3`, `oga`, `ogg`, `opus`, `wav`, `weba`, `m4v`, `mp4`, `ogv`, `webm`, `vtt`, `otf`, `ttf`, `woff`, `woff2` and `pdf`. File names with spaces aren't found, so either avoid spaces or write them as `%20` (e.g. `my%20cat.png`).
+
 ## Options
 
 ### HTTP Server
