@@ -2,3 +2,6 @@
 // editor does.
 export const DOCS_URL: string = import.meta.env.VITE_DOCS_URL || "https://squiffystory.com";
 export const GITHUB_URL = "https://github.com/textadventures/squiffy";
+export const GAMES_URL = "https://textadventures.co.uk/games/platform/squiffy";
+export const ISSUES_URL = "https://github.com/textadventures/squiffy/issues";
+export const DISCORD_URL = "https://textadventures.co.uk/community/discord";

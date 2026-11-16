@@ -16,7 +16,7 @@
     import { squiffyLanguage } from "#lib/squiffy-lang.js";
     import { isNarrow } from "#lib/layout.svelte.js";
     import { showToast } from "#lib/toast.js";
-    import { confirmDialog, promptDialog } from "#lib/confirm.js";
+    import { chooseDialog, confirmDialog, promptDialog } from "#lib/confirm.js";
     import Toolbar from "#components/Toolbar.svelte";
     import FilesPanel from "#components/FilesPanel.svelte";
     import OutlinePanel from "#components/OutlinePanel.svelte";
@@ -25,6 +25,8 @@
     import ReferencesPanel from "#components/ReferencesPanel.svelte";
     import PreviewPanel from "#components/PreviewPanel.svelte";
     import AssetManagerModal from "#components/AssetManagerModal.svelte";
+    import AboutModal from "#components/AboutModal.svelte";
+    import { addSectionOrPassage, insertSnippet, runCommand, userSnippets } from "#lib/editor-commands.js";
     import type { ExportKind } from "#lib/language/protocol.js";
 
     const p = $derived(project.current);
@@ -39,6 +41,7 @@
     // Shift+F12's results, shown under the editor
     let references = $state<{ name: string; locations: Location[] } | null>(null);
     let assetsOpen = $state(false);
+    let aboutOpen = $state(false);
     // Changes whenever an asset is added, changed or deleted, so the preview gets it
     let assetsVersion = $state(0);
 
@@ -56,6 +59,8 @@
 
     const activeView = () => (p ? views.get(p.activePath) : undefined);
     let symbols = $derived(p ? symbolsByPath[p.activePath] ?? [] : []);
+    // The author's own snippets, in the open files
+    let snippets = $derived(p ? p.openFiles.flatMap(f => userSnippets(symbolsByPath[f.path] ?? [], f.text)) : []);
 
     onMount(() => {
         void (async () => {
@@ -335,6 +340,48 @@
         if (view && path === p?.activePath) cursorLine = view.state.doc.lineAt(offset).number - 1;
     }
 
+    // ---- Squiffy 5 ----
+
+    // When a .squiffy file with Squiffy 5 text processor syntax opens, offer to convert all of it,
+    // as the 6.x editor does. Once per file each time the editor's opened: the quick fixes on
+    // each line are still there if the author says no.
+    const offeredV5 = new Set<string>();
+    $effect(() => {
+        const c = client;
+        const current = p;
+        if (!c || !current) return;
+        for (const file of current.openFiles) {
+            if (!isSquiffyFile(file.path) || offeredV5.has(file.path)) continue;
+            offeredV5.add(file.path);
+            void offerV5Conversion(c, file.path, file.text);
+        }
+    });
+
+    async function offerV5Conversion(c: LanguageClient, path: string, text: string) {
+        const count = await c.call("countV5Syntax", text);
+        if (count === 0) return;
+        const convert = await chooseDialog(
+            `${path} uses the Squiffy 5 text processor (${count} ${count === 1 ? "place" : "places"}). Convert it to Squiffy 6's?\n\nYou can undo this.`,
+            [
+                { label: "Not now", value: false },
+                { label: "Convert", value: true },
+            ],
+        );
+        const view = views.get(path);
+        if (!convert || !view) return;
+        const result = await c.call("convertV5Syntax", view.state.doc.toString());
+        if (result.converted > 0) {
+            view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: result.script } });
+        }
+        const left = result.problems.length;
+        showToast(
+            `Converted ${result.converted} Squiffy 5 ${result.converted === 1 ? "command" : "commands"}.`
+            + (left ? ` ${left} couldn't be converted automatically, and are marked as problems.` : ""),
+            "info",
+            10000,
+        );
+    }
+
     // ---- Export ----
 
     // Publishes the story, as it is in the editor now
@@ -525,6 +572,11 @@
             onassets={() => { assetsOpen = true; }}
             ondownloadproject={handleDownloadProject}
             onexport={handleExport}
+            oncommand={command => { const v = activeView(); if (v) runCommand(v, command); }}
+            onadd={kind => { const v = activeView(); if (v && isSquiffyFile(p.activePath)) addSectionOrPassage(v, kind, symbols); }}
+            onsnippet={content => { const v = activeView(); if (v) insertSnippet(v, content); }}
+            {snippets}
+            onabout={() => { aboutOpen = true; }}
         />
         <div class="flex flex-1 overflow-hidden">
             {#if !isNarrow.current || narrowPane === "outline"}
@@ -611,6 +663,10 @@
             {/if}
         </div>
     </main>
+
+    {#if aboutOpen}
+        <AboutModal onclose={() => { aboutOpen = false; }} />
+    {/if}
 
     {#if assetsOpen}
         <AssetManagerModal project={p} oninsert={insertAsset} oncancel={() => { assetsOpen = false; }} />

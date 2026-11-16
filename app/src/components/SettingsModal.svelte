@@ -1,7 +1,8 @@
 <script lang="ts">
-    // Settings: for now just the theme (#176), as in Quest Viva's Settings dialog.
+    // Settings: the theme (#176), as in Quest Viva's Settings dialog, and the editor's text size,
+    // as in the 6.x editor's.
     import { theme, setTheme, type ThemePreference } from "#lib/theme-store.js";
-    import { settings } from "#lib/settings.svelte.js";
+    import { settings, setFontSize, FONT_SIZES, DEFAULT_FONT_SIZE } from "#lib/settings.svelte.js";
     import { trapFocus } from "#lib/actions/trapFocus.js";
     import X from "@lucide/svelte/icons/x";
 
@@ -45,6 +46,14 @@
                     {/each}
                 </div>
             </fieldset>
+            <label class="flex flex-col gap-2">
+                <span class="text-sm font-medium">Editor text size</span>
+                <select class="select bg-surface-50-950 px-2 py-1 text-sm" value={settings.fontSize} onchange={e => setFontSize(Number(e.currentTarget.value))}>
+                    {#each FONT_SIZES as size (size)}
+                        <option value={size}>{size}px{size === DEFAULT_FONT_SIZE ? " (default)" : ""}</option>
+                    {/each}
+                </select>
+            </label>
         </div>
     </div>
 {/if}

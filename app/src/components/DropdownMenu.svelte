@@ -71,11 +71,18 @@
         if (restoreFocus) triggerEl?.focus();
     }
 
+    // Focus goes back to the trigger, unless the action put it somewhere else (e.g. into the
+    // code editor, after inserting something there)
     function select(item: DropdownMenuItem) {
         if (item.disabled) return;
         item.action();
-        close();
+        const moved = document.activeElement !== null && document.activeElement !== document.body
+            && !rootEl?.contains(document.activeElement);
+        close(!moved);
     }
+
+    // Items line up whether or not they have an icon, when any of them does
+    let anyIcon = $derived(items.some(item => item.icon));
 
     function focusItem(index: number) {
         itemEls[index]?.focus({ preventScroll: true });
@@ -148,10 +155,10 @@
             role="menu"
             tabindex="-1"
             style={fixed ? fixedStyle : undefined}
-            class="{fixed ? "" : `absolute ${align === "right" ? "right-0" : "left-0"} top-full mt-1`} z-[999] w-56 bg-surface-50-950 border border-surface-200-800 rounded shadow-lg py-1"
+            class="{fixed ? "" : `absolute ${align === "right" ? "right-0" : "left-0"} top-full mt-1`} z-[999] w-56 max-h-[calc(100dvh-5rem)] overflow-y-auto bg-surface-50-950 border border-surface-200-800 rounded shadow-lg py-1"
             onkeydown={onMenuKeydown}
         >
-            {#each items as item, i (item.label)}
+            {#each items as item, i (i)}
                 {#if item.divider}
                     <div class="my-1 border-t border-surface-200-800"></div>
                 {/if}
@@ -169,6 +176,8 @@
                 >
                     {#if item.icon}
                         <item.icon size={14} />
+                    {:else if anyIcon}
+                        <span class="w-3.5 shrink-0" aria-hidden="true"></span>
                     {/if}
                     {item.label}
                 </button>
