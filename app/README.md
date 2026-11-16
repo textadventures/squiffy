@@ -1,0 +1,32 @@
+# Squiffy 7 editor
+
+The rebuilt Squiffy editor (#278), on the same stack and app shell as Quest Viva's editor: SvelteKit + Skeleton, with CodeMirror 6. It replaces `editor/` once it reaches parity; until then `editor/` keeps shipping 6.x to app.squiffystory.com. The plan is in the comments on #278.
+
+```bash
+npm run dev     # http://localhost:5180
+npm run check   # svelte-check
+npm test
+```
+
+## How it fits together
+
+- **Projects** are a `ProjectFileSystem` from `@textadventures/project-fs` plus the path of the main `.squiffy` file (`src/lib/project.svelte.ts`). They come from a folder opened with File System Access (Chromium), or a draft in the browser's origin-private file system (New, and Open file, which imports a file into a new draft). Edits autosave a second after typing stops.
+- **The language service** (`squiffy-compiler/language-service`) runs in a Web Worker (`src/lib/language/worker.ts`). It reads project files by calling back to the page (`src/lib/rpc.ts`), since some back ends, such as the Electron bridge, only exist there. The page sends it the text being edited as it changes.
+- **The code editor** (`src/components/CodeEditor.svelte`, from Quest Viva's) takes its extensions from outside: the highlighting mode in `src/lib/squiffy-lang.ts`, and diagnostics and the outline from `src/lib/language/codemirror.ts`.
+
+Parts copied from Quest Viva's `src/AppShell` are noted in their comments. Fixes to the shared parts (`app.css`, `theme-store.ts`, `CodeEditor.svelte`, `codemirror-theme.ts`, `DropdownMenu.svelte`) may need porting between the two.
+
+## Deployment
+
+Until it replaces `editor/`, the app is its own Cloudflare Pages project, `squiffy-app-next`, connected to this repo like `squiffy-app` and `squiffy-site`, so every PR gets a preview of it. Its settings:
+
+| Setting | Value |
+|---|---|
+| Root directory | (the repo root) |
+| Build command | `npx lerna run build --scope @textadventures/squiffy-app --include-dependencies` |
+| Build output directory | `app/build` |
+| Production branch | `main` |
+
+It has no `404.html`, so Pages serves `index.html` for every path, which the app's client-side routing needs. `static/_headers` caches SvelteKit's hashed assets for a year.
+
+When the app takes over app.squiffystory.com, `deploy-app.yml` builds it instead of `editor/` and uploads it to the `squiffy-app` project, and this project is deleted.

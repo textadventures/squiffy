@@ -7,6 +7,7 @@
     "compiler",
     "project-fs",
     "editor",
+    "app",
     "cli",
     "packager",
     "runtime",

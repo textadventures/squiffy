@@ -32,6 +32,9 @@ cd site && npm run build
 # Run the editor locally
 cd editor && npm run dev
 
+# Run the Squiffy 7 editor rebuild locally
+cd app && npm run dev
+
 # Run the site locally
 cd site && npm run dev
 ```
@@ -143,6 +146,7 @@ CLI options:
   - Uses Ace editor for code editing
   - Two entry points: `index.html` (editor) and `preview.html` (story preview)
   - PWA-enabled with offline support
+- **app**: Private workspace (`@textadventures/squiffy-app`) with the Squiffy 7 editor rebuild (#278): SvelteKit + Skeleton on Quest Viva's app shell, CodeMirror 6, the language service in a Web Worker, and `@textadventures/project-fs` for files. It replaces `editor/` once it reaches parity. See `app/README.md`.
 - **site**: Marketing/documentation site at squiffystory.com, with a beta channel at beta.squiffystory.com (Astro + Starlight; see "Docs site" above)
 - **project-fs**: Private workspace (`@textadventures/project-fs`) with the editor's file system layer: list/read/write/delete over a rooted project tree, with in-memory, File System Access, OPFS, Node and Electron adapters and a shared conformance suite. No Squiffy imports, so it can become a standalone package later (#215). See `project-fs/README.md`.
 - **types**: Type definitions for `.squiffy` imports, used by the Vite plugin
