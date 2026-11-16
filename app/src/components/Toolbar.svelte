@@ -8,6 +8,10 @@
     import { settings } from "#lib/settings.svelte.js";
     import { isNarrow } from "#lib/layout.svelte.js";
     import { DOCS_URL, GITHUB_URL } from "#lib/links.js";
+    import type { ExportKind } from "#lib/language/protocol.js";
+    import FolderDown from "@lucide/svelte/icons/folder-down";
+    import Globe from "@lucide/svelte/icons/globe";
+    import FileCode from "@lucide/svelte/icons/file-code";
     import DropdownMenu from "#components/DropdownMenu.svelte";
     import type { DropdownMenuItem } from "#components/DropdownMenu.svelte";
     import Home from "@lucide/svelte/icons/home";
@@ -35,9 +39,13 @@
         onrun?: (fromCursor: boolean) => void;
         // Opens the Assets dialog
         onassets?: () => void;
+        // Downloads the whole project as a zip, which Open file can read back
+        ondownloadproject?: () => void;
+        // Publishes the story: HTML, JavaScript and assets as a zip, one HTML file, or the JavaScript
+        onexport?: (kind: ExportKind) => void;
     }
 
-    let { outlineOpen = false, ontoggleoutline, onrun, onassets }: Props = $props();
+    let { outlineOpen = false, ontoggleoutline, onrun, onassets, ondownloadproject, onexport }: Props = $props();
 
     const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform);
     const mod = isMac ? "⌘" : "Ctrl+";
@@ -60,7 +68,11 @@
 
     let fileMenuItems = $derived<DropdownMenuItem[]>([
         { label: "Save", action: () => void p?.save(), icon: Save },
+        { label: "Download project (.zip)", action: () => ondownloadproject?.(), icon: FolderDown },
         { label: `Download ${p?.activePath ?? ""}`, action: () => { if (p?.activePath) void downloadFile(p.activePath); }, icon: Download, disabled: !p?.activePath },
+        { label: "HTML and JavaScript (.zip)", action: () => onexport?.("zip"), icon: Globe, divider: true, heading: "Publish" },
+        { label: "HTML (one file)", action: () => onexport?.("html"), icon: Globe },
+        { label: "JavaScript only", action: () => onexport?.("js"), icon: FileCode },
     ]);
 
     let overflowItems = $derived.by((): DropdownMenuItem[] => {

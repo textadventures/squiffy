@@ -25,6 +25,7 @@
     import ReferencesPanel from "#components/ReferencesPanel.svelte";
     import PreviewPanel from "#components/PreviewPanel.svelte";
     import AssetManagerModal from "#components/AssetManagerModal.svelte";
+    import type { ExportKind } from "#lib/language/protocol.js";
 
     const p = $derived(project.current);
 
@@ -329,6 +330,45 @@
         if (view && path === p?.activePath) cursorLine = view.state.doc.lineAt(offset).number - 1;
     }
 
+    // ---- Export ----
+
+    // Publishes the story, as it is in the editor now
+    async function handleExport(kind: ExportKind) {
+        const current = p;
+        const c = client;
+        if (!current || !c) return;
+        try {
+            await syncOpenFiles();
+            const { fileName, saveBlob, storyAssets } = await import("#lib/export.js");
+            const result = await c.call("exportStory", kind, kind === "js" ? {} : await storyAssets(current));
+            if (!result.success) {
+                showToast(`The story can't be published until this is fixed: ${result.errors[0]}`);
+                return;
+            }
+            if (kind === "zip" && result.zip) {
+                saveBlob(new Blob([result.zip as BlobPart], { type: "application/zip" }), fileName(current.displayName, " (web).zip"));
+            } else if (kind === "html") {
+                saveBlob(new Blob([result.files["index.html"]], { type: "text/html" }), fileName(current.displayName, ".html"));
+            } else if (kind === "js") {
+                saveBlob(new Blob([result.files["story.js"]], { type: "text/javascript" }), "story.js");
+            }
+        } catch (err) {
+            showToast(`Couldn't publish the story: ${errorText(err)}`);
+        }
+    }
+
+    // The whole project, with any unsaved changes, as a zip that Open file reads back
+    async function handleDownloadProject() {
+        const current = p;
+        if (!current) return;
+        try {
+            const { fileName, saveBlob, zipProject } = await import("#lib/export.js");
+            saveBlob(new Blob([await zipProject(current) as BlobPart], { type: "application/zip" }), fileName(current.displayName, ".zip"));
+        } catch (err) {
+            showToast(`Couldn't download the project: ${errorText(err)}`);
+        }
+    }
+
     // ---- Files ----
 
     function errorText(err: unknown) {
@@ -478,6 +518,8 @@
             ontoggleoutline={() => { narrowPane = narrowPane === "outline" ? "editor" : "outline"; }}
             onrun={fromCursor => runPreview(fromCursor)}
             onassets={() => { assetsOpen = true; }}
+            ondownloadproject={handleDownloadProject}
+            onexport={handleExport}
         />
         <div class="flex flex-1 overflow-hidden">
             {#if !isNarrow.current || narrowPane === "outline"}

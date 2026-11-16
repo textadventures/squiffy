@@ -92,14 +92,14 @@
             <button type="button" class="card start-card preset-outlined-surface-200-800" disabled={busy} onclick={() => fileInput?.click()}>
                 <FileUp size={22} class="text-primary-500" />
                 <span class="font-medium">Open file</span>
-                <span class="text-xs text-surface-600-400">Copy a .squiffy file into a new draft</span>
+                <span class="text-xs text-surface-600-400">Copy a .squiffy file, or a project .zip, into a new draft</span>
             </button>
-            <input bind:this={fileInput} type="file" accept=".squiffy" class="hidden" onchange={handleFileChosen} />
+            <input bind:this={fileInput} type="file" accept=".squiffy,.zip" class="hidden" onchange={handleFileChosen} />
         </div>
         {#if !canOpenFolders}
             <p class="text-xs text-surface-600-400">
-                This browser can't edit files where they are, so stories are kept in the browser. Use File, Download in the
-                editor to keep a copy.
+                This browser can't edit files where they are, so stories are kept in the browser. Use File, Download project
+                in the editor to keep a copy, and Open file to bring it back.
             </p>
         {/if}
     </section>
