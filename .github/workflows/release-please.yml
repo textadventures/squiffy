@@ -7,6 +7,9 @@ name: release-please
 on:
   push:
     branches: [main]
+  # Manual fallback for when a push to main didn't trigger a run (e.g. one
+  # made with GITHUB_TOKEN), leaving the release PR out of date.
+  workflow_dispatch:
 
 permissions:
   contents: write
