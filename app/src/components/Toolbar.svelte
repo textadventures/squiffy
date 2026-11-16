@@ -231,7 +231,8 @@
                         {/snippet}
                     </DropdownMenu>
                 {/if}
-                <div class="flex items-center">
+                <!-- Run and its options as one split button: stretch both halves to the same height -->
+                <div class="flex items-stretch">
                     <button
                         type="button"
                         class="btn btn-xs preset-filled-primary-500 rounded-r-none"
@@ -242,7 +243,7 @@
                         {#snippet trigger(toggle, open)}
                             <button
                                 type="button"
-                                class="btn btn-xs preset-filled-primary-500 rounded-l-none border-l border-primary-700 px-1.5"
+                                class="btn btn-xs preset-filled-primary-500 rounded-l-none h-full border-l border-white/30 px-1.5"
                                 onclick={toggle}
                                 title="Run options"
                                 aria-label="Run options"

@@ -16,10 +16,5 @@ export const siteUrl = betaSite ? betaSiteUrl : stableSiteUrl;
 export const stableAppUrl = "https://app.squiffystory.com";
 export const betaAppUrl = "https://app-beta.squiffystory.com";
 
-/**
- * The editor that matches these docs: deploy-app.yml sends prereleases to the beta one.
- * Until the first Squiffy 7 prerelease (7.0.0-beta.1) there's nothing at app-beta, so the beta
- * docs link to the stable editor too. When that ships, change this back to:
- *   export const appUrl = betaSite ? betaAppUrl : stableAppUrl;
- */
-export const appUrl = stableAppUrl;
+/** The editor that matches these docs: deploy-app.yml sends prereleases to the beta one. */
+export const appUrl = betaSite ? betaAppUrl : stableAppUrl;
