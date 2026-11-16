@@ -8,8 +8,9 @@ name: Deploy squiffystory.com
 # The beta docs, beta.squiffystory.com, are built by Cloudflare itself: the
 # project is still connected to GitHub, and builds `main` (and every PR) as a
 # preview deployment with PUBLIC_BETA_SITE=true. Its production branch is
-# `production`, which isn't a branch in this repo, and automatic production
-# deployments are turned off, so only this workflow's upload to
+# `production`, a placeholder branch in this repo (Cloudflare won't accept a
+# branch that doesn't exist) that nothing should be pushed to. Automatic
+# production deployments are turned off, so only this workflow's upload to
 # --branch=production goes live. See "Deployments" in CLAUDE.md.
 on:
   push:
