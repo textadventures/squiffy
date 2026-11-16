@@ -54,6 +54,17 @@ The browser's local storage will be used to save the state of the game. This mea
 
 **Note: Even if you recompile a game, the previous state will still be loaded.** This means that after making a change to your game, you'll need to click the Restart button at the top of the screen to see your changes.
 
+### Errors and warnings
+
+If your script has a problem, Squiffy prints it with the file and line number:
+
+```
+WARNING: mygame.squiffy line 12: In section 'kitchen' there is a link to a section called [[cellar]], which doesn't exist
+ERROR: mygame.squiffy line 30: Can't add passage "look" as no section has been created.
+```
+
+A warning, such as a link to a section or passage that doesn't exist, points at the line the problem is on, and the game is still created. An error stops the game being created, so fix it and run Squiffy again.
+
 ## Output Formats
 
 Squiffy supports different output formats depending on how you want to distribute your game.
