@@ -22,15 +22,27 @@
     import ListTree from "@lucide/svelte/icons/list-tree";
     import SettingsIcon from "@lucide/svelte/icons/settings";
     import BookOpen from "@lucide/svelte/icons/book-open";
+    import Play from "@lucide/svelte/icons/play";
+    import StepForward from "@lucide/svelte/icons/step-forward";
     import GithubIcon from "#components/GithubIcon.svelte";
 
     interface Props {
         // On a narrow screen, whether the outline is showing instead of the editor
         outlineOpen?: boolean;
         ontoggleoutline?: () => void;
+        // Runs the story in the preview, from the start or from the section the cursor is in
+        onrun?: (fromCursor: boolean) => void;
     }
 
-    let { outlineOpen = false, ontoggleoutline }: Props = $props();
+    let { outlineOpen = false, ontoggleoutline, onrun }: Props = $props();
+
+    const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform);
+    const mod = isMac ? "⌘" : "Ctrl+";
+
+    let runMenuItems = $derived<DropdownMenuItem[]>([
+        { label: `Run from the start (${mod}Enter)`, action: () => onrun?.(false), icon: Play },
+        { label: `Run from this section (${mod}Shift+Enter)`, action: () => onrun?.(true), icon: StepForward },
+    ]);
 
     const p = $derived(project.current);
 
@@ -125,6 +137,27 @@
                         {/snippet}
                     </DropdownMenu>
                 {/if}
+                <div class="flex items-center">
+                    <button
+                        type="button"
+                        class="btn btn-xs preset-filled-primary-500 rounded-r-none"
+                        onclick={() => onrun?.(false)}
+                        title="Run the story ({mod}Enter)"
+                    ><Play size={14} /> <span class="hidden md:inline">Run</span></button>
+                    <DropdownMenu items={runMenuItems}>
+                        {#snippet trigger(toggle, open)}
+                            <button
+                                type="button"
+                                class="btn btn-xs preset-filled-primary-500 rounded-l-none border-l border-primary-700 px-1.5"
+                                onclick={toggle}
+                                title="Run options"
+                                aria-label="Run options"
+                                aria-haspopup="menu"
+                                aria-expanded={open}
+                            ><ChevronDown size={12} /></button>
+                        {/snippet}
+                    </DropdownMenu>
+                </div>
                 <DropdownMenu items={overflowItems}>
                     {#snippet trigger(toggle, open)}
                         <button type="button" class="toolbar-icon-btn" onclick={toggle} title="More" aria-label="More" aria-haspopup="menu" aria-expanded={open}><Ellipsis size={16} /></button>

@@ -167,7 +167,9 @@ export async function openDraft(id: string): Promise<void> {
     const meta = await drafts.getMeta(id);
     const fs = await drafts.open(id);
     const mainFile = meta?.mainFile ?? DEFAULT_MAIN_FILE;
-    const text = (await fs.exists(mainFile)) ? await fs.readText(mainFile) : "";
+    // Say so, rather than quietly opening an empty story in its place
+    if (!(await fs.exists(mainFile))) throw new Error(`its story file, ${mainFile}, is missing.`);
+    const text = await fs.readText(mainFile);
     const opened = new OpenProject(fs, { kind: "draft", id }, mainFile, text);
     opened.title = meta?.title ?? "";
     setCurrent(opened);

@@ -12,6 +12,7 @@ npm test
 
 - **Projects** are a `ProjectFileSystem` from `@textadventures/project-fs` plus the path of the main `.squiffy` file (`src/lib/project.svelte.ts`). They come from a folder opened with File System Access (Chromium), or a draft in the browser's origin-private file system (New, and Open file, which imports a file into a new draft). Edits autosave a second after typing stops.
 - **The language service** (`squiffy-compiler/language-service`) runs in a Web Worker (`src/lib/language/worker.ts`). It reads project files by calling back to the page (`src/lib/rpc.ts`), since some back ends, such as the Electron bridge, only exist there. The page sends it the text being edited as it changes.
+- **The preview** (`src/components/PreviewPanel.svelte`) runs the story in squiffy-runtime's preview page, in a sandboxed `srcdoc` iframe, through `squiffy-runtime/preview-host`. The worker compiles it from the language service's analysis (`compile` in `src/lib/language/worker.ts`), so the story isn't parsed twice. Edits hot-update the running story; following a link in the preview moves the editor there. The page is loaded only when the preview first opens.
 - **The code editor** (`src/components/CodeEditor.svelte`, from Quest Viva's) takes its extensions from outside: the highlighting mode in `src/lib/squiffy-lang.ts`, and the language features from `src/lib/language/codemirror.ts`, which sends the editor's text to the worker before each query.
 
 ## Language features
@@ -26,6 +27,7 @@ npm test
 | Rename | F2, across every link to the section or passage |
 | Folding | Sections and passages |
 | Go to section or passage | Ctrl/Cmd+Shift+O, the outline's search box |
+| Run | Ctrl/Cmd+Enter from the start; Ctrl/Cmd+Shift+Enter from the section the cursor is in |
 
 Parts copied from Quest Viva's `src/AppShell` are noted in their comments. Fixes to the shared parts (`app.css`, `theme-store.ts`, `CodeEditor.svelte`, `codemirror-theme.ts`, `DropdownMenu.svelte`) may need porting between the two.
 
