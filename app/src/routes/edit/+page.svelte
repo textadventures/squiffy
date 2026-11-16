@@ -1,20 +1,22 @@
 <script lang="ts">
     // The editor: toolbar, outline and code editor, laid out like Quest Viva's edit page.
-    import { onMount } from "svelte";
+    import { onMount, tick } from "svelte";
     import { goto } from "$app/navigation";
     import { page } from "$app/state";
     import { EditorView } from "@codemirror/view";
-    import type { DocumentSymbol } from "squiffy-compiler/language-service";
+    import type { DocumentSymbol, Location, WorkspaceEdit } from "squiffy-compiler/language-service";
     import { base } from "#lib/base-path.js";
     import { project, openDraft } from "#lib/project.svelte.js";
     import { createLanguageClient, type LanguageClient } from "#lib/language/client.js";
-    import { languageFeatures, toOffset } from "#lib/language/codemirror.js";
+    import { applyEditsToString, languageFeatures, toOffset } from "#lib/language/codemirror.js";
     import { squiffyLanguage } from "#lib/squiffy-lang.js";
     import { isNarrow } from "#lib/layout.svelte.js";
     import { showToast } from "#lib/toast.js";
+    import { promptDialog } from "#lib/confirm.js";
     import Toolbar from "#components/Toolbar.svelte";
     import OutlinePanel from "#components/OutlinePanel.svelte";
     import CodeEditor from "#components/CodeEditor.svelte";
+    import ReferencesPanel from "#components/ReferencesPanel.svelte";
 
     const p = $derived(project.current);
 
@@ -22,6 +24,9 @@
     let symbols = $state<DocumentSymbol[]>([]);
     let cursorLine = $state(0);
     let view: EditorView | null = null;
+    let outline = $state<ReturnType<typeof OutlinePanel>>();
+    // Shift+F12's results, shown under the editor
+    let references = $state<{ name: string; locations: Location[] } | null>(null);
 
     // Session-only, as in Quest Viva
     let outlineWidth = $state(240);
@@ -52,8 +57,25 @@
         function handleVisibilityChange() {
             if (document.hidden) void project.current?.save();
         }
+        // Ctrl/Cmd+Shift+O: go to a section or passage, from the outline's search box
+        function handleKeydown(e: KeyboardEvent) {
+            if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === "o") {
+                e.preventDefault();
+                // At once when the outline's showing, so the next keys go to the search box; on a
+                // phone, once the outline has replaced the editor
+                if (outline) outline.focusSearch();
+                else {
+                    narrowOutline = true;
+                    void tick().then(() => outline?.focusSearch());
+                }
+            }
+        }
         document.addEventListener("visibilitychange", handleVisibilityChange);
-        return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+        window.addEventListener("keydown", handleKeydown);
+        return () => {
+            document.removeEventListener("visibilitychange", handleVisibilityChange);
+            window.removeEventListener("keydown", handleKeydown);
+        };
     });
 
     // Best effort to save before the tab closes. A write can't be awaited here, so the browser's
@@ -99,9 +121,43 @@
                     symbols = s;
                     current.setTitle(s.find(x => x.kind === "title")?.name ?? "");
                 },
+                onNavigate: goToLocation,
+                onReferences: (name, locations) => {
+                    references = { name, locations };
+                },
+                prompt: (message, initial) => promptDialog(message, initial, "Rename"),
+                applyEdits,
+                notify: message => showToast(message, "info"),
             }),
         ];
     });
+
+    // Moves the editor to a location. Only the main file is open for now: multi-file projects
+    // come with #118.
+    function goToLocation(location: Location) {
+        if (!view || !p) return;
+        if (location.file !== p.mainFile) {
+            showToast(`That's in ${location.file}, which can't be opened yet.`, "info");
+            return;
+        }
+        const anchor = toOffset(view.state.doc, location.range.start);
+        const head = toOffset(view.state.doc, location.range.end);
+        view.dispatch({ selection: { anchor, head }, effects: EditorView.scrollIntoView(anchor, { y: "center" }) });
+        view.focus();
+    }
+
+    // Edits to other files in the project, e.g. a rename that reaches into an @imported file
+    async function applyEdits(edit: WorkspaceEdit) {
+        if (!p || !client) return;
+        for (const [file, edits] of Object.entries(edit)) {
+            try {
+                await p.fs.write(file, applyEditsToString(await p.fs.readText(file), edits));
+                await client.call("fileChanged", file);
+            } catch (err) {
+                showToast(`Couldn't change ${file}: ${err instanceof Error ? err.message : String(err)}`);
+            }
+        }
+    }
 
     function goToSymbol(symbol: DocumentSymbol) {
         narrowOutline = false;
@@ -162,6 +218,7 @@
         <div class="flex flex-1 overflow-hidden">
             {#if !isNarrow.current || narrowOutline}
                 <OutlinePanel
+                    bind:this={outline}
                     {symbols}
                     {cursorLine}
                     onselect={goToSymbol}
@@ -178,15 +235,26 @@
             {/if}
             <!-- Kept mounted (hidden, not removed) on a narrow screen so the cursor and undo
                  history survive opening the outline -->
-            <div id="editor" class="flex-1 min-w-0 {isNarrow.current && narrowOutline ? "hidden" : ""}">
-                <CodeEditor
-                    value={p.text}
-                    {extensions}
-                    onChange={text => p.setText(text)}
-                    onSave={() => void p.save()}
-                    onCursor={handleCursor}
-                    onView={v => { view = v; }}
-                />
+            <div id="editor" class="flex-1 min-w-0 flex flex-col {isNarrow.current && narrowOutline ? "hidden" : ""}">
+                <div class="flex-1 min-h-0">
+                    <CodeEditor
+                        value={p.text}
+                        {extensions}
+                        onChange={text => p.setText(text)}
+                        onSave={() => void p.save()}
+                        onCursor={handleCursor}
+                        onView={v => { view = v; }}
+                    />
+                </div>
+                {#if references}
+                    <ReferencesPanel
+                        name={references.name}
+                        locations={references.locations}
+                        textOf={file => (file === p.mainFile ? p.text : undefined)}
+                        onselect={goToLocation}
+                        onclose={() => { references = null; view?.focus(); }}
+                    />
+                {/if}
             </div>
         </div>
     </main>

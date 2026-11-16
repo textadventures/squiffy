@@ -10,7 +10,10 @@ export interface DialogChoice<T> {
 interface DialogState {
     message: string;
     choices: DialogChoice<unknown>[];
-    resolve: (result: unknown) => void;
+    // For promptDialog(), `text` is what's in the text box
+    resolve: (result: unknown, text?: string) => void;
+    // A text box, for promptDialog(): its starting text
+    input?: string;
 }
 
 export const dialogState = writable<DialogState | null>(null);
@@ -39,4 +42,19 @@ export async function confirmDialog(message: string, options?: ConfirmOptions): 
         { label: options?.confirmLabel ?? "OK", value: true, danger: options?.danger },
     ]);
     return result ?? false;
+}
+
+// Asks for some text, e.g. a new name. Resolves with the text, or null if cancelled.
+export function promptDialog(message: string, initial = "", confirmLabel = "OK"): Promise<string | null> {
+    return new Promise(resolve => {
+        dialogState.set({
+            message,
+            choices: [
+                { label: "Cancel", value: false },
+                { label: confirmLabel, value: true },
+            ],
+            input: initial,
+            resolve: (result, text) => resolve(result === true ? text ?? "" : null),
+        });
+    });
 }

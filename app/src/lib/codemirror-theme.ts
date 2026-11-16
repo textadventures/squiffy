@@ -45,6 +45,17 @@ export const editorTheme = EditorView.theme({
         backgroundColor: "color-mix(in srgb, var(--color-primary-500) 20%, transparent)",
         outline: "none",
     },
+    // Problems, e.g. a link to a section that doesn't exist (#173): a tint as well as the wavy
+    // underline, which a link's own underline would otherwise hide
+    ".cm-lintRange-warning": {
+        backgroundColor: "color-mix(in srgb, var(--color-warning-500) 15%, transparent)",
+    },
+    ".cm-lintRange-error": {
+        backgroundColor: "color-mix(in srgb, var(--color-error-500) 15%, transparent)",
+    },
+    ".cm-lintRange-warning *, .cm-lintRange-error *": {
+        textDecoration: "none",
+    },
     ".cm-tooltip": {
         backgroundColor: "var(--color-surface-50-950)",
         color: "var(--color-surface-900-100)",
