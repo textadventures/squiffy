@@ -1,6 +1,6 @@
 {
   "name": "squiffy-runtime",
-  "version": "6.0.0",
+  "version": "6.0.1",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/textadventures/squiffy.git",
@@ -36,16 +36,16 @@
     "@types/jsdom": "^30.0.0",
     "css.escape": "^1.5.1",
     "esbuild": "^0.28.2",
-    "global-jsdom": "^30.0.0",
-    "jsdom": "^30.0.1",
-    "squiffy-compiler": "^6.0.0",
+    "global-jsdom": "^31.0.0",
+    "jsdom": "^31.0.0",
+    "squiffy-compiler": "^6.0.1",
     "typescript": "^6.0.3",
-    "vite": "^8.3.4",
+    "vite": "^8.3.5",
     "vite-plugin-dts": "^5.1.2"
   },
   "dependencies": {
     "animejs": "^4.5.0",
     "handlebars": "^4.7.10",
-    "marked": "^18.1.1"
+    "marked": "^18.1.2"
   }
 }
