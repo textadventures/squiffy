@@ -9,7 +9,17 @@ export type CompiledStory =
     | { success: true; js: string; css: string[]; scripts: string[] }
     | { success: false; errors: string[] };
 
+export type ExportKind = "zip" | "html" | "js";
+
+// A published story: the packager's files (and zip), or why it can't be made
+export type ExportResult =
+    | { success: true; files: Record<string, string>; zip?: Uint8Array }
+    | { success: false; errors: string[] };
+
 export interface WorkerApi extends ServiceQueries {
+    // Packages the story for publishing, with its assets (by their path from the main file's
+    // folder): a zip of HTML, JavaScript and assets; one HTML file; or the story's JavaScript
+    exportStory(kind: ExportKind, assets: Record<string, Uint8Array>): Promise<ExportResult>;
     // Compiles the story from the language service's latest analysis, for the preview
     compile(): Promise<CompiledStory>;
     // Where a section, or a passage in it, is defined: for following the preview

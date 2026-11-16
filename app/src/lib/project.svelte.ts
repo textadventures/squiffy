@@ -10,7 +10,7 @@
 // Each open file saves on its own, shortly after typing stops, as in Quest Viva, and Save
 // (Ctrl+S) saves them all at once.
 import {
-    OpfsProjectStore, basename, dirname, findFiles, fsaOpener, hasFileSystemAccess, moveFile,
+    OpfsProjectStore, basename, findFiles, fsaOpener, hasFileSystemAccess, moveFile,
     type FileEntry, type FileTypeFilter, type ProjectFileSystem,
 } from "@textadventures/project-fs";
 import { chooseDialog } from "./confirm.js";
@@ -307,8 +307,19 @@ export async function listDrafts() {
     return list.sort((a, b) => (b.meta?.lastOpened ?? 0) - (a.meta?.lastOpened ?? 0));
 }
 
-// Imports a .squiffy file into a new draft. Returns the draft's id.
+// Imports a .squiffy file, or a project zip (from Download project), into a new draft. Returns
+// the draft's id.
 export async function importFile(file: File): Promise<string> {
+    if (file.name.toLowerCase().endsWith(".zip")) {
+        const { readProjectZip, guessMainFile } = await import("./export.js");
+        const files = readProjectZip(new Uint8Array(await file.arrayBuffer()));
+        const mainFile = guessMainFile(files.keys());
+        if (!mainFile) throw new Error(`There's no .squiffy file in ${file.name}.`);
+        const id = crypto.randomUUID();
+        const fs = await drafts.create(id, { title: "", mainFile, lastOpened: Date.now() });
+        for (const [path, data] of files) await fs.write(path, data);
+        return id;
+    }
     const text = await file.text();
     // Keep the file's name when it's a valid project path, else fall back to the default
     const name = /^[^/\\:*?"<>|]+\.squiffy$/i.test(file.name) ? file.name : DEFAULT_MAIN_FILE;
@@ -345,29 +356,13 @@ export async function openFolder(): Promise<boolean> {
     return true;
 }
 
-// Downloads a file, e.g. to keep a copy of a draft
+// Downloads a file, with the editor's unsaved text if it's open
 export async function downloadFile(path: string): Promise<void> {
     if (!current) return;
     const open = current.fileAt(path);
     const blob = open ? new Blob([open.text], { type: "text/plain" }) : new Blob([await current.fs.read(path) as BlobPart]);
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = basename(path);
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    const { saveBlob } = await import("./export.js");
+    saveBlob(blob, basename(path));
 }
 
-// `path` relative to the folder `fromDir`, e.g. an image's path as the main file refers to it
-export function relativePath(fromDir: string, path: string): string {
-    const from = fromDir === "" ? [] : fromDir.split("/");
-    const to = path.split("/");
-    let common = 0;
-    while (common < from.length && common < to.length - 1 && from[common] === to[common]) common++;
-    return [...from.slice(common).map(() => ".."), ...to.slice(common)].join("/");
-}
-
-// A file's path as the story refers to it: relative to the main file's folder
-export function storyPath(project: OpenProject, path: string): string {
-    return relativePath(dirname(project.mainFile), path);
-}
+export { relativePath, storyPath } from "./paths.js";
