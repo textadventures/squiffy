@@ -17,6 +17,10 @@ export interface AnalyseSettings {
     externalFiles?: ExternalFiles;
     // Reuses the syntax trees of files that haven't changed since the last analysis.
     parseCache?: ParseCache;
+    // Carry on after an error instead of stopping, skipping whatever caused it, so that a
+    // language service can still report warnings and find sections. The analysis still has
+    // success: false, and can't be emitted.
+    recover?: boolean;
 }
 
 // Caches the syntax tree of each file by filename, reparsing a file only when its text changes.
@@ -262,7 +266,7 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
                         if (importFilename.endsWith(".squiffy")) {
                             const content = await settings.externalFiles.getContent(importFilename);
                             const success = await processFile(content, importFilename, false);
-                            if (!success) return false;
+                            if (!success && !settings.recover) return false;
                         }
                         else if (importFilename.endsWith(".js")) {
                             story.scripts.push(settings.externalFiles.getLocalFilename(importFilename));
@@ -326,14 +330,18 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
                 passage = null;
                 continue;
             }
-            if (node.header && !handleSectionHeader(node)) return false;
+            if (node.header && !handleSectionHeader(node) && !settings.recover) return false;
             for (const statement of node.body) {
-                if (!await handleStatement(statement)) return false;
+                if (!await handleStatement(statement) && !settings.recover) return false;
             }
             for (const passageNode of node.passages) {
-                if (!handlePassageHeader(passageNode)) return false;
+                if (!handlePassageHeader(passageNode)) {
+                    if (!settings.recover) return false;
+                    // Skip the passage, since there's nowhere to put it
+                    continue;
+                }
                 for (const statement of passageNode.body) {
-                    if (!await handleStatement(statement)) return false;
+                    if (!await handleStatement(statement) && !settings.recover) return false;
                 }
             }
         }
@@ -369,11 +377,13 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
         }
     }
 
+    // Set once the sections are all known, before checking links
+    let sectionNames: string[] = [];
+    let sectionIndexes = new Map<string, number>();
+
     function checkText(container: Section | Passage, section: Section, passage: Passage | null) {
         const getNextSectionName = (): string | null => {
-            const sectionNames = Object.keys(story.sections);
-            const currentIndex = sectionNames.indexOf(section.name);
-            return sectionNames[currentIndex + 1] || null;
+            return sectionNames[(sectionIndexes.get(section.name) ?? -1) + 1] || null;
         };
 
         const result = transformText(container.text.join("\n"), getNextSectionName);
@@ -419,15 +429,18 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
         }
     }
 
-    const success = await processFile(settings.script, settings.scriptBaseFilename, true);
+    // With recover, processFile carries on after errors, so check for them too
+    const success = await processFile(settings.script, settings.scriptBaseFilename, true) && !legacyErrors.length;
 
-    if (success) {
+    if (success || settings.recover) {
         if (!Object.keys(story.sections).length) {
             story.addSection("_default", settings.scriptBaseFilename, 0, undefined);
         }
         if (!story.start) {
             story.start = Object.keys(story.sections)[0];
         }
+        sectionNames = Object.keys(story.sections);
+        sectionIndexes = new Map(sectionNames.map((name, i) => [name, i]));
         for (const section of Object.values(story.sections)) {
             checkText(section, section, null);
             for (const passage of Object.values(section.passages)) {
@@ -460,10 +473,16 @@ function linkDestinationExists(link: string, keys: Record<string, unknown>) {
 
     // First check if the full link is a valid destination (handles names containing commas).
     const trimmedLink = link.trim();
-    if (Object.keys(keys).includes(trimmedLink)) {
+    if (hasOwn(keys, trimmedLink)) {
         return true;
     }
     // Otherwise, assume a comma separates the destination from setters.
     const linkDestination = trimmedLink.split(",")[0].trim();
-    return Object.keys(keys).includes(linkDestination);
+    return hasOwn(keys, linkDestination);
+}
+
+// The same as Object.keys(keys).includes(key) for the plain objects used here, without building
+// an array for every link.
+function hasOwn(keys: Record<string, unknown>, key: string) {
+    return Object.prototype.hasOwnProperty.call(keys, key);
 }
