@@ -35,28 +35,28 @@ To store the result in an [attribute](/attributes/), use the `set` option.
 
 <Sample script="It's another {{random (array &quot;Monday&quot; &quot;Tuesday&quot; &quot;Wednesday&quot; &quot;Thursday&quot; &quot;Friday&quot; &quot;Saturday&quot; &quot;Sunday&quot;)}} in the city.
 
-    The weather is {{random (array &quot;sunny&quot; &quot;cloudy&quot; &quot;rainy&quot; &quot;windy&quot; &quot;snowy&quot;) set=&quot;weather&quot;}}.
+The weather is {{random (array &quot;sunny&quot; &quot;cloudy&quot; &quot;rainy&quot; &quot;windy&quot; &quot;snowy&quot;) set=&quot;weather&quot;}}.
 
-    It feels like it's always {{weather}} here.
+It feels like it's always {{weather}} here.
 
-    +++Continue...
++++Continue...
 
-    The weather is still {{weather}}.
+The weather is still {{weather}}.
 "></Sample>
 
 ## Animation
 
 <Sample alwaysShowRestart={true} script="You can animate text like this:
 
-    {{#animate &quot;typewriter&quot;}}This is animated text using a typewriter effect.{{/animate}}
+{{#animate &quot;typewriter&quot;}}This is animated text using a typewriter effect.{{/animate}}
 
-    +++Continue...
++++Continue...
 
-    There are other effects you can use too:
+There are other effects you can use too:
 
-    {{#animate &quot;toast&quot;}}This is animated text using a toast effect.{{/animate}}
+{{#animate &quot;toast&quot;}}This is animated text using a toast effect.{{/animate}}
 
-    Be careful not to overuse them though!
+Be careful not to overuse them though!
 "></Sample>
 
 Squiffy includes [Anime.js](https://animejs.com/), and you can define your own custom animations by setting them up in a `@ui` section. See the [example on GitHub](https://github.com/textadventures/squiffy/tree/main/examples/animate).
@@ -76,12 +76,12 @@ You can change how an animation runs by adding options after its name:
 
 <Sample alwaysShowRestart={true} script="{{#animate &quot;typewriter&quot; interval=30}}This text types out quickly.{{/animate}}
 
-    {{#animate &quot;typewriter&quot; interval=300 start=1500}}This text waits, then types slowly.{{/animate}}
+{{#animate &quot;typewriter&quot; interval=300 start=1500}}This text waits, then types slowly.{{/animate}}
 
-    Click {{#animate &quot;fadeIn&quot; trigger=&quot;link&quot; loop=true}}[this link]{{/animate}} to make it pulse.
+Click {{#animate &quot;fadeIn&quot; trigger=&quot;link&quot; loop=true}}[this link]{{/animate}} to make it pulse.
 
-    [this link]:
-    Clicked!
+[this link]:
+Clicked!
 "></Sample>
 
 ### Click to continue
@@ -90,9 +90,9 @@ Animations are queued and play sequentially. Sometimes you want to pause the que
 
 <Sample alwaysShowRestart={true} script="The door creaked open slowly...
 
-    {{#animate &quot;continue&quot;}}Step inside{{/animate}}
+{{#animate &quot;continue&quot;}}Step inside{{/animate}}
 
-    {{#animate &quot;fadeIn&quot;}}You enter a dark room. Shadows dance on the walls.{{/animate}}
+{{#animate &quot;fadeIn&quot;}}You enter a dark room. Shadows dance on the walls.{{/animate}}
 "></Sample>
 
 The `continue` animation supports different visual styles via the `style` parameter:
@@ -104,9 +104,9 @@ The `continue` animation supports different visual styles via the `style` parame
 
 <Sample alwaysShowRestart={true} script="Choose your adventure...
 
-    {{#animate &quot;continue&quot; style=&quot;wave&quot;}}Enter the cave{{/animate}}
+{{#animate &quot;continue&quot; style=&quot;wave&quot;}}Enter the cave{{/animate}}
 
-    {{#animate &quot;typewriter&quot;}}You venture into the darkness...{{/animate}}
+{{#animate &quot;typewriter&quot;}}You venture into the darkness...{{/animate}}
 "></Sample>
 
 ## Replace
@@ -115,25 +115,25 @@ By creating labels, you can replace existing output when a link is clicked or wh
 
 <Sample script="I walked to the shops and I bought {{#label &quot;1&quot;}}a pint of milk{{/label}}.
 
-    Or maybe I bought [something different]?
+Or maybe I bought [something different]?
 
-    [something different]:
-    {{#replace &quot;1&quot;}}a loaf of bread{{/replace}}"></Sample>
+[something different]:
+{{#replace &quot;1&quot;}}a loaf of bread{{/replace}}"></Sample>
 
 The replacement text can include links to other passages or sections:
 
 <Sample script="I walked to the shops and I {{#label &quot;1&quot;}}bought a pint of milk{{/label}}.
 
-    But I was [thinking]...
+But I was [thinking]...
 
-    [thinking]:
-    {{#replace &quot;1&quot;}}suddenly thought, hang on, I could [[go to the funfair]] or [[join the circus]] instead{{/replace}}
+[thinking]:
+{{#replace &quot;1&quot;}}suddenly thought, hang on, I could [[go to the funfair]] or [[join the circus]] instead{{/replace}}
 
-    [[go to the funfair]]:
-    Off I went to the funfair...
+[[go to the funfair]]:
+Off I went to the funfair...
 
-    [[join the circus]]:
-    Off I went to the circus..."></Sample>
+[[join the circus]]:
+Off I went to the circus..."></Sample>
 
 ## Rotate
 
@@ -145,19 +145,19 @@ You can store the result in an [attribute](/attributes/):
 
 <Sample script="Please choose: {{rotate (array &quot;small&quot; &quot;medium&quot; &quot;large&quot;) set=&quot;size&quot;}}
 
-        +++Then continue...
++++Then continue...
 
-        You chose {{size}}."></Sample>
+You chose {{size}}."></Sample>
 
 You might want the link to display the _next_ option, rather than the current one. Use the `show="next"` option for this:
 
 <Sample script="Current size: {{live &quot;size&quot;}}.
 
-        Change size: {{rotate (array &quot;small&quot; &quot;medium&quot; &quot;large&quot;) set=&quot;size&quot; show=&quot;next&quot;}}
+Change size: {{rotate (array &quot;small&quot; &quot;medium&quot; &quot;large&quot;) set=&quot;size&quot; show=&quot;next&quot;}}
 
-        +++Or pick this one...
++++Or pick this one...
 
-        You chose {{size}}."></Sample>
+You chose {{size}}."></Sample>
 
 ## Sequence
 
@@ -169,8 +169,8 @@ As a variation on this, you can use a section link as the final option in a sequ
 
 <Sample script="{{sequence (array &quot;Click me&quot; &quot;Click me again&quot; (section &quot;next&quot; text=&quot;And once more&quot;))}}
 
-        [[next]]:
-        Done!"></Sample>
+[[next]]:
+Done!"></Sample>
 
 ## Live
 
@@ -180,19 +180,19 @@ In this example, notice how the static `{{count}}` does not change, but the live
 
 <Sample script="@set count = 0
 
-    This is static: {{count}}.
+This is static: {{count}}.
 
-    This is live: {{live &quot;count&quot;}}.
+This is live: {{live &quot;count&quot;}}.
 
-    +++Continue
-    @inc count
++++Continue
+@inc count
 
-    Now count is {{count}}.
+Now count is {{count}}.
 
-    +++Continue
-    @inc count
++++Continue
+@inc count
 
-    Now count is {{count}}."></Sample>
+Now count is {{count}}."></Sample>
 
 Here we combine `{{live}}` with `{{rotate}}` to create a button that cycles through options. Instead of simply
 displaying the attribute value, we use the `section` parameter to display text which can itself contain
@@ -200,13 +200,13 @@ further helpers.
 
 <Sample script="Choose a colour: {{rotate (array &quot;red&quot; &quot;green&quot; &quot;blue&quot;) set=&quot;colour&quot;}}
 
-        {{live &quot;colour&quot; section=&quot;colourDescription&quot;}}
+{{live &quot;colour&quot; section=&quot;colourDescription&quot;}}
 
-        [[colourDescription]]:
-        {{#if colour = &quot;red&quot;}}
-            The colour of fire and blood.
-        {{else if colour = &quot;green&quot;}}
-            The colour of nature and life.
-        {{else if colour = &quot;blue&quot;}}
-            The colour of the sky and the sea.
-        {{/if}}"></Sample>
+[[colourDescription]]:
+{{#if colour = &quot;red&quot;}}
+    The colour of fire and blood.
+{{else if colour = &quot;green&quot;}}
+    The colour of nature and life.
+{{else if colour = &quot;blue&quot;}}
+    The colour of the sky and the sea.
+{{/if}}"></Sample>

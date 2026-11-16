@@ -13,7 +13,7 @@ If you want more control over how your Squiffy story is presented, you can embed
 
 First, export your story using the CLI with `--scriptonly`:
 
-```
+```bash
 npx @textadventures/squiffy-cli mygame.squiffy --scriptonly
 ```
 
@@ -58,7 +58,7 @@ Here's a minimal HTML page that runs a Squiffy story:
 
 If you're building a web app with [Vite](https://vite.dev), the Squiffy Vite plugin lets you import `.squiffy` files directly. They're compiled as part of your build, so there's no separate export step:
 
-```
+```bash
 npm install --save-dev @textadventures/vite-plugin-squiffy
 npm install squiffy-runtime
 ```

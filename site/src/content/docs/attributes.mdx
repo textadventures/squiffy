@@ -15,7 +15,7 @@ Attributes are variables that store information about your story's state. You ca
 
 The simplest way to set an attribute is using the `@set` directive:
 
-```
+```squiffy
 @set score = 1000
 @set player_name = Alice
 ```
@@ -24,32 +24,32 @@ If the value is a number, it will be stored as a number, and `true` or `false` a
 
 For boolean (true/false) values, to set as true:
 
-```
+```squiffy
 @set has_key
 ```
 
 and to set as false:
 
-```
+```squiffy
 @set not has_key
 ```
 
 or alternatively:
 
-```
+```squiffy
 @unset has_key
 ```
 
 For number values, you can increase or decrease by 1:
 
-```
+```squiffy
 @inc score
 @dec health
 ```
 
 Or increase or decrease by other amounts:
 
-```
+```squiffy
 @inc score 100
 @dec health 5
 ```
@@ -123,7 +123,7 @@ These work both with `@set` and in links:
 
 For example, this link copies the current score into `final_score` and doubles the bonus:
 
-```
+```squiffy
 [[Finish]](ending, final_score=@score, bonus*=2)
 ```
 
@@ -133,7 +133,7 @@ The `@set`, `@inc`, `@dec`, and `@unset` directives run when a section or passag
 
 If you want to change an attribute **conditionally** (only when an `{{#if}}` condition is true), use the helper versions instead:
 
-```
+```squiffy
 {{#if (seen "helped the wizard")}}
 {{inc "reputation"}}
 The wizard remembers your kindness.
@@ -180,7 +180,7 @@ You walk past. Reputation: {{reputation}}"></Sample>
 
 You can display the value of an attribute using `{{name}}` (if the attribute name is all one word), or `{{get "attribute name"}}` for multi-word attributes or when the attribute name comes from an expression.
 
-```
+```squiffy
 You chose {{gender}}.
 Your full name is {{get "player name"}}.
 ```
@@ -216,7 +216,7 @@ In this example, `{{get room}}` looks up the value of `room` (e.g., "kitchen"), 
 
 You can also read a value using JavaScript:
 
-```
+```javascript
     var gender = squiffy.get("gender");
 ```
 
@@ -312,7 +312,7 @@ The cupboard is
 
 You can also use JavaScript:
 
-```
+```javascript
     if (squiffy.story.seen("passage3")) {
         alert("You have seen passage3!");
     }
@@ -348,7 +348,7 @@ In addition to the standard link syntax, you can create links programmatically u
 
 Creates a link to a section with optional custom text and attribute settings:
 
-```
+```squiffy
 {{section "section_name" text="Link text" set="attribute=value, count+=1"}}
 ```
 
@@ -356,7 +356,7 @@ Creates a link to a section with optional custom text and attribute settings:
 
 Creates a link to a passage with optional custom text and attribute settings:
 
-```
+```squiffy
 {{passage "passage_name" text="Link text" set="visited=true"}}
 ```
 
@@ -427,7 +427,7 @@ You can interact with attributes using JavaScript in any section or passage:
 
 ### Setting values
 
-```
+```javascript
     squiffy.set("attribute_name", value);
     squiffy.set("score", 100);
     squiffy.set("has_key", true);
@@ -435,7 +435,7 @@ You can interact with attributes using JavaScript in any section or passage:
 
 ### Getting values
 
-```
+```javascript
     var score = squiffy.get("score");
     var hasKey = squiffy.get("has_key");
 ```
@@ -457,14 +457,14 @@ Health: {{health}}
 
 You can use the `{{array}}` helper to create arrays for use with other helpers like `{{random}}`, `{{rotate}}`, and `{{at}}`:
 
-```
+```squiffy
 {{random (array "option1" "option2" "option3")}}
 {{at (array "section1" "section2" "section3")}}
 ```
 
 If an attribute holds an array, you can display one of its elements by index using Handlebars' `.[n]` syntax. Indexes start at 0, so this shows the second element:
 
-```
+```squiffy
 The second fruit is {{fruits.[1]}}.
 ```
 

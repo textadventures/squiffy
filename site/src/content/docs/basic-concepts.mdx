@@ -17,14 +17,14 @@ You can format text using [Markdown](https://daringfireball.net/projects/markdow
 
 <Sample script="Here is some **bold text** and some _italic text_.
 
-    A list:
-    - Item 1
-    - Item 2
-    - Item 3
+A list:
+- Item 1
+- Item 2
+- Item 3
 
-    A link to [Google](https://www.google.com).
+A link to [Google](https://www.google.com).
 
-    Using a `&lt;span&gt;` tag to &lt;span style=&quot;color: red&quot;&gt;change the colour&lt;/span&gt; of some text.
+Using a `&lt;span&gt;` tag to &lt;span style=&quot;color: red&quot;&gt;change the colour&lt;/span&gt; of some text.
 "></Sample>
 
 To create interactive stories, you'll need to add some links. There are two types of text block you can use in Squiffy:
@@ -50,7 +50,7 @@ Three different flavours of ice cream - yum!"></Sample>
 
 To use different link text, put the name of the section in brackets afterwards.
 
-```
+```squiffy
 This is [[how to use custom link text]](section2).
 ```
 
@@ -78,7 +78,7 @@ Passage names must be unique within their section.
 
 To use different link text, put the name of the passage in brackets afterwards.
 
-```
+```squiffy
 This is [how to use custom link text](passage1).
 ```
 
@@ -88,17 +88,17 @@ When you want a simple link that moves to the next part of your story, use `+++`
 
 <Sample script="This is the first part of my story.
 
-            +++Continue...
++++Continue...
 
-            This is the second part.
+This is the second part.
 
-            +++I want to hear more...
++++I want to hear more...
 
-            Very well. Here is the third part."></Sample>
+Very well. Here is the third part."></Sample>
 
 The `+++` syntax is a shorthand. Instead of writing:
 
-```
+```squiffy
 This is the first part.
 
 [[Continue...]](second part)
@@ -109,7 +109,7 @@ This is the second part.
 
 You can simply write:
 
-```
+```squiffy
 This is the first part.
 
 +++Continue...
@@ -121,7 +121,7 @@ Everything after `+++Continue...` until the next `+++` or `[[section]]:` becomes
 
 You can use directives like `@clear` or `@set` immediately after the `+++` line:
 
-```
+```squiffy
 +++Next chapter...
 @clear
 
@@ -152,7 +152,7 @@ And the story continues..."></Sample>
 
 The `>` at the end of the link text means "link to the next section". This is equivalent to:
 
-```
+```squiffy
 {{#animate "fadeIn"}}
 Welcome to the story!
 
@@ -170,7 +170,7 @@ And the story continues...
 
 You can also use the explicit form `[[link text]](>)` if you prefer, or if you need to set attributes:
 
-```
+```squiffy
 [[Begin]](>, score=10)
 ```
 
@@ -180,10 +180,10 @@ Any section or passage can call some JavaScript when it is displayed. Simply ind
 
 <Sample script="Clicking this [link] will show an alert.
 
-    [link]:
-    &#32;&#32;&#32;&#32;alert (&quot;Hello!&quot;);
+[link]:
+&#32;&#32;&#32;&#32;alert (&quot;Hello!&quot;);
 
-    Text for the passage."></Sample>
+Text for the passage."></Sample>
 
 Your JavaScript can use these functions:
 
@@ -208,23 +208,23 @@ In the example below, the text "We're nearly here. The train is pulling into the
 
 <Sample script="On the train you can see a [girl singing], a [man reading a book] and an [old woman].
 
-    [girl singing]:
-    She is nodding her head to the music in her enormous earphones, and singing badly out of tune.
+[girl singing]:
+She is nodding her head to the music in her enormous earphones, and singing badly out of tune.
 
-    [man reading a book]:
-    He's been reading the same page of *War and Peace* for a while now.
+[man reading a book]:
+He's been reading the same page of *War and Peace* for a while now.
 
-    [old woman]:
-    She eyes you suspiciously, as if she has seen your type before.
+[old woman]:
+She eyes you suspiciously, as if she has seen your type before.
 
-    [@1]:
-    We're nearly here. The train is pulling into the platform.
+[@1]:
+We're nearly here. The train is pulling into the platform.
 
-    [@2]:
-    &#32;&#32;&#32;&#32;squiffy.story.go(&quot;station&quot;);
+[@2]:
+&#32;&#32;&#32;&#32;squiffy.story.go(&quot;station&quot;);
 
-    [[station]]:
-    We have now arrived at the station."></Sample>
+[[station]]:
+We have now arrived at the station."></Sample>
 
 You can also trigger a passage to be written only after all the passages in that section have been clicked on.
 
@@ -232,23 +232,23 @@ See the example below where after all passage links have been clicked the text "
 
 <Sample script="Looking at the detective's desk you can see the following items to examine; a [photograph], a [file] and a [coffee mug].
 
-    [photograph]:
-    Looks like some kind of work celebration. The detective is in the middle of the picture holding a basket of fruit and other officers are toasting him.
+[photograph]:
+Looks like some kind of work celebration. The detective is in the middle of the picture holding a basket of fruit and other officers are toasting him.
 
-    [file]:
-    The file is empty. You notice though that the tab has your brother's name on it!
+[file]:
+The file is empty. You notice though that the tab has your brother's name on it!
 
-    [coffee mug]:
-    It is just a coffee mug.
+[coffee mug]:
+It is just a coffee mug.
 
-    [@last]:
-    You have examined every item."></Sample>
+[@last]:
+You have examined every item."></Sample>
 
 ## Clear the screen
 
 Any section or passage can clear the screen using @clear on a line on its own:
 
-```
+```squiffy
 [[Chapter 2]]:
 @clear
 My first reaction to the explosion was...
@@ -260,21 +260,21 @@ Attributes are variables that store information about your story's state, such a
 
 You can set an attribute using the `@set` directive:
 
-```
+```squiffy
 @set score = 100
 @set player_name = Alice
 ```
 
 And read it using double curly braces:
 
-```
+```squiffy
 Your score is {{score}}.
 Hello, {{player_name}}!
 ```
 
 You can also set attributes directly from links:
 
-```
+```squiffy
 Are you [[male]](start, gender=male) or [[female]](start, gender=female)?
 ```
 
@@ -305,17 +305,17 @@ By default, the story begins in the first section. You can choose a different se
 
 <Sample script="@start Beginning
 
-    [[some other section]]:
-    This section would normally be the start, but we have overridden it.
+[[some other section]]:
+This section would normally be the start, but we have overridden it.
 
-    [[Beginning]]:
-    This is where the story begins."></Sample>
+[[Beginning]]:
+This is where the story begins."></Sample>
 
 ## Set the title
 
 Set the title like this:
 
-```
+```squiffy
 @title My Amazing Interactive Story
 ```
 
@@ -325,7 +325,7 @@ An empty name for a section or passage creates a "master", which is triggered fo
 
 e.g. to clear the screen before every section, and to increase a global turn counter:
 
-```
+```squiffy
 [[]]:
 @clear
 @inc turns
@@ -338,25 +338,25 @@ e.g. to clear the screen before every section, and to increase a global turn cou
 
 You can split your script up into multiple files and import them:
 
-```
+```squiffy
 @import other_file.squiffy
 ```
 
 You can also use the same syntax to import external JavaScript files:
 
-```
+```squiffy
 @import my_script.js
 ```
 
 and CSS files:
 
-```
+```squiffy
 @import my_style.css
 ```
 
 This syntax also accepts wildcards, so you can include all .squiffy files in a directory:
 
-```
+```squiffy
 @import *.squiffy
 ```
 
@@ -436,13 +436,13 @@ Starting game on {{difficulty}} difficulty.
 
 Put the image next to your `.squiffy` file (or in a folder below it) and use Markdown image syntax:
 
-```
+```squiffy
 ![A sleeping cat](cat.png)
 ```
 
 You can also use HTML, for example for sound and video:
 
-```
+```squiffy
 <img src="images/map.png" alt="Map of the island">
 <audio src="sounds/rain.mp3" controls></audio>
 ```

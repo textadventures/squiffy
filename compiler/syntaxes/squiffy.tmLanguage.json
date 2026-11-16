@@ -1,0 +1,972 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Squiffy",
+  "scopeName": "source.squiffy",
+  "fileTypes": [
+    "squiffy"
+  ],
+  "patterns": [
+    {
+      "include": "#preamble"
+    },
+    {
+      "include": "#block"
+    },
+    {
+      "include": "#text"
+    }
+  ],
+  "repository": {
+    "block": {
+      "comment": "Each header starts a block. Until the block's first line of text, lines indented by a tab or four spaces are JavaScript, as in the compiler (compiler/src/parse.ts).",
+      "patterns": [
+        {
+          "include": "#snippet"
+        },
+        {
+          "include": "#section-header"
+        },
+        {
+          "include": "#passage-header"
+        },
+        {
+          "include": "#continue"
+        },
+        {
+          "include": "#separator"
+        },
+        {
+          "include": "#ui-block"
+        }
+      ]
+    },
+    "preamble": {
+      "comment": "The top of the file works like the start of a section.",
+      "begin": "\\A(?=\\s*$|\\t| {4}|\\s*@)",
+      "end": "^(?!\\s*$|\\t| {4}|\\s*@)",
+      "patterns": [
+        {
+          "include": "#ui-block"
+        },
+        {
+          "include": "#js-line"
+        },
+        {
+          "include": "#directive"
+        }
+      ]
+    },
+    "section-header": {
+      "begin": "^\\s*(\\[\\[)(.*)(\\]\\])(:)\\s*$",
+      "beginCaptures": {
+        "0": {
+          "name": "markup.heading.section.squiffy"
+        },
+        "1": {
+          "name": "punctuation.definition.heading.begin.squiffy"
+        },
+        "2": {
+          "name": "entity.name.section.squiffy"
+        },
+        "3": {
+          "name": "punctuation.definition.heading.end.squiffy"
+        },
+        "4": {
+          "name": "punctuation.separator.key-value.squiffy"
+        }
+      },
+      "end": "^(?!\\s*$|\\t| {4}|\\s*@)",
+      "patterns": [
+        {
+          "include": "#ui-block"
+        },
+        {
+          "include": "#js-line"
+        },
+        {
+          "include": "#directive"
+        }
+      ]
+    },
+    "passage-header": {
+      "begin": "^\\s*(\\[)(?!\\[|snippet:)(.*)(\\])(:)\\s*$",
+      "beginCaptures": {
+        "0": {
+          "name": "markup.heading.passage.squiffy"
+        },
+        "1": {
+          "name": "punctuation.definition.heading.begin.squiffy"
+        },
+        "2": {
+          "name": "entity.name.function.passage.squiffy"
+        },
+        "3": {
+          "name": "punctuation.definition.heading.end.squiffy"
+        },
+        "4": {
+          "name": "punctuation.separator.key-value.squiffy"
+        }
+      },
+      "end": "^(?!\\s*$|\\t| {4}|\\s*@)",
+      "patterns": [
+        {
+          "include": "#ui-block"
+        },
+        {
+          "include": "#js-line"
+        },
+        {
+          "include": "#directive"
+        }
+      ]
+    },
+    "continue": {
+      "begin": "^\\s*(\\+\\+\\+)(.*)$",
+      "beginCaptures": {
+        "0": {
+          "name": "markup.heading.continue.squiffy"
+        },
+        "1": {
+          "name": "keyword.control.continue.squiffy"
+        },
+        "2": {
+          "name": "string.other.link.title.squiffy",
+          "patterns": [
+            {
+              "include": "#inline"
+            }
+          ]
+        }
+      },
+      "end": "^(?!\\s*$|\\t| {4}|\\s*@)",
+      "patterns": [
+        {
+          "include": "#ui-block"
+        },
+        {
+          "include": "#js-line"
+        },
+        {
+          "include": "#directive"
+        }
+      ]
+    },
+    "separator": {
+      "begin": "^\\s*(---)\\s*$",
+      "beginCaptures": {
+        "1": {
+          "name": "meta.separator.squiffy keyword.control.separator.squiffy"
+        }
+      },
+      "end": "^(?!\\s*$|\\t| {4}|\\s*@)",
+      "patterns": [
+        {
+          "include": "#ui-block"
+        },
+        {
+          "include": "#js-line"
+        },
+        {
+          "include": "#directive"
+        }
+      ]
+    },
+    "snippet": {
+      "comment": "A snippet's content is plain text up to the next section or snippet header. Passage headers inside it are just text.",
+      "begin": "^\\s*(\\[)(snippet)(:)\\s*(.+)(\\])(:)\\s*$",
+      "beginCaptures": {
+        "0": {
+          "name": "markup.heading.snippet.squiffy"
+        },
+        "1": {
+          "name": "punctuation.definition.heading.begin.squiffy"
+        },
+        "2": {
+          "name": "keyword.other.snippet.squiffy"
+        },
+        "3": {
+          "name": "punctuation.separator.squiffy"
+        },
+        "4": {
+          "name": "entity.name.type.snippet.squiffy"
+        },
+        "5": {
+          "name": "punctuation.definition.heading.end.squiffy"
+        },
+        "6": {
+          "name": "punctuation.separator.key-value.squiffy"
+        }
+      },
+      "end": "^(?=\\s*\\[\\[.*\\]\\]:\\s*$|\\s*\\[snippet:\\s*.+\\]:\\s*$)",
+      "contentName": "meta.snippet.body.squiffy",
+      "patterns": [
+        {
+          "include": "#markdown-block"
+        },
+        {
+          "include": "#inline"
+        }
+      ]
+    },
+    "ui-block": {
+      "comment": "@ui on its own starts a block of story-wide JavaScript and HTML, ended by ---.",
+      "begin": "^\\s*(@ui)\\s*$",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.control.directive.squiffy"
+        }
+      },
+      "end": "^(?=\\s*---\\s*$)",
+      "name": "meta.ui-block.squiffy",
+      "patterns": [
+        {
+          "include": "#js-line"
+        },
+        {
+          "include": "#inline"
+        }
+      ]
+    },
+    "js-line": {
+      "match": "^(\\t| {4})(.*)$",
+      "captures": {
+        "2": {
+          "name": "meta.embedded.block.javascript",
+          "patterns": [
+            {
+              "include": "source.js"
+            }
+          ]
+        }
+      }
+    },
+    "directive": {
+      "patterns": [
+        {
+          "comment": "One setter per line, so its value runs to the end of the line: @set score = 10, @set greeting := Hello, {{name}}!, @set not has_key",
+          "match": "^\\s*(@)(set|unset)\\s+(.*?)\\s*$",
+          "captures": {
+            "0": {
+              "name": "meta.directive.attribute.squiffy"
+            },
+            "1": {
+              "name": "punctuation.definition.directive.squiffy keyword.control.directive.squiffy"
+            },
+            "2": {
+              "name": "keyword.control.directive.squiffy"
+            },
+            "3": {
+              "patterns": [
+                {
+                  "include": "#assignment"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "match": "^\\s*(@)(inc|dec)\\s+(\\S+)(?:\\s+(\\d+))?\\s*$",
+          "captures": {
+            "0": {
+              "name": "meta.directive.attribute.squiffy"
+            },
+            "1": {
+              "name": "punctuation.definition.directive.squiffy keyword.control.directive.squiffy"
+            },
+            "2": {
+              "name": "keyword.control.directive.squiffy"
+            },
+            "3": {
+              "name": "variable.parameter.attribute.squiffy"
+            },
+            "4": {
+              "name": "constant.numeric.squiffy"
+            }
+          }
+        },
+        {
+          "match": "^\\s*(@)(title|start|import|ui)\\s+(.*?)\\s*$",
+          "captures": {
+            "0": {
+              "name": "meta.directive.squiffy"
+            },
+            "1": {
+              "name": "punctuation.definition.directive.squiffy keyword.control.directive.squiffy"
+            },
+            "2": {
+              "name": "keyword.control.directive.squiffy"
+            },
+            "3": {
+              "name": "string.unquoted.squiffy"
+            }
+          }
+        },
+        {
+          "match": "^\\s*(@)(clear)\\s*$",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.directive.squiffy keyword.control.directive.squiffy"
+            },
+            "2": {
+              "name": "keyword.control.directive.squiffy"
+            }
+          }
+        }
+      ]
+    },
+    "text": {
+      "patterns": [
+        {
+          "include": "#directive"
+        },
+        {
+          "include": "#markdown-block"
+        },
+        {
+          "include": "#inline"
+        }
+      ]
+    },
+    "inline": {
+      "patterns": [
+        {
+          "include": "#handlebars-comment"
+        },
+        {
+          "include": "#handlebars"
+        },
+        {
+          "include": "#html-comment"
+        },
+        {
+          "include": "#link"
+        },
+        {
+          "include": "#html-tag"
+        },
+        {
+          "include": "#markdown-inline"
+        }
+      ]
+    },
+    "link": {
+      "comment": "In the order the compiler tries them (compiler/src/text.ts).",
+      "patterns": [
+        {
+          "name": "meta.link.section.next.squiffy",
+          "match": "(\\[\\[)([^\\]]*?)(>)(\\]\\])",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.link.begin.squiffy"
+            },
+            "2": {
+              "name": "string.other.link.title.squiffy",
+              "patterns": [
+                {
+                  "include": "#handlebars"
+                }
+              ]
+            },
+            "3": {
+              "name": "keyword.operator.next-section.squiffy"
+            },
+            "4": {
+              "name": "punctuation.definition.link.end.squiffy"
+            }
+          }
+        },
+        {
+          "name": "meta.link.section.squiffy",
+          "match": "(\\[\\[)([^\\]]*?)(\\]\\])(\\()(.*?)(\\))",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.link.begin.squiffy"
+            },
+            "2": {
+              "name": "string.other.link.title.squiffy",
+              "patterns": [
+                {
+                  "include": "#handlebars"
+                }
+              ]
+            },
+            "3": {
+              "name": "punctuation.definition.link.end.squiffy"
+            },
+            "4": {
+              "name": "punctuation.definition.metadata.begin.squiffy"
+            },
+            "5": {
+              "patterns": [
+                {
+                  "include": "#link-target"
+                }
+              ]
+            },
+            "6": {
+              "name": "punctuation.definition.metadata.end.squiffy"
+            }
+          }
+        },
+        {
+          "name": "meta.image.markdown.squiffy",
+          "match": "(!)(\\[)([^\\]]*?)(\\])(\\()(.*?)(\\))",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.link.image.squiffy"
+            },
+            "2": {
+              "name": "punctuation.definition.link.begin.squiffy"
+            },
+            "3": {
+              "name": "string.other.link.description.squiffy"
+            },
+            "4": {
+              "name": "punctuation.definition.link.end.squiffy"
+            },
+            "5": {
+              "name": "punctuation.definition.metadata.begin.squiffy"
+            },
+            "6": {
+              "name": "markup.underline.link.image.squiffy"
+            },
+            "7": {
+              "name": "punctuation.definition.metadata.end.squiffy"
+            }
+          }
+        },
+        {
+          "name": "meta.link.url.squiffy",
+          "match": "(\\[)([^\\]]*?)(\\])(\\()(https?://.*?)(\\))",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.link.begin.squiffy"
+            },
+            "2": {
+              "name": "string.other.link.title.squiffy"
+            },
+            "3": {
+              "name": "punctuation.definition.link.end.squiffy"
+            },
+            "4": {
+              "name": "punctuation.definition.metadata.begin.squiffy"
+            },
+            "5": {
+              "name": "markup.underline.link.squiffy"
+            },
+            "6": {
+              "name": "punctuation.definition.metadata.end.squiffy"
+            }
+          }
+        },
+        {
+          "name": "meta.link.passage.squiffy",
+          "match": "(\\[)([^\\]]*?)(\\])(\\()(.*?)(\\))",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.link.begin.squiffy"
+            },
+            "2": {
+              "name": "string.other.link.title.squiffy",
+              "patterns": [
+                {
+                  "include": "#handlebars"
+                }
+              ]
+            },
+            "3": {
+              "name": "punctuation.definition.link.end.squiffy"
+            },
+            "4": {
+              "name": "punctuation.definition.metadata.begin.squiffy"
+            },
+            "5": {
+              "patterns": [
+                {
+                  "include": "#link-target"
+                }
+              ]
+            },
+            "6": {
+              "name": "punctuation.definition.metadata.end.squiffy"
+            }
+          }
+        },
+        {
+          "name": "meta.link.section.squiffy",
+          "match": "(\\[\\[)(.*?)(\\]\\])",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.link.begin.squiffy"
+            },
+            "2": {
+              "name": "string.other.link.title.squiffy markup.underline.link.squiffy",
+              "patterns": [
+                {
+                  "include": "#handlebars"
+                }
+              ]
+            },
+            "3": {
+              "name": "punctuation.definition.link.end.squiffy"
+            }
+          }
+        },
+        {
+          "name": "meta.link.passage.squiffy",
+          "match": "(\\[)([^\\]]*?)(\\])",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.link.begin.squiffy"
+            },
+            "2": {
+              "name": "string.other.link.title.squiffy markup.underline.link.squiffy",
+              "patterns": [
+                {
+                  "include": "#handlebars"
+                }
+              ]
+            },
+            "3": {
+              "name": "punctuation.definition.link.end.squiffy"
+            }
+          }
+        }
+      ]
+    },
+    "link-target": {
+      "comment": "A link's target, then any attribute setters after a comma: [[text]](section, score=1, not visited).",
+      "match": "\\s*([^,]*?)\\s*(?:(,)(.*))?$",
+      "captures": {
+        "1": {
+          "name": "markup.underline.link.squiffy",
+          "patterns": [
+            {
+              "match": ">",
+              "name": "keyword.operator.next-section.squiffy"
+            }
+          ]
+        },
+        "2": {
+          "name": "punctuation.separator.squiffy"
+        },
+        "3": {
+          "patterns": [
+            {
+              "include": "#assignments"
+            }
+          ]
+        }
+      }
+    },
+    "assignments": {
+      "comment": "Comma-separated setters after a link's target: [[text]](section, score+=1, not visited)",
+      "patterns": [
+        {
+          "match": "([^,]+)|(,)",
+          "captures": {
+            "1": {
+              "patterns": [
+                {
+                  "include": "#assignment"
+                }
+              ]
+            },
+            "2": {
+              "name": "punctuation.separator.squiffy"
+            }
+          }
+        }
+      ]
+    },
+    "assignment": {
+      "comment": "One setter, as the runtime reads it (setAttribute in runtime/src/squiffy.runtime.ts): a = 1, a += 1 (or -=, *=, /=), a := text with {{...}}, a = @b, not a, a. Patterns inside a capture can't anchor to its start (^ and \\G never match there), but $ is its end, and the earliest match wins.",
+      "patterns": [
+        {
+          "match": "\\s*(\\w*)\\s*(:=)(.*)$",
+          "captures": {
+            "1": {
+              "name": "variable.parameter.attribute.squiffy"
+            },
+            "2": {
+              "name": "keyword.operator.assignment.squiffy"
+            },
+            "3": {
+              "name": "string.unquoted.squiffy",
+              "patterns": [
+                {
+                  "include": "#handlebars"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "match": "\\s*(\\w*)\\s*([+\\-*/]?=)\\s*(.*?)\\s*$",
+          "captures": {
+            "1": {
+              "name": "variable.parameter.attribute.squiffy"
+            },
+            "2": {
+              "name": "keyword.operator.assignment.squiffy"
+            },
+            "3": {
+              "patterns": [
+                {
+                  "include": "#value"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "match": "\\s*(?:(not)\\s+)?(.*?)\\s*$",
+          "captures": {
+            "1": {
+              "name": "keyword.operator.logical.squiffy"
+            },
+            "2": {
+              "name": "variable.parameter.attribute.squiffy"
+            }
+          }
+        }
+      ]
+    },
+    "value": {
+      "patterns": [
+        {
+          "match": "-?\\d+(?:\\.\\d+)?$",
+          "name": "constant.numeric.squiffy"
+        },
+        {
+          "match": "(?:true|false)$",
+          "name": "constant.language.boolean.squiffy"
+        },
+        {
+          "match": "@\\w+$",
+          "name": "variable.parameter.attribute.squiffy"
+        },
+        {
+          "match": ".+$",
+          "name": "string.unquoted.squiffy"
+        }
+      ]
+    },
+    "handlebars-comment": {
+      "patterns": [
+        {
+          "begin": "\\{\\{!--",
+          "end": "--\\}\\}",
+          "name": "comment.block.handlebars.squiffy"
+        },
+        {
+          "begin": "\\{\\{!",
+          "end": "\\}\\}",
+          "name": "comment.block.handlebars.squiffy"
+        }
+      ]
+    },
+    "handlebars": {
+      "patterns": [
+        {
+          "comment": "Block helper open {{#if ...}} and close {{/if}}",
+          "begin": "(\\{\\{~?)\\s*([#/][\\w-]+)",
+          "beginCaptures": {
+            "1": {
+              "name": "support.constant.handlebars.squiffy punctuation.section.embedded.begin.handlebars.squiffy"
+            },
+            "2": {
+              "name": "keyword.control.block.handlebars.squiffy"
+            }
+          },
+          "end": "~?\\}\\}",
+          "endCaptures": {
+            "0": {
+              "name": "support.constant.handlebars.squiffy punctuation.section.embedded.end.handlebars.squiffy"
+            }
+          },
+          "name": "meta.embedded.expression.handlebars.squiffy",
+          "patterns": [
+            {
+              "include": "#handlebars-expression"
+            }
+          ]
+        },
+        {
+          "comment": "{{else}} and {{else if ...}}",
+          "begin": "(\\{\\{~?)\\s*(else)\\b(?:\\s+(if|unless)\\b)?",
+          "beginCaptures": {
+            "1": {
+              "name": "support.constant.handlebars.squiffy punctuation.section.embedded.begin.handlebars.squiffy"
+            },
+            "2": {
+              "name": "keyword.control.block.handlebars.squiffy"
+            },
+            "3": {
+              "name": "keyword.control.block.handlebars.squiffy"
+            }
+          },
+          "end": "~?\\}\\}",
+          "endCaptures": {
+            "0": {
+              "name": "support.constant.handlebars.squiffy punctuation.section.embedded.end.handlebars.squiffy"
+            }
+          },
+          "name": "meta.embedded.expression.handlebars.squiffy",
+          "patterns": [
+            {
+              "include": "#handlebars-expression"
+            }
+          ]
+        },
+        {
+          "comment": "{{helper args}}, or {{attribute}} on its own",
+          "begin": "(\\{\\{\\{?~?)\\s*(?:([\\w.-]+)(?=\\s)|([\\w.-]+)(?=\\s*~?\\}))?",
+          "beginCaptures": {
+            "1": {
+              "name": "support.constant.handlebars.squiffy punctuation.section.embedded.begin.handlebars.squiffy"
+            },
+            "2": {
+              "name": "support.function.helper.handlebars.squiffy"
+            },
+            "3": {
+              "name": "variable.parameter.attribute.handlebars.squiffy"
+            }
+          },
+          "end": "~?\\}\\}\\}?",
+          "endCaptures": {
+            "0": {
+              "name": "support.constant.handlebars.squiffy punctuation.section.embedded.end.handlebars.squiffy"
+            }
+          },
+          "name": "meta.embedded.expression.handlebars.squiffy",
+          "patterns": [
+            {
+              "include": "#handlebars-expression"
+            }
+          ]
+        }
+      ]
+    },
+    "handlebars-expression": {
+      "patterns": [
+        {
+          "begin": "(\\()\\s*([\\w.-]+)?",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.section.parens.begin.handlebars.squiffy"
+            },
+            "2": {
+              "name": "support.function.helper.handlebars.squiffy"
+            }
+          },
+          "end": "\\)",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.section.parens.end.handlebars.squiffy"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#handlebars-expression"
+            }
+          ]
+        },
+        {
+          "begin": "\"",
+          "end": "\"",
+          "name": "string.quoted.double.handlebars.squiffy"
+        },
+        {
+          "begin": "'",
+          "end": "'",
+          "name": "string.quoted.single.handlebars.squiffy"
+        },
+        {
+          "match": "-?\\b\\d+(?:\\.\\d+)?\\b",
+          "name": "constant.numeric.handlebars.squiffy"
+        },
+        {
+          "match": "\\b(?:true|false|null|undefined)\\b",
+          "name": "constant.language.handlebars.squiffy"
+        },
+        {
+          "match": "\\b(?:and|or|not)\\b",
+          "name": "keyword.operator.logical.handlebars.squiffy"
+        },
+        {
+          "match": "!=|>=|<=|=(?!=)|>|<",
+          "name": "keyword.operator.comparison.handlebars.squiffy"
+        },
+        {
+          "match": "([\\w-]+)(=)",
+          "captures": {
+            "1": {
+              "name": "entity.other.attribute-name.handlebars.squiffy"
+            },
+            "2": {
+              "name": "punctuation.separator.key-value.handlebars.squiffy"
+            }
+          }
+        },
+        {
+          "match": "\\bas\\s*\\|[^|]*\\|",
+          "name": "variable.parameter.block.handlebars.squiffy"
+        },
+        {
+          "match": "\\[[^\\]]*\\]",
+          "name": "variable.parameter.attribute.handlebars.squiffy"
+        },
+        {
+          "match": "@?[\\w.-]+",
+          "name": "variable.parameter.attribute.handlebars.squiffy"
+        }
+      ]
+    },
+    "html-comment": {
+      "begin": "<!--",
+      "end": "-->",
+      "name": "comment.block.html.squiffy"
+    },
+    "html-tag": {
+      "begin": "(</?)([A-Za-z][\\w:-]*)",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.definition.tag.begin.html.squiffy"
+        },
+        "2": {
+          "name": "entity.name.tag.html.squiffy"
+        }
+      },
+      "end": "/?>",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.tag.end.html.squiffy"
+        }
+      },
+      "name": "meta.tag.html.squiffy",
+      "patterns": [
+        {
+          "include": "#handlebars"
+        },
+        {
+          "match": "[\\w:-]+",
+          "name": "entity.other.attribute-name.html.squiffy"
+        },
+        {
+          "match": "=",
+          "name": "punctuation.separator.key-value.html.squiffy"
+        },
+        {
+          "begin": "\"",
+          "end": "\"",
+          "name": "string.quoted.double.html.squiffy",
+          "patterns": [
+            {
+              "include": "#handlebars"
+            }
+          ]
+        },
+        {
+          "begin": "'",
+          "end": "'",
+          "name": "string.quoted.single.html.squiffy",
+          "patterns": [
+            {
+              "include": "#handlebars"
+            }
+          ]
+        }
+      ]
+    },
+    "markdown-block": {
+      "patterns": [
+        {
+          "match": "^\\s*(#{1,6})\\s+(.*)$",
+          "captures": {
+            "0": {
+              "name": "markup.heading.markdown.squiffy"
+            },
+            "1": {
+              "name": "punctuation.definition.heading.markdown.squiffy"
+            },
+            "2": {
+              "name": "entity.name.section.markdown.squiffy",
+              "patterns": [
+                {
+                  "include": "#inline"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "match": "^\\s*([*+-]|\\d+\\.)(?=\\s)",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.list.begin.markdown.squiffy"
+            }
+          }
+        },
+        {
+          "match": "^\\s*(>)(?=\\s)",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.quote.begin.markdown.squiffy"
+            }
+          }
+        }
+      ]
+    },
+    "markdown-inline": {
+      "patterns": [
+        {
+          "match": "(\\*\\*|__)(?=\\S)(.+?)(?<=\\S)(\\1)",
+          "captures": {
+            "0": {
+              "name": "markup.bold.markdown.squiffy"
+            },
+            "1": {
+              "name": "punctuation.definition.bold.markdown.squiffy"
+            },
+            "3": {
+              "name": "punctuation.definition.bold.markdown.squiffy"
+            }
+          }
+        },
+        {
+          "match": "(?<![\\w*])(\\*)(?=[^\\s*])(.+?)(?<=[^\\s*])(\\*)(?![\\w*])",
+          "captures": {
+            "0": {
+              "name": "markup.italic.markdown.squiffy"
+            },
+            "1": {
+              "name": "punctuation.definition.italic.markdown.squiffy"
+            },
+            "3": {
+              "name": "punctuation.definition.italic.markdown.squiffy"
+            }
+          }
+        },
+        {
+          "match": "(?<!\\w)(_)(?=\\S)(.+?)(?<=\\S)(_)(?!\\w)",
+          "captures": {
+            "0": {
+              "name": "markup.italic.markdown.squiffy"
+            },
+            "1": {
+              "name": "punctuation.definition.italic.markdown.squiffy"
+            },
+            "3": {
+              "name": "punctuation.definition.italic.markdown.squiffy"
+            }
+          }
+        },
+        {
+          "match": "(`)([^`]+)(`)",
+          "name": "markup.inline.raw.markdown.squiffy"
+        }
+      ]
+    }
+  }
+}

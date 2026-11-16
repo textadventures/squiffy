@@ -47,7 +47,7 @@ v6 introduces some new Handlebars helpers:
 
 Use `{{live}}` to display an attribute that automatically updates when its value changes:
 
-```
+```squiffy
 @set score = 0
 You have {{live "score"}} points.
 
@@ -62,7 +62,7 @@ When the player clicks "Get points", the score shown in the first paragraph upda
 
 You can now modify attributes directly within `{{#if}}` blocks using `{{set}}`, `{{inc}}`, and `{{dec}}` - reducing the need to write JavaScript for conditional logic:
 
-```
+```squiffy
 {{#if score > 100}}
     {{set "rank" "expert"}}
     You've reached expert level!
@@ -81,7 +81,7 @@ Text can now appear with animations using the `{{#animate}}` helper:
 - **continue** - Clickable link that pauses the animation queue
 
 Example:
-```
+```squiffy
 {{#animate "typewriter"}}This text appears letter by letter.{{/animate}}
 ```
 
@@ -91,7 +91,7 @@ You can define custom animations using JavaScript in a `@ui` section. See the [a
 
 Players can enter text using HTML input elements with the `data-attribute` attribute:
 
-```
+```squiffy
 What is your name?
 <input type="text" data-attribute="name" placeholder="Enter your name...">
 
@@ -106,7 +106,7 @@ You can also use `<textarea>` for longer text, or any element with `contentedita
 
 Input fields support HTML5 validation attributes. Links are automatically disabled until all inputs in the current section are valid.
 
-```
+```squiffy
 <input type="text" data-attribute="name" required minlength="2">
 
 +++Continue...

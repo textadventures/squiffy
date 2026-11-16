@@ -5,13 +5,21 @@ import starlight from "@astrojs/starlight";
 import { astroExpressiveCode } from "@astrojs/starlight/expressive-code";
 import { appLinks } from "./src/app-links.mjs";
 import { betaSite, siteUrl } from "./src/channel.mjs";
+import squiffyGrammar from "squiffy-compiler/squiffy.tmLanguage.json" with { type: "json" };
+import javascript from "shiki/langs/javascript.mjs";
 
 // https://astro.build/config
 export default defineConfig({
     site: siteUrl,
     trailingSlash: "always",
     integrations: [
-        astroExpressiveCode(),
+        astroExpressiveCode({
+            shiki: {
+                // Highlights ```squiffy code blocks, with the grammar the compiler package exports.
+                // Its JavaScript blocks need Shiki's JavaScript grammar loaded alongside it.
+                langs: [...javascript, { ...squiffyGrammar, name: "squiffy", embeddedLangs: ["javascript"] }],
+            },
+        }),
         mdx(),
         starlight({
             title: "Squiffy",

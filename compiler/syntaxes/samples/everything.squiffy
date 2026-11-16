@@ -1,0 +1,69 @@
+@title Every construct
+@start intro
+@import chapters/*.squiffy
+@ui story.js
+    squiffy.set("score", 0);
+
+@ui
+    squiffy.registerHelper("shout", (text) => text.toUpperCase());
+<div class="banner">Welcome</div>
+---
+
+[[intro]]:
+@set score = 10
+@set name = Bob
+@set greeting := Hello, {{name}}!
+@set best = @score
+@set coins *= 2
+@set has_key
+@set not visited
+@unset has_key
+@inc score 5
+@dec health
+    console.log("Started");
+    if (squiffy.get("score") > 5) { squiffy.set("lucky", true); }
+# A heading
+
+You wake up. This is **bold**, *italic* and `code`. <span class="note" title="{{name}}">HTML</span>
+
+    Indented text after the first line of text isn't JavaScript.
+
+Go to the [[kitchen]], [[look around]](garden), or [[carry on>]].
+Try [the door](door, tried=1), [the window], or [[next]](>, score+=1).
+Read [the manual](https://example.com/manual). ![A cat](cat.png)
+
+{{score}} points, {{get "player name"}} and {{{raw_html}}}.
+{{#if score > 100 and (seen "door")}}
+Well done.
+{{else if not has_key}}
+No key.
+{{else}}
+{{random (array "red" "green") set="colour"}}
+{{/if}}
+{{#animate "typewriter" interval=30}}Typing...{{/animate}}
+{{! a comment }}
+{{!-- a longer comment --}}
+{{embed "intro"}} {{embed "greeting"}}
+<!-- an HTML comment -->
+
+[door]:
+@clear
+    squiffy.set("door_opened", true);
+The door opens.
+
+[[kitchen]]:
+It's a kitchen.
+
++++Continue...
+
+    js after a continue line
+
+More text.
+
+[snippet: greeting]:
+Hello, {{name}}! [this is text]:
+- a list item
+> a quote
+
+[[garden]]:
+A garden.

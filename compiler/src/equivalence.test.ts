@@ -111,7 +111,8 @@ describe("story corpus", async () => {
 
     const files: string[] = [];
     for (const dir of corpusDirs) {
-        files.push(...(await glob("**/*.squiffy", { cwd: dir, absolute: true, ignore: ["**/node_modules/**", "**/dist/**"] })).sort());
+        // syntaxes/samples holds the TextMate grammar's test files, which @import and @ui files that don't exist
+        files.push(...(await glob("**/*.squiffy", { cwd: dir, absolute: true, ignore: ["**/node_modules/**", "**/dist/**", "**/syntaxes/samples/**"] })).sort());
     }
 
     test("finds stories", () => {

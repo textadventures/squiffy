@@ -1,0 +1,424 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`TextMate grammar > every construct in the sample 1`] = `
+""@" meta.directive.squiffy punctuation.definition.directive.squiffy keyword.control.directive.squiffy
+"title" meta.directive.squiffy keyword.control.directive.squiffy
+" " meta.directive.squiffy
+"Every construct" meta.directive.squiffy string.unquoted.squiffy
+
+"@" meta.directive.squiffy punctuation.definition.directive.squiffy keyword.control.directive.squiffy
+"start" meta.directive.squiffy keyword.control.directive.squiffy
+" " meta.directive.squiffy
+"intro" meta.directive.squiffy string.unquoted.squiffy
+
+"@" meta.directive.squiffy punctuation.definition.directive.squiffy keyword.control.directive.squiffy
+"import" meta.directive.squiffy keyword.control.directive.squiffy
+" " meta.directive.squiffy
+"chapters/*.squiffy" meta.directive.squiffy string.unquoted.squiffy
+
+"@" meta.directive.squiffy punctuation.definition.directive.squiffy keyword.control.directive.squiffy
+"ui" meta.directive.squiffy keyword.control.directive.squiffy
+" " meta.directive.squiffy
+"story.js" meta.directive.squiffy string.unquoted.squiffy
+
+"    " 
+"squiffy.set(\\"score\\", 0);" meta.embedded.block.javascript
+
+
+
+"@ui" meta.ui-block.squiffy keyword.control.directive.squiffy
+
+"    " meta.ui-block.squiffy
+"squiffy.registerHelper(\\"shout\\", (text) => text.toUpperCase());" meta.ui-block.squiffy meta.embedded.block.javascript
+
+"<" meta.ui-block.squiffy meta.tag.html.squiffy punctuation.definition.tag.begin.html.squiffy
+"div" meta.ui-block.squiffy meta.tag.html.squiffy entity.name.tag.html.squiffy
+" " meta.ui-block.squiffy meta.tag.html.squiffy
+"class" meta.ui-block.squiffy meta.tag.html.squiffy entity.other.attribute-name.html.squiffy
+"=" meta.ui-block.squiffy meta.tag.html.squiffy punctuation.separator.key-value.html.squiffy
+"\\"banner\\"" meta.ui-block.squiffy meta.tag.html.squiffy string.quoted.double.html.squiffy
+">" meta.ui-block.squiffy meta.tag.html.squiffy punctuation.definition.tag.end.html.squiffy
+"Welcome" meta.ui-block.squiffy
+"</" meta.ui-block.squiffy meta.tag.html.squiffy punctuation.definition.tag.begin.html.squiffy
+"div" meta.ui-block.squiffy meta.tag.html.squiffy entity.name.tag.html.squiffy
+">" meta.ui-block.squiffy meta.tag.html.squiffy punctuation.definition.tag.end.html.squiffy
+
+"---" meta.separator.squiffy keyword.control.separator.squiffy
+
+
+
+"[[" markup.heading.section.squiffy punctuation.definition.heading.begin.squiffy
+"intro" markup.heading.section.squiffy entity.name.section.squiffy
+"]]" markup.heading.section.squiffy punctuation.definition.heading.end.squiffy
+":" markup.heading.section.squiffy punctuation.separator.key-value.squiffy
+
+"@" meta.directive.attribute.squiffy punctuation.definition.directive.squiffy keyword.control.directive.squiffy
+"set" meta.directive.attribute.squiffy keyword.control.directive.squiffy
+" " meta.directive.attribute.squiffy
+"score" variable.parameter.attribute.squiffy
+" " 
+"=" keyword.operator.assignment.squiffy
+" " 
+"10" constant.numeric.squiffy
+
+"@" meta.directive.attribute.squiffy punctuation.definition.directive.squiffy keyword.control.directive.squiffy
+"set" meta.directive.attribute.squiffy keyword.control.directive.squiffy
+" " meta.directive.attribute.squiffy
+"name" variable.parameter.attribute.squiffy
+" " 
+"=" keyword.operator.assignment.squiffy
+" " 
+"Bob" string.unquoted.squiffy
+
+"@" meta.directive.attribute.squiffy punctuation.definition.directive.squiffy keyword.control.directive.squiffy
+"set" meta.directive.attribute.squiffy keyword.control.directive.squiffy
+" " meta.directive.attribute.squiffy
+"greeting" variable.parameter.attribute.squiffy
+" " 
+":=" keyword.operator.assignment.squiffy
+" Hello, " string.unquoted.squiffy
+"{{" string.unquoted.squiffy meta.embedded.expression.handlebars.squiffy support.constant.handlebars.squiffy punctuation.section.embedded.begin.handlebars.squiffy
+"name" string.unquoted.squiffy meta.embedded.expression.handlebars.squiffy variable.parameter.attribute.handlebars.squiffy
+"}}" string.unquoted.squiffy meta.embedded.expression.handlebars.squiffy support.constant.handlebars.squiffy punctuation.section.embedded.end.handlebars.squiffy
+"!" string.unquoted.squiffy
+
+"@" meta.directive.attribute.squiffy punctuation.definition.directive.squiffy keyword.control.directive.squiffy
+"set" meta.directive.attribute.squiffy keyword.control.directive.squiffy
+" " meta.directive.attribute.squiffy
+"best" variable.parameter.attribute.squiffy
+" " 
+"=" keyword.operator.assignment.squiffy
+" " 
+"@score" variable.parameter.attribute.squiffy
+
+"@" meta.directive.attribute.squiffy punctuation.definition.directive.squiffy keyword.control.directive.squiffy
+"set" meta.directive.attribute.squiffy keyword.control.directive.squiffy
+" " meta.directive.attribute.squiffy
+"coins" variable.parameter.attribute.squiffy
+" " 
+"*=" keyword.operator.assignment.squiffy
+" " 
+"2" constant.numeric.squiffy
+
+"@" meta.directive.attribute.squiffy punctuation.definition.directive.squiffy keyword.control.directive.squiffy
+"set" meta.directive.attribute.squiffy keyword.control.directive.squiffy
+" " meta.directive.attribute.squiffy
+"has_key" variable.parameter.attribute.squiffy
+
+"@" meta.directive.attribute.squiffy punctuation.definition.directive.squiffy keyword.control.directive.squiffy
+"set" meta.directive.attribute.squiffy keyword.control.directive.squiffy
+" " meta.directive.attribute.squiffy
+"not" keyword.operator.logical.squiffy
+" " 
+"visited" variable.parameter.attribute.squiffy
+
+"@" meta.directive.attribute.squiffy punctuation.definition.directive.squiffy keyword.control.directive.squiffy
+"unset" meta.directive.attribute.squiffy keyword.control.directive.squiffy
+" " meta.directive.attribute.squiffy
+"has_key" variable.parameter.attribute.squiffy
+
+"@" meta.directive.attribute.squiffy punctuation.definition.directive.squiffy keyword.control.directive.squiffy
+"inc" meta.directive.attribute.squiffy keyword.control.directive.squiffy
+" " meta.directive.attribute.squiffy
+"score" meta.directive.attribute.squiffy variable.parameter.attribute.squiffy
+" " meta.directive.attribute.squiffy
+"5" meta.directive.attribute.squiffy constant.numeric.squiffy
+
+"@" meta.directive.attribute.squiffy punctuation.definition.directive.squiffy keyword.control.directive.squiffy
+"dec" meta.directive.attribute.squiffy keyword.control.directive.squiffy
+" " meta.directive.attribute.squiffy
+"health" meta.directive.attribute.squiffy variable.parameter.attribute.squiffy
+
+"    " 
+"console.log(\\"Started\\");" meta.embedded.block.javascript
+
+"    " 
+"if (squiffy.get(\\"score\\") > 5) { squiffy.set(\\"lucky\\", true); }" meta.embedded.block.javascript
+
+"#" markup.heading.markdown.squiffy punctuation.definition.heading.markdown.squiffy
+" " markup.heading.markdown.squiffy
+"A heading" entity.name.section.markdown.squiffy
+
+
+
+"You wake up. This is " 
+"**" markup.bold.markdown.squiffy punctuation.definition.bold.markdown.squiffy
+"bold" markup.bold.markdown.squiffy
+"**" markup.bold.markdown.squiffy punctuation.definition.bold.markdown.squiffy
+", " 
+"*" markup.italic.markdown.squiffy punctuation.definition.italic.markdown.squiffy
+"italic" markup.italic.markdown.squiffy
+"*" markup.italic.markdown.squiffy punctuation.definition.italic.markdown.squiffy
+" and " 
+"\`code\`" markup.inline.raw.markdown.squiffy
+". " 
+"<" meta.tag.html.squiffy punctuation.definition.tag.begin.html.squiffy
+"span" meta.tag.html.squiffy entity.name.tag.html.squiffy
+" " meta.tag.html.squiffy
+"class" meta.tag.html.squiffy entity.other.attribute-name.html.squiffy
+"=" meta.tag.html.squiffy punctuation.separator.key-value.html.squiffy
+"\\"note\\"" meta.tag.html.squiffy string.quoted.double.html.squiffy
+" " meta.tag.html.squiffy
+"title" meta.tag.html.squiffy entity.other.attribute-name.html.squiffy
+"=" meta.tag.html.squiffy punctuation.separator.key-value.html.squiffy
+"\\"" meta.tag.html.squiffy string.quoted.double.html.squiffy
+"{{" meta.tag.html.squiffy string.quoted.double.html.squiffy meta.embedded.expression.handlebars.squiffy support.constant.handlebars.squiffy punctuation.section.embedded.begin.handlebars.squiffy
+"name" meta.tag.html.squiffy string.quoted.double.html.squiffy meta.embedded.expression.handlebars.squiffy variable.parameter.attribute.handlebars.squiffy
+"}}" meta.tag.html.squiffy string.quoted.double.html.squiffy meta.embedded.expression.handlebars.squiffy support.constant.handlebars.squiffy punctuation.section.embedded.end.handlebars.squiffy
+"\\"" meta.tag.html.squiffy string.quoted.double.html.squiffy
+">" meta.tag.html.squiffy punctuation.definition.tag.end.html.squiffy
+"HTML" 
+"</" meta.tag.html.squiffy punctuation.definition.tag.begin.html.squiffy
+"span" meta.tag.html.squiffy entity.name.tag.html.squiffy
+">" meta.tag.html.squiffy punctuation.definition.tag.end.html.squiffy
+
+
+
+"    Indented text after the first line of text isn't JavaScript." 
+
+
+
+"Go to the " 
+"[[" meta.link.section.squiffy punctuation.definition.link.begin.squiffy
+"kitchen" meta.link.section.squiffy string.other.link.title.squiffy markup.underline.link.squiffy
+"]]" meta.link.section.squiffy punctuation.definition.link.end.squiffy
+", " 
+"[[" meta.link.section.squiffy punctuation.definition.link.begin.squiffy
+"look around" meta.link.section.squiffy string.other.link.title.squiffy
+"]]" meta.link.section.squiffy punctuation.definition.link.end.squiffy
+"(" meta.link.section.squiffy punctuation.definition.metadata.begin.squiffy
+"garden" meta.link.section.squiffy markup.underline.link.squiffy
+")" meta.link.section.squiffy punctuation.definition.metadata.end.squiffy
+", or " 
+"[[" meta.link.section.next.squiffy punctuation.definition.link.begin.squiffy
+"carry on" meta.link.section.next.squiffy string.other.link.title.squiffy
+">" meta.link.section.next.squiffy keyword.operator.next-section.squiffy
+"]]" meta.link.section.next.squiffy punctuation.definition.link.end.squiffy
+"." 
+
+"Try " 
+"[" meta.link.passage.squiffy punctuation.definition.link.begin.squiffy
+"the door" meta.link.passage.squiffy string.other.link.title.squiffy
+"]" meta.link.passage.squiffy punctuation.definition.link.end.squiffy
+"(" meta.link.passage.squiffy punctuation.definition.metadata.begin.squiffy
+"door" meta.link.passage.squiffy markup.underline.link.squiffy
+"," meta.link.passage.squiffy punctuation.separator.squiffy
+" " meta.link.passage.squiffy
+"tried" meta.link.passage.squiffy variable.parameter.attribute.squiffy
+"=" meta.link.passage.squiffy keyword.operator.assignment.squiffy
+"1" meta.link.passage.squiffy constant.numeric.squiffy
+")" meta.link.passage.squiffy punctuation.definition.metadata.end.squiffy
+", " 
+"[" meta.link.passage.squiffy punctuation.definition.link.begin.squiffy
+"the window" meta.link.passage.squiffy string.other.link.title.squiffy markup.underline.link.squiffy
+"]" meta.link.passage.squiffy punctuation.definition.link.end.squiffy
+", or " 
+"[[" meta.link.section.squiffy punctuation.definition.link.begin.squiffy
+"next" meta.link.section.squiffy string.other.link.title.squiffy
+"]]" meta.link.section.squiffy punctuation.definition.link.end.squiffy
+"(" meta.link.section.squiffy punctuation.definition.metadata.begin.squiffy
+">" meta.link.section.squiffy markup.underline.link.squiffy keyword.operator.next-section.squiffy
+"," meta.link.section.squiffy punctuation.separator.squiffy
+" " meta.link.section.squiffy
+"score" meta.link.section.squiffy variable.parameter.attribute.squiffy
+"+=" meta.link.section.squiffy keyword.operator.assignment.squiffy
+"1" meta.link.section.squiffy constant.numeric.squiffy
+")" meta.link.section.squiffy punctuation.definition.metadata.end.squiffy
+"." 
+
+"Read " 
+"[" meta.link.url.squiffy punctuation.definition.link.begin.squiffy
+"the manual" meta.link.url.squiffy string.other.link.title.squiffy
+"]" meta.link.url.squiffy punctuation.definition.link.end.squiffy
+"(" meta.link.url.squiffy punctuation.definition.metadata.begin.squiffy
+"https://example.com/manual" meta.link.url.squiffy markup.underline.link.squiffy
+")" meta.link.url.squiffy punctuation.definition.metadata.end.squiffy
+". " 
+"!" meta.image.markdown.squiffy punctuation.definition.link.image.squiffy
+"[" meta.image.markdown.squiffy punctuation.definition.link.begin.squiffy
+"A cat" meta.image.markdown.squiffy string.other.link.description.squiffy
+"]" meta.image.markdown.squiffy punctuation.definition.link.end.squiffy
+"(" meta.image.markdown.squiffy punctuation.definition.metadata.begin.squiffy
+"cat.png" meta.image.markdown.squiffy markup.underline.link.image.squiffy
+")" meta.image.markdown.squiffy punctuation.definition.metadata.end.squiffy
+
+
+
+"{{" meta.embedded.expression.handlebars.squiffy support.constant.handlebars.squiffy punctuation.section.embedded.begin.handlebars.squiffy
+"score" meta.embedded.expression.handlebars.squiffy variable.parameter.attribute.handlebars.squiffy
+"}}" meta.embedded.expression.handlebars.squiffy support.constant.handlebars.squiffy punctuation.section.embedded.end.handlebars.squiffy
+" points, " 
+"{{" meta.embedded.expression.handlebars.squiffy support.constant.handlebars.squiffy punctuation.section.embedded.begin.handlebars.squiffy
+"get" meta.embedded.expression.handlebars.squiffy support.function.helper.handlebars.squiffy
+" " meta.embedded.expression.handlebars.squiffy
+"\\"player name\\"" meta.embedded.expression.handlebars.squiffy string.quoted.double.handlebars.squiffy
+"}}" meta.embedded.expression.handlebars.squiffy support.constant.handlebars.squiffy punctuation.section.embedded.end.handlebars.squiffy
+" and " 
+"{{{" meta.embedded.expression.handlebars.squiffy support.constant.handlebars.squiffy punctuation.section.embedded.begin.handlebars.squiffy
+"raw_html" meta.embedded.expression.handlebars.squiffy variable.parameter.attribute.handlebars.squiffy
+"}}}" meta.embedded.expression.handlebars.squiffy support.constant.handlebars.squiffy punctuation.section.embedded.end.handlebars.squiffy
+"." 
+
+"{{" meta.embedded.expression.handlebars.squiffy support.constant.handlebars.squiffy punctuation.section.embedded.begin.handlebars.squiffy
+"#if" meta.embedded.expression.handlebars.squiffy keyword.control.block.handlebars.squiffy
+" " meta.embedded.expression.handlebars.squiffy
+"score" meta.embedded.expression.handlebars.squiffy variable.parameter.attribute.handlebars.squiffy
+" " meta.embedded.expression.handlebars.squiffy
+">" meta.embedded.expression.handlebars.squiffy keyword.operator.comparison.handlebars.squiffy
+" " meta.embedded.expression.handlebars.squiffy
+"100" meta.embedded.expression.handlebars.squiffy constant.numeric.handlebars.squiffy
+" " meta.embedded.expression.handlebars.squiffy
+"and" meta.embedded.expression.handlebars.squiffy keyword.operator.logical.handlebars.squiffy
+" " meta.embedded.expression.handlebars.squiffy
+"(" meta.embedded.expression.handlebars.squiffy punctuation.section.parens.begin.handlebars.squiffy
+"seen" meta.embedded.expression.handlebars.squiffy support.function.helper.handlebars.squiffy
+" " meta.embedded.expression.handlebars.squiffy
+"\\"door\\"" meta.embedded.expression.handlebars.squiffy string.quoted.double.handlebars.squiffy
+")" meta.embedded.expression.handlebars.squiffy punctuation.section.parens.end.handlebars.squiffy
+"}}" meta.embedded.expression.handlebars.squiffy support.constant.handlebars.squiffy punctuation.section.embedded.end.handlebars.squiffy
+
+"Well done." 
+
+"{{" meta.embedded.expression.handlebars.squiffy support.constant.handlebars.squiffy punctuation.section.embedded.begin.handlebars.squiffy
+"else" meta.embedded.expression.handlebars.squiffy keyword.control.block.handlebars.squiffy
+" " meta.embedded.expression.handlebars.squiffy
+"if" meta.embedded.expression.handlebars.squiffy keyword.control.block.handlebars.squiffy
+" " meta.embedded.expression.handlebars.squiffy
+"not" meta.embedded.expression.handlebars.squiffy keyword.operator.logical.handlebars.squiffy
+" " meta.embedded.expression.handlebars.squiffy
+"has_key" meta.embedded.expression.handlebars.squiffy variable.parameter.attribute.handlebars.squiffy
+"}}" meta.embedded.expression.handlebars.squiffy support.constant.handlebars.squiffy punctuation.section.embedded.end.handlebars.squiffy
+
+"No key." 
+
+"{{" meta.embedded.expression.handlebars.squiffy support.constant.handlebars.squiffy punctuation.section.embedded.begin.handlebars.squiffy
+"else" meta.embedded.expression.handlebars.squiffy keyword.control.block.handlebars.squiffy
+"}}" meta.embedded.expression.handlebars.squiffy support.constant.handlebars.squiffy punctuation.section.embedded.end.handlebars.squiffy
+
+"{{" meta.embedded.expression.handlebars.squiffy support.constant.handlebars.squiffy punctuation.section.embedded.begin.handlebars.squiffy
+"random" meta.embedded.expression.handlebars.squiffy support.function.helper.handlebars.squiffy
+" " meta.embedded.expression.handlebars.squiffy
+"(" meta.embedded.expression.handlebars.squiffy punctuation.section.parens.begin.handlebars.squiffy
+"array" meta.embedded.expression.handlebars.squiffy support.function.helper.handlebars.squiffy
+" " meta.embedded.expression.handlebars.squiffy
+"\\"red\\"" meta.embedded.expression.handlebars.squiffy string.quoted.double.handlebars.squiffy
+" " meta.embedded.expression.handlebars.squiffy
+"\\"green\\"" meta.embedded.expression.handlebars.squiffy string.quoted.double.handlebars.squiffy
+")" meta.embedded.expression.handlebars.squiffy punctuation.section.parens.end.handlebars.squiffy
+" " meta.embedded.expression.handlebars.squiffy
+"set" meta.embedded.expression.handlebars.squiffy entity.other.attribute-name.handlebars.squiffy
+"=" meta.embedded.expression.handlebars.squiffy punctuation.separator.key-value.handlebars.squiffy
+"\\"colour\\"" meta.embedded.expression.handlebars.squiffy string.quoted.double.handlebars.squiffy
+"}}" meta.embedded.expression.handlebars.squiffy support.constant.handlebars.squiffy punctuation.section.embedded.end.handlebars.squiffy
+
+"{{" meta.embedded.expression.handlebars.squiffy support.constant.handlebars.squiffy punctuation.section.embedded.begin.handlebars.squiffy
+"/if" meta.embedded.expression.handlebars.squiffy keyword.control.block.handlebars.squiffy
+"}}" meta.embedded.expression.handlebars.squiffy support.constant.handlebars.squiffy punctuation.section.embedded.end.handlebars.squiffy
+
+"{{" meta.embedded.expression.handlebars.squiffy support.constant.handlebars.squiffy punctuation.section.embedded.begin.handlebars.squiffy
+"#animate" meta.embedded.expression.handlebars.squiffy keyword.control.block.handlebars.squiffy
+" " meta.embedded.expression.handlebars.squiffy
+"\\"typewriter\\"" meta.embedded.expression.handlebars.squiffy string.quoted.double.handlebars.squiffy
+" " meta.embedded.expression.handlebars.squiffy
+"interval" meta.embedded.expression.handlebars.squiffy entity.other.attribute-name.handlebars.squiffy
+"=" meta.embedded.expression.handlebars.squiffy punctuation.separator.key-value.handlebars.squiffy
+"30" meta.embedded.expression.handlebars.squiffy constant.numeric.handlebars.squiffy
+"}}" meta.embedded.expression.handlebars.squiffy support.constant.handlebars.squiffy punctuation.section.embedded.end.handlebars.squiffy
+"Typing..." 
+"{{" meta.embedded.expression.handlebars.squiffy support.constant.handlebars.squiffy punctuation.section.embedded.begin.handlebars.squiffy
+"/animate" meta.embedded.expression.handlebars.squiffy keyword.control.block.handlebars.squiffy
+"}}" meta.embedded.expression.handlebars.squiffy support.constant.handlebars.squiffy punctuation.section.embedded.end.handlebars.squiffy
+
+"{{! a comment }}" comment.block.handlebars.squiffy
+
+"{{!-- a longer comment --}}" comment.block.handlebars.squiffy
+
+"{{" meta.embedded.expression.handlebars.squiffy support.constant.handlebars.squiffy punctuation.section.embedded.begin.handlebars.squiffy
+"embed" meta.embedded.expression.handlebars.squiffy support.function.helper.handlebars.squiffy
+" " meta.embedded.expression.handlebars.squiffy
+"\\"intro\\"" meta.embedded.expression.handlebars.squiffy string.quoted.double.handlebars.squiffy
+"}}" meta.embedded.expression.handlebars.squiffy support.constant.handlebars.squiffy punctuation.section.embedded.end.handlebars.squiffy
+" " 
+"{{" meta.embedded.expression.handlebars.squiffy support.constant.handlebars.squiffy punctuation.section.embedded.begin.handlebars.squiffy
+"embed" meta.embedded.expression.handlebars.squiffy support.function.helper.handlebars.squiffy
+" " meta.embedded.expression.handlebars.squiffy
+"\\"greeting\\"" meta.embedded.expression.handlebars.squiffy string.quoted.double.handlebars.squiffy
+"}}" meta.embedded.expression.handlebars.squiffy support.constant.handlebars.squiffy punctuation.section.embedded.end.handlebars.squiffy
+
+"<!-- an HTML comment -->" comment.block.html.squiffy
+
+
+
+"[" markup.heading.passage.squiffy punctuation.definition.heading.begin.squiffy
+"door" markup.heading.passage.squiffy entity.name.function.passage.squiffy
+"]" markup.heading.passage.squiffy punctuation.definition.heading.end.squiffy
+":" markup.heading.passage.squiffy punctuation.separator.key-value.squiffy
+
+"@" punctuation.definition.directive.squiffy keyword.control.directive.squiffy
+"clear" keyword.control.directive.squiffy
+
+"    " 
+"squiffy.set(\\"door_opened\\", true);" meta.embedded.block.javascript
+
+"The door opens." 
+
+
+
+"[[" markup.heading.section.squiffy punctuation.definition.heading.begin.squiffy
+"kitchen" markup.heading.section.squiffy entity.name.section.squiffy
+"]]" markup.heading.section.squiffy punctuation.definition.heading.end.squiffy
+":" markup.heading.section.squiffy punctuation.separator.key-value.squiffy
+
+"It's a kitchen." 
+
+
+
+"+++" markup.heading.continue.squiffy keyword.control.continue.squiffy
+"Continue..." string.other.link.title.squiffy
+
+
+
+"    " 
+"js after a continue line" meta.embedded.block.javascript
+
+
+
+"More text." 
+
+
+
+"[" markup.heading.snippet.squiffy punctuation.definition.heading.begin.squiffy
+"snippet" markup.heading.snippet.squiffy keyword.other.snippet.squiffy
+":" markup.heading.snippet.squiffy punctuation.separator.squiffy
+" " markup.heading.snippet.squiffy
+"greeting" markup.heading.snippet.squiffy entity.name.type.snippet.squiffy
+"]" markup.heading.snippet.squiffy punctuation.definition.heading.end.squiffy
+":" markup.heading.snippet.squiffy punctuation.separator.key-value.squiffy
+
+"Hello, " meta.snippet.body.squiffy
+"{{" meta.snippet.body.squiffy meta.embedded.expression.handlebars.squiffy support.constant.handlebars.squiffy punctuation.section.embedded.begin.handlebars.squiffy
+"name" meta.snippet.body.squiffy meta.embedded.expression.handlebars.squiffy variable.parameter.attribute.handlebars.squiffy
+"}}" meta.snippet.body.squiffy meta.embedded.expression.handlebars.squiffy support.constant.handlebars.squiffy punctuation.section.embedded.end.handlebars.squiffy
+"! " meta.snippet.body.squiffy
+"[" meta.snippet.body.squiffy meta.link.passage.squiffy punctuation.definition.link.begin.squiffy
+"this is text" meta.snippet.body.squiffy meta.link.passage.squiffy string.other.link.title.squiffy markup.underline.link.squiffy
+"]" meta.snippet.body.squiffy meta.link.passage.squiffy punctuation.definition.link.end.squiffy
+":" meta.snippet.body.squiffy
+
+"-" meta.snippet.body.squiffy punctuation.definition.list.begin.markdown.squiffy
+" a list item" meta.snippet.body.squiffy
+
+">" meta.snippet.body.squiffy punctuation.definition.quote.begin.markdown.squiffy
+" a quote" meta.snippet.body.squiffy
+
+
+
+"[[" markup.heading.section.squiffy punctuation.definition.heading.begin.squiffy
+"garden" markup.heading.section.squiffy entity.name.section.squiffy
+"]]" markup.heading.section.squiffy punctuation.definition.heading.end.squiffy
+":" markup.heading.section.squiffy punctuation.separator.key-value.squiffy
+
+"A garden." 
+
+"
+`;
