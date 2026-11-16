@@ -39,6 +39,7 @@
     import FoldVertical from "@lucide/svelte/icons/fold-vertical";
     import UnfoldVertical from "@lucide/svelte/icons/unfold-vertical";
     import Info from "@lucide/svelte/icons/info";
+    import ExternalLink from "@lucide/svelte/icons/external-link";
     import Library from "@lucide/svelte/icons/library";
     import Gamepad2 from "@lucide/svelte/icons/gamepad-2";
     import Bug from "@lucide/svelte/icons/bug";
@@ -65,9 +66,11 @@
         // The author's own snippets, from [snippet:...] blocks
         snippets?: Snippet[];
         onabout?: () => void;
+        // Plays the published story in a new tab, as players will see it
+        onplaytab?: () => void;
     }
 
-    let { outlineOpen = false, ontoggleoutline, onrun, onassets, ondownloadproject, onexport, oncommand, onadd, onsnippet, snippets = [], onabout }: Props = $props();
+    let { outlineOpen = false, ontoggleoutline, onrun, onassets, ondownloadproject, onexport, oncommand, onadd, onsnippet, snippets = [], onabout, onplaytab }: Props = $props();
 
     const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform);
     const mod = isMac ? "⌘" : "Ctrl+";
@@ -75,6 +78,7 @@
     let runMenuItems = $derived<DropdownMenuItem[]>([
         { label: `Run from the start (${mod}Enter)`, action: () => onrun?.(false), icon: Play },
         { label: `Run from this section (${mod}Shift+Enter)`, action: () => onrun?.(true), icon: StepForward },
+        { label: "Play in a new tab", action: () => onplaytab?.(), icon: ExternalLink, divider: true },
     ]);
 
     const p = $derived(project.current);

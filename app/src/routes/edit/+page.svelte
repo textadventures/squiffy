@@ -409,6 +409,31 @@
         }
     }
 
+    // The published story, in a tab of its own, as players will see it (the 6.x editor's Preview).
+    // The tab is opened straight away, during the click, so a popup blocker lets it through.
+    async function handlePlayInTab() {
+        const current = p;
+        const c = client;
+        if (!current || !c) return;
+        const tab = window.open("", "_blank");
+        try {
+            await syncOpenFiles();
+            const { storyAssets } = await import("#lib/export.js");
+            const result = await c.call("exportStory", "html", await storyAssets(current));
+            if (!result.success) {
+                tab?.close();
+                showToast(`The story can't run until this is fixed: ${result.errors[0]}`);
+                return;
+            }
+            const url = URL.createObjectURL(new Blob([result.files["index.html"]], { type: "text/html" }));
+            if (tab) tab.location.href = url;
+            else showToast("The browser blocked the new tab.", "info");
+        } catch (err) {
+            tab?.close();
+            showToast(`Couldn't play the story: ${errorText(err)}`);
+        }
+    }
+
     // The whole project, with any unsaved changes, as a zip that Open file reads back
     async function handleDownloadProject() {
         const current = p;
@@ -577,6 +602,7 @@
             onsnippet={content => { const v = activeView(); if (v) insertSnippet(v, content); }}
             {snippets}
             onabout={() => { aboutOpen = true; }}
+            onplaytab={handlePlayInTab}
         />
         <div class="flex flex-1 overflow-hidden">
             {#if !isNarrow.current || narrowPane === "outline"}

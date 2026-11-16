@@ -1,6 +1,6 @@
 # Squiffy 7 editor
 
-The rebuilt Squiffy editor (#278), on the same stack and app shell as Quest Viva's editor: SvelteKit + Skeleton, with CodeMirror 6. It replaces `editor/` once it reaches parity; until then `editor/` keeps shipping 6.x to app.squiffystory.com. The plan is in the comments on #278.
+The Squiffy editor at app.squiffystory.com (#278), on the same stack and app shell as Quest Viva's editor: SvelteKit + Skeleton, with CodeMirror 6. It replaced the 6.x editor in 7.0. The plan is in the comments on #278.
 
 ```bash
 npm run dev     # http://localhost:5180
@@ -38,15 +38,19 @@ Parts copied from Quest Viva's `src/AppShell` are noted in their comments. Fixes
 
 ## Deployment
 
-Until it replaces `editor/`, the app is its own Cloudflare Pages project, `squiffy-app-next`, connected to this repo like `squiffy-app` and `squiffy-site`, so every PR gets a preview of it. Its settings:
+`deploy-app.yml` builds this for each release and uploads it to the `squiffy-app` Cloudflare Pages project: stable releases to app.squiffystory.com, and prereleases to app-beta.squiffystory.com, whose home page says it's the beta (`VITE_BETA_APP`). `squiffy-app` also builds a preview for every PR and push. Its build settings:
 
 | Setting | Value |
 |---|---|
 | Root directory | (the repo root) |
 | Build command | `npx lerna run build --scope @textadventures/squiffy-app --include-dependencies` |
 | Build output directory | `app/build` |
-| Production branch | `main` |
 
 It has no `404.html`, so Pages serves `index.html` for every path, which the app's client-side routing needs. `static/_headers` caches SvelteKit's hashed assets for a year.
 
-When the app takes over app.squiffystory.com, `deploy-app.yml` builds it instead of `editor/` and uploads it to the `squiffy-app` project, and this project is deleted.
+### From the 6.x editor
+
+The 6.x editor ran at the same addresses, so:
+
+- `static/sw.js` replaces its service worker (Workbox, at `/sw.js`), which would otherwise keep serving the 6.x editor from its cache. It clears the 6.x caches, unregisters itself and reloads the page.
+- Its unsaved work (idb-keyval's default store, key `autosave`) is offered as a draft on the home page (`src/lib/legacy.ts`).

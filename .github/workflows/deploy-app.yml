@@ -1,6 +1,6 @@
 name: Deploy app.squiffystory.com
 
-# Deploys the editor to the squiffy-app Cloudflare Pages project when
+# Deploys the editor (app/) to the squiffy-app Cloudflare Pages project when
 # release-please tags a release, so app.squiffystory.com only ever runs a
 # released version. Runs alongside npm-publish.yml off the same tag.
 #
@@ -31,8 +31,8 @@ jobs:
           echo "::error::Run this workflow against a release tag (gh workflow run deploy-app.yml --ref vX.Y.Z), not a branch."
           exit 1
 
-      # Full history and tags: the editor's prebuild step counts commits since
-      # the last tag for its version string, which is 0 for a release tag.
+      # Full history and tags, so the release channel and the tag check below
+      # see the tag as it is
       - name: Checkout code
         uses: actions/checkout@v7
         with:
@@ -60,7 +60,8 @@ jobs:
       # (beta.squiffy.pages.dev, served as app-beta.squiffystory.com)
       # rather than production, so app.squiffystory.com only ever runs a
       # stable release. Its Help menu links to the beta docs,
-      # beta.squiffystory.com, which are built from main.
+      # beta.squiffystory.com, which are built from main, and its home page
+      # says it's the beta (VITE_BETA_APP).
       - name: Choose the Cloudflare Pages branch
         run: |
           if [ "$(.github/scripts/release-channel.sh "$GITHUB_REF_NAME")" == "stable" ]; then
@@ -68,14 +69,15 @@ jobs:
           else
             echo "PAGES_BRANCH=beta" >> $GITHUB_ENV
             echo "VITE_DOCS_URL=https://beta.squiffystory.com" >> $GITHUB_ENV
+            echo "VITE_BETA_APP=true" >> $GITHUB_ENV
           fi
 
       - name: Build the editor and the packages it uses
-        run: npx lerna run build --scope @textadventures/squiffy-editor --include-dependencies
+        run: npx lerna run build --scope @textadventures/squiffy-app --include-dependencies
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy editor/dist --project-name=squiffy-app --branch=${{ env.PAGES_BRANCH }}
+          command: pages deploy app/build --project-name=squiffy-app --branch=${{ env.PAGES_BRANCH }}
