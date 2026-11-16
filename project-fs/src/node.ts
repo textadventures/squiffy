@@ -33,6 +33,10 @@ export class NodeFileSystem extends TreeFileSystem {
     // Signatures (mtime:size, or "deleted") of this instance's own last write to each path, so
     // the watcher can tell them from external changes.
     private readonly ownWrites = new Map<string, string>();
+    // How many writes or deletes of each path this instance has in progress. The watcher can see
+    // a write's events before ownWrites has its signature (or while the file is half written),
+    // so it holds off on these paths until the write is recorded.
+    private readonly ownBusy = new Map<string, number>();
     private pendingPaths = new Set<string>();
     private debounce: ReturnType<typeof setTimeout> | null = null;
 
@@ -144,8 +148,10 @@ export class NodeFileSystem extends TreeFileSystem {
 
     protected async writeFile(segments: string[], data: Uint8Array): Promise<void> {
         const p = await this.abs(segments);
-        await fsp.writeFile(p, data);
-        this.recordOwn(segments.join("/"), await fsp.stat(p).catch(() => null));
+        await this.ownOperation(segments.join("/"), async () => {
+            await fsp.writeFile(p, data);
+            return fsp.stat(p).catch(() => null);
+        });
     }
 
     protected async createDir(segments: string[]): Promise<void> {
@@ -153,8 +159,11 @@ export class NodeFileSystem extends TreeFileSystem {
     }
 
     protected async removeFile(segments: string[]): Promise<void> {
-        await fsp.unlink(await this.abs(segments));
-        this.recordOwn(segments.join("/"), null);
+        const p = await this.abs(segments);
+        await this.ownOperation(segments.join("/"), async () => {
+            await fsp.unlink(p);
+            return null;
+        });
     }
 
     protected async removeDir(segments: string[]): Promise<void> {
@@ -163,8 +172,18 @@ export class NodeFileSystem extends TreeFileSystem {
 
     // ── watch ───────────────────────────────────────────────────────────────
 
-    private recordOwn(path: string, stat: Stats | null) {
-        if (this.emitter.size > 0) this.ownWrites.set(path.normalize("NFC"), signature(stat));
+    /** Runs a write or delete of `path`, then records the resulting file's signature as our own. */
+    private async ownOperation(path: string, op: () => Promise<Stats | null>): Promise<void> {
+        const key = path.normalize("NFC");
+        this.ownBusy.set(key, (this.ownBusy.get(key) ?? 0) + 1);
+        try {
+            const stat = await op();
+            if (this.emitter.size > 0) this.ownWrites.set(key, signature(stat));
+        } finally {
+            const count = this.ownBusy.get(key)! - 1;
+            if (count > 0) this.ownBusy.set(key, count);
+            else this.ownBusy.delete(key);
+        }
     }
 
     watch(listener: (changes: FileChange[]) => void): () => void {
@@ -178,15 +197,18 @@ export class NodeFileSystem extends TreeFileSystem {
         const root = this.realRoot ?? this.root;
         try {
             this.watcher = fsWatch(root, { recursive: true }, (_event, filename) => {
-                if (!filename) return;
-                this.pendingPaths.add(String(filename).split(nodePath.sep).join("/"));
-                if (this.debounce) clearTimeout(this.debounce);
-                this.debounce = setTimeout(() => void this.flush(), WATCH_DEBOUNCE_MS);
+                if (filename) this.queue(String(filename).split(nodePath.sep).join("/"));
             });
             this.watcher.on("error", () => this.stopWatching());
         } catch {
             // Unwatchable (e.g. removable media gone): editing still works, without change events.
         }
+    }
+
+    private queue(path: string) {
+        this.pendingPaths.add(path);
+        if (this.debounce) clearTimeout(this.debounce);
+        this.debounce = setTimeout(() => void this.flush(), WATCH_DEBOUNCE_MS);
     }
 
     private stopWatching() {
@@ -202,6 +224,7 @@ export class NodeFileSystem extends TreeFileSystem {
         const paths = [...this.pendingPaths];
         this.pendingPaths.clear();
         const changes: FileChange[] = [];
+        const retry: string[] = [];
         for (const raw of paths) {
             let path: string;
             try {
@@ -211,16 +234,29 @@ export class NodeFileSystem extends TreeFileSystem {
             }
             const base = path.slice(path.lastIndexOf("/") + 1);
             if (isJunkFile(base)) continue;
+            // An own write of this path in progress, or one made while we look at the file: try
+            // again once it's done, when its signature is in ownWrites.
+            const ownBefore = this.ownWrites.get(path);
+            if (this.ownBusy.has(path)) {
+                retry.push(raw);
+                continue;
+            }
             const isFile = await this.exists(path).catch(() => false);
             let stat: Stats | null = null;
             if (isFile) stat = await fsp.stat(nodePath.join(await this.rootReal(), path)).catch(() => null);
             else if (await this.isDirectory(path)) continue; // directory events carry no file change
+            if (this.ownBusy.has(path) || this.ownWrites.get(path) !== ownBefore) {
+                retry.push(raw);
+                continue;
+            }
             const sig = signature(stat);
             if (this.ownWrites.get(path) === sig) continue;
             this.ownWrites.delete(path);
             changes.push({ path, kind: stat ? "changed" : "deleted" });
         }
-        if (this.watcher) this.emitter.emit(changes);
+        if (!this.watcher) return;
+        for (const raw of retry) this.queue(raw);
+        if (changes.length > 0) this.emitter.emit(changes);
     }
 
     private async isDirectory(path: string): Promise<boolean> {
