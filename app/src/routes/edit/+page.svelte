@@ -1,5 +1,5 @@
 <script lang="ts">
-    // The editor: toolbar, outline and code editor, laid out like Quest Viva's edit page.
+    // The editor: toolbar, outline, code editor and preview, laid out like Quest Viva's edit page.
     import { onMount, tick } from "svelte";
     import { goto } from "$app/navigation";
     import { page } from "$app/state";
@@ -8,7 +8,7 @@
     import { base } from "#lib/base-path.js";
     import { project, openDraft } from "#lib/project.svelte.js";
     import { createLanguageClient, type LanguageClient } from "#lib/language/client.js";
-    import { applyEditsToString, languageFeatures, toOffset } from "#lib/language/codemirror.js";
+    import { applyEditsToString, languageFeatures, toOffset, toPosition } from "#lib/language/codemirror.js";
     import { squiffyLanguage } from "#lib/squiffy-lang.js";
     import { isNarrow } from "#lib/layout.svelte.js";
     import { showToast } from "#lib/toast.js";
@@ -17,6 +17,7 @@
     import OutlinePanel from "#components/OutlinePanel.svelte";
     import CodeEditor from "#components/CodeEditor.svelte";
     import ReferencesPanel from "#components/ReferencesPanel.svelte";
+    import PreviewPanel from "#components/PreviewPanel.svelte";
 
     const p = $derived(project.current);
 
@@ -28,13 +29,17 @@
     // Shift+F12's results, shown under the editor
     let references = $state<{ name: string; locations: Location[] } | null>(null);
 
+    let preview = $state<ReturnType<typeof PreviewPanel>>();
+    let previewOpen = $state(false);
+
     // Session-only, as in Quest Viva
     let outlineWidth = $state(240);
-    const OUTLINE_MIN_WIDTH = 160;
-    const OUTLINE_MAX_WIDTH = 500;
+    let previewWidth = $state(420);
+    const OUTLINE_LIMITS = [160, 500] as const;
+    const PREVIEW_LIMITS = [280, 900] as const;
 
-    // On a narrow screen the outline replaces the editor while it's open
-    let narrowOutline = $state(false);
+    // On a narrow screen one pane shows at a time: the editor, the outline or the preview
+    let narrowPane = $state<"editor" | "outline" | "preview">("editor");
 
     onMount(() => {
         void (async () => {
@@ -57,24 +62,31 @@
         function handleVisibilityChange() {
             if (document.hidden) void project.current?.save();
         }
-        // Ctrl/Cmd+Shift+O: go to a section or passage, from the outline's search box
+        // Ctrl/Cmd+Shift+O: go to a section or passage, from the outline's search box.
+        // Ctrl/Cmd+Enter: run the story; with Shift, from the section the cursor is in. Caught
+        // before the editor sees them, since Ctrl/Cmd+Enter would otherwise add a line.
         function handleKeydown(e: KeyboardEvent) {
-            if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === "o") {
+            if (!(e.metaKey || e.ctrlKey)) return;
+            if (e.shiftKey && e.key.toLowerCase() === "o") {
                 e.preventDefault();
                 // At once when the outline's showing, so the next keys go to the search box; on a
                 // phone, once the outline has replaced the editor
                 if (outline) outline.focusSearch();
                 else {
-                    narrowOutline = true;
+                    narrowPane = "outline";
                     void tick().then(() => outline?.focusSearch());
                 }
+            } else if (e.key === "Enter") {
+                e.preventDefault();
+                e.stopPropagation();
+                void runPreview(e.shiftKey);
             }
         }
         document.addEventListener("visibilitychange", handleVisibilityChange);
-        window.addEventListener("keydown", handleKeydown);
+        window.addEventListener("keydown", handleKeydown, true);
         return () => {
             document.removeEventListener("visibilitychange", handleVisibilityChange);
-            window.removeEventListener("keydown", handleKeydown);
+            window.removeEventListener("keydown", handleKeydown, true);
         };
     });
 
@@ -159,8 +171,49 @@
         }
     }
 
+    // Compiles the story as it is in the editor now, for the preview
+    async function compileStory() {
+        if (!client || !p) return { success: false as const, errors: ["The story isn't open."] };
+        await client.call("updateFile", p.mainFile, p.text);
+        return client.call("compile");
+    }
+
+    // Runs the story in the preview: from the start, or from the section (and passage) the
+    // cursor is in (#175)
+    async function runPreview(fromCursor = false) {
+        if (!p || !client) return;
+        let startAt: { section: string; passage?: string } | undefined;
+        if (fromCursor && view) {
+            await client.call("updateFile", p.mainFile, p.text);
+            startAt = await client.call("getSectionAt", p.mainFile, toPosition(view.state.doc, view.state.selection.main.head));
+        }
+        previewOpen = true;
+        narrowPane = "preview";
+        await tick();
+        await preview?.run(startAt);
+    }
+
+    // Edits hot-update the running story, once typing pauses
+    $effect(() => {
+        void p?.text;
+        if (!previewOpen) return;
+        const timer = setTimeout(() => void preview?.update(), 600);
+        return () => clearTimeout(timer);
+    });
+
+    // When the player clicks through to a section or passage, the editor follows, without taking
+    // the focus from the preview
+    function followPreview(section: string, passage?: string) {
+        if (!view) return;
+        const sectionSymbol = symbols.find(s => s.kind === "section" && s.name === section);
+        const target = (passage && sectionSymbol?.children.find(c => c.name === passage)) || sectionSymbol;
+        if (!target) return;
+        const offset = toOffset(view.state.doc, target.selectionRange.start);
+        view.dispatch({ selection: { anchor: offset }, effects: EditorView.scrollIntoView(offset, { y: "start", yMargin: 24 }) });
+    }
+
     function goToSymbol(symbol: DocumentSymbol) {
-        narrowOutline = false;
+        narrowPane = "editor";
         // On a narrow screen the editor is only now coming back, so wait for it
         requestAnimationFrame(() => {
             if (!view) return;
@@ -177,16 +230,20 @@
         if (view) cursorLine = view.state.doc.lineAt(offset).number - 1;
     }
 
-    function handleSplitterPointerDown(e: PointerEvent) {
+    // Drags a splitter: the outline's is on its right, the preview's on its left
+    function handleSplitterPointerDown(e: PointerEvent, panel: "outline" | "preview") {
         e.preventDefault();
         const startX = e.clientX;
-        const startWidth = outlineWidth;
+        const startWidth = panel === "outline" ? outlineWidth : previewWidth;
+        const [min, max] = panel === "outline" ? OUTLINE_LIMITS : PREVIEW_LIMITS;
         document.body.style.cursor = "col-resize";
         document.body.style.userSelect = "none";
 
         function onMove(moveEvent: PointerEvent) {
-            const next = startWidth + (moveEvent.clientX - startX);
-            outlineWidth = Math.min(OUTLINE_MAX_WIDTH, Math.max(OUTLINE_MIN_WIDTH, next));
+            const delta = moveEvent.clientX - startX;
+            const next = Math.min(max, Math.max(min, startWidth + (panel === "outline" ? delta : -delta)));
+            if (panel === "outline") outlineWidth = next;
+            else previewWidth = next;
         }
         function onUp() {
             document.removeEventListener("pointermove", onMove);
@@ -214,9 +271,13 @@
         class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[1000] focus:rounded focus:bg-primary-500 focus:text-white focus:px-3 focus:py-2 focus:text-sm"
     >Skip to editor</a>
     <main class="flex flex-col h-dvh overflow-hidden safe-area-inset">
-        <Toolbar outlineOpen={narrowOutline} ontoggleoutline={() => { narrowOutline = !narrowOutline; }} />
+        <Toolbar
+            outlineOpen={narrowPane === "outline"}
+            ontoggleoutline={() => { narrowPane = narrowPane === "outline" ? "editor" : "outline"; }}
+            onrun={fromCursor => runPreview(fromCursor)}
+        />
         <div class="flex flex-1 overflow-hidden">
-            {#if !isNarrow.current || narrowOutline}
+            {#if !isNarrow.current || narrowPane === "outline"}
                 <OutlinePanel
                     bind:this={outline}
                     {symbols}
@@ -229,13 +290,13 @@
                 <div
                     role="separator"
                     aria-orientation="vertical"
-                    class="w-1 shrink-0 cursor-col-resize hover:bg-primary-500/50 active:bg-primary-500/70 transition-colors"
-                    onpointerdown={handleSplitterPointerDown}
+                    class="splitter"
+                    onpointerdown={e => handleSplitterPointerDown(e, "outline")}
                 ></div>
             {/if}
             <!-- Kept mounted (hidden, not removed) on a narrow screen so the cursor and undo
-                 history survive opening the outline -->
-            <div id="editor" class="flex-1 min-w-0 flex flex-col {isNarrow.current && narrowOutline ? "hidden" : ""}">
+                 history survive opening the outline or the preview -->
+            <div id="editor" class="flex-1 min-w-0 flex flex-col {isNarrow.current && narrowPane !== "editor" ? "hidden" : ""}">
                 <div class="flex-1 min-h-0">
                     <CodeEditor
                         value={p.text}
@@ -256,6 +317,41 @@
                     />
                 {/if}
             </div>
+            {#if previewOpen}
+                {#if !isNarrow.current}
+                    <div
+                        role="separator"
+                        aria-orientation="vertical"
+                        class="splitter"
+                        onpointerdown={e => handleSplitterPointerDown(e, "preview")}
+                    ></div>
+                {/if}
+                <!-- Also kept mounted while hidden on a narrow screen, so the story keeps its place -->
+                <div class={isNarrow.current && narrowPane !== "preview" ? "hidden" : "contents"}>
+                    <PreviewPanel
+                        bind:this={preview}
+                        compile={compileStory}
+                        onNavigated={followPreview}
+                        onclose={() => { previewOpen = false; narrowPane = "editor"; }}
+                        width={isNarrow.current ? undefined : previewWidth}
+                    />
+                </div>
+            {/if}
         </div>
     </main>
 {/if}
+
+<style>
+    .splitter {
+        width: 0.25rem;
+        flex-shrink: 0;
+        cursor: col-resize;
+        transition: background-color 150ms;
+    }
+    .splitter:hover {
+        background-color: color-mix(in srgb, var(--color-primary-500) 50%, transparent);
+    }
+    .splitter:active {
+        background-color: color-mix(in srgb, var(--color-primary-500) 70%, transparent);
+    }
+</style>
