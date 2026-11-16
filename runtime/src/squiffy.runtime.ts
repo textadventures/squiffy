@@ -9,6 +9,7 @@ import { LinkHandler } from "./linkHandler.js";
 import { Animation } from "./animation.js";
 import { imports } from "./import.js";
 import { areInputsValid, setupInputValidation } from "./inputValidation.js";
+import { createAssetHtmlResolver } from "./assets.js";
 
 export type { SquiffyApi } from "./types.js";
 export type { SquiffyEventHandler, SquiffyEventMap } from "./events.js";
@@ -373,7 +374,8 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             return false;
         }
 
-        outputElement.innerHTML = output;
+        // Saved output may contain asset URLs that are no longer valid (e.g. blob: URLs), so resolve them again
+        outputElement.innerHTML = resolveAssetsInHtml(output);
 
         setCurrentSectionElement();
         setCurrentPassageElement();
@@ -481,7 +483,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         write: (text: string, source: string) => {
             scrollPosition = outputElement.scrollHeight;
 
-            const html = ui.processText(text, false).trim();
+            const html = ui.renderHtml(text, false).trim();
 
             // Previously, we skipped the rest of this if "html" came back as an empty string.
             // But, we _do_ always want the block to be created, in the editor at least - as the
@@ -532,6 +534,10 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         processText: (text: string, inline: boolean) => {
             return textProcessor.process(text, inline);
         },
+        // processText, plus asset URL resolution - for text that's going to be displayed as HTML
+        renderHtml: (text: string, inline: boolean) => {
+            return resolveAssetsInHtml(ui.processText(text, inline));
+        },
     };
 
     function update(newStory: Story) {
@@ -554,7 +560,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             const previousSection = currentSection;
             currentSection = section;
             try {
-                return ui.processText(text, false);
+                return ui.renderHtml(text, false);
             } finally {
                 currentSection = previousSection;
             }
@@ -685,6 +691,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     const outputElement = document.createElement("div");
     outputElementContainer.appendChild(outputElement);
     story = options.story;
+    const resolveAssetsInHtml = createAssetHtmlResolver(options.resolveAssetUrl);
 
     const settings = {
         scroll: options.scroll || "body",
@@ -775,7 +782,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     const animation = new Animation();
 
     const pluginManager = new PluginManager(outputElement, textProcessor, state, linkHandler,
-        getSectionText, getPassageText, ui.processText, addTransition, animation, emitter);
+        getSectionText, getPassageText, ui.renderHtml, addTransition, animation, emitter);
     pluginManager.add(Plugins.ReplaceLabel());
     pluginManager.add(Plugins.RotateSequencePlugin());
     pluginManager.add(Plugins.RandomPlugin());

@@ -430,6 +430,25 @@ Starting game on {{difficulty}} difficulty.
 
 {{#if comments}}Your comment: {{comments}}{{/if}}"></Sample>
 
+## Images and other files
+
+*Images and other files work with the [command-line tool](/cli/#images-and-other-files), but not yet in the web editor.*
+
+Put the image next to your `.squiffy` file (or in a folder below it) and use Markdown image syntax:
+
+```
+![A sleeping cat](cat.png)
+```
+
+You can also use HTML, for example for sound and video:
+
+```
+<img src="images/map.png" alt="Map of the island">
+<audio src="sounds/rain.mp3" controls></audio>
+```
+
+Images are scaled down to fit the page width (see [Customising styles](/styling/#page-layout)).
+
 ## Custom HTML and CSS
 
 To add your own styles when using the command-line tool, put them in a CSS file and [import](#importing-files) it with `@import my_style.css`. The exported `index.html` links to it after Squiffy's own stylesheet, so your rules take precedence. See [Customising styles](/styling/) for the rules you're most likely to want to change.

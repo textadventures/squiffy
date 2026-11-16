@@ -104,6 +104,7 @@ The `squiffyRuntime.init()` function accepts an options object:
 | `storyId` | `string` | URL path (or the story's ID when opened from a local file) | Key used for localStorage (allows multiple stories on same domain) |
 | `scroll` | `string` | `"body"` | Scroll behavior: `"body"`, `"element"`, or `"none"` |
 | `onSet` | `function` | - | Callback when an attribute is set |
+| `resolveAssetUrl` | `function` | - | Maps an image or other file path used in the story to the URL to load it from. See [Asset URLs](#asset-urls) |
 
 ### Persistence
 
@@ -143,6 +144,27 @@ const squiffyApi = await squiffyRuntime.init({
     scroll: 'element',
 });
 ```
+
+### Asset URLs
+
+By default, file paths in the story, like `cat.png` in `![A cat](cat.png)`, load relative to the page. If your files live somewhere else, pass `resolveAssetUrl` to map each path to a URL:
+
+```javascript
+const squiffyApi = await squiffyRuntime.init({
+    element: document.getElementById('squiffy'),
+    story: story,
+    resolveAssetUrl: (path) => 'https://cdn.example.com/my-story/' + path,
+});
+```
+
+It's applied to `src`, `srcset` and `poster` attributes (so images, audio, video and `<source>` elements), and to `url(...)` in inline `style` attributes. It's called with the path as written in the story, with any `%20`-style encoding decoded. Return the path unchanged to leave it as it is.
+
+It isn't called for:
+- absolute URLs (`http:`, `https:`, `data:`, `blob:` and other schemes) or protocol-relative ones (`//example.com/...`)
+- links (`href`)
+- `<style>` elements and stylesheets
+
+When the player returns to a saved story, its saved output is resolved again, so URLs that only last for a session, like `blob:` URLs, still work.
 
 ## API methods
 

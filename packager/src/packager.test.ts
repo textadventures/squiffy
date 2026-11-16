@@ -1,6 +1,7 @@
 import { expect, test } from "vitest";
 import { compile } from "squiffy-compiler";
-import { createPackage } from "./packager.js";
+import { unzipSync, strFromU8 } from "fflate";
+import { createPackage, normaliseAssetPath } from "./packager.js";
 
 test("Create package from compiled story", async () => {
     const script = "Hello world!";
@@ -211,4 +212,95 @@ test("Inline HTML package with zip", async () => {
     expect(Object.keys(pkg.files).length).toBe(1);
     expect(pkg.zip).toBeDefined();
     expect(pkg.zip).toBeInstanceOf(Uint8Array);
+});
+
+const compileOrThrow = async (script: string) => {
+    const compileResult = await compile({ script });
+    if (!compileResult.success) {
+        throw new Error("Compile failed");
+    }
+    return compileResult;
+};
+
+const pngBytes = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+const mp3Bytes = new Uint8Array([0x49, 0x44, 0x33]);
+
+test("Package without assets has no asset options in HTML", async () => {
+    const pkg = await createPackage(await compileOrThrow("Hello"), { inlineHtml: true, assets: {} });
+    const html = pkg.files["index.html"];
+    expect(html).not.toContain("ASSET_OPTIONS");
+    expect(html).not.toContain("resolveAssetUrl: function");
+    expect(html).not.toContain("squiffyAssetUrls");
+    expect(html).toContain("storyId: window.location.pathname,\n            });");
+});
+
+test("Assets are added to the zip at their paths", async () => {
+    const pkg = await createPackage(await compileOrThrow("![A cat](cat.png)"), {
+        createZip: true,
+        assets: { "cat.png": pngBytes, "./sounds\\meow.mp3": mp3Bytes },
+    });
+
+    // Assets aren't text files, so aren't in pkg.files
+    expect(Object.keys(pkg.files).sort()).toEqual(["index.html", "squiffy.runtime.global.js", "story.js", "style.css"]);
+    expect(pkg.files["index.html"]).not.toContain("resolveAssetUrl: function");
+
+    const zip = unzipSync(pkg.zip!);
+    expect(Object.keys(zip).sort()).toEqual(["cat.png", "index.html", "sounds/meow.mp3", "squiffy.runtime.global.js", "story.js", "style.css"]);
+    expect(zip["cat.png"]).toEqual(pngBytes);
+    expect(zip["sounds/meow.mp3"]).toEqual(mp3Bytes);
+});
+
+test("Generated files take precedence over assets with the same name", async () => {
+    const pkg = await createPackage(await compileOrThrow("Hello"), {
+        createZip: true,
+        assets: { "index.html": pngBytes },
+    });
+    const zip = unzipSync(pkg.zip!);
+    expect(strFromU8(zip["index.html"])).toContain("<html");
+});
+
+test("Inline HTML embeds assets as data URIs", async () => {
+    const pkg = await createPackage(await compileOrThrow("![A cat](images/cat.png)"), {
+        inlineHtml: true,
+        createZip: true,
+        assets: { "images/cat.png": pngBytes, "meow.mp3": mp3Bytes },
+    });
+    const html = pkg.files["index.html"];
+    expect(html).toContain('"images/cat.png":"data:image/png;base64,iVBORw0KGgo="');
+    expect(html).toContain('"meow.mp3":"data:audio/mpeg;base64,SUQz"');
+    expect(html).toContain("resolveAssetUrl: function (path)");
+
+    // The zip only has the single HTML file
+    expect(Object.keys(unzipSync(pkg.zip!))).toEqual(["index.html"]);
+});
+
+test("Inline HTML resolveAssetUrl maps paths to data URIs", async () => {
+    const pkg = await createPackage(await compileOrThrow("Hello"), {
+        inlineHtml: true,
+        assets: { "cat.png": pngBytes },
+    });
+    const html = pkg.files["index.html"];
+    const assetScript = html.match(/var squiffyAssetUrls = (.*);/)![1];
+    const resolverSource = html.match(/resolveAssetUrl: (function \(path\) \{.*\}),/)![1];
+    const resolve = new Function("squiffyAssetUrls", `return ${resolverSource};`)(JSON.parse(assetScript));
+    expect(resolve("cat.png")).toBe("data:image/png;base64,iVBORw0KGgo=");
+    expect(resolve("./cat.png")).toBe("data:image/png;base64,iVBORw0KGgo=");
+    expect(resolve("dog.png")).toBe("dog.png");
+});
+
+test("Embedded asset data can't close the script element", async () => {
+    const pkg = await createPackage(await compileOrThrow("Hello"), {
+        inlineHtml: true,
+        assets: { "</script>.png": pngBytes },
+    });
+    expect(pkg.files["index.html"]).toContain("\\u003c/script>.png");
+});
+
+test("Asset paths outside the package are rejected", () => {
+    expect(normaliseAssetPath("./a/b.png")).toBe("a/b.png");
+    expect(normaliseAssetPath("a\\b.png")).toBe("a/b.png");
+    expect(() => normaliseAssetPath("../cat.png")).toThrow();
+    expect(() => normaliseAssetPath("a/../../cat.png")).toThrow();
+    expect(() => normaliseAssetPath("/etc/cat.png")).toThrow();
+    expect(() => normaliseAssetPath("C:/cat.png")).toThrow();
 });

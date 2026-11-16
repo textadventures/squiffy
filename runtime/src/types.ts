@@ -7,6 +7,13 @@ export interface SquiffyInitOptions {
     persist?: boolean,
     storyId?: string,
     onSet?: (attribute: string, value: any) => void,
+    /**
+     * Maps an asset path used in the story (e.g. "cat.png" in an img src) to the URL it should be
+     * loaded from. Applied to src, srcset and poster attributes, and url() in inline styles, of
+     * rendered output. Absolute URLs (http:, https:, data:, blob: etc. and protocol-relative) are
+     * left alone. When not provided, paths are used as they are.
+     */
+    resolveAssetUrl?: (path: string) => string,
 }
 
 export interface SquiffySettings {
