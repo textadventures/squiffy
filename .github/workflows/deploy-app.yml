@@ -56,19 +56,22 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build the editor and the packages it uses
-        run: npx lerna run build --scope @textadventures/squiffy-editor --include-dependencies
-
       # A prerelease goes to the `beta` preview branch
-      # (beta.squiffy-app.pages.dev) rather than production, so
-      # app.squiffystory.com only ever runs a stable release.
+      # (beta.squiffy.pages.dev, served as app-beta.squiffystory.com)
+      # rather than production, so app.squiffystory.com only ever runs a
+      # stable release. Its Help menu links to the beta docs,
+      # beta.squiffystory.com, which are built from main.
       - name: Choose the Cloudflare Pages branch
         run: |
           if [ "$(.github/scripts/release-channel.sh "$GITHUB_REF_NAME")" == "stable" ]; then
             echo "PAGES_BRANCH=main" >> $GITHUB_ENV
           else
             echo "PAGES_BRANCH=beta" >> $GITHUB_ENV
+            echo "VITE_DOCS_URL=https://beta.squiffystory.com" >> $GITHUB_ENV
           fi
+
+      - name: Build the editor and the packages it uses
+        run: npx lerna run build --scope @textadventures/squiffy-editor --include-dependencies
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v4
