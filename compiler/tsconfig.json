@@ -19,5 +19,5 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src/compiler.ts"]
+  "include": ["src/compiler.ts", "src/language-service.ts"]
 }

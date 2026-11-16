@@ -28,6 +28,17 @@
   },
   "main": "dist/compiler.js",
   "types": "dist/compiler.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/compiler.d.ts",
+      "default": "./dist/compiler.js"
+    },
+    "./language-service": {
+      "types": "./dist/language-service.d.ts",
+      "default": "./dist/language-service.js"
+    },
+    "./package.json": "./package.json"
+  },
   "files": [
     "dist"
   ],
