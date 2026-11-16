@@ -4,7 +4,7 @@
     import { AppBar } from "@skeletonlabs/skeleton-svelte";
     import { goto } from "$app/navigation";
     import { base } from "#lib/base-path.js";
-    import { project, closeProject, downloadMainFile } from "#lib/project.svelte.js";
+    import { project, closeProject, downloadFile } from "#lib/project.svelte.js";
     import { settings } from "#lib/settings.svelte.js";
     import { isNarrow } from "#lib/layout.svelte.js";
     import { DOCS_URL, GITHUB_URL } from "#lib/links.js";
@@ -23,6 +23,7 @@
     import SettingsIcon from "@lucide/svelte/icons/settings";
     import BookOpen from "@lucide/svelte/icons/book-open";
     import Play from "@lucide/svelte/icons/play";
+    import ImageIcon from "@lucide/svelte/icons/image";
     import StepForward from "@lucide/svelte/icons/step-forward";
     import GithubIcon from "#components/GithubIcon.svelte";
 
@@ -32,9 +33,11 @@
         ontoggleoutline?: () => void;
         // Runs the story in the preview, from the start or from the section the cursor is in
         onrun?: (fromCursor: boolean) => void;
+        // Opens the Assets dialog
+        onassets?: () => void;
     }
 
-    let { outlineOpen = false, ontoggleoutline, onrun }: Props = $props();
+    let { outlineOpen = false, ontoggleoutline, onrun, onassets }: Props = $props();
 
     const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform);
     const mod = isMac ? "⌘" : "Ctrl+";
@@ -57,7 +60,7 @@
 
     let fileMenuItems = $derived<DropdownMenuItem[]>([
         { label: "Save", action: () => void p?.save(), icon: Save },
-        { label: `Download ${p?.mainFile ?? ""}`, action: downloadMainFile, icon: Download },
+        { label: `Download ${p?.activePath ?? ""}`, action: () => { if (p?.activePath) void downloadFile(p.activePath); }, icon: Download, disabled: !p?.activePath },
     ]);
 
     let overflowItems = $derived.by((): DropdownMenuItem[] => {
@@ -68,7 +71,7 @@
         ];
         if (!isNarrow.current) return links;
         links[0] = { ...links[0], divider: true };
-        return [...fileMenuItems, ...links];
+        return [...fileMenuItems, { label: "Images and other files", action: () => onassets?.(), icon: ImageIcon }, ...links];
     });
 </script>
 
@@ -84,7 +87,7 @@
                     aria-label="Back to home"
                 ><Home size={16} /></button>
                 {#if p}
-                    <span class="text-sm font-medium truncate min-w-0" title={p.mainFile}>{p.displayName}</span>
+                    <span class="text-sm font-medium truncate min-w-0" title={p.source.kind === "folder" ? p.fs.name : p.mainFile}>{p.displayName}</span>
                     {#if p.source.kind === "draft"}
                         <span class="badge preset-tonal text-[11px] ml-2 shrink-0" title="Kept in this browser. Download it to keep a copy.">Draft</span>
                     {/if}
@@ -124,6 +127,7 @@
                         aria-pressed={outlineOpen}
                     ><ListTree size={16} /></button>
                 {:else}
+                    <button type="button" class="toolbar-icon-btn" onclick={onassets} title="Images and other files" aria-label="Images and other files"><ImageIcon size={16} /></button>
                     <DropdownMenu items={fileMenuItems}>
                         {#snippet trigger(toggle, open)}
                             <button
