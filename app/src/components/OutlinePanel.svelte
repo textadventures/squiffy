@@ -83,7 +83,7 @@
 
 <nav
     aria-label="Outline"
-    class="flex flex-col shrink-0 overflow-hidden bg-surface-50-950 border-r border-surface-200-800 {width === undefined ? "flex-1" : ""}"
+    class="flex flex-col min-h-0 overflow-hidden {width === undefined ? "flex-1" : "shrink-0"}"
     style={width === undefined ? undefined : `width: ${width}px`}
 >
     <div class="px-3 pt-2 pb-1 text-[11px] font-semibold text-surface-600-400 uppercase tracking-wide">Outline</div>

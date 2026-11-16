@@ -63,6 +63,12 @@ const handlers: WorkerApi = {
         current().setMainFile(path);
     },
     compile,
+    async findSection(section, passage) {
+        const symbol = (await current().getAnalysis()).sections.find(s => s.name === section);
+        const node = passage ? symbol?.passages.find(p => p.name === passage)?.node : symbol?.node;
+        if (!symbol || !node) return undefined;
+        return { file: symbol.file, range: ("nameRange" in node && node.nameRange) || node.range };
+    },
     getDiagnostics: path => current().getDiagnostics(path),
     getDocumentSymbols: path => current().getDocumentSymbols(path),
     getDefinition: (path, position) => current().getDefinition(path, position),

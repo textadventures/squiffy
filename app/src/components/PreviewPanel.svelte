@@ -2,7 +2,8 @@
     // The story preview: squiffy-runtime's preview page in a sandboxed iframe (srcdoc, scripts
     // only, so the story can't reach the editor, its storage or its cookies), driven through
     // squiffy-runtime/preview-host. Edits hot-update the running story, keeping its state;
-    // Restart starts it again from where it was last run from.
+    // Restart starts it again from where it was last run from. The story's images and other assets
+    // are sent as Blobs, since a sandboxed frame can't load the editor's own blob: URLs (#307).
     import { onMount } from "svelte";
     import type { PreviewHost, StartAt } from "squiffy-runtime/preview-host";
     import type { CompiledStory } from "#lib/language/protocol.js";
@@ -14,13 +15,17 @@
     interface Props {
         // Compiles the story as it is in the editor now
         compile: () => Promise<CompiledStory>;
+        // The story's assets, by their path from the main file's folder
+        assets: () => Promise<Record<string, Blob>>;
+        // Changes when assets are added, replaced or deleted, to send them again
+        assetsVersion?: number;
         // A section or passage was shown because the player clicked a link (not on starting)
         onNavigated?: (section: string, passage?: string) => void;
         onclose: () => void;
         width?: number;
     }
 
-    let { compile, onNavigated, onclose, width }: Props = $props();
+    let { compile, assets, assetsVersion = 0, onNavigated, onclose, width }: Props = $props();
 
     let iframe = $state<HTMLIFrameElement>();
     let host: PreviewHost | null = null;
@@ -32,6 +37,8 @@
     let runtimeError = $state<string | null>(null);
     // Navigations while the story starts are where it starts, not the player clicking
     let following = false;
+    // Where the story last said it was
+    let lastPlace = "";
     let pendingRun: { startAt?: StartAt } | null = null;
     let pageStarted = false;
     // Updates are compiled one at a time, so an older compile can't land after a newer one
@@ -60,7 +67,12 @@
                 onCanGoBackChanged: value => {
                     canGoBack = value;
                 },
+                // A hot update reports the section that's showing again, which mustn't move the
+                // author's cursor, so only a move to another section or passage is followed
                 onNavigated: (section, passage) => {
+                    const place = `${section}\u0000${passage ?? ""}`;
+                    if (place === lastPlace) return;
+                    lastPlace = place;
                     if (following) onNavigated?.(section, passage);
                 },
                 onRuntimeError: message => {
@@ -96,9 +108,20 @@
         runtimeError = null;
         canGoBack = false;
         following = false;
+        lastPlace = "";
         running = true;
+        host.setAssets({ files: await assets() });
         host.load({ js: result.js, css: result.css, scripts: result.scripts }, at ? { startAt: at } : {});
     }
+
+    // New or changed assets go to the running story; ones already on screen stay as they were
+    let sentAssetsVersion = 0;
+    $effect(() => {
+        const version = assetsVersion;
+        if (version === sentAssetsVersion) return;
+        sentAssetsVersion = version;
+        if (host && running) void assets().then(files => host?.setAssets({ files }));
+    });
 
     // Hot-updates the running story after an edit
     export function update() {

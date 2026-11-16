@@ -1,5 +1,5 @@
 // What the app and the language service worker call on each other (see rpc.ts).
-import type { LanguageService } from "squiffy-compiler/language-service";
+import type { LanguageService, Location } from "squiffy-compiler/language-service";
 
 // The language service's queries, as the worker exposes them
 export type ServiceQueries = Omit<LanguageService, "updateFile" | "fileChanged" | "setMainFile" | "getAnalysis">;
@@ -12,6 +12,8 @@ export type CompiledStory =
 export interface WorkerApi extends ServiceQueries {
     // Compiles the story from the language service's latest analysis, for the preview
     compile(): Promise<CompiledStory>;
+    // Where a section, or a passage in it, is defined: for following the preview
+    findSection(section: string, passage?: string): Promise<Location | undefined>;
     // Starts (or restarts) the service for a project
     open(mainFile: string): void;
     updateFile(path: string, text: string | undefined): void;
