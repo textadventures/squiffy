@@ -11,6 +11,7 @@
     import { clearLegacyAutoSave, getLegacyAutoSave, type LegacyAutoSave } from "#lib/legacy.js";
     import { confirmDialog } from "#lib/confirm.js";
     import { showToast } from "#lib/toast.js";
+    import { checkDraftStorage } from "#lib/storage.js";
     import HomeHeader from "#components/HomeHeader.svelte";
     import BetaBanner from "#components/BetaBanner.svelte";
 
@@ -20,17 +21,25 @@
     import FileUp from "@lucide/svelte/icons/file-up";
     import Trash2 from "@lucide/svelte/icons/trash-2";
     import X from "@lucide/svelte/icons/x";
+    import ShieldAlert from "@lucide/svelte/icons/shield-alert";
 
     let draftList = $state<StoredProject<DraftMeta>[] | null>(null);
     let recentFolders = $state<RecentFolder[]>([]);
     // Unsaved work from the 6.x editor, if there is any
     let legacy = $state<LegacyAutoSave | null>(null);
     let draftsError = $state<string | null>(null);
+    // Set when the browser won't let the editor use OPFS, where drafts are kept
+    let storageBlocked = $state<string | null>(null);
     let busy = $state(false);
     let fileInput = $state<HTMLInputElement>();
 
     async function refresh() {
         if (canOpenFolders) recentFolders = await listRecentFolders();
+        const storage = await checkDraftStorage();
+        if (!storage.ok) {
+            storageBlocked = storage.detail;
+            return;
+        }
         try {
             draftList = await listDrafts();
         } catch (err) {
@@ -116,6 +125,24 @@
 <HomeHeader />
 
 <main class="max-w-3xl mx-auto px-4 py-6 flex flex-col gap-8">
+    {#if storageBlocked}
+        <section aria-labelledby="storage-heading" role="alert" class="card preset-outlined-error-500 p-4 flex gap-3">
+            <ShieldAlert size={22} class="shrink-0 text-error-500" />
+            <div class="flex flex-col gap-1 text-sm">
+                <h2 id="storage-heading" class="font-semibold">This browser is blocking the storage the editor needs</h2>
+                <p>
+                    The editor keeps stories in your browser's storage, and the browser won't let it.
+                    A privacy add-on (such as Ghostery), a strict privacy setting, or a private window can cause this.
+                    Try allowing this site in the add-on or settings and reloading, or use another browser.
+                </p>
+                {#if canOpenFolders}
+                    <p>You can still use Open folder to edit a story's files where they are.</p>
+                {/if}
+                <p class="text-xs text-surface-600-400">Details: {storageBlocked}</p>
+            </div>
+        </section>
+    {/if}
+
     {#if legacy}
         <section aria-labelledby="legacy-heading" class="card preset-outlined-warning-500 p-4 flex flex-wrap items-center gap-3">
             <div class="flex-1 basis-64">
@@ -124,7 +151,7 @@
                     {legacy.title || legacy.fileName || "Untitled"} · Last changed {dateFormat.format(legacy.timestamp)}
                 </p>
             </div>
-            <button type="button" class="btn btn-sm preset-filled-primary-500" disabled={busy} onclick={handleOpenLegacy}>Open as a draft</button>
+            <button type="button" class="btn btn-sm preset-filled-primary-500" disabled={busy || !!storageBlocked} onclick={handleOpenLegacy}>Open as a draft</button>
             <button type="button" class="btn btn-sm preset-tonal" disabled={busy} onclick={handleDiscardLegacy}>Discard</button>
         </section>
     {/if}
@@ -132,7 +159,7 @@
     <section aria-labelledby="start-heading" class="flex flex-col gap-3">
         <h2 id="start-heading" class="text-sm font-semibold text-surface-600-400 uppercase tracking-wide">Start</h2>
         <div class="grid gap-3 sm:grid-cols-3">
-            <button type="button" class="card start-card preset-outlined-surface-200-800" disabled={busy} onclick={handleNew}>
+            <button type="button" class="card start-card preset-outlined-surface-200-800" disabled={busy || !!storageBlocked} onclick={handleNew}>
                 <FilePlus size={22} class="text-primary-500" />
                 <span class="font-medium">New story</span>
                 <span class="text-xs text-surface-600-400">Kept in this browser as a draft</span>
@@ -144,7 +171,7 @@
                     <span class="text-xs text-surface-600-400">Edit a story's files where they are</span>
                 </button>
             {/if}
-            <button type="button" class="card start-card preset-outlined-surface-200-800" disabled={busy} onclick={() => fileInput?.click()}>
+            <button type="button" class="card start-card preset-outlined-surface-200-800" disabled={busy || !!storageBlocked} onclick={() => fileInput?.click()}>
                 <FileUp size={22} class="text-primary-500" />
                 <span class="font-medium">Open file</span>
                 <span class="text-xs text-surface-600-400">Copy a .squiffy file, or a project .zip, into a new draft</span>
@@ -188,7 +215,9 @@
 
     <section aria-labelledby="drafts-heading" class="flex flex-col gap-3">
         <h2 id="drafts-heading" class="text-sm font-semibold text-surface-600-400 uppercase tracking-wide">Drafts</h2>
-        {#if draftsError}
+        {#if storageBlocked}
+            <p class="text-sm text-surface-600-400">Drafts can't be kept while the browser is blocking storage.</p>
+        {:else if draftsError}
             <p class="text-sm text-error-500">Drafts aren't available in this browser: {draftsError}</p>
         {:else if draftList === null}
             <p class="text-sm text-surface-600-400">Loading…</p>
