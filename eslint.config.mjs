@@ -25,6 +25,19 @@ export default defineConfig([
             },
         },
     },
+    {
+        // The desktop app's build scripts run in Node
+        files: ["desktop/scripts/**"],
+        languageOptions: {
+            globals: {
+                URL: "readonly",
+                console: "readonly",
+                process: "readonly",
+                require: "readonly",
+                module: "writable",
+            },
+        },
+    },
     includeIgnoreFile(gitignorePath, "Imported .gitignore patterns"),
     globalIgnores(["**/.astro/**", "**/.svelte-kit/**", "app/build/**", "examples/**"]),
     eslint.configs.recommended,
@@ -32,6 +45,13 @@ export default defineConfig([
     {
         rules: {
             "@typescript-eslint/no-explicit-any": "off",
+        },
+    },
+    {
+        // electron-builder loads its hooks as CommonJS
+        files: ["**/*.cjs"],
+        rules: {
+            "@typescript-eslint/no-require-imports": "off",
         },
     },
 ]);

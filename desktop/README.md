@@ -29,7 +29,45 @@ This folder isn't one of the repo's npm workspaces, so the root `npm install` (a
 - **The editor** (`app/`) checks for the bridge (`isElectron()`, `desktopApi()`). In the desktop app there are no drafts: New story asks for a folder and puts a story file and `squiffy.json` in it, Open file opens a `.squiffy` file's folder or unpacks a project zip into a folder, and there's no service worker. The native menu's commands are carried out by `app/src/lib/desktop-shell.ts`.
 - **Links** to other sites open in the browser, and nothing navigates the window away from the editor.
 
+## Packaging
+
+```bash
+npm run dist                               # installers for this OS, in release/
+RELEASE_CHANNEL=prerelease npm run dist    # the same, as Squiffy Beta
+```
+
+`npm run dist` builds the main process, copies the editor's build (`app/build`, so build that first) into `resources/app-static`, and runs electron-builder (`scripts/dist.mjs`, on top of the `build` config in `package.json`):
+
+| | Stable | Beta (`RELEASE_CHANNEL=prerelease`) |
+|---|---|---|
+| App | Squiffy | Squiffy Beta |
+| `appId` | `com.squiffystory.desktop` | `com.squiffystory.desktop.beta` |
+| `name` (Windows install folder, `.deb`, Linux executable) | `squiffy-desktop` | `squiffy-desktop-beta` |
+| `desktopName` (Linux `.desktop` file and WM_CLASS) | `squiffy.desktop` | `squiffy-beta.desktop` |
+| Icons | `build/` | `build/beta/` |
+
+The beta is a separate app, so it installs beside the stable one and keeps its own settings and recent folders, as Quest Viva Beta does. Its home page says it's the beta, and its help links go to the beta docs.
+
+- **macOS:** a DMG, Apple Silicon only, as Quest Viva's. electron-builder signs with any Developer ID it finds in the keychain; without one, `scripts/adhoc-sign.cjs` signs it ad hoc, since Apple Silicon won't open an unsigned app at all.
+- **Windows:** an NSIS installer, x64, unsigned (SmartScreen warns).
+- **Linux:** AppImage and `.deb`, x64 and arm64, run with `--no-sandbox` (Chromium's SUID sandbox helper can't be set up by an AppImage). The `.deb` is there because an AppImage doesn't add itself to the desktop's app list.
+- `.squiffy` files are associated with the app, which opens a file's folder.
+
+The icons are made from the editor's logo by `build/make-icons.sh` (ImageMagick and macOS's `iconutil`). The results are committed.
+
+### Releases
+
+`.github/workflows/desktop-publish.yml` runs on each release tag, on macOS, Windows and Linux. It builds the editor (with `VITE_DOCS_URL` and `VITE_BETA_APP` for a prerelease, as `deploy-app.yml` does), packages the app for the tag's channel (`.github/scripts/release-channel.sh`), and attaches the installers to the GitHub Release release-please made. It also runs, unsigned, on pull requests that change `desktop/` or the workflow, and can be run by hand (`gh workflow run desktop-publish.yml -f channel=stable`), when the installers are just the run's artifacts.
+
+The macOS build is signed with a Developer ID and notarized when these repo secrets are set, as in Quest Viva's workflow, and signed ad hoc otherwise:
+
+| Secret | |
+|---|---|
+| `MAC_CSC_LINK` | The Developer ID Application certificate, as a base64 `.p12` |
+| `MAC_CSC_KEY_PASSWORD` | Its password |
+| `APPLE_API_KEY_P8` | An App Store Connect API key, base64 |
+| `APPLE_API_KEY_ID`, `APPLE_API_ISSUER` | Its key ID and issuer ID |
+
 ## Still to do (#276)
 
-- Packaging: installers for macOS, Windows and Linux with electron-builder, a separate "Squiffy Beta" app for prereleases, icons, `.squiffy` file associations, signing, and a workflow that attaches them to each GitHub Release.
 - Telling the author when there's a new version, and a downloads page on the docs site.
