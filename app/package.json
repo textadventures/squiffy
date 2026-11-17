@@ -1,7 +1,7 @@
 {
   "name": "@textadventures/squiffy-app",
   "private": true,
-  "version": "7.0.0-beta.1",
+  "version": "7.0.0-beta.2",
   "description": "The Squiffy 7 editor, rebuilt on Quest Viva's app shell (SvelteKit + Skeleton)",
   "license": "MIT",
   "repository": {
@@ -29,14 +29,14 @@
     "@codemirror/view": "^6.43.15",
     "@lezer/highlight": "^1.2.5",
     "@lucide/svelte": "^1.70.0",
-    "@textadventures/graph-map": "^7.0.0-beta.1",
-    "@textadventures/project-fs": "^7.0.0-beta.1",
-    "@textadventures/squiffy-codemirror": "^7.0.0-beta.1",
-    "@textadventures/squiffy-packager": "^7.0.0-beta.1",
+    "@textadventures/graph-map": "^7.0.0-beta.2",
+    "@textadventures/project-fs": "^7.0.0-beta.2",
+    "@textadventures/squiffy-codemirror": "^7.0.0-beta.2",
+    "@textadventures/squiffy-packager": "^7.0.0-beta.2",
     "fflate": "^0.8.3",
     "idb-keyval": "^6.3.0",
-    "squiffy-compiler": "^7.0.0-beta.1",
-    "squiffy-runtime": "^7.0.0-beta.1"
+    "squiffy-compiler": "^7.0.0-beta.2",
+    "squiffy-runtime": "^7.0.0-beta.2"
   },
   "devDependencies": {
     "@skeletonlabs/skeleton": "^5.0.1",

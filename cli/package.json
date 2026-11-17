@@ -1,6 +1,6 @@
 {
   "name": "@textadventures/squiffy-cli",
-  "version": "7.0.0-beta.1",
+  "version": "7.0.0-beta.2",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/textadventures/squiffy.git",
@@ -35,12 +35,12 @@
     "squiffy-packager": "dist/squiffy.js"
   },
   "dependencies": {
-    "@textadventures/squiffy-packager": "^7.0.0-beta.1",
+    "@textadventures/squiffy-packager": "^7.0.0-beta.2",
     "finalhandler": "^2.1.0",
     "glob": "^14.0.2",
     "serve-static": "^2.2.0",
-    "squiffy-compiler": "^7.0.0-beta.1",
-    "squiffy-runtime": "^7.0.0-beta.1",
+    "squiffy-compiler": "^7.0.0-beta.2",
+    "squiffy-runtime": "^7.0.0-beta.2",
     "yargs": "^18.2.0"
   },
   "devDependencies": {
