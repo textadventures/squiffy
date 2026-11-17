@@ -36,6 +36,9 @@ export interface GraphNode {
     // reachable and something has to link to it, except for special passages such as @last,
     // which can run whenever their section can.
     reachable: boolean;
+    // Not reachable, but its text is shown inside something that is, by {{embed}} or
+    // {{live ... section=}}: a part of other sections rather than a place of its own
+    embedded?: boolean;
     // A section with no way out: no links to a section (in it, its passages, or anything they
     // embed) and no navigation that can't be followed. Never true for an ending.
     deadEnd: boolean;
@@ -163,6 +166,8 @@ export function buildStoryGraph(source: GraphSource): StoryGraph {
     // Containers with navigation that can't be followed
     const unknown = new Set<string>();
     const endings = new Set<string>();
+    // {{live}} helpers that show a section or passage
+    const liveEmbeds: { container: SectionNode | PassageNode; from: string; file: string; sectionName: string; kind: "section" | "passage"; target: string; range: Range }[] = [];
 
     const addNode = (node: GraphNode) => {
         nodes.push(node);
@@ -202,6 +207,15 @@ export function buildStoryGraph(source: GraphSource): StoryGraph {
                 }
                 else if (statement.type == "text") {
                     if (/\{\{~?\s*section\s/.test(statement.text)) unknown.add(from);
+                    // {{live "x" section="name"}} and passage="name" show that section's or
+                    // passage's text, and so its links, as {{embed}} does
+                    for (const match of statement.text.matchAll(/\{\{~?\s*live\s[^}]*?\b(section|passage)\s*=\s*(["'])([^"']*)\2[^}]*\}\}/g)) {
+                        const line = statement.range.start.line;
+                        liveEmbeds.push({
+                            container, from, file: section.file, sectionName: name, kind: match[1] as "section" | "passage", target: match[3],
+                            range: { start: { line, character: match.index }, end: { line, character: match.index + match[0].length } },
+                        });
+                    }
                 }
                 else if (statement.type == "js") {
                     for (const match of statement.code.matchAll(/\.go\s*\(\s*(?:(["'])([^"'\\]*)\1\s*\))?/g)) {
@@ -292,6 +306,19 @@ export function buildStoryGraph(source: GraphSource): StoryGraph {
         });
     }
 
+    for (const live of liveEmbeds) {
+        const to = live.kind == "section"
+            ? source.sections.has(live.target) ? sectionId(live.target) : undefined
+            : source.sections.get(live.sectionName)?.passages.has(live.target) ? passageId(live.sectionName, live.target) : undefined;
+        edges.push({
+            from: live.from,
+            ...(to ? { to } : { target: live.target }),
+            kind: "embed",
+            conditional: isConditional(live.container, live.range.start),
+            location: { file: live.file, range: live.range },
+        });
+    }
+
     // In the order they're written
     const fileOrder = new Map([...source.files.keys()].map((file, i) => [file, i]));
     edges.sort((a, b) => (fileOrder.get(a.location.file) ?? -1) - (fileOrder.get(b.location.file) ?? -1)
@@ -352,6 +379,10 @@ export function buildStoryGraph(source: GraphSource): StoryGraph {
             else reach(edge.to);
         }
     }
+    // Shown inside something that can be reached, though not reached itself
+    for (const node of nodes) {
+        if (!node.reachable && shown.has(node.id)) node.embedded = true;
+    }
 
     // ---- Dead ends ----
     const masterIds = nodeById.has(sectionId(""))
@@ -396,7 +427,7 @@ export function storyGraphDiagnostics(graph: StoryGraph): Diagnostic[] {
         // The master section, which is part of every section
         if (node.name == "") continue;
         if (!node.reachable) {
-            if (!checkReachable) continue;
+            if (!checkReachable || node.embedded) continue;
             diagnostics.push({
                 file: node.location.file,
                 range: node.location.range,

@@ -121,6 +121,7 @@ describe("story graph", () => {
         expect(reachable(graph)).toEqual(["section:a", "section:b"]);
         // a's way out is in what it embeds
         expect(deadEnds(graph)).toEqual([]);
+        expect(nodeOf(graph, "section:shared").embedded).toBe(true);
     });
 
     test("links inside {{#if}} are conditional, and can be followed", async () => {
@@ -223,6 +224,37 @@ describe("for the story map", () => {
     });
 });
 
+describe("live sections and passages", () => {
+    test("{{live}} with section= or passage= shows its text, so its links can be followed", async () => {
+        const graph = await one(`[[a]]:
+Score: {{live "score" section="panel"}} {{live "x" passage="info"}} {{live "y" section="nowhere"}}
+
+[info]:
+[[c]]
+
+[[panel]]:
+{{#if x}}[[b]]{{/if}}
+
+[[b]]:
+@end
+
+[[c]]:
+@end`);
+        expect(edgeSummary(graph.edges.filter(e => e.kind == "embed"))).toEqual([
+            "section:a -> section:panel (embed)",
+            "section:a -> passage:a/info (embed)",
+            "section:a -> ? (embed)",
+        ]);
+        expect(graph.edges.find(e => e.kind == "embed" && !e.to)?.target).toBe("nowhere");
+        // Through the panel, b can be reached, and a isn't a dead end
+        expect(nodeOf(graph, "section:b").reachable).toBe(true);
+        expect(nodeOf(graph, "section:c").reachable).toBe(true);
+        expect(nodeOf(graph, "section:a").deadEnd).toBe(false);
+        // Embedding doesn't make the panel itself somewhere the player goes, but it's shown
+        expect(nodeOf(graph, "section:panel")).toMatchObject({ reachable: false, embedded: true });
+    });
+});
+
 describe("diagnostics", () => {
     test("unreachable sections and dead ends", async () => {
         const main = "[[a]]:\nGo to [[b]].\n\n[[b]]:\nStuck.\n\n[[c]]:\nGo to [[a]].";
@@ -254,6 +286,11 @@ describe("diagnostics", () => {
             const [action] = await ls.getCodeActions("story.squiffy", diagnostic.range);
             expect(apply(main, action.edit["story.squiffy"])).toBe(expected);
         }
+    });
+
+    test("a section that's only shown inside others isn't unreachable, or a dead end", async () => {
+        const ls = service({ "story.squiffy": "[[a]]:\n{{live \"x\" section=\"panel\"}} {{embed \"shared\"}} [[b]]\n\n[[panel]]:\nJust text.\n\n[[shared]]:\nMore text.\n\n[[b]]:\n@end" });
+        expect(await ls.getDiagnostics("story.squiffy")).toEqual([]);
     });
 
     test("no unreachable sections when something navigates somewhere that can't be known", async () => {

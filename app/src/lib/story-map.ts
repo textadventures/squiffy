@@ -1,9 +1,10 @@
 // The story map's graph (#380), from the language service's story graph: sections as boxes, their
 // passages as smaller boxes hanging under them, and broken links as markers saying what's
-// missing. Each section's rank (its row on the map) is its distance in links from the start, so
-// the map reads from the start at the top to the endings at the bottom. Sections that can't be
-// reached from the start are a group of their own, to the side, ranked from wherever their own
-// chains begin.
+// missing. Each section's rank (its row on the map) is the longest way to it
+// from the start, leaving out links that go back round a loop, so the links point down the map,
+// from the start at the top to the endings at the bottom. Embeds count, as their links show where
+// they're embedded. Sections that can't be reached from the start are a group of their own, to the
+// side, ranked from wherever their own chains begin.
 import type { GraphEdge, GraphEdgeKind, GraphNode, StoryGraph } from "squiffy-compiler/language-service";
 import type { MapPositions } from "squiffy-compiler";
 import { layeredLayout, type Layout, type MapEdge, type MapGraph, type MapNode } from "@textadventures/graph-map";
@@ -35,8 +36,8 @@ export type StoryMap = MapGraph<StoryMapNode, StoryMapEdge>;
 const sectionId = (name: string) => `section:${name}`;
 const passageId = (section: string, name: string) => `passage:${section}/${name}`;
 
-// Navigation: these change the section
-const NAVIGATION = new Set<GraphEdgeKind>(["section-link", "goto", "script"]);
+// What the map's rows follow: navigation, and embeds, whose links show where they're embedded
+const NAVIGATION = new Set<GraphEdgeKind>(["section-link", "goto", "script", "embed"]);
 
 const SECTION_HEIGHT = 30;
 const PASSAGE_HEIGHT = 22;
@@ -66,7 +67,7 @@ export function buildStoryMap(graph: StoryGraph): StoryMap {
     // ---- Ranks ----
     const sections = graphNodes.filter(n => n.kind == "section");
     const sectionIds = new Map(sections.map(n => [n.name, n.id]));
-    // Section to section navigation, from anything in the section
+    // Section to section navigation (and embedding), from anything in the section
     const next = new Map<string, Set<string>>();
     const hasIncoming = new Set<string>();
     for (const edge of graph.edges) {
@@ -80,25 +81,66 @@ export function buildStoryMap(graph: StoryGraph): StoryMap {
         set.add(b);
         hasIncoming.add(b);
     }
-    const rank = new Map<string, number>();
-    const bfs = (roots: string[]) => {
-        const queue = roots.filter(r => !rank.has(r));
-        for (const r of queue) rank.set(r, 0);
-        for (let i = 0; i < queue.length; i++) {
-            const id = queue[i];
-            for (const n of next.get(id) ?? []) {
-                if (rank.has(n)) continue;
-                rank.set(n, rank.get(id)! + 1);
-                queue.push(n);
+    // Rows by the longest path from the start, once the links that go back round loops are set
+    // aside, so that every other link points down the map. (The shortest path would put a
+    // section that many choices lead to, such as "next round", in the same row as the choices.)
+    const start = sections.find(n => n.start);
+    const roots = [
+        ...(start ? [start.id] : []),
+        // Then what the start doesn't lead to: from where its chains begin, then whatever's left
+        // (sections in loops), in the order they're written
+        ...sections.filter(n => !hasIncoming.has(n.id)).map(n => n.id),
+        ...sections.map(n => n.id),
+    ];
+    // Links back to a section that's on the way to them, found by walking depth first
+    const back = new Set<string>();
+    const visited = new Set<string>();
+    const onPath = new Set<string>();
+    for (const root of roots) {
+        if (visited.has(root)) continue;
+        const stack: { id: string; children: Iterator<string> }[] = [{ id: root, children: (next.get(root) ?? new Set<string>()).values() }];
+        visited.add(root);
+        onPath.add(root);
+        while (stack.length) {
+            const top = stack[stack.length - 1];
+            const child = top.children.next();
+            if (child.done) {
+                onPath.delete(top.id);
+                stack.pop();
+                continue;
+            }
+            const id = child.value;
+            if (onPath.has(id)) back.add(`${top.id}\u0000${id}`);
+            else if (!visited.has(id)) {
+                visited.add(id);
+                onPath.add(id);
+                stack.push({ id, children: (next.get(id) ?? new Set<string>()).values() });
             }
         }
-    };
-    const start = sections.find(n => n.start);
-    if (start) bfs([start.id]);
-    // What the start doesn't lead to: from where its chains begin, then from whatever's left
-    // (sections in loops), in the order they're written
-    bfs(sections.filter(n => !rank.has(n.id) && !hasIncoming.has(n.id)).map(n => n.id));
-    for (const n of sections) bfs([n.id]);
+    }
+    // Longest paths over the links that remain, in an order where every section comes after
+    // everything that leads to it
+    const forward = new Map<string, string[]>();
+    const waiting = new Map<string, number>(sections.map(n => [n.id, 0]));
+    for (const [from, tos] of next) {
+        for (const to of tos) {
+            if (back.has(`${from}\u0000${to}`)) continue;
+            (forward.get(from) ?? forward.set(from, []).get(from)!).push(to);
+            waiting.set(to, waiting.get(to)! + 1);
+        }
+    }
+    const rank = new Map<string, number>();
+    const ready = roots.filter((id, i) => roots.indexOf(id) == i && waiting.get(id) == 0);
+    for (const id of ready) rank.set(id, 0);
+    for (let i = 0; i < ready.length; i++) {
+        const id = ready[i];
+        for (const to of forward.get(id) ?? []) {
+            rank.set(to, Math.max(rank.get(to) ?? 0, rank.get(id)! + 1));
+            const left = waiting.get(to)! - 1;
+            waiting.set(to, left);
+            if (left == 0) ready.push(to);
+        }
+    }
     // Reachable, by the map's reckoning: led to from the start
     const fromStart = new Set<string>();
     if (start) {
@@ -124,7 +166,8 @@ export function buildStoryMap(graph: StoryGraph): StoryMap {
         if (n.ending) classes.push("ending");
         // As in the diagnostics: a section that can't be reached isn't also called a dead end
         if (n.deadEnd && n.reachable) classes.push("dead-end");
-        if (!n.reachable) classes.push("unreachable");
+        if (!n.reachable && !n.embedded) classes.push("unreachable");
+        if (n.embedded) classes.push("embedded");
         if (n.unknownExits) classes.push("unknown-exits");
         if (n.detail) classes.push("unnamed");
         add({
@@ -221,14 +264,15 @@ function describe(node: StoryMapNode, out: StoryMapEdge[], into: StoryMapEdge[],
     if (g.start) parts.push("The story starts here.");
     if (g.ending) parts.push("An ending.");
     if (g.deadEnd && g.reachable) parts.push("A dead end: no way out.");
-    if (!g.reachable) parts.push("Can't be reached from the start.");
+    if (g.embedded) parts.push("Shown inside other sections.");
+    else if (!g.reachable) parts.push("Can't be reached from the start.");
     const names = (list: StoryMapEdge[], end: "to" | "from") => [...new Set(list.map(e => byId.get(e[end])!.label))].join(", ");
     if (out.length) parts.push(`Links to ${names(out, "to")}.`);
     if (into.length) parts.push(`Linked from ${names(into, "from")}.`);
     return parts.join(" ");
 }
 
-// The layout: rows by distance from the start, passages under their sections
+// The layout: rows by the longest way from the start, passages under their sections
 export function storyMapLayout(): Layout<StoryMapNode, StoryMapEdge> {
     return layeredLayout<StoryMapNode, StoryMapEdge>({
         rank: n => n.rank,

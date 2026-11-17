@@ -1,6 +1,6 @@
 // Layouts: where new nodes start, and the forces that shape the map from there. The map takes any
 // Layout; layeredLayout() is a directed force layout, where each node is pulled towards a row
-// (its rank, e.g. its distance from the start), so the map reads from top to bottom while staying
+// (its rank, e.g. how far it is from the start), so the map reads from top to bottom while staying
 // springy, and "satellite" nodes are held close under the node they belong to.
 
 import { collide, manyBody, springs, towards, type LinkSpring } from "./forces.js";
@@ -38,33 +38,70 @@ export function layeredLayout<N extends MapNode, E extends MapEdge>(options: Lay
     const groupOf = (node: N) => options.group?.(node) ?? 0;
     const satelliteGap = 18;
 
-    // Where a satellite sits under its parent, given its place among its siblings
-    function underParent(parent: { x: number; y: number; height: number }, satellites: N[], index: number, node: N): Point {
-        const widths = satellites.map(s => s.width);
-        const total = widths.reduce((a, b) => a + b, 0) + columnGap / 2 * (satellites.length - 1);
-        let x = parent.x - total / 2;
-        for (let i = 0; i < index; i++) x += widths[i] + columnGap / 2;
-        return { x: x + node.width / 2, y: parent.y + parent.height / 2 + satelliteGap + node.height / 2 };
+    // Satellites per line under their parent: more go on further lines
+    const perLine = 3;
+    const satelliteSpacing = columnGap / 2;
+
+    // How the graph's laid out, apart from where things are: which satellites belong to which
+    // node and where they sit under it, and how far down each row is. A row is as tall as the
+    // satellites hanging under its nodes need.
+    function arrange(graph: MapGraph<N, E>) {
+        const byId = new Map(graph.nodes.map(n => [n.id, n]));
+        const satellitesOf = new Map<string, N[]>();
+        const main: N[] = [];
+        for (const node of graph.nodes) {
+            const parent = parentOf(node);
+            if (parent !== undefined && byId.has(parent) && parentOf(byId.get(parent)!) === undefined) {
+                let list = satellitesOf.get(parent);
+                if (!list) satellitesOf.set(parent, list = []);
+                list.push(node);
+            } else {
+                main.push(node);
+            }
+        }
+        // Each satellite's offset from its parent's centre, and the size of the block they make
+        const offset = new Map<string, Point>();
+        const block = new Map<string, { width: number; height: number }>();
+        for (const [parentId, satellites] of satellitesOf) {
+            const parent = byId.get(parentId)!;
+            const lineHeight = Math.max(...satellites.map(s => s.height)) + 8;
+            let width = 0;
+            for (let start = 0; start < satellites.length; start += perLine) {
+                const line = satellites.slice(start, start + perLine);
+                const lineWidth = line.reduce((a, s) => a + s.width, 0) + satelliteSpacing * (line.length - 1);
+                width = Math.max(width, lineWidth);
+                let x = -lineWidth / 2;
+                for (const s of line) {
+                    offset.set(s.id, { x: x + s.width / 2, y: parent.height / 2 + satelliteGap + (start / perLine) * lineHeight + s.height / 2 });
+                    x += s.width + satelliteSpacing;
+                }
+            }
+            block.set(parentId, { width, height: satelliteGap + Math.ceil(satellites.length / perLine) * lineHeight });
+        }
+        // Rows: each one's top is below the one before, and whatever hangs under it
+        const below = new Map<number, number>();
+        for (const node of main) {
+            const rank = options.rank(node);
+            if (rank === undefined) continue;
+            below.set(rank, Math.max(below.get(rank) ?? 0, block.get(node.id)?.height ?? 0));
+        }
+        const ranks = [...below.keys()].sort((a, b) => a - b);
+        const rowYs = new Map<number, number>();
+        let y = 0;
+        ranks.forEach((rank, i) => {
+            if (i > 0) y += (rank - ranks[i - 1]) * rowGap + below.get(ranks[i - 1])!;
+            rowYs.set(rank, y);
+        });
+        const last = ranks.length ? ranks[ranks.length - 1] : 0;
+        const rowY = (rank: number) => rowYs.get(rank) ?? (rowYs.get(last) ?? 0) + (rank - last) * rowGap + (below.get(last) ?? 0);
+        return { byId, satellitesOf, main, offset, block, rowY };
     }
 
     return {
         place(graph, known) {
             const placed = new Map<string, Point>();
-            const byId = new Map(graph.nodes.map(n => [n.id, n]));
-            const satellitesOf = new Map<string, N[]>();
-            const main: N[] = [];
-            for (const node of graph.nodes) {
-                const parent = parentOf(node);
-                if (parent !== undefined && byId.has(parent)) {
-                    let list = satellitesOf.get(parent);
-                    if (!list) satellitesOf.set(parent, list = []);
-                    list.push(node);
-                } else {
-                    main.push(node);
-                }
-            }
+            const { byId, satellitesOf, main, offset, block, rowY } = arrange(graph);
             const position = (id: string) => known.get(id) ?? placed.get(id);
-            const rowY = (node: N) => (options.rank(node) ?? 0) * rowGap;
 
             const fresh = main.filter(n => !known.has(n.id));
             if (known.size == 0) {
@@ -96,7 +133,8 @@ export function layeredLayout<N extends MapNode, E extends MapEdge>(options: Lay
                 let rightmost = -Infinity;
                 for (const p of known.values()) rightmost = Math.max(rightmost, p.x);
                 for (const node of fresh) {
-                    const y = options.rank(node) === undefined ? undefined : rowY(node);
+                    const rank = options.rank(node);
+                    const y = rank === undefined ? undefined : rowY(rank);
                     const anchorId = (neighbours.get(node.id) ?? []).find(id => position(id) && byId.has(id));
                     if (anchorId) {
                         const anchor = position(anchorId)!;
@@ -114,12 +152,12 @@ export function layeredLayout<N extends MapNode, E extends MapEdge>(options: Lay
 
             // Satellites under their parents
             for (const [parentId, satellites] of satellitesOf) {
-                const parent = byId.get(parentId)!;
                 const at = position(parentId);
                 if (!at) continue;
-                satellites.forEach((node, i) => {
-                    if (!known.has(node.id)) placed.set(node.id, underParent({ ...at, height: parent.height }, satellites, i, node));
-                });
+                for (const node of satellites) {
+                    const o = offset.get(node.id)!;
+                    if (!known.has(node.id)) placed.set(node.id, { x: at.x + o.x, y: at.y + o.y });
+                }
             }
             return placed;
 
@@ -161,11 +199,7 @@ export function layeredLayout<N extends MapNode, E extends MapEdge>(options: Lay
                 }
 
                 // A row's width includes the satellites hanging under its nodes
-                const span = (node: N) => {
-                    const satellites = satellitesOf.get(node.id) ?? [];
-                    const under = satellites.reduce((a, s) => a + s.width, 0) + columnGap / 2 * Math.max(0, satellites.length - 1);
-                    return Math.max(node.width, under);
-                };
+                const span = (node: N) => Math.max(node.width, block.get(node.id)?.width ?? 0);
                 const rowWidth = (row: N[]) => row.reduce((a, n) => a + span(n), 0) + columnGap * (row.length - 1);
                 const widest = Math.max(...[...rows.values()].map(rowWidth));
                 const centre = left + widest / 2;
@@ -182,7 +216,7 @@ export function layeredLayout<N extends MapNode, E extends MapEdge>(options: Lay
                     let x = centre - rowWidth(row) / 2;
                     for (const { n } of keyed) {
                         const w = span(n);
-                        placed.set(n.id, { x: x + w / 2, y: rank * rowGap });
+                        placed.set(n.id, { x: x + w / 2, y: rowY(rank) });
                         x += w + columnGap;
                     }
                 }
@@ -191,19 +225,22 @@ export function layeredLayout<N extends MapNode, E extends MapEdge>(options: Lay
         },
 
         forces(graph, nodes) {
-            const byId = new Map(graph.nodes.map(n => [n.id, n]));
+            const { byId, offset, rowY } = arrange(graph);
             const sim = (id: string) => nodes.get(id);
             const parentSim = new Map<SimNode, SimNode>();
+            const satelliteOffset = new Map<SimNode, Point>();
             const rankY = new Map<SimNode, number>();
             for (const node of graph.nodes) {
                 const s = sim(node.id);
                 if (!s) continue;
-                const parent = parentOf(node);
-                const p = parent === undefined ? undefined : sim(parent);
-                if (p) parentSim.set(s, p);
-                else {
+                const o = offset.get(node.id);
+                const p = o && sim(parentOf(node)!);
+                if (o && p) {
+                    parentSim.set(s, p);
+                    satelliteOffset.set(s, o);
+                } else {
                     const rank = options.rank(node);
-                    if (rank !== undefined) rankY.set(s, rank * rowGap);
+                    if (rank !== undefined) rankY.set(s, rowY(rank));
                 }
             }
 
@@ -228,7 +265,8 @@ export function layeredLayout<N extends MapNode, E extends MapEdge>(options: Lay
                 links.push({ source, target, distance: rowGap * Math.max(1, Math.min(span, 3)), strength });
             }
             for (const [satellite, parent] of parentSim) {
-                links.push({ source: parent, target: satellite, distance: (parent.height + satellite.height) / 2 + satelliteGap, strength: 0.6 });
+                const o = satelliteOffset.get(satellite)!;
+                links.push({ source: parent, target: satellite, distance: Math.hypot(o.x, o.y), strength: 0.6 });
             }
 
             return [
@@ -237,11 +275,16 @@ export function layeredLayout<N extends MapNode, E extends MapEdge>(options: Lay
                 // Rows
                 towards("y", n => {
                     const parent = parentSim.get(n);
-                    return parent ? parent.y + (parent.height + n.height) / 2 + satelliteGap : rankY.get(n);
-                }, 0.4),
-                // Satellites stay under their parents; everything else near where it started
-                towards("x", n => parentSim.get(n)?.x ?? n.home?.x, n => parentSim.has(n) ? 0.05 : 0.02),
-                collide({ padding: 8 }),
+                    return parent ? parent.y + satelliteOffset.get(n)!.y : rankY.get(n);
+                }, n => parentSim.has(n) ? 0.4 : 0.8),
+                // Satellites stay in their places under their parents; everything else near where
+                // it started
+                towards("x", n => {
+                    const parent = parentSim.get(n);
+                    return parent ? parent.x + satelliteOffset.get(n)!.x : n.home?.x;
+                }, n => parentSim.has(n) ? 0.3 : 0.02),
+                // Two nodes in rows move apart along the row, rather than out of it
+                collide({ padding: 8, sideways: n => rankY.has(n) }),
             ];
         },
     };

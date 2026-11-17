@@ -267,7 +267,7 @@
             </div>
             {#if g.start || g.ending || (g.deadEnd && g.reachable) || !g.reachable}
                 <p class="text-surface-600-400">
-                    {[g.start ? "The story starts here." : "", g.ending ? "An ending." : "", g.deadEnd && g.reachable ? "A dead end: there's no way out. If it's an ending, add @end." : "", !g.reachable ? "Can't be reached from the start." : ""].filter(Boolean).join(" ")}
+                    {[g.start ? "The story starts here." : "", g.ending ? "An ending." : "", g.deadEnd && g.reachable ? "A dead end: there's no way out. If it's an ending, add @end." : "", g.embedded ? "Shown inside other sections, with {{embed}} or {{live}}." : !g.reachable ? "Can't be reached from the start." : ""].filter(Boolean).join(" ")}
                 </p>
             {/if}
             {#if links.out.length}

@@ -30,12 +30,13 @@ Nothing links here.
 `;
 
 describe("story map", () => {
-    test("sections ranked by their distance from the start, passages under their sections", async () => {
+    test("sections ranked by the longest way from the start, so links point down, and passages under their sections", async () => {
         const map = buildStoryMap(await graphOf(story));
         const byId = Object.fromEntries(map.nodes.map(n => [n.id, n]));
         expect(byId["section:start"]).toMatchObject({ rank: 0, group: 0 });
-        expect(byId["section:left"]).toMatchObject({ rank: 1, group: 0 });
         expect(byId["section:right"]).toMatchObject({ rank: 1, group: 0 });
+        // right links to left too, so left goes below it
+        expect(byId["section:left"]).toMatchObject({ rank: 2, group: 0 });
         expect(byId["passage:start/look"]).toMatchObject({ parent: "section:start", group: 0 });
         // Can't be reached: a group of its own
         expect(byId["section:lost"]).toMatchObject({ rank: 0, group: 1 });
@@ -89,6 +90,14 @@ describe("positions", () => {
         const positions = renamePositions({ sections: { start: [1, 2] }, passages: { start: { look: [3, 4] } } }, renames);
         expect(positions).toEqual({ sections: { begin: [1, 2] }, passages: { begin: { peek: [3, 4] } } });
         expect(renamePositions({ sections: { other: [1, 2] }, passages: {} }, renames)).toBeUndefined();
+    });
+});
+
+describe("rows", () => {
+    test("links back round a loop don't push sections down", async () => {
+        const map = buildStoryMap(await graphOf("[[a]]:\n[[b]]\n\n[[b]]:\n[[c]] [[d]]\n\n[[c]]:\n[[next]]\n\n[[d]]:\n[[next]]\n\n[[next]]:\n[[a]] [[end]]\n\n[[end]]:\n@end"));
+        const rank = Object.fromEntries(map.nodes.map(n => [n.label, n.rank]));
+        expect(rank).toEqual({ a: 0, b: 1, c: 2, d: 2, next: 3, end: 4 });
     });
 });
 

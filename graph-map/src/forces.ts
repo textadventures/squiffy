@@ -103,6 +103,9 @@ export interface CollideOptions {
     padding?: number;
     // How much of an overlap is undone each tick, from 0 to 1
     strength?: number;
+    // Nodes that should only be pushed sideways when they overlap each other, e.g. ones held in
+    // rows. Others move along whichever axis they overlap least.
+    sideways?: (node: SimNode) => boolean;
 }
 
 // Keeps boxes from overlapping, by pushing overlapping pairs apart along the axis where they
@@ -110,6 +113,7 @@ export interface CollideOptions {
 export function collide(options: CollideOptions = {}): Force {
     const padding = options.padding ?? 8;
     const strength = options.strength ?? 0.7;
+    const sideways = options.sideways;
     return (nodes, _alpha, random) => {
         if (nodes.length < 2) return;
         let cell = 0;
@@ -139,7 +143,7 @@ export function collide(options: CollideOptions = {}): Force {
                         if (dy == 0) dy = jiggle(random);
                         const share = a.fixed ? 0 : b.fixed ? 1 : 0.5;
                         // Boxes are wider than they're tall, so moving up or down is usually less
-                        if (ox < oy) {
+                        if (ox < oy || (sideways?.(a) && sideways(b))) {
                             const push = ox * strength * Math.sign(dx);
                             a.vx -= push * share;
                             b.vx += push * (1 - share);
