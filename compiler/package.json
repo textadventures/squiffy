@@ -38,6 +38,10 @@
       "types": "./dist/language-service.d.ts",
       "default": "./dist/language-service.js"
     },
+    "./node": {
+      "types": "./dist/node.d.ts",
+      "default": "./dist/node.js"
+    },
     "./squiffy.tmLanguage.json": "./syntaxes/squiffy.tmLanguage.json",
     "./package.json": "./package.json"
   },

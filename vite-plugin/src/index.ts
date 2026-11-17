@@ -2,7 +2,8 @@ import path from "path";
 import fs from "fs/promises";
 import { glob } from "glob";
 import { compile } from "squiffy-compiler";
-import type { Plugin } from "vite";
+import { findStory, StoryNotFoundError } from "squiffy-compiler/node";
+import type { Plugin, ViteDevServer } from "vite";
 
 export interface SquiffyPluginOptions {
     /** Log each .squiffy file as it is compiled (defaults to false). */
@@ -41,10 +42,31 @@ const externalFiles = (inputFilename: string, readFiles: string[]) => {
 
 export default function squiffyPlugin(options: SquiffyPluginOptions = {}): Plugin {
     const { verbose = false } = options;
+    // Each loaded project's main file (the module id), by the folder its squiffy.json is in. A
+    // .squiffy file added to or removed from that folder changes the story, but Vite only watches
+    // files the story has already read, so the dev server is told to rebuild it.
+    const projectFolders = new Map<string, string>();
+    let server: ViteDevServer | undefined;
+
+    const onFileAddedOrRemoved = (file: string) => {
+        if (!server || !file.endsWith(".squiffy")) return;
+        for (const [id, folder] of projectFolders) {
+            if (!path.relative(folder, file).startsWith("..")) {
+                const module = server.moduleGraph.getModuleById(id);
+                if (module) void server.reloadModule(module);
+            }
+        }
+    };
 
     return {
         name: "vite-plugin-squiffy",
         enforce: "pre",
+
+        configureServer(devServer) {
+            server = devServer;
+            devServer.watcher.on("add", onFileAddedOrRemoved);
+            devServer.watcher.on("unlink", onFileAddedOrRemoved);
+        },
 
         async load(id) {
             const filename = id.split("?")[0];
@@ -54,16 +76,38 @@ export default function squiffyPlugin(options: SquiffyPluginOptions = {}): Plugi
                 this.info(`compiling ${filename}`);
             }
 
+            // The same rule as the CLI: importing a project's main file builds the whole project in
+            // its squiffy.json, and importing any other file builds just that file.
+            let story;
+            try {
+                story = await findStory(filename);
+            }
+            catch (e) {
+                if (e instanceof StoryNotFoundError) this.error(e.message);
+                throw e;
+            }
+            if (story.note && verbose) {
+                this.info(story.note);
+            }
+
             const readFiles = [filename];
             const result = await compile({
                 scriptBaseFilename: path.basename(filename),
                 script: (await fs.readFile(filename)).toString(),
                 onWarning: message => this.warn(message),
                 externalFiles: externalFiles(filename, readFiles),
+                storyFiles: story.storyFiles,
             });
 
             for (const file of readFiles.slice(1)) {
                 this.addWatchFile(file);
+            }
+            if (story.projectFile) {
+                this.addWatchFile(story.projectFile);
+                projectFolders.set(id, path.dirname(story.projectFile));
+            }
+            else {
+                projectFolders.delete(id);
             }
 
             if (!result.success) {

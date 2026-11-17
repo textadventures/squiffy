@@ -363,3 +363,80 @@ describe("code actions", () => {
         expect(apply(text, actions[1].edit["s.squiffy"])).not.toContain("{if");
     });
 });
+
+describe("folder mode, with a squiffy.json", () => {
+    const folder = (extra: Record<string, string> = {}) => {
+        const data: Record<string, string> = {
+            "squiffy.json": "{ \"version\": 1, \"main\": \"story.squiffy\", \"exclude\": [\"drafts/**\"] }",
+            "story.squiffy": "@title Folder\n@import b.squiffy\n\n[[start]]:\nGo to [[a]] or [[b]].",
+            "a.squiffy": "@title Not this\n[[a]]:\nA",
+            "b.squiffy": "[[b]]:\nB",
+            "drafts/c.squiffy": "[[c]]:\nC",
+            ...extra,
+        };
+        const files = memoryFiles(data);
+        // The main file given here is overridden by squiffy.json
+        return { data, ls: createLanguageService({ files, mainFile: "other.squiffy" }) };
+    };
+
+    test("every .squiffy file not excluded is part of the story", async () => {
+        const { ls } = folder();
+        expect(await ls.getProjectInfo()).toEqual({
+            projectFile: { version: 1, main: "story.squiffy", exclude: ["drafts/**"] },
+            mainFile: "story.squiffy",
+            storyFiles: ["a.squiffy", "b.squiffy"],
+            excludedFiles: ["drafts/c.squiffy"],
+        });
+        const analysis = await ls.getAnalysis();
+        expect(analysis.success).toBe(true);
+        expect(analysis.files.map(f => f.filename)).toEqual(["story.squiffy", "b.squiffy", "a.squiffy"]);
+        expect(analysis.sections.map(s => s.name)).toEqual(["b", "start", "a"]);
+    });
+
+    test("warnings for @title outside the main file, and a quick fix for an @import that isn't needed", async () => {
+        const { ls, data } = folder();
+        expect((await ls.getDiagnostics("a.squiffy")).map(d => [d.code, d.severity])).toEqual([
+            ["squiffy/not-in-main-file", "warning"],
+        ]);
+        const [hint] = await ls.getDiagnostics("story.squiffy");
+        expect([hint.code, hint.severity, hint.range.start.line]).toEqual(["squiffy/redundant-import", "hint", 1]);
+        const [action] = await ls.getCodeActions("story.squiffy", hint.range);
+        expect(action.title).toBe("Remove this @import");
+        expect(apply(data["story.squiffy"], action.edit["story.squiffy"])).toBe("@title Folder\n\n[[start]]:\nGo to [[a]] or [[b]].");
+    });
+
+    test("an excluded file isn't part of the story, but can still be opened", async () => {
+        const { ls } = folder();
+        expect(await ls.getDiagnostics("drafts/c.squiffy")).toEqual([]);
+        expect((await ls.getDocumentSymbols("drafts/c.squiffy")).map(s => s.name)).toEqual(["c"]);
+        expect((await ls.getAnalysis()).sections.some(s => s.name == "c")).toBe(false);
+    });
+
+    test("follows changes to squiffy.json and new files", async () => {
+        const { ls, data } = folder();
+        data["squiffy.json"] = "{ \"version\": 1, \"main\": \"story.squiffy\" }";
+        ls.fileChanged("squiffy.json");
+        expect((await ls.getProjectInfo()).storyFiles).toEqual(["a.squiffy", "b.squiffy", "drafts/c.squiffy"]);
+        ls.updateFile("d.squiffy", "[[d]]:\n");
+        expect((await ls.getProjectInfo()).storyFiles).toContain("d.squiffy");
+        ls.updateFile("squiffy.json", "{ \"version\": 1, \"main\": \"a.squiffy\" }");
+        expect((await ls.getProjectInfo()).mainFile).toBe("a.squiffy");
+        expect((await ls.getAnalysis()).sections[0].name).toBe("a");
+    });
+
+    test("a broken squiffy.json is an error, and the main file falls back to the one given", async () => {
+        const { ls } = folder({ "squiffy.json": "{ \"version\": 9, \"main\": \"story.squiffy\" }", "other.squiffy": "[[o]]:\n" });
+        const info = await ls.getProjectInfo();
+        expect(info.projectFile).toBeUndefined();
+        expect(info.mainFile).toBe("other.squiffy");
+        expect(info.error).toBe("This story's squiffy.json is version 9, which needs a newer version of Squiffy.");
+        expect((await ls.getDiagnostics("squiffy.json")).map(d => [d.code, d.severity])).toEqual([["squiffy/project-file", "error"]]);
+        expect((await ls.getAnalysis()).success).toBe(false);
+    });
+
+    test("without squiffy.json, other files need an @import", async () => {
+        const ls = createLanguageService({ files: memoryFiles({ "s.squiffy": "[[s]]:\n", "t.squiffy": "[[t]]:\n" }), mainFile: "s.squiffy" });
+        expect(await ls.getProjectInfo()).toEqual({ mainFile: "s.squiffy", storyFiles: [], excludedFiles: [] });
+        expect((await ls.getAnalysis()).sections.map(s => s.name)).toEqual(["s"]);
+    });
+});

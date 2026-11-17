@@ -12,7 +12,9 @@ export interface Range {
     end: Position;
 }
 
-export type DiagnosticSeverity = "error" | "warning";
+// A hint points out something that works but could be simpler, such as an @import that isn't
+// needed. Hints aren't passed to the compiler's onWarning.
+export type DiagnosticSeverity = "error" | "warning" | "hint";
 
 export type DiagnosticCode =
     | "squiffy/passage-without-section"
@@ -25,7 +27,10 @@ export type DiagnosticCode =
     | "squiffy/unknown-section-link"
     | "squiffy/unknown-passage-link"
     | "squiffy/duplicate-section"
-    | "squiffy/duplicate-passage";
+    | "squiffy/duplicate-passage"
+    | "squiffy/not-in-main-file"
+    | "squiffy/redundant-import"
+    | "squiffy/project-file";
 
 export interface Diagnostic {
     // The filename as the compiler was given it (scriptBaseFilename, or the name returned by

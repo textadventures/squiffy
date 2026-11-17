@@ -21,13 +21,14 @@ async function exportStory(kind: ExportKind, assets: Record<string, Uint8Array>)
     const pkg = await createPackage(result, { createZip: kind === "zip", inlineHtml: kind === "html", assets });
     return { success: true, files: pkg.files, zip: pkg.zip };
 }
-let mainFile = "";
 
 // The story's own stylesheets and scripts (@import of .css and .js files), which are named
 // relative to the main file. One that can't be read is left out, as the compiler does.
 async function readAll(names: string[]): Promise<string[]> {
+    // squiffy.json's main file, if the project has one
+    const main = (await current().getProjectInfo()).mainFile;
     const texts = await Promise.all(names.map(async name => {
-        const path = resolvePath(dirname(mainFile), name);
+        const path = resolvePath(dirname(main), name);
         if (path === null) return undefined;
         try {
             return await host.call("readText", path);
@@ -62,9 +63,8 @@ function current(): LanguageService {
 
 const handlers: WorkerApi = {
     open(path) {
-        mainFile = path;
         service = createLanguageService({
-            mainFile,
+            mainFile: path,
             files: {
                 list: () => host.call("list"),
                 readText: path => host.call("readText", path),
@@ -73,10 +73,8 @@ const handlers: WorkerApi = {
     },
     updateFile: (path, text) => current().updateFile(path, text),
     fileChanged: path => current().fileChanged(path),
-    setMainFile: path => {
-        mainFile = path;
-        current().setMainFile(path);
-    },
+    setMainFile: path => current().setMainFile(path),
+    getProjectInfo: () => current().getProjectInfo(),
     compile,
     exportStory,
     countV5Syntax: text => findV5Syntax(text).length,

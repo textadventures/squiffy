@@ -1,11 +1,16 @@
 import * as fs from "fs";
 import * as path from "path";
 import { compile, findV5Syntax, formatDiagnostic } from "squiffy-compiler";
+import type { StoryOnDisk } from "squiffy-compiler/node";
 import { externalFiles } from "./external-files.js";
 import { findAssets, getStoryText } from "./assets.js";
 import { createPackage, PackageOptions } from "@textadventures/squiffy-packager";
 
-async function getCompileResult(inputFilename: string) {
+// A story given as a filename is just that file and its @imports, as with no squiffy.json
+const toStory = (input: string | StoryOnDisk): StoryOnDisk => typeof input == "string" ? { mainFile: input } : input;
+
+async function getCompileResult(story: StoryOnDisk) {
+    const inputFilename = story.mainFile;
     const inputFile = fs.readFileSync(inputFilename);
     const inputText = inputFile.toString();
     if (findV5Syntax(inputText).length > 0) {
@@ -15,6 +20,7 @@ async function getCompileResult(inputFilename: string) {
         scriptBaseFilename: path.basename(inputFilename),
         script: inputText,
         externalFiles: externalFiles(inputFilename),
+        storyFiles: story.storyFiles,
         globalJs: true,
     });
     for (const diagnostic of result.diagnostics) {
@@ -28,10 +34,16 @@ async function getCompileResult(inputFilename: string) {
     return result;
 }
 
-export const writeScriptFile = async(inputFilename: string, outputPath: string, outputFilename: string)=> {
-    console.log("Loading " + inputFilename);
+const logLoading = (story: StoryOnDisk) => {
+    if (story.note) console.log(story.note);
+    console.log("Loading " + (story.projectFile ?? story.mainFile));
+};
 
-    const result = await getCompileResult(inputFilename);
+export const writeScriptFile = async(input: string | StoryOnDisk, outputPath: string, outputFilename: string)=> {
+    const story = toStory(input);
+    logLoading(story);
+
+    const result = await getCompileResult(story);
 
     if (!result.success) {
         console.log("Failed.");
@@ -42,10 +54,12 @@ export const writeScriptFile = async(inputFilename: string, outputPath: string, 
     fs.writeFileSync(path.join(outputPath, outputFilename), await result.getJs());
 };
 
-export const createPackageFiles = async (inputFilename: string, outputPath: string, options: PackageOptions = {}) => {
-    console.log("Loading " + inputFilename);
+export const createPackageFiles = async (input: string | StoryOnDisk, outputPath: string, options: PackageOptions = {}) => {
+    const story = toStory(input);
+    const inputFilename = story.mainFile;
+    logLoading(story);
 
-    const result = await getCompileResult(inputFilename);
+    const result = await getCompileResult(story);
 
     if (!result.success) {
         console.log("Failed.");

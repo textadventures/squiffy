@@ -15,6 +15,11 @@ export type { AnalyseSettings, Analysis, ExternalFiles, SectionSymbol, PassageSy
 export { emit } from "./emit.js";
 export type { EmitSettings, Output, UiInfo, CompileSuccess } from "./emit.js";
 export { formatDiagnostic } from "./syntax.js";
+export {
+    PROJECT_FILENAME, PROJECT_FILE_VERSION, PROJECT_SCHEMA_URL, parseProjectFile, getStoryFiles, isExcluded,
+    isAlwaysSkipped, formatProjectFile, updateProjectFile,
+} from "./project.js";
+export type { ProjectFile, ParsedProjectFile, StoryFiles } from "./project.js";
 export type * from "./syntax.js";
 
 interface CompilerSettings {
@@ -26,6 +31,8 @@ interface CompilerSettings {
     externalFiles?: ExternalFiles;
     globalJs?: boolean;
     parseCache?: ParseCache;
+    // In folder mode, the story's other .squiffy files: see AnalyseSettings.storyFiles
+    storyFiles?: string[];
 }
 
 export interface CompileError {
