@@ -31,12 +31,10 @@ jobs:
         with:
           sparse-checkout: .github/scripts
 
-      # release-please creates every release as a normal (non-prerelease)
-      # GitHub Release, since release-please-config.json no longer sets
-      # prerelease: true. A prerelease cut with a `Release-As: X.Y.Z-beta.N`
-      # footer is flagged as one here, which stops it holding "Latest" (and
-      # matches npm-publish.yml's `beta` dist-tag), so Latest only ever points
-      # at a stable release.
+      # Make the GitHub Release's prerelease flag and "Latest" match the tag
+      # (and npm-publish.yml's `beta` dist-tag), rather than relying on what
+      # release-please set: a prerelease such as X.Y.Z-beta.N is flagged as
+      # one, so Latest only ever points at a stable release.
       - name: Mark the release stable or prerelease
         if: ${{ steps.release.outputs.release_created }}
         env:
