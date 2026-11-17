@@ -76,8 +76,10 @@
         return null;
     });
 
+    // Sections without a name of their own show their detail ("(Start)", "+++Next", "---")
+    // rather than the name the story gives them (_default, _continue1, ...)
     function label(s: DocumentSymbol) {
-        return s.name || s.detail || "(untitled)";
+        return s.detail || s.name || "(untitled)";
     }
 </script>
 
@@ -130,7 +132,7 @@
         onclick={() => onselect(symbol)}
     >
         <Icon size={13} class="shrink-0 opacity-60" />
-        <span class="truncate" class:italic={!symbol.name}>{label(symbol)}</span>
+        <span class="truncate" class:italic={!!symbol.detail || !symbol.name}>{label(symbol)}</span>
     </button>
 {/snippet}
 
