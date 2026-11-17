@@ -1,5 +1,22 @@
 # Changelog
 
+## [7.0.0-beta.4](https://github.com/textadventures/squiffy/compare/v7.0.0-beta.3...v7.0.0-beta.4) (2026-11-17)
+
+
+### Features
+
+* arithmetic in infix expressions, and expressions in {{set}}, {{inc}}, {{dec}} and {{= }} ([#391](https://github.com/textadventures/squiffy/issues/391)) ([656dd08](https://github.com/textadventures/squiffy/commit/656dd08c9b9a480282dd8813f9743bc774e0079b))
+* convert Squiffy 6 setters when a story gets a squiffy.json ([#396](https://github.com/textadventures/squiffy/issues/396)) ([e25bcd4](https://github.com/textadventures/squiffy/commit/e25bcd4bc0f7e39be3c1b689110c13bebd6cf776))
+* expressions in [@set](https://github.com/set) and link setters, for stories with a squiffy.json ([#395](https://github.com/textadventures/squiffy/issues/395)) ([cdbc641](https://github.com/textadventures/squiffy/commit/cdbc6417f1f530ce6457ca10a8b12b9b6c92da18))
+* warn about text without quotes in setters in a story with a squiffy.json ([#399](https://github.com/textadventures/squiffy/issues/399)) ([56a3667](https://github.com/textadventures/squiffy/commit/56a36675d228f0b18f992cfb7abad29a8ad5fcfb))
+
+
+### Bug Fixes
+
+* allow brackets in link setters ([#398](https://github.com/textadventures/squiffy/issues/398)) ([e1a0084](https://github.com/textadventures/squiffy/commit/e1a00846344769e56093402bf98ea3740df381c0))
+* desktop app icon frame, About window, beta banner and folder wording ([#393](https://github.com/textadventures/squiffy/issues/393)) ([647f5e6](https://github.com/textadventures/squiffy/commit/647f5e60c7b7b4471731b2f931f91e83a5813615))
+* use numbers stored as text in {{inc}}, {{dec}}, [@inc](https://github.com/inc), [@dec](https://github.com/dec) and += ([#394](https://github.com/textadventures/squiffy/issues/394)) ([8298276](https://github.com/textadventures/squiffy/commit/829827603e9408b79fb52b096ccb07baf99932d8))
+
 ## [7.0.0-beta.3](https://github.com/textadventures/squiffy/compare/v7.0.0-beta.2...v7.0.0-beta.3) (2026-11-17)
 
 
