@@ -1,6 +1,6 @@
 // Whether the browser lets the editor use the origin-private file system (OPFS), where drafts
-// are kept (project.svelte.ts). Firefox's strict privacy settings, private windows and privacy
-// add-ons (e.g. Ghostery) can block it: navigator.storage.getDirectory() then throws (often a
+// are kept (project.svelte.ts). Strict privacy settings (e.g. Firefox blocking all cookies),
+// private windows and privacy add-ons can block it: navigator.storage.getDirectory() then throws (often a
 // SecurityError), or navigator.storage isn't there at all. Checked once at startup, so the home
 // page can say so plainly instead of every draft action failing with the browser's own message.
 

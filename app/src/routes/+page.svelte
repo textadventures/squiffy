@@ -132,7 +132,7 @@
                 <h2 id="storage-heading" class="font-semibold">This browser is blocking the storage the editor needs</h2>
                 <p>
                     The editor keeps stories in your browser's storage, and the browser won't let it.
-                    A privacy add-on (such as Ghostery), a strict privacy setting, or a private window can cause this.
+                    A privacy add-on, a strict privacy setting (such as blocking all cookies), or a private window can cause this.
                     Try allowing this site in the add-on or settings and reloading, or use another browser.
                 </p>
                 {#if canOpenFolders}
