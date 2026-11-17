@@ -24,6 +24,11 @@
         },
         {
           "type": "json",
+          "path": "codemirror-lang/package.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
           "path": "runtime/package.json",
           "jsonpath": "$.version"
         },
@@ -110,12 +115,12 @@
         {
           "type": "json",
           "path": "package-lock.json",
-          "jsonpath": "$.packages[compiler,project-fs,runtime,packager,cli,app,site,types,vite-plugin,examples/vite-app].version"
+          "jsonpath": "$.packages[compiler,codemirror-lang,project-fs,runtime,packager,cli,app,site,types,vite-plugin,examples/vite-app].version"
         },
         {
           "type": "json",
           "path": "package-lock.json",
-          "jsonpath": "$.packages[compiler,project-fs,runtime,packager,cli,app,site,types,vite-plugin,examples/vite-app][dependencies,devDependencies][?(@property.startsWith('squiffy-') || @property.startsWith('@textadventures/squiffy-') || @property == '@textadventures/vite-plugin-squiffy' || @property == '@textadventures/project-fs')]"
+          "jsonpath": "$.packages[compiler,codemirror-lang,project-fs,runtime,packager,cli,app,site,types,vite-plugin,examples/vite-app][dependencies,devDependencies][?(@property.startsWith('squiffy-') || @property.startsWith('@textadventures/squiffy-') || @property == '@textadventures/vite-plugin-squiffy' || @property == '@textadventures/project-fs')]"
         }
       ]
     }

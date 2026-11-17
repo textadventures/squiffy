@@ -5,6 +5,7 @@
   "type": "module",
   "workspaces": [
     "compiler",
+    "codemirror-lang",
     "project-fs",
     "app",
     "cli",
