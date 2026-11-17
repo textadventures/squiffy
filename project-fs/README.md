@@ -66,6 +66,7 @@ const opened = await electronOpener(window.projectFs).openFile({ filters });
 This part is security-sensitive:
 
 - **The renderer never sends an absolute path.** A root is approved only by a native dialog in the main process, or by `approveRoot()`, which the main process calls itself for paths it trusts (a recent list it keeps, a command-line argument). The renderer gets back an opaque random `rootId`.
+- **`rootPath(sender, rootId)`** gives the main process the real path of a root that window holds, for its own bookkeeping (the desktop app's recent folders). A root id from the renderer can be trusted that way, where a path from it can't.
 - **Root ids are scoped per window.** An id from one window gets `UNKNOWN_ROOT` in another, and a window's ids are dropped when it closes or calls `release()`.
 - **Every argument is untrusted.** Types are checked, and paths go through `parsePath()` in the main process, independently of the renderer's own checks.
 - **Symlinks can't lead outside.** Before every fs call, the deepest existing part of the target path is resolved with `realpath()` and must be inside the root's realpath. A dangling symlink is refused, since writing through it would create its target wherever that is. Symlinked directories aren't followed at all, and symlinked files are only visible when they point inside the root.

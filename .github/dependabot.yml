@@ -29,6 +29,30 @@ updates:
     commit-message:
       prefix: "chore"
 
+  # The desktop app (desktop/) isn't an npm workspace, so it has its own lockfile
+  - package-ecosystem: "npm"
+    directory: "/desktop"
+    schedule:
+      interval: "weekly"
+    groups:
+      desktop:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+      desktop-major:
+        patterns:
+          - "*"
+        update-types:
+          - "major"
+    ignore:
+      - dependency-name: "@textadventures/project-fs"
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+    commit-message:
+      prefix: "chore"
+
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:

@@ -74,6 +74,21 @@
         },
         {
           "type": "json",
+          "path": "desktop/package.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "desktop/package-lock.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "desktop/package-lock.json",
+          "jsonpath": "$.packages[?(@property == '' || @property == '../project-fs')].version"
+        },
+        {
+          "type": "json",
           "path": "compiler/package.json",
           "jsonpath": "$[dependencies,devDependencies][?(@property.startsWith('squiffy-') || @property.startsWith('@textadventures/squiffy-'))]"
         },

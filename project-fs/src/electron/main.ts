@@ -44,12 +44,19 @@ export interface ProjectFsMain {
      * whose path it resolved). Never call this with a path the renderer sent.
      */
     approveRoot(sender: SenderLike, absPath: string): Promise<RootInfo>;
+    /**
+     * The real absolute path of a root this window holds, or null if the id isn't one of its
+     * roots. For the main process's own bookkeeping, such as a recent-projects list: a root id
+     * from the renderer can be trusted this way, where a path from it can't.
+     */
+    rootPath(sender: SenderLike, rootId: unknown): string | null;
     /** Removes every handler and stops every watcher. */
     dispose(): void;
 }
 
 interface Root {
     fs: NodeFileSystem;
+    path: string;
     sender: SenderLike;
     unwatch?: () => void;
 }
@@ -76,7 +83,7 @@ export function registerProjectFsHandlers(options: ProjectFsMainOptions): Projec
         const real = await fsp.realpath(absPath);
         if (!(await fsp.stat(real)).isDirectory()) throw new ProjectFsError("NOT_A_DIRECTORY", `Not a folder: ${absPath}`);
         const rootId = randomUUID();
-        roots.set(rootId, { fs: new NodeFileSystem(real), sender });
+        roots.set(rootId, { fs: new NodeFileSystem(real), path: real, sender });
         if (!trackedSenders.has(sender.id) && sender.once) {
             trackedSenders.add(sender.id);
             sender.once("destroyed", () => {
@@ -193,6 +200,10 @@ export function registerProjectFsHandlers(options: ProjectFsMainOptions): Projec
 
     return {
         approveRoot: approve,
+        rootPath(sender, rootId) {
+            const root = typeof rootId === "string" ? roots.get(rootId) : undefined;
+            return root && root.sender.id === sender.id ? root.path : null;
+        },
         dispose() {
             for (const c of channels) ipcMain.removeHandler(c);
             for (const id of [...roots.keys()]) drop(id);

@@ -19,6 +19,9 @@ jobs:
         with:
           node-version: 24
           cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            desktop/package-lock.json
 
       - name: Fetch full history and tags
         run: |
@@ -30,6 +33,17 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      # The desktop app isn't one of the npm workspaces, so the editor's builds don't install
+      # Electron. Its binary isn't needed to type-check and bundle it.
+      - name: Build desktop app
+        working-directory: desktop
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+        run: |
+          npm ci
+          npm run check
+          npm run build
 
       - name: Lint
         run: npm run lint

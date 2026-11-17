@@ -34,6 +34,9 @@ cd app && npm run dev
 
 # Run the site locally
 cd site && npm run dev
+
+# Run the desktop app (not a workspace: npm install in desktop/ first)
+cd desktop && npm start
 ```
 
 ## Testing
@@ -143,6 +146,7 @@ CLI options:
 - **cli**: Node.js CLI wrapper around packager, includes file I/O and dev server
 - **app**: Private workspace (`@textadventures/squiffy-app`) with the editor at app.squiffystory.com (#278): SvelteKit + Skeleton on Quest Viva's app shell, CodeMirror 6, the language service in a Web Worker, the sandboxed preview from `squiffy-runtime/preview-host`, and `@textadventures/project-fs` for files. A PWA, with offline support. It replaced the 6.x editor (`editor/`, Vite + Bootstrap + Ace) in 7.0. See `app/README.md`.
 - **codemirror-lang**: Private workspace (`@textadventures/squiffy-codemirror`) with the CodeMirror 6 highlighting mode for `.squiffy` files, shared by the editor and the docs site's editable samples (`site/src/components/Sample.astro`). Each colours it with its own `HighlightStyle`. The docs' static code blocks use the TextMate grammar in `compiler/syntaxes/` instead, so a highlighting change may need making in both.
+- **desktop**: The Electron desktop app (#276), `squiffy-desktop`: the editor from `app/` served from an `app://` scheme, with project-fs's Electron bridge for folders on disk, recent folders kept by the main process, and a native menu. Not one of the npm workspaces (so the root install doesn't download Electron): it has its own lockfile and depends on `file:../project-fs`. See `desktop/README.md`.
 - **site**: Marketing/documentation site at squiffystory.com, with a beta channel at beta.squiffystory.com (Astro + Starlight; see "Docs site" above)
 - **project-fs**: Private workspace (`@textadventures/project-fs`) with the editor's file system layer: list/read/write/delete over a rooted project tree, with in-memory, File System Access, OPFS, Node and Electron adapters and a shared conformance suite. No Squiffy imports, so it can become a standalone package later (#215). See `project-fs/README.md`.
 - **graph-map**: Private workspace (`@textadventures/graph-map`) with the editor's story map component (#380): a Svelte map of a directed graph with a live force-directed layout (Barnes–Hut repulsion, springs, rows by rank), pan, zoom, drag-to-link and keyboard access. No Squiffy imports, like `project-fs`, so Quest Viva can use it too. The TypeScript core builds to `dist/`; `GraphMap.svelte` is shipped as source. See `graph-map/README.md`.
