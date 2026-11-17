@@ -68,6 +68,8 @@ The macOS build is signed with a Developer ID and notarized when these repo secr
 | `APPLE_API_KEY_P8` | An App Store Connect API key, base64 |
 | `APPLE_API_KEY_ID`, `APPLE_API_ISSUER` | Its key ID and issuer ID |
 
-## Still to do (#276)
+### Updates and downloads
 
-- Telling the author when there's a new version, and a downloads page on the docs site.
+The app doesn't update itself. When a new version is out, the editor says so, with a link to the release (`app/src/lib/desktop-updates.svelte.ts`, shown by `UpdateBanner.svelte`). It checks GitHub's releases when it starts and once a day: Squiffy for stable releases, and Squiffy Beta for prereleases as well. A release only counts once it has an installer for that platform. "Not now" skips that version.
+
+The docs site's [desktop app page](https://squiffystory.com/desktop-app/) (`site/src/content/docs/desktop-app.mdx`, `site/src/components/DownloadButton.astro`) offers the latest release's installers, with the visitor's own system first. On beta.squiffystory.com it offers the newest prerelease, Squiffy Beta.

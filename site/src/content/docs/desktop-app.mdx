@@ -1,0 +1,30 @@
+---
+title: The desktop app
+description: Download Squiffy for Mac, Windows or Linux
+sidebar:
+    order: 2.5
+---
+
+import DownloadButton from "@components/DownloadButton.astro";
+
+Squiffy is also a desktop app, for Mac, Windows and Linux. It's the same editor as at [app.squiffystory.com](https://app.squiffystory.com/), with the same features, as an app of its own that keeps your stories in folders on your computer.
+
+<DownloadButton />
+
+The Mac app is for Macs with Apple silicon (M1 and later). On Linux, the `.deb` package adds Squiffy to your list of apps. The AppImage runs from wherever you save it.
+
+The Windows installer isn't signed, so Windows may warn you about it the first time. Choose **More info**, then **Run anyway**.
+
+## How it differs from the web editor
+
+- **New story** asks for a folder, and puts a story file and a `squiffy.json` project file in it.
+- **Open folder** opens a story's folder, and **Open file** opens the folder of a `.squiffy` file. **Open file** can also open a project `.zip`, from **Download project** in the web editor, and asks for a folder to unpack it into. That's how to move a draft from the web editor to the desktop app.
+- There are no drafts. Everything is saved to the files themselves, a moment after you stop typing.
+- The folders you've opened are listed under **Recent folders** on the home page and in **File > Open Recent**, and open without asking for permission again.
+- Double-click a `.squiffy` file to open it in Squiffy.
+
+When a new version of Squiffy is out, the app tells you, with a link to download it.
+
+## Squiffy Beta
+
+Betas of the next version are a separate app, Squiffy Beta, which you can install beside Squiffy. It keeps its own list of recent folders and settings. Download it from the [releases on GitHub](https://github.com/textadventures/squiffy/releases): it's the newest one marked "Pre-release".

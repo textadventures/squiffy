@@ -11,6 +11,7 @@
     } from "#lib/project.svelte.js";
     import { openInEditor } from "#lib/desktop-shell.js";
     import { desktopApi } from "#lib/desktop.js";
+    import { DOCS_URL } from "#lib/links.js";
     import type { StoredProject } from "@textadventures/project-fs";
     import { clearLegacyAutoSave, getLegacyAutoSave, type LegacyAutoSave } from "#lib/legacy.js";
     import { confirmDialog } from "#lib/confirm.js";
@@ -188,6 +189,12 @@
             </button>
             <input bind:this={fileInput} type="file" accept=".squiffy,.zip" class="hidden" onchange={handleFileChosen} />
         </div>
+        {#if !isDesktop}
+            <p class="text-xs text-surface-600-400">
+                Squiffy is also a <a class="anchor" href="{DOCS_URL}/desktop-app/" target="_blank" rel="noopener noreferrer">desktop app</a>
+                for Mac, Windows and Linux, which keeps stories in folders on your computer.
+            </p>
+        {/if}
         {#if !canOpenFolders}
             <p class="text-xs text-surface-600-400">
                 This browser can't edit files where they are, so stories are kept in the browser. Use File, Download project

@@ -9,6 +9,7 @@ import {
     type PickedFolder,
 } from "./project.svelte.js";
 import { settings } from "./settings.svelte.js";
+import { watchForDesktopUpdates } from "./desktop-updates.svelte.js";
 import { showToast } from "./toast.js";
 
 let busy = false;
@@ -70,6 +71,7 @@ export function initDesktopShell(): () => void {
         desktop.onBeforeClose(async () => {
             await project.current?.save();
         }),
+        watchForDesktopUpdates(),
     ];
     return () => stops.forEach(stop => stop());
 }
