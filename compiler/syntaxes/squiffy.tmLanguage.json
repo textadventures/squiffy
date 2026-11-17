@@ -377,7 +377,7 @@
         },
         {
           "name": "meta.link.section.squiffy",
-          "match": "(\\[\\[)([^\\]]*?)(\\]\\])(\\()(.*?)(\\))",
+          "match": "(\\[\\[)([^\\]]*?)(\\]\\])(\\()((?:[^()]|\\((?:[^()]|\\((?:[^()]|\\([^()]*\\))*\\))*\\))*?)(\\))",
           "captures": {
             "1": {
               "name": "punctuation.definition.link.begin.squiffy"
@@ -461,7 +461,7 @@
         },
         {
           "name": "meta.link.passage.squiffy",
-          "match": "(\\[)([^\\]]*?)(\\])(\\()(.*?)(\\))",
+          "match": "(\\[)([^\\]]*?)(\\])(\\()((?:[^()]|\\((?:[^()]|\\((?:[^()]|\\([^()]*\\))*\\))*\\))*?)(\\))",
           "captures": {
             "1": {
               "name": "punctuation.definition.link.begin.squiffy"

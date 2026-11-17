@@ -278,6 +278,28 @@ Shop.`;
     expect(await result.getJs()).toContain("story.expressions = true;");
 });
 
+test("With expressions, link setters can have brackets in them", async () => {
+    const script = `[[start]]:
+[[Buy]](shop, gold *= (price - 1)) and [haggle](deal, x = ((a + 1) * 2)) (or not)
+
+[deal]:
+Done.
+
+[[shop]]:
+Shop.`;
+    const result = await compile({ scriptBaseFilename: "test.squiffy", script, expressions: true });
+    assertSuccess(result);
+    const text = result.output.story.sections.start.text;
+    expect(text).toContain('{{section "shop" text="Buy" set=" gold *= (price - 1)"}}');
+    expect(text).toContain('{{passage "deal" text="haggle" set=" x = ((a + 1) * 2)"}} (or not)');
+});
+
+test("Without expressions, a link's target still ends at the first \")\", as in Squiffy 6", async () => {
+    const result = await compile({ scriptBaseFilename: "test.squiffy", script: "[[start]]:\n[[Buy]](shop, a = (b)) x\n\n[[shop]]:\nS" });
+    assertSuccess(result);
+    expect(result.output.story.sections.start.text).toContain('{{section "shop" text="Buy" set=" a = (b"}}) x');
+});
+
 test("A story without expressions isn't flagged (#373)", async () => {
     const result = await compile({ scriptBaseFilename: "test.squiffy", script: "[[start]]:\nHello." });
 

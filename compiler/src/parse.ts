@@ -254,8 +254,10 @@ function findLinks(node: SectionNode | PassageNode, lines: string[]) {
     const toRange = (start: number, end: number): Range => ({ start: toPosition(start), end: toPosition(end) });
 
     // Which section comes next isn't known until the story is analysed, but all that matters
-    // here is that there is one, so that [[text>]] is treated as a link.
-    const result = transformText(textNodes.map(n => n.text).join("\n"), () => "");
+    // here is that there is one, so that [[text>]] is treated as a link. Link
+    // targets can have brackets in them, as in a story with a squiffy.json, whether or not this
+    // one has one: the two only differ when a target has a "(" in it.
+    const result = transformText(textNodes.map(n => n.text).join("\n"), () => "", true);
 
     node.links = result.links.map((link): LinkNode => ({
         type: "link",
