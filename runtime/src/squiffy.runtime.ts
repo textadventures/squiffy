@@ -21,6 +21,8 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     let currentPassageElement: HTMLElement | null;
     let currentBlockOutputElement: HTMLElement | null;
     let scrollPosition = 0;
+    // Set when the screen is cleared, so the next scroll goes up to the top of the new screen (#54)
+    let scrollToTop = false;
     const emitter = new Emitter<SquiffyEventMap>();
     const transitions: (() => Promise<void>)[] = [];
     let runningTransitions = false;
@@ -461,6 +463,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
 
         const clearStackItem = document.createElement("div");
         clearStack.appendChild(clearStackItem);
+        scrollToTop = true;
 
         // Move everything in the outputElement (except the clearStack itself) into the new clearStackItem
         for (const child of [...outputElement.children]) {
@@ -527,6 +530,21 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         scrollToEnd: () => {
             if (settings.scroll === "none") {
                 // do nothing
+            }
+            else if (scrollToTop) {
+                // The screen was cleared, so the new text starts at the top of the output, which may be
+                // above where the reader has scrolled to.
+                scrollToTop = false;
+                if (settings.scroll === "element") {
+                    currentSectionElement.scrollIntoView({ block: "start", inline: "nearest", behavior: "smooth" });
+                }
+                else {
+                    const currentScrollTop = Math.max(document.body.scrollTop, document.documentElement.scrollTop);
+                    const outputTop = outputElement.getBoundingClientRect().top + currentScrollTop;
+                    if (outputTop < currentScrollTop) {
+                        window.scrollTo({ top: outputTop, behavior: "smooth" });
+                    }
+                }
             }
             else if (settings.scroll === "element") {
                 outputElement.lastElementChild?.scrollIntoView({ block: "end", inline: "nearest", behavior: "smooth" });
