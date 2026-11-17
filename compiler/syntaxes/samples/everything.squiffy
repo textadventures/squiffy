@@ -11,9 +11,11 @@
 
 [[intro]]:
 @set score = 10
-@set name = Bob
+@set name = "Bob"
 @set greeting := Hello, {{name}}!
-@set best = @score
+@set best = score
+@set total = score + coins * 2
+@set rich = total > 100 and not visited
 @set coins *= 2
 @set has_key
 @set not visited
@@ -29,7 +31,7 @@ You wake up. This is **bold**, *italic* and `code`. <span class="note" title="{{
     Indented text after the first line of text isn't JavaScript.
 
 Go to the [[kitchen]], [[look around]](garden), or [[carry on>]].
-Try [the door](door, tried=1), [the window], or [[next]](>, score+=1).
+Try [the door](door, tried=1, msg = "Hi, there"), [the window], or [[next]](>, score+=1).
 Read [the manual](https://example.com/manual). ![A cat](cat.png)
 
 {{score}} points, {{get "player name"}} and {{{raw_html}}}.

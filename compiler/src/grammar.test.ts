@@ -90,6 +90,33 @@ describe("TextMate grammar", () => {
         expect(scopeOf(code, 0, "name")).toContain("variable.parameter.attribute.handlebars.squiffy");
     });
 
+    test("setter values are expressions, as in {{#if}}, in a story with a squiffy.json (#373)", () => {
+        const attribute = "variable.parameter.attribute";
+        expect(scopeOf("@set weapon = \"sword\"", 0, "sword")).toContain("string.quoted.double.handlebars.squiffy");
+        expect(scopeOf("@set best = score", 0, "score")).toContain(attribute);
+        expect(scopeOf("@set gold = gold + price * 2", 0, "+")).toContain("keyword.operator.arithmetic.handlebars.squiffy");
+        expect(scopeOf("@set gold = gold + price * 2", 0, "price")).toContain(attribute);
+        expect(scopeOf("@set gold = gold + price * 2", 0, "2")).toContain("constant.numeric.handlebars.squiffy");
+        expect(scopeOf("@set rich = gold > 100", 0, ">")).toContain("keyword.operator.comparison.handlebars.squiffy");
+        expect(scopeOf("@set lost = not has_key", 0, "not")).toContain("keyword.operator.logical.handlebars.squiffy");
+        expect(scopeOf("@set seen_it = (seen \"intro\")", 0, "seen")).toContain("support.function.helper.handlebars.squiffy");
+        expect(scopeOf("@set gold -= price", 0, "price")).toContain(attribute);
+        expect(scopeOf("@set gold = 10", 0, "10")).toContain("constant.numeric.squiffy");
+        expect(scopeOf("@set flag = true", 0, "true")).toContain("constant.language.boolean.squiffy");
+    });
+
+    test("setter values without a squiffy.json: text and @attribute", () => {
+        expect(scopeOf("@set greeting = Hello there", 0, "Hello there")).toContain("string.unquoted.squiffy");
+        expect(scopeOf("@set best = @score", 0, "@score")).toContain("variable.parameter.attribute.squiffy");
+    });
+
+    test("commas inside quotes don't separate link setters", () => {
+        const code = "[[Buy]](shop, msg = \"Hi, there\", gold -= price)";
+        expect(scopeOf(code, 0, "Hi, there")).toContain("string.quoted.double.handlebars.squiffy");
+        expect(scopeOf(code, 0, "-=")).toContain("keyword.operator.assignment.squiffy");
+        expect(scopeOf(code, 0, "price")).toContain("variable.parameter.attribute");
+    });
+
     test("handlebars", () => {
         expect(scopeOf("{{score}}", 0, "score")).toContain("variable.parameter.attribute.handlebars.squiffy");
         expect(scopeOf("{{get \"score\"}}", 0, "get")).toContain("support.function.helper.handlebars.squiffy");
