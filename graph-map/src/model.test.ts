@@ -121,10 +121,74 @@ describe("stability", () => {
             model.drag("left", { x: -400, y: 300 });
             model.step(1000, 1);
         }
-        expect(model.endDrag("left")).toEqual({ x: -400, y: 300 });
+        expect(model.endDrag().get("left")).toEqual({ x: -400, y: 300 });
         expect(model.position("l1")!.x).toBeLessThan(l1.x - 20);
         settle(model);
         expect(model.position("left")).toMatchObject({ x: -400, y: 300 });
+    });
+
+    test("dragging moves only what's linked to the dragged node, and the rest stays put", () => {
+        const model = new MapModel(layout());
+        model.update(story);
+        settle(model);
+        const before = positions(model);
+        model.startDrag("left");
+        for (let i = 0; i < 60; i++) {
+            model.drag("left", { x: -500, y: 120 });
+            model.step(1000, 1);
+        }
+        model.endDrag();
+        settle(model);
+        const after = positions(model);
+        // Not linked to left: held still, rather than spreading into the space it left
+        for (const id of ["right", "r1", "r2"]) expect(after[id]).toEqual(before[id]);
+        // Linked to it: followed it
+        expect(after.l1[0]).toBeLessThan(before.l1[0] - 20);
+        // Once settled, the neighbours stay where they got to, the next time anything moves
+        const l1 = after.l1;
+        model.startDrag("r2");
+        model.drag("r2", { x: 600, y: 300 });
+        model.endDrag();
+        settle(model);
+        expect(positions(model).l1).toEqual(l1);
+    });
+
+    test("a node linked to others doesn't follow a dragged one, but one linked only to it does", () => {
+        const model = new MapModel(layout());
+        // hub is linked from both left and right; leaf only from left
+        const graph = { nodes: [...story.nodes, node("hub", 3), node("leaf", 2)], edges: [...story.edges, edge("left", "hub"), edge("right", "hub"), edge("left", "leaf")] };
+        model.update(graph);
+        settle(model);
+        const before = positions(model);
+        model.startDrag("left");
+        for (let i = 0; i < 60; i++) {
+            model.drag("left", { x: -600, y: 120 });
+            model.step(1000, 1);
+        }
+        model.endDrag();
+        settle(model);
+        const after = positions(model);
+        expect(after.hub).toEqual(before.hub);
+        expect(after.start).toEqual(before.start);
+        expect(after.leaf[0]).toBeLessThan(before.leaf[0] - 50);
+    });
+
+    test("several nodes dragged together keep their places relative to each other, and are all pinned", () => {
+        const model = new MapModel(layout());
+        model.update(story);
+        settle(model);
+        const before = positions(model);
+        model.startDrag(["left", "right"]);
+        model.drag("left", { x: model.position("left")!.x + 100, y: model.position("left")!.y + 50 });
+        const dropped = model.endDrag();
+        expect([...dropped.keys()].sort()).toEqual(["left", "right"]);
+        settle(model);
+        const after = positions(model);
+        for (const id of ["left", "right"]) {
+            expect(after[id][0] - before[id][0]).toBeCloseTo(100, -1);
+            expect(after[id][1] - before[id][1]).toBeCloseTo(50, -1);
+            expect(model.isPinned(id)).toBe(true);
+        }
     });
 
     test("a renamed node keeps its place", () => {
@@ -145,7 +209,7 @@ describe("stability", () => {
         const original = positions(model);
         model.startDrag("left");
         model.drag("left", { x: -400, y: 300 });
-        model.endDrag("left");
+        model.endDrag();
         settle(model);
         model.relayout(new Map());
         settle(model);

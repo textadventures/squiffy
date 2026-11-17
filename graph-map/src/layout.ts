@@ -13,6 +13,9 @@ export interface Layout<N extends MapNode = MapNode, E extends MapEdge = MapEdge
     place(graph: MapGraph<N, E>, known: ReadonlyMap<string, Point>): Map<string, Point>;
     // The forces that act on the nodes. Rebuilt whenever the graph changes.
     forces(graph: MapGraph<N, E>, nodes: ReadonlyMap<string, SimNode>): Force[];
+    // Nodes that go wherever another goes, by the id of the one they follow, such as satellites
+    // under their parent: when that one moves, so do they
+    attached?(graph: MapGraph<N, E>): Map<string, string[]>;
 }
 
 export interface LayeredLayoutOptions<N extends MapNode, E extends MapEdge> {
@@ -222,6 +225,10 @@ export function layeredLayout<N extends MapNode, E extends MapEdge>(options: Lay
                 }
                 return widest;
             }
+        },
+
+        attached(graph) {
+            return new Map([...arrange(graph).satellitesOf].map(([id, satellites]) => [id, satellites.map(s => s.id)]));
         },
 
         forces(graph, nodes) {

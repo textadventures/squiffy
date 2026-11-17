@@ -982,7 +982,7 @@
                     width={isNarrow.current || mapMaximized ? undefined : mapWidth}
                     ongoto={(node, focus) => { const location = node.graphNode?.location; if (location) goFromMap(location, focus); }}
                     ongotoedge={(edge: StoryMapEdge) => goFromMap(edge.edges[0].location, false)}
-                    onmove={(node, at) => savePositions(withPosition(mapPositions, node, at))}
+                    onmove={moves => savePositions(moves.reduce((positions, { node, at }) => withPosition(positions, node, at), mapPositions ?? { sections: {}, passages: {} }))}
                     onlink={linkFromMap}
                     oncreate={(at, near) => void createSectionFromMap(at, near)}
                     onrename={node => void renameFromMap(node)}

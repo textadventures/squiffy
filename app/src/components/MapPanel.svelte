@@ -52,7 +52,8 @@
         // Go to a node (or a broken link) in the editor, taking the focus or not
         ongoto: (node: StoryMapNode, focus: boolean) => void;
         ongotoedge: (edge: StoryMapEdge) => void;
-        onmove: (node: GraphNode, at: Point) => void;
+        // Sections and passages were dropped somewhere (several, if they were dragged together)
+        onmove: (moves: { node: GraphNode; at: Point }[]) => void;
         // Add a link from one node to another, or to a new section
         onlink: (from: GraphNode, to: GraphNode | null, at: Point) => void;
         oncreate: (at: Point, near: GraphNode | undefined) => void;
@@ -179,7 +180,7 @@
         if (await onrelayout()) map?.relayout(new Map());
     }
 
-    const instructions = "Arrow keys move between sections and passages. Enter goes to one in the editor, and F2 renames it. Plus and minus zoom, and 0 fits the whole story in view. Drag the background to pan, a box to move it, or the dot under the selected box to add a link.";
+    const instructions = "Arrow keys move between sections and passages. Enter goes to one in the editor, and F2 renames it. Plus and minus zoom, and 0 fits the whole story in view. Drag the background to pan, a box to move it, or the dot under the selected box to add a link. Shift and drag the background to select several boxes, or Shift and click one, then drag one of them to move them all.";
 </script>
 
 <section
@@ -218,7 +219,7 @@
             <span class="key-badge key-ending">■</span><span>An ending (@end)</span>
             <span class="key-badge key-dead-end">!</span><span>A dead end: no way out, and not an ending</span>
             <span class="key-badge key-unreachable"></span><span>Can't be reached from the start</span>
-            <span></span><span class="text-surface-600-400 pt-1">Drag the dot under the selected box to another to add a link, or to empty space for a new section. Double-click empty space to add a section.</span>
+            <span></span><span class="text-surface-600-400 pt-1">Drag the dot under the selected box to another to add a link, or to empty space for a new section. Double-click empty space to add a section. Shift+drag empty space, or Shift+click, to select several boxes and move them together.</span>
         </div>
     {/if}
     <div class="relative flex-1 min-h-0">
@@ -241,7 +242,7 @@
                 {canConnect}
                 onactivate={handleActivate}
                 onedgeactivate={ongotoedge}
-                onmove={(n, at) => { if (n.graphNode) onmove(n.graphNode, at); }}
+                onmove={moves => onmove(moves.flatMap(({ node, at }) => node.graphNode ? [{ node: node.graphNode, at }] : []))}
                 onconnect={(from, to, at) => { if (from.graphNode) onlink(from.graphNode, to?.graphNode ?? null, at); }}
                 oncreate={at => oncreate(at, selectedNode?.graphNode)}
                 onrename={n => { if (n.graphNode && !n.graphNode.detail) onrename(n.graphNode); }}

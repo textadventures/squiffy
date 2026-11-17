@@ -21,8 +21,8 @@
         // A node was clicked ("click"), or double-clicked or Enter pressed on it ("open")
         onactivate?: (node: N, how: "click" | "open") => void;
         onedgeactivate?: (edge: E) => void;
-        // A node was dropped somewhere, and is now pinned there
-        onmove?: (node: N, at: Point) => void;
+        // Nodes were dropped somewhere (one, or several dragged together), and are now pinned there
+        onmove?: (moves: { node: N; at: Point }[]) => void;
         // A link was dragged from one node to another, or to empty space (`to` is null)
         onconnect?: (from: N, to: N | null, at: Point) => void;
         // The background was double-clicked
@@ -43,7 +43,8 @@
 <script lang="ts" generics="N extends MapNode, E extends MapEdge">
     // A map of a directed graph, drawn as SVG: boxes and arrows, with pan and zoom (drag the
     // background, scroll, pinch, or Ctrl/Cmd+scroll to zoom), dragging nodes (which pins them where
-    // they're dropped), drag-to-link from a node's handle, and keyboard access (arrow keys move
+    // they're dropped), selecting several with Shift+drag (a lasso) or Shift+click to drag them
+    // together, drag-to-link from a node's handle, and keyboard access (arrow keys move
     // between nodes, Enter activates one). The layout is live: see MapModel. Knows nothing about
     // what the graph is of: the host gives it nodes and edges, styles them through their classes,
     // and can draw nodes its own way with the `node` snippet.
@@ -288,7 +289,12 @@
 
     // ---- Pointer ----
 
+    // Nodes selected together, with Shift+drag on the background (a lasso) or Shift+click, to move
+    // them at once. The single `selected` node is separate: the one the host shows details of.
+    let group = $state.raw<ReadonlySet<string>>(new Set());
+
     type Gesture =
+        | { kind: "lasso"; start: Point; at: Point; base: ReadonlySet<string> }
         | { kind: "pan"; start: Point; from: Transform; moved: boolean }
         | { kind: "pinch"; distance: number; from: Transform; centre: Point }
         | { kind: "node"; id: string; start: Point; offset: Point; dragging: boolean }
@@ -329,6 +335,11 @@
             gesture = { kind: "node", id, start: p, offset: { x: at.x - m.x, y: at.y - m.y }, dragging: false };
             return;
         }
+        if (e.shiftKey) {
+            const m = toMap(transform, p);
+            gesture = { kind: "lasso", start: m, at: m, base: group };
+            return;
+        }
         gesture = { kind: "pan", start: p, from: transform, moved: false };
     }
 
@@ -358,12 +369,19 @@
                 g.dragging = true;
                 autoFit = false;
                 fast = false;
-                model.startDrag(g.id);
+                // Dragging one of a group moves the whole group; anything else drops the group
+                if (group.has(g.id) && group.size > 1) model.startDrag([...group]);
+                else {
+                    group = new Set();
+                    model.startDrag(g.id);
+                }
             }
             const m = toMap(transform, p);
             model.drag(g.id, { x: m.x + g.offset.x, y: m.y + g.offset.y });
             paint();
             wake();
+        } else if (g.kind == "lasso") {
+            gesture = { ...g, at: toMap(transform, p) };
         } else if (g.kind == "connect") {
             const m = toMap(transform, p);
             const over = nodeAt(m);
@@ -384,19 +402,32 @@
         }
         gesture = null;
         if (!g || e.type == "pointercancel") {
-            if (g?.kind == "node" && g.dragging) model.endDrag(g.id);
+            if (g?.kind == "node" && g.dragging) model.endDrag();
             return;
         }
         if (g.kind == "node") {
             const n = nodesById.get(g.id);
             if (g.dragging) {
-                const at = model.endDrag(g.id);
+                const dropped = model.endDrag();
                 wake();
-                if (n && at) onmove?.(n, at);
+                const moves = [...dropped].flatMap(([id, at]) => {
+                    const node = nodesById.get(id);
+                    return node ? [{ node, at }] : [];
+                });
+                if (moves.length) onmove?.(moves);
+            } else if (n && e.shiftKey) {
+                // Shift+click adds a node to the group, or takes it out
+                const next = new Set(group.size ? group : selected ? [selected] : []);
+                if (next.has(n.id)) next.delete(n.id);
+                else next.add(n.id);
+                setGroup(next);
             } else if (n) {
+                group = new Set();
                 select(n.id, false);
                 onactivate?.(n, "click");
             }
+        } else if (g.kind == "lasso") {
+            setGroup(new Set([...g.base, ...lassoed(g)]));
         } else if (g.kind == "connect") {
             const from = nodesById.get(g.from);
             const to = g.target ? nodesById.get(g.target) ?? null : null;
@@ -406,8 +437,36 @@
             const edgeEl = (e.target as Element).closest("[data-edge]");
             const edge = edgeEl && graph.edges.find(x => x.id == edgeEl.getAttribute("data-edge"));
             if (edge) onedgeactivate?.(edge);
-            else selected = null;
+            else {
+                selected = null;
+                group = new Set();
+            }
         }
+    }
+
+    // The nodes a lasso touches
+    function lassoed(g: { start: Point; at: Point }): string[] {
+        const x0 = Math.min(g.start.x, g.at.x), x1 = Math.max(g.start.x, g.at.x);
+        const y0 = Math.min(g.start.y, g.at.y), y1 = Math.max(g.start.y, g.at.y);
+        return graph.nodes.filter(n => {
+            const p = model.position(n.id);
+            return p && !n.decoration
+                && p.x + n.width / 2 >= x0 && p.x - n.width / 2 <= x1
+                && p.y + n.height / 2 >= y0 && p.y - n.height / 2 <= y1;
+        }).map(n => n.id);
+    }
+
+    // A group of one is just the selected node
+    function setGroup(next: Set<string>) {
+        if (next.size <= 1) {
+            group = new Set();
+            const [only] = next;
+            select(only ?? null);
+            return;
+        }
+        group = next;
+        selected = null;
+        announcement = `${next.size} selected. Drag one of them to move them all.`;
     }
 
     function handleDoubleClick(e: MouseEvent) {
@@ -475,9 +534,10 @@
             e.preventDefault();
             const n = nodesById.get(selected);
             if (n) onrename?.(n);
-        } else if (e.key == "Escape" && selected) {
+        } else if (e.key == "Escape" && (selected || group.size)) {
             e.preventDefault();
             selected = null;
+            group = new Set();
         } else if ((e.key == "+" || e.key == "=") && !e.ctrlKey && !e.metaKey) {
             e.preventDefault();
             zoomBy(1.25);
@@ -497,6 +557,7 @@
     }
 
     const instructionsId = `graph-map-${Math.random().toString(36).slice(2)}`;
+    const lassoIds = $derived(gesture?.kind == "lasso" ? new Set(lassoed(gesture)) : new Set<string>());
     const connectFrom = $derived(gesture?.kind == "connect" ? box(gesture.from) : undefined);
 </script>
 
@@ -507,7 +568,7 @@
     bind:clientWidth={width}
     bind:clientHeight={height}
     class="graph-map"
-    class:graph-map-connecting={gesture?.kind == "connect"}
+    class:graph-map-connecting={gesture?.kind == "connect" || gesture?.kind == "lasso"}
     class:graph-map-panning={gesture?.kind == "pan" && gesture.moved}
     role="application"
     aria-roledescription="map"
@@ -538,7 +599,7 @@
                     {@const state = { selected: n.id == selected, target: gesture?.kind == "connect" && gesture.target == n.id, dragging: gesture?.kind == "node" && gesture.dragging && gesture.id == n.id }}
                     <g
                         class="gm-node {n.class ?? ""}"
-                        class:gm-node-selected={state.selected}
+                        class:gm-node-selected={state.selected || group.has(n.id) || (gesture?.kind == "lasso" && lassoIds.has(n.id))}
                         class:gm-node-target={state.target}
                         class:gm-node-dragging={state.dragging}
                         data-node={n.id}
@@ -561,6 +622,15 @@
                     </g>
                 {/each}
             </g>
+            {#if gesture?.kind == "lasso"}
+                <rect
+                    class="gm-lasso"
+                    x={Math.min(gesture.start.x, gesture.at.x)}
+                    y={Math.min(gesture.start.y, gesture.at.y)}
+                    width={Math.abs(gesture.at.x - gesture.start.x)}
+                    height={Math.abs(gesture.at.y - gesture.start.y)}
+                />
+            {/if}
             {#if gesture?.kind == "connect" && connectFrom}
                 {@const to = gesture.target ? box(gesture.target) : undefined}
                 {@const shape = edgeShape(connectFrom, to ?? { ...gesture.at, width: 0, height: 0 }, 0, 3)}
@@ -671,6 +741,12 @@
     }
     .gm-connecting :global(.gm-edge-arrow) {
         fill: var(--gm-accent);
+    }
+    .gm-lasso {
+        fill: color-mix(in srgb, var(--gm-accent) 10%, transparent);
+        stroke: var(--gm-accent);
+        stroke-dasharray: 4 3;
+        vector-effect: non-scaling-stroke;
     }
     .gm-handle {
         cursor: crosshair;
