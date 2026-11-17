@@ -1,6 +1,6 @@
 {
   "name": "@textadventures/project-fs",
-  "version": "7.0.0-beta.3",
+  "version": "7.0.0-beta.4",
   "private": true,
   "description": "A file system layer over a rooted project tree, with in-memory, File System Access, OPFS, Node and Electron adapters",
   "license": "MIT",
