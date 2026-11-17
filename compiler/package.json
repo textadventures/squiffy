@@ -17,10 +17,10 @@
   "preferGlobal": true,
   "devDependencies": {
     "@types/node": "^26.6.6",
-    "glob": "^14.0.2",
-    "shiki": "^4.5.0",
+    "glob": "^14.0.6",
+    "shiki": "^4.6.0",
     "typescript": "^6.0.3",
-    "vitest": "^5.0.5"
+    "vitest": "^5.1.0"
   },
   "scripts": {
     "test": "vitest --run",
