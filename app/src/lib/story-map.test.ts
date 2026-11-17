@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { createLanguageService } from "squiffy-compiler/language-service";
-import { buildStoryMap, checkSectionName, findRenames, linkTo, nodeAtLine, pinnedPositions, renamePositions, withPosition } from "./story-map.js";
+import { buildStoryMap, checkSectionName, findRenames, linkTo, movedNodes, nodeAtLine, pinnedPositions, renamePositions, sectionKeys, withPosition } from "./story-map.js";
 
 async function graphOf(text: string) {
     const files: Record<string, string> = { "story.squiffy": text };
@@ -67,29 +67,80 @@ describe("story map", () => {
     });
 });
 
+describe("passages that run on their own", () => {
+    test("are tied to their section, as nothing links to them", async () => {
+        const map = buildStoryMap(await graphOf("[[a]]:\n[p]\n\n[p]:\nx\n\n[@last]:\n[[b]]\n\n[@1]:\nOne.\n\n[[b]]:\n@end"));
+        expect(map.edges.filter(e => e.kind == "auto").map(e => [e.from, e.to])).toEqual([
+            ["section:a", "passage:a/@last"],
+            ["section:a", "passage:a/@1"],
+        ]);
+        // Not counted as links in the descriptions
+        expect(map.nodes.find(n => n.id == "section:a")!.description).toBe("Section a. The story starts here. Links to p.");
+        expect(map.nodes.find(n => n.id == "passage:a/@last")!.description).toContain("Runs on its own");
+    });
+});
+
 describe("positions", () => {
     test("saved by name, and read back by node id", async () => {
         const graph = await graphOf(story);
+        const keys = sectionKeys(graph);
         const left = graph.nodes.find(n => n.id == "section:left")!;
         const look = graph.nodes.find(n => n.id == "passage:start/look")!;
-        let positions = withPosition(undefined, left, { x: 10.4, y: -20.6 });
-        positions = withPosition(positions, look, { x: 1, y: 2 });
+        let positions = withPosition(undefined, keys, left, { x: 10.4, y: -20.6 });
+        positions = withPosition(positions, keys, look, { x: 1, y: 2 });
         expect(positions).toEqual({ sections: { left: [10, -21] }, passages: { start: { look: [1, 2] } } });
-        expect([...pinnedPositions(positions)]).toEqual([["section:left", { x: 10, y: -21 }], ["passage:start/look", { x: 1, y: 2 }]]);
-        expect(withPosition(positions, look, undefined)).toEqual({ sections: { left: [10, -21] }, passages: {} });
+        expect([...pinnedPositions(positions, graph)]).toEqual([["section:left", { x: 10, y: -21 }], ["passage:start/look", { x: 1, y: 2 }]]);
+        expect(withPosition(positions, keys, look, undefined)).toEqual({ sections: { left: [10, -21] }, passages: {} });
+    });
+
+    const anonymous = "Hello.\n\n[[a]]:\n[p]\n\n[p]:\nx\n+++Day Two\n[Talk]\n\n[Talk]:\nHi.\n\n[@last]:\n[[b]]\n\n[[b]]:\n---\nOne.\n---\nTwo.\n\n[[c]]:\n---\nThree.\n";
+
+    test("a section without a name of its own is saved under what the map calls it", async () => {
+        const graph = await graphOf(anonymous);
+        expect(Object.fromEntries(sectionKeys(graph))).toEqual({
+            _default: "(Start)",
+            a: "a",
+            _continue1: "+++Day Two",
+            b: "b",
+            _continue2: "--- after b",
+            _continue3: "--- after b (2)",
+            c: "c",
+            _continue4: "--- after c",
+        });
+        const keys = sectionKeys(graph);
+        const talk = graph.nodes.find(n => n.id == "passage:_continue1/Talk")!;
+        expect(withPosition(undefined, keys, talk, { x: 1, y: 2 })).toEqual({ sections: {}, passages: { "+++Day Two": { Talk: [1, 2] } } });
+    });
+
+    test("adding a section above one without a name of its own leaves its position where it was", async () => {
+        const before = await graphOf(anonymous);
+        const positions = { sections: { "+++Day Two": [5, 6] as [number, number] }, passages: { "+++Day Two": { "@last": [7, 8] as [number, number] } } };
+        const after = await graphOf(anonymous.replace("[[a]]:", "+++Prologue\nOnce.\n\n[[a]]:"));
+        // Day Two is now _continue2, and keeps its position
+        expect([...pinnedPositions(positions, after)]).toEqual([["section:_continue2", { x: 5, y: 6 }], ["passage:_continue2/@last", { x: 7, y: 8 }]]);
+        expect(renamePositions(positions, before, after)).toBeUndefined();
+        // and the map moves its place to its new id
+        expect(movedNodes(before, after)).toContainEqual(["section:_continue1", "section:_continue2"]);
+        expect(movedNodes(before, after)).toContainEqual(["passage:_continue1/Talk", "passage:_continue2/Talk"]);
+    });
+
+    test("changing a +++ line's text keeps its position", async () => {
+        const before = await graphOf(anonymous);
+        const after = await graphOf(anonymous.replace("+++Day Two", "+++The next day"));
+        const positions = { sections: { "+++Day Two": [5, 6] as [number, number] }, passages: { "+++Day Two": { Talk: [7, 8] as [number, number] } } };
+        expect(renamePositions(positions, before, after)).toEqual({ sections: { "+++The next day": [5, 6] }, passages: { "+++The next day": { Talk: [7, 8] } } });
     });
 
     test("a renamed section keeps its position and its passages'", async () => {
         const before = await graphOf(story);
         const after = await graphOf(story.replace("[[start]]:", "[[begin]]:").replace("[look]:", "[peek]:"));
-        const renames = findRenames(before, after);
-        expect(renames.map(([a, b]) => [a.id, b.id])).toEqual([
+        expect(findRenames(before, after).map(([a, b]) => [a.id, b.id])).toEqual([
             ["section:start", "section:begin"],
             ["passage:start/look", "passage:begin/peek"],
         ]);
-        const positions = renamePositions({ sections: { start: [1, 2] }, passages: { start: { look: [3, 4] } } }, renames);
+        const positions = renamePositions({ sections: { start: [1, 2] }, passages: { start: { look: [3, 4] } } }, before, after);
         expect(positions).toEqual({ sections: { begin: [1, 2] }, passages: { begin: { peek: [3, 4] } } });
-        expect(renamePositions({ sections: { other: [1, 2] }, passages: {} }, renames)).toBeUndefined();
+        expect(renamePositions({ sections: { other: [1, 2] }, passages: {} }, before, after)).toBeUndefined();
     });
 });
 

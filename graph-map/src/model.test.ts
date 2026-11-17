@@ -191,6 +191,24 @@ describe("stability", () => {
         }
     });
 
+    test("taking a node's pin away lays it out again, and moving a pin moves it", () => {
+        const model = new MapModel(layout());
+        model.update(story);
+        settle(model);
+        const laidOut = positions(model);
+        model.update(story, new Map([["l1", { x: 900, y: 900 }]]));
+        settle(model);
+        expect(positions(model).l1).toEqual([900, 900]);
+        model.update(story, new Map([["l1", { x: 950, y: 900 }]]));
+        expect(positions(model).l1).toEqual([950, 900]);
+        model.update(story, new Map());
+        settle(model);
+        // Back near its place under left, not left out at 950, 900
+        expect(Math.abs(positions(model).l1[1] - laidOut.l1[1])).toBeLessThan(40);
+        expect(Math.abs(positions(model).l1[0] - positions(model).left[0])).toBeLessThan(250);
+        expect(model.isPinned("l1")).toBe(false);
+    });
+
     test("a renamed node keeps its place", () => {
         const model = new MapModel(layout());
         model.update(story);

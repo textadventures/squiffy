@@ -69,14 +69,14 @@ The map button in the toolbar shows your story as a map: each section is a box, 
 - **Drag** the background to move around, and scroll or pinch to zoom. The buttons above the map zoom in and out, and fit the whole story in view. **Full screen** gives the map the whole window.
 - **Drag a box** to move it. It stays where you put it. Its passages come with it, and so does any box that's linked only to it, while everything else stays put.
 - To move several boxes at once, hold Shift and drag across empty space to select them, or Shift+click boxes to add them, then drag any one of them. Click empty space, or press Escape, to let them go.
-- Where you've put things is saved in `squiffy.json`, so it's the same next time you open the story, and a section keeps its place if you rename it or move it to another file. A story from an earlier version of Squiffy may not have a `squiffy.json`, so the editor adds one, leaving out any `.squiffy` files in the folder that aren't part of the story, so the story stays the same. **Lay out again** forgets where you've put things.
+- Where you've put things is saved in `squiffy.json`, so it's the same next time you open the story, and a section keeps its place if you rename it or move it to another file. A section without a name of its own, started with `+++` or `---`, is saved under what the map calls it, such as `+++Day Two`. If you edit `squiffy.json` while the map's open, it follows: take a position out and that box is laid out again. A story from an earlier version of Squiffy may not have a `squiffy.json`, so the editor adds one, leaving out any `.squiffy` files in the folder that aren't part of the story, so the story stays the same. **Lay out again** forgets where you've put things.
 - The **search box** in the outline also fades out the sections and passages that don't match.
 
 ### Problems on the map
 
 Links to sections or passages that don't exist end in a red box with the missing name. Sections the player can't reach are faded, with a dashed outline. Dead ends, sections with no way out that aren't marked as an [ending](/basic-concepts/#endings), have an orange outline and a **!**. The start has a ▶, and endings a double outline.
 
-Different kinds of link look different: links to passages are lighter, [embeds](/basic-concepts/#embed-text) are dotted, `squiffy.story.go` in JavaScript is a different colour, and links that only appear inside `{{#if}}` or `{{#unless}}` are dashed. The **?** button above the map shows the key.
+Different kinds of link look different: links to passages are lighter, [embeds](/basic-concepts/#embed-text) are dotted, `squiffy.story.go` in JavaScript is a different colour, and links that only appear inside `{{#if}}` or `{{#unless}}` are dashed. Passages that run on their own, such as [`@last`](/basic-concepts/#turn-counting), are tied to their section with a fine dotted line. The **?** button above the map shows the key.
 
 ### Editing from the map
 

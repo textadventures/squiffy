@@ -80,7 +80,7 @@
     const layout = storyMapLayout();
 
     const base = $derived(graph ? buildStoryMap(graph) : null);
-    const pinned = $derived(pinnedPositions(positions));
+    const pinned = $derived(pinnedPositions(positions, graph));
     const tooLarge = $derived(!!base && base.nodes.length > LARGE && !showLarge);
 
     // Where the player went, and the links they took between those places
@@ -133,8 +133,8 @@
         const byId = new Map(base.nodes.map(n => [n.id, n]));
         const unique = (list: StoryMapNode[]) => [...new Map(list.map(n => [n.id, n])).values()];
         return {
-            out: unique(base.edges.filter(e => e.from == selectedNode.id).map(e => byId.get(e.to)!)),
-            into: unique(base.edges.filter(e => e.to == selectedNode.id).map(e => byId.get(e.from)!)),
+            out: unique(base.edges.filter(e => e.from == selectedNode.id && e.kind != "auto").map(e => byId.get(e.to)!)),
+            into: unique(base.edges.filter(e => e.to == selectedNode.id && e.kind != "auto").map(e => byId.get(e.from)!)),
         };
     });
 
@@ -148,8 +148,11 @@
     });
 
     // A node's id is changing (it's been renamed), so it keeps its place
-    export function rename(from: string, to: string) {
-        map?.rename(from, to);
+    // Moves places from one id to another, e.g. after renames. The ids can swap or shift along,
+    // so they go through temporary ids first.
+    export function rename(pairs: [string, string][]) {
+        for (const [from, to] of pairs) map?.rename(from, `\u0000${to}`);
+        for (const [, to] of pairs) map?.rename(`\u0000${to}`, to);
     }
 
     export function relayout() {
@@ -212,6 +215,7 @@
             <svg width="36" height="10" aria-hidden="true"><line x1="0" y1="5" x2="36" y2="5" class="gm-edge-line edge-passage-link" /></svg><span>Link to a passage</span>
             <svg width="36" height="10" aria-hidden="true"><line x1="0" y1="5" x2="36" y2="5" class="gm-edge-line edge-embed" /></svg><span>Embed</span>
             <svg width="36" height="10" aria-hidden="true"><line x1="0" y1="5" x2="36" y2="5" class="gm-edge-line edge-script" /></svg><span>squiffy.story.go in JavaScript</span>
+            <svg width="36" height="10" aria-hidden="true"><line x1="0" y1="5" x2="36" y2="5" class="gm-edge-line edge-auto" /></svg><span>A passage that runs on its own, such as @last</span>
             <svg width="36" height="10" aria-hidden="true"><line x1="0" y1="5" x2="36" y2="5" class="gm-edge-line edge-section-link conditional" /></svg><span>Inside {"{{#if}}"} or {"{{#unless}}"}</span>
             <svg width="36" height="10" aria-hidden="true"><line x1="0" y1="5" x2="36" y2="5" class="gm-edge-line edge-section-link broken" /></svg><span>Broken link, to something that doesn't exist</span>
             <svg width="36" height="10" aria-hidden="true"><line x1="0" y1="5" x2="36" y2="5" class="gm-edge-line edge-section-link trace" /></svg><span>The way the player went in the preview</span>
@@ -418,6 +422,15 @@
     .story-map :global(.edge-script .gm-edge-arrow),
     .story-map :global(.edge-goto .gm-edge-arrow) {
         fill: var(--color-secondary-500);
+    }
+    .story-map :global(.edge-auto.gm-edge-line),
+    .story-map :global(.edge-auto .gm-edge-line) {
+        stroke: var(--color-surface-400-600);
+        stroke-dasharray: 2 3;
+        stroke-width: 1;
+    }
+    .story-map :global(.edge-auto .gm-edge-arrow) {
+        fill: var(--color-surface-400-600);
     }
     .story-map :global(.conditional.gm-edge-line),
     .story-map :global(.conditional .gm-edge-line) {

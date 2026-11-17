@@ -5,7 +5,7 @@
 // from the start at the top to the endings at the bottom. Embeds count, as their links show where
 // they're embedded. Sections that can't be reached from the start are a group of their own, to the
 // side, ranked from wherever their own chains begin.
-import type { GraphEdge, GraphEdgeKind, GraphNode, StoryGraph } from "squiffy-compiler/language-service";
+import type { GraphEdge, GraphEdgeKind, GraphNode, Location, StoryGraph } from "squiffy-compiler/language-service";
 import type { MapPositions } from "squiffy-compiler";
 import { layeredLayout, type Layout, type MapEdge, type MapGraph, type MapNode } from "@textadventures/graph-map";
 
@@ -24,17 +24,25 @@ export interface StoryMapNode extends MapNode {
 }
 
 export interface StoryMapEdge extends MapEdge {
-    kind: GraphEdgeKind;
-    // Every link this stands for (links between the same two places are drawn once)
+    // "auto" ties a section to a passage that runs on its own, such as @last, which nothing
+    // links to
+    kind: GraphEdgeKind | "auto";
+    // Every link this stands for (links between the same two places are drawn once). None for
+    // "auto".
     edges: GraphEdge[];
     conditional: boolean;
     broken?: boolean;
+    // Where to go in the script: for "auto", the passage's header
+    location?: Location;
 }
+
+// Passages that run without being linked to: @last, @1, @2... and the passage called "", which
+// runs with every other passage in its section
+const runsOnItsOwn = (name: string) => name == "" || name.startsWith("@");
 
 export type StoryMap = MapGraph<StoryMapNode, StoryMapEdge>;
 
 const sectionId = (name: string) => `section:${name}`;
-const passageId = (section: string, name: string) => `passage:${section}/${name}`;
 
 // What the map's rows follow: navigation, and embeds, whose links show where they're embedded
 const NAVIGATION = new Set<GraphEdgeKind>(["section-link", "goto", "script", "embed"]);
@@ -224,6 +232,11 @@ export function buildStoryMap(graph: StoryGraph): StoryMap {
         merged.set(key, { id: key, from: edge.from, to, kind: edge.kind, edges: [edge], conditional: edge.conditional, ...(broken ? { broken } : {}) });
     }
     const edges = [...merged.values()];
+    // Passages that run on their own are tied to their sections, as nothing links to them
+    for (const n of nodes) {
+        if (n.kind != "passage" || !n.parent || !runsOnItsOwn(n.graphNode!.name)) continue;
+        edges.push({ id: `${n.parent}>${n.id}>auto`, from: n.parent, to: n.id, kind: "auto", edges: [], conditional: false, location: n.graphNode!.location });
+    }
     for (const edge of edges) {
         edge.class = [`edge-${edge.kind}`, edge.conditional ? "conditional" : "", edge.broken ? "broken" : ""].filter(Boolean).join(" ");
         edge.title = edgeTitle(edge, byId);
@@ -233,6 +246,7 @@ export function buildStoryMap(graph: StoryGraph): StoryMap {
     const outgoing = new Map<string, StoryMapEdge[]>();
     const incoming = new Map<string, StoryMapEdge[]>();
     for (const edge of edges) {
+        if (edge.kind == "auto") continue;
         (outgoing.get(edge.from) ?? outgoing.set(edge.from, []).get(edge.from)!).push(edge);
         (incoming.get(edge.to) ?? incoming.set(edge.to, []).get(edge.to)!).push(edge);
     }
@@ -251,6 +265,12 @@ const KIND_NAMES: Record<GraphEdgeKind, string> = {
 };
 
 function edgeTitle(edge: StoryMapEdge, byId: Map<string, StoryMapNode>): string {
+    if (edge.kind == "auto") {
+        const name = byId.get(edge.to)!.label;
+        return name == "@last" ? "@last runs once every other passage in the section has been clicked"
+            : /^@\d+$/.test(name) ? `${name} runs when that many passages in the section have been clicked`
+            : `${name} runs on its own`;
+    }
     const to = byId.get(edge.to)!;
     const texts = [...new Set(edge.edges.map(e => e.text).filter(Boolean))];
     const target = edge.broken ? `${to.label} (doesn't exist)` : to.label;
@@ -262,6 +282,7 @@ function describe(node: StoryMapNode, out: StoryMapEdge[], into: StoryMapEdge[],
     const g = node.graphNode!;
     const parts = [`${node.kind == "section" ? "Section" : `Passage in ${byId.get(node.parent!)?.label ?? node.section}`} ${node.label}.`];
     if (g.start) parts.push("The story starts here.");
+    if (node.kind == "passage" && runsOnItsOwn(g.name)) parts.push("Runs on its own, without a link.");
     if (g.ending) parts.push("An ending.");
     if (g.deadEnd && g.reachable) parts.push("A dead end: no way out.");
     if (g.embedded) parts.push("Shown inside other sections.");
@@ -293,33 +314,73 @@ export interface Point {
 
 export const emptyPositions = (): MapPositions => ({ sections: {}, passages: {} });
 
+// What a section's position is saved under: its name, or for a section without a name of its
+// own, what the map calls it: "+++Day Two", "---" or "(Start)". The name the story gives such a
+// section (_continue1 and so on) changes whenever another is added above it, but this doesn't. If
+// two have the same label, the section before them tells them apart ("--- after cave"), and if
+// that's not enough, their order does ("--- after cave (2)").
+export function sectionKeys(graph: StoryGraph): Map<string, string> {
+    const keys = new Map<string, string>();
+    const sections = graph.nodes.filter(n => n.kind == "section" && n.name != "");
+    const labelCount = new Map<string, number>();
+    for (const n of sections) if (n.detail) labelCount.set(n.detail, (labelCount.get(n.detail) ?? 0) + 1);
+    let previous = "";
+    const candidates = new Map<string, string>();
+    for (const n of sections) {
+        if (!n.detail) {
+            keys.set(n.name, n.name);
+            previous = n.name;
+            continue;
+        }
+        candidates.set(n.name, labelCount.get(n.detail) == 1 ? n.detail : previous ? `${n.detail} after ${previous}` : n.detail);
+    }
+    const seen = new Map<string, number>();
+    const total = new Map<string, number>();
+    for (const key of candidates.values()) total.set(key, (total.get(key) ?? 0) + 1);
+    for (const [name, key] of candidates) {
+        const n = (seen.get(key) ?? 0) + 1;
+        seen.set(key, n);
+        keys.set(name, total.get(key)! > 1 && n > 1 ? `${key} (${n})` : key);
+    }
+    return keys;
+}
+
 // The saved positions, by node id
-export function pinnedPositions(positions: MapPositions | undefined): Map<string, Point> {
+export function pinnedPositions(positions: MapPositions | undefined, graph: StoryGraph | null): Map<string, Point> {
     const pinned = new Map<string, Point>();
-    if (!positions) return pinned;
-    for (const [name, [x, y]] of Object.entries(positions.sections)) pinned.set(sectionId(name), { x, y });
-    for (const [section, byName] of Object.entries(positions.passages)) {
-        for (const [name, [x, y]] of Object.entries(byName)) pinned.set(passageId(section, name), { x, y });
+    if (!positions || !graph) return pinned;
+    for (const [name, key] of sectionKeys(graph)) {
+        const at = positions.sections[key];
+        if (at) pinned.set(sectionId(name), { x: at[0], y: at[1] });
+    }
+    const keys = sectionKeys(graph);
+    for (const n of graph.nodes) {
+        if (n.kind != "passage") continue;
+        const key = keys.get(n.section!);
+        const at = key === undefined ? undefined : positions.passages[key]?.[n.name];
+        if (at) pinned.set(n.id, { x: at[0], y: at[1] });
     }
     return pinned;
 }
 
 // A copy of the positions with one node's changed (or removed, with undefined). Only sections and
 // passages have positions saved.
-export function withPosition(positions: MapPositions | undefined, node: Pick<GraphNode, "kind" | "name" | "section">, at: Point | undefined): MapPositions {
+export function withPosition(positions: MapPositions | undefined, keys: Map<string, string>, node: Pick<GraphNode, "kind" | "name" | "section">, at: Point | undefined): MapPositions {
     const next: MapPositions = {
         sections: { ...positions?.sections },
         passages: Object.fromEntries(Object.entries(positions?.passages ?? {}).map(([s, byName]) => [s, { ...byName }])),
     };
     const value: [number, number] | undefined = at && [Math.round(at.x), Math.round(at.y)];
     if (node.kind == "section") {
-        if (value) next.sections[node.name] = value;
-        else delete next.sections[node.name];
+        const key = keys.get(node.name) ?? node.name;
+        if (value) next.sections[key] = value;
+        else delete next.sections[key];
     } else {
-        const byName = next.passages[node.section!] ??= {};
+        const key = keys.get(node.section!) ?? node.section!;
+        const byName = next.passages[key] ??= {};
         if (value) byName[node.name] = value;
         else delete byName[node.name];
-        if (!Object.keys(byName).length) delete next.passages[node.section!];
+        if (!Object.keys(byName).length) delete next.passages[key];
     }
     return next;
 }
@@ -330,16 +391,20 @@ export function withPosition(positions: MapPositions | undefined, node: Pick<Gra
 export function findRenames(before: StoryGraph, after: StoryGraph): [GraphNode, GraphNode][] {
     const afterIds = new Set(after.nodes.map(n => n.id));
     const beforeIds = new Set(before.nodes.map(n => n.id));
+    // One whose position key is in both versions has only moved (e.g. "+++Day Two" becoming
+    // _continue2 when a section's added above it), even if another has landed on its line
+    const beforeKeys = nodeKeys(before), afterKeys = nodeKeys(after);
+    const stillThere = new Set(afterKeys.values()), wasThere = new Set(beforeKeys.values());
     const place = (n: GraphNode) => `${n.kind}\u0000${n.location.file}\u0000${n.location.range.start.line}`;
     const gone = new Map<string, GraphNode[]>();
     for (const n of before.nodes) {
-        if (afterIds.has(n.id)) continue;
+        if (afterIds.has(n.id) || stillThere.has(beforeKeys.get(n.id)!)) continue;
         const key = place(n);
         gone.set(key, [...gone.get(key) ?? [], n]);
     }
     const renames: [GraphNode, GraphNode][] = [];
     for (const n of after.nodes) {
-        if (beforeIds.has(n.id)) continue;
+        if (beforeIds.has(n.id) || wasThere.has(afterKeys.get(n.id)!)) continue;
         const candidates = gone.get(place(n));
         if (candidates?.length == 1) {
             renames.push([candidates[0], n]);
@@ -349,43 +414,83 @@ export function findRenames(before: StoryGraph, after: StoryGraph): [GraphNode, 
     return renames;
 }
 
-// The saved positions after renames, or undefined if none of them had a saved position. A
-// renamed section's passages keep theirs too.
-export function renamePositions(positions: MapPositions | undefined, renames: [GraphNode, GraphNode][]): MapPositions | undefined {
+// Every section's and passage's position key ("section key" or "section key/passage name"),
+// by node id
+function nodeKeys(graph: StoryGraph): Map<string, string> {
+    const keys = sectionKeys(graph);
+    const result = new Map<string, string>();
+    for (const n of graph.nodes) {
+        const section = keys.get(n.kind == "section" ? n.name : n.section!);
+        if (section === undefined) continue;
+        result.set(n.id, n.kind == "section" ? section : `${section}\u0000${n.name}`);
+    }
+    return result;
+}
+
+// The nodes that are the same section or passage before and after an edit, though their ids
+// differ: renamed ones (see findRenames), and ones without a name of their own whose story names
+// shifted, e.g. "+++Day Two" going from _continue2 to _continue3 when a section's added above it.
+// The map moves each one's place to its new id.
+export function movedNodes(before: StoryGraph, after: StoryGraph): [string, string][] {
+    const pairs = new Map<string, string>(findRenames(before, after).map(([a, b]) => [a.id, b.id]));
+    const byKey = new Map([...nodeKeys(after)].map(([id, key]) => [key, id]));
+    for (const [id, key] of nodeKeys(before)) {
+        const now = byKey.get(key);
+        if (now && now != id && !pairs.has(id)) pairs.set(id, now);
+    }
+    return [...pairs];
+}
+
+// The saved positions after an edit, or undefined if none changed: a section or passage that's
+// been renamed, or a section without a name of its own whose +++ text changed, keeps its place.
+// A renamed section's passages keep theirs too.
+export function renamePositions(positions: MapPositions | undefined, before: StoryGraph, after: StoryGraph): MapPositions | undefined {
     if (!positions) return undefined;
+    const beforeKeys = nodeKeys(before), afterKeys = nodeKeys(after);
+    const afterById = new Map(after.nodes.map(n => [n.id, n]));
+    // The same node: renamed, or with the same id and its header on the same line
+    const pairs: [GraphNode, GraphNode][] = [...findRenames(before, after)];
+    for (const n of before.nodes) {
+        const same = afterById.get(n.id);
+        if (same && same.location.file == n.location.file && same.location.range.start.line == n.location.range.start.line) pairs.push([n, same]);
+    }
     let changed = false;
     const next: MapPositions = {
         sections: { ...positions.sections },
         passages: Object.fromEntries(Object.entries(positions.passages).map(([s, byName]) => [s, { ...byName }])),
     };
+    const split = (key: string) => key.split("\u0000") as [string, string?];
     // Sections first, as a renamed section's passages are renamed too
-    const movedSections = new Map<string, string>();
-    for (const [from, to] of renames) {
+    for (const [from, to] of pairs) {
         if (from.kind != "section") continue;
-        movedSections.set(from.name, to.name);
-        const at = next.sections[from.name];
-        if (at) {
-            delete next.sections[from.name];
-            next.sections[to.name] = at;
+        const a = beforeKeys.get(from.id), b = afterKeys.get(to.id);
+        if (a === undefined || b === undefined || a == b) continue;
+        if (next.sections[a]) {
+            next.sections[b] = next.sections[a];
+            delete next.sections[a];
             changed = true;
         }
-        const passages = next.passages[from.name];
-        if (passages) {
-            delete next.passages[from.name];
-            next.passages[to.name] = passages;
+        if (next.passages[a]) {
+            next.passages[b] = { ...next.passages[b], ...next.passages[a] };
+            delete next.passages[a];
             changed = true;
         }
     }
-    for (const [from, to] of renames) {
+    for (const [from, to] of pairs) {
         if (from.kind != "passage") continue;
-        const byName = next.passages[movedSections.get(from.section!) ?? from.section!];
-        const at = byName?.[from.name];
+        const a = beforeKeys.get(from.id), b = afterKeys.get(to.id);
+        if (a === undefined || b === undefined || a == b) continue;
+        const [aSection, aName] = split(a), [bSection, bName] = split(b);
+        // Its section's move has already brought it along
+        const byName = next.passages[aSection] ?? next.passages[bSection];
+        const at = byName?.[aName!];
         if (at) {
-            delete byName[from.name];
-            (next.passages[to.section!] ??= {})[to.name] = at;
+            delete byName[aName!];
+            (next.passages[bSection] ??= {})[bName!] = at;
             changed = true;
         }
     }
+    for (const [key, byName] of Object.entries(next.passages)) if (!Object.keys(byName).length) delete next.passages[key];
     return changed ? next : undefined;
 }
 

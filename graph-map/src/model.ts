@@ -1,7 +1,8 @@
 // The map's live state, apart from drawing it: each node's position, the simulation, and what's
 // held still. Keeps the map stable as the graph changes:
 //
-// - Nodes the host has pinned (e.g. hand-placed by the author) never move, unless dragged.
+// - Nodes the host has pinned (e.g. hand-placed by the author) never move, unless dragged. If the
+//   host moves a pin, the node goes there; if it takes one away, the node is laid out again.
 // - When nodes are added, the ones already there are held still while the new ones settle, apart
 //   from their neighbours, which can make room. Once it settles, nothing is held.
 // - Dragging a node (or several at once) moves what's attached to it, such as satellites, and
@@ -39,10 +40,21 @@ export class MapModel<N extends MapNode = MapNode, E extends MapEdge = MapEdge> 
     update(graph: MapGraph<N, E>, pinned: ReadonlyMap<string, Point> = new Map()) {
         const first = this.nodes.size == 0;
         this.graph = graph;
+        const before = this.pinned;
         this.pinned = new Map(pinned);
         const ids = new Set(graph.nodes.map(n => n.id));
         for (const id of [...this.nodes.keys()]) {
             if (!ids.has(id)) this.nodes.delete(id);
+        }
+        // A node the host has stopped pinning (e.g. its position was taken out of a saved file)
+        // goes back to the layout: it's placed again, as if it were new. One whose pin moved goes
+        // there, and what it's linked to can adjust.
+        const repinned: string[] = [];
+        for (const [id, was] of before) {
+            if (this.dragging.has(id)) continue;
+            const now = this.pinned.get(id);
+            if (!now) this.nodes.delete(id);
+            else if (now.x != was.x || now.y != was.y) repinned.push(id);
         }
         for (const id of [...this.held]) {
             if (!ids.has(id)) this.held.delete(id);
@@ -78,9 +90,9 @@ export class MapModel<N extends MapNode = MapNode, E extends MapEdge = MapEdge> 
 
         if (first) {
             this.sim.alpha = 1;
-        } else if (added.length) {
-            // Hold everything else still, apart from what the new nodes are linked to
-            this.holdAllBut(this.neighbourhood(added));
+        } else if (added.length || repinned.length) {
+            // Hold everything else still, apart from what the new (or moved) nodes are linked to
+            this.holdAllBut(this.neighbourhood([...added, ...repinned]));
             this.sim.reheat(0.5);
         }
         this.updateFixed();

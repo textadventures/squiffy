@@ -28,7 +28,7 @@
     import ReferencesPanel from "#components/ReferencesPanel.svelte";
     import PreviewPanel from "#components/PreviewPanel.svelte";
     import MapPanel, { type TraceStep } from "#components/MapPanel.svelte";
-    import { checkSectionName, findRenames, linkTo, nodeAtLine, renamePositions, withPosition, type Point, type StoryMapEdge, type StoryMapNode } from "#lib/story-map.js";
+    import { checkSectionName, linkTo, movedNodes, nodeAtLine, renamePositions, sectionKeys, withPosition, type Point, type StoryMapEdge, type StoryMapNode } from "#lib/story-map.js";
     import AssetManagerModal from "#components/AssetManagerModal.svelte";
     import AboutModal from "#components/AboutModal.svelte";
     import { addSectionOrPassage, insertSnippet, runCommand, userSnippets } from "#lib/editor-commands.js";
@@ -422,9 +422,8 @@
         const before = storyGraph;
         if (before) {
             // Renamed sections and passages keep their places
-            const renames = findRenames(before, graph);
-            for (const [from, to] of renames) mapPanel?.rename(from.id, to.id);
-            const moved = renamePositions(mapPositions, renames);
+            mapPanel?.rename(movedNodes(before, graph));
+            const moved = renamePositions(mapPositions, before, graph);
             if (moved) void savePositions(moved);
         }
         storyGraph = graph;
@@ -573,7 +572,7 @@
         try {
             let edit = await newSectionEdit(file, name);
             if (linkFrom) edit = mergeEdits(linkEdit(linkFrom, `[[${name}]]`), edit);
-            savePositions(withPosition(mapPositions, { kind: "section", name }, at));
+            savePositions(withPosition(mapPositions, new Map(), { kind: "section", name }, at));
             selectWhenReady = `section:${name}`;
             await applyEdits(edit);
         } catch (err) {
@@ -1006,8 +1005,11 @@
                     maximized={mapMaximized}
                     width={isNarrow.current || mapMaximized ? undefined : mapWidth}
                     ongoto={(node, focus) => { const location = node.graphNode?.location; if (location) goFromMap(location, focus); }}
-                    ongotoedge={(edge: StoryMapEdge) => goFromMap(edge.edges[0].location, false)}
-                    onmove={moves => savePositions(moves.reduce((positions, { node, at }) => withPosition(positions, node, at), mapPositions ?? { sections: {}, passages: {} }))}
+                    ongotoedge={(edge: StoryMapEdge) => { const location = edge.edges[0]?.location ?? edge.location; if (location) goFromMap(location, false); }}
+                    onmove={moves => {
+                        const keys = storyGraph ? sectionKeys(storyGraph) : new Map<string, string>();
+                        savePositions(moves.reduce((positions, { node, at }) => withPosition(positions, keys, node, at), mapPositions ?? { sections: {}, passages: {} }));
+                    }}
                     onlink={linkFromMap}
                     oncreate={(at, near) => void createSectionFromMap(at, near)}
                     onrename={node => void renameFromMap(node)}
