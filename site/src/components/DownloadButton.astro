@@ -1,0 +1,156 @@
+---
+// The desktop app's downloads (#276), from the GitHub Release that desktop-publish.yml attaches the
+// installers to, with the one for the visitor's system first. Ported from Quest Viva's
+// site/src/components/DownloadButton.astro. squiffystory.com offers GitHub's latest release (the
+// newest stable one), and beta.squiffystory.com the newest prerelease, Squiffy Beta. Without
+// JavaScript, or if GitHub can't be reached, it's a link to the releases page.
+import { betaSite } from "../channel.mjs";
+
+const releasesPage = betaSite
+    ? "https://github.com/textadventures/squiffy/releases"
+    : "https://github.com/textadventures/squiffy/releases/latest";
+---
+
+<div id="download-widget" class="download-widget" data-beta={betaSite ? "true" : undefined}>
+    <a class="download-fallback-link" href={releasesPage}>All downloads (GitHub Releases)</a>
+</div>
+
+<script>
+    const REPO_API = "https://api.github.com/repos/textadventures/squiffy";
+
+    interface ReleaseAsset {
+        name: string;
+        browser_download_url: string;
+    }
+    interface Release {
+        tag_name: string;
+        html_url: string;
+        published_at: string;
+        prerelease?: boolean;
+        draft?: boolean;
+        assets: ReleaseAsset[];
+    }
+
+    function detectOs(): "Windows" | "Mac" | "Linux" | null {
+        const ua = navigator.userAgent;
+        if (/Windows/.test(ua)) return "Windows";
+        if (/Mac OS X|Macintosh/.test(ua)) return "Mac";
+        if (/Linux/.test(ua)) return "Linux";
+        return null;
+    }
+
+    // By extension. wantArm64 picks the x64 or arm64 Linux build; the Mac build is only arm64.
+    function findAsset(assets: ReleaseAsset[], extension: string, wantArm64?: boolean): ReleaseAsset | null {
+        return assets.find(a => {
+            const name = a.name.toLowerCase();
+            return name.endsWith(extension) && (wantArm64 === undefined || name.includes("arm64") === wantArm64);
+        }) ?? null;
+    }
+
+    async function fetchJson<T>(url: string): Promise<T | null> {
+        const response = await fetch(url);
+        return response.ok ? (await response.json()) as T : null;
+    }
+
+    // The beta site wants the newest prerelease with installers (the list is newest first)
+    async function fetchRelease(beta: boolean): Promise<Release | null> {
+        if (beta) {
+            const releases = await fetchJson<Release[]>(`${REPO_API}/releases?per_page=30`);
+            const prerelease = releases?.find(r => r.prerelease && !r.draft && r.assets.some(a => a.name.endsWith(".dmg") || a.name.endsWith(".exe")));
+            if (prerelease) return prerelease;
+        }
+        return fetchJson<Release>(`${REPO_API}/releases/latest`);
+    }
+
+    function makeLink(text: string, url: string, className: string): HTMLAnchorElement {
+        const a = document.createElement("a");
+        a.className = className;
+        a.href = url;
+        a.textContent = text;
+        return a;
+    }
+
+    async function render() {
+        const container = document.getElementById("download-widget");
+        if (!container) return;
+        let release: Release | null;
+        try {
+            release = await fetchRelease(container.dataset.beta === "true");
+        } catch {
+            return;
+        }
+        if (!release) return;
+
+        // .deb first on Linux: an AppImage doesn't add itself to the desktop's list of apps
+        const candidates = [
+            { os: "Windows", label: "Windows", asset: findAsset(release.assets, ".exe") },
+            { os: "Mac", label: "Mac (Apple Silicon)", asset: findAsset(release.assets, ".dmg") },
+            { os: "Linux", label: "Linux (.deb)", asset: findAsset(release.assets, ".deb", false) },
+            { os: "Linux", label: "Linux (AppImage)", asset: findAsset(release.assets, ".appimage", false) },
+            { os: "Linux-arm64", label: "Linux on Arm (.deb)", asset: findAsset(release.assets, ".deb", true) },
+            { os: "Linux-arm64", label: "Linux on Arm (AppImage)", asset: findAsset(release.assets, ".appimage", true) },
+        ];
+        // A release whose installers haven't been attached yet: leave the link to the releases page
+        if (!candidates.some(c => c.asset)) return;
+
+        const detected = detectOs();
+        const primary = detected ? candidates.find(c => c.os === detected && c.asset) : undefined;
+        const others = candidates.filter(c => c !== primary && c.asset);
+
+        const version = document.createElement("p");
+        version.className = "download-version";
+        const date = new Date(release.published_at);
+        version.textContent = Number.isNaN(date.getTime())
+            ? release.tag_name
+            : `${release.tag_name} · released ${date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}`;
+
+        const nodes: HTMLElement[] = [version];
+        if (primary?.asset) nodes.push(makeLink(`Download for ${primary.label}`, primary.asset.browser_download_url, "download-primary-link"));
+        const list = document.createElement("p");
+        list.className = "download-others";
+        for (const other of others) {
+            if (other.asset) list.append(makeLink(other.label, other.asset.browser_download_url, "download-secondary-link"));
+        }
+        nodes.push(list, makeLink("All downloads and release notes", release.html_url, "download-fallback-link"));
+        container.replaceChildren(...nodes);
+    }
+
+    void render();
+</script>
+
+<style is:global>
+    /* Not scoped, since the links are made by the script above */
+    .download-widget {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        margin-block: 1.5rem;
+    }
+    .download-version {
+        font-size: var(--sl-text-sm);
+        color: var(--sl-color-gray-3);
+        margin: 0;
+    }
+    .download-primary-link {
+        display: inline-block;
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.5rem;
+        background: var(--sl-color-accent);
+        color: var(--sl-color-black);
+        font-weight: 600;
+        text-decoration: none;
+    }
+    .download-widget .download-others {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.25rem 1rem;
+        margin: 0;
+    }
+    .download-secondary-link,
+    .download-fallback-link {
+        font-size: var(--sl-text-sm);
+        color: var(--sl-color-gray-3);
+    }
+</style>
