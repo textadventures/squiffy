@@ -34,6 +34,7 @@ describe("findStory", () => {
             mainFile: path.join(dir, "story.squiffy"),
             storyFiles: [path.join(dir, "b.squiffy"), path.join(dir, "sub/a.squiffy")],
             projectFile: path.join(dir, "squiffy.json"),
+            expressions: true,
         });
     });
 
@@ -49,11 +50,13 @@ describe("findStory", () => {
         expect(story.mainFile).toBe(path.join(dir, "other.squiffy"));
         expect(story.storyFiles).toBeUndefined();
         expect(story.note).toContain("Building just other.squiffy, as it isn't the main file");
+        // It's still in a project, so it uses the project's rules for @set (#373)
+        expect(story.expressions).toBe(true);
     });
 
     test("a file with no squiffy.json builds just that file", async () => {
         await write({ "story.squiffy": "", "other.squiffy": "" });
-        expect(await findStory(path.join(dir, "story.squiffy"))).toEqual({ mainFile: path.join(dir, "story.squiffy") });
+        expect(await findStory(path.join(dir, "story.squiffy"))).toEqual({ mainFile: path.join(dir, "story.squiffy"), expressions: false });
     });
 
     test.each([

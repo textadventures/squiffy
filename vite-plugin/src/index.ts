@@ -97,6 +97,7 @@ export default function squiffyPlugin(options: SquiffyPluginOptions = {}): Plugi
                 onWarning: message => this.warn(message),
                 externalFiles: externalFiles(filename, readFiles),
                 storyFiles: story.storyFiles,
+                expressions: story.expressions,
             });
 
             for (const file of readFiles.slice(1)) {

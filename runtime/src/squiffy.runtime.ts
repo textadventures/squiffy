@@ -128,7 +128,67 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         }
     }
     
+    // Runs a setter from @set or a link, e.g. gold += 5. An error leaves the attribute as it was,
+    // and is shown with the next text written.
     function setAttribute(expr: string) {
+        try {
+            if (story.expressions) {
+                setWithExpression(expr);
+            }
+            else {
+                setWithoutExpression(expr);
+            }
+        }
+        catch (e) {
+            const message = e instanceof Error ? e.message : String(e);
+            console.error(`Squiffy error in "${expr}":`, message);
+            pendingErrors.push(errorHtml(`Error in "${expr}":`, message));
+        }
+    }
+
+    // +=, -=, *= and /=, which only work on numbers (#374)
+    function operate(lhs: string, op: string, amountValue: unknown) {
+        const what = op + "=";
+        const amount = toNumber(what, amountValue);
+        let value = toNumber(what, get(lhs));
+        if (op == "+") value += amount;
+        if (op == "-") value -= amount;
+        if (op == "*") value *= amount;
+        if (op == "/") value /= amount;
+        set(lhs, value);
+    }
+
+    // A story with a squiffy.json (#373): the right-hand side is an expression, with the same rules
+    // as {{#if}}, e.g. weapon = "sword", gold = gold + price * 2, rich = gold > 100.
+    function setWithExpression(expr: string) {
+        const textMatch = /^(\w+)\s*:=(.*)$/.exec(expr);
+        if (textMatch) {
+            // Text with {{...}} processed, as before
+            set(textMatch[1], ui.processText(textMatch[2], true));
+            return;
+        }
+        const match = /^(\w+)\s*([+\-*/]?)=(?!=)(.*)$/.exec(expr);
+        if (match) {
+            const [, lhs, op, rhs] = match;
+            const value = textProcessor.evaluate(rhs);
+            if (op) {
+                operate(lhs, op, value);
+            }
+            else {
+                set(lhs, value);
+            }
+            return;
+        }
+        const flagMatch = /^(not\s+)?(\w+)$/.exec(expr.trim());
+        if (!flagMatch) {
+            throw new Error("expected an attribute name, e.g. gold = 10, gold += 5, has_key or not has_key");
+        }
+        set(flagMatch[2], !flagMatch[1]);
+    }
+
+    // A story without a squiffy.json, as in Squiffy 6: the right-hand side is a number, true,
+    // false, @attribute, or else text
+    function setWithoutExpression(expr: string) {
         expr = expr.replace(/^(\w*\s*):=(.*)$/, (_, name, value) => (name + "=" + ui.processText(value, true)));
         const setRegex = /^([\w]*)\s*=\s*(.*)$/;
         const setMatch = setRegex.exec(expr);
@@ -156,31 +216,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
                 const lhs = incDecMatch[1];
                 const op = incDecMatch[2];
                 const rhsText = incDecMatch[3].trim();
-                const rhs = rhsText.startsWith("@") ? get(rhsText.substring(1)) : rhsText;
-                try {
-                    const what = op + "=";
-                    const amount = toNumber(what, rhs);
-                    let value = toNumber(what, get(lhs));
-                    if (op == "+") {
-                        value += amount;
-                    }
-                    if (op == "-") {
-                        value -= amount;
-                    }
-                    if (op == "*") {
-                        value *= amount;
-                    }
-                    if (op == "/") {
-                        value /= amount;
-                    }
-                    set(lhs, value);
-                }
-                catch (e) {
-                    // Leave the attribute as it was, and show the error with the next text written
-                    const message = e instanceof Error ? e.message : String(e);
-                    console.error(`Squiffy error in "${expr}":`, message);
-                    pendingErrors.push(errorHtml(`Error in "${expr}":`, message));
-                }
+                operate(lhs, op, rhsText.startsWith("@") ? get(rhsText.substring(1)) : rhsText);
             }
             else {
                 let value = true;

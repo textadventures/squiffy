@@ -27,6 +27,9 @@ export interface AnalyseSettings {
     // after the main file, skipping any it has already @imported. Pass undefined for a story
     // that's just the main file and its @imports.
     storyFiles?: string[];
+    // Whether @set and link setters take expressions, with the same rules as {{#if}} (#373).
+    // True for a story with a squiffy.json.
+    expressions?: boolean;
 }
 
 // Caches the syntax tree of each file by filename, reparsing a file only when its text changes.
@@ -72,6 +75,8 @@ export interface Analysis {
     // The section the story starts at: @start's, or else the main file's first section. It may
     // not exist, if @start names a section that doesn't.
     start: string;
+    // See AnalyseSettings.expressions
+    expressions: boolean;
 }
 
 // ---- Story model, which emit() turns into output ----
@@ -456,7 +461,7 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
             return sectionNames[(sectionIndexes.get(section.name) ?? -1) + 1] || null;
         };
 
-        const result = transformText(container.text.join("\n"), getNextSectionName);
+        const result = transformText(container.text.join("\n"), getNextSectionName, settings.expressions);
         container.output = result.output;
 
         const toPosition = positionMapper(container.textSources, container.text.map(t => t.length));
@@ -545,6 +550,7 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
             passages: Object.values(section.passages).map(passage => ({ name: passage.name, node: passage.node })),
         })),
         start: story.start,
+        expressions: settings.expressions ?? false,
     };
     analysisInternals.set(analysis, { story, legacyErrors, legacyWarnings });
     return analysis;

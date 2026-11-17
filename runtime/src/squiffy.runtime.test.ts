@@ -26,10 +26,12 @@ const html = `
 </html>
 `;
 
-const compile = async (script: string, scriptBaseFilename?: string) => {
+// expressions: compile as a story with a squiffy.json, whose setters take expressions (#373)
+const compile = async (script: string, scriptBaseFilename?: string, expressions = false) => {
     const compileResult = await squiffyCompile({
         script: script,
         scriptBaseFilename: scriptBaseFilename,
+        expressions,
     });
 
     if (!compileResult.success) {
@@ -47,14 +49,14 @@ const compile = async (script: string, scriptBaseFilename?: string) => {
     };
 };
 
-const initScript = async (script: string) => {
+const initScript = async (script: string, expressions = false) => {
     const element = document.getElementById("squiffy");
 
     if (!element) {
         throw new Error("Element not found");
     }
 
-    const compileResult = await compile(script);
+    const compileResult = await compile(script, undefined, expressions);
 
     const squiffyApi = await init({
         element: element,
@@ -1907,6 +1909,164 @@ Arrived.
     const { element, squiffyApi } = await initScript(script);
     await squiffyApi.clickLink(findLink(element, "section", "Go"));
     expect(getSectionContent(element, "next")).toBe("Error in \"name+=1\": \"+=\" needs numbers, but was given \"Bob\"Arrived.");
+});
+
+// ---- Expressions in @set and link setters, for a story with a squiffy.json (#373) ----
+
+test("@set takes expressions, with the same rules as {{#if}}", async () => {
+    const script = `
+[[start]]:
+@set weapon = "sword"
+@set price = 3
+@set gold = 10
+@set gold = gold + price * 2
+@set rich = gold > 15
+@set poor = not rich
+@set best = gold
+@set title = 'Bob' + " the Brave"
+@set negative = -price
+@set empty = ""
+`;
+    const { squiffyApi } = await initScript(script, true);
+    expect(squiffyApi.get("weapon")).toBe("sword");
+    expect(squiffyApi.get("gold")).toBe(16);
+    expect(squiffyApi.get("rich")).toBe(true);
+    expect(squiffyApi.get("poor")).toBe(false);
+    expect(squiffyApi.get("best")).toBe(16);
+    expect(squiffyApi.get("title")).toBe("Bob the Brave");
+    expect(squiffyApi.get("negative")).toBe(-3);
+    expect(squiffyApi.get("empty")).toBe("");
+});
+
+test("+=, -=, *= and /= take expressions", async () => {
+    const script = `
+[[start]]:
+@set price = 3
+@set gold = 10
+@set gold += price * 2
+@set gold -= 1
+@set gold *= (price - 1)
+@set gold /= 2
+@inc count
+@inc count 4
+@dec count
+`;
+    const { squiffyApi } = await initScript(script, true);
+    expect(squiffyApi.get("gold")).toBe(15);
+    expect(squiffyApi.get("count")).toBe(4);
+});
+
+test("flags and := work as before with expressions", async () => {
+    const script = `
+[[start]]:
+@set name = "Bob"
+@set has_key
+@set not has_map
+@set greeting := Hello, {{name}}!
+`;
+    const { squiffyApi } = await initScript(script, true);
+    expect(squiffyApi.get("has_key")).toBe(true);
+    expect(squiffyApi.get("has_map")).toBe(false);
+    expect(squiffyApi.get("greeting")).toBe("Hello, Bob!");
+});
+
+test("helpers can be used in setter expressions", async () => {
+    const script = `
+[[start]]:
+@set visited = (seen "start")
+@set here = (at "start")
+`;
+    const { squiffyApi } = await initScript(script, true);
+    expect(squiffyApi.get("visited")).toBe(true);
+    expect(squiffyApi.get("here")).toBe(true);
+});
+
+test("link setters take expressions, and can have commas in quotes", async () => {
+    const script = `
+[[start]]:
+@set gold = 10
+@set price = 3
+[[Buy]](shop, gold -= price, swords += 1, message = "Thanks, come again", weapon = 'sword')
+
+[[shop]]:
+{{message}}
+[[Haggle]](haggle, price = price - 1)
+
+[[haggle]]:
+Done.
+{{section "end" text="End" set="gold = gold + price * 10, done"}}
+
+[[end]]:
+The end.
+`;
+    const { squiffyApi, element } = await initScript(script, true);
+    await squiffyApi.clickLink(findLink(element, "section", "Buy"));
+    expect(squiffyApi.get("gold")).toBe(7);
+    expect(squiffyApi.get("swords")).toBe(1);
+    expect(squiffyApi.get("message")).toBe("Thanks, come again");
+    expect(squiffyApi.get("weapon")).toBe("sword");
+    expect(getSectionContent(element, "shop")).toContain("Thanks, come again");
+    await squiffyApi.clickLink(findLink(element, "section", "Haggle"));
+    expect(squiffyApi.get("price")).toBe(2);
+    await squiffyApi.clickLink(findLink(element, "section", "End"));
+    expect(squiffyApi.get("gold")).toBe(27);
+    expect(squiffyApi.get("done")).toBe(true);
+});
+
+test("passage link setters take expressions", async () => {
+    const script = `
+[[start]]:
+@set gold = 10
+[Spend](spend, gold = gold / 2)
+
+[spend]:
+Spent.
+`;
+    const { squiffyApi, element } = await initScript(script, true);
+    await squiffyApi.clickLink(findLink(element, "passage", "Spend"));
+    expect(squiffyApi.get("gold")).toBe(5);
+});
+
+test("an invalid setter expression shows an error and leaves the attribute alone", async () => {
+    const script = `
+[[start]]:
+@set gold = 10
+@set gold = gold +
+@set gold += "lots"
+@set gold > 5
+Hello.
+`;
+    const { squiffyApi, element } = await initScript(script, true);
+    const errors = [...element.querySelectorAll(".squiffy-error")].map(e => e.textContent);
+    expect(errors).toEqual([
+        "Error in \"gold = gold +\": Invalid expression \"gold +\": expected a value after '+'",
+        "Error in \"gold += \"lots\"\": \"+=\" needs numbers, but was given \"lots\"",
+        "Error in \"gold > 5\": expected an attribute name, e.g. gold = 10, gold += 5, has_key or not has_key",
+    ]);
+    expect(squiffyApi.get("gold")).toBe(10);
+    expect(element.textContent).toContain("Hello.");
+});
+
+test("without a squiffy.json, setters keep the Squiffy 6 rules", async () => {
+    const script = `
+[[start]]:
+@set weapon = sword
+@set price = 3
+@set best = @price
+@set gold = gold + price
+[[Go]](next, name = Bob's, message = Hi, there)
+
+[[next]]:
+Done.
+`;
+    const { squiffyApi, element } = await initScript(script);
+    expect(squiffyApi.get("weapon")).toBe("sword");
+    expect(squiffyApi.get("best")).toBe(3);
+    expect(squiffyApi.get("gold")).toBe("gold + price");
+    await squiffyApi.clickLink(findLink(element, "section", "Go"));
+    expect(squiffyApi.get("name")).toBe("Bob's");
+    expect(squiffyApi.get("message")).toBe("Hi");
+    expect(squiffyApi.get("there")).toBe(true);
 });
 
 // State modification helper tests

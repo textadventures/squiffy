@@ -13,6 +13,8 @@ interface OutputStory {
     start: string;
     id: string | null;
     uiJsIndex?: number;
+    // Whether @set and link setters take expressions (#373)
+    expressions?: boolean;
     sections: Record<string, OutputSection>;
 }
 
@@ -71,6 +73,10 @@ export function emit(analysis: Analysis, settings: EmitSettings = {}): CompileSu
         },
         js: [],
     };
+
+    if (analysis.expressions) {
+        output.story.expressions = true;
+    }
 
     if (story.uiJs.length > 0) {
         output.js.push(story.uiJs);
@@ -145,6 +151,9 @@ export function emit(analysis: Analysis, settings: EmitSettings = {}): CompileSu
         outputJs.push(`story.id = ${JSON.stringify(output.story.id, null, 4)};`);
         if (output.story.uiJsIndex !== undefined) {
             outputJs.push(`story.uiJsIndex = ${output.story.uiJsIndex};`);
+        }
+        if (output.story.expressions) {
+            outputJs.push("story.expressions = true;");
         }
         outputJs.push(`story.start = ${JSON.stringify(output.story.start, null, 4)};`);
         outputJs.push(`story.sections = ${JSON.stringify(output.story.sections, null, 4)};`);
