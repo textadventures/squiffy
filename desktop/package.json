@@ -5,7 +5,10 @@
   "private": true,
   "description": "The Squiffy desktop app: the editor from app.squiffystory.com, with stories kept in folders on disk",
   "license": "MIT",
-  "author": "Alex Warren",
+  "author": {
+    "name": "Alex Warren",
+    "email": "alex@textadventures.co.uk"
+  },
   "homepage": "https://squiffystory.com",
   "repository": {
     "type": "git",
@@ -18,7 +21,8 @@
     "build": "node scripts/build.mjs",
     "check": "tsc --noEmit",
     "start": "npm run build && electron .",
-    "dev": "npm run build && electron . --dev-server"
+    "dev": "npm run build && electron . --dev-server",
+    "dist": "npm run build && node scripts/copy-static.mjs && node scripts/dist.mjs"
   },
   "dependencies": {},
   "devDependencies": {
@@ -26,6 +30,83 @@
     "@types/node": "^24.10.0",
     "electron": "^45.3.3",
     "esbuild": "^0.28.2",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "electron-builder": "^26.18.0"
+  },
+  "desktopName": "squiffy.desktop",
+  "build": {
+    "appId": "com.squiffystory.desktop",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "!dist/**/*.map"
+    ],
+    "extraResources": [
+      {
+        "from": "resources/app-static",
+        "to": "app-static"
+      },
+      {
+        "from": "resources/icon.png",
+        "to": "icon.png"
+      }
+    ],
+    "fileAssociations": [
+      {
+        "ext": "squiffy",
+        "name": "Squiffy story",
+        "description": "Squiffy story",
+        "mimeType": "text/x-squiffy",
+        "role": "Editor"
+      }
+    ],
+    "afterSign": "scripts/adhoc-sign.cjs",
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64"
+          ]
+        }
+      ]
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "linux": {
+      "icon": "build/icons",
+      "category": "Development",
+      "executableArgs": [
+        "--no-sandbox"
+      ],
+      "syncDesktopName": true,
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ]
+    }
   }
 }

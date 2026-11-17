@@ -21,6 +21,12 @@ function staticRoot(): string {
     return app.isPackaged ? nodePath.join(process.resourcesPath, "app-static") : nodePath.resolve(app.getAppPath(), "../app/build");
 }
 
+// The app's icon as a PNG, for the window on Linux (elsewhere it comes from the app bundle) and
+// the About panel. scripts/dist.mjs puts the right channel's in the resources.
+function iconPath(): string {
+    return app.isPackaged ? nodePath.join(process.resourcesPath, "icon.png") : nodePath.resolve(app.getAppPath(), "build/icons/512x512.png");
+}
+
 registerAppScheme();
 
 if (!app.requestSingleInstanceLock()) {
@@ -46,6 +52,13 @@ app.on("open-file", (event, path) => {
 async function start() {
     await app.whenReady();
     if (!devServer) handleAppScheme(staticRoot());
+    app.setAboutPanelOptions({
+        applicationName: app.getName(),
+        applicationVersion: app.getVersion(),
+        copyright: "MIT License",
+        website: "https://squiffystory.com",
+        iconPath: iconPath(),
+    });
 
     const projectFs = registerProjectFsHandlers({
         ipcMain,
@@ -88,8 +101,9 @@ function createWindow(route: string) {
         ...state.bounds,
         minWidth: 480,
         minHeight: 360,
-        title: "Squiffy",
+        title: app.getName(),
         show: false,
+        ...(process.platform === "linux" ? { icon: iconPath() } : {}),
         webPreferences: {
             preload: nodePath.join(here, "preload.cjs"),
             contextIsolation: true,
