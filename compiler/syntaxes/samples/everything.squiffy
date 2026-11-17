@@ -40,6 +40,7 @@ No key.
 {{else}}
 {{random (array "red" "green") set="colour"}}
 {{/if}}
+{{set "gold" gold + price * 2}} costs {{= price - discount}}, {{inc "my-count" -1}}
 {{#animate "typewriter" interval=30}}Typing...{{/animate}}
 {{! a comment }}
 {{!-- a longer comment --}}

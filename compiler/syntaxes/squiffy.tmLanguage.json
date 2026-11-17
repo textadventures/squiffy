@@ -720,8 +720,8 @@
           ]
         },
         {
-          "comment": "{{helper args}}, or {{attribute}} on its own",
-          "begin": "(\\{\\{\\{?~?)\\s*(?:([\\w.-]+)(?=\\s)|([\\w.-]+)(?=\\s*~?\\}))?",
+          "comment": "{{helper args}}, {{attribute}} on its own, or {{= expression}}",
+          "begin": "(\\{\\{\\{?~?)\\s*(?:([\\w.-]+)(?=\\s)|([\\w.-]+)(?=\\s*~?\\})|(=))?",
           "beginCaptures": {
             "1": {
               "name": "support.constant.handlebars.squiffy punctuation.section.embedded.begin.handlebars.squiffy"
@@ -731,6 +731,9 @@
             },
             "3": {
               "name": "variable.parameter.attribute.handlebars.squiffy"
+            },
+            "4": {
+              "name": "keyword.operator.display.handlebars.squiffy"
             }
           },
           "end": "~?\\}\\}\\}?",
@@ -797,6 +800,11 @@
         {
           "match": "!=|>=|<=|=(?!=)|>|<",
           "name": "keyword.operator.comparison.handlebars.squiffy"
+        },
+        {
+          "comment": "- and / are operators only at the start of a word: a-b is an attribute name and a/b a path",
+          "match": "[+*%]|(?<![\\w.\\]-])[-/]",
+          "name": "keyword.operator.arithmetic.handlebars.squiffy"
         },
         {
           "match": "([\\w-]+)(=)",

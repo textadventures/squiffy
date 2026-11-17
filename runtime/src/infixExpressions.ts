@@ -1,10 +1,19 @@
-// Rewrites infix conditions in {{#if}}, {{#unless}}, {{else if}} and {{else unless}}
-// into the equivalent prefix helper calls, before the text reaches Handlebars. e.g.
-//   {{#if score > 100 and has_key}}  ->  {{#if (and (gt score 100) has_key)}}
+// Rewrites infix expressions into the equivalent prefix helper calls, before the text reaches
+// Handlebars. They're accepted in:
+//   conditions:  {{#if score > 100 and has_key}}  ->  {{#if (and (gt score 100) has_key)}}
+//                (also {{#unless}}, {{else if}} and {{else unless}})
+//   values:      {{set "gold" gold + price * 2}}  ->  {{set "gold" (add gold (mul price 2))}}
+//                (also {{inc}} and {{dec}})
+//   display:     {{= price * 2}}                  ->  {{mul price 2}}
 //
-// Precedence, from tightest to loosest: comparisons, not/!, and/&&, or/||. So "not" applies to
-// a whole comparison, as it reads in English: not gender = "male" means not (gender = "male").
-// Conditions that don't use any infix operator are passed through unchanged.
+// Precedence, from tightest to loosest: unary minus, * / %, + -, comparisons, not/!, and/&&,
+// or/||. So "not" applies to a whole comparison, as it reads in English: not gender = "male"
+// means not (gender = "male").
+// Expressions that don't use any infix operator are passed through unchanged (except {{= }},
+// which isn't valid Handlebars, so it's always rewritten).
+//
+// "-" and "/" can appear inside Handlebars names and paths (my-score, ../score), so they're only
+// operators at the start of a token: a - b and a -b subtract, but a-b is the attribute "a-b".
 
 type TokenType = "op" | "(" | ")" | "value" | "ident";
 
@@ -27,13 +36,24 @@ const comparisonHelpers: Record<string, string> = {
     "<=": "lte",
 };
 
-const symbolicOps = ["==", "!=", ">=", "<=", "&&", "||", "=", ">", "<", "!"];
+const arithmeticHelpers: Record<string, string> = {
+    "+": "add",
+    "-": "sub",
+    "*": "mul",
+    "/": "div",
+    "%": "mod",
+};
+
+const symbolicOps = ["==", "!=", ">=", "<=", "&&", "||", "=", ">", "<", "!", "+", "*", "%", "-", "/"];
 const keywordOps = ["and", "or", "not"];
 const literals = ["true", "false", "null", "undefined"];
 
 // Characters that end an identifier/path. "[" starts a Handlebars literal segment,
 // e.g. [my attribute], which may contain any of these.
-const identTerminators = new Set([..." \t\r\n!\"'()<>=&|{}~"]);
+// "-" and "/" aren't here: see above.
+const identTerminators = new Set([..." \t\r\n!\"'()<>=&|{}~+*%"]);
+
+const numberPattern = /^-?\d+(\.\d+)?$/;
 
 class ExpressionError extends Error {}
 
@@ -64,7 +84,9 @@ function tokenize(expr: string): Token[] {
             i = j + 1;
             continue;
         }
-        const op = symbolicOps.find(o => expr.startsWith(o, i));
+        // A "-" before a digit starts a negative number, as before (the parser treats
+        // a -1 as a - 1 where it needs an operator)
+        const op = symbolicOps.find(o => expr.startsWith(o, i) && !(o === "-" && /\d/.test(expr[i + 1] ?? "")));
         if (op) {
             tokens.push({ type: "op", text: op });
             i += op.length;
@@ -87,7 +109,7 @@ function tokenize(expr: string): Token[] {
         const word = expr.slice(i, j);
         if (keywordOps.includes(word)) {
             tokens.push({ type: "op", text: word });
-        } else if (literals.includes(word) || /^-?\d+(\.\d+)?$/.test(word)) {
+        } else if (literals.includes(word) || numberPattern.test(word)) {
             tokens.push({ type: "value", text: word });
         } else {
             tokens.push({ type: "ident", text: word });
@@ -121,6 +143,28 @@ class Parser {
 
     private describe(token: Token | undefined) {
         return token ? `'${token.text}'` : "end of expression";
+    }
+
+    // A value: an expression with nothing after it
+    parseExpression(): Node {
+        const result = this.parseOr();
+        if (this.peek()) {
+            throw new ExpressionError(`unexpected ${this.describe(this.peek())}`);
+        }
+        return result;
+    }
+
+    // Arguments to a helper: `count` plain values (e.g. the attribute name), then an expression
+    parseArguments(count: number): Node[] {
+        const result: Node[] = [];
+        for (let i = 0; i < count; i++) {
+            result.push(this.parsePrimary());
+        }
+        if (!this.peek()) {
+            throw new ExpressionError("expected a value");
+        }
+        result.push(this.parseExpression());
+        return result;
     }
 
     // Top level: an expression, optionally followed by hash arguments (e.g. includeZero=true)
@@ -176,7 +220,7 @@ class Parser {
     }
 
     private parseComparison(): Node {
-        const left = this.parsePrimary();
+        const left = this.parseAdditive();
         const opToken = this.peek();
         if (opToken?.type !== "op" || !(opToken.text in comparisonHelpers)) {
             return left;
@@ -185,13 +229,56 @@ class Parser {
         if (!this.peek()) {
             throw new ExpressionError(`expected a value after '${opToken.text}'`);
         }
-        const right = this.parsePrimary();
+        const right = this.parseAdditive();
         const following = this.peek();
         if (following?.type === "op" && following.text in comparisonHelpers) {
             throw new ExpressionError(`comparisons can't be chained (at '${following.text}'), use "and" to combine them`);
         }
         this.usedInfix = true;
         return { kind: "call", name: comparisonHelpers[opToken.text], args: [left, right] };
+    }
+
+    private parseAdditive(): Node {
+        return this.parseArithmetic(["+", "-"], () => this.parseMultiplicative());
+    }
+
+    private parseMultiplicative(): Node {
+        return this.parseArithmetic(["*", "/", "%"], () => this.parseUnary());
+    }
+
+    // Left-associative, so a - b - c is (a - b) - c
+    private parseArithmetic(ops: string[], parseOperand: () => Node): Node {
+        let left = parseOperand();
+        for (;;) {
+            let op: string;
+            const token = this.peek();
+            if (this.isOp(token, ...ops)) {
+                op = this.next().text;
+                if (!this.peek()) {
+                    throw new ExpressionError(`expected a value after '${op}'`);
+                }
+            } else if (ops.includes("-") && token?.type === "value" && token.text.startsWith("-") && numberPattern.test(token.text)) {
+                // a -1 means a - 1. Split the negative number into the operator and the number.
+                op = "-";
+                this.tokens[this.pos] = { type: "value", text: token.text.slice(1) };
+            } else {
+                return left;
+            }
+            this.usedInfix = true;
+            left = { kind: "call", name: arithmeticHelpers[op], args: [left, parseOperand()] };
+        }
+    }
+
+    private parseUnary(): Node {
+        if (this.isOp(this.peek(), "-")) {
+            this.next();
+            if (!this.peek()) {
+                throw new ExpressionError("expected a value after '-'");
+            }
+            this.usedInfix = true;
+            return { kind: "call", name: "sub", args: [{ kind: "raw", text: "0" }, this.parseUnary()] };
+        }
+        return this.parsePrimary();
     }
 
     private parsePrimary(): Node {
@@ -247,34 +334,69 @@ function emit(node: Node): string {
     return `(${node.name} ${node.args.map(emit).join(" ")})`;
 }
 
-// Rewrites a single condition. Returns null if it doesn't use infix syntax.
-export function rewriteInfixCondition(condition: string): string | null {
-    let tokens: Token[];
+type Mode = "condition" | "arguments" | "display";
+
+// Parses `text` and returns the rewritten nodes, or null if it should be left alone: it
+// doesn't use infix syntax, or it can't be parsed and has no operators (which leaves malformed
+// prefix syntax for Handlebars to report).
+function rewrite(text: string, mode: Mode, label: string): Node[] | null {
+    // Errors are thrown after the try/catch blocks, as new errors with the expression in the message
+    let error: ExpressionError | null = null;
+    let tokens: Token[] = [];
     try {
-        tokens = tokenize(condition);
-    } catch {
-        // Leave anything we can't tokenize for Handlebars to report
-        return null;
+        tokens = tokenize(text);
+    } catch (e) {
+        // Leave anything we can't tokenize for Handlebars to report, except {{= }}
+        if (mode !== "display" || !(e instanceof ExpressionError)) return null;
+        error = e;
     }
     const hasOperators = tokens.some(t => t.type === "op");
     const parser = new Parser(tokens);
-    let nodes: Node[];
-    let error: ExpressionError | null = null;
-    try {
-        nodes = parser.parseCondition();
-    } catch (e) {
-        if (!hasOperators || !(e instanceof ExpressionError)) return null;
-        error = e;
-        nodes = [];
+    let nodes: Node[] = [];
+    if (!error) {
+        try {
+            nodes = mode === "condition" ? parser.parseCondition()
+                : mode === "arguments" ? parser.parseArguments(1)
+                : [parser.parseExpression()];
+        } catch (e) {
+            if (!(e instanceof ExpressionError) || (!hasOperators && mode !== "display")) return null;
+            error = e;
+        }
     }
     if (error) {
-        throw new Error(`Invalid condition "${condition.trim()}": ${error.message}`);
+        throw new Error(`Invalid ${label} "${text.trim()}": ${error.message}`);
     }
-    if (!parser.usedInfix) return null;
-    return nodes.map(emit).join(" ");
+    if (!parser.usedInfix && mode !== "display") return null;
+    return nodes;
 }
 
-const blockStart = /(\\*)\{\{(~?\s*)(#if|#unless|else\s+if|else\s+unless)(?=[\s(!])/g;
+// Rewrites a single condition. Returns null if it doesn't use infix syntax.
+export function rewriteInfixCondition(condition: string): string | null {
+    const nodes = rewrite(condition, "condition", "condition");
+    return nodes && nodes.map(emit).join(" ");
+}
+
+// Rewrites the arguments to {{set}}, {{inc}} or {{dec}}: an attribute name, then an expression.
+// Returns null if the expression doesn't use infix syntax.
+export function rewriteInfixArguments(args: string): string | null {
+    const nodes = rewrite(args, "arguments", "expression");
+    return nodes && nodes.map(emit).join(" ");
+}
+
+// Rewrites the expression in {{= expression}} into the contents of a mustache tag, i.e. a
+// helper call without the outer parentheses, or an attribute name.
+export function rewriteDisplayExpression(expression: string): string {
+    const node = rewrite(expression, "display", "expression")![0];
+    if (node.kind === "call") {
+        return `${node.name} ${node.args.map(emit).join(" ")}`;
+    }
+    if (literals.includes(node.text) || numberPattern.test(node.text) || /^["']/.test(node.text)) {
+        throw new Error(`Invalid expression "${expression.trim()}": expected an attribute or a calculation`);
+    }
+    return node.text;
+}
+
+const tagStart = /(\\*)\{\{(~?\s*)(?:(#if|#unless|else\s+if|else\s+unless)(?=[\s(!])|(set|inc|dec)(?=\s)|(=))/g;
 
 // Finds the end of a mustache tag starting at `from`, skipping over quoted strings.
 // Returns the index of the closing "}}" (or "~}}"), or -1.
@@ -301,9 +423,9 @@ export function rewriteInfixExpressions(text: string): string {
 
     let result = "";
     let last = 0;
-    blockStart.lastIndex = 0;
+    tagStart.lastIndex = 0;
     let match: RegExpExecArray | null;
-    while ((match = blockStart.exec(text)) !== null) {
+    while ((match = tagStart.exec(text)) !== null) {
         // An odd number of backslashes escapes the mustache
         if (match[1].length % 2 === 1) continue;
 
@@ -311,13 +433,20 @@ export function rewriteInfixExpressions(text: string): string {
         const argEnd = findTagEnd(text, argStart);
         if (argEnd === -1) break;
 
-        const condition = text.slice(argStart, argEnd);
-        const rewritten = rewriteInfixCondition(condition);
-        if (rewritten !== null) {
-            result += text.slice(last, argStart) + " " + rewritten;
+        const args = text.slice(argStart, argEnd);
+        if (match[5]) {
+            // {{= expression}}: replace the "=" too
+            const tagOpen = match.index + match[1].length;
+            result += text.slice(last, tagOpen) + "{{" + match[2] + rewriteDisplayExpression(args);
             last = argEnd;
+        } else {
+            const rewritten = match[3] ? rewriteInfixCondition(args) : rewriteInfixArguments(args);
+            if (rewritten !== null) {
+                result += text.slice(last, argStart) + " " + rewritten;
+                last = argEnd;
+            }
         }
-        blockStart.lastIndex = argEnd;
+        tagStart.lastIndex = argEnd;
     }
     return result + text.slice(last);
 }

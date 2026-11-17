@@ -1,5 +1,5 @@
 import { expect, test, describe } from "vitest";
-import { rewriteInfixCondition, rewriteInfixExpressions } from "./infixExpressions.js";
+import { rewriteDisplayExpression, rewriteInfixArguments, rewriteInfixCondition, rewriteInfixExpressions } from "./infixExpressions.js";
 
 describe("rewriteInfixCondition", () => {
     test.each([
@@ -123,6 +123,83 @@ describe("rewriteInfixCondition", () => {
         expect(() => rewriteInfixCondition(input)).toThrow(message);
     });
 
+    test.each([
+        ["a + b > 1", "(gt (add a b) 1)"],
+        ["a - b > 1", "(gt (sub a b) 1)"],
+        ["a * b > 1", "(gt (mul a b) 1)"],
+        ["a / b > 1", "(gt (div a b) 1)"],
+        ["a % b = 1", "(eq (mod a b) 1)"],
+        ["-a < 0", "(lt (sub 0 a) 0)"],
+        ["- a < 0", "(lt (sub 0 a) 0)"],
+        ["gold >= price * 2", "(gte gold (mul price 2))"],
+    ])("arithmetic operator: %s", (input, expected) => {
+        expect(rewriteInfixCondition(input)).toBe(expected);
+    });
+
+    test.each([
+        ["a + b * c = 1", "(eq (add a (mul b c)) 1)"],
+        ["a * b + c = 1", "(eq (add (mul a b) c) 1)"],
+        ["a - b - c = 1", "(eq (sub (sub a b) c) 1)"],
+        ["a / b / c = 1", "(eq (div (div a b) c) 1)"],
+        ["a % b * c = 1", "(eq (mul (mod a b) c) 1)"],
+        ["(a + b) * c = 1", "(eq (mul (add a b) c) 1)"],
+        ["a * (b + c) = 1", "(eq (mul a (add b c)) 1)"],
+        ["-a * b = 1", "(eq (mul (sub 0 a) b) 1)"],
+        ["-(a + b) = 1", "(eq (sub 0 (add a b)) 1)"],
+        ["a - -b = 1", "(eq (sub a (sub 0 b)) 1)"],
+        ["a + b > c and not d - 1 = 0", "(and (gt (add a b) c) (not (eq (sub d 1) 0)))"],
+        ["a > b + 1 or c", "(or (gt a (add b 1)) c)"],
+        ["(length \"items\") * 2 > 3", "(gt (mul (length \"items\") 2) 3)"],
+    ])("arithmetic precedence: %s", (input, expected) => {
+        expect(rewriteInfixCondition(input)).toBe(expected);
+    });
+
+    test.each([
+        ["a+b>1", "(gt (add a b) 1)"],
+        ["a*b>1", "(gt (mul a b) 1)"],
+        ["a%b>1", "(gt (mod a b) 1)"],
+        ["a -1 > 0", "(gt (sub a 1) 0)"],
+        ["a - 1 > 0", "(gt (sub a 1) 0)"],
+        ["a -b > 0", "(gt (sub a b) 0)"],
+        ["a /b > 0", "(gt (div a b) 0)"],
+        ["a * -1 > 0", "(gt (mul a -1) 0)"],
+        ["a > -1", "(gt a -1)"],
+        ["1.5 * a > 0", "(gt (mul 1.5 a) 0)"],
+    ])("arithmetic spacing: %s", (input, expected) => {
+        expect(rewriteInfixCondition(input)).toBe(expected);
+    });
+
+    test.each([
+        ["my-score > 1", "(gt my-score 1)"],
+        ["a-b > 1", "(gt a-b 1)"],
+        ["../score > 1", "(gt ../score 1)"],
+        ["player/score > 1", "(gt player/score 1)"],
+        ["[gold + silver] > 1", "(gt [gold + silver] 1)"],
+        ["name = \"a + b\"", "(eq name \"a + b\")"],
+    ])("- and / inside names and paths: %s", (input, expected) => {
+        expect(rewriteInfixCondition(input)).toBe(expected);
+    });
+
+    test.each([
+        "my-score",
+        "(gt x -1)",
+        "(foo a -1)",
+        "(x -1)",
+    ])("passes through prefix syntax with -: %s", (input) => {
+        expect(rewriteInfixCondition(input)).toBeNull();
+    });
+
+    test.each([
+        ["a +", "expected a value after '+'"],
+        ["a * > 1", "expected a value before '>'"],
+        ["* a", "expected a value before '*'"],
+        ["a + + b", "expected a value before '+'"],
+        ["-", "expected a value after '-'"],
+        ["(a + b", "expected ')' but found end of expression"],
+    ])("arithmetic error: %s", (input, message) => {
+        expect(() => rewriteInfixCondition(input)).toThrow(message);
+    });
+
     test("error message includes the condition", () => {
         expect(() => rewriteInfixCondition(" score > ")).toThrow("Invalid condition \"score >\": expected a value after '>'");
     });
@@ -131,6 +208,65 @@ describe("rewriteInfixCondition", () => {
         expect(rewriteInfixCondition("a b")).toBeNull();
         expect(rewriteInfixCondition("(eq a")).toBeNull();
         expect(rewriteInfixCondition("\"unterminated")).toBeNull();
+    });
+});
+
+describe("rewriteInfixArguments", () => {
+    test.each([
+        ["\"gold\" gold + price * 2", "\"gold\" (add gold (mul price 2))"],
+        ["\"gold\" (gold + price) * 2", "\"gold\" (mul (add gold price) 2)"],
+        ["\"name\" name + \" the Brave\"", "\"name\" (add name \" the Brave\")"],
+        ["\"x\" -y", "\"x\" (sub 0 y)"],
+        ["\"x\" a > b", "\"x\" (gt a b)"],
+        ["\"x\" a and b", "\"x\" (and a b)"],
+        ["\"x\" (length \"items\") - 1", "\"x\" (sub (length \"items\") 1)"],
+    ])("%s", (input, expected) => {
+        expect(rewriteInfixArguments(input)).toBe(expected);
+    });
+
+    test.each([
+        "\"score\" 100",
+        "\"score\" -1",
+        "\"name\" \"Alice\"",
+        "\"items\" (array \"a\" \"b\")",
+        "\"x\" (add a b)",
+        "\"counter\"",
+        "\"x\" my-score",
+    ])("passes through prefix syntax: %s", (input) => {
+        expect(rewriteInfixArguments(input)).toBeNull();
+    });
+
+    test.each([
+        ["\"gold\" gold +", "Invalid expression \"\"gold\" gold +\": expected a value after '+'"],
+        ["\"gold\" gold + 1 x", "unexpected 'x'"],
+        ["\"gold\" + 1", "expected a value before '+'"],
+    ])("error: %s", (input, message) => {
+        expect(() => rewriteInfixArguments(input)).toThrow(message);
+    });
+});
+
+describe("rewriteDisplayExpression", () => {
+    test.each([
+        ["price * 2", "mul price 2"],
+        ["gold + price * 2", "add gold (mul price 2)"],
+        ["a > b", "gt a b"],
+        ["gold", "gold"],
+        [" (gold) ", "gold"],
+        ["(length \"items\")", "length \"items\""],
+        ["-gold", "sub 0 gold"],
+    ])("%s", (input, expected) => {
+        expect(rewriteDisplayExpression(input)).toBe(expected);
+    });
+
+    test.each([
+        ["", "expected a value"],
+        ["a +", "expected a value after '+'"],
+        ["a b", "unexpected 'b'"],
+        ["5", "expected an attribute or a calculation"],
+        ["\"text\"", "expected an attribute or a calculation"],
+        ["\"unterminated", "unterminated string"],
+    ])("error: %s", (input, message) => {
+        expect(() => rewriteDisplayExpression(input)).toThrow(message);
     });
 });
 
@@ -183,5 +319,29 @@ describe("rewriteInfixExpressions", () => {
 
     test("throws for malformed infix", () => {
         expect(() => rewriteInfixExpressions("{{#if score >}}x{{/if}}")).toThrow("Invalid condition \"score >\"");
+    });
+
+    test("{{set}}, {{inc}} and {{dec}}", () => {
+        expect(rewriteInfixExpressions("{{set \"gold\" gold + price * 2}}{{inc \"gold\" price * 2}}{{dec \"hp\" dmg - armour}}"))
+            .toBe("{{set \"gold\" (add gold (mul price 2))}}{{inc \"gold\" (mul price 2)}}{{dec \"hp\" (sub dmg armour)}}");
+    });
+
+    test("{{set}} with prefix syntax is untouched", () => {
+        const text = "{{set \"score\" 100}}{{inc \"x\"}}{{set \"items\" (array \"a\")}}{{settings}}{{inc}}";
+        expect(rewriteInfixExpressions(text)).toBe(text);
+    });
+
+    test("{{= expression}}", () => {
+        expect(rewriteInfixExpressions("Cost: {{= price * 2}}, {{~= a + b ~}} and {{= gold}}."))
+            .toBe("Cost: {{mul price 2}}, {{~add a b~}} and {{gold}}.");
+    });
+
+    test("escaped {{= }} is untouched", () => {
+        expect(rewriteInfixExpressions("\\{{= a + b}}")).toBe("\\{{= a + b}}");
+    });
+
+    test("throws for malformed {{set}} and {{= }}", () => {
+        expect(() => rewriteInfixExpressions("{{set \"x\" a +}}")).toThrow("Invalid expression \"\"x\" a +\"");
+        expect(() => rewriteInfixExpressions("{{= a +}}")).toThrow("Invalid expression \"a +\"");
     });
 });

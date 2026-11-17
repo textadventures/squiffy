@@ -37,12 +37,36 @@ Squiffy processes all text through Handlebars, which means you can use:
 | `and` or `&&` | both are true | `and` |
 | `or` or `\|\|` | either is true | `or` |
 | `not` or `!` | is not true | `not` |
+| `+` | add (or join text) | `add` |
+| `-` | subtract | `sub` |
+| `*` | multiply | `mul` |
+| `/` | divide | `div` |
+| `%` | remainder after dividing | `mod` |
 
 Values can be attribute names, numbers, quoted strings, `true`/`false`, or helper calls in parentheses such as `(seen "intro")` or `(length "inventory")`. For attribute names containing spaces, use square brackets: `{{#if [player name] = "Bob"}}`.
 
-Comparisons are worked out first, then `not`, then `and`, then `or`. So `not gender = "male"` means `not (gender = "male")`, and `a or b and c` means `a or (b and c)`. Use parentheses to group things differently, e.g. `(a or b) and c`.
+Calculations are worked out first (`*`, `/` and `%` before `+` and `-`), then comparisons, then `not`, then `and`, then `or`. So `gold >= price * 2 + 1` means `gold >= ((price * 2) + 1)`, `not gender = "male"` means `not (gender = "male")`, and `a or b and c` means `a or (b and c)`. Use parentheses to group things differently, e.g. `(a or b) and c`. A `-` in front of a value makes it negative, e.g. `-score`.
+
+Put spaces around `-` and `/` when they're operators. Without them they're part of a name: `my-score` is an attribute called "my-score", and `player/score` is a Handlebars path, but `my - score` subtracts.
 
 Each condition is converted to the equivalent helpers before it runs, so `{{#if score > 100 and has_key}}` is the same as `{{#if (and (gt score 100) has_key)}}`. You can still write conditions in that form if you prefer, and you'll need it when using the comparison or logic helpers anywhere other than a condition, as described below.
+
+### Calculations
+
+You can also use these operators to work out a value to store or display:
+
+```squiffy
+{{set "gold" gold + price * 2}}
+{{inc "score" bonus * 10}}
+{{dec "health" damage - armour}}
+That costs {{= price * 2}} gold.
+```
+
+`{{set}}`, `{{inc}}` and `{{dec}}` accept an expression after the attribute name. `{{= expression}}` displays the result of one. As with conditions, they're converted to helpers before they run: `{{set "gold" gold + price * 2}}` is the same as `{{set "gold" (add gold (mul price 2))}}`, and `{{= price * 2}}` is the same as `{{mul price 2}}`.
+
+`+` adds numbers, including text that holds a number, such as an attribute set to `"5"` from a text input. If either value is other text, it joins them instead, so `name + " the Brave"` gives "Bob the Brave". The other operators only work with numbers. An attribute that hasn't been set counts as `0`, or as empty text when joining.
+
+Dividing by zero, or using `-`, `*`, `/` or `%` on something that isn't a number, shows an error in the story.
 
 ### Understanding parentheses vs double brackets
 
@@ -111,10 +135,10 @@ See [Attributes](/attributes/) for detailed documentation and examples.
 
 | Helper | Parameters | Description | Example |
 |--------|------------|-------------|---------|
-| `{{set}}` | `"attribute" value` | Set attribute to a value | `{{set "score" 100}}` |
+| `{{set}}` | `"attribute" value` | Set attribute to a value, which can be a [calculation](#calculations) | `{{set "score" 100}}` or `{{set "score" score * 2}}` |
 | `{{unset}}` | `"attribute"` | Set attribute to false | `{{unset "has_key"}}` |
-| `{{inc}}` | `"attribute" [amount]` | Increment by 1 or specified amount | `{{inc "score"}}` or `{{inc "score" 10}}` |
-| `{{dec}}` | `"attribute" [amount]` | Decrement by 1 or specified amount | `{{dec "health"}}` or `{{dec "health" 5}}` |
+| `{{inc}}` | `"attribute" [amount]` | Increment by 1 or specified amount | `{{inc "score"}}` or `{{inc "score" bonus * 10}}` |
+| `{{dec}}` | `"attribute" [amount]` | Decrement by 1 or specified amount | `{{dec "health"}}` or `{{dec "health" damage - armour}}` |
 
 <Aside>
 These helpers execute at render time and respect `{{#if}}` conditions, unlike `@set`, `@inc`, `@dec`, and `@unset` directives which always execute when a section/passage loads.
@@ -142,6 +166,18 @@ See [Attributes](/attributes/#logic-helpers) for examples. In `{{#if}}` and `{{#
 | `{{and ...}}` | Returns true if all arguments are truthy | `a and b` | `{{#if has_key and door_locked}}Can unlock{{/if}}` |
 | `{{or ...}}` | Returns true if any argument is truthy | `a or b` | `{{#if is_admin or is_moderator}}Has powers{{/if}}` |
 | `{{not value}}` | Negates a boolean value | `not a` | `{{#if not game_over}}Continue{{/if}}` |
+
+## Maths helpers
+
+You can usually use the operator instead (see [Calculations](#calculations)). Each helper takes exactly two values.
+
+| Helper | Description | Operator | Example |
+|--------|-------------|----------|---------|
+| `{{add a b}}` | Adds two numbers, or joins them if either is other text | `a + b` | `{{set "total" (add price tax)}}` |
+| `{{sub a b}}` | Subtracts b from a | `a - b` | `{{set "left" (sub total spent)}}` |
+| `{{mul a b}}` | Multiplies a by b | `a * b` | `{{set "gold" (mul gold 2)}}` |
+| `{{div a b}}` | Divides a by b | `a / b` | `{{set "share" (div gold players)}}` |
+| `{{mod a b}}` | The remainder after dividing a by b | `a % b` | `{{#if (mod turn 2) = 0}}Even turn{{/if}}` |
 
 ## Navigation helpers
 

@@ -145,9 +145,10 @@ The wizard eyes you suspiciously.
 The available helpers are:
 
 - `{{set "attribute" value}}` — set an attribute to a value
+- `{{set "attribute" a + b * 2}}` — set an attribute to the result of a calculation (see [Calculating values](#calculating-values))
 - `{{unset "attribute"}}` — set an attribute to false
 - `{{inc "attribute"}}` — increase a number attribute by 1
-- `{{inc "attribute" 5}}` — increase by a specific amount
+- `{{inc "attribute" 5}}` — increase by a specific amount, which can also be a calculation
 - `{{dec "attribute"}}` — decrease by 1
 - `{{dec "attribute" 3}}` — decrease by a specific amount
 
@@ -175,6 +176,23 @@ Reputation: {{reputation}}
 
 [Ignore them]:
 You walk past. Reputation: {{reputation}}"></Sample>
+
+### Calculating values
+
+`{{set}}`, `{{inc}}` and `{{dec}}` can work out a value using `+`, `-`, `*`, `/` and `%`, and `{{= ...}}` displays the result of a calculation:
+
+<Sample script="@set gold = 10
+@set price = 3
+
+You have {{gold}} gold. A sword costs {{price}}, and a shield costs {{= price * 2}}.
+
+[Sell your old armour]
+
+[Sell your old armour]:
+{{set &quot;gold&quot; gold + price * 2}}
+You sell it for twice the price of a sword. You now have {{gold}} gold."></Sample>
+
+`+` joins text too, so `{{set "title" name + " the Brave"}}` works. See [Calculations](/helpers-reference/#calculations) in the helpers reference for the details, including how `-` and `/` need spaces around them.
 
 ## Reading attributes
 
@@ -248,6 +266,8 @@ For number values, you can use:
 - `a >= b` — greater than or equal
 - `a < b` — less than
 - `a <= b` — less than or equal
+
+You can calculate the values you compare, e.g. `{{#if gold >= price * 2}}`. See [Calculating values](#calculating-values).
 
 <Sample script="@set score = 75
 
