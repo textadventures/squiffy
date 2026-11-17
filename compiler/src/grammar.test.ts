@@ -98,4 +98,18 @@ describe("TextMate grammar", () => {
         expect(scopeOf("{{random (array \"a\")}}", 0, "array")).toContain("support.function.helper.handlebars.squiffy");
         expect(scopeOf("{{! note }}", 0, " note ")).toContain("comment.block.handlebars.squiffy");
     });
+
+    test("arithmetic", () => {
+        const arithmetic = "keyword.operator.arithmetic.handlebars.squiffy";
+        expect(scopeOf("{{set \"x\" a + b}}", 0, "+")).toContain(arithmetic);
+        expect(scopeOf("{{#if a * 2 > 1}}x{{/if}}", 0, "*")).toContain(arithmetic);
+        expect(scopeOf("{{set \"x\" a % b}}", 0, "%")).toContain(arithmetic);
+        expect(scopeOf("{{set \"x\" a - b}}", 0, "-")).toContain(arithmetic);
+        expect(scopeOf("{{set \"x\" a / b}}", 0, "/")).toContain(arithmetic);
+        expect(scopeOf("{{set \"x\" -b}}", 0, "-")).toContain(arithmetic);
+        expect(scopeOf("{{set \"x\" my-score}}", 0, "my-score")).toContain("variable.parameter.attribute.handlebars.squiffy");
+        expect(scopeOf("{{set \"x\" ../score}}", 0, "/")).not.toContain(arithmetic);
+        expect(scopeOf("{{set \"x\" a -1}}", 0, "-1")).toContain("constant.numeric.handlebars.squiffy");
+        expect(scopeOf("{{= a * 2}}", 0, "=")).toContain("keyword.operator.display.handlebars.squiffy");
+    });
 });

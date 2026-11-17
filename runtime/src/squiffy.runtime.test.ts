@@ -1771,6 +1771,59 @@ Go to: [[whitespace]]
     expect(section).not.toBeNull();
 });
 
+// Maths helpers and arithmetic in infix expressions
+test.each([
+    ["{{set \"x\" (add 2 3)}}", 5],
+    ["{{set \"x\" (sub 2 3)}}", -1],
+    ["{{set \"x\" (mul 2 3)}}", 6],
+    ["{{set \"x\" (div 3 2)}}", 1.5],
+    ["{{set \"x\" (mod 7 3)}}", 1],
+    ["{{set \"x\" (add \"2\" 3)}}", 5],
+    ["{{set \"x\" (add \"Bob\" \" the Brave\")}}", "Bob the Brave"],
+    ["{{set \"x\" (add \"Bob\" 2)}}", "Bob2"],
+    ["{{set \"x\" (add unsetattr 2)}}", 2],
+    ["{{set \"x\" (mul unsetattr 2)}}", 0],
+])("maths helper: %s", async (text, expected) => {
+    const { squiffyApi } = await initScript(`[[start]]:\n${text}`);
+    expect(squiffyApi.get("x")).toBe(expected);
+});
+
+test.each([
+    ["{{= (div 1 0)}}", "division by zero"],
+    ["{{= (mod 1 0)}}", "division by zero"],
+    ["{{= (mul \"a\" 2)}}", "\"mul\" needs numbers, but was given \"a\""],
+    ["{{= (sub 1)}}", "\"sub\" needs two values, but was given 1"],
+    ["{{= (add (array 1) 2)}}", "\"add\" can't add a list"],
+])("maths helper error: %s", async (text, message) => {
+    const { element } = await initScript(`[[start]]:\n${text}`);
+    expect(element.querySelector(".squiffy-error")?.textContent).toContain(message);
+});
+
+test("arithmetic in {{set}}, {{inc}}, {{dec}} and conditions", async () => {
+    const script = `
+[[start]]:
+@set gold = 10
+@set price = 3
+@set name = Bob
+{{set "gold" gold + price * 2}}
+{{inc "count" price * 2}}
+{{dec "count" (price - 1) * 2}}
+{{set "title" name + " the Brave"}}
+{{#if gold >= price * 5 + 1}}Rich{{else}}Poor{{/if}}. Double: {{= price * 2}}.
+`;
+
+    const { squiffyApi, element } = await initScript(script);
+    expect(squiffyApi.get("gold")).toBe(16);
+    expect(squiffyApi.get("count")).toBe(2);
+    expect(squiffyApi.get("title")).toBe("Bob the Brave");
+    expect(element.textContent).toContain("Rich. Double: 6.");
+});
+
+test("Invalid arithmetic shows a template error", async () => {
+    const { element } = await initScript("[[start]]:\n{{set \"gold\" gold +}}");
+    expect(element.querySelector(".squiffy-error")?.textContent).toContain("Invalid expression");
+});
+
 // State modification helper tests
 test("{{set}} helper sets attribute value", async () => {
     const script = `

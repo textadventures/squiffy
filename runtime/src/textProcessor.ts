@@ -82,6 +82,58 @@ export class TextProcessor {
         this.handlebars.registerHelper("lt",  (a,b) => a <  b);
         this.handlebars.registerHelper("gte", (a,b) => a >= b);
         this.handlebars.registerHelper("lte", (a,b) => a <= b);
+        // Maths helpers. These are what arithmetic in infix expressions is rewritten to,
+        // e.g. {{set "gold" gold + price * 2}} -> {{set "gold" (add gold (mul price 2))}}
+        const isBlank = (v: any) => v === undefined || v === null || v === false || v === "";
+        const isNumeric = (v: any) =>
+            typeof v === "number" || isBlank(v) || (typeof v === "string" && v.trim() !== "" && !isNaN(Number(v)));
+        const toNumber = (helper: string, v: any): number => {
+            v = unwrapValue(v);
+            if (!isNumeric(v)) {
+                throw new Error(`"${helper}" needs numbers, but was given ${JSON.stringify(v)}`);
+            }
+            return isBlank(v) ? 0 : Number(v);
+        };
+        const mathsHelper = (name: string, fn: (a: number, b: number) => number) => {
+            this.handlebars.registerHelper(name, (...args) => {
+                const values = args.slice(0, -1);
+                if (values.length !== 2) {
+                    throw new Error(`"${name}" needs two values, but was given ${values.length}`);
+                }
+                return fn(toNumber(name, values[0]), toNumber(name, values[1]));
+            });
+        };
+        // "add" joins text when either value isn't a number (or a string holding one),
+        // so name + " the Brave" works, but an attribute holding "5" still adds as 5.
+        this.handlebars.registerHelper("add", (...args) => {
+            const values = args.slice(0, -1).map(unwrapValue);
+            if (values.length !== 2) {
+                throw new Error(`"add" needs two values, but was given ${values.length}`);
+            }
+            const [a, b] = values;
+            if (isNumeric(a) && isNumeric(b)) {
+                return toNumber("add", a) + toNumber("add", b);
+            }
+            const text = (v: any) => {
+                if (isBlank(v)) return "";
+                if (typeof v === "object") {
+                    throw new Error(`"add" can't add ${Array.isArray(v) ? "a list" : "an object"}`);
+                }
+                return String(v);
+            };
+            return text(a) + text(b);
+        });
+        mathsHelper("sub", (a, b) => a - b);
+        mathsHelper("mul", (a, b) => a * b);
+        mathsHelper("div", (a, b) => {
+            if (b === 0) throw new Error("division by zero");
+            return a / b;
+        });
+        mathsHelper("mod", (a, b) => {
+            if (b === 0) throw new Error("division by zero");
+            return a % b;
+        });
+
         this.handlebars.registerHelper("array", function (...args) {
             args.pop(); // remove last argument - options
             return args;

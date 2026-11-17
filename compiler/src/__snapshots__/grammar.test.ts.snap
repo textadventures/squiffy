@@ -316,6 +316,40 @@ exports[`TextMate grammar > every construct in the sample 1`] = `
 "}}" meta.embedded.expression.handlebars.squiffy support.constant.handlebars.squiffy punctuation.section.embedded.end.handlebars.squiffy
 
 "{{" meta.embedded.expression.handlebars.squiffy support.constant.handlebars.squiffy punctuation.section.embedded.begin.handlebars.squiffy
+"set" meta.embedded.expression.handlebars.squiffy support.function.helper.handlebars.squiffy
+" " meta.embedded.expression.handlebars.squiffy
+"\\"gold\\"" meta.embedded.expression.handlebars.squiffy string.quoted.double.handlebars.squiffy
+" " meta.embedded.expression.handlebars.squiffy
+"gold" meta.embedded.expression.handlebars.squiffy variable.parameter.attribute.handlebars.squiffy
+" " meta.embedded.expression.handlebars.squiffy
+"+" meta.embedded.expression.handlebars.squiffy keyword.operator.arithmetic.handlebars.squiffy
+" " meta.embedded.expression.handlebars.squiffy
+"price" meta.embedded.expression.handlebars.squiffy variable.parameter.attribute.handlebars.squiffy
+" " meta.embedded.expression.handlebars.squiffy
+"*" meta.embedded.expression.handlebars.squiffy keyword.operator.arithmetic.handlebars.squiffy
+" " meta.embedded.expression.handlebars.squiffy
+"2" meta.embedded.expression.handlebars.squiffy constant.numeric.handlebars.squiffy
+"}}" meta.embedded.expression.handlebars.squiffy support.constant.handlebars.squiffy punctuation.section.embedded.end.handlebars.squiffy
+" costs " 
+"{{" meta.embedded.expression.handlebars.squiffy support.constant.handlebars.squiffy punctuation.section.embedded.begin.handlebars.squiffy
+"=" meta.embedded.expression.handlebars.squiffy keyword.operator.display.handlebars.squiffy
+" " meta.embedded.expression.handlebars.squiffy
+"price" meta.embedded.expression.handlebars.squiffy variable.parameter.attribute.handlebars.squiffy
+" " meta.embedded.expression.handlebars.squiffy
+"-" meta.embedded.expression.handlebars.squiffy keyword.operator.arithmetic.handlebars.squiffy
+" " meta.embedded.expression.handlebars.squiffy
+"discount" meta.embedded.expression.handlebars.squiffy variable.parameter.attribute.handlebars.squiffy
+"}}" meta.embedded.expression.handlebars.squiffy support.constant.handlebars.squiffy punctuation.section.embedded.end.handlebars.squiffy
+", " 
+"{{" meta.embedded.expression.handlebars.squiffy support.constant.handlebars.squiffy punctuation.section.embedded.begin.handlebars.squiffy
+"inc" meta.embedded.expression.handlebars.squiffy support.function.helper.handlebars.squiffy
+" " meta.embedded.expression.handlebars.squiffy
+"\\"my-count\\"" meta.embedded.expression.handlebars.squiffy string.quoted.double.handlebars.squiffy
+" " meta.embedded.expression.handlebars.squiffy
+"-1" meta.embedded.expression.handlebars.squiffy constant.numeric.handlebars.squiffy
+"}}" meta.embedded.expression.handlebars.squiffy support.constant.handlebars.squiffy punctuation.section.embedded.end.handlebars.squiffy
+
+"{{" meta.embedded.expression.handlebars.squiffy support.constant.handlebars.squiffy punctuation.section.embedded.begin.handlebars.squiffy
 "#animate" meta.embedded.expression.handlebars.squiffy keyword.control.block.handlebars.squiffy
 " " meta.embedded.expression.handlebars.squiffy
 "\\"typewriter\\"" meta.embedded.expression.handlebars.squiffy string.quoted.double.handlebars.squiffy
