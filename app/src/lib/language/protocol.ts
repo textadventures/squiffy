@@ -27,6 +27,10 @@ export interface WorkerApi extends ServiceQueries {
     // Squiffy 6's, as the 6.x editor offers when it opens one
     countV5Syntax(text: string): number;
     convertV5Syntax(text: string): V5ConversionResult;
+    // The .squiffy files that make up the story as it is now: the main file, what it @imports and,
+    // with a squiffy.json, the rest of the folder's. Complete only if the story has no errors, as
+    // the analysis stops at the first.
+    getStoryFiles(): Promise<{ files: string[]; complete: boolean }>;
     // Where a section, or a passage in it, is defined: for following the preview
     findSection(section: string, passage?: string): Promise<Location | undefined>;
     // Starts (or restarts) the service for a project

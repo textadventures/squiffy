@@ -380,6 +380,8 @@ To keep a `.squiffy` file in the folder without it being part of the story, list
 
 Paths are relative to the folder `squiffy.json` is in. `*` and `?` match within a file or folder name, and `**` across folders. Naming a folder leaves out everything in it, so `drafts` and `drafts/**` are the same. Files in `node_modules`, and in folders whose names start with a dot, are always left out.
 
+The editor also saves where you've put sections and passages on its [story map](/editor/#the-story-map) in `squiffy.json`, under `map`. Only the editor uses it.
+
 ### Building a story with a project file
 
 With the [command-line tool](/cli/#stories-in-several-files), run it in the folder without a file name, or give it the folder or the main file. Give it any other `.squiffy` file, and it builds just that file, so several separate stories can still share a folder.

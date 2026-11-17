@@ -23,11 +23,15 @@
         assetsVersion?: number;
         // A section or passage was shown because the player clicked a link (not on starting)
         onNavigated?: (section: string, passage?: string) => void;
+        // Every section or passage the story shows, from the start, for the story map's trace
+        onVisited?: (section: string, passage?: string) => void;
+        // The story was started again, from the start or a section
+        onStarted?: () => void;
         onclose: () => void;
         width?: number;
     }
 
-    let { compile, assets, assetsVersion = 0, onNavigated, onclose, width }: Props = $props();
+    let { compile, assets, assetsVersion = 0, onNavigated, onVisited, onStarted, onclose, width }: Props = $props();
 
     let iframe = $state<HTMLIFrameElement>();
     let host: PreviewHost | null = null;
@@ -82,6 +86,7 @@
                     const place = `${section}\u0000${passage ?? ""}`;
                     if (place === lastPlace) return;
                     lastPlace = place;
+                    onVisited?.(section, passage);
                     if (following) onNavigated?.(section, passage);
                 },
                 onRuntimeError: message => {
@@ -123,6 +128,7 @@
         following = false;
         lastPlace = "";
         running = true;
+        onStarted?.();
         host.setAssets({ files: await assets() });
         host.load({ js: result.js, css: result.css, scripts: result.scripts }, at ? { startAt: at } : {});
     }

@@ -26,6 +26,7 @@
     import Circle from "@lucide/svelte/icons/circle";
     import Ellipsis from "@lucide/svelte/icons/ellipsis";
     import ListTree from "@lucide/svelte/icons/list-tree";
+    import MapIcon from "@lucide/svelte/icons/map";
     import SettingsIcon from "@lucide/svelte/icons/settings";
     import BookOpen from "@lucide/svelte/icons/book-open";
     import Play from "@lucide/svelte/icons/play";
@@ -49,6 +50,9 @@
         // On a narrow screen, whether the outline is showing instead of the editor
         outlineOpen?: boolean;
         ontoggleoutline?: () => void;
+        // Whether the story map is showing
+        mapOpen?: boolean;
+        ontogglemap?: () => void;
         // Runs the story in the preview, from the start or from the section the cursor is in
         onrun?: (fromCursor: boolean) => void;
         // Opens the Assets dialog
@@ -70,7 +74,7 @@
         onplaytab?: () => void;
     }
 
-    let { outlineOpen = false, ontoggleoutline, onrun, onassets, ondownloadproject, onexport, oncommand, onadd, onsnippet, snippets = [], onabout, onplaytab }: Props = $props();
+    let { outlineOpen = false, ontoggleoutline, mapOpen = false, ontogglemap, onrun, onassets, ondownloadproject, onexport, oncommand, onadd, onsnippet, snippets = [], onabout, onplaytab }: Props = $props();
 
     const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform);
     const mod = isMac ? "⌘" : "Ctrl+";
@@ -231,6 +235,14 @@
                         {/snippet}
                     </DropdownMenu>
                 {/if}
+                <button
+                    type="button"
+                    class="toolbar-icon-btn"
+                    onclick={ontogglemap}
+                    title="Story map"
+                    aria-label="Story map"
+                    aria-pressed={mapOpen}
+                ><MapIcon size={16} /></button>
                 <!-- Run and its options as one split button: stretch both halves to the same height -->
                 <div class="flex items-stretch">
                     <button

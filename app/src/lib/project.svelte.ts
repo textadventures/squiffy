@@ -17,7 +17,7 @@ import {
 } from "@textadventures/project-fs";
 import {
     formatProjectFile, getStoryFiles, isExcluded, parseProjectFile, PROJECT_FILENAME, updateProjectFile,
-    type ProjectFile, type StoryFiles,
+    type MapPositions, type ProjectFile, type StoryFiles,
 } from "squiffy-compiler";
 import { checklistDialog, chooseDialog } from "./confirm.js";
 import { showToast } from "./toast.js";
@@ -212,7 +212,7 @@ class OpenProject {
     }
 
     // Changes squiffy.json, keeping anything else in it. Returns false if it isn't a JSON object.
-    private async updateProject(changes: { main?: string; exclude?: string[] }): Promise<boolean> {
+    private async updateProject(changes: { main?: string; exclude?: string[]; map?: MapPositions }): Promise<boolean> {
         if (this.projectText === null) return false;
         const text = updateProjectFile(this.projectText, changes);
         if (text === undefined) return false;
@@ -224,6 +224,13 @@ class OpenProject {
     async createProjectFile(main: string, exclude: string[] = []) {
         await this.writeText(PROJECT_FILENAME, formatProjectFile({ main, exclude }));
         this.setStoredMainFile(main);
+    }
+
+    // Saves where the author has put sections and passages on the story map, in squiffy.json.
+    // Returns false if there's no squiffy.json, or it can't be read.
+    async setMapPositions(map: MapPositions): Promise<boolean> {
+        if (!this.projectFile) return false;
+        return this.updateProject({ map });
     }
 
     // Leaves a .squiffy file out of the story, or puts it back, by editing squiffy.json's

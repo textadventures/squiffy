@@ -48,6 +48,18 @@ describe("parseProjectFile", () => {
     });
 });
 
+describe("story map positions", () => {
+    test("anything that isn't a position is left out, rather than being an error", () => {
+        const parsed = parseProjectFile(JSON.stringify({
+            version: 1, main: "a.squiffy",
+            map: { sections: { a: [1, 2], b: "here", c: [1], d: [1, "2"] }, passages: { a: { p: [3, 4], q: null }, b: [1, 2] } },
+        }));
+        expect(parsed.success && parsed.project.map).toEqual({ sections: { a: [1, 2] }, passages: { a: { p: [3, 4] } } });
+        const notAMap = parseProjectFile(JSON.stringify({ version: 1, main: "a.squiffy", map: "no" }));
+        expect(notAMap.success && notAMap.project.map).toBeUndefined();
+    });
+});
+
 describe("getStoryFiles", () => {
     test("every other .squiffy file, sorted by path, skipping node_modules and dot-folders", () => {
         const paths = [
@@ -94,6 +106,19 @@ describe("writing project files", () => {
         expect(JSON.parse(updateProjectFile("{ \"version\": 1, \"main\": \"a.squiffy\", \"exclude\": [\"x\"] }", { exclude: [] })!))
             .toEqual({ version: 1, main: "a.squiffy" });
         expect(updateProjectFile("{", { main: "x" })).toBeUndefined();
+    });
+
+    test("story map positions, one to a line, and removed when there are none", () => {
+        const text = "{\n  \"version\": 1,\n  \"main\": \"a.squiffy\"\n}\n";
+        const updated = updateProjectFile(text, { map: { sections: { Cave: [120, -40] }, passages: { Cave: { look: [130, 0] }, Empty: {} } } })!;
+        expect(updated).toBe("{\n  \"version\": 1,\n  \"main\": \"a.squiffy\",\n  \"map\": {\n    \"sections\": {\n      \"Cave\": [120, -40]\n    },\n    \"passages\": {\n      \"Cave\": {\n        \"look\": [130, 0]\n      }\n    }\n  }\n}\n");
+        expect(parseProjectFile(updated)).toEqual({
+            success: true,
+            project: { version: 1, main: "a.squiffy", exclude: [], map: { sections: { Cave: [120, -40] }, passages: { Cave: { look: [130, 0] } } } },
+        });
+        expect(updateProjectFile(updated, { map: { sections: {}, passages: {} } })).toBe(text);
+        expect(updateProjectFile(text, { map: { sections: { a: [1, 2] }, passages: {} } }))
+            .toBe("{\n  \"version\": 1,\n  \"main\": \"a.squiffy\",\n  \"map\": {\n    \"sections\": {\n      \"a\": [1, 2]\n    }\n  }\n}\n");
     });
 });
 

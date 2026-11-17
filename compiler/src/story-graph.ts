@@ -22,14 +22,23 @@ export interface GraphNode {
     name: string;
     // For passages, the section they're in
     section?: string;
+    // What to call a section without a name of its own: what its +++ line says, "---" or
+    // "(Start)" for the text before the first section, as in the outline
+    detail?: string;
     // The name in the header (or the header itself, for a section without a name of its own)
     location: Location;
+    // Where its own text ends (before any passages, for a section), ignoring blank lines at the
+    // end: where a new link from it can be added
+    contentEnd: Position;
     // The section the story starts at
     start?: boolean;
     // Whether the player can get here from the start. For a passage, its section has to be
     // reachable and something has to link to it, except for special passages such as @last,
     // which can run whenever their section can.
     reachable: boolean;
+    // Not reachable, but its text is shown inside something that is, by {{embed}} or
+    // {{live ... section=}}: a part of other sections rather than a place of its own
+    embedded?: boolean;
     // A section with no way out: no links to a section (in it, its passages, or anything they
     // embed) and no navigation that can't be followed. Never true for an ending.
     deadEnd: boolean;
@@ -68,6 +77,8 @@ export interface GraphEdge {
     location: Location;
     // The link text
     text?: string;
+    // For a link or embed whose target doesn't exist, the name it's written with
+    target?: string;
     // Attributes the link sets, e.g. "gold+=1"
     setters?: string[];
 }
@@ -125,6 +136,28 @@ function conditionalRanges(container: SectionNode | PassageNode): Range[] {
     return ranges;
 }
 
+// What the outline calls a section without a name of its own
+function sectionDetail(node: SectionNode): string | undefined {
+    if (node.kind == "preamble") return "(Start)";
+    if (node.header?.type == "continue") return `+++${node.header.text}`;
+    if (node.header?.type == "separator") return "---";
+    return undefined;
+}
+
+// The end of a section's or passage's own text, leaving out blank lines and its passages
+function contentEnd(container: SectionNode | PassageNode): Position {
+    const ownEnd = container.type == "section" && container.passages.length
+        ? container.passages[0].range.start
+        : container.range.end;
+    let end = container.header?.range.end ?? container.range.start;
+    for (const statement of container.body) {
+        if (comparePositions(statement.range.start, ownEnd) >= 0) break;
+        if (statement.type == "text" && !statement.text.trim()) continue;
+        if (comparePositions(statement.range.end, end) > 0) end = statement.range.end;
+    }
+    return end;
+}
+
 export function buildStoryGraph(source: GraphSource): StoryGraph {
     const nodes: GraphNode[] = [];
     const edges: GraphEdge[] = [];
@@ -133,6 +166,8 @@ export function buildStoryGraph(source: GraphSource): StoryGraph {
     // Containers with navigation that can't be followed
     const unknown = new Set<string>();
     const endings = new Set<string>();
+    // {{live}} helpers that show a section or passage
+    const liveEmbeds: { container: SectionNode | PassageNode; from: string; file: string; sectionName: string; kind: "section" | "passage"; target: string; range: Range }[] = [];
 
     const addNode = (node: GraphNode) => {
         nodes.push(node);
@@ -145,8 +180,11 @@ export function buildStoryGraph(source: GraphSource): StoryGraph {
         const range = node
             ? node.nameRange ?? node.header?.range ?? collapsed(node.range.start)
             : collapsed({ line: 0, character: 0 });
+        const detail = node ? sectionDetail(node) : undefined;
         addNode({
-            id, kind: "section", name, location: { file: section.file, range }, reachable: false, deadEnd: false,
+            id, kind: "section", name, ...(detail ? { detail } : {}),
+            location: { file: section.file, range }, contentEnd: node ? contentEnd(node) : range.end,
+            reachable: false, deadEnd: false,
             ...(name == source.start ? { start: true } : {}),
         });
         if (node) containerIds.set(node, id);
@@ -154,7 +192,8 @@ export function buildStoryGraph(source: GraphSource): StoryGraph {
             const pid = passageId(name, passageName);
             addNode({
                 id: pid, kind: "passage", name: passageName, section: name,
-                location: { file: section.file, range: passage.nameRange }, reachable: false, deadEnd: false,
+                location: { file: section.file, range: passage.nameRange }, contentEnd: contentEnd(passage),
+                reachable: false, deadEnd: false,
             });
             containerIds.set(passage, pid);
         }
@@ -168,6 +207,15 @@ export function buildStoryGraph(source: GraphSource): StoryGraph {
                 }
                 else if (statement.type == "text") {
                     if (/\{\{~?\s*section\s/.test(statement.text)) unknown.add(from);
+                    // {{live "x" section="name"}} and passage="name" show that section's or
+                    // passage's text, and so its links, as {{embed}} does
+                    for (const match of statement.text.matchAll(/\{\{~?\s*live\s[^}]*?\b(section|passage)\s*=\s*(["'])([^"']*)\2[^}]*\}\}/g)) {
+                        const line = statement.range.start.line;
+                        liveEmbeds.push({
+                            container, from, file: section.file, sectionName: name, kind: match[1] as "section" | "passage", target: match[3],
+                            range: { start: { line, character: match.index }, end: { line, character: match.index + match[0].length } },
+                        });
+                    }
                 }
                 else if (statement.type == "js") {
                     for (const match of statement.code.matchAll(/\.go\s*\(\s*(?:(["'])([^"'\\]*)\1\s*\))?/g)) {
@@ -234,7 +282,7 @@ export function buildStoryGraph(source: GraphSource): StoryGraph {
         const conditional = isConditional(usage.container, range.start);
         const location = { file: usage.file, range };
         if (usage.embed) {
-            edges.push({ from, ...(to ? { to } : {}), kind: "embed", conditional, location });
+            edges.push({ from, ...(to ? { to } : { target: usage.embed.name }), kind: "embed", conditional, location });
             continue;
         }
         const link = usage.link!;
@@ -253,7 +301,21 @@ export function buildStoryGraph(source: GraphSource): StoryGraph {
             ...(dynamic ? { dynamic } : {}),
             location,
             ...(text ? { text } : {}),
+            ...(!to && !dynamic && link.form != "next" ? { target: link.target.split(",")[0].trim() } : {}),
             ...(setters.length ? { setters } : {}),
+        });
+    }
+
+    for (const live of liveEmbeds) {
+        const to = live.kind == "section"
+            ? source.sections.has(live.target) ? sectionId(live.target) : undefined
+            : source.sections.get(live.sectionName)?.passages.has(live.target) ? passageId(live.sectionName, live.target) : undefined;
+        edges.push({
+            from: live.from,
+            ...(to ? { to } : { target: live.target }),
+            kind: "embed",
+            conditional: isConditional(live.container, live.range.start),
+            location: { file: live.file, range: live.range },
         });
     }
 
@@ -317,6 +379,10 @@ export function buildStoryGraph(source: GraphSource): StoryGraph {
             else reach(edge.to);
         }
     }
+    // Shown inside something that can be reached, though not reached itself
+    for (const node of nodes) {
+        if (!node.reachable && shown.has(node.id)) node.embedded = true;
+    }
 
     // ---- Dead ends ----
     const masterIds = nodeById.has(sectionId(""))
@@ -361,7 +427,7 @@ export function storyGraphDiagnostics(graph: StoryGraph): Diagnostic[] {
         // The master section, which is part of every section
         if (node.name == "") continue;
         if (!node.reachable) {
-            if (!checkReachable) continue;
+            if (!checkReachable || node.embedded) continue;
             diagnostics.push({
                 file: node.location.file,
                 range: node.location.range,

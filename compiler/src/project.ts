@@ -24,6 +24,15 @@ export interface ProjectFile {
     // file's folder. "*" and "?" match within a folder name, "**" across folders, and a pattern
     // that matches a folder excludes everything in it.
     exclude: string[];
+    // Where the author has put sections and passages on the editor's story map, if anywhere
+    map?: MapPositions;
+}
+
+// Positions on the story map, by section name, and passages by section and passage name. Only
+// sections and passages the author has moved by hand are saved: the map lays out the rest.
+export interface MapPositions {
+    sections: Record<string, [number, number]>;
+    passages: Record<string, Record<string, [number, number]>>;
 }
 
 export type ParsedProjectFile =
@@ -76,7 +85,36 @@ export function parseProjectFile(text: string): ParsedProjectFile {
         return fail(`${PROJECT_FILENAME}'s "exclude" should be a list of file patterns, such as ["drafts/**"].`);
     }
 
-    return { success: true, project: { version, main: mainPath, exclude: exclude as string[] } };
+    const map = parseMapPositions(data.map);
+    return { success: true, project: { version, main: mainPath, exclude: exclude as string[], ...(map ? { map } : {}) } };
+}
+
+const isPosition = (value: unknown): value is [number, number] =>
+    Array.isArray(value) && value.length == 2 && value.every(n => typeof n == "number" && Number.isFinite(n));
+
+const isObject = (value: unknown): value is Record<string, unknown> =>
+    !!value && typeof value == "object" && !Array.isArray(value);
+
+// The story map's positions. Only the editor uses them, so anything that isn't a position is
+// left out rather than stopping the story from building.
+function parseMapPositions(value: unknown): MapPositions | undefined {
+    if (!isObject(value)) return undefined;
+    const sections: MapPositions["sections"] = {};
+    const passages: MapPositions["passages"] = {};
+    if (isObject(value.sections)) {
+        for (const [name, position] of Object.entries(value.sections)) {
+            if (isPosition(position)) sections[name] = position;
+        }
+    }
+    if (isObject(value.passages)) {
+        for (const [section, byName] of Object.entries(value.passages)) {
+            if (!isObject(byName)) continue;
+            for (const [name, position] of Object.entries(byName)) {
+                if (isPosition(position)) (passages[section] ??= {})[name] = position;
+            }
+        }
+    }
+    return { sections, passages };
 }
 
 // A project path with "/" separators and no "." segments, or null if it goes outside the folder
@@ -184,8 +222,8 @@ export function formatProjectFile(project: { main: string; exclude?: string[] })
 }
 
 // Changes a project file's text, keeping any other properties it has. Returns undefined if the
-// text isn't a JSON object.
-export function updateProjectFile(text: string, changes: { main?: string; exclude?: string[] }): string | undefined {
+// text isn't a JSON object. A `map` with no positions removes it.
+export function updateProjectFile(text: string, changes: { main?: string; exclude?: string[]; map?: MapPositions }): string | undefined {
     let json: unknown;
     try {
         json = JSON.parse(text);
@@ -200,6 +238,19 @@ export function updateProjectFile(text: string, changes: { main?: string; exclud
         if (changes.exclude.length) data.exclude = changes.exclude;
         else delete data.exclude;
     }
+    if (changes.map !== undefined) {
+        const { sections, passages } = changes.map;
+        const used = Object.fromEntries(Object.entries(passages).filter(([, byName]) => Object.keys(byName).length));
+        // Anything else that's in "map" stays, but empty lists of positions don't
+        const map: Record<string, unknown> = { ...(isObject(data.map) ? data.map : {}) };
+        delete map.sections;
+        delete map.passages;
+        if (Object.keys(sections).length) map.sections = sections;
+        if (Object.keys(used).length) map.passages = used;
+        if (Object.keys(map).length) data.map = map;
+        else delete data.map;
+    }
     const indent = /^\{\s*\n([ \t]+)/.exec(text)?.[1] ?? 2;
-    return JSON.stringify(data, null, indent) + "\n";
+    // Each position on one line, rather than an x and a y on lines of their own
+    return JSON.stringify(data, null, indent).replace(/\[\s+(-?[\d.e+-]+),\s+(-?[\d.e+-]+)\s+\]/g, "[$1, $2]") + "\n";
 }

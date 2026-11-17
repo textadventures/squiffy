@@ -51,13 +51,49 @@ The **Add** menu inserts:
 The editor understands your story as you write:
 
 - It underlines problems, such as a link to a section that doesn't exist. Hover over a problem to see what's wrong, and in many cases there's a quick fix, such as creating the missing section.
-- It warns about a section the player can't reach, because nothing that can be reached from the start of the story links to it, and about a "dead end": a section with no links to another section. If a dead end is one of your story's endings, the quick fix marks it with [`@end`](/basic-concepts/#endings).
+- It warns about a section the player can't reach, because nothing that can be reached from the start of the story links to it (a section that's only shown inside others, with `{{embed}}` or `{{live ... section=...}}`, is fine), and about a "dead end": a section with no links to another section. If a dead end is one of your story's endings, the quick fix marks it with [`@end`](/basic-concepts/#endings).
 - As you type a link, it suggests the names of your sections and passages.
 - Hover over a link to see the start of the section or passage it goes to.
 - Press F12, or Ctrl+click (Cmd+click on Mac), on a link to go to the section or passage. Shift+F12 lists every link to it.
 - Press F2 on a section or passage name, or a link to one, to rename it everywhere.
 
 The ⋯ menu has **Find and replace**, and **Collapse all** and **Expand all**, which fold every section and passage so you can see the shape of your story. Undo and Redo are in the toolbar.
+
+## The story map
+
+The map button in the toolbar shows your story as a map: each section is a box, its passages hang underneath it, and links are arrows. The map reads from the top, where the story starts, down towards its endings. The script is still your story: the map is drawn from it, updates as you type, and anything you do on the map changes the script.
+
+![The story map, between the script and the preview, showing the way the player went through the story in green](../../assets/editor-story-map.png)
+
+- **Click** a section or passage to go to it in the script. Moving the cursor in the script highlights the section it's in on the map.
+- **Drag** the background to move around, and scroll or pinch to zoom. The buttons above the map zoom in and out, and fit the whole story in view. **Full screen** gives the map the whole window.
+- **Drag a box** to move it. It stays where you put it. Its passages come with it, and so does any box that's linked only to it, while everything else stays put.
+- To move several boxes at once, hold Shift and drag across empty space to select them, or Shift+click boxes to add them, then drag any one of them. Click empty space, or press Escape, to let them go.
+- Where you've put things is saved in `squiffy.json`, so it's the same next time you open the story, and a section keeps its place if you rename it or move it to another file. A section without a name of its own, started with `+++` or `---`, is saved under what the map calls it, such as `+++Day Two`. If you edit `squiffy.json` while the map's open, it follows: take a position out and that box is laid out again. A story from an earlier version of Squiffy may not have a `squiffy.json`, so the editor adds one, leaving out any `.squiffy` files in the folder that aren't part of the story, so the story stays the same. **Lay out again** forgets where you've put things.
+- The **search box** in the outline also fades out the sections and passages that don't match.
+
+### Problems on the map
+
+Links to sections or passages that don't exist end in a red box with the missing name. Sections the player can't reach are faded, with a dashed outline. Dead ends, sections with no way out that aren't marked as an [ending](/basic-concepts/#endings), have an orange outline and a **!**. The start has a ▶, and endings a double outline.
+
+Different kinds of link look different: links to passages are lighter, [embeds](/basic-concepts/#embed-text) are dotted, `squiffy.story.go` in JavaScript is a different colour, and links that only appear inside `{{#if}}` or `{{#unless}}` are dashed. Passages that run on their own, such as [`@last`](/basic-concepts/#turn-counting), are tied to their section with a fine dotted line. The **?** button above the map shows the key.
+
+### Editing from the map
+
+Select a section or passage, then drag the dot under it:
+
+- to another section, to add a link to it, or to a passage in the same section, to add a passage link;
+- to an empty space, to add a new section there, with a link to it.
+
+The link goes at the cursor if it's in that section or passage, or else at the end of it. Double-click an empty space, or use **+** above the map, to add a section without a link. Below the map, you can rename the selected section or passage everywhere it's used (or press F2), or run the story from it.
+
+### Testing with the map
+
+When you run your story, the sections and passages the player visits, and the links they take, are outlined in green, so you can see which parts of the story you've tested.
+
+### Using the keyboard
+
+Click the map, or tab to it, then use the arrow keys to move between sections and passages. Enter goes to the selected one in the script, F2 renames it, **+** and **-** zoom, and **0** fits the whole story in view. A screen reader reads out each section's links in and out as you move to it.
 
 ## Images and other files
 
@@ -74,7 +110,7 @@ The image button in the toolbar opens **Images and other files**, where you can 
 
 Below the story, **Attributes** shows the values your story has set. This is useful for checking that your `@set` directives and `{{set}}` helpers are doing what you expect.
 
-On a phone, the editor shows the script, the outline or the story, with buttons in the toolbar to switch between them.
+On a phone, the editor shows the script, the outline, the map or the story, with buttons in the toolbar to switch between them.
 
 ## Publishing your story
 

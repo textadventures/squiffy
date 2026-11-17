@@ -121,6 +121,7 @@ describe("story graph", () => {
         expect(reachable(graph)).toEqual(["section:a", "section:b"]);
         // a's way out is in what it embeds
         expect(deadEnds(graph)).toEqual([]);
+        expect(nodeOf(graph, "section:shared").embedded).toBe(true);
     });
 
     test("links inside {{#if}} are conditional, and can be followed", async () => {
@@ -198,6 +199,62 @@ describe("@end", () => {
     });
 });
 
+describe("for the story map", () => {
+    test("sections without names of their own are labelled as in the outline", async () => {
+        const graph = await one("Hello.\n[[Go]](a)\n\n[[a]]:\nOne.\n+++More\nTwo.\n---\nThree.");
+        expect(graph.nodes.filter(n => n.kind == "section").map(n => [n.name, n.detail])).toEqual([
+            ["_default", "(Start)"], ["a", undefined], ["_continue1", "+++More"], ["_continue2", "---"],
+        ]);
+    });
+
+    test("where a new link goes: the end of the section's own text, or the passage's", async () => {
+        const graph = await one("[[a]]:\nOne.\nTwo.\n\n[p]:\nPassage.\n\n\n[[b]]:\n\n[[c]]:\n@set x\n");
+        expect(nodeOf(graph, "section:a").contentEnd).toEqual({ line: 2, character: 4 });
+        expect(nodeOf(graph, "passage:a/p").contentEnd).toEqual({ line: 5, character: 8 });
+        // Only a header: after it
+        expect(nodeOf(graph, "section:b").contentEnd).toEqual({ line: 8, character: 6 });
+        expect(nodeOf(graph, "section:c").contentEnd).toEqual({ line: 11, character: 6 });
+    });
+
+    test("a broken link or embed says what it's written with", async () => {
+        const graph = await one("[[a]]:\n[[Go]](nowhere, x=1) [[elsewhere]] [gone] {{embed \"lost\"}} [[x]]({{dest}})");
+        expect(graph.edges.map(e => [e.to, e.target])).toEqual([
+            [undefined, "nowhere"], [undefined, "elsewhere"], [undefined, "gone"], [undefined, "lost"], [undefined, undefined],
+        ]);
+    });
+});
+
+describe("live sections and passages", () => {
+    test("{{live}} with section= or passage= shows its text, so its links can be followed", async () => {
+        const graph = await one(`[[a]]:
+Score: {{live "score" section="panel"}} {{live "x" passage="info"}} {{live "y" section="nowhere"}}
+
+[info]:
+[[c]]
+
+[[panel]]:
+{{#if x}}[[b]]{{/if}}
+
+[[b]]:
+@end
+
+[[c]]:
+@end`);
+        expect(edgeSummary(graph.edges.filter(e => e.kind == "embed"))).toEqual([
+            "section:a -> section:panel (embed)",
+            "section:a -> passage:a/info (embed)",
+            "section:a -> ? (embed)",
+        ]);
+        expect(graph.edges.find(e => e.kind == "embed" && !e.to)?.target).toBe("nowhere");
+        // Through the panel, b can be reached, and a isn't a dead end
+        expect(nodeOf(graph, "section:b").reachable).toBe(true);
+        expect(nodeOf(graph, "section:c").reachable).toBe(true);
+        expect(nodeOf(graph, "section:a").deadEnd).toBe(false);
+        // Embedding doesn't make the panel itself somewhere the player goes, but it's shown
+        expect(nodeOf(graph, "section:panel")).toMatchObject({ reachable: false, embedded: true });
+    });
+});
+
 describe("diagnostics", () => {
     test("unreachable sections and dead ends", async () => {
         const main = "[[a]]:\nGo to [[b]].\n\n[[b]]:\nStuck.\n\n[[c]]:\nGo to [[a]].";
@@ -229,6 +286,11 @@ describe("diagnostics", () => {
             const [action] = await ls.getCodeActions("story.squiffy", diagnostic.range);
             expect(apply(main, action.edit["story.squiffy"])).toBe(expected);
         }
+    });
+
+    test("a section that's only shown inside others isn't unreachable, or a dead end", async () => {
+        const ls = service({ "story.squiffy": "[[a]]:\n{{live \"x\" section=\"panel\"}} {{embed \"shared\"}} [[b]]\n\n[[panel]]:\nJust text.\n\n[[shared]]:\nMore text.\n\n[[b]]:\n@end" });
+        expect(await ls.getDiagnostics("story.squiffy")).toEqual([]);
     });
 
     test("no unreachable sections when something navigates somewhere that can't be known", async () => {

@@ -79,6 +79,13 @@ const handlers: WorkerApi = {
     exportStory,
     countV5Syntax: text => findV5Syntax(text).length,
     convertV5Syntax: text => convertV5Syntax(text),
+    async getStoryFiles() {
+        const analysis = await current().getAnalysis();
+        return {
+            files: analysis.files.map(f => f.filename).filter((f): f is string => f !== undefined),
+            complete: analysis.success,
+        };
+    },
     async findSection(section, passage) {
         const symbol = (await current().getAnalysis()).sections.find(s => s.name === section);
         const node = passage ? symbol?.passages.find(p => p.name === passage)?.node : symbol?.node;

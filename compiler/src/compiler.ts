@@ -19,7 +19,7 @@ export {
     PROJECT_FILENAME, PROJECT_FILE_VERSION, PROJECT_SCHEMA_URL, parseProjectFile, getStoryFiles, isExcluded,
     isAlwaysSkipped, formatProjectFile, updateProjectFile,
 } from "./project.js";
-export type { ProjectFile, ParsedProjectFile, StoryFiles } from "./project.js";
+export type { MapPositions, ProjectFile, ParsedProjectFile, StoryFiles } from "./project.js";
 export type * from "./syntax.js";
 
 interface CompilerSettings {

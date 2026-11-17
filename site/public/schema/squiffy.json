@@ -27,6 +27,33 @@
         "type": "string"
       },
       "examples": [["drafts/**", "notes.squiffy"]]
+    },
+    "map": {
+      "description": "Where sections and passages have been put on the editor's story map. The editor writes this: only what's been moved by hand is here, and the map lays out the rest.",
+      "type": "object",
+      "properties": {
+        "sections": {
+          "description": "Positions of sections, by name, as [x, y].",
+          "type": "object",
+          "additionalProperties": { "$ref": "#/definitions/position" }
+        },
+        "passages": {
+          "description": "Positions of passages, by their section's name and then their own, as [x, y].",
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": { "$ref": "#/definitions/position" }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "position": {
+      "type": "array",
+      "items": { "type": "number" },
+      "minItems": 2,
+      "maxItems": 2
     }
   }
 }

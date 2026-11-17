@@ -1,12 +1,13 @@
 <script lang="ts">
     // The editor: toolbar; files and outline; a tab and a code editor for each open file; and the
     // preview. Laid out like Quest Viva's edit page.
-    import { onMount, tick } from "svelte";
+    import { onMount, tick, untrack } from "svelte";
     import { goto } from "$app/navigation";
     import { page } from "$app/state";
     import { EditorView } from "@codemirror/view";
     import type { Extension } from "@codemirror/state";
-    import type { DocumentSymbol, Location, WorkspaceEdit } from "squiffy-compiler/language-service";
+    import type { DocumentSymbol, GraphNode, Location, StoryGraph, WorkspaceEdit } from "squiffy-compiler/language-service";
+    import { PROJECT_FILENAME, type MapPositions } from "squiffy-compiler";
     import { basename, dirname, extname, guessMimeType, joinPath, parsePath } from "@textadventures/project-fs";
     import { base } from "#lib/base-path.js";
     import { project, openDraft, openRecentFolder, downloadFile, storyPath, offerProjectFile, type ProjectOffer } from "#lib/project.svelte.js";
@@ -26,6 +27,8 @@
     import CodeEditor from "#components/CodeEditor.svelte";
     import ReferencesPanel from "#components/ReferencesPanel.svelte";
     import PreviewPanel from "#components/PreviewPanel.svelte";
+    import MapPanel, { type TraceStep } from "#components/MapPanel.svelte";
+    import { checkSectionName, linkTo, movedNodes, nodeAtLine, renamePositions, sectionKeys, withPosition, type Point, type StoryMapEdge, type StoryMapNode } from "#lib/story-map.js";
     import AssetManagerModal from "#components/AssetManagerModal.svelte";
     import AboutModal from "#components/AboutModal.svelte";
     import { addSectionOrPassage, insertSnippet, runCommand, userSnippets } from "#lib/editor-commands.js";
@@ -50,14 +53,31 @@
     let preview = $state<ReturnType<typeof PreviewPanel>>();
     let previewOpen = $state(false);
 
+    // The story map (#380)
+    let mapPanel = $state<ReturnType<typeof MapPanel>>();
+    let mapOpen = $state(false);
+    let mapMaximized = $state(false);
+    // Raw, as it's replaced rather than changed, and can be large
+    let storyGraph = $state.raw<StoryGraph | null>(null);
+    // Bumped when a file changes in the project, to read the graph again
+    let filesVersion = $state(0);
+    // The outline's search, which filters the map too
+    let outlineQuery = $state("");
+    // Where the player's been in the preview since it last started
+    let trace = $state.raw<TraceStep[]>([]);
+    // Without a squiffy.json, positions on the map last as long as the editor's open
+    let sessionPositions = $state.raw<MapPositions | undefined>();
+
     // Session-only, as in Quest Viva
     let sidebarWidth = $state(240);
     let previewWidth = $state(420);
+    let mapWidth = $state(480);
     const SIDEBAR_LIMITS = [160, 500] as const;
     const PREVIEW_LIMITS = [280, 900] as const;
+    const MAP_LIMITS = [280, 1400] as const;
 
     // On a narrow screen one pane shows at a time: the editor, the sidebar or the preview
-    let narrowPane = $state<"editor" | "outline" | "preview">("editor");
+    let narrowPane = $state<"editor" | "outline" | "preview" | "map">("editor");
 
     const activeView = () => (p ? views.get(p.activePath) : undefined);
     let symbols = $derived(p ? symbolsByPath[p.activePath] ?? [] : []);
@@ -151,6 +171,7 @@
                 }
             });
             if (isAsset(path)) assetsVersion++;
+            filesVersion++;
         };
         client = c;
         return () => {
@@ -315,11 +336,11 @@
 
     // Runs the story in the preview: from the start, or from the section (and passage) the
     // cursor is in (#175)
-    async function runPreview(fromCursor = false) {
+    async function runPreview(fromCursor = false, at?: { section: string; passage?: string }) {
         if (!p || !client) return;
-        let startAt: { section: string; passage?: string } | undefined;
+        let startAt = at;
         const view = activeView();
-        if (fromCursor && view && isSquiffyFile(p.activePath)) {
+        if (!at && fromCursor && view && isSquiffyFile(p.activePath)) {
             await syncOpenFiles();
             startAt = await client.call("getSectionAt", p.activePath, toPosition(view.state.doc, view.state.selection.main.head));
         }
@@ -368,6 +389,232 @@
     function handleCursor(path: string, offset: number) {
         const view = views.get(path);
         if (view && path === p?.activePath) cursorLine = view.state.doc.lineAt(offset).number - 1;
+    }
+
+    // ---- The story map ----
+
+    const mapPositions = $derived(p?.projectFile ? p.projectFile.map : sessionPositions);
+
+    // The section or passage the cursor's in, which the map highlights
+    let currentNode = $derived(storyGraph && p && isSquiffyFile(p.activePath) ? nodeAtLine(storyGraph, p.activePath, cursorLine)?.id ?? null : null);
+
+    // Read the graph again as the story changes, once typing pauses
+    let graphRequest = 0;
+    $effect(() => {
+        void p?.openFiles.map(f => f.text);
+        void filesVersion;
+        if (!mapOpen || !client) return;
+        // Untracked, or reading the graph would read it again whenever it arrives
+        const timer = setTimeout(() => void refreshGraph(), untrack(() => storyGraph) ? 400 : 0);
+        return () => clearTimeout(timer);
+    });
+
+    // A node to select once it's on the map, e.g. a section just added from it
+    let selectWhenReady: string | null = null;
+
+    async function refreshGraph() {
+        const c = client;
+        if (!c) return;
+        const request = ++graphRequest;
+        await syncOpenFiles();
+        const graph = await c.call("getStoryGraph");
+        if (request !== graphRequest) return;
+        const before = storyGraph;
+        if (before) {
+            // Renamed sections and passages keep their places
+            mapPanel?.rename(movedNodes(before, graph));
+            const moved = renamePositions(mapPositions, before, graph);
+            if (moved) void savePositions(moved);
+        }
+        storyGraph = graph;
+        if (selectWhenReady && graph.nodes.some(n => n.id === selectWhenReady)) {
+            const id = selectWhenReady;
+            selectWhenReady = null;
+            await tick();
+            mapPanel?.focusNode(id);
+        }
+    }
+
+    function toggleMap() {
+        if (mapOpen && (!isNarrow.current || narrowPane === "map")) {
+            mapOpen = false;
+            mapMaximized = false;
+            narrowPane = "editor";
+        } else {
+            mapOpen = true;
+            narrowPane = "map";
+        }
+    }
+
+    // Saving positions one at a time, so a quick second drag doesn't race the first
+    let positionsQueue: Promise<unknown> = Promise.resolve();
+    // Without a squiffy.json, whether the author said no to adding one
+    let declinedProjectFile = false;
+    function savePositions(next: MapPositions) {
+        const current = p;
+        if (!current) return;
+        const empty = !Object.keys(next.sections).length && !Object.keys(next.passages).length;
+        if (!current.projectFile && (empty || declinedProjectFile || current.projectText !== null)) {
+            // Nothing worth adding a squiffy.json for, the author doesn't want one, or there's one
+            // that can't be read
+            sessionPositions = next;
+            if (current.projectText !== null && !empty) showToast("squiffy.json couldn't be read, so the map's positions weren't saved. Fix it, then try again.");
+            return;
+        }
+        // Shown straight away, while squiffy.json is written
+        if (!current.projectFile) sessionPositions = next;
+        positionsQueue = positionsQueue.then(async () => {
+            try {
+                if (!current.projectFile && !(await addProjectFileForMap(current))) {
+                    declinedProjectFile = true;
+                    showToast("Where you put things on the map is saved in squiffy.json, so without one it'll be forgotten when you close the story.", "info", 8000);
+                    return;
+                }
+                if (!(await current.setMapPositions(next))) showToast("squiffy.json couldn't be read, so the map's positions weren't saved. Fix it, then try again.");
+            } catch (err) {
+                showToast(`Couldn't save the map: ${errorText(err)}`);
+            }
+        });
+    }
+
+    // Adds a squiffy.json to keep the map's positions in. It makes the folder one story, so any
+    // other .squiffy files in the folder that aren't part of the story now are excluded, and the
+    // story stays as it was. If the story has an error, which files are part of it isn't certain,
+    // so the author is asked instead. Says whether there's a squiffy.json now.
+    async function addProjectFileForMap(current: NonNullable<typeof p>): Promise<boolean> {
+        const c = client;
+        if (!c) return false;
+        await syncOpenFiles();
+        const { files, complete } = await c.call("getStoryFiles");
+        if (!complete) return (await offerProjectFile(current, { main: current.mainFile })) === "created";
+        const inStory = new Set(files);
+        const exclude = current.files.map(f => f.path).filter(path => isSquiffyFile(path) && path !== current.mainFile && !inStory.has(path));
+        await current.createProjectFile(current.mainFile, exclude);
+        showToast(`Added ${PROJECT_FILENAME}, to save where you put things on the map.${exclude.length ? ` It leaves out the .squiffy files that aren't part of this story.` : ""}`, "info", 8000);
+        return true;
+    }
+
+    // Shows a location in the editor, opening its file, without taking the focus from the map
+    async function showLocation(location: Location) {
+        if (!p) return;
+        try {
+            await p.open(location.file);
+        } catch (err) {
+            showToast(`Couldn't open ${location.file}: ${errorText(err)}`);
+            return;
+        }
+        const view = await viewFor(location.file);
+        if (!view) return;
+        const offset = toOffset(view.state.doc, location.range.start);
+        view.dispatch({ selection: { anchor: offset }, effects: EditorView.scrollIntoView(offset, { y: "start", yMargin: 24 }) });
+    }
+
+    function goFromMap(location: Location, focus: boolean) {
+        if (focus || mapMaximized || isNarrow.current) {
+            mapMaximized = false;
+            void goToLocation(location);
+        } else {
+            void showLocation(location);
+        }
+    }
+
+    // Where a new link from a section or passage goes: at the cursor, if it's in there, or else
+    // after the last thing in it
+    function linkEdit(from: GraphNode, text: string): WorkspaceEdit {
+        const file = from.location.file;
+        const view = views.get(file);
+        if (view && p?.activePath === file && storyGraph) {
+            const head = view.state.selection.main.head;
+            const at = toPosition(view.state.doc, head);
+            if (nodeAtLine(storyGraph, file, at.line)?.id === from.id && at.line > from.location.range.start.line) {
+                return { [file]: [{ range: { start: at, end: at }, newText: text }] };
+            }
+        }
+        const at = from.contentEnd;
+        const headerOnly = at.line === from.location.range.start.line;
+        return { [file]: [{ range: { start: at, end: at }, newText: `${headerOnly ? "\n" : "\n\n"}${text}` }] };
+    }
+
+    // A new section at the end of a file
+    async function newSectionEdit(file: string, name: string): Promise<WorkspaceEdit> {
+        const text = p?.fileAt(file)?.text ?? await p!.fs.readText(file);
+        const lines = text.split("\n");
+        const end = { line: lines.length - 1, character: lines[lines.length - 1].length };
+        const gap = text.endsWith("\n\n") || text === "" ? "" : text.endsWith("\n") ? "\n" : "\n\n";
+        return { [file]: [{ range: { start: end, end }, newText: `${gap}[[${name}]]:\n` }] };
+    }
+
+    function mergeEdits(a: WorkspaceEdit, b: WorkspaceEdit): WorkspaceEdit {
+        const merged: WorkspaceEdit = { ...a };
+        for (const [file, edits] of Object.entries(b)) merged[file] = [...merged[file] ?? [], ...edits];
+        return merged;
+    }
+
+    async function askSectionName(): Promise<string | null> {
+        const graph = storyGraph;
+        const name = (await promptDialog("New section name:", "", "Add"))?.trim();
+        if (!name || !graph) return null;
+        const problem = checkSectionName(name, graph);
+        if (problem) {
+            showToast(problem, "info");
+            return null;
+        }
+        return name;
+    }
+
+    // Adds a section, where it was asked for on the map, in the same file as the section it's
+    // near (or the file that's open, or the main file)
+    async function createSectionFromMap(at: Point, near: GraphNode | undefined, linkFrom?: GraphNode) {
+        if (!p) return;
+        const name = await askSectionName();
+        if (!name || !p) return;
+        const file = linkFrom?.location.file ?? near?.location.file ?? (isSquiffyFile(p.activePath) ? p.activePath : p.mainFile);
+        try {
+            let edit = await newSectionEdit(file, name);
+            if (linkFrom) edit = mergeEdits(linkEdit(linkFrom, `[[${name}]]`), edit);
+            savePositions(withPosition(mapPositions, new Map(), { kind: "section", name }, at));
+            selectWhenReady = `section:${name}`;
+            await applyEdits(edit);
+        } catch (err) {
+            showToast(`Couldn't add the section: ${errorText(err)}`);
+        }
+    }
+
+    async function linkFromMap(from: GraphNode, to: GraphNode | null, at: Point) {
+        if (!to) {
+            await createSectionFromMap(at, from, from);
+            return;
+        }
+        const link = linkTo(from, to);
+        if ("error" in link) {
+            showToast(link.error, "info");
+            return;
+        }
+        await applyEdits(linkEdit(from, link.text));
+    }
+
+    async function renameFromMap(node: GraphNode) {
+        const c = client;
+        if (!c || node.detail) return;
+        const name = (await promptDialog(`Rename the ${node.kind} "${node.name}" to:`, node.name, "Rename"))?.trim();
+        if (!name || name === node.name) return;
+        await syncOpenFiles();
+        const result = await c.call("getRenameEdits", node.location.file, node.location.range.start, name);
+        if (!result) return;
+        if ("error" in result) {
+            showToast(result.error, "info");
+            return;
+        }
+        await applyEdits(result.edit);
+    }
+
+    async function relayoutMap(): Promise<boolean> {
+        const saved = mapPositions && (Object.keys(mapPositions.sections).length || Object.keys(mapPositions.passages).length);
+        if (saved) {
+            if (!(await confirmDialog("Lay out the map again? Everything you've moved by hand goes back to where the map puts it.", { confirmLabel: "Lay out again" }))) return false;
+            savePositions({ sections: {}, passages: {} });
+        }
+        return true;
     }
 
     // ---- Squiffy 5 ----
@@ -615,13 +862,13 @@
     // splitter captures the pointer, and iframes stop taking pointer events while it's
     // dragged, as otherwise the preview's iframe swallows the moves whenever the pointer
     // crosses into it, and the resize stutters.
-    function handleSplitterPointerDown(e: PointerEvent, panel: "sidebar" | "preview") {
+    function handleSplitterPointerDown(e: PointerEvent, panel: "sidebar" | "preview" | "map") {
         if (e.button !== 0) return;
         e.preventDefault();
         const splitter = e.currentTarget as HTMLElement;
         const startX = e.clientX;
-        const startWidth = panel === "sidebar" ? sidebarWidth : previewWidth;
-        const [min, max] = panel === "sidebar" ? SIDEBAR_LIMITS : PREVIEW_LIMITS;
+        const startWidth = panel === "sidebar" ? sidebarWidth : panel === "map" ? mapWidth : previewWidth;
+        const [min, max] = panel === "sidebar" ? SIDEBAR_LIMITS : panel === "map" ? MAP_LIMITS : PREVIEW_LIMITS;
         splitter.setPointerCapture(e.pointerId);
         document.body.classList.add("splitter-dragging");
 
@@ -629,6 +876,7 @@
             const delta = moveEvent.clientX - startX;
             const next = Math.min(max, Math.max(min, startWidth + (panel === "sidebar" ? delta : -delta)));
             if (panel === "sidebar") sidebarWidth = next;
+            else if (panel === "map") mapWidth = next;
             else previewWidth = next;
         }
         function onUp() {
@@ -661,6 +909,8 @@
         <Toolbar
             outlineOpen={narrowPane === "outline"}
             ontoggleoutline={() => { narrowPane = narrowPane === "outline" ? "editor" : "outline"; }}
+            mapOpen={mapOpen && (!isNarrow.current || narrowPane === "map")}
+            ontogglemap={toggleMap}
             onrun={fromCursor => runPreview(fromCursor)}
             onassets={() => { assetsOpen = true; }}
             ondownloadproject={handleDownloadProject}
@@ -673,7 +923,7 @@
             onplaytab={handlePlayInTab}
         />
         <div class="flex flex-1 overflow-hidden">
-            {#if !isNarrow.current || narrowPane === "outline"}
+            {#if isNarrow.current ? narrowPane === "outline" : !(mapOpen && mapMaximized)}
                 <div
                     class="flex flex-col shrink-0 overflow-hidden bg-surface-50-950 border-r border-surface-200-800 {isNarrow.current ? "flex-1" : ""}"
                     style={isNarrow.current ? undefined : `width: ${sidebarWidth}px`}
@@ -692,13 +942,14 @@
                     </div>
                     <OutlinePanel
                         bind:this={outline}
+                        bind:query={outlineQuery}
                         {symbols}
                         {cursorLine}
                         onselect={goToSymbol}
                     />
                 </div>
             {/if}
-            {#if !isNarrow.current}
+            {#if !isNarrow.current && !(mapOpen && mapMaximized)}
                 <div
                     role="separator"
                     aria-orientation="vertical"
@@ -708,7 +959,7 @@
             {/if}
             <!-- Kept mounted (hidden, not removed) on a narrow screen so the cursor and undo
                  history survive opening the sidebar or the preview -->
-            <div id="editor" class="flex-1 min-w-0 flex flex-col {isNarrow.current && narrowPane !== "editor" ? "hidden" : ""}">
+            <div id="editor" class="flex-1 min-w-0 flex flex-col {(isNarrow.current && narrowPane !== "editor") || (!isNarrow.current && mapOpen && mapMaximized) ? "hidden" : ""}">
                 <EditorTabs project={p} />
                 <!-- One editor per open file, so each keeps its own cursor and undo history -->
                 {#each p.openFiles as file (file.path)}
@@ -735,6 +986,39 @@
                     />
                 {/if}
             </div>
+            {#if mapOpen && (!isNarrow.current || narrowPane === "map")}
+                {#if !isNarrow.current && !mapMaximized}
+                    <div
+                        role="separator"
+                        aria-orientation="vertical"
+                        class="splitter"
+                        onpointerdown={e => handleSplitterPointerDown(e, "map")}
+                    ></div>
+                {/if}
+                <MapPanel
+                    bind:this={mapPanel}
+                    graph={storyGraph}
+                    positions={mapPositions}
+                    query={outlineQuery}
+                    current={currentNode}
+                    {trace}
+                    maximized={mapMaximized}
+                    width={isNarrow.current || mapMaximized ? undefined : mapWidth}
+                    ongoto={(node, focus) => { const location = node.graphNode?.location; if (location) goFromMap(location, focus); }}
+                    ongotoedge={(edge: StoryMapEdge) => { const location = edge.edges[0]?.location ?? edge.location; if (location) goFromMap(location, false); }}
+                    onmove={moves => {
+                        const keys = storyGraph ? sectionKeys(storyGraph) : new Map<string, string>();
+                        savePositions(moves.reduce((positions, { node, at }) => withPosition(positions, keys, node, at), mapPositions ?? { sections: {}, passages: {} }));
+                    }}
+                    onlink={linkFromMap}
+                    oncreate={(at, near) => void createSectionFromMap(at, near)}
+                    onrename={node => void renameFromMap(node)}
+                    onrun={node => void runPreview(false, node.kind === "section" ? { section: node.name } : { section: node.section!, passage: node.name })}
+                    onrelayout={relayoutMap}
+                    ontogglemaximized={() => { mapMaximized = !mapMaximized; }}
+                    onclose={() => { mapOpen = false; mapMaximized = false; narrowPane = "editor"; }}
+                />
+            {/if}
             {#if previewOpen}
                 {#if !isNarrow.current}
                     <div
@@ -752,6 +1036,8 @@
                         assets={previewAssets}
                         {assetsVersion}
                         onNavigated={(section, passage) => void followPreview(section, passage)}
+                        onStarted={() => { trace = []; }}
+                        onVisited={(section, passage) => { trace = [...trace.slice(-499), { section, passage }]; }}
                         onclose={() => { previewOpen = false; narrowPane = "editor"; }}
                         width={isNarrow.current ? undefined : previewWidth}
                     />

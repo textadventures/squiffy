@@ -16,13 +16,14 @@
         cursorLine: number;
         onselect: (symbol: DocumentSymbol) => void;
         width?: number;
+        // The search box's text, which the story map filters by too
+        query?: string;
     }
 
-    let { symbols, cursorLine, onselect, width }: Props = $props();
+    let { symbols, cursorLine, onselect, width, query = $bindable("") }: Props = $props();
 
     const contains = (s: DocumentSymbol, line: number) => s.range.start.line <= line && line <= s.range.end.line;
 
-    let query = $state("");
     let searchEl = $state<HTMLInputElement>();
 
     export function focusSearch() {
