@@ -2,7 +2,6 @@
 import { defineConfig } from "astro/config";
 import mdx from "@astrojs/mdx";
 import starlight from "@astrojs/starlight";
-import { astroExpressiveCode } from "@astrojs/starlight/expressive-code";
 import { appLinks } from "./src/app-links.mjs";
 import { betaSite, siteUrl } from "./src/channel.mjs";
 import squiffyGrammar from "squiffy-compiler/squiffy.tmLanguage.json" with { type: "json" };
@@ -13,20 +12,21 @@ export default defineConfig({
     site: siteUrl,
     trailingSlash: "always",
     integrations: [
-        astroExpressiveCode({
-            shiki: {
-                // Highlights ```squiffy code blocks, with the grammar the compiler package exports.
-                // Its JavaScript blocks need Shiki's JavaScript grammar loaded alongside it.
-                langs: [...javascript, { ...squiffyGrammar, name: "squiffy", embeddedLangs: ["javascript"] }],
-            },
-        }),
-        mdx(),
         starlight({
             title: "Squiffy",
             logo: {
                 src: "./src/assets/squiffy.png",
             },
             favicon: "/squiffy.png",
+            // Configured here rather than as a separate astroExpressiveCode() integration, so Starlight
+            // applies its own preset, which switches code blocks between light and dark with the site.
+            expressiveCode: {
+                shiki: {
+                    // Highlights ```squiffy code blocks, with the grammar the compiler package exports.
+                    // Its JavaScript blocks need Shiki's JavaScript grammar loaded alongside it.
+                    langs: [...javascript, { ...squiffyGrammar, name: "squiffy", embeddedLangs: ["javascript"] }],
+                },
+            },
             customCss: [
                 "./src/styles/custom.css",
             ],
@@ -46,6 +46,8 @@ export default defineConfig({
                 baseUrl: "https://github.com/textadventures/squiffy/edit/main/site/",
             },
         }),
+        // After Starlight, which adds Expressive Code, so that it highlights the MDX pages' code blocks too
+        mdx(),
         appLinks(),
     ],
     markdown: {

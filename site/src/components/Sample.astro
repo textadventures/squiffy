@@ -130,6 +130,24 @@ const restartClass = "sample-button restart" + (!alwaysShowRestart ? " hidden" :
                     EditorView.theme({
                         ".cm-content": {fontSize: "13px"},
                         ".cm-lineNumbers": {fontSize: "13px"},
+                        // basicSetup's own colours are light-only, so use Starlight's, which follow
+                        // the site's light/dark switch
+                        ".cm-gutters": {
+                            backgroundColor: "var(--sl-color-gray-6)",
+                            color: "var(--sl-color-gray-3)",
+                            borderRight: "1px solid var(--sl-color-hairline)",
+                        },
+                        ".cm-activeLine": {
+                            backgroundColor: "color-mix(in srgb, var(--sl-color-accent) 12%, transparent)",
+                        },
+                        ".cm-activeLineGutter": {
+                            backgroundColor: "color-mix(in srgb, var(--sl-color-accent) 20%, transparent)",
+                            color: "var(--sl-color-white)",
+                        },
+                        "&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection": {
+                            backgroundColor: "color-mix(in srgb, var(--sl-color-accent) 30%, transparent)",
+                        },
+                        ".cm-cursor": {borderLeftColor: "var(--sl-color-white)"},
                     }),
                     updateListener
                 ],
