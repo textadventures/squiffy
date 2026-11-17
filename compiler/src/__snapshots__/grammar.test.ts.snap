@@ -68,7 +68,7 @@ exports[`TextMate grammar > every construct in the sample 1`] = `
 " " 
 "=" keyword.operator.assignment.squiffy
 " " 
-"Bob" string.unquoted.squiffy
+"\\"Bob\\"" meta.expression.squiffy string.quoted.double.handlebars.squiffy
 
 "@" meta.directive.attribute.squiffy punctuation.definition.directive.squiffy keyword.control.directive.squiffy
 "set" meta.directive.attribute.squiffy keyword.control.directive.squiffy
@@ -89,7 +89,43 @@ exports[`TextMate grammar > every construct in the sample 1`] = `
 " " 
 "=" keyword.operator.assignment.squiffy
 " " 
-"@score" variable.parameter.attribute.squiffy
+"score" variable.parameter.attribute.squiffy
+
+"@" meta.directive.attribute.squiffy punctuation.definition.directive.squiffy keyword.control.directive.squiffy
+"set" meta.directive.attribute.squiffy keyword.control.directive.squiffy
+" " meta.directive.attribute.squiffy
+"total" variable.parameter.attribute.squiffy
+" " 
+"=" keyword.operator.assignment.squiffy
+" " 
+"score" meta.expression.squiffy variable.parameter.attribute.handlebars.squiffy
+" " meta.expression.squiffy
+"+" meta.expression.squiffy keyword.operator.arithmetic.handlebars.squiffy
+" " meta.expression.squiffy
+"coins" meta.expression.squiffy variable.parameter.attribute.handlebars.squiffy
+" " meta.expression.squiffy
+"*" meta.expression.squiffy keyword.operator.arithmetic.handlebars.squiffy
+" " meta.expression.squiffy
+"2" meta.expression.squiffy constant.numeric.handlebars.squiffy
+
+"@" meta.directive.attribute.squiffy punctuation.definition.directive.squiffy keyword.control.directive.squiffy
+"set" meta.directive.attribute.squiffy keyword.control.directive.squiffy
+" " meta.directive.attribute.squiffy
+"rich" variable.parameter.attribute.squiffy
+" " 
+"=" keyword.operator.assignment.squiffy
+" " 
+"total" meta.expression.squiffy variable.parameter.attribute.handlebars.squiffy
+" " meta.expression.squiffy
+">" meta.expression.squiffy keyword.operator.comparison.handlebars.squiffy
+" " meta.expression.squiffy
+"100" meta.expression.squiffy constant.numeric.handlebars.squiffy
+" " meta.expression.squiffy
+"and" meta.expression.squiffy keyword.operator.logical.handlebars.squiffy
+" " meta.expression.squiffy
+"not" meta.expression.squiffy keyword.operator.logical.handlebars.squiffy
+" " meta.expression.squiffy
+"visited" meta.expression.squiffy variable.parameter.attribute.handlebars.squiffy
 
 "@" meta.directive.attribute.squiffy punctuation.definition.directive.squiffy keyword.control.directive.squiffy
 "set" meta.directive.attribute.squiffy keyword.control.directive.squiffy
@@ -207,6 +243,13 @@ exports[`TextMate grammar > every construct in the sample 1`] = `
 "tried" meta.link.passage.squiffy variable.parameter.attribute.squiffy
 "=" meta.link.passage.squiffy keyword.operator.assignment.squiffy
 "1" meta.link.passage.squiffy constant.numeric.squiffy
+"," meta.link.passage.squiffy punctuation.separator.squiffy
+" " meta.link.passage.squiffy
+"msg" meta.link.passage.squiffy variable.parameter.attribute.squiffy
+" " meta.link.passage.squiffy
+"=" meta.link.passage.squiffy keyword.operator.assignment.squiffy
+" " meta.link.passage.squiffy
+"\\"Hi, there\\"" meta.link.passage.squiffy meta.expression.squiffy string.quoted.double.handlebars.squiffy
 ")" meta.link.passage.squiffy punctuation.definition.metadata.end.squiffy
 ", " 
 "[" meta.link.passage.squiffy punctuation.definition.link.begin.squiffy

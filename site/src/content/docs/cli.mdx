@@ -157,6 +157,16 @@ You can optionally specify a custom filename:
 ```bash
 npx @textadventures/squiffy-cli mygame.squiffy --scriptonly myscript.js
 ```
+### Converting from Squiffy 6
+
+In a story with a `squiffy.json`, text in `@set` and link assignments goes in quotes, and attributes are written without an `@` (see [Coming from Squiffy 6](/whats-new-7/#coming-from-squiffy-6)). A Squiffy 6 story has no `squiffy.json`, so it keeps the old rules. When the CLI builds one whose assignments would need changing, it says so. Use `--convert-v6`, giving it the story's main file, to convert it and add a `squiffy.json`:
+
+```bash
+npx @textadventures/squiffy-cli mygame.squiffy --convert-v6
+```
+
+This converts the main file and every `.squiffy` file it `@import`s, keeping each original as a `.bak` file. The new `squiffy.json` leaves out any other `.squiffy` files in the folder, so the story is made of the same files as before. Anything that can't be converted exactly is left as it is, and listed with its line number so you can update it by hand. If the story still has Squiffy 5 syntax, run `--convert-v5` first.
+
 ### Converting from Squiffy 5
 
 Squiffy 6 replaced the Squiffy 5 text processor syntax, such as `{if x:...}` and `{x}`, with [Handlebars](/dynamic-text/). When the CLI sees Squiffy 5 syntax in a story, it warns about it. Use `--convert-v5` to convert it to the Squiffy 6 equivalent:

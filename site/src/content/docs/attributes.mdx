@@ -17,10 +17,23 @@ The simplest way to set an attribute is using the `@set` directive:
 
 ```squiffy
 @set score = 1000
-@set player_name = Alice
+@set player_name = "Alice"
 ```
 
-If the value is a number, it will be stored as a number, and `true` or `false` are stored as booleans. Otherwise, it will be stored as a string.
+Text goes in quotes, and numbers and `true` or `false` don't. The value can also be another attribute, or a calculation (see [Calculating values](#calculating-values)):
+
+```squiffy
+@set weapon = "sword"
+@set best_score = score
+@set gold = gold + price * 2
+@set rich = gold > 100
+```
+
+The value works just like a condition in `{{#if}}`: a word on its own is an attribute, so `@set weapon = sword` would set `weapon` to the value of an attribute called `sword`, not to the text "sword".
+
+<Aside>
+Stories made with Squiffy 6 used different rules: text didn't need quotes, and another attribute was written as `@score`. See [Coming from Squiffy 6](/whats-new-7/#coming-from-squiffy-6) for how a story is converted.
+</Aside>
 
 For boolean (true/false) values, to set as true:
 
@@ -80,13 +93,13 @@ Ouch! Health: {{health}}"></Sample>
 
 ### Setting from links
 
-You can set attribute values directly from section and passage links using a comma-separated list of assignments:
+You can set attribute values directly from section and passage links using a comma-separated list of assignments, which work the same way as `@set`:
 
 <Sample script="Choose your character class:
 
-[[Warrior]](game_start, class=warrior, strength=10, health=100)
-[[Mage]](game_start, class=mage, intelligence=10, health=60)
-[[Rogue]](game_start, class=rogue, dexterity=10, health=80)
+[[Warrior]](game_start, class=&quot;warrior&quot;, strength=10, health=100)
+[[Mage]](game_start, class=&quot;mage&quot;, intelligence=10, health=60)
+[[Rogue]](game_start, class=&quot;rogue&quot;, dexterity=10, health=80)
 
 [[game_start]]:
 You are a {{class}}.
@@ -99,7 +112,7 @@ Intelligence: {{intelligence}}, Health: {{health}}
 Dexterity: {{dexterity}}, Health: {{health}}
 {{/if}}"></Sample>
 
-You can also use increment (`+=`) and decrement (`-=`) operators in link attributes:
+You can also use increment (`+=`) and decrement (`-=`) operators, and calculations, in link attributes:
 
 <Sample script="@set coins = 10
 
@@ -116,15 +129,21 @@ These work both with `@set` and in links:
 
 | Syntax | Meaning | Example |
 |--------|---------|---------|
-| `a += n`, `a -= n` | Add or subtract a number | `@set coins += 5` |
+| `a = "text"` | Set to some text | `@set weapon = "sword"` |
+| `a = b` | Copy the value of another attribute | `@set best_score = score` |
+| `a = ...` | Set to the result of a calculation or comparison | `@set total = price * 2` |
+| `a += n`, `a -= n` | Add or subtract a number (which can also be a calculation) | `@set coins += price` |
 | `a *= n`, `a /= n` | Multiply or divide by a number | `@set score *= 2` |
-| `a = @b` | Copy the value of another attribute | `@set best_score = @score` |
 | `a := text` | Set to some text, after processing any `{{...}}` in it | `@set greeting := Hello, {{name}}!` |
+
+`+=`, `-=`, `*=` and `/=` only work on numbers. To add text to the end of some text, use `+`: `@set title = name + " the Brave"`.
+
+In a link, the assignments are separated by commas, but a comma inside quotes is part of the text: `[[Say hello]](next, greeting = "Hello, friend", met = true)`.
 
 For example, this link copies the current score into `final_score` and doubles the bonus:
 
 ```squiffy
-[[Finish]](ending, final_score=@score, bonus*=2)
+[[Finish]](ending, final_score=score, bonus*=2)
 ```
 
 ### Conditional attribute changes
@@ -179,7 +198,7 @@ You walk past. Reputation: {{reputation}}"></Sample>
 
 ### Calculating values
 
-`{{set}}`, `{{inc}}` and `{{dec}}` can work out a value using `+`, `-`, `*`, `/` and `%`, and `{{= ...}}` displays the result of a calculation:
+`@set`, link assignments, `{{set}}`, `{{inc}}` and `{{dec}}` can work out a value using `+`, `-`, `*`, `/` and `%`, and `{{= ...}}` displays the result of a calculation:
 
 <Sample script="@set gold = 10
 @set price = 3
@@ -189,7 +208,7 @@ You have {{gold}} gold. A sword costs {{price}}, and a shield costs {{= price * 
 [Sell your old armour]
 
 [Sell your old armour]:
-{{set &quot;gold&quot; gold + price * 2}}
+@set gold = gold + price * 2
 You sell it for twice the price of a sword. You now have {{gold}} gold."></Sample>
 
 `+` joins text too, so `{{set "title" name + " the Brave"}}` works. See [Calculations](/helpers-reference/#calculations) in the helpers reference for the details, including how `-` and `/` need spaces around them.
@@ -205,8 +224,8 @@ Your full name is {{get "player name"}}.
 
 Both `{{attribute}}` and `{{get "attribute"}}` always return the latest value, even if the attribute was just modified by a helper in the same section.
 
-<Sample script="@set player_name = Alice
-@set favorite_color = blue
+<Sample script="@set player_name = &quot;Alice&quot;
+@set favorite_color = &quot;blue&quot;
 
 Hello, {{player_name}}!
 
@@ -214,9 +233,9 @@ Your favorite color is {{favorite_color}}."></Sample>
 
 The main use for `{{get}}` is when you need to read an attribute whose name is stored in another variable. This enables dynamic attribute lookup:
 
-<Sample script="@set room = kitchen
-@set kitchen = A cozy room with a stove.
-@set garden = A sunny outdoor space.
+<Sample script="@set room = &quot;kitchen&quot;
+@set kitchen = &quot;A cozy room with a stove.&quot;
+@set garden = &quot;A sunny outdoor space.&quot;
 
 You are in the {{room}}.
 
@@ -225,7 +244,7 @@ You are in the {{room}}.
 [[Go to the garden]](garden)
 
 [[garden]]:
-@set room = garden
+@set room = &quot;garden&quot;
 You are now in the {{room}}.
 
 {{get room}}"></Sample>
@@ -246,7 +265,7 @@ You can compare attribute values in `{{#if}}` and `{{#unless}}` conditions. See 
 
 Use `=` to check if two values are equal, and `!=` to check if they're not equal:
 
-<Sample script="@set choice = red
+<Sample script="@set choice = &quot;red&quot;
 
 You chose {{choice}}.
 
@@ -369,7 +388,7 @@ In addition to the standard link syntax, you can create links programmatically u
 Creates a link to a section with optional custom text and attribute settings:
 
 ```squiffy
-{{section "section_name" text="Link text" set="attribute=value, count+=1"}}
+{{section "section_name" text="Link text" set="attribute='value', count+=1"}}
 ```
 
 ### The `{{passage}}` helper
@@ -382,9 +401,9 @@ Creates a link to a passage with optional custom text and attribute settings:
 
 <Sample script="Choose your reward:
 
-{{section &quot;reward&quot; text=&quot;Gold&quot; set=&quot;choice=gold, coins+=100&quot;}},
-{{section &quot;reward&quot; text=&quot;Silver&quot; set=&quot;choice=silver, coins+=50&quot;}}, or
-{{section &quot;reward&quot; text=&quot;Bronze&quot; set=&quot;choice=bronze, coins+=25&quot;}}
+{{section &quot;reward&quot; text=&quot;Gold&quot; set=&quot;choice='gold', coins+=100&quot;}},
+{{section &quot;reward&quot; text=&quot;Silver&quot; set=&quot;choice='silver', coins+=50&quot;}}, or
+{{section &quot;reward&quot; text=&quot;Bronze&quot; set=&quot;choice='bronze', coins+=25&quot;}}
 
 [[reward]]:
 You chose {{choice}} and received {{coins}} coins!"></Sample>
@@ -400,27 +419,27 @@ Here's a complete example showing how attributes can work together to create a f
 Please select your meal:
 
 **Main Course:**
-- [[Chicken Curry ($12)]](add_drink, main=Chicken Curry, cost=12)
-- [[Vegetable Stir-Fry ($10)]](add_drink, main=Vegetable Stir-Fry, cost=10)
-- [[Beef Burger ($14)]](add_drink, main=Beef Burger, cost=14)
+- [[Chicken Curry ($12)]](add_drink, main=&quot;Chicken Curry&quot;, cost=12)
+- [[Vegetable Stir-Fry ($10)]](add_drink, main=&quot;Vegetable Stir-Fry&quot;, cost=10)
+- [[Beef Burger ($14)]](add_drink, main=&quot;Beef Burger&quot;, cost=14)
 
 [[add_drink]]:
 {{set &quot;total_cost&quot; cost}}
 You ordered: **{{main}}** - ${{cost}}
 
 **Add a drink?**
-- [[Soda ($3)]](add_dessert, drink=Soda, drink_cost=3)
-- [[Juice ($4)]](add_dessert, drink=Juice, drink_cost=4)
-- [[Water (free)]](add_dessert, drink=Water, drink_cost=0)
+- [[Soda ($3)]](add_dessert, drink=&quot;Soda&quot;, drink_cost=3)
+- [[Juice ($4)]](add_dessert, drink=&quot;Juice&quot;, drink_cost=4)
+- [[Water (free)]](add_dessert, drink=&quot;Water&quot;, drink_cost=0)
 - [[No thanks]](add_dessert)
 
 [[add_dessert]]:
 {{#if drink}}{{inc &quot;total_cost&quot; drink_cost}}You added: {{drink}} {{#if drink_cost > 0}}(${{drink_cost}}){{else}}(free!){{/if}}{{/if}}
 
 **Add a dessert?**
-- [[Ice Cream ($6)]](finish, dessert=Ice Cream, dessert_cost=6)
-- [[Cake ($7)]](finish, dessert=Cake, dessert_cost=7)
-- [[Fruit ($4)]](finish, dessert=Fruit, dessert_cost=4)
+- [[Ice Cream ($6)]](finish, dessert=&quot;Ice Cream&quot;, dessert_cost=6)
+- [[Cake ($7)]](finish, dessert=&quot;Cake&quot;, dessert_cost=7)
+- [[Fruit ($4)]](finish, dessert=&quot;Fruit&quot;, dessert_cost=4)
 - [[No thanks]](finish)
 
 [[finish]]:

@@ -560,10 +560,10 @@
       }
     },
     "assignments": {
-      "comment": "Comma-separated setters after a link's target: [[text]](section, score+=1, not visited)",
+      "comment": "Comma-separated setters after a link's target: [[text]](section, score+=1, not visited, msg = \"Hi, there\"). A comma inside quotes or brackets doesn't separate them.",
       "patterns": [
         {
-          "match": "([^,]+)|(,)",
+          "match": "((?:\"[^\"]*\"?|'[^']*'?|\\([^)]*\\)?|[^,\"'(])+)|(,)",
           "captures": {
             "1": {
               "patterns": [
@@ -580,7 +580,7 @@
       ]
     },
     "assignment": {
-      "comment": "One setter, as the runtime reads it (setAttribute in runtime/src/squiffy.runtime.ts): a = 1, a += 1 (or -=, *=, /=), a := text with {{...}}, a = @b, not a, a. Patterns inside a capture can't anchor to its start (^ and \\G never match there), but $ is its end, and the earliest match wins.",
+      "comment": "One setter (setAttribute in runtime/src/squiffy.runtime.ts): a = 1, a += 1 (or -=, *=, /=), a := text with {{...}}, not a, a. In a story with a squiffy.json the value is an expression, as in {{#if}}: a = \"text\", a = b + 1; without one, a = text and a = @b. Patterns inside a capture can't anchor to its start (^ and \\G never match there), but $ is its end, and the earliest match wins.",
       "patterns": [
         {
           "match": "\\s*(\\w*)\\s*(:=)(.*)$",
@@ -633,7 +633,21 @@
       ]
     },
     "value": {
+      "comment": "A setter's value. One with quotes, brackets, operators or and/or/not is an expression, as in {{#if}}. A single word is an attribute in a story with a squiffy.json, and anything else unquoted is text, as in a story without one. Of two matches at the start, the first listed wins.",
       "patterns": [
+        {
+          "match": "(?=.*(?:[\"'()+*%<>!]|\\s[-/]|\\b(?:and|or|not)\\b)).+$",
+          "name": "meta.expression.squiffy",
+          "captures": {
+            "0": {
+              "patterns": [
+                {
+                  "include": "#handlebars-expression"
+                }
+              ]
+            }
+          }
+        },
         {
           "match": "-?\\d+(?:\\.\\d+)?$",
           "name": "constant.numeric.squiffy"
@@ -644,6 +658,10 @@
         },
         {
           "match": "@\\w+$",
+          "name": "variable.parameter.attribute.squiffy"
+        },
+        {
+          "match": "(?:[\\w-]+|\\[[^\\]]*\\])$",
           "name": "variable.parameter.attribute.squiffy"
         },
         {

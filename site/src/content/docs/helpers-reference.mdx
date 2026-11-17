@@ -56,13 +56,15 @@ Each condition is converted to the equivalent helpers before it runs, so `{{#if 
 You can also use these operators to work out a value to store or display:
 
 ```squiffy
+@set gold = gold + price * 2
 {{set "gold" gold + price * 2}}
 {{inc "score" bonus * 10}}
 {{dec "health" damage - armour}}
 That costs {{= price * 2}} gold.
+[[Buy]](shop, gold -= price * 2)
 ```
 
-`{{set}}`, `{{inc}}` and `{{dec}}` accept an expression after the attribute name. `{{= expression}}` displays the result of one. As with conditions, they're converted to helpers before they run: `{{set "gold" gold + price * 2}}` is the same as `{{set "gold" (add gold (mul price 2))}}`, and `{{= price * 2}}` is the same as `{{mul price 2}}`.
+`@set` and link assignments accept an expression after the `=` (or `+=`, `-=`, `*=`, `/=`): see [Setting attributes](/attributes/#setting-attributes). `{{set}}`, `{{inc}}` and `{{dec}}` accept an expression after the attribute name. `{{= expression}}` displays the result of one. As with conditions, they're converted to helpers before they run: `{{set "gold" gold + price * 2}}` is the same as `{{set "gold" (add gold (mul price 2))}}`, and `{{= price * 2}}` is the same as `{{mul price 2}}`.
 
 `+` adds numbers, including text that holds a number, such as an attribute set to `"5"` from a text input. If either value is other text, it joins them instead, so `name + " the Brave"` gives "Bob the Brave". The other operators only work with numbers. An attribute that hasn't been set counts as `0`, or as empty text when joining.
 
@@ -199,8 +201,10 @@ See [Attributes](/attributes/#creating-links-with-helpers) for examples.
 
 Example:
 ```squiffy
-{{section "next_room" text="Enter" set="visited=true, count+=1"}}
+{{section "next_room" text="Enter" set="visited=true, count+=1, room='hall'"}}
 ```
+
+`set` takes the same comma-separated assignments as a link, such as `[[Enter]](next_room, visited=true)`: see [Setting attributes](/attributes/#setting-attributes). Text in them goes in quotes, and single quotes save escaping the double quotes around `set`.
 
 ## Content helpers
 

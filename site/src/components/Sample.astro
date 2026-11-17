@@ -159,6 +159,9 @@ const restartClass = "sample-button restart" + (!alwaysShowRestart ? " hidden" :
             async function initRuntime(script: string, outputContainer: HTMLElement, restartButton: HTMLElement) {
                 const result = await squiffyCompile({
                     script: script,
+                    // As in a story with a squiffy.json, which every story made in the editor has:
+                    // @set and link setters take expressions (#373)
+                    expressions: true,
                 });
 
                 if (!result.success) {

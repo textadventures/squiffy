@@ -5,7 +5,7 @@ sidebar:
     order: 19
 ---
 
-Squiffy 7 brings a new editor. The language adds the [`@end`](/basic-concepts/#endings) directive for marking endings, and [calculations](/helpers-reference/#calculations) in the text processor, but your Squiffy 6 stories work unchanged. See [Using the editor](/editor/) for a tour.
+Squiffy 7 brings a new editor. The language adds the [`@end`](/basic-concepts/#endings) directive for marking endings, [calculations](/helpers-reference/#calculations), and the same rules for `@set` as for `{{#if}}`. Squiffy 6 stories still work, and the editor converts them for you: see [Coming from Squiffy 6](#coming-from-squiffy-6). See [Using the editor](/editor/) for a tour.
 
 ## The new editor
 
@@ -23,6 +23,7 @@ Squiffy 7 brings a new editor. The language adds the [`@end`](/basic-concepts/#e
 ## The language
 
 - **Calculations.** Work out values with `+`, `-`, `*`, `/` and `%` in conditions, in `{{set}}`, `{{inc}}` and `{{dec}}`, and in the new `{{= ...}}`, which displays the result: `{{set "gold" gold + price * 2}}`, `{{#if gold >= price * 2}}`, or `That costs {{= price * 2}} gold.` There are matching [maths helpers](/helpers-reference/#maths-helpers) too: `add`, `sub`, `mul`, `div` and `mod`. See [Calculating values](/attributes/#calculating-values).
+- **`@set` and link assignments work like `{{#if}}`.** Text goes in quotes and attributes don't need an `@`, so a value can be a calculation or a comparison: `@set weapon = "sword"`, `@set gold = gold + price * 2`, `@set rich = gold > 100`, or `[[Buy]](shop, gold -= price)`. See [Setting attributes](/attributes/#setting-attributes).
 - **Endings.** Mark the sections where your story ends with [`@end`](/basic-concepts/#endings), and the editor won't report them as dead ends.
 
 ## Published stories
@@ -35,6 +36,27 @@ Squiffy 7 brings a new editor. The language adds the [`@end`](/basic-concepts/#e
 If you had unsaved work in the Squiffy 6 editor, the home page offers to open it as a draft.
 
 The Squiffy 6 editor opened and saved a single `.squiffy` file. To edit a story's file where it is, open the folder it's in. Otherwise, use **Open file** to copy it into a draft.
+
+### Setting attributes
+
+In Squiffy 6, text in `@set` and link assignments didn't need quotes, and another attribute was written with an `@`. A story with a [`squiffy.json`](/basic-concepts/#stories-in-several-files), which every story made in the Squiffy 7 editor has, uses the new rules:
+
+| Squiffy 6 | Squiffy 7 |
+|-----------|-----------|
+| `@set weapon = sword` | `@set weapon = "sword"` |
+| `@set best = @score` | `@set best = score` |
+| `[[Go]](next, name = Bob, gold += @price)` | `[[Go]](next, name = "Bob", gold += price)` |
+
+Numbers, `true` and `false`, `@set has_key`, `@set not has_key`, `:=`, `@inc` and `@dec` are the same in both.
+
+A story without a `squiffy.json` keeps the Squiffy 6 rules, so it works unchanged. When a story gets a `squiffy.json`, its assignments are converted:
+
+- **Editor:** opening a Squiffy 6 file as a draft converts it, and so does adding a `squiffy.json` to a folder (when you add a second file, or use the story map). Open files are changed in the editor, so you can use Undo.
+- **CLI:** run with `--convert-v6`, which converts the story and adds a `squiffy.json`. See [Converting from Squiffy 6](/cli/#converting-from-squiffy-6).
+
+Anything that can't be converted exactly, such as text with both kinds of quote in it, is left as it is and listed so you can change it by hand. In a story with a `squiffy.json`, an attribute written as `@score` is underlined in the editor, with a quick fix.
+
+### Starting the story
 
 In Squiffy 6, an `@import` above the main file's first section made the story begin in the imported file. Squiffy 7 begins in the main file. If your story relied on the old behaviour, choose the start section with [`@start`](/basic-concepts/#set-the-start-section).
 
