@@ -69,6 +69,9 @@ export interface Analysis {
     diagnostics: Diagnostic[];
     // The story's sections in order, with later sections of the same name replacing earlier ones.
     sections: SectionSymbol[];
+    // The section the story starts at: @start's, or else the main file's first section. It may
+    // not exist, if @start names a section that doesn't.
+    start: string;
 }
 
 // ---- Story model, which emit() turns into output ----
@@ -291,6 +294,13 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
                     }
                     else {
                         passage.clear = true;
+                    }
+                    return true;
+                case "end":
+                    // Only for the language service's dead end check
+                    if (!passage) {
+                        section = ensureSectionExists(lineCount);
+                        if (!section) return sectionRequired(node);
                     }
                     return true;
                 case "title":
@@ -534,6 +544,7 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
             ...(section.node ? { node: section.node } : {}),
             passages: Object.values(section.passages).map(passage => ({ name: passage.name, node: passage.node })),
         })),
+        start: story.start,
     };
     analysisInternals.set(analysis, { story, legacyErrors, legacyWarnings });
     return analysis;

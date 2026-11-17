@@ -95,6 +95,7 @@ const handlers: WorkerApi = {
     getFoldingRanges: path => current().getFoldingRanges(path),
     getCodeActions: (path, range) => current().getCodeActions(path, range),
     getSectionAt: (path, position) => current().getSectionAt(path, position),
+    getStoryGraph: () => current().getStoryGraph(),
 };
 
 const host = connect<HostApi & Handlers>(self as unknown as Port, handlers as unknown as Handlers);

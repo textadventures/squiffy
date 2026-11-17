@@ -254,6 +254,18 @@ Any section or passage can clear the screen using @clear on a line on its own:
 My first reaction to the explosion was...
 ```
 
+## Endings
+
+A section that has no links to another section is where the story stops. The editor warns about these "dead ends", in case you meant to add a link. If the section is one of your story's endings, say so with `@end` on a line on its own, and the warning goes away:
+
+```squiffy
+[[Fall into the river]]:
+@end
+The current carries you away. THE END.
+```
+
+An `@end` in one of a section's passages marks the whole section as an ending. `@end` doesn't change what the player sees.
+
 ## Attributes
 
 Attributes are variables that store information about your story's state, such as scores, inventory, player choices, and any other data that changes during gameplay.

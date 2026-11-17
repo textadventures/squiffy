@@ -43,8 +43,11 @@ Sections can also have passages, which add text without moving the story on. Cli
 This is the text for the passage.
 
 [[next section]]:
+@end
 
 When a new section appears, any passage links in the previous section that weren't clicked are disabled.
+
+This section has no links, so the story ends here. The @end above says that's on purpose. Without it, the editor would warn you about a dead end.
 `;
 
 // Kept beside each draft in OPFS (projects/<id>/meta.json)

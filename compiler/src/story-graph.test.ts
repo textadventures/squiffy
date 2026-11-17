@@ -1,0 +1,238 @@
+import { beforeAll, describe, expect, test, vi } from "vitest";
+
+import { createLanguageService, ProjectFiles, WorkspaceEdit } from "./language-service.js";
+import { parse } from "./parse.js";
+import type { GraphEdge, StoryGraph } from "./story-graph.js";
+
+beforeAll(() => {
+    vi.stubGlobal("crypto", {
+        randomUUID: () => "00000000-0000-0000-0000-000000000000"
+    });
+});
+
+function memoryFiles(files: Record<string, string>): ProjectFiles {
+    return {
+        list: async () => Object.keys(files).map(path => ({ path })),
+        readText: async (path: string) => {
+            if (!(path in files)) throw new Error(`No file ${path}`);
+            return files[path];
+        },
+    };
+}
+
+function service(files: Record<string, string>, mainFile = "story.squiffy") {
+    return createLanguageService({ files: memoryFiles(files), mainFile });
+}
+
+async function graphOf(files: Record<string, string>) {
+    return service(files).getStoryGraph();
+}
+
+const one = (main: string) => graphOf({ "story.squiffy": main });
+
+const nodeOf = (graph: StoryGraph, id: string) => {
+    const node = graph.nodes.find(n => n.id == id);
+    if (!node) throw new Error(`No node ${id}: ${graph.nodes.map(n => n.id).join(", ")}`);
+    return node;
+};
+
+// Each edge as "from -> to (kind)", with a ? for conditional ones
+const edgeSummary = (edges: GraphEdge[]) =>
+    edges.map(e => `${e.from} -> ${e.to ?? "?"} (${e.kind}${e.conditional ? ", conditional" : ""})`);
+
+const reachable = (graph: StoryGraph) => graph.nodes.filter(n => n.reachable).map(n => n.id);
+const deadEnds = (graph: StoryGraph) => graph.nodes.filter(n => n.deadEnd).map(n => n.id);
+
+function apply(text: string, edits: WorkspaceEdit[string]) {
+    const lines = text.split("\n");
+    const offset = (p: { line: number; character: number }) => lines.slice(0, p.line).reduce((n, l) => n + l.length + 1, 0) + p.character;
+    const sorted = [...edits].sort((a, b) => offset(b.range.start) - offset(a.range.start));
+    for (const edit of sorted) {
+        text = text.substring(0, offset(edit.range.start)) + edit.newText + text.substring(offset(edit.range.end));
+    }
+    return text;
+}
+
+describe("story graph", () => {
+    test("sections, passages and the links between them", async () => {
+        const main = "[[start]]:\nGo [[north]](cave, gold+=1, seen) or [look].\n\n[look]:\nNothing. [[Leave]](cave)\n\n[[cave]]:\n@end\nDark.";
+        const graph = await one(main);
+        expect(graph.nodes.map(n => [n.id, n.kind, n.name, n.section])).toEqual([
+            ["section:start", "section", "start", undefined],
+            ["passage:start/look", "passage", "look", "start"],
+            ["section:cave", "section", "cave", undefined],
+        ]);
+        expect(nodeOf(graph, "section:start").start).toBe(true);
+        expect(nodeOf(graph, "section:cave").location).toEqual({
+            file: "story.squiffy", range: { start: { line: 6, character: 2 }, end: { line: 6, character: 6 } },
+        });
+        expect(edgeSummary(graph.edges)).toEqual([
+            "section:start -> section:cave (section-link)",
+            "section:start -> passage:start/look (passage-link)",
+            "passage:start/look -> section:cave (section-link)",
+        ]);
+        expect(graph.edges[0]).toMatchObject({ text: "north", setters: ["gold+=1", "seen"] });
+        expect(graph.edges[0].location.range.start).toEqual({ line: 1, character: 3 });
+        expect(graph.edges[1]).toMatchObject({ text: "look" });
+        expect(graph.edges[1].setters).toBeUndefined();
+        expect(reachable(graph)).toEqual(["section:start", "passage:start/look", "section:cave"]);
+        expect(nodeOf(graph, "section:cave").ending).toBe(true);
+        expect(deadEnds(graph)).toEqual([]);
+    });
+
+    test("ids stay the same when unrelated text changes", async () => {
+        const before = await one("[[a]]:\n[[b]]\n\n[[b]]:\n@end");
+        const after = await one("Intro\n\n[[a]]:\nMore text.\n[[b]]\n\n[[b]]:\n@end\nThe end.");
+        expect(after.nodes.map(n => n.id)).toEqual(["section:_default", ...before.nodes.map(n => n.id)]);
+    });
+
+    test("across files", async () => {
+        const graph = await graphOf({
+            "story.squiffy": "[[start]]:\n@import chapters/*.squiffy\nGo to [[cellar]].",
+            "chapters/cellar.squiffy": "[[cellar]]:\nBack [[up]](start), or on to [[attic]].",
+            "chapters/attic.squiffy": "[[attic]]:\n@end",
+        });
+        expect(edgeSummary(graph.edges)).toEqual([
+            "section:start -> section:cellar (section-link)",
+            "section:cellar -> section:start (section-link)",
+            "section:cellar -> section:attic (section-link)",
+        ]);
+        expect(nodeOf(graph, "section:attic").location.file).toBe("chapters/attic.squiffy");
+        expect(graph.edges[2].location.file).toBe("chapters/cellar.squiffy");
+        expect(reachable(graph).sort()).toEqual(["section:attic", "section:cellar", "section:start"]);
+    });
+
+    test("+++ and [[next>]] links", async () => {
+        const graph = await one("[[a]]:\nOne\n+++Onward\nTwo [[More>]]\n\n---\nThree\n@end");
+        expect(edgeSummary(graph.edges)).toEqual([
+            "section:a -> section:_continue1 (section-link)",
+            "section:_continue1 -> section:_continue2 (section-link)",
+        ]);
+        expect(graph.edges[0]).toMatchObject({ text: "Onward", location: { range: { start: { line: 2, character: 0 } } } });
+        expect(reachable(graph)).toEqual(["section:a", "section:_continue1", "section:_continue2"]);
+    });
+
+    test("embeds include content, but don't make what they embed reachable", async () => {
+        const graph = await one("[[a]]:\n{{embed \"shared\"}}\n\n[[shared]]:\nGo to [[b]].\n\n[[b]]:\n@end");
+        expect(edgeSummary(graph.edges)).toEqual([
+            "section:a -> section:shared (embed)",
+            "section:shared -> section:b (section-link)",
+        ]);
+        expect(reachable(graph)).toEqual(["section:a", "section:b"]);
+        // a's way out is in what it embeds
+        expect(deadEnds(graph)).toEqual([]);
+    });
+
+    test("links inside {{#if}} are conditional, and can be followed", async () => {
+        const graph = await one("[[a]]:\n{{#if key}}\nOpen the [[door]].\n{{else}}\nIt's locked. [[Back]](a)\n{{/if}}\n[[Wait]](a)\n\n[[door]]:\n@end");
+        expect(edgeSummary(graph.edges)).toEqual([
+            "section:a -> section:door (section-link, conditional)",
+            "section:a -> section:a (section-link, conditional)",
+            "section:a -> section:a (section-link)",
+        ]);
+        expect(nodeOf(graph, "section:door").reachable).toBe(true);
+    });
+
+    test("broken links have no target, and count as a way out", async () => {
+        const graph = await one("[[a]]:\nGo to [[nowhere]] or [nothing].");
+        expect(edgeSummary(graph.edges)).toEqual([
+            "section:a -> ? (section-link)",
+            "section:a -> ? (passage-link)",
+        ]);
+        expect(deadEnds(graph)).toEqual([]);
+    });
+
+    test("dynamic links and JavaScript navigation are unknown exits", async () => {
+        const graph = await one([
+            "[[a]]:", "[[Go]]({{destination}})", "",
+            "[[b]]:", "    squiffy.story.go(squiffy.get(\"next\"));", "",
+            "[[c]]:", "{{section \"d\" text=\"Go\"}}", "",
+            "[[d]]:", "    squiffy.story.go(\"e\");", "",
+            "[[e]]:", "@end",
+        ].join("\n"));
+        expect(graph.nodes.filter(n => n.unknownExits).map(n => n.id)).toEqual(["section:a", "section:b", "section:c"]);
+        expect(graph.edges[0]).toMatchObject({ from: "section:a", dynamic: true });
+        expect(graph.edges[0].to).toBeUndefined();
+        expect(edgeSummary(graph.edges.slice(1))).toEqual(["section:d -> section:e (script)"]);
+        expect(deadEnds(graph)).toEqual([]);
+    });
+
+    test("passages are reachable when something links to them, and special ones with their section", async () => {
+        const graph = await one("[[a]]:\n[one]\n\n[one]:\nx\n\n[two]:\ny\n\n[@last]:\nz\n\n[]:\nAlways\n@end");
+        expect(reachable(graph)).toEqual(["section:a", "passage:a/one", "passage:a/@last", "passage:a/"]);
+    });
+
+    test("the master section is part of every section", async () => {
+        const graph = await one("[[]]:\n[[Restart]](a)\n\n[[a]]:\nHello.");
+        expect(nodeOf(graph, "section:").reachable).toBe(true);
+        expect(deadEnds(graph)).toEqual([]);
+    });
+
+    test("@start sets where reachability starts from", async () => {
+        const graph = await one("@start b\n\n[[a]]:\n[[b]]\n\n[[b]]:\n@end");
+        expect(nodeOf(graph, "section:b").start).toBe(true);
+        expect(reachable(graph)).toEqual(["section:b"]);
+    });
+
+    test("endings, in a section or one of its passages", async () => {
+        const graph = await one("[[a]]:\n[[b]] [[c]] [[d]]\n\n[[b]]:\nThe end.\n@end\n\n[[c]]:\n[die]\n\n[die]:\n@end\n\n[[d]]:\nOops.");
+        expect(graph.nodes.filter(n => n.ending).map(n => n.id)).toEqual(["section:b", "section:c"]);
+        expect(deadEnds(graph)).toEqual(["section:d"]);
+    });
+});
+
+describe("@end", () => {
+    test("is parsed as a directive, which the compiler ignores", async () => {
+        const file = parse("[[a]]:\n@end\nText");
+        expect(file.sections[0].type == "section" && file.sections[0].body.map(n => n.type)).toEqual(["end", "text"]);
+        const analysis = await service({ "story.squiffy": "[[a]]:\n@end\nText" }).getAnalysis();
+        expect(analysis.success).toBe(true);
+    });
+
+    test("is offered as a completion", async () => {
+        const ls = service({ "story.squiffy": "[[a]]:\n@e" });
+        const items = await ls.getCompletions("story.squiffy", { line: 1, character: 2 });
+        expect(items.find(i => i.label == "@end")).toMatchObject({
+            kind: "directive", range: { start: { line: 1, character: 0 }, end: { line: 1, character: 2 } },
+        });
+    });
+});
+
+describe("diagnostics", () => {
+    test("unreachable sections and dead ends", async () => {
+        const main = "[[a]]:\nGo to [[b]].\n\n[[b]]:\nStuck.\n\n[[c]]:\nGo to [[a]].";
+        const ls = service({ "story.squiffy": main });
+        const diagnostics = await ls.getDiagnostics("story.squiffy");
+        expect(diagnostics.map(d => [d.code, d.severity, d.range.start.line])).toEqual([
+            ["squiffy/dead-end", "warning", 3],
+            ["squiffy/unreachable-section", "warning", 6],
+        ]);
+    });
+
+    test("a quick fix marks a dead end as an ending", async () => {
+        const main = "[[a]]:\nGo to [[b]].\n\n[[b]]:\nThe end.";
+        const ls = service({ "story.squiffy": main });
+        const [diagnostic] = await ls.getDiagnostics("story.squiffy");
+        const [action] = await ls.getCodeActions("story.squiffy", diagnostic.range);
+        expect(action.title).toBe("Mark this section as an ending");
+        const fixed = apply(main, action.edit["story.squiffy"]);
+        expect(fixed).toBe("[[a]]:\nGo to [[b]].\n\n[[b]]:\n@end\nThe end.");
+        ls.updateFile("story.squiffy", fixed);
+        expect(await ls.getDiagnostics("story.squiffy")).toEqual([]);
+    });
+
+    test("the quick fix works on a header at the end of the file, and on the text before any section", async () => {
+        for (const [main, expected] of [["[[a]]:", "[[a]]:\n@end"], ["Hello.", "@end\nHello."]]) {
+            const ls = service({ "story.squiffy": main });
+            const [diagnostic] = await ls.getDiagnostics("story.squiffy");
+            expect(diagnostic.code).toBe("squiffy/dead-end");
+            const [action] = await ls.getCodeActions("story.squiffy", diagnostic.range);
+            expect(apply(main, action.edit["story.squiffy"])).toBe(expected);
+        }
+    });
+
+    test("no unreachable sections when something navigates somewhere that can't be known", async () => {
+        const ls = service({ "story.squiffy": "[[a]]:\n    squiffy.story.go(squiffy.get(\"room\"));\n\n[[b]]:\n@end" });
+        expect(await ls.getDiagnostics("story.squiffy")).toEqual([]);
+    });
+});

@@ -1,5 +1,6 @@
 // The Squiffy language service: outline, diagnostics, go to definition, references, rename,
-// completion, hover, folding, quick fixes and "which section is this", for a multi-file project.
+// completion, hover, folding, quick fixes, "which section is this" and the story graph, for a
+// multi-file project.
 // It has no UI or DOM dependencies, so the web editor, the desktop app (from a Web Worker) and an
 // LSP adapter for VS Code can all call it directly.
 //
@@ -11,8 +12,10 @@ import type {
 } from "./syntax.js";
 import { getStoryFiles, globToRegExp, parseProjectFile, PROJECT_FILENAME, ProjectFile } from "./project.js";
 import { convertV5Syntax, findV5Syntax } from "./v5.js";
+import { buildStoryGraph, StoryGraph, storyGraphDiagnostics } from "./story-graph.js";
 
 export type { Diagnostic, Position, Range } from "./syntax.js";
+export type { GraphEdge, GraphEdgeKind, GraphNode, StoryGraph } from "./story-graph.js";
 
 // Read access to the project. A ProjectFileSystem from @textadventures/project-fs fits as is.
 export interface ProjectFiles {
@@ -70,7 +73,7 @@ export interface DocumentSymbol {
 
 export interface CompletionItem {
     label: string;
-    kind: "section" | "passage" | "attribute" | "snippet";
+    kind: "section" | "passage" | "attribute" | "snippet" | "directive";
     // The text to insert, if it isn't the label.
     insertText?: string;
     detail?: string;
@@ -130,6 +133,8 @@ export interface LanguageService {
     getFoldingRanges(path: string): Promise<FoldingRange[]>;
     getCodeActions(path: string, range: Range): Promise<CodeAction[]>;
     getSectionAt(path: string, position: Position): Promise<SectionAt | undefined>;
+    // The whole story's sections and passages, and the links between them
+    getStoryGraph(): Promise<StoryGraph>;
 }
 
 // ---- What a position refers to ----
@@ -166,7 +171,23 @@ interface Index {
     usages: Usage[];
     attributes: Set<string>;
     snippets: { file: string; node: SnippetNode }[];
+    // Built when it's first needed
+    graph?: { graph: StoryGraph; diagnostics: Diagnostic[] };
 }
+
+// Directives, for completion, with what they do
+const DIRECTIVES: [string, string][] = [
+    ["title", "Sets the story's title"],
+    ["start", "Sets the section the story starts at"],
+    ["import", "Adds another file to the story"],
+    ["set", "Sets an attribute"],
+    ["unset", "Sets an attribute to false"],
+    ["inc", "Adds to an attribute"],
+    ["dec", "Subtracts from an attribute"],
+    ["clear", "Clears the screen"],
+    ["end", "Marks this section as an ending"],
+    ["ui", "JavaScript for the story's user interface"],
+];
 
 const contains = (range: Range, pos: Position) =>
     comparePositions(range.start, pos) <= 0 && comparePositions(pos, range.end) <= 0;
@@ -425,6 +446,26 @@ export function createLanguageService(options: LanguageServiceOptions): Language
         }
     }
 
+    function getGraph(index: Index) {
+        if (!index.graph) {
+            const graph = buildStoryGraph({
+                files: index.files,
+                sections: index.sections,
+                nodeNames: index.nodeNames,
+                usages: index.usages,
+                start: index.analysis.start,
+                resolve: usage => resolveUsage(index, usage as Usage),
+            });
+            index.graph = { graph, diagnostics: storyGraphDiagnostics(graph) };
+        }
+        return index.graph;
+    }
+
+    // The analysis's diagnostics, and the story graph's
+    function allDiagnostics(index: Index) {
+        return [...index.analysis.diagnostics, ...getGraph(index).diagnostics];
+    }
+
     // The passages a passage link or embed in this section can reach
     function passagesOf(index: Index, sectionNode: SectionNode) {
         const name = index.nodeNames.get(sectionNode);
@@ -579,7 +620,7 @@ export function createLanguageService(options: LanguageServiceOptions): Language
 
         async getDiagnostics(path) {
             const index = await getIndex();
-            return index.analysis.diagnostics.filter(d => d.file == path);
+            return allDiagnostics(index).filter(d => d.file == path);
         },
 
         async getDocumentSymbols(path) {
@@ -717,6 +758,11 @@ export function createLanguageService(options: LanguageServiceOptions): Language
             if ((match = /(?<![![])\[([^[\]]*)$/.exec(prefix))) {
                 return passageItems(match[1]);
             }
+            if ((match = /^\s*(@\w*)$/.exec(prefix))) {
+                return DIRECTIVES.map(([name, detail]) => ({
+                    label: `@${name}`, kind: "directive", detail, range: replace(match![1]),
+                }));
+            }
             if ((match = /^\s*@(?:set|unset|inc|dec)\s+(?:not\s+)?([^\s=]*)$/.exec(prefix))) {
                 return [...index.attributes].sort().map(name => ({ label: name, kind: "attribute", range: replace(match![1]) }));
             }
@@ -775,7 +821,7 @@ export function createLanguageService(options: LanguageServiceOptions): Language
             const tree = await getFile(index, path);
             if (!tree) return [];
             const actions: CodeAction[] = [];
-            const diagnostics = index.analysis.diagnostics.filter(d => d.file == path && overlaps(d.range, range));
+            const diagnostics = allDiagnostics(index).filter(d => d.file == path && overlaps(d.range, range));
             const v5 = findV5Syntax(tree.text);
             const lines = tree.text.replace(/\r/g, "").split("\n");
 
@@ -817,6 +863,19 @@ export function createLanguageService(options: LanguageServiceOptions): Language
             }
 
             for (const diagnostic of diagnostics) {
+                if (diagnostic.code != "squiffy/dead-end") continue;
+                const { section } = containerAt(tree.file, diagnostic.range.start);
+                if (!section) continue;
+                // A line after the header, or at the top of the file for the text before the first section
+                const line = section.header ? section.header.range.start.line + 1 : 0;
+                const edit: WorkspaceEdit = {};
+                addEdit(edit, path, line < lines.length
+                    ? { range: lineRange(line, 0, 0), newText: "@end\n" }
+                    : { range: lineRange(line - 1, lines[line - 1].length, lines[line - 1].length), newText: "\n@end" });
+                actions.push({ title: "Mark this section as an ending", kind: "quickfix", diagnostic, edit });
+            }
+
+            for (const diagnostic of diagnostics) {
                 if (diagnostic.code != "squiffy/redundant-import") continue;
                 // Remove the whole line, including its line break
                 const line = diagnostic.range.start.line;
@@ -836,6 +895,10 @@ export function createLanguageService(options: LanguageServiceOptions): Language
                 }
             }
             return actions;
+        },
+
+        async getStoryGraph() {
+            return getGraph(await getIndex()).graph;
         },
 
         async getSectionAt(path, position) {

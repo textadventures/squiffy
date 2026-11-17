@@ -67,6 +67,7 @@ const COMPLETION_TYPES: Record<CompletionItem["kind"], string> = {
     passage: "property",
     attribute: "variable",
     snippet: "text",
+    directive: "keyword",
 };
 
 // Folding ranges from the last analysis, as document offsets, kept in step with edits

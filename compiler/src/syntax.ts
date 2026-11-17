@@ -30,7 +30,9 @@ export type DiagnosticCode =
     | "squiffy/duplicate-passage"
     | "squiffy/not-in-main-file"
     | "squiffy/redundant-import"
-    | "squiffy/project-file";
+    | "squiffy/project-file"
+    | "squiffy/unreachable-section"
+    | "squiffy/dead-end";
 
 export interface Diagnostic {
     // The filename as the compiler was given it (scriptBaseFilename, or the name returned by
@@ -176,6 +178,13 @@ export interface ClearNode {
     range: Range;
 }
 
+// @end: the section is one of the story's endings, so having no way out isn't a mistake.
+// The runtime ignores it.
+export interface EndNode {
+    type: "end";
+    range: Range;
+}
+
 // @set, @unset, @inc or @dec
 export interface AttributeNode {
     type: "attribute";
@@ -214,6 +223,7 @@ export type StatementNode =
     | UiBlockStartNode
     | UiFileNode
     | ClearNode
+    | EndNode
     | AttributeNode
     | JsNode
     | TextNode;
