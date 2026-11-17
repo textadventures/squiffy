@@ -40,6 +40,23 @@ describe("preview host", () => {
         ]);
     });
 
+    test("sends the theme when the page is ready, and again if it reloads", () => {
+        const { channel, sent, receive } = fakeChannel();
+        const host = createPreviewHost(channel);
+        host.setTheme("light");
+        host.setTheme("dark");
+        expect(sent).toEqual([]);
+
+        receive({ channel: PREVIEW_CHANNEL, type: "ready" });
+        expect(sent).toEqual([{ channel: PREVIEW_CHANNEL, type: "theme", theme: "dark" }]);
+
+        host.setTheme("system");
+        expect(sent.slice(1)).toEqual([{ channel: PREVIEW_CHANNEL, type: "theme", theme: "system" }]);
+
+        receive({ channel: PREVIEW_CHANNEL, type: "ready" });
+        expect(sent.slice(2)).toEqual([{ channel: PREVIEW_CHANNEL, type: "theme", theme: "system" }]);
+    });
+
     test("passes messages from the page to handlers, ignoring anything else", () => {
         const { channel, receive } = fakeChannel();
         const handlers = {

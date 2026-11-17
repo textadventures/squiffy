@@ -5,6 +5,15 @@
     <title><!-- TITLE --></title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script>
+        // Applies the reader's light or dark choice from the theme button before the page is shown
+        try {
+            const theme = localStorage.getItem('squiffy-theme:' + window.location.pathname);
+            if (theme === 'light' || theme === 'dark') document.documentElement.dataset.squiffyTheme = theme;
+        } catch (e) {
+            // Storage can be unavailable, e.g. in a private window
+        }
+    </script>
     <!-- SCRIPTS -->
     <!-- STYLE_CONTENT -->
     <!-- RUNTIME_CONTENT -->
@@ -35,9 +44,61 @@
 <div id="squiffy-container">
     <div id="squiffy-header">
         <button class="squiffy-header-button" id="restart" tabindex="0">Restart</button>
+        <button class="squiffy-header-button" id="squiffy-theme" type="button">
+            <svg class="squiffy-icon-dark" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+            <svg class="squiffy-icon-light" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        </button>
     </div>
     <div id="squiffy">
     </div>
 </div>
+<script>
+    // The light/dark button. It follows the system setting until the reader chooses, and their
+    // choice is remembered for this story. This script is after the stylesheets, so it runs once
+    // they've loaded and can see whether the story's own CSS fixes the theme.
+    (function () {
+        const root = document.documentElement;
+        const button = document.getElementById('squiffy-theme');
+        const key = 'squiffy-theme:' + window.location.pathname;
+        const system = window.matchMedia('(prefers-color-scheme: dark)');
+        const chosen = root.dataset.squiffyTheme;
+
+        // A story that sets its own color-scheme doesn't change with the button, so hide it
+        const schemeFor = function (theme) {
+            root.dataset.squiffyTheme = theme;
+            return getComputedStyle(root).colorScheme;
+        };
+        const fixed = schemeFor('light') === schemeFor('dark');
+        if (chosen) root.dataset.squiffyTheme = chosen; else delete root.dataset.squiffyTheme;
+        if (fixed) {
+            button.hidden = true;
+            return;
+        }
+
+        const current = function () {
+            return root.dataset.squiffyTheme || (system.matches ? 'dark' : 'light');
+        };
+        const update = function () {
+            const next = current() === 'dark' ? 'light' : 'dark';
+            button.title = 'Switch to ' + next + ' mode';
+            button.setAttribute('aria-label', button.title);
+            button.dataset.next = next;
+        };
+        button.addEventListener('click', function () {
+            const theme = button.dataset.next;
+            // Choosing the system's own setting goes back to following it
+            const follow = theme === (system.matches ? 'dark' : 'light');
+            if (follow) delete root.dataset.squiffyTheme; else root.dataset.squiffyTheme = theme;
+            try {
+                if (follow) localStorage.removeItem(key); else localStorage.setItem(key, theme);
+            } catch (e) {
+                // The choice just isn't remembered
+            }
+            update();
+        });
+        system.addEventListener('change', update);
+        update();
+    })();
+</script>
 </body>
 </html>

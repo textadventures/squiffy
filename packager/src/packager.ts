@@ -4,7 +4,7 @@ import { CompileSuccess } from "squiffy-compiler";
 import squiffyRuntime from "squiffy-runtime/dist/squiffy.runtime.global.js?raw";
 import runtimeCss from "squiffy-runtime/dist/squiffy.runtime.css?raw";
 import htmlTemplateFile from "./index.template.html?raw";
-import cssTemplateFile from "./style.template.css?raw";
+import pageCss from "squiffy-runtime/dist/squiffy.page.css?raw";
 
 import pkg from "../package.json" with {type: "json"};
 
@@ -98,7 +98,7 @@ export const createPackage = async (input: CompileSuccess, createZipOrOptions: b
     const infoComment = `<!--\n\nCreated with Squiffy ${version}\n\nhttps://squiffystory.com\nhttps://github.com/textadventures/squiffy\n\n-->`;
     const scriptData = uiInfo.externalScripts.map(script => `<script src="${script}"></script>`).join("\n");
     const stylesheetData = uiInfo.externalStylesheets.map(sheet => `<link rel="stylesheet" href="${sheet}"/>`).join("\n");
-    const combinedCss = runtimeCss.toString() + "\n\n" + cssTemplateFile.toString();
+    const combinedCss = runtimeCss.toString() + "\n\n" + pageCss.toString();
 
     const storyJs = await input.getJs();
 

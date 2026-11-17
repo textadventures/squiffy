@@ -7,6 +7,7 @@
     import { onMount } from "svelte";
     import type { PreviewHost, StartAt } from "squiffy-runtime/preview-host";
     import type { CompiledStory } from "#lib/language/protocol.js";
+    import { theme } from "#lib/theme-store.js";
     import RotateCcw from "@lucide/svelte/icons/rotate-ccw";
     import ArrowLeft from "@lucide/svelte/icons/arrow-left";
     import X from "@lucide/svelte/icons/x";
@@ -50,6 +51,7 @@
 
     onMount(() => {
         let disposed = false;
+        let disposeTheme: (() => void) | undefined;
         void (async () => {
             const [{ previewHtml }, { createPreviewHost, iframeChannel, setUpPreviewFrame }] = await Promise.all([
                 import("squiffy-runtime/preview-html"),
@@ -86,6 +88,8 @@
                     runtimeError = message;
                 },
             });
+            // The story follows the editor's Light, Dark or Match system setting
+            disposeTheme = theme.subscribe(value => host?.setTheme(value));
             if (pendingRun) {
                 const { startAt: at } = pendingRun;
                 pendingRun = null;
@@ -94,6 +98,7 @@
         })();
         return () => {
             disposed = true;
+            disposeTheme?.();
             host?.dispose();
             host = null;
         };
@@ -176,9 +181,8 @@
             <button type="button" class="btn-icon btn-icon-sm" aria-label="Dismiss" onclick={() => { runtimeError = null; }}><X size={12} /></button>
         </div>
     {/if}
-    <!-- The story's own page, always light: its default stylesheet doesn't follow the editor's
-         theme (#176 covers the game's CSS separately) -->
-    <iframe bind:this={iframe} title="Story preview" class="flex-1 w-full bg-white"></iframe>
+    <!-- The story's own page, which paints its own background in light or dark mode -->
+    <iframe bind:this={iframe} title="Story preview" class="flex-1 w-full"></iframe>
     {#if Object.keys(attributes).length > 0}
         <div class="border-t border-surface-200-800 text-xs">
             <button
