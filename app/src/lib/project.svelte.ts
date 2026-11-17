@@ -18,7 +18,7 @@ import {
     type FileEntry, type FileTypeFilter, type ProjectFileSystem,
 } from "@textadventures/project-fs";
 import {
-    formatProjectFile, getStoryFiles, isExcluded, parseProjectFile, PROJECT_FILENAME, updateProjectFile,
+    convertSetters, formatProjectFile, getStoryFiles, isExcluded, parseProjectFile, PROJECT_FILENAME, updateProjectFile,
     type MapPositions, type ProjectFile, type StoryFiles,
 } from "squiffy-compiler";
 import { checklistDialog, chooseDialog, confirmDialog } from "./confirm.js";
@@ -227,10 +227,29 @@ class OpenProject {
         return true;
     }
 
-    // Creates squiffy.json, making the folder one story
-    async createProjectFile(main: string, exclude: string[] = []) {
+    // Creates squiffy.json, making the folder one story. A story with a squiffy.json uses
+    // Squiffy 7's rules for @set and link setters (#373), so the setters in the story's .squiffy
+    // files are converted first, through their editors if they're open, so it can be undone.
+    async createProjectFile(main: string, exclude: string[] = []): Promise<SetterConversion> {
+        const paths = this.files.map(f => f.path);
+        const story = getStoryFiles({ version: 1, main, exclude }, paths.includes(main) ? paths : [...paths, main]);
+        const conversion: SetterConversion = { converted: 0, problems: [] };
+        for (const path of [main, ...story.included]) {
+            const open = this.fileAt(path);
+            let text: string;
+            try {
+                text = open ? open.text : await this.fs.readText(path);
+            } catch {
+                continue;
+            }
+            const result = convertSetters(text);
+            if (result.converted) await this.writeText(path, result.script);
+            conversion.converted += result.converted;
+            conversion.problems.push(...result.problems.map(problem => `${path} line ${problem.line}`));
+        }
         await this.writeText(PROJECT_FILENAME, formatProjectFile({ main, exclude }));
         this.setStoredMainFile(main);
+        return conversion;
     }
 
     // Saves where the author has put sections and passages on the story map, in squiffy.json.
@@ -418,10 +437,35 @@ export async function closeProject(): Promise<void> {
     setCurrent(null);
 }
 
-// A new draft with one .squiffy file, and a squiffy.json naming it
+// What converting a story's setters to Squiffy 7's rules did (#373): how many setters changed,
+// and where the ones that couldn't be converted are
+export interface SetterConversion {
+    converted: number;
+    problems: string[];
+}
+
+// What to tell the author about a conversion, or "" if nothing happened
+export function setterConversionMessage(conversion: SetterConversion): string {
+    const { converted, problems } = conversion;
+    if (!converted && !problems.length) return "";
+    let message = converted
+        ? `Converted ${converted} setter${converted === 1 ? "" : "s"} to Squiffy 7's rules, where text is in quotes and attributes don't need "@" (e.g. @set weapon = "sword").`
+        : "";
+    if (problems.length) {
+        message += `${message ? " " : ""}${problems.length === 1 ? "One setter" : `${problems.length} setters`} couldn't be converted, and may need changing by hand: ${problems.slice(0, 3).join(", ")}${problems.length > 3 ? ", ..." : ""}.`;
+    }
+    return message;
+}
+
+// A new draft with one .squiffy file, and a squiffy.json naming it. A draft is a copy, and has a
+// squiffy.json, so its setters are converted to Squiffy 7's rules (#373).
 async function createDraft(mainFile: string, text: string): Promise<string> {
     const id = crypto.randomUUID();
     const fs = await drafts.create(id, { title: "", mainFile, lastOpened: Date.now() });
+    const conversion = convertSetters(text);
+    text = conversion.script;
+    const message = setterConversionMessage({ converted: conversion.converted, problems: conversion.problems.map(p => `line ${p.line}`) });
+    if (message) showToast(message, "info", 12000);
     await fs.write(mainFile, text);
     await fs.write(PROJECT_FILENAME, formatProjectFile({ main: mainFile }));
     return id;
@@ -725,7 +769,8 @@ export async function offerProjectFile(p: OpenProject, options: { main: string; 
         exclude = others.filter((_, i) => !result.checked[fixed.length + i]);
     }
 
-    await p.createProjectFile(main, exclude);
-    showToast(`Added ${PROJECT_FILENAME}, which makes this folder one story: every .squiffy file in it is part of the story, starting from the main file (★). Use a file's ⋯ menu to leave it out.`, "info", 12000);
+    const conversion = await p.createProjectFile(main, exclude);
+    const converted = setterConversionMessage(conversion);
+    showToast(`Added ${PROJECT_FILENAME}, which makes this folder one story: every .squiffy file in it is part of the story, starting from the main file (★). Use a file's ⋯ menu to leave it out.${converted ? ` ${converted}` : ""}`, "info", 12000);
     return "created";
 }

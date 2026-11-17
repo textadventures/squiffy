@@ -5,6 +5,7 @@ import { hideBin } from "yargs/helpers";
 import { serve } from "./server.js";
 import { createPackageFiles, writeScriptFile } from "./file-packager.js";
 import { convertV5File } from "./convert-v5.js";
+import { convertV6Story } from "./convert-v6.js";
 import { findStory, StoryNotFoundError } from "squiffy-compiler/node";
 
 import pkg from "../package.json" with { type: "json" };
@@ -24,6 +25,8 @@ const argv = yargs(hideBin(process.argv))
     .describe("inline", "Create single HTML file with everything inlined")
     .describe("convert-v5", "Convert Squiffy 5 text processor syntax to Squiffy 6, keeping a backup of the original file")
     .boolean("convert-v5")
+    .describe("convert-v6", "Convert a Squiffy 6 story's @set and link setters to Squiffy 7's rules and add a squiffy.json, keeping a backup of each file changed")
+    .boolean("convert-v6")
     .version(version)
     .parseSync();
 
@@ -55,6 +58,15 @@ if (argv.convertV5) {
         process.exitCode = 1;
     }
     else if (!convertV5File(input)) {
+        process.exitCode = 1;
+    }
+}
+else if (argv.convertV6) {
+    if (argv._[0] === undefined) {
+        console.error("Give the story's main .squiffy file to convert.");
+        process.exitCode = 1;
+    }
+    else if (!await convertV6Story(input)) {
         process.exitCode = 1;
     }
 }

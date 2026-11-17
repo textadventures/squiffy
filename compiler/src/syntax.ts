@@ -21,6 +21,7 @@ export type DiagnosticCode =
     | "squiffy/text-in-ui-block"
     | "squiffy/content-before-section"
     | "squiffy/v5-syntax"
+    | "squiffy/at-attribute"
     | "squiffy/external-files-unavailable"
     | "squiffy/no-next-section"
     | "squiffy/unknown-embed"

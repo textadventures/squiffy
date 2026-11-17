@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
-import { compile, findV5Syntax, formatDiagnostic } from "squiffy-compiler";
+import { compile, convertSetters, findV5Syntax, formatDiagnostic } from "squiffy-compiler";
 import type { StoryOnDisk } from "squiffy-compiler/node";
 import { externalFiles } from "./external-files.js";
 import { findAssets, getStoryText } from "./assets.js";
@@ -15,6 +15,9 @@ async function getCompileResult(story: StoryOnDisk) {
     const inputText = inputFile.toString();
     if (findV5Syntax(inputText).length > 0) {
         console.warn("This story looks like it uses Squiffy 5 text processor syntax. Run with --convert-v5 to convert it to Squiffy 6.");
+    }
+    else if (!story.expressions && convertSetters(inputText).converted > 0) {
+        console.log("This story uses Squiffy 6's rules for @set and link setters. Run with --convert-v6 to convert it to Squiffy 7's.");
     }
     const result = await compile({
         scriptBaseFilename: path.basename(inputFilename),

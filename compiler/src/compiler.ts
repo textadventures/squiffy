@@ -4,6 +4,8 @@ import type { Diagnostic } from "./syntax.js";
 
 export { findV5Syntax, convertV5Syntax } from "./v5.js";
 export type { V5SyntaxMatch, V5ConversionProblem, V5ConversionResult } from "./v5.js";
+export { convertSetters, convertSetter } from "./setters.js";
+export type { SetterConversion, SetterConversionProblem, SetterConversionResult } from "./setters.js";
 
 // The compiler works in three stages, which can also be used separately:
 // - parse() turns one file into a syntax tree, with a source range on every node

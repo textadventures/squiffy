@@ -5,6 +5,7 @@ import type {
 import { positionMapper, SourceLine, transformText } from "./text.js";
 import { PROJECT_FILENAME } from "./project.js";
 import { findV5Syntax } from "./v5.js";
+import { findAtAttributes } from "./setters.js";
 
 export interface ExternalFiles {
     getMatchingFilenames(pattern: string): Promise<string[]>;
@@ -182,6 +183,14 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
         const lines = text.replace(/\r/g, "").split("\n");
 
         warnAboutV5Syntax(text, lines, filename);
+        if (settings.expressions) {
+            for (const found of findAtAttributes(file)) {
+                const name = found.text.substring(1);
+                report("warning", "squiffy/at-attribute", filename, found.range,
+                    `Use ${name} rather than ${found.text}: in a story with a ${PROJECT_FILENAME}, setters name attributes without "@".`,
+                    found.range.start.line + 1);
+            }
+        }
 
         let section: Section | null = null;
         let passage: Passage | null = null;

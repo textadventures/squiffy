@@ -353,6 +353,24 @@ describe("code actions", () => {
         expect(apply(text, actions[0].edit["s.squiffy"])).toBe("[[a]]:\nSee [p].\n[p]:\n\n[[b]]:\nB");
     });
 
+    test("@name in setters, in a story with a squiffy.json (#373)", async () => {
+        const text = "[[a]]:\n@set best = @score + 1\n@set quote = \"@not this\"\n[[Go]](b, gold -= @price)\n\n[[b]]:\nB";
+        const files = { "squiffy.json": "{ \"version\": 1, \"main\": \"s.squiffy\" }", "s.squiffy": text };
+        const ls = createLanguageService({ files: memoryFiles(files), mainFile: "s.squiffy" });
+        const diagnostics = (await ls.getDiagnostics("s.squiffy")).filter(d => d.code == "squiffy/at-attribute");
+        expect(diagnostics.map(d => slice(text, d.range))).toEqual(["@score", "@price"]);
+        expect(diagnostics[0].message).toBe("Use score rather than @score: in a story with a squiffy.json, setters name attributes without \"@\".");
+        const actions = await ls.getCodeActions("s.squiffy", diagnostics[1].range);
+        expect(actions.map(a => a.title)).toEqual(["Change to price"]);
+        expect(apply(text, actions[0].edit["s.squiffy"])).toContain("[[Go]](b, gold -= price)");
+    });
+
+    test("no warning for @name without a squiffy.json, where it's how setters use attributes", async () => {
+        const text = "[[a]]:\n@set best = @score\n\nA";
+        const ls = createLanguageService({ files: memoryFiles({ "s.squiffy": text }), mainFile: "s.squiffy" });
+        expect((await ls.getDiagnostics("s.squiffy")).some(d => d.code == "squiffy/at-attribute")).toBe(false);
+    });
+
     test("convert Squiffy 5 syntax", async () => {
         const text = "[[a]]:\nHello {name}, {if x:yes}.";
         const ls = createLanguageService({ files: memoryFiles({ "s.squiffy": text }), mainFile: "s.squiffy" });

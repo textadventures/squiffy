@@ -2,7 +2,7 @@ import { expect, test, beforeEach, afterEach, beforeAll, vi } from "vitest";
 import fs from "fs/promises";
 import globalJsdom from "global-jsdom";
 import { init } from "./squiffy.runtime.js";
-import { compile as squiffyCompile } from "squiffy-compiler";
+import { compile as squiffyCompile, convertSetters } from "squiffy-compiler";
 
 // Mock crypto.randomUUID() to return a stable value for tests
 beforeAll(() => {
@@ -2067,6 +2067,56 @@ Done.
     expect(squiffyApi.get("name")).toBe("Bob's");
     expect(squiffyApi.get("message")).toBe("Hi");
     expect(squiffyApi.get("there")).toBe(true);
+});
+
+test("a converted story runs the same with expressions as it did without (#373)", async () => {
+    const script = `
+[[start]]:
+@set weapon = sword
+@set greeting = Hello there
+@set name = Bob's
+@set quoted = say "hi"
+@set gold = 10
+@set price = 3
+@set half = 0.5
+@set big = 1e3
+@set flag = true
+@set off = false
+@set best = @gold
+@set gold += @price
+@set gold -= 1
+@set gold *= 2
+@inc count
+@inc count 4
+@dec count
+@set has_key
+@set not has_map
+@set hello := Hi, {{name}}
+[[Shop]](shop, item = sword and shield, gold -= @price, visited, msg = Hi, there)
+
+[[shop]]:
+{{section "end" text="End" set="title = The End, done, final = @gold"}}
+
+[[end]]:
+The end.
+`;
+    const run = async (text: string, expressions: boolean) => {
+        const { squiffyApi, element } = await initScript(text, expressions);
+        await squiffyApi.clickLink(findLink(element, "section", "Shop"));
+        await squiffyApi.clickLink(findLink(element, "section", "End"));
+        const names = ["weapon", "greeting", "name", "quoted", "gold", "price", "half", "big", "flag", "off", "best",
+            "count", "has_key", "has_map", "hello", "item", "visited", "msg", "there", "title", "done", "final"];
+        expect(element.querySelector(".squiffy-error")).toBeNull();
+        return Object.fromEntries(names.map(name => [name, squiffyApi.get(name)]));
+    };
+
+    const before = await run(script, false);
+    const converted = convertSetters(script);
+    expect(converted.problems).toEqual([]);
+    expect(converted.converted).toBeGreaterThan(5);
+    const after = await run(converted.script, true);
+    expect(after).toEqual(before);
+    expect(before).toMatchObject({ weapon: "sword", quoted: "say \"hi\"", gold: 21, best: 10, item: "sword and shield", msg: "Hi", there: true, final: 21 });
 });
 
 // State modification helper tests

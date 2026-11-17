@@ -848,6 +848,13 @@ export function createLanguageService(options: LanguageServiceOptions): Language
                         actions.push({ title: `Create passage '${name}'`, kind: "quickfix", diagnostic, edit });
                     }
                 }
+                else if (diagnostic.code == "squiffy/at-attribute") {
+                    const start = diagnostic.range.start;
+                    const name = lines[start.line].substring(start.character + 1, diagnostic.range.end.character);
+                    const edit: WorkspaceEdit = {};
+                    addEdit(edit, path, { range: { start, end: { line: start.line, character: start.character + 1 } }, newText: "" });
+                    actions.push({ title: `Change to ${name}`, kind: "quickfix", diagnostic, edit });
+                }
                 else if (diagnostic.code == "squiffy/v5-syntax") {
                     const line = diagnostic.range.start.line;
                     const match = v5.find(m => m.line == line + 1
