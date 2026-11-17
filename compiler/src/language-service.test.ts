@@ -158,7 +158,7 @@ describe("document symbols", () => {
         const text = "Intro text\n+++Next\nMore\n---\nEnd";
         const ls = createLanguageService({ files: memoryFiles({ "s.squiffy": text }), mainFile: "s.squiffy" });
         expect((await ls.getDocumentSymbols("s.squiffy")).map(s => [s.name, s.detail])).toEqual([
-            ["_default", undefined],
+            ["_default", "(Start)"],
             ["_continue1", "+++Next"],
             ["_continue2", "---"],
         ]);

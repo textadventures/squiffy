@@ -59,7 +59,8 @@ export interface Location {
 export interface DocumentSymbol {
     name: string;
     kind: "title" | "section" | "passage" | "snippet";
-    // For sections without a name of their own (+++ and --- lines), what the line says.
+    // For sections without a name of their own, what to show instead of the name the story gives
+    // them: what the +++ or --- line says, or "(Start)" for the text before the first section.
     detail?: string;
     range: Range;
     // The range to select when the symbol is picked, e.g. the name in its header.
@@ -613,7 +614,7 @@ export function createLanguageService(options: LanguageServiceOptions): Language
                 if (node.kind == "preamble") {
                     // Only a section if the story made it one (the main file's _default section)
                     if (storyName === undefined) continue;
-                    symbols.push({ name: storyName, kind: "section", range: node.range, selectionRange: node.range, children: passageSymbols(node) });
+                    symbols.push({ name: storyName, kind: "section", detail: "(Start)", range: node.range, selectionRange: node.range, children: passageSymbols(node) });
                     continue;
                 }
                 const header = node.header!;
