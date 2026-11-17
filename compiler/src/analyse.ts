@@ -5,7 +5,7 @@ import type {
 import { positionMapper, SourceLine, transformText } from "./text.js";
 import { PROJECT_FILENAME } from "./project.js";
 import { findV5Syntax } from "./v5.js";
-import { findAtAttributes } from "./setters.js";
+import { attributesSetIn, findAtAttributes, findUnquotedText } from "./setters.js";
 
 export interface ExternalFiles {
     getMatchingFilenames(pattern: string): Promise<string[]>;
@@ -156,6 +156,8 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
     const story = new Story();
     const cache = settings.parseCache ?? new ParseCache();
     const files: SquiffyFile[] = [];
+    // Each file's text, in the same order as files
+    const texts: string[] = [];
     const diagnostics: Diagnostic[] = [];
     const legacyErrors: string[] = [];
     const legacyWarnings: string[] = [];
@@ -179,6 +181,7 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
     async function processFile(text: string, filename: string | undefined, isFirst: boolean): Promise<boolean> {
         const file = cache.parse(text, filename);
         files.push(file);
+        texts.push(text);
         processed.add(filename);
         const lines = text.replace(/\r/g, "").split("\n");
 
@@ -438,6 +441,22 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
             `"${line}" was ignored, as other files can't be loaded here`, node.range.start.line + 1);
     }
 
+    // Text in a setter without quotes, as in Squiffy 6 (#373). A single word is only reported if no
+    // attribute of that name is set anywhere in the story, so this needs every file first.
+    function warnAboutUnquotedText() {
+        const set = new Set<string>();
+        files.forEach((file, i) => attributesSetIn(file, texts[i]).forEach(name => set.add(name)));
+        for (const file of files) {
+            for (const found of findUnquotedText(file, name => set.has(name))) {
+                const quoted = found.quoted ?? `"${found.text}"`;
+                const message = found.kind == "word"
+                    ? `${found.text} isn't set anywhere in the story, so this sets ${found.attribute} to nothing. For the text ${quoted}, use quotes.`
+                    : `Text in a setter goes in quotes in a story with a ${PROJECT_FILENAME}: ${quoted}.`;
+                report("warning", "squiffy/unquoted-text", file.filename, found.range, message, found.range.start.line + 1);
+            }
+        }
+    }
+
     function warnAboutV5Syntax(text: string, lines: string[], filename: string | undefined) {
         const truncate = (s: string) => s.length > 60 ? s.substring(0, 57) + "..." : s;
 
@@ -546,6 +565,10 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
                 checkText(passage, section, passage);
             }
         }
+    }
+
+    if (settings.expressions) {
+        warnAboutUnquotedText();
     }
 
     const analysis: Analysis = {

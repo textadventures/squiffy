@@ -365,6 +365,51 @@ describe("code actions", () => {
         expect(apply(text, actions[0].edit["s.squiffy"])).toContain("[[Go]](b, gold -= price)");
     });
 
+    test("text without quotes in setters, in a story with a squiffy.json (#373)", async () => {
+        const text = [
+            "[[a]]:",
+            "@set weapon = sword",
+            "@set greeting = Hello there",
+            "@set best = score",
+            "@set name_copy = player",
+            "@set count += many",
+            "@set rich = gold > 100",
+            "@set ok = \"fine\"",
+            "[[Go]](b, mood = happy, item = shield, title = The End)",
+            "{{section \"b\" text=\"B\" set=\"colour = red\"}}",
+            "<input data-attribute=\"player\">",
+            "{{set \"score\" 10}}",
+            "",
+            "[[b]]:",
+            "    squiffy.set(\"shield\", true);",
+            "B",
+        ].join("\n");
+        const files = { "squiffy.json": "{ \"version\": 1, \"main\": \"s.squiffy\" }", "s.squiffy": text };
+        const ls = createLanguageService({ files: memoryFiles(files), mainFile: "s.squiffy" });
+        const diagnostics = (await ls.getDiagnostics("s.squiffy")).filter(d => d.code == "squiffy/unquoted-text")
+            .sort((a, b) => a.range.start.line - b.range.start.line || a.range.start.character - b.range.start.character);
+        // score, player and shield are set somewhere, so they're attributes. count += many is
+        // an error whatever it means.
+        expect(diagnostics.map(d => slice(text, d.range))).toEqual(["sword", "Hello there", "happy", "The End", "red"]);
+        expect(diagnostics[0].message).toBe("sword isn't set anywhere in the story, so this sets weapon to nothing. For the text \"sword\", use quotes.");
+        expect(diagnostics[1].message).toBe("Text in a setter goes in quotes in a story with a squiffy.json: \"Hello there\".");
+
+        const fix = async (i: number) => {
+            const [action] = await ls.getCodeActions("s.squiffy", diagnostics[i].range);
+            return [action.title, apply(text, action.edit["s.squiffy"]).split("\n")[diagnostics[i].range.start.line]];
+        };
+        expect(await fix(0)).toEqual(["Change to \"sword\"", "@set weapon = \"sword\""]);
+        expect(await fix(2)).toEqual(["Change to \"happy\"", "[[Go]](b, mood = \"happy\", item = shield, title = The End)"]);
+        // Inside set="...", single quotes save escaping
+        expect(await fix(4)).toEqual(["Change to 'red'", "{{section \"b\" text=\"B\" set=\"colour = 'red'\"}}"]);
+    });
+
+    test("no warning for text without quotes without a squiffy.json, where it's how setters set text", async () => {
+        const text = "[[a]]:\n@set weapon = sword\n@set greeting = Hello there\n\nA";
+        const ls = createLanguageService({ files: memoryFiles({ "s.squiffy": text }), mainFile: "s.squiffy" });
+        expect((await ls.getDiagnostics("s.squiffy")).some(d => d.code == "squiffy/unquoted-text")).toBe(false);
+    });
+
     test("no warning for @name without a squiffy.json, where it's how setters use attributes", async () => {
         const text = "[[a]]:\n@set best = @score\n\nA";
         const ls = createLanguageService({ files: memoryFiles({ "s.squiffy": text }), mainFile: "s.squiffy" });

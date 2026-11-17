@@ -12,6 +12,7 @@ import type {
 } from "./syntax.js";
 import { getStoryFiles, globToRegExp, parseProjectFile, PROJECT_FILENAME, ProjectFile } from "./project.js";
 import { convertV5Syntax, findV5Syntax } from "./v5.js";
+import { findUnquotedText } from "./setters.js";
 import { buildStoryGraph, StoryGraph, storyGraphDiagnostics } from "./story-graph.js";
 
 export type { Diagnostic, Position, Range } from "./syntax.js";
@@ -854,6 +855,15 @@ export function createLanguageService(options: LanguageServiceOptions): Language
                     const edit: WorkspaceEdit = {};
                     addEdit(edit, path, { range: { start, end: { line: start.line, character: start.character + 1 } }, newText: "" });
                     actions.push({ title: `Change to ${name}`, kind: "quickfix", diagnostic, edit });
+                }
+                else if (diagnostic.code == "squiffy/unquoted-text") {
+                    const start = diagnostic.range.start;
+                    const found = findUnquotedText(tree.file, () => false)
+                        .find(u => comparePositions(u.range.start, start) == 0);
+                    if (!found?.quoted) continue;
+                    const edit: WorkspaceEdit = {};
+                    addEdit(edit, path, { range: found.range, newText: found.quoted });
+                    actions.push({ title: `Change to ${found.quoted}`, kind: "quickfix", diagnostic, edit });
                 }
                 else if (diagnostic.code == "squiffy/v5-syntax") {
                     const line = diagnostic.range.start.line;

@@ -281,3 +281,137 @@ export function findAtAttributes(file: SquiffyFile): AtAttribute[] {
     }
     return result;
 }
+
+// ---- Text without quotes in a story that uses expressions ----
+
+// One setter, and where it is in the file
+interface SetterSite {
+    text: string;
+    line: number;
+    character: number;
+    // Inside a set="..." string, where single quotes save escaping
+    inHelperString: boolean;
+}
+
+// Splits a list of setters with the rules of a story that uses expressions (as splitSetters in
+// runtime/src/infixExpressions.ts does): on commas outside quotes and brackets. Keeps offsets.
+function splitWithOffsets(setters: string): { text: string, offset: number }[] {
+    const result: { text: string, offset: number }[] = [];
+    let depth = 0;
+    let quote: string | null = null;
+    let start = 0;
+    for (let i = 0; i <= setters.length; i++) {
+        const c = setters[i];
+        if (i < setters.length && quote) {
+            if (c === "\\") i++;
+            else if (c === quote) quote = null;
+        }
+        else if (c === "\"" || c === "'") quote = c;
+        else if (c === "(") depth++;
+        else if (c === ")") depth = Math.max(0, depth - 1);
+        else if (i === setters.length || (c === "," && depth === 0)) {
+            result.push({ text: setters.slice(start, i), offset: start });
+            start = i + 1;
+        }
+    }
+    return result;
+}
+
+// Every setter in a file: @set, link setters and set="..." on {{section}} and {{passage}}
+function setterSites(file: SquiffyFile): SetterSite[] {
+    const sites: SetterSite[] = [];
+    const addList = (text: string, line: number, character: number, inHelperString: boolean) => {
+        for (const part of splitWithOffsets(text)) {
+            sites.push({ text: part.text, line, character: character + part.offset, inHelperString });
+        }
+    };
+    for (const section of [file.preamble, ...file.sections] as (SectionNode | SnippetNode)[]) {
+        if (section.type !== "section") continue;
+        for (const container of [section, ...section.passages]) {
+            for (const node of container.body) {
+                if (node.type === "attribute" && node.directive === "set") {
+                    sites.push({ text: node.value, line: node.valueRange.start.line, character: node.valueRange.start.character, inHelperString: false });
+                }
+                else if (node.type === "text") {
+                    for (const match of node.text.matchAll(helperSetPattern)) {
+                        const start = match.index! + match[0].length - match[1].length + 1;
+                        addList(match[1].slice(1, -1), node.range.start.line, node.range.start.character + start, match[1][0] === "\"");
+                    }
+                }
+            }
+            for (const link of container.links) {
+                const comma = link.target.indexOf(",");
+                const { targetRange } = link;
+                if (link.form === "unnamed" || comma === -1 || targetRange.start.line !== targetRange.end.line) continue;
+                addList(link.target.substring(comma + 1), targetRange.start.line, targetRange.start.character + comma + 1, false);
+            }
+        }
+    }
+    return sites;
+}
+
+// The names of the attributes a file sets, or might: those on the left of a setter, those of
+// @inc, @dec and @unset, and anything in quotes, which covers {{set "x" ...}}, data-attribute="x",
+// id="x" on an input, squiffy.set("x", ...) in JavaScript, and so on.
+export function attributesSetIn(file: SquiffyFile, text: string): Set<string> {
+    const names = new Set<string>();
+    for (const site of setterSites(file)) {
+        const name = /^\s*(?:not\s+)?(\w+)/.exec(site.text);
+        if (name) names.add(name[1]);
+    }
+    for (const section of [file.preamble, ...file.sections] as (SectionNode | SnippetNode)[]) {
+        if (section.type !== "section") continue;
+        for (const container of [section, ...section.passages]) {
+            for (const node of container.body) {
+                if (node.type === "attribute" && node.directive !== "set") names.add(node.value.trim());
+            }
+        }
+    }
+    for (const match of text.matchAll(/"([^"\\\n]*)"|'([^'\\\n]*)'/g)) {
+        names.add((match[1] ?? match[2]).trim());
+    }
+    return names;
+}
+
+export interface UnquotedText {
+    // The value, e.g. sword
+    text: string;
+    range: Range;
+    // The attribute being set
+    attribute: string;
+    // "word": a single word that's no attribute the story sets. "words": several words, which
+    // isn't an expression at all.
+    kind: "word" | "words";
+    // The value in quotes, if it can be quoted
+    quoted: string | null;
+}
+
+// Finds setters whose value looks like text without quotes, written with the Squiffy 6 rules, in a
+// story that uses expressions: name = sword, where sword isn't an attribute the story sets
+// (isSet), or name = Hello there.
+export function findUnquotedText(file: SquiffyFile, isSet: (name: string) => boolean): UnquotedText[] {
+    const result: UnquotedText[] = [];
+    for (const site of setterSites(file)) {
+        // Only plain "=": text with +=, -=, *= or /= is an error whatever it's written as
+        const match = /^(\s*)(\w+)(\s*=(?!=)\s*)(.*?)\s*$/.exec(site.text);
+        if (!match) continue;
+        const [, leading, attribute, eq, value] = match;
+        let kind: UnquotedText["kind"] | null = null;
+        if (/^[A-Za-z_]\w*$/.test(value)) {
+            if (!reservedWords.has(value) && !value.startsWith("_") && !isSet(value)) kind = "word";
+        }
+        else if (/\s/.test(value) && /^[^"'()+*%<>=!&|{}[\]@\\/]+$/.test(value) && !/(^|\s)-|\b(and|or|not)\b/.test(value)) {
+            kind = "words";
+        }
+        if (!kind) continue;
+        const character = site.character + leading.length + attribute.length + eq.length;
+        result.push({
+            text: value,
+            range: { start: { line: site.line, character }, end: { line: site.line, character: character + value.length } },
+            attribute,
+            kind,
+            quoted: quote(value, site.inHelperString),
+        });
+    }
+    return result;
+}
