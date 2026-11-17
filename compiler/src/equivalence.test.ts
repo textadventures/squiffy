@@ -92,6 +92,8 @@ async function run(compiler: typeof compile | typeof legacyCompile, settings: Se
 async function expectSameResult(settings: Settings) {
     const expected = await run(legacyCompile, settings);
     const actual = await run(compile, settings);
+    // The old compiler didn't warn about duplicate sections and passages (tested in compiler.test.ts)
+    actual.warnings = actual.warnings.filter(w => !/There's already a (section|passage) called/.test(w));
 
     if ("threw" in expected) {
         // The old compiler crashed on some content before the first section of an imported

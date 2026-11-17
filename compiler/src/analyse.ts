@@ -165,8 +165,23 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
         let passage: Passage | null = null;
         let inUiBlock = false;
 
+        // Where an earlier section or passage was defined, for a duplicate's warning
+        const earlierLocation = (earlierFilename: string | undefined, line: number) =>
+            earlierFilename == filename || !earlierFilename ? `line ${line}` : `${earlierFilename} line ${line}`;
         const addSection = (name: string, line: number, node: SectionNode | undefined) => {
             if (isFirst && !mainFirstSection) mainFirstSection = name;
+            const earlier = hasOwn(story.sections, name) ? story.sections[name] : undefined;
+            // The compiler's own names (_default, _continue1, ...) only clash with a section the
+            // author named the same way. The main file's preamble can add "_default" more than
+            // once, each replacing the last, but that's not a clash the author can see.
+            if (earlier && node && !(node.kind == "preamble" && earlier.node?.kind == "preamble")) {
+                // A --- in the preamble starts a section that has no node of its own
+                const range = node.nameRange ?? node.header?.range
+                    ?? { start: { line: line - 1, character: 0 }, end: { line: line - 1, character: lines[line - 1]?.length ?? 0 } };
+                report("warning", "squiffy/duplicate-section", filename, range,
+                    `There's already a section called [[${name}]], at ${earlierLocation(earlier.filename, earlier.line)}. This one replaces it.`,
+                    range.start.line + 1);
+            }
             return story.addSection(name, filename, line, node);
         };
         const ensureSectionExists = (line: number) => {
@@ -227,6 +242,12 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
                 report("error", "squiffy/passage-without-section", filename, node.nameRange,
                     `Can't add passage "${node.name}" as no section has been created.`, lineCount);
                 return false;
+            }
+            if (hasOwn(section.passages, node.name)) {
+                const earlier = section.passages[node.name];
+                report("warning", "squiffy/duplicate-passage", filename, node.nameRange,
+                    `There's already a passage called [${node.name}] in section '${section.name}', at ${earlierLocation(section.filename, earlier.line)}. This one replaces it.`,
+                    lineCount);
             }
             passage = section.addPassage(node.name, lineCount, node);
             return true;
