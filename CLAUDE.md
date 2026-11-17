@@ -35,8 +35,8 @@ cd app && npm run dev
 # Run the site locally
 cd site && npm run dev
 
-# Run the desktop app (not a workspace: npm install in desktop/ first)
-cd desktop && npm start
+# Build and run the desktop app (desktop/ isn't a workspace; this installs it too)
+./electron.sh
 ```
 
 ## Testing

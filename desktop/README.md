@@ -2,6 +2,8 @@
 
 The Squiffy desktop app (#276): the editor from app.squiffystory.com (`app/`) in an Electron window, with stories kept in folders on disk. It's modelled on Quest Viva's `src/ElectronApp`, but it's a separate app, not shared with it (#304). The compiler and runtime are plain JavaScript, so there's no backend process: it's the Electron shell plus project-fs's Electron bridge.
 
+From the repo root, `./electron.sh` builds the editor, the packages it uses and the desktop app, and launches it (`--skip-build` to just launch; a `.squiffy` file path opens its folder). Or by hand:
+
 ```bash
 # from the repo root, once
 npm run build
