@@ -23,7 +23,9 @@ export type DiagnosticCode =
     | "squiffy/no-next-section"
     | "squiffy/unknown-embed"
     | "squiffy/unknown-section-link"
-    | "squiffy/unknown-passage-link";
+    | "squiffy/unknown-passage-link"
+    | "squiffy/duplicate-section"
+    | "squiffy/duplicate-passage";
 
 export interface Diagnostic {
     // The filename as the compiler was given it (scriptBaseFilename, or the name returned by

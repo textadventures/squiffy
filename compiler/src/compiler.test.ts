@@ -602,3 +602,67 @@ test("A main file with only @imports starts at the first imported section", asyn
     assertSuccess(result);
     expect(result.output.story.start).toBe("chapter2");
 });
+
+test("Warning: a section or passage name used more than once", async () => {
+    const warnings: string[] = [];
+    const result = await compile({
+        scriptBaseFilename: "story.squiffy",
+        script: `[[a]]:
+one
+[p]:
+first
+[p]:
+second
+
+[[b]]:
+[p]:
+a different section's passage is fine
+@import chapter2.squiffy
+
+[[a]]:
+two
+`,
+        externalFiles: inMemoryFiles({ "chapter2.squiffy": "[[b]]:\nfrom chapter 2\n" }),
+        onWarning: (message) => warnings.push(message),
+    });
+
+    assertSuccess(result);
+    expect(warnings).toEqual([
+        "WARNING: story.squiffy line 5: There's already a passage called [p] in section 'a', at line 3. This one replaces it.",
+        "WARNING: chapter2.squiffy line 1: There's already a section called [[b]], at story.squiffy line 8. This one replaces it.",
+        "WARNING: story.squiffy line 13: There's already a section called [[a]], at line 1. This one replaces it.",
+    ]);
+    expect(result.diagnostics.map(d => d.code)).toEqual([
+        "squiffy/duplicate-passage",
+        "squiffy/duplicate-section",
+        "squiffy/duplicate-section",
+    ]);
+    // The later definition still wins
+    expect(result.output.story.sections["a"].text).toContain("two");
+    // ...replacing the earlier section's passages too
+    expect(result.output.story.sections["a"].passages).toBeUndefined();
+    expect(result.output.story.sections["b"].text).toContain("from chapter 2");
+});
+
+test("No duplicate warning for the compiler's own section names", async () => {
+    const warnings: string[] = [];
+    const result = await compile({
+        scriptBaseFilename: "story.squiffy",
+        script: "---\nintro\n+++Next\nmore\n---\nend\n",
+        onWarning: (message) => warnings.push(message),
+    });
+    assertSuccess(result);
+    expect(warnings).toEqual([]);
+});
+
+test("Warning when a section is named like one the compiler names itself", async () => {
+    const warnings: string[] = [];
+    await compile({
+        scriptBaseFilename: "story.squiffy",
+        script: "[[_continue1]]:\nhi\n+++Next\nmore\n",
+        onWarning: (message) => warnings.push(message),
+    });
+    expect(warnings).toEqual([
+        "WARNING: story.squiffy line 3: There's already a section called [[_continue1]], at line 1. This one replaces it.",
+    ]);
+});

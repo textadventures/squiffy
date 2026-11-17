@@ -116,6 +116,19 @@ describe("diagnostics", () => {
         expect(await ls.getDiagnostics("story.squiffy")).toEqual([]);
     });
 
+    test("for a section or passage defined twice, at the later name", async () => {
+        const main = "[[a]]:\n[p]:\nx\n[p]:\ny\n@import b.squiffy";
+        const b = "[[a]]:\nagain";
+        const ls = createLanguageService({ files: memoryFiles({ "s.squiffy": main, "b.squiffy": b }), mainFile: "s.squiffy" });
+        expect((await ls.getDiagnostics("s.squiffy")).map(d => [d.code, d.severity, slice(main, d.range)])).toEqual([
+            ["squiffy/duplicate-passage", "warning", "p"],
+        ]);
+        const diagnostics = await ls.getDiagnostics("b.squiffy");
+        expect(diagnostics.map(d => [d.code, d.severity, slice(b, d.range), d.message])).toEqual([
+            ["squiffy/duplicate-section", "warning", "a", "There's already a section called [[a]], at s.squiffy line 1. This one replaces it."],
+        ]);
+    });
+
     test("pick up changes to project files", async () => {
         const data: Record<string, string> = { "s.squiffy": "[[a]]:\n@import b.squiffy", "b.squiffy": "[[b]]:\n[[c]]" };
         const ls = createLanguageService({ files: memoryFiles(data), mainFile: "s.squiffy" });
