@@ -54,7 +54,7 @@ A story without a `squiffy.json` keeps the Squiffy 6 rules, so it works unchange
 - **Editor:** opening a Squiffy 6 file as a draft converts it, and so does adding a `squiffy.json` to a folder (when you add a second file, or use the story map). Open files are changed in the editor, so you can use Undo.
 - **CLI:** run with `--convert-v6`, which converts the story and adds a `squiffy.json`. See [Converting from Squiffy 6](/cli/#converting-from-squiffy-6).
 
-Anything that can't be converted exactly, such as text with both kinds of quote in it, is left as it is and listed so you can change it by hand. In a story with a `squiffy.json`, an attribute written as `@score` is underlined in the editor, with a quick fix.
+Anything that can't be converted exactly, such as text with both kinds of quote in it, is left as it is and listed so you can change it by hand. In a story with a `squiffy.json`, the editor underlines assignments that still look like Squiffy 6, with a quick fix: an attribute written as `@score`, and text without quotes, such as `@set greeting = Hello there`, or `@set weapon = sword` when there's no attribute called `sword`.
 
 ### Starting the story
 
