@@ -3,6 +3,7 @@ import Handlebars from "handlebars";
 import { Section, Story } from "./types.js";
 import { State } from "./state.js";
 import { rewriteInfixExpressions } from "./infixExpressions.js";
+import { isNumeric, isBlank, toNumber } from "./numbers.js";
 
 export class TextProcessor {
     getStory: () => Story;
@@ -59,19 +60,18 @@ export class TextProcessor {
             return "";
         });
 
-        this.handlebars.registerHelper("inc", (attribute: string, options: any) => {
-            const amount = typeof options === "number" ? options : 1;
-            const currentValue = this.state.get(attribute) || 0;
-            this.state.set(attribute, currentValue + amount);
-            return "";
-        });
-
-        this.handlebars.registerHelper("dec", (attribute: string, options: any) => {
-            const amount = typeof options === "number" ? options : 1;
-            const currentValue = this.state.get(attribute) || 0;
-            this.state.set(attribute, currentValue - amount);
-            return "";
-        });
+        // {{inc "x"}} adds 1, and {{inc "x" amount}} adds the amount. Handlebars passes its options
+        // object last, so the amount is there if there's anything before it.
+        const incDecHelper = (name: string, sign: 1 | -1) => {
+            this.handlebars.registerHelper(name, (attribute: string, ...args: any[]) => {
+                const amount = args.length > 1 ? toNumber(name, unwrapValue(args[0])) : 1;
+                const currentValue = toNumber(name, this.state.get(attribute));
+                this.state.set(attribute, currentValue + sign * amount);
+                return "";
+            });
+        };
+        incDecHelper("inc", 1);
+        incDecHelper("dec", -1);
 
         this.handlebars.registerHelper("and", (...args) => args.slice(0,-1).every(Boolean));
         this.handlebars.registerHelper("or",  (...args) => args.slice(0,-1).some(Boolean));
@@ -84,19 +84,9 @@ export class TextProcessor {
         this.handlebars.registerHelper("lte", (a,b) => a <= b);
         // Maths helpers. These are what arithmetic in infix expressions is rewritten to,
         // e.g. {{set "gold" gold + price * 2}} -> {{set "gold" (add gold (mul price 2))}}
-        const isBlank = (v: any) => v === undefined || v === null || v === false || v === "";
-        const isNumeric = (v: any) =>
-            typeof v === "number" || isBlank(v) || (typeof v === "string" && v.trim() !== "" && !isNaN(Number(v)));
-        const toNumber = (helper: string, v: any): number => {
-            v = unwrapValue(v);
-            if (!isNumeric(v)) {
-                throw new Error(`"${helper}" needs numbers, but was given ${JSON.stringify(v)}`);
-            }
-            return isBlank(v) ? 0 : Number(v);
-        };
         const mathsHelper = (name: string, fn: (a: number, b: number) => number) => {
             this.handlebars.registerHelper(name, (...args) => {
-                const values = args.slice(0, -1);
+                const values = args.slice(0, -1).map(unwrapValue);
                 if (values.length !== 2) {
                     throw new Error(`"${name}" needs two values, but was given ${values.length}`);
                 }
@@ -256,7 +246,13 @@ export class TextProcessor {
         } catch (e) {
             const errorMessage = e instanceof Error ? e.message : String(e);
             console.error("Squiffy template error:", errorMessage);
-            return `<div class="squiffy-error" style="color: red; background: #ffe0e0; padding: 8px; border: 1px solid red; margin: 4px 0; font-family: monospace; white-space: pre-wrap;"><strong>Template error:</strong> ${errorMessage}</div>`;
+            return errorHtml("Template error:", errorMessage);
         }
     }
+}
+
+// The block that shows an error in the story's output
+export function errorHtml(label: string, message: string) {
+    const escape = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    return `<div class="squiffy-error" style="color: red; background: #ffe0e0; padding: 8px; border: 1px solid red; margin: 4px 0; font-family: monospace; white-space: pre-wrap;"><strong>${escape(label)}</strong> ${escape(message)}</div>`;
 }
