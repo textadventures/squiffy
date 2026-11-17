@@ -1,5 +1,6 @@
 import { SquiffyApi, SquiffyInitOptions, Story, Section, Passage, StartAt } from "./types.js";
-import { TextProcessor } from "./textProcessor.js";
+import { TextProcessor, errorHtml } from "./textProcessor.js";
+import { toNumber } from "./numbers.js";
 import { Emitter, SquiffyEventMap } from "./events.js";
 import { State } from "./state.js";
 import { updateStory } from "./updater.js";
@@ -23,6 +24,9 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     let scrollPosition = 0;
     // Set when the screen is cleared, so the next scroll goes up to the top of the new screen (#54)
     let scrollToTop = false;
+    // Errors from setting attributes (e.g. @set gold += abc), shown at the start of the next text
+    // written. A link's setters run before the next section has anywhere to show them.
+    const pendingErrors: string[] = [];
     const emitter = new Emitter<SquiffyEventMap>();
     const transitions: (() => Promise<void>)[] = [];
     let runningTransitions = false;
@@ -151,24 +155,32 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             if (incDecMatch) {
                 const lhs = incDecMatch[1];
                 const op = incDecMatch[2];
-                let rhs = incDecMatch[3];
-                if (rhs.startsWith("@")) rhs = get(rhs.substring(1));
-                const rhsNumeric = parseFloat(rhs);
-                let value = get(lhs);
-                if (value === null) value = 0;
-                if (op == "+") {
-                    value += rhsNumeric;
+                const rhsText = incDecMatch[3].trim();
+                const rhs = rhsText.startsWith("@") ? get(rhsText.substring(1)) : rhsText;
+                try {
+                    const what = op + "=";
+                    const amount = toNumber(what, rhs);
+                    let value = toNumber(what, get(lhs));
+                    if (op == "+") {
+                        value += amount;
+                    }
+                    if (op == "-") {
+                        value -= amount;
+                    }
+                    if (op == "*") {
+                        value *= amount;
+                    }
+                    if (op == "/") {
+                        value /= amount;
+                    }
+                    set(lhs, value);
                 }
-                if (op == "-") {
-                    value -= rhsNumeric;
+                catch (e) {
+                    // Leave the attribute as it was, and show the error with the next text written
+                    const message = e instanceof Error ? e.message : String(e);
+                    console.error(`Squiffy error in "${expr}":`, message);
+                    pendingErrors.push(errorHtml(`Error in "${expr}":`, message));
                 }
-                if (op == "*") {
-                    value *= rhsNumeric;
-                }
-                if (op == "/") {
-                    value /= rhsNumeric;
-                }
-                set(lhs, value);
             }
             else {
                 let value = true;
@@ -496,7 +508,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         write: (text: string, source: string) => {
             scrollPosition = outputElement.scrollHeight;
 
-            const html = ui.renderHtml(text, false).trim();
+            const html = pendingErrors.splice(0).join("") + ui.renderHtml(text, false).trim();
 
             // Previously, we skipped the rest of this if "html" came back as an empty string.
             // But, we _do_ always want the block to be created, in the editor at least - as the

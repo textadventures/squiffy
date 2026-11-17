@@ -1824,6 +1824,91 @@ test("Invalid arithmetic shows a template error", async () => {
     expect(element.querySelector(".squiffy-error")?.textContent).toContain("Invalid expression");
 });
 
+test("{{inc}} and {{dec}} use amounts stored as text (#374)", async () => {
+    const script = `
+[[start]]:
+@set price = 0
+{{set "price" "10"}}{{set "a" 0}}{{set "b" 20}}
+{{inc "a" "10"}}{{inc "a" price}}{{dec "b" price}}
+`;
+    const { squiffyApi } = await initScript(script);
+    expect(squiffyApi.get("a")).toBe(20);
+    expect(squiffyApi.get("b")).toBe(10);
+});
+
+test("{{inc}} and {{dec}} add to values stored as text, rather than joining them (#374)", async () => {
+    const script = `
+[[start]]:
+{{set "a" "5"}}{{inc "a"}}{{set "b" "5"}}{{inc "b" 2}}{{set "c" "5"}}{{dec "c"}}
+`;
+    const { squiffyApi } = await initScript(script);
+    expect(squiffyApi.get("a")).toBe(6);
+    expect(squiffyApi.get("b")).toBe(7);
+    expect(squiffyApi.get("c")).toBe(4);
+});
+
+test("{{inc}} on text that isn't a number shows a template error (#374)", async () => {
+    const { element, squiffyApi } = await initScript("[[start]]:\n{{set \"a\" \"abc\"}}{{inc \"a\"}}");
+    expect(element.querySelector(".squiffy-error")?.textContent).toContain("\"inc\" needs numbers, but was given \"abc\"");
+    expect(squiffyApi.get("a")).toBe("abc");
+});
+
+test("@inc, @dec and += etc. work on values stored as text (#374)", async () => {
+    const script = `
+[[start]]:
+{{set "a" "5"}}{{set "b" "5"}}{{set "c" "5"}}{{set "d" "5"}}{{set "price" "3"}}
+[[next]]
+
+[[next]]:
+@inc a
+@dec b 2
+@set c += @price
+@set d *= 2
+@set e += 4
+`;
+    const { element, squiffyApi } = await initScript(script);
+    await squiffyApi.clickLink(findLink(element, "section", "next"));
+    expect(squiffyApi.get("a")).toBe(6);
+    expect(squiffyApi.get("b")).toBe(3);
+    expect(squiffyApi.get("c")).toBe(8);
+    expect(squiffyApi.get("d")).toBe(10);
+    expect(squiffyApi.get("e")).toBe(4);
+    expect(element.querySelector(".squiffy-error")).toBeNull();
+});
+
+test("+= on text that isn't a number shows an error and leaves the attribute alone (#374)", async () => {
+    const script = `
+[[start]]:
+@set name = Bob
+@set name += 1
+@set gold += lots
+Hello.
+`;
+    const { element, squiffyApi } = await initScript(script);
+    const errors = [...element.querySelectorAll(".squiffy-error")].map(e => e.textContent);
+    expect(errors).toEqual([
+        "Error in \"name += 1\": \"+=\" needs numbers, but was given \"Bob\"",
+        "Error in \"gold += lots\": \"+=\" needs numbers, but was given \"lots\"",
+    ]);
+    expect(squiffyApi.get("name")).toBe("Bob");
+    expect(squiffyApi.get("gold")).toBeNull();
+    expect(element.textContent).toContain("Hello.");
+});
+
+test("an error in a link's setters is shown in the next section (#374)", async () => {
+    const script = `
+[[start]]:
+@set name = Bob
+[[Go]](next, name+=1)
+
+[[next]]:
+Arrived.
+`;
+    const { element, squiffyApi } = await initScript(script);
+    await squiffyApi.clickLink(findLink(element, "section", "Go"));
+    expect(getSectionContent(element, "next")).toBe("Error in \"name+=1\": \"+=\" needs numbers, but was given \"Bob\"Arrived.");
+});
+
 // State modification helper tests
 test("{{set}} helper sets attribute value", async () => {
     const script = `
