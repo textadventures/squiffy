@@ -118,7 +118,7 @@ describe("diagnostics", () => {
 
     test("for a section or passage defined twice, at the later name", async () => {
         const main = "[[a]]:\n[p]:\nx\n[p]:\ny\n@import b.squiffy";
-        const b = "[[a]]:\nagain";
+        const b = "[[a]]:\n@end\nagain";
         const ls = createLanguageService({ files: memoryFiles({ "s.squiffy": main, "b.squiffy": b }), mainFile: "s.squiffy" });
         expect((await ls.getDiagnostics("s.squiffy")).map(d => [d.code, d.severity, slice(main, d.range)])).toEqual([
             ["squiffy/duplicate-passage", "warning", "p"],
@@ -130,7 +130,7 @@ describe("diagnostics", () => {
     });
 
     test("pick up changes to project files", async () => {
-        const data: Record<string, string> = { "s.squiffy": "[[a]]:\n@import b.squiffy", "b.squiffy": "[[b]]:\n[[c]]" };
+        const data: Record<string, string> = { "s.squiffy": "[[a]]:\n@import b.squiffy\n[[b]]", "b.squiffy": "[[b]]:\n[[c]]" };
         const ls = createLanguageService({ files: memoryFiles(data), mainFile: "s.squiffy" });
         expect((await ls.getDiagnostics("b.squiffy")).length).toBe(1);
         data["b.squiffy"] = "[[b]]:\n[[a]]";
@@ -369,8 +369,8 @@ describe("folder mode, with a squiffy.json", () => {
         const data: Record<string, string> = {
             "squiffy.json": "{ \"version\": 1, \"main\": \"story.squiffy\", \"exclude\": [\"drafts/**\"] }",
             "story.squiffy": "@title Folder\n@import b.squiffy\n\n[[start]]:\nGo to [[a]] or [[b]].",
-            "a.squiffy": "@title Not this\n[[a]]:\nA",
-            "b.squiffy": "[[b]]:\nB",
+            "a.squiffy": "@title Not this\n[[a]]:\n@end\nA",
+            "b.squiffy": "[[b]]:\n@end\nB",
             "drafts/c.squiffy": "[[c]]:\nC",
             ...extra,
         };

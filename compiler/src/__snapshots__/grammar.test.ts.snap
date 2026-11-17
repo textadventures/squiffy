@@ -369,6 +369,9 @@ exports[`TextMate grammar > every construct in the sample 1`] = `
 "]]" markup.heading.section.squiffy punctuation.definition.heading.end.squiffy
 ":" markup.heading.section.squiffy punctuation.separator.key-value.squiffy
 
+"@" punctuation.definition.directive.squiffy keyword.control.directive.squiffy
+"end" keyword.control.directive.squiffy
+
 "It's a kitchen." 
 
 
