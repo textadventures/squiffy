@@ -9,10 +9,10 @@
     import type { DocumentSymbol, Location, WorkspaceEdit } from "squiffy-compiler/language-service";
     import { basename, dirname, extname, guessMimeType, joinPath, parsePath } from "@textadventures/project-fs";
     import { base } from "#lib/base-path.js";
-    import { project, openDraft, openRecentFolder, downloadFile, storyPath } from "#lib/project.svelte.js";
+    import { project, openDraft, openRecentFolder, downloadFile, storyPath, offerProjectFile, type ProjectOffer } from "#lib/project.svelte.js";
     import { isAsset, isSquiffyFile, isTextFile } from "#lib/file-types.js";
     import { createLanguageClient, type LanguageClient } from "#lib/language/client.js";
-    import { applyEditsToString, applyTextEdits, languageFeatures, toOffset, toPosition } from "#lib/language/codemirror.js";
+    import { applyEditsToString, applyTextEdits, languageFeatures, recheckProblems, toOffset, toPosition } from "#lib/language/codemirror.js";
     import { squiffyLanguage } from "@textadventures/squiffy-codemirror";
     import { css } from "@codemirror/lang-css";
     import { javascript } from "@codemirror/lang-javascript";
@@ -143,7 +143,13 @@
         });
         void c.call("open", current.mainFile);
         current.onFileChanged = path => {
-            void c.call("fileChanged", path);
+            // Another file's change (such as squiffy.json leaving a file out of the story) can
+            // change the problems in the files that are open, so check them again
+            void c.call("fileChanged", path).then(() => {
+                for (const [open, view] of views) {
+                    if (open !== path && isSquiffyFile(open)) recheckProblems(view);
+                }
+            });
             if (isAsset(path)) assetsVersion++;
         };
         client = c;
@@ -487,7 +493,8 @@
         }
     }
 
-    // A new .squiffy file is @imported from the main file, so it's part of the story straight away
+    // A new .squiffy file is part of the story straight away. With a squiffy.json, that's
+    // automatic. Without one, the editor offers to add one, or else @imports it from the main file.
     async function handleNewFile() {
         if (!p) return;
         const name = await promptDialog("New file name:", "chapter.squiffy", "Create");
@@ -496,8 +503,14 @@
         if (!validPath(path)) return;
         const squiffy = isSquiffyFile(path);
         try {
+            if (await p.fs.exists(path)) throw new Error(`There's already a file called ${path}.`);
+            let offer: ProjectOffer | null = null;
+            if (squiffy && !p.projectFile && p.projectText === null) {
+                offer = await offerProjectFile(p, { main: p.mainFile, adding: path });
+                if (offer === "cancelled") return;
+            }
             await p.createFile(path, squiffy ? `[[${basename(path).replace(/\.squiffy$/i, "")}]]:\n\n` : "");
-            if (squiffy) await addImport(storyPath(p, path));
+            if (offer === "declined") await addImport(storyPath(p, path));
             if (isTextFile(path)) await p.open(path);
         } catch (err) {
             showToast(errorText(err));
@@ -535,6 +548,31 @@
         try {
             await p.renameFile(path, to);
             if (isSquiffyFile(path)) showToast("If another file @imports this one by name, change its @import too.", "info");
+        } catch (err) {
+            showToast(errorText(err));
+        }
+    }
+
+    // Starring a file. With a squiffy.json, that changes its "main"; without one, the editor
+    // offers to add one, or else just remembers the new main file in the browser.
+    async function handleMakeMain(path: string) {
+        if (!p) return;
+        try {
+            if (!p.projectFile && p.projectText === null) {
+                // "created" makes it the main file in the new squiffy.json
+                if ((await offerProjectFile(p, { main: path })) !== "declined") return;
+            }
+            await p.setMainFile(path);
+        } catch (err) {
+            showToast(errorText(err));
+        }
+    }
+
+    async function handleExclude(path: string, excluded: boolean) {
+        if (!p) return;
+        try {
+            const problem = await p.setExcluded(path, excluded);
+            if (problem) showToast(problem, "info");
         } catch (err) {
             showToast(errorText(err));
         }
@@ -641,6 +679,8 @@
                             onrename={handleRename}
                             ondelete={handleDelete}
                             ondownload={path => void downloadFile(path)}
+                            onmakemain={handleMakeMain}
+                            onexclude={handleExclude}
                             onopen={handleOpenFile}
                         />
                     </div>

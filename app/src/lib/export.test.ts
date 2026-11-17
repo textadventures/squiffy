@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { strToU8, strFromU8, zipSync } from "fflate";
-import { fileName, guessMainFile, readProjectZip } from "./export.js";
+import { fileName, guessMainFile, readProjectZip, zipMainFile } from "./export.js";
 import { relativePath, storyPath } from "./paths.js";
 
 describe("project zips", () => {
@@ -30,6 +30,23 @@ describe("project zips", () => {
         expect(guessMainFile(["chapters/a.squiffy", "story.squiffy", "bat.png"])).toBe("story.squiffy");
         expect(guessMainFile(["b.squiffy", "a.squiffy"])).toBe("a.squiffy");
         expect(guessMainFile(["bat.png"])).toBeUndefined();
+    });
+});
+
+describe("a zip's main file", () => {
+    const files = (entries: Record<string, string>) => new Map(Object.entries(entries).map(([path, text]) => [path, strToU8(text)]));
+
+    test("comes from squiffy.json, instead of a guess", () => {
+        expect(zipMainFile(files({
+            "a.squiffy": "", "story/main.squiffy": "",
+            "squiffy.json": "{ \"version\": 1, \"main\": \"story/main.squiffy\" }",
+        }))).toBe("story/main.squiffy");
+    });
+
+    test("is guessed when squiffy.json is missing, broken or names a file that isn't there", () => {
+        expect(zipMainFile(files({ "b.squiffy": "", "a.squiffy": "" }))).toBe("a.squiffy");
+        expect(zipMainFile(files({ "b.squiffy": "", "a.squiffy": "", "squiffy.json": "{" }))).toBe("a.squiffy");
+        expect(zipMainFile(files({ "a.squiffy": "", "squiffy.json": "{ \"version\": 1, \"main\": \"gone.squiffy\" }" }))).toBe("a.squiffy");
     });
 });
 

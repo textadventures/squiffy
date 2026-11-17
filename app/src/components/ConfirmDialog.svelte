@@ -7,6 +7,8 @@
     let inputEl = $state<HTMLInputElement>();
     // What's typed in promptDialog()'s text box
     let text = $state("");
+    // Which of checklistDialog()'s boxes are ticked
+    let checked = $state<boolean[]>([]);
 
     // Fills the text box when a dialog opens, then focuses it (or the dialog) once it's on screen.
     // Selecting before the value is rendered would leave the cursor at the end instead.
@@ -14,6 +16,7 @@
         const state = $dialogState;
         if (!state) return;
         text = state.input ?? "";
+        checked = state.checklist?.map(item => item.checked) ?? [];
         void tick().then(() => {
             if (state.input === undefined) {
                 dialogEl?.focus();
@@ -25,7 +28,7 @@
     });
 
     function respond(result: unknown) {
-        $dialogState?.resolve(result, text);
+        $dialogState?.resolve(result, text, checked);
         dialogState.set(null);
     }
 
@@ -61,6 +64,18 @@
             <p class="text-sm whitespace-pre-line">{state.message}</p>
             {#if state.input !== undefined}
                 <input bind:this={inputEl} bind:value={text} class="input text-sm" type="text" aria-label={state.message} />
+            {/if}
+            {#if state.checklist}
+                <ul class="max-h-60 overflow-y-auto flex flex-col gap-1 text-sm">
+                    {#each state.checklist as item, i (item.label)}
+                        <li>
+                            <label class="flex items-center gap-2" class:opacity-60={item.disabled}>
+                                <input type="checkbox" class="checkbox" bind:checked={checked[i]} disabled={item.disabled} />
+                                <span class="truncate">{item.label}</span>
+                            </label>
+                        </li>
+                    {/each}
+                </ul>
             {/if}
 
             <div class="flex flex-wrap justify-end gap-2">

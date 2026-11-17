@@ -72,6 +72,14 @@ const COMPLETION_TYPES: Record<CompletionItem["kind"], string> = {
 // Folding ranges from the last analysis, as document offsets, kept in step with edits
 const setFoldRanges = StateEffect.define<{ from: number; to: number }[]>();
 
+// Checks a file for problems again although its text hasn't changed, e.g. after another file
+// changed. CodeMirror's forceLinting only hurries a check that's already due.
+const recheck = StateEffect.define<null>();
+
+export function recheckProblems(view: EditorView) {
+    view.dispatch({ effects: recheck.of(null) });
+}
+
 const foldRanges = StateField.define<{ from: number; to: number }[]>({
     create: () => [],
     update(ranges, tr) {
@@ -288,7 +296,10 @@ export function languageFeatures(options: LanguageFeatureOptions): Extension[] {
                 source: d.code,
                 actions: fixes.get(diagnosticKey(d)),
             }));
-        }, { delay: DELAY_MS }),
+        }, {
+            delay: DELAY_MS,
+            needsRefresh: update => update.transactions.some(tr => tr.effects.some(e => e.is(recheck))),
+        }),
         lintGutter(),
         foldRanges,
         squiffyFolding,

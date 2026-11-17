@@ -3,6 +3,7 @@
 // to keep a copy of a draft, which lives only in this browser.
 import { strToU8, unzipSync, zipSync } from "fflate";
 import { isJunkFile, isSkippedDirectory, parsePath } from "@textadventures/project-fs";
+import { parseProjectFile, PROJECT_FILENAME } from "squiffy-compiler";
 import { isSquiffyFile } from "./file-types.js";
 import { storyPath } from "./paths.js";
 import type { OpenProject } from "./project.svelte.js";
@@ -33,13 +34,13 @@ async function projectFiles(project: OpenProject): Promise<Map<string, Uint8Arra
     return files;
 }
 
-// What the published story needs besides its own code: every file other than .squiffy ones in
-// the main file's folder, by its path from there, as the story refers to it
+// What the published story needs besides its own code: every file other than .squiffy ones (and
+// squiffy.json) in the main file's folder, by its path from there, as the story refers to it
 export async function storyAssets(project: OpenProject): Promise<Record<string, Uint8Array>> {
     const assets: Record<string, Uint8Array> = {};
     for (const [path, data] of await projectFiles(project)) {
         const relative = storyPath(project, path);
-        if (!isSquiffyFile(path) && !relative.startsWith("../")) assets[relative] = data;
+        if (!isSquiffyFile(path) && path !== PROJECT_FILENAME && !relative.startsWith("../")) assets[relative] = data;
     }
     return assets;
 }
@@ -69,6 +70,17 @@ export function readProjectZip(data: Uint8Array): Map<string, Uint8Array> {
         files.set(path, bytes);
     }
     return files;
+}
+
+// The main file of a project read from a zip: the one its squiffy.json names, if it has one and
+// that file is in the zip, else a guess
+export function zipMainFile(files: Map<string, Uint8Array>): string | undefined {
+    const project = files.get(PROJECT_FILENAME);
+    if (project) {
+        const parsed = parseProjectFile(new TextDecoder().decode(project));
+        if (parsed.success && files.has(parsed.project.main)) return parsed.project.main;
+    }
+    return guessMainFile(files.keys());
 }
 
 // The main file of a project read from a zip: the top-most .squiffy file, then the first by name

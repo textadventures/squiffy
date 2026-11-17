@@ -10,10 +10,20 @@ export interface DialogChoice<T> {
 interface DialogState {
     message: string;
     choices: DialogChoice<unknown>[];
-    // For promptDialog(), `text` is what's in the text box
-    resolve: (result: unknown, text?: string) => void;
+    // For promptDialog(), `text` is what's in the text box; for checklistDialog(), `checked` is
+    // which boxes are ticked
+    resolve: (result: unknown, text?: string, checked?: boolean[]) => void;
     // A text box, for promptDialog(): its starting text
     input?: string;
+    // A list of checkboxes, for checklistDialog()
+    checklist?: ChecklistItem[];
+}
+
+export interface ChecklistItem {
+    label: string;
+    checked: boolean;
+    // Shown ticked, but can't be changed
+    disabled?: boolean;
 }
 
 export const dialogState = writable<DialogState | null>(null);
@@ -55,6 +65,21 @@ export function promptDialog(message: string, initial = "", confirmLabel = "OK")
             ],
             input: initial,
             resolve: (result, text) => resolve(result === true ? text ?? "" : null),
+        });
+    });
+}
+
+// Asks a question with a list of checkboxes. Resolves with the chosen value and which boxes are
+// ticked, or null if dismissed.
+export function checklistDialog<T>(message: string, items: ChecklistItem[], choices: DialogChoice<T>[]): Promise<{ value: T; checked: boolean[] } | null> {
+    return new Promise(resolve => {
+        dialogState.set({
+            message,
+            choices: choices as DialogChoice<unknown>[],
+            checklist: items,
+            resolve: (result, _text, checked) => resolve(result === null || result === undefined
+                ? null
+                : { value: result as T, checked: checked ?? items.map(i => i.checked) }),
         });
     });
 }
