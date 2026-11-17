@@ -12,10 +12,10 @@
 //     await preview.load({ js: await result.getJs() }, { startAt: { section: "kitchen" } });
 
 import {
-    Envelope, HostMessage, isEnvelope, PREVIEW_CHANNEL, PreviewAssets, PreviewMessage, PreviewStory, StartAt,
+    Envelope, HostMessage, isEnvelope, PREVIEW_CHANNEL, PreviewAssets, PreviewMessage, PreviewStory, PreviewTheme, StartAt,
 } from "./preview-protocol.js";
 
-export type { HostMessage, PreviewAssets, PreviewMessage, PreviewStory, StartAt } from "./preview-protocol.js";
+export type { HostMessage, PreviewAssets, PreviewMessage, PreviewStory, PreviewTheme, StartAt } from "./preview-protocol.js";
 export { PREVIEW_CHANNEL } from "./preview-protocol.js";
 
 // How the host talks to the preview page
@@ -45,6 +45,8 @@ export interface PreviewHost {
     back(): void;
     // Sets the assets the story can use. Send these before load().
     setAssets(assets: PreviewAssets): void;
+    // Shows the story in light or dark mode. It's kept if the page reloads.
+    setTheme(theme: PreviewTheme): void;
     dispose(): void;
 }
 
@@ -73,6 +75,7 @@ export function iframeChannel(iframe: HTMLIFrameElement): PreviewChannel {
 export function createPreviewHost(channel: PreviewChannel, handlers: PreviewHandlers = {}): PreviewHost {
     let isReady = false;
     let queue: HostMessage[] = [];
+    let theme: PreviewTheme | undefined;
     let resolveReady: () => void;
     const ready = new Promise<void>(resolve => { resolveReady = resolve; });
 
@@ -89,6 +92,7 @@ export function createPreviewHost(channel: PreviewChannel, handlers: PreviewHand
                 // Sent again if the page reloads, which loses its story, so onReady is
                 // where a host can load it again
                 isReady = true;
+                if (theme) send({ type: "theme", theme });
                 const queued = queue;
                 queue = [];
                 for (const m of queued) send(m);
@@ -121,6 +125,11 @@ export function createPreviewHost(channel: PreviewChannel, handlers: PreviewHand
         restart: () => send({ type: "restart" }),
         back: () => send({ type: "back" }),
         setAssets: assets => send({ type: "assets", assets }),
+        setTheme: value => {
+            theme = value;
+            // Sent when the page is ready, and again if it reloads
+            if (isReady) send({ type: "theme", theme });
+        },
         dispose: () => {
             stop();
             queue = [];

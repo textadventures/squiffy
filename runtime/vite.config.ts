@@ -39,10 +39,9 @@ export default defineConfig({
             closeBundle() {
                 try {
                     mkdirSync("dist", { recursive: true });
-                    copyFileSync(
-                        resolve("src/squiffy.runtime.css"),
-                        resolve("dist/squiffy.runtime.css")
-                    );
+                    for (const file of ["squiffy.runtime.css", "squiffy.page.css"]) {
+                        copyFileSync(resolve("src", file), resolve("dist", file));
+                    }
                 } catch (err) {
                     console.error("Failed to copy CSS file:", err);
                 }

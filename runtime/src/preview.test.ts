@@ -144,7 +144,20 @@ describe("preview", () => {
         const js = await compileJs(script);
         await preview.receive({ type: "load", story: { js, css: ["body { color: red; }"] } });
         await preview.receive({ type: "load", story: { js, css: ["body { color: blue; }"] } });
-        expect([...document.head.querySelectorAll("style")].map(s => s.textContent)).toEqual(["body { color: blue; }"]);
+        // After the preview's own (empty) theme style
+        expect([...document.head.querySelectorAll("style")].map(s => s.textContent)).toEqual(["", "body { color: blue; }"]);
+    });
+
+    test("sets the theme before the story's stylesheets, so they can override it", async () => {
+        const { preview } = setUp();
+        const js = await compileJs(script);
+        await preview.receive({ type: "load", story: { js, css: [":root { color-scheme: light; }"] } });
+        await preview.receive({ type: "theme", theme: "dark" });
+        const styles = () => [...document.head.querySelectorAll("style")].map(s => s.textContent);
+        expect(styles()).toEqual([":root { color-scheme: dark; }", ":root { color-scheme: light; }"]);
+
+        await preview.receive({ type: "theme", theme: "system" });
+        expect(styles()[0]).toBe("");
     });
 
     test("reports errors", async () => {

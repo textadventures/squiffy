@@ -371,3 +371,5 @@ Squiffy adds CSS classes to its output that you can style:
 - `.squiffy-link.disabled` - Links that have been clicked/disabled
 
 You can include the default styles from a full export (`style.css`) and customize from there, or write your own styles from scratch. See [Customising styles](/styling/) for a reference to the default styles.
+
+The colours in `squiffy.runtime.css` follow your page's [`color-scheme`](https://developer.mozilla.org/en-US/docs/Web/CSS/color-scheme). A page that doesn't set one is light, so an embedded story stays light unless your page supports dark mode, for example with `:root { color-scheme: light dark; }`. The page layout of an exported story, including its background and text colours, is in `squiffy.page.css` in the same package.

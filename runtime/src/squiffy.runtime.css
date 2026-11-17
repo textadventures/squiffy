@@ -1,13 +1,47 @@
-/* Core Squiffy Runtime Styles */
+/* Core Squiffy Runtime Styles. See https://squiffystory.com/styling/ for how to customise these. */
+
+/* Colours. Each has a light and a dark value, and light-dark() picks one from the page's
+   color-scheme. This file doesn't set color-scheme itself, so a story embedded in a page stays
+   light unless the page opts in to dark mode. The exported story's page (squiffy.page.css) sets
+   "color-scheme: light dark", so it follows the reader's system setting. */
+:root
+{
+    --squiffy-text: light-dark(#1f2328, #e4e4e7);
+    --squiffy-background: light-dark(#ffffff, #18181b);
+    /* Secondary text: the Restart button, and links waiting for valid input */
+    --squiffy-muted: light-dark(#6b6f76, #9a9ca3);
+    /* The lines between sections */
+    --squiffy-border: light-dark(#e2e2e6, #34343a);
+    --squiffy-link: light-dark(#1d5fd6, #7aa7ff);
+    --squiffy-link-hover: light-dark(#0f3f99, #b0cbff);
+    --squiffy-error: light-dark(#c62828, #ff7b72);
+    --squiffy-success: light-dark(#2e7d32, #6cc070);
+}
 
 /* Link styles */
 a.squiffy-link
 {
+    color: var(--squiffy-link);
     text-decoration: underline;
-    text-decoration-color: Blue;
-    color: Blue;
+    text-decoration-color: currentColor;
+    text-decoration-thickness: from-font;
+    text-underline-offset: 0.15em;
     cursor: pointer;
     transition: color 0.4s ease-in-out, text-decoration-color 0.4s ease-in-out;
+}
+
+a.squiffy-link:hover
+{
+    color: var(--squiffy-link-hover);
+}
+
+a.squiffy-link:focus-visible,
+button.squiffy-header-button:focus-visible,
+.squiffy-continue:focus-visible
+{
+    outline: 2px solid var(--squiffy-link);
+    outline-offset: 2px;
+    border-radius: 2px;
 }
 
 /* Rotate/sequence links - visually distinct as they update in-place rather than advancing the story */
@@ -33,10 +67,9 @@ a.squiffy-link.validation-disabled
 {
     text-decoration: inherit;
     text-decoration-color: transparent;
-    color: #999 !important;
+    color: var(--squiffy-muted) !important;
     cursor: not-allowed;
     pointer-events: none;
-    opacity: 0.6;
 }
 
 /* Invalid input field states */
@@ -44,8 +77,8 @@ input.squiffy-invalid,
 textarea.squiffy-invalid,
 select.squiffy-invalid
 {
-    border-color: #dc3545 !important;
-    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+    border-color: var(--squiffy-error) !important;
+    box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--squiffy-error) 25%, transparent);
 }
 
 /* Valid input field states (optional, provides positive feedback) */
@@ -53,7 +86,7 @@ input:not([disabled]):valid,
 textarea:not([disabled]):valid,
 select:not([disabled]):valid
 {
-    border-color: #28a745;
+    border-color: var(--squiffy-success);
 }
 
 /* Focus state for invalid inputs */
@@ -62,19 +95,29 @@ textarea.squiffy-invalid:focus,
 select.squiffy-invalid:focus
 {
     outline: none;
-    border-color: #dc3545 !important;
-    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.5);
+    border-color: var(--squiffy-error) !important;
+    box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--squiffy-error) 50%, transparent);
 }
 
-/* Header button styles */
+/* Header button styles: the Restart button */
 button.squiffy-header-button
 {
-    text-decoration: underline;
-    color: Blue;
+    color: var(--squiffy-muted);
     cursor: pointer;
     background: none;
     border: none;
-    font-family: inherit;
+    padding: 0.25em 0;
+    font: inherit;
+    text-decoration: underline;
+    text-decoration-color: transparent;
+    text-underline-offset: 0.15em;
+    transition: color 0.2s ease-in-out, text-decoration-color 0.2s ease-in-out;
+}
+
+button.squiffy-header-button:hover
+{
+    color: var(--squiffy-text);
+    text-decoration-color: currentColor;
 }
 
 /* Output block spacing */
@@ -83,7 +126,7 @@ div.squiffy-output-passage:not(:last-child),
 div.squiffy-output-section:not(:last-child)
 {
     margin-bottom: 1em;
-    border-bottom: 1px solid #ccc;
+    border-bottom: 1px solid var(--squiffy-border);
 }
 
 /* Fade animations */
@@ -99,9 +142,11 @@ div.squiffy-output-section:not(:last-child)
 
 /* Continue animation - click to proceed */
 .squiffy-continue {
+    color: var(--squiffy-link);
     text-decoration: underline;
-    text-decoration-color: Blue;
-    color: Blue;
+    text-decoration-color: currentColor;
+    text-decoration-thickness: from-font;
+    text-underline-offset: 0.15em;
     cursor: pointer;
 }
 
@@ -121,8 +166,8 @@ div.squiffy-output-section:not(:last-child)
 }
 
 @keyframes squiffy-glow {
-    0%, 100% { text-shadow: 0 0 4px rgba(0, 0, 255, 0.5); }
-    50% { text-shadow: 0 0 12px rgba(0, 0, 255, 0.8), 0 0 20px rgba(0, 0, 255, 0.4); }
+    0%, 100% { text-shadow: 0 0 4px color-mix(in srgb, currentColor 50%, transparent); }
+    50% { text-shadow: 0 0 12px color-mix(in srgb, currentColor 80%, transparent), 0 0 20px color-mix(in srgb, currentColor 40%, transparent); }
 }
 
 /* Style: bounce - subtle vertical bounce */
@@ -139,5 +184,16 @@ div.squiffy-output-section:not(:last-child)
 /* Style: wave - character spans need special handling for underline */
 .squiffy-continue-wave {
     text-decoration: none;
-    border-bottom: 1px solid Blue;
+    border-bottom: 1px solid currentColor;
+}
+
+/* Respect the reader's reduced-motion setting */
+@media (prefers-reduced-motion: reduce)
+{
+    .squiffy-continue-pulse,
+    .squiffy-continue-glow,
+    .squiffy-continue-bounce
+    {
+        animation: none;
+    }
 }

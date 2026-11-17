@@ -16,14 +16,16 @@ const template = (css: string, js: string) => `<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Squiffy preview</title>
 <style>
-html, body { height: 100%; margin: 0; }
-#squiffy, .squiffy-preview-story, .squiffy-preview-story > div { height: 100%; box-sizing: border-box; }
-.squiffy-preview-story > div { padding: 1em; }
 ${css}
+/* The preview scrolls the story within the frame, with the text centred as on the exported page */
+html, body { height: 100%; }
+div#squiffy-container { max-width: none; height: 100%; padding: 0; }
+#squiffy, .squiffy-preview-story, .squiffy-preview-story > div { height: 100%; box-sizing: border-box; }
+.squiffy-preview-story > div { padding: 1em max(1.25rem, calc((100% - var(--squiffy-max-width)) / 2)); }
 </style>
 </head>
 <body>
-<div id="squiffy"></div>
+<div id="squiffy-container"><div id="squiffy"></div></div>
 <script>
 ${js.replace(/<\/(script)/gi, "<\\/$1")}
 </script>
@@ -49,7 +51,9 @@ export default defineConfig({
             name: "inline-preview-page",
             async closeBundle() {
                 const js = readFileSync(resolve("dist/preview-build/squiffy.preview.js"), "utf8");
-                const css = readFileSync(resolve("src/squiffy.runtime.css"), "utf8");
+                // The same styles as an exported story's page
+                const css = readFileSync(resolve("src/squiffy.runtime.css"), "utf8") + "\n"
+                    + readFileSync(resolve("src/squiffy.page.css"), "utf8");
                 const html = template(css, js);
                 writeFileSync(resolve("dist/squiffy.preview.html"), html);
                 writeFileSync(resolve("dist/preview-html.js"),

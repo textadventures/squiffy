@@ -27,6 +27,9 @@ export interface PreviewAssets {
     urls?: Record<string, string>;
 }
 
+// "system" follows the reader's system setting, like an exported story
+export type PreviewTheme = "light" | "dark" | "system";
+
 export type HostMessage =
     // Starts a story, replacing any that's running. Send assets first.
     | { type: "load"; story: PreviewStory; startAt?: StartAt }
@@ -35,7 +38,10 @@ export type HostMessage =
     | { type: "restart" }
     | { type: "back" }
     // Replaces the assets the story can use
-    | { type: "assets"; assets: PreviewAssets };
+    | { type: "assets"; assets: PreviewAssets }
+    // Shows the story in light or dark mode, e.g. to match the host's own theme. A story's own
+    // CSS can still override it, e.g. with ":root { color-scheme: light; }".
+    | { type: "theme"; theme: PreviewTheme };
 
 export type PreviewMessage =
     // The page has loaded and is listening

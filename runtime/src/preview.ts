@@ -52,6 +52,9 @@ export function createPreview(options: PreviewOptions) {
     const assetUrls = new Map<string, string>();
     const objectUrls: string[] = [];
     const injected: Element[] = [];
+    // Sets the theme. It's added before any of the story's own stylesheets, so they can override it.
+    const themeStyle = document.createElement("style");
+    document.head.appendChild(themeStyle);
 
     const send = (message: PreviewMessage) => {
         try {
@@ -151,6 +154,9 @@ export function createPreview(options: PreviewOptions) {
                     break;
                 case "assets":
                     setAssets(message.assets);
+                    break;
+                case "theme":
+                    themeStyle.textContent = message.theme == "system" ? "" : `:root { color-scheme: ${message.theme}; }`;
                     break;
             }
         }

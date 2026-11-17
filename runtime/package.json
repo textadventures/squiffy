@@ -17,6 +17,8 @@
     "./squiffy.runtime.css": "./dist/squiffy.runtime.css",
     "./dist/squiffy.runtime.global.js": "./dist/squiffy.runtime.global.js",
     "./dist/squiffy.runtime.css": "./dist/squiffy.runtime.css",
+    "./squiffy.page.css": "./dist/squiffy.page.css",
+    "./dist/squiffy.page.css": "./dist/squiffy.page.css",
     "./preview-host": {
       "types": "./dist/preview-host.d.ts",
       "default": "./dist/preview-host.js"

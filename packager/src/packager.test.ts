@@ -32,6 +32,18 @@ test("Create package from compiled story", async () => {
     expect(pkg.zip).toBeUndefined();
 });
 
+test("Exported page has a light/dark button, and applies the saved choice before it's shown", async () => {
+    const compileResult = await compile({ script: "Hello world!" });
+    if (!compileResult.success) throw new Error("Compile failed");
+    const html = (await createPackage(compileResult, false)).files["index.html"];
+
+    expect(html).toContain('id="squiffy-theme"');
+    // The saved choice is applied in <head>, before the stylesheets
+    const head = html.substring(0, html.indexOf("</head>"));
+    expect(head).toContain("localStorage.getItem('squiffy-theme:'");
+    expect(head.indexOf("squiffyTheme")).toBeLessThan(head.indexOf('href="style.css"'));
+});
+
 test("Create package with zip", async () => {
     const script = "Test story";
     const compileResult = await compile({ script });

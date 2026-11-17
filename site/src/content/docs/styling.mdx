@@ -21,6 +21,22 @@ There are three ways to add your own CSS, depending on how you build your story:
 When you override a rule, you only need to include the properties you're changing. For example, to change the link colour, `a.squiffy-link { color: darkgreen; }` is enough. Everything else keeps its default.
 </Aside>
 
+## Light and dark mode
+
+A story follows the reader's light or dark system setting. Readers can also switch between light and dark with the button next to Restart, and their choice is remembered the next time they open the story. All of Squiffy's colours are [CSS variables](#colours), each with a light and a dark value, so changing a colour is usually just a matter of setting a variable.
+
+To keep a story in light mode whatever the reader's setting (or in dark mode, with `dark`):
+
+```css
+:root {
+    color-scheme: light;    /* default: light dark */
+}
+```
+
+This also hides the light/dark button, as it would have no effect. Do this if your own CSS sets a background or text colour for one mode only. For example, a story that sets `body { background-color: white; }` would show light text on a white background in dark mode.
+
+In the editor, the preview follows the editor's own theme, which you choose in **Settings**. A story that sets `color-scheme` keeps its own setting in the preview too.
+
 ## Common changes
 
 ### Fonts, text size and page width
@@ -28,58 +44,73 @@ When you override a rule, you only need to include the properties you're changin
 The whole story sits inside `div#squiffy-container`, and the story text is in `div#squiffy`. Include the `div`, otherwise your rule is less specific than the default and won't take effect:
 
 ```css
+:root {
+    --squiffy-max-width: 50rem;                        /* default: 42rem */
+}
+
 div#squiffy-container {
-    font-family: "Helvetica Neue", Arial, sans-serif;  /* default: Georgia, serif */
-    max-width: 900px;                                  /* default: 700px */
+    font-family: "Helvetica Neue", Arial, sans-serif;  /* default: Charter, …, Georgia, serif */
+    line-height: 1.5;                                  /* default: 1.6 */
 }
 
 div#squiffy {
-    font-size: 20px;                                   /* default: 18px */
+    font-size: 1.25rem;                                /* default: 1.125rem */
 }
 ```
 
-### Background and text colour
+Sizes are in `rem`, so they scale with the text size the reader has chosen in their browser (`1rem` is usually 16 pixels).
 
-Squiffy doesn't set a background or text colour, so it uses the browser's defaults (usually black on white). Set them on `body`:
+### Colours
+
+Set these variables to change Squiffy's colours. `light-dark()` gives a colour for each mode, so the story still works in both:
 
 ```css
-body {
-    background-color: #1e1e2e;
-    color: #e0e0e0;
+:root {
+    --squiffy-background: light-dark(#fdf6e3, #1e1e2e);
+    --squiffy-text: light-dark(#3b3227, #e0e0e0);
+    --squiffy-link: light-dark(darkgreen, lightgreen);
+    --squiffy-link-hover: light-dark(green, palegreen);
 }
 ```
 
-If you use a dark background, you'll probably want to change the link colour too, as the default blue is hard to read on dark colours.
+If you've [kept your story in one mode](#light-and-dark-mode), you can give just one colour: `--squiffy-link: darkgreen;`.
+
+| Variable | What it colours | Light | Dark |
+| --- | --- | --- | --- |
+| `--squiffy-background` | The page background | `#ffffff` | `#18181b` |
+| `--squiffy-text` | The story text | `#1f2328` | `#e4e4e7` |
+| `--squiffy-link` | Links, [continue](/dynamic-text/#animation) links and the keyboard focus outline | `#1d5fd6` | `#7aa7ff` |
+| `--squiffy-link-hover` | Links under the mouse pointer | `#0f3f99` | `#b0cbff` |
+| `--squiffy-muted` | The Restart button, and links waiting for [valid input](/basic-concepts/#input-validation) | `#6b6f76` | `#9a9ca3` |
+| `--squiffy-border` | The lines between sections | `#e2e2e6` | `#34343a` |
+| `--squiffy-error` | Inputs that fail validation | `#c62828` | `#ff7b72` |
+| `--squiffy-success` | Inputs that pass validation | `#2e7d32` | `#6cc070` |
 
 ### Link colour
 
-Links are `a.squiffy-link`. The default is blue and underlined. The underline colour is set separately from the text colour, so change both:
+Links are `a.squiffy-link`. The easiest way to change their colour is with the `--squiffy-link` and `--squiffy-link-hover` [variables](#colours). The underline is the same colour as the text, so you can also change the colour with a rule:
 
 ```css
 a.squiffy-link {
-    color: darkgreen;                   /* default: Blue */
-    text-decoration-color: darkgreen;   /* default: Blue */
+    color: darkgreen;      /* default: var(--squiffy-link) */
 }
 
 a.squiffy-link:hover {
-    color: limegreen;
-    text-decoration-color: limegreen;
+    color: limegreen;      /* default: var(--squiffy-link-hover) */
 }
 ```
-
-The Restart button (`button.squiffy-header-button`) and [continue](/dynamic-text/#animation) links (`.squiffy-continue`) are also blue by default, and have their own rules.
 
 Once the player has moved on to a new section, the old links are disabled. They are shown in the same colour as the surrounding text, without an underline.
 
 ### Section dividers
 
-When the player moves on, a grey line separates each section from the next. To remove it, or change it:
+When the player moves on, a faint line separates each section from the next. Change its colour with `--squiffy-border`, or to remove it:
 
 ```css
 div.squiffy-output-section:not(:last-child),
 div.squiffy-output-passage:not(:last-child),
 div.squiffy-output-block:not(:last-child) {
-    border-bottom: none;     /* default: 1px solid #ccc */
+    border-bottom: none;     /* default: 1px solid var(--squiffy-border) */
 }
 ```
 
@@ -94,6 +125,30 @@ Each section's output has a `data-section` attribute with the section's name, an
 }
 ```
 
+### The header
+
+The Restart and light/dark buttons are in a header that stays at the top of the window as the story scrolls under it. Its background is `--squiffy-background`, so if you change the page's background, set that [variable](#colours) rather than styling `body`. To make the header scroll away with the story instead:
+
+```css
+div#squiffy-header {
+    position: static;
+}
+
+div#squiffy-header::after {
+    display: none;     /* the fade under the header */
+}
+```
+
+### Hiding the light/dark button
+
+To follow the reader's system setting without offering them the button:
+
+```css
+button#squiffy-theme {
+    display: none;
+}
+```
+
 ### Changing the Restart button text
 
 The text of the Restart button is in the HTML, not the CSS. To change it, for example to translate it, edit this line in `index.html`:
@@ -105,7 +160,7 @@ The text of the Restart button is in the HTML, not the CSS. To change it, for ex
 The confirmation message (`Are you sure you want to restart?`) is in the `<script>` block near the top of the same file. To hide the button altogether:
 
 ```css
-div#squiffy-header {
+button#restart {
     display: none;
 }
 ```
@@ -122,24 +177,28 @@ The exported `style.css` combines two sets of rules: the page layout, and the st
 
 | Selector | What it is | Defaults |
 | --- | --- | --- |
-| `div#squiffy-container` | Wraps the header and the story | `max-width: 700px`, centred, `font-family: Georgia, serif` |
-| `div#squiffy-header` | The bar above the story containing the Restart button | `font-size: 14px`, right-aligned |
-| `div#squiffy` | The story text | `font-size: 18px` |
+| `:root` | The whole page | `color-scheme: light dark`, `--squiffy-max-width: 42rem` |
+| `body` | The page | `background-color: var(--squiffy-background)`, `color: var(--squiffy-text)`, no margin |
+| `div#squiffy-container` | Wraps the header and the story | `max-width: var(--squiffy-max-width)`, centred, `line-height: 1.6`, a serif font (Charter, Sitka Text, Cambria or Georgia, whichever the reader has) |
+| `div#squiffy-header` | The bar above the story containing the Restart and light/dark buttons | Stays at the top of the window (`position: sticky`), with a short fade underneath. `font-size: 0.875rem`, right-aligned |
+| `button#squiffy-theme` | The light/dark button | A moon or sun icon, in the same colour as the Restart button |
+| `div#squiffy` | The story text | `font-size: 1.125rem` |
 | `div#squiffy img` | Images in the story | `max-width: 100%`, so they never overflow the page |
 
 ### Story text
 
 | Selector | What it is | Defaults |
 | --- | --- | --- |
-| `a.squiffy-link` | Links | `color: Blue`, underlined in blue, with a short fade when the colour changes |
+| `:root` | The whole page | The [colour variables](#colours) |
+| `a.squiffy-link` | Links | `color: var(--squiffy-link)`, underlined, with a short fade when the colour changes, and an outline when focused with the keyboard |
 | `a.squiffy-link[data-handler="rotate"]`, `a.squiffy-link[data-handler="sequence"]` | [Rotate and sequence](/dynamic-text/#rotate) links | Dotted underline, since they change in place rather than moving the story on |
 | `a.squiffy-link.disabled` | Links that can no longer be clicked | Same colour as the surrounding text, no underline |
-| `a.squiffy-link.validation-disabled` | Links disabled until the player fills in the [inputs](/basic-concepts/#input-validation) correctly | `color: #999`, faded |
-| `button.squiffy-header-button` | The Restart button | Looks like a link: `color: Blue`, underlined, no border or background |
-| `.squiffy-output-section` | Each section's output | A `1px solid #ccc` line underneath, and a `1em` gap, except for the latest one |
+| `a.squiffy-link.validation-disabled` | Links disabled until the player fills in the [inputs](/basic-concepts/#input-validation) correctly | `color: var(--squiffy-muted)`, no underline |
+| `button.squiffy-header-button` | The Restart button | `color: var(--squiffy-muted)`, no border or background, underlined when the mouse pointer is over it |
+| `.squiffy-output-section` | Each section's output | A `1px solid var(--squiffy-border)` line underneath, and a `1em` gap, except for the latest one |
 | `.squiffy-output-passage` | Each passage's output | As above |
-| `input.squiffy-invalid` (and `textarea`, `select`) | An input that fails validation | Red border (`#dc3545`) |
-| `input:valid` (and `textarea`, `select`) | An input that passes validation | Green border (`#28a745`) |
-| `.squiffy-continue` | [Continue](/dynamic-text/#animation) links | Blue and underlined, like other links |
+| `input.squiffy-invalid` (and `textarea`, `select`) | An input that fails validation | `border-color: var(--squiffy-error)` |
+| `input:valid` (and `textarea`, `select`) | An input that passes validation | `border-color: var(--squiffy-success)` |
+| `.squiffy-continue` | [Continue](/dynamic-text/#animation) links | `color: var(--squiffy-link)`, underlined, like other links. Its pulse, glow and bounce animations are turned off if the reader has asked their system to reduce motion. |
 
-The full set of rules is in [`squiffy.runtime.css`](https://github.com/textadventures/squiffy/blob/main/runtime/src/squiffy.runtime.css) and [`style.template.css`](https://github.com/textadventures/squiffy/blob/main/packager/src/style.template.css) on GitHub.
+The full set of rules is in [`squiffy.runtime.css`](https://github.com/textadventures/squiffy/blob/main/runtime/src/squiffy.runtime.css) and [`squiffy.page.css`](https://github.com/textadventures/squiffy/blob/main/runtime/src/squiffy.page.css) on GitHub.
