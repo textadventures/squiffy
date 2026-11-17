@@ -10,8 +10,8 @@ name: Publish desktop app
 # signed ad hoc otherwise. Windows and Linux builds are unsigned.
 #
 # It also runs on pull requests that change the desktop app or this workflow, to check it still
-# packages on every platform. Those builds are the beta, unsigned, and only kept as the run's
-# artifacts.
+# packages on every platform (except release-please's release PR). Those builds are the beta,
+# unsigned, and only kept as the run's artifacts.
 on:
   push:
     tags: ['v*']
@@ -32,6 +32,9 @@ on:
 
 jobs:
   publish:
+    # Skip release-please's release PR: it only bumps the version in desktop/package.json, which
+    # would rebuild every platform on each push to main, and the tag build checks the same thing.
+    if: ${{ !startsWith(github.head_ref, 'release-please--') }}
     strategy:
       fail-fast: false
       matrix:
