@@ -7,7 +7,7 @@
     import { EditorView } from "@codemirror/view";
     import type { Extension } from "@codemirror/state";
     import type { DocumentSymbol, GraphNode, Location, StoryGraph, WorkspaceEdit } from "squiffy-compiler/language-service";
-    import type { MapPositions } from "squiffy-compiler";
+    import { PROJECT_FILENAME, type MapPositions } from "squiffy-compiler";
     import { basename, dirname, extname, guessMimeType, joinPath, parsePath } from "@textadventures/project-fs";
     import { base } from "#lib/base-path.js";
     import { project, openDraft, openRecentFolder, downloadFile, storyPath, offerProjectFile, type ProjectOffer } from "#lib/project.svelte.js";
@@ -449,25 +449,50 @@
 
     // Saving positions one at a time, so a quick second drag doesn't race the first
     let positionsQueue: Promise<unknown> = Promise.resolve();
-    let warnedNoProjectFile = false;
+    // Without a squiffy.json, whether the author said no to adding one
+    let declinedProjectFile = false;
     function savePositions(next: MapPositions) {
         const current = p;
         if (!current) return;
-        if (!current.projectFile) {
+        const empty = !Object.keys(next.sections).length && !Object.keys(next.passages).length;
+        if (!current.projectFile && (empty || declinedProjectFile || current.projectText !== null)) {
+            // Nothing worth adding a squiffy.json for, the author doesn't want one, or there's one
+            // that can't be read
             sessionPositions = next;
-            if (!warnedNoProjectFile) {
-                warnedNoProjectFile = true;
-                showToast("Where you put things on the map is saved in squiffy.json, which this story doesn't have, so it'll be forgotten when you close it.", "info", 8000);
-            }
+            if (current.projectText !== null && !empty) showToast("squiffy.json couldn't be read, so the map's positions weren't saved. Fix it, then try again.");
             return;
         }
+        // Shown straight away, while squiffy.json is written
+        if (!current.projectFile) sessionPositions = next;
         positionsQueue = positionsQueue.then(async () => {
             try {
+                if (!current.projectFile && !(await addProjectFileForMap(current))) {
+                    declinedProjectFile = true;
+                    showToast("Where you put things on the map is saved in squiffy.json, so without one it'll be forgotten when you close the story.", "info", 8000);
+                    return;
+                }
                 if (!(await current.setMapPositions(next))) showToast("squiffy.json couldn't be read, so the map's positions weren't saved. Fix it, then try again.");
             } catch (err) {
                 showToast(`Couldn't save the map: ${errorText(err)}`);
             }
         });
+    }
+
+    // Adds a squiffy.json to keep the map's positions in. It makes the folder one story, so any
+    // other .squiffy files in the folder that aren't part of the story now are excluded, and the
+    // story stays as it was. If the story has an error, which files are part of it isn't certain,
+    // so the author is asked instead. Says whether there's a squiffy.json now.
+    async function addProjectFileForMap(current: NonNullable<typeof p>): Promise<boolean> {
+        const c = client;
+        if (!c) return false;
+        await syncOpenFiles();
+        const { files, complete } = await c.call("getStoryFiles");
+        if (!complete) return (await offerProjectFile(current, { main: current.mainFile })) === "created";
+        const inStory = new Set(files);
+        const exclude = current.files.map(f => f.path).filter(path => isSquiffyFile(path) && path !== current.mainFile && !inStory.has(path));
+        await current.createProjectFile(current.mainFile, exclude);
+        showToast(`Added ${PROJECT_FILENAME}, to save where you put things on the map.${exclude.length ? ` It leaves out the .squiffy files that aren't part of this story.` : ""}`, "info", 8000);
+        return true;
     }
 
     // Shows a location in the editor, opening its file, without taking the focus from the map
