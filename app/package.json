@@ -28,6 +28,7 @@
     "@lezer/highlight": "^1.2.5",
     "@lucide/svelte": "^1.70.0",
     "@textadventures/project-fs": "^7.0.0-beta.1",
+    "@textadventures/squiffy-codemirror": "^7.0.0-beta.1",
     "@textadventures/squiffy-packager": "^7.0.0-beta.1",
     "fflate": "^0.8.3",
     "idb-keyval": "^6.3.0",

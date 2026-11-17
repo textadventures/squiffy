@@ -2,7 +2,7 @@ import { EditorState } from "@codemirror/state";
 import { ensureSyntaxTree } from "@codemirror/language";
 import { highlightTree, tagHighlighter, tags as t } from "@lezer/highlight";
 import { describe, expect, test } from "vitest";
-import { squiffyLanguage } from "./squiffy-lang.js";
+import { squiffyLanguage } from "./index.js";
 
 const highlighter = tagHighlighter(Object.entries({
     heading: t.heading, heading2: t.heading2, link: t.link, keyword: t.keyword, monospace: t.monospace,
@@ -20,7 +20,7 @@ function highlight(doc: string): string[] {
     return spans;
 }
 
-describe("squiffy-lang", () => {
+describe("squiffy-codemirror", () => {
     test("indented lines are JavaScript only before a block's first line of text", () => {
         const spans = highlight("[[a]]:\n@set x = 1\n\n    js();\nText\n    not js\n[b]:\n    js2();");
         expect(spans).toContain("    js();: tok-monospace");

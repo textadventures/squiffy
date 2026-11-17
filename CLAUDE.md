@@ -142,6 +142,7 @@ CLI options:
 - **packager**: Combines compiler + runtime, generates output files
 - **cli**: Node.js CLI wrapper around packager, includes file I/O and dev server
 - **app**: Private workspace (`@textadventures/squiffy-app`) with the editor at app.squiffystory.com (#278): SvelteKit + Skeleton on Quest Viva's app shell, CodeMirror 6, the language service in a Web Worker, the sandboxed preview from `squiffy-runtime/preview-host`, and `@textadventures/project-fs` for files. A PWA, with offline support. It replaced the 6.x editor (`editor/`, Vite + Bootstrap + Ace) in 7.0. See `app/README.md`.
+- **codemirror-lang**: Private workspace (`@textadventures/squiffy-codemirror`) with the CodeMirror 6 highlighting mode for `.squiffy` files, shared by the editor and the docs site's editable samples (`site/src/components/Sample.astro`). Each colours it with its own `HighlightStyle`. The docs' static code blocks use the TextMate grammar in `compiler/syntaxes/` instead, so a highlighting change may need making in both.
 - **site**: Marketing/documentation site at squiffystory.com, with a beta channel at beta.squiffystory.com (Astro + Starlight; see "Docs site" above)
 - **project-fs**: Private workspace (`@textadventures/project-fs`) with the editor's file system layer: list/read/write/delete over a rooted project tree, with in-memory, File System Access, OPFS, Node and Electron adapters and a shared conformance suite. No Squiffy imports, so it can become a standalone package later (#215). See `project-fs/README.md`.
 - **types**: Type definitions for `.squiffy` imports, used by the Vite plugin
@@ -180,7 +181,7 @@ When working on the compiler or runtime:
 When working on the editor:
 1. Run `npm run dev` in the app directory
 2. Changes hot-reload automatically
-3. The editor uses local versions of compiler, runtime, packager and project-fs (rebuild them after changing them)
+3. The editor uses local versions of compiler, runtime, packager, project-fs and codemirror-lang (rebuild them after changing them)
 
 ## Module System
 

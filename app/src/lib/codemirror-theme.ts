@@ -74,7 +74,7 @@ export const squiffyHighlightStyle = HighlightStyle.define([
     { tag: t.number, color: "var(--color-tertiary-500)" },
     { tag: [t.tagName, t.attributeName], color: "var(--color-primary-500)" },
     { tag: [t.bracket, t.paren, t.squareBracket, t.brace], color: "var(--color-surface-600-400)" },
-    // Squiffy (squiffy-lang.ts): section and passage headers, links, the text processor, and
+    // Squiffy (@textadventures/squiffy-codemirror): section and passage headers, links, the text processor, and
     // indented JavaScript
     { tag: t.heading, color: "var(--color-primary-600-400)", fontWeight: "bold" },
     { tag: t.heading2, color: "var(--color-secondary-600-400)", fontWeight: "bold" },

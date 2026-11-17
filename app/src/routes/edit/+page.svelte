@@ -13,7 +13,7 @@
     import { isAsset, isSquiffyFile, isTextFile } from "#lib/file-types.js";
     import { createLanguageClient, type LanguageClient } from "#lib/language/client.js";
     import { applyEditsToString, applyTextEdits, languageFeatures, toOffset, toPosition } from "#lib/language/codemirror.js";
-    import { squiffyLanguage } from "#lib/squiffy-lang.js";
+    import { squiffyLanguage } from "@textadventures/squiffy-codemirror";
     import { isNarrow } from "#lib/layout.svelte.js";
     import { showToast } from "#lib/toast.js";
     import { chooseDialog, confirmDialog, promptDialog } from "#lib/confirm.js";

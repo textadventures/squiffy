@@ -14,7 +14,7 @@ import { forceLinting, linter, lintGutter, type Action, type Diagnostic as CmDia
 import type {
     CodeAction, CompletionItem, DocumentSymbol, FoldingRange, Location, Position, TextEdit, WorkspaceEdit,
 } from "squiffy-compiler/language-service";
-import { squiffyLanguage } from "../squiffy-lang.js";
+import { squiffyLanguage } from "@textadventures/squiffy-codemirror";
 import { refreshFolding } from "../codemirror-folding.js";
 import type { LanguageClient } from "./client.js";
 
