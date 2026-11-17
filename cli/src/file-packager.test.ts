@@ -1,6 +1,7 @@
 import { describe, test, expect, beforeEach, afterEach } from "vitest";
 import { writeScriptFile, createPackageFiles } from "./file-packager.js";
 import { externalFiles } from "./external-files.js";
+import { findStory } from "squiffy-compiler/node";
 import fs from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -237,5 +238,21 @@ describe("external-files", () => {
         // Should only find file2, not file1 (already included)
         expect(matches.length).toBe(1);
         expect(matches[0]).toContain("notincluded.txt");
+    });
+
+    test("a folder with a squiffy.json builds every .squiffy file in it", async () => {
+        await fs.writeFile(path.join(TEST_DIR, "squiffy.json"), "{ \"version\": 1, \"main\": \"story.squiffy\", \"exclude\": [\"drafts/**\"] }");
+        await fs.writeFile(path.join(TEST_DIR, "story.squiffy"), "@title Folder\n[[start]]:\nGo to [[chapter]].\n");
+        await fs.mkdir(path.join(TEST_DIR, "chapters"), { recursive: true });
+        await fs.writeFile(path.join(TEST_DIR, "chapters", "one.squiffy"), "[[chapter]]:\nFrom another file.\n");
+        await fs.mkdir(path.join(TEST_DIR, "drafts"), { recursive: true });
+        await fs.writeFile(path.join(TEST_DIR, "drafts", "draft.squiffy"), "[[draft]]:\nNot in the story.\n");
+
+        const story = await findStory(TEST_DIR);
+        expect(await writeScriptFile(story, OUTPUT_DIR, "story.js")).not.toBe(false);
+
+        const storyContent = await fs.readFile(path.join(OUTPUT_DIR, "story.js"), "utf8");
+        expect(storyContent).toContain("From another file.");
+        expect(storyContent).not.toContain("Not in the story.");
     });
 });

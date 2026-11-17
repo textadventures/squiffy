@@ -3,6 +3,7 @@ import type {
     Diagnostic, DiagnosticCode, DiagnosticSeverity, PassageNode, Range, SectionNode, SquiffyFile, StatementNode,
 } from "./syntax.js";
 import { positionMapper, SourceLine, transformText } from "./text.js";
+import { PROJECT_FILENAME } from "./project.js";
 import { findV5Syntax } from "./v5.js";
 
 export interface ExternalFiles {
@@ -21,6 +22,11 @@ export interface AnalyseSettings {
     // language service can still report warnings and find sections. The analysis still has
     // success: false, and can't be emitted.
     recover?: boolean;
+    // In folder mode (a project with a squiffy.json), the story's other .squiffy files, in order:
+    // see getStoryFiles. They're named as getMatchingFilenames would name them, and are processed
+    // after the main file, skipping any it has already @imported. Pass undefined for a story
+    // that's just the main file and its @imports.
+    storyFiles?: string[];
 }
 
 // Caches the syntax tree of each file by filename, reparsing a file only when its text changes.
@@ -57,7 +63,8 @@ export interface PassageSymbol {
 export interface Analysis {
     // False if there's an error diagnostic. Analysis stops at the first error.
     success: boolean;
-    // The main file, then each imported .squiffy file in the order it was imported.
+    // The main file, then each .squiffy file in the order it was processed: @imported files where
+    // they're imported, then in folder mode the rest of the story's files.
     files: SquiffyFile[];
     diagnostics: Diagnostic[];
     // The story's sections in order, with later sections of the same name replacing earlier ones.
@@ -150,13 +157,20 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
 
     const report = (severity: DiagnosticSeverity, code: DiagnosticCode, filename: string | undefined, range: Range, message: string, legacyLine: number) => {
         diagnostics.push({ file: filename ?? "", range, severity, code, message });
+        if (severity == "hint") return;
         const legacy = `${severity.toUpperCase()}: ${filename} line ${legacyLine}: ${message}`;
         (severity == "error" ? legacyErrors : legacyWarnings).push(legacy);
     };
 
+    const storyFiles = settings.storyFiles && new Set(settings.storyFiles);
+    // The .squiffy files processed so far, so a story file the main file has already @imported
+    // isn't processed again
+    const processed = new Set<string | undefined>();
+
     async function processFile(text: string, filename: string | undefined, isFirst: boolean): Promise<boolean> {
         const file = cache.parse(text, filename);
         files.push(file);
+        processed.add(filename);
         const lines = text.replace(/\r/g, "").split("\n");
 
         warnAboutV5Syntax(text, lines, filename);
@@ -280,17 +294,34 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
                     }
                     return true;
                 case "title":
-                    story.title = node.value;
-                    return true;
                 case "start":
-                    story.start = node.value;
+                    // In folder mode, a file that isn't the main file could otherwise quietly
+                    // change the story's title or where it starts
+                    if (storyFiles && !isFirst) {
+                        report("warning", "squiffy/not-in-main-file", filename, lineRange(node),
+                            `@${node.type} only works in the story's main file, so this was ignored.`, lineCount);
+                    }
+                    else if (node.type == "title") {
+                        story.title = node.value;
+                    }
+                    else {
+                        story.start = node.value;
+                    }
                     return true;
-                case "import":
+                case "import": {
                     if (!settings.externalFiles) {
                         warnExternalFilesUnavailable(`@import ${node.pattern}`, node, filename);
                         return true;
                     }
-                    for (const importFilename of await settings.externalFiles.getMatchingFilenames(node.pattern)) {
+                    const matches = await settings.externalFiles.getMatchingFilenames(node.pattern);
+                    const squiffyMatches = matches.filter(m => m.endsWith(".squiffy"));
+                    if (storyFiles && squiffyMatches.length && squiffyMatches.length == matches.length
+                        && squiffyMatches.every(m => storyFiles.has(m))) {
+                        report("hint", "squiffy/redundant-import", filename, lineRange(node),
+                            `${squiffyMatches.length == 1 ? "This file is" : "These files are"} already part of the story, as ${PROJECT_FILENAME} includes every .squiffy file in the folder, so this @import isn't needed.`,
+                            lineCount);
+                    }
+                    for (const importFilename of matches) {
                         if (importFilename.endsWith(".squiffy")) {
                             const content = await settings.externalFiles.getContent(importFilename);
                             const success = await processFile(content, importFilename, false);
@@ -304,6 +335,7 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
                         }
                     }
                     return true;
+                }
                 case "attribute": {
                     section = ensureSectionExists(lineCount);
                     let attribute: string;
@@ -458,7 +490,22 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
     }
 
     // With recover, processFile carries on after errors, so check for them too
-    const success = await processFile(settings.script, settings.scriptBaseFilename, true) && !legacyErrors.length;
+    let success = await processFile(settings.script, settings.scriptBaseFilename, true);
+
+    // In folder mode, the rest of the story's files, in order
+    for (const storyFile of settings.storyFiles ?? []) {
+        if (!success && !settings.recover) break;
+        if (processed.has(storyFile)) continue;
+        if (!settings.externalFiles) {
+            report("warning", "squiffy/external-files-unavailable", settings.scriptBaseFilename,
+                { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } },
+                "The story's other files were ignored, as other files can't be loaded here", 1);
+            break;
+        }
+        const content = await settings.externalFiles.getContent(storyFile);
+        success = await processFile(content, storyFile, false) && success;
+    }
+    success &&= !legacyErrors.length;
 
     if (success || settings.recover) {
         if (!Object.keys(story.sections).length) {

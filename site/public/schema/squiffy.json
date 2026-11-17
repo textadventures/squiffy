@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://squiffystory.com/schema/squiffy.json",
+  "title": "Squiffy project file",
+  "description": "Makes a folder of .squiffy files one story. See https://squiffystory.com/basic-concepts/#stories-in-several-files",
+  "type": "object",
+  "required": ["version", "main"],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "version": {
+      "description": "The version of the project file format. Squiffy refuses to build a project with a version it doesn't know.",
+      "type": "integer",
+      "enum": [1]
+    },
+    "main": {
+      "description": "The story's main file, relative to this file's folder. The story starts there, and its @title is the story's title.",
+      "type": "string",
+      "pattern": "\\.squiffy$",
+      "examples": ["story.squiffy"]
+    },
+    "exclude": {
+      "description": "Patterns for .squiffy files that aren't part of the story, relative to this file's folder. * and ? match within a folder name, ** across folders, and a pattern that matches a folder leaves out everything in it.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "examples": [["drafts/**", "notes.squiffy"]]
+    }
+  }
+}

@@ -9,6 +9,7 @@ import { analyse, Analysis, ExternalFiles, ParseCache } from "./analyse.js";
 import type {
     Diagnostic, EmbedNode, LinkNode, PassageNode, Position, Range, SectionNode, SnippetNode, SquiffyFile,
 } from "./syntax.js";
+import { getStoryFiles, globToRegExp, parseProjectFile, PROJECT_FILENAME, ProjectFile } from "./project.js";
 import { convertV5Syntax, findV5Syntax } from "./v5.js";
 
 export type { Diagnostic, Position, Range } from "./syntax.js";
@@ -22,8 +23,24 @@ export interface ProjectFiles {
 
 export interface LanguageServiceOptions {
     files: ProjectFiles;
-    // The project path of the story's main .squiffy file, which @imports the others.
+    // The project path of the story's main .squiffy file, which @imports the others. A
+    // squiffy.json at the root of the project takes precedence.
     mainFile: string;
+}
+
+// How the project's files make up the story
+export interface ProjectInfo {
+    // The squiffy.json at the root of the project, if there is one and it's valid. Its presence
+    // turns on folder mode, where every .squiffy file not excluded is part of the story.
+    projectFile?: ProjectFile;
+    // Why squiffy.json couldn't be used, if it couldn't
+    error?: string;
+    // The main file: squiffy.json's "main", or else the one the service was given
+    mainFile: string;
+    // In folder mode, the story's other .squiffy files, in the order they're added to the story
+    storyFiles: string[];
+    // In folder mode, the .squiffy files squiffy.json excludes
+    excludedFiles: string[];
 }
 
 export interface TextEdit {
@@ -95,7 +112,9 @@ export interface LanguageService {
     // Tells the service a file changed in the project (or was added or deleted), e.g. from a
     // file watcher.
     fileChanged(path: string): void;
+    // Sets the main file to use when there's no squiffy.json
     setMainFile(path: string): void;
+    getProjectInfo(): Promise<ProjectInfo>;
 
     // The analysis of the whole project, from the main file. Recomputed after a change, reusing
     // the syntax trees of unchanged files.
@@ -134,6 +153,7 @@ interface Usage {
 // The analysis, indexed for lookups
 interface Index {
     analysis: Analysis;
+    project: ProjectInfo;
     files: Map<string, SquiffyFile>;
     texts: Map<string, string>;
     sectionNames: string[];
@@ -197,36 +217,6 @@ function relativePath(fromDir: string, path: string): string {
     return [...from.slice(common).map(() => ".."), ...to.slice(common)].join("/");
 }
 
-// "*" and "?" match within one path segment; "**" matches across segments.
-function globToRegExp(pattern: string): RegExp {
-    let out = "";
-    for (let i = 0; i < pattern.length; i++) {
-        const c = pattern[i];
-        if (c == "*") {
-            if (pattern[i + 1] == "*") {
-                i++;
-                if (pattern[i + 1] == "/") {
-                    i++;
-                    out += "(?:.*/)?";
-                }
-                else {
-                    out += ".*";
-                }
-            }
-            else {
-                out += "[^/]*";
-            }
-        }
-        else if (c == "?") {
-            out += "[^/]";
-        }
-        else {
-            out += c.replace(/[.+^${}()|[\]\\]/g, "\\$&");
-        }
-    }
-    return new RegExp(`^${out}$`);
-}
-
 const endOfText = (text: string): Position => {
     const lines = text.split("\n");
     return { line: lines.length - 1, character: lines[lines.length - 1].length };
@@ -263,17 +253,16 @@ export function createLanguageService(options: LanguageServiceOptions): Language
 
     // The compiler's ExternalFiles, resolving @import patterns and @ui paths against the main
     // file's folder and never importing a file twice, as the CLI does.
-    function externalFiles(texts: Map<string, string>): ExternalFiles {
+    function externalFiles(texts: Map<string, string>, mainFile: string, storyFiles: string[]): ExternalFiles {
         const baseDir = dirname(mainFile);
         const included = new Set([mainFile]);
-        const matched = new Set<string>();
+        const matched = new Set<string>(storyFiles);
         return {
             async getMatchingFilenames(pattern: string) {
                 const resolved = resolvePath(baseDir, pattern);
                 if (resolved === null) return [];
                 const regex = globToRegExp(resolved);
-                const paths = new Set((await files.list()).map(f => f.path));
-                for (const open of openFiles.keys()) paths.add(open);
+                const paths = await listPaths();
                 const result = [...paths].filter(p => regex.test(p) && !included.has(p)).sort();
                 for (const p of result) matched.add(p);
                 return result;
@@ -295,8 +284,34 @@ export function createLanguageService(options: LanguageServiceOptions): Language
         };
     }
 
+    async function listPaths(): Promise<Set<string>> {
+        const paths = new Set((await files.list()).map(f => f.path));
+        for (const open of openFiles.keys()) paths.add(open);
+        return paths;
+    }
+
+    async function getProject(): Promise<ProjectInfo> {
+        const fallback: ProjectInfo = { mainFile, storyFiles: [], excludedFiles: [] };
+        const paths = await listPaths();
+        if (!paths.has(PROJECT_FILENAME)) return fallback;
+        let text: string;
+        try {
+            text = await readFile(PROJECT_FILENAME);
+        }
+        catch {
+            return fallback;
+        }
+        const parsed = parseProjectFile(text);
+        if (!parsed.success) return { ...fallback, error: parsed.error };
+        const project = parsed.project;
+        const story = getStoryFiles(project, paths);
+        return { projectFile: project, mainFile: project.main, storyFiles: story.included, excludedFiles: story.excluded };
+    }
+
     async function buildIndex(): Promise<Index> {
         const texts = new Map<string, string>();
+        const project = await getProject();
+        const mainFile = project.mainFile;
         let script = "";
         try {
             script = await readFile(mainFile);
@@ -309,13 +324,26 @@ export function createLanguageService(options: LanguageServiceOptions): Language
         const analysis = await analyse({
             script,
             scriptBaseFilename: mainFile,
-            externalFiles: externalFiles(texts),
+            externalFiles: externalFiles(texts, mainFile, project.storyFiles),
             parseCache,
             recover: true,
+            ...(project.projectFile ? { storyFiles: project.storyFiles } : {}),
         });
+        if (project.error) {
+            // A broken squiffy.json stops the story building, as it does in the CLI
+            analysis.success = false;
+            analysis.diagnostics.unshift({
+                file: PROJECT_FILENAME,
+                range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } },
+                severity: "error",
+                code: "squiffy/project-file",
+                message: project.error,
+            });
+        }
 
         const index: Index = {
             analysis,
+            project,
             files: new Map(),
             texts,
             sectionNames: analysis.sections.map(s => s.name),
@@ -538,6 +566,10 @@ export function createLanguageService(options: LanguageServiceOptions): Language
         setMainFile(path) {
             mainFile = path;
             changed();
+        },
+
+        async getProjectInfo() {
+            return (await getIndex()).project;
         },
 
         async getAnalysis() {
@@ -781,6 +813,17 @@ export function createLanguageService(options: LanguageServiceOptions): Language
                     });
                     actions.push({ title: `Convert to ${match.suggestion}`, kind: "quickfix", diagnostic, edit });
                 }
+            }
+
+            for (const diagnostic of diagnostics) {
+                if (diagnostic.code != "squiffy/redundant-import") continue;
+                // Remove the whole line, including its line break
+                const line = diagnostic.range.start.line;
+                const end = line + 1 < lines.length ? { line: line + 1, character: 0 } : { line, character: lines[line].length };
+                const start = line + 1 < lines.length || line == 0 ? { line, character: 0 } : { line: line - 1, character: lines[line - 1].length };
+                const edit: WorkspaceEdit = {};
+                addEdit(edit, path, { range: { start, end }, newText: "" });
+                actions.push({ title: "Remove this @import", kind: "quickfix", diagnostic, edit });
             }
 
             if (diagnostics.some(d => d.code == "squiffy/v5-syntax")) {

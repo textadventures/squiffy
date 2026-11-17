@@ -5,6 +5,7 @@ import { hideBin } from "yargs/helpers";
 import { serve } from "./server.js";
 import { createPackageFiles, writeScriptFile } from "./file-packager.js";
 import { convertV5File } from "./convert-v5.js";
+import { findStory, StoryNotFoundError } from "squiffy-compiler/node";
 
 import pkg from "../package.json" with { type: "json" };
 import path from "path";
@@ -12,8 +13,8 @@ const version = pkg.version;
 
 const argv = yargs(hideBin(process.argv))
     .usage(
-        "Usage: npx @textadventures/squiffy-cli filename.squiffy [options]")
-    .demand(1)
+        "Usage: npx @textadventures/squiffy-cli [filename.squiffy | folder] [options]\n\n" +
+        "With a folder (or nothing, for the current folder), builds the story in its squiffy.json.")
     .alias("s", "serve")
     .alias("p", "port")
     .describe("s", "Start HTTP server after compiling")
@@ -35,20 +36,37 @@ const options = {
     inline: argv.inline
 };
 
-const inputFilename = argv._[0] as string;
-const outputPath = path.resolve(path.dirname(inputFilename));
+const input = argv._[0] === undefined ? "." : String(argv._[0]);
+
+const findStoryOrExit = async () => {
+    try {
+        return await findStory(input);
+    }
+    catch (e) {
+        if (!(e instanceof StoryNotFoundError)) throw e;
+        console.error(e.message);
+        process.exit(1);
+    }
+};
 
 if (argv.convertV5) {
-    if (!convertV5File(inputFilename)) {
+    if (argv._[0] === undefined) {
+        console.error("Give the .squiffy file to convert.");
+        process.exitCode = 1;
+    }
+    else if (!convertV5File(input)) {
         process.exitCode = 1;
     }
 }
 else if (options.scriptOnly) {
+    const story = await findStoryOrExit();
     const outputFilename = typeof options.scriptOnly === "string" ? options.scriptOnly : "story.js";
-    await writeScriptFile(inputFilename, outputPath, outputFilename);
+    await writeScriptFile(story, path.dirname(story.mainFile), outputFilename);
 }
 else {
-    const result = await createPackageFiles(inputFilename, outputPath, {
+    const story = await findStoryOrExit();
+    const outputPath = path.dirname(story.mainFile);
+    const result = await createPackageFiles(story, outputPath, {
         createZip: !!options.zip,
         inlineHtml: !!options.inline
     });

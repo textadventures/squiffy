@@ -332,32 +332,69 @@ e.g. to clear the screen before every section, and to increase a global turn cou
     if (squiffy.get("turns") > 5) ...
 ```
 
-## Importing files
+## Stories in several files
 
-You can split your script up into multiple files and import them:
+A story can be split across several `.squiffy` files. To make a folder of files one story, add a project file called `squiffy.json` to the folder, naming the story's main file:
+
+```json
+{
+  "$schema": "https://squiffystory.com/schema/squiffy.json",
+  "version": 1,
+  "main": "story.squiffy"
+}
+```
+
+Every `.squiffy` file in the folder and its subfolders is then part of the story. You don't need to `@import` them.
+
+- The main file comes first, then the other files in order of their paths. That order decides how `+++` sections are numbered and, if two sections have the same name, which one wins (you'll get a warning).
+- The story starts in the main file, at its first section or its [`@start`](#set-the-start-section) section, and the main file's `@title` is the story's title. `@title` and `@start` in other files are ignored, with a warning.
+- A section in one file can link to a section in any other.
+- Paths to images and other files, and in `@import`, are relative to the main file's folder, whichever file they're in. So you can move a file into a subfolder without changing it.
+- `version` is the version of the project file format, which is 1. A version of Squiffy that doesn't know the version refuses to build the story, saying you need a newer Squiffy.
+
+The `$schema` line is optional. It lets text editors such as VS Code check the file and suggest what can go in it.
+
+### Leaving files out
+
+To keep a `.squiffy` file in the folder without it being part of the story, list it under `exclude`:
+
+```json
+{
+  "version": 1,
+  "main": "story.squiffy",
+  "exclude": ["notes.squiffy", "drafts/**"]
+}
+```
+
+Paths are relative to the folder `squiffy.json` is in. `*` and `?` match within a file or folder name, and `**` across folders. Naming a folder leaves out everything in it, so `drafts` and `drafts/**` are the same. Files in `node_modules`, and in folders whose names start with a dot, are always left out.
+
+### Building a story with a project file
+
+With the [command-line tool](/cli/#stories-in-several-files), run it in the folder without a file name, or give it the folder or the main file. Give it any other `.squiffy` file, and it builds just that file, so several separate stories can still share a folder.
+
+With the [Vite plugin](/embedding/#using-vite), import the main file.
+
+### Importing files
+
+Without a `squiffy.json`, a story is its main file and whatever that imports:
 
 ```squiffy
 @import other_file.squiffy
-```
-
-In the [editor](/editor/), creating a `.squiffy` file with the **+** button adds its `@import` for you.
-
-You can also use the same syntax to import external JavaScript files:
-
-```squiffy
-@import my_script.js
-```
-
-and CSS files:
-
-```squiffy
-@import my_style.css
 ```
 
 This syntax also accepts wildcards, so you can include all .squiffy files in a directory:
 
 ```squiffy
 @import *.squiffy
+```
+
+In a story with a `squiffy.json`, an `@import` of a `.squiffy` file that's already part of the story isn't needed, and the editor offers to remove it. An `@import` in the main file still adds the file at that point in the story.
+
+JavaScript and CSS files always need an `@import`, with or without a `squiffy.json`:
+
+```squiffy
+@import my_script.js
+@import my_style.css
 ```
 
 ## User Input

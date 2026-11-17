@@ -54,6 +54,18 @@ The browser's local storage will be used to save the state of the game. This mea
 
 **Note: Even if you recompile a game, the previous state will still be loaded.** This means that after making a change to your game, you'll need to click the Restart button at the top of the screen to see your changes.
 
+### Stories in several files
+
+If your story is split across several `.squiffy` files with a [`squiffy.json` project file](/basic-concepts/#stories-in-several-files), run Squiffy in the story's folder without a file name:
+
+```bash
+npx @textadventures/squiffy-cli
+```
+
+Giving it the folder, or the main file named in `squiffy.json`, does the same. The files are written to the main file's folder.
+
+Give it any other `.squiffy` file in the folder, and it builds just that file and whatever it `@import`s, as if there were no `squiffy.json`. Squiffy says when it does this. So a folder can still hold several separate stories.
+
 ### Errors and warnings
 
 If your script has a problem, Squiffy prints it with the file and line number:
@@ -63,7 +75,7 @@ WARNING: mygame.squiffy line 12: In section 'kitchen' there is a link to a secti
 ERROR: mygame.squiffy line 30: Can't add passage "look" as no section has been created.
 ```
 
-A warning, such as a link to a section or passage that doesn't exist, points at the line the problem is on, and the game is still created. An error stops the game being created, so fix it and run Squiffy again.
+A warning, such as a link to a section or passage that doesn't exist, points at the line the problem is on, and the game is still created. A hint, such as an `@import` that isn't needed, is a suggestion. An error stops the game being created, so fix it and run Squiffy again.
 
 ## Output Formats
 

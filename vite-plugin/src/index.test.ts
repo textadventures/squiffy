@@ -49,6 +49,7 @@ const getWatchFiles = async (filename: string) => {
     const context = {
         addWatchFile: (file: string) => watchFiles.push(file),
         warn: () => {},
+        info: () => {},
         error: (message: string) => { throw new Error(message); },
     };
     const load = squiffyPlugin().load as (this: typeof context, id: string) => Promise<string>;
@@ -127,5 +128,43 @@ describe("vite-plugin-squiffy", () => {
         });
 
         await expect(buildEntry()).rejects.toThrow(/Failed to compile.*game\.squiffy/s);
+    });
+
+    test("importing a project's main file builds every .squiffy file in its squiffy.json, and watches them", async () => {
+        await writeFiles({
+            "main.js": "export { story } from \"./game.squiffy\";",
+            "squiffy.json": "{ \"version\": 1, \"main\": \"game.squiffy\", \"exclude\": [\"drafts/**\"] }",
+            "game.squiffy": "[[start]]:\nGo to [[chapter1]].\n",
+            "chapters/one.squiffy": "[[chapter1]]:\nChapter one.\n",
+            "drafts/draft.squiffy": "[[draft]]:\nNot yet.\n",
+        });
+
+        const { js } = await buildEntry();
+        const result = await importBundle(js);
+
+        expect(Object.keys(result.story.sections)).toEqual(["start", "chapter1"]);
+        expect(await getWatchFiles("game.squiffy")).toEqual([
+            path.join(root, "chapters", "one.squiffy"),
+            path.join(root, "squiffy.json"),
+        ]);
+    });
+
+    test("importing another file in a project's folder builds just that file", async () => {
+        await writeFiles({
+            "squiffy.json": "{ \"version\": 1, \"main\": \"game.squiffy\" }",
+            "game.squiffy": "[[start]]:\nHello.\n",
+            "other.squiffy": "[[other]]:\nOther.\n",
+        });
+        expect(await getWatchFiles("other.squiffy")).toEqual([]);
+    });
+
+    test("fails the build when squiffy.json needs a newer Squiffy", async () => {
+        await writeFiles({
+            "main.js": "export { story } from \"./game.squiffy\";",
+            "squiffy.json": "{ \"version\": 99, \"main\": \"game.squiffy\" }",
+            "game.squiffy": "[[start]]:\nHello.\n",
+        });
+
+        await expect(buildEntry()).rejects.toThrow(/needs a newer version of Squiffy/);
     });
 });
