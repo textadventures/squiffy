@@ -10,7 +10,7 @@
     import { PROJECT_FILENAME, type MapPositions } from "squiffy-compiler";
     import { basename, dirname, extname, guessMimeType, joinPath, parsePath } from "@textadventures/project-fs";
     import { base } from "#lib/base-path.js";
-    import { project, openDraft, openRecentFolder, downloadFile, storyPath, offerProjectFile, type ProjectOffer } from "#lib/project.svelte.js";
+    import { project, openDraft, openRecentFolder, downloadFile, storyPath, offerProjectFile, setterConversionMessage, type ProjectOffer } from "#lib/project.svelte.js";
     import { isAsset, isSquiffyFile, isTextFile } from "#lib/file-types.js";
     import { createLanguageClient, type LanguageClient } from "#lib/language/client.js";
     import { applyEditsToString, applyTextEdits, languageFeatures, recheckProblems, toOffset, toPosition } from "#lib/language/codemirror.js";
@@ -489,8 +489,9 @@
         if (!complete) return (await offerProjectFile(current, { main: current.mainFile })) === "created";
         const inStory = new Set(files);
         const exclude = current.files.map(f => f.path).filter(path => isSquiffyFile(path) && path !== current.mainFile && !inStory.has(path));
-        await current.createProjectFile(current.mainFile, exclude);
-        showToast(`Added ${PROJECT_FILENAME}, to save where you put things on the map.${exclude.length ? ` It leaves out the .squiffy files that aren't part of this story.` : ""}`, "info", 8000);
+        const conversion = await current.createProjectFile(current.mainFile, exclude);
+        const converted = setterConversionMessage(conversion);
+        showToast(`Added ${PROJECT_FILENAME}, to save where you put things on the map.${exclude.length ? ` It leaves out the .squiffy files that aren't part of this story.` : ""}${converted ? ` ${converted}` : ""}`, "info", converted ? 12000 : 8000);
         return true;
     }
 
