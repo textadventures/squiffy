@@ -470,6 +470,36 @@ Three.
     expect(visibleText(element)).toBe("Two. a three");
 });
 
+test("Clearing the screen scrolls up to the top of the output", async () => {
+    // https://github.com/textadventures/squiffy/issues/54
+    const script = `
+[[start]]:
+Start. [[two]]
+
+[[two]]:
+Two. [[three]]
+
+[[three]]:
+@clear
+Three.
+`;
+    const { squiffyApi, element } = await initScript(script);
+
+    // The reader has scrolled down to 500px, and the output starts 20px from the top of the page
+    Object.defineProperty(document.documentElement, "scrollTop", { configurable: true, get: () => 500 });
+    (element.firstElementChild as HTMLElement).getBoundingClientRect = () => ({ top: -480 }) as DOMRect;
+    const scrollTo = vi.fn();
+    window.scrollTo = scrollTo;
+
+    // No clear, so no scrolling up
+    await squiffyApi.clickLink(findLink(element, "section", "two"));
+    expect(scrollTo).not.toHaveBeenCalled();
+
+    await squiffyApi.clickLink(findLink(element, "section", "three"));
+    expect(scrollTo).toHaveBeenCalledTimes(1);
+    expect(scrollTo).toHaveBeenCalledWith({ top: 20, behavior: "smooth" });
+});
+
 test("Run JavaScript functions", async () => {
     const script = `
     document.getElementById('test').innerText = 'Initial JavaScript';
