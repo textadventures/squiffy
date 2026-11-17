@@ -1,5 +1,19 @@
 # Changelog
 
+## [7.0.0-beta.3](https://github.com/textadventures/squiffy/compare/v7.0.0-beta.2...v7.0.0-beta.3) (2026-11-17)
+
+
+### Features
+
+* package the desktop app for macOS, Windows and Linux, and attach it to each release ([#387](https://github.com/textadventures/squiffy/issues/387)) ([3da6c9e](https://github.com/textadventures/squiffy/commit/3da6c9e028bc9d674463dd4604d2af907089d6d4))
+* run the editor as an Electron desktop app, with stories in folders on disk ([#383](https://github.com/textadventures/squiffy/issues/383)) ([2b44384](https://github.com/textadventures/squiffy/commit/2b44384c14099b48df735b607d85017a23074a41))
+* tell desktop app users when a new version is out, and add a downloads page ([#388](https://github.com/textadventures/squiffy/issues/388)) ([eea532a](https://github.com/textadventures/squiffy/commit/eea532a21424236ab50505af08d50444b52e0b6b))
+
+
+### Bug Fixes
+
+* scroll up to the start of the new screen after [@clear](https://github.com/clear) ([#390](https://github.com/textadventures/squiffy/issues/390)) ([b03fe38](https://github.com/textadventures/squiffy/commit/b03fe380450af7182fbd5ba23e1720291d837e92))
+
 ## [7.0.0-beta.2](https://github.com/textadventures/squiffy/compare/v7.0.0-beta.1...v7.0.0-beta.2) (2026-11-17)
 
 

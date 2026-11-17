@@ -1,6 +1,6 @@
 {
   "name": "squiffy-example-vite-app",
-  "version": "7.0.0-beta.2",
+  "version": "7.0.0-beta.3",
   "private": true,
   "type": "module",
   "scripts": {
@@ -9,10 +9,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "squiffy-runtime": "^7.0.0-beta.2"
+    "squiffy-runtime": "^7.0.0-beta.3"
   },
   "devDependencies": {
-    "@textadventures/vite-plugin-squiffy": "^7.0.0-beta.2",
+    "@textadventures/vite-plugin-squiffy": "^7.0.0-beta.3",
     "typescript": "^6.0.3",
     "vite": "^8.3.8"
   }
