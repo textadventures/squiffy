@@ -1,0 +1,42 @@
+{
+  "name": "@textadventures/graph-map",
+  "version": "7.0.0-beta.1",
+  "private": true,
+  "description": "A map of a directed graph, as a Svelte component: pan, zoom, dragging, keyboard access and a live force-directed layout",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/textadventures/squiffy.git",
+    "directory": "graph-map"
+  },
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "svelte": "./src/GraphMap.svelte",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./GraphMap.svelte": {
+      "types": "./src/GraphMap.svelte",
+      "svelte": "./src/GraphMap.svelte",
+      "default": "./src/GraphMap.svelte"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "check": "svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
+    "test": "vitest --run",
+    "dev": "vitest"
+  },
+  "peerDependencies": {
+    "svelte": "^5.0.0"
+  },
+  "devDependencies": {
+    "svelte": "^5.57.3",
+    "svelte-check": "^4.7.8",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.5"
+  }
+}

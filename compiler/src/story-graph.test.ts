@@ -198,6 +198,31 @@ describe("@end", () => {
     });
 });
 
+describe("for the story map", () => {
+    test("sections without names of their own are labelled as in the outline", async () => {
+        const graph = await one("Hello.\n[[Go]](a)\n\n[[a]]:\nOne.\n+++More\nTwo.\n---\nThree.");
+        expect(graph.nodes.filter(n => n.kind == "section").map(n => [n.name, n.detail])).toEqual([
+            ["_default", "(Start)"], ["a", undefined], ["_continue1", "+++More"], ["_continue2", "---"],
+        ]);
+    });
+
+    test("where a new link goes: the end of the section's own text, or the passage's", async () => {
+        const graph = await one("[[a]]:\nOne.\nTwo.\n\n[p]:\nPassage.\n\n\n[[b]]:\n\n[[c]]:\n@set x\n");
+        expect(nodeOf(graph, "section:a").contentEnd).toEqual({ line: 2, character: 4 });
+        expect(nodeOf(graph, "passage:a/p").contentEnd).toEqual({ line: 5, character: 8 });
+        // Only a header: after it
+        expect(nodeOf(graph, "section:b").contentEnd).toEqual({ line: 8, character: 6 });
+        expect(nodeOf(graph, "section:c").contentEnd).toEqual({ line: 11, character: 6 });
+    });
+
+    test("a broken link or embed says what it's written with", async () => {
+        const graph = await one("[[a]]:\n[[Go]](nowhere, x=1) [[elsewhere]] [gone] {{embed \"lost\"}} [[x]]({{dest}})");
+        expect(graph.edges.map(e => [e.to, e.target])).toEqual([
+            [undefined, "nowhere"], [undefined, "elsewhere"], [undefined, "gone"], [undefined, "lost"], [undefined, undefined],
+        ]);
+    });
+});
+
 describe("diagnostics", () => {
     test("unreachable sections and dead ends", async () => {
         const main = "[[a]]:\nGo to [[b]].\n\n[[b]]:\nStuck.\n\n[[c]]:\nGo to [[a]].";

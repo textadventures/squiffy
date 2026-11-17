@@ -24,6 +24,11 @@
         },
         {
           "type": "json",
+          "path": "graph-map/package.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
           "path": "codemirror-lang/package.json",
           "jsonpath": "$.version"
         },
@@ -90,7 +95,7 @@
         {
           "type": "json",
           "path": "app/package.json",
-          "jsonpath": "$[dependencies,devDependencies][?(@property.startsWith('squiffy-') || @property.startsWith('@textadventures/squiffy-') || @property == '@textadventures/project-fs')]"
+          "jsonpath": "$[dependencies,devDependencies][?(@property.startsWith('squiffy-') || @property.startsWith('@textadventures/squiffy-') || @property == '@textadventures/project-fs' || @property == '@textadventures/graph-map')]"
         },
         {
           "type": "json",
@@ -115,12 +120,12 @@
         {
           "type": "json",
           "path": "package-lock.json",
-          "jsonpath": "$.packages[compiler,codemirror-lang,project-fs,runtime,packager,cli,app,site,types,vite-plugin,examples/vite-app].version"
+          "jsonpath": "$.packages[compiler,codemirror-lang,project-fs,graph-map,runtime,packager,cli,app,site,types,vite-plugin,examples/vite-app].version"
         },
         {
           "type": "json",
           "path": "package-lock.json",
-          "jsonpath": "$.packages[compiler,codemirror-lang,project-fs,runtime,packager,cli,app,site,types,vite-plugin,examples/vite-app][dependencies,devDependencies][?(@property.startsWith('squiffy-') || @property.startsWith('@textadventures/squiffy-') || @property == '@textadventures/vite-plugin-squiffy' || @property == '@textadventures/project-fs')]"
+          "jsonpath": "$.packages[compiler,codemirror-lang,project-fs,graph-map,runtime,packager,cli,app,site,types,vite-plugin,examples/vite-app][dependencies,devDependencies][?(@property.startsWith('squiffy-') || @property.startsWith('@textadventures/squiffy-') || @property == '@textadventures/vite-plugin-squiffy' || @property == '@textadventures/project-fs' || @property == '@textadventures/graph-map')]"
         }
       ]
     }
