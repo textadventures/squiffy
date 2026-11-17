@@ -53,11 +53,11 @@ function token(stream: StringStream, state: State): string | null {
     // Section links [[...]] and passage links [...], with an optional (target) after, which can
     // have balanced brackets in it, e.g. [[Buy]](shop, gold -= (price - 1) * 2)
     if (stream.match(/^\[\[[^\]]*\]\]/)) {
-        stream.match(TARGET) || stream.match(/^\([^)]*\)/);
+        if (!stream.match(TARGET)) stream.match(/^\([^)]*\)/);
         return "link";
     }
     if (stream.match(/^\[[^\]]*\]/)) {
-        stream.match(TARGET) || stream.match(/^\([^)]*\)/);
+        if (!stream.match(TARGET)) stream.match(/^\([^)]*\)/);
         return "link";
     }
     // Handlebars: {{! comment }}, {{#if ...}}, {{helper ...}}, {{attribute}}, {{{html}}}
