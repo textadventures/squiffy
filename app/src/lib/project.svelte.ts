@@ -1,7 +1,9 @@
 // The open project: where it's stored, its main file, and the files open in the editor.
 //
-// A project is a ProjectFileSystem from @textadventures/project-fs plus a pointer to its main
-// .squiffy file, which @imports the others (#118). It comes from one of:
+// A project is a ProjectFileSystem from @textadventures/project-fs plus its main .squiffy file
+// (#118). With a squiffy.json project file (#361), the main file is the one it names, and every
+// .squiffy file in the folder is part of the story. Without one, the main file is the one
+// remembered in the browser, which @imports the others. A project comes from one of:
 //   - a folder on disk, opened with File System Access (Chromium browsers)
 //   - a local draft, kept in the browser's origin-private file system (every modern browser):
 //     New, and Open file, which imports a .squiffy file into a new draft
@@ -13,7 +15,12 @@ import {
     DirectoryHandleFileSystem, OpfsProjectStore, basename, findFiles, fsaOpener, hasFileSystemAccess, moveFile,
     type FileEntry, type FileTypeFilter, type ProjectFileSystem,
 } from "@textadventures/project-fs";
-import { chooseDialog } from "./confirm.js";
+import {
+    formatProjectFile, getStoryFiles, isExcluded, parseProjectFile, PROJECT_FILENAME, updateProjectFile,
+    type ProjectFile, type StoryFiles,
+} from "squiffy-compiler";
+import { checklistDialog, chooseDialog } from "./confirm.js";
+import { showToast } from "./toast.js";
 import { findRecentFolder, hasPermission, rememberFolder, updateRecentFolder } from "./recent.js";
 
 export const SQUIFFY_FILES: FileTypeFilter[] = [
@@ -94,6 +101,9 @@ class OpenFile {
             await this.project.fs.write(this.path, text);
             this.savedText = text;
             this.saveError = null;
+            // The language service reads .squiffy files from their editors, but anything else,
+            // such as squiffy.json, from the project
+            if (!this.path.toLowerCase().endsWith(".squiffy")) this.project.onFileChanged?.(this.path);
             await this.project.touch();
         } catch (err) {
             this.saveError = err instanceof Error ? err.message : String(err);
@@ -112,13 +122,31 @@ export type { OpenFile };
 class OpenProject {
     fs: ProjectFileSystem;
     source: ProjectSource;
-    mainFile = $state("");
+    // The main file remembered in the browser (a draft's meta.json, or the recent folders list),
+    // used when there's no squiffy.json
+    storedMainFile = $state("");
     title = $state("");
     // Every file in the project, from the last refreshFiles()
     files = $state<FileEntry[]>([]);
     // Open files, in tab order, and which one is showing
     openFiles = $state<OpenFile[]>([]);
     activePath = $state("");
+
+    // squiffy.json's saved text, or null if there isn't one: from its editor if it's open,
+    // otherwise as read by the last refreshFiles()
+    private diskProjectText = $state<string | null>(null);
+    projectText = $derived(this.openFiles.find(f => f.path === PROJECT_FILENAME)?.savedText ?? this.diskProjectText);
+    // The project file, if there's a valid one. Its presence turns on folder mode, where every
+    // .squiffy file not excluded is part of the story.
+    projectFile = $derived.by((): ProjectFile | null => {
+        if (this.projectText === null) return null;
+        const parsed = parseProjectFile(this.projectText);
+        return parsed.success ? parsed.project : null;
+    });
+    // squiffy.json's main file wins over the one remembered in the browser
+    mainFile = $derived(this.projectFile?.main ?? this.storedMainFile);
+    // In folder mode, which .squiffy files are part of the story and which are excluded
+    storyFiles = $derived<StoryFiles | null>(this.projectFile ? getStoryFiles(this.projectFile, this.files.map(f => f.path)) : null);
 
     active = $derived(this.openFiles.find(f => f.path === this.activePath) ?? null);
     dirty = $derived(this.openFiles.some(f => f.dirty));
@@ -132,7 +160,7 @@ class OpenProject {
     constructor(fs: ProjectFileSystem, source: ProjectSource, mainFile: string) {
         this.fs = fs;
         this.source = source;
-        this.mainFile = mainFile;
+        this.storedMainFile = mainFile;
         this.title = source.kind === "folder" ? fs.name : "";
     }
 
@@ -150,7 +178,67 @@ class OpenProject {
     }
 
     async refreshFiles() {
-        this.files = await this.fs.list();
+        const files = await this.fs.list();
+        let projectText: string | null = null;
+        if (files.some(f => f.path === PROJECT_FILENAME)) {
+            try {
+                projectText = await this.fs.readText(PROJECT_FILENAME);
+            } catch {
+                // Treated as missing
+            }
+        }
+        this.files = files;
+        this.diskProjectText = projectText;
+    }
+
+    isExcluded(path: string): boolean {
+        return this.storyFiles?.excluded.includes(path) ?? false;
+    }
+
+    // Writes a text file, through its editor if it's open, so it keeps its undo history
+    async writeText(path: string, text: string) {
+        const open = this.fileAt(path);
+        if (open) {
+            open.setText(text);
+            await open.save();
+        } else {
+            await this.fs.write(path, text);
+        }
+        await this.refreshFiles();
+        this.onFileChanged?.(path);
+    }
+
+    // Changes squiffy.json, keeping anything else in it. Returns false if it isn't a JSON object.
+    private async updateProject(changes: { main?: string; exclude?: string[] }): Promise<boolean> {
+        if (this.projectText === null) return false;
+        const text = updateProjectFile(this.projectText, changes);
+        if (text === undefined) return false;
+        await this.writeText(PROJECT_FILENAME, text);
+        return true;
+    }
+
+    // Creates squiffy.json, making the folder one story
+    async createProjectFile(main: string, exclude: string[] = []) {
+        await this.writeText(PROJECT_FILENAME, formatProjectFile({ main, exclude }));
+        this.setStoredMainFile(main);
+    }
+
+    // Leaves a .squiffy file out of the story, or puts it back, by editing squiffy.json's
+    // "exclude". Returns why it couldn't, if it couldn't.
+    async setExcluded(path: string, excluded: boolean): Promise<string | null> {
+        const project = this.projectFile;
+        if (!project) return `There's no ${PROJECT_FILENAME}.`;
+        let exclude = [...project.exclude];
+        if (excluded) {
+            if (!isExcluded(path, exclude)) exclude.push(path);
+        } else {
+            exclude = exclude.filter(pattern => pattern.replace(/^\.\//, "") !== path);
+            const patterns = exclude.filter(pattern => isExcluded(path, [pattern]));
+            if (patterns.length) {
+                return `${path} is excluded by ${patterns.map(p => `"${p}"`).join(" and ")} in ${PROJECT_FILENAME}. Edit it there to include this file.`;
+            }
+        }
+        return (await this.updateProject({ exclude })) ? null : `${PROJECT_FILENAME} couldn't be read. Fix it, then try again.`;
     }
 
     // Opens a file in a tab (or goes to its tab) and shows it
@@ -185,9 +273,17 @@ class OpenProject {
         void this.touch();
     }
 
-    setMainFile(path: string) {
-        this.mainFile = path;
+    private setStoredMainFile(path: string) {
+        this.storedMainFile = path;
         void this.touch();
+    }
+
+    // Makes another file the main one: in squiffy.json, if there is one, and in the browser
+    async setMainFile(path: string) {
+        if (this.projectText !== null && !(await this.updateProject({ main: path }))) {
+            showToast(`${PROJECT_FILENAME} couldn't be read, so its main file wasn't changed. Fix it, then try again.`);
+        }
+        this.setStoredMainFile(path);
     }
 
     // Creates a file and opens it. Fails if it exists.
@@ -215,8 +311,8 @@ class OpenProject {
             this.openFiles[index] = new OpenFile(this, to, open.text);
             if (this.activePath === from) this.activePath = to;
         }
-        if (this.mainFile === from) this.setMainFile(to);
         await this.refreshFiles();
+        if (this.mainFile === from || this.storedMainFile === from) await this.setMainFile(to);
         this.onFileChanged?.(from);
         this.onFileChanged?.(to);
     }
@@ -237,12 +333,12 @@ class OpenProject {
     // title, or in the recent folders list
     async touch() {
         if (this.source.kind === "folder") {
-            await updateRecentFolder(this.source.id, this.mainFile);
+            await updateRecentFolder(this.source.id, this.storedMainFile);
             return;
         }
         await drafts.setMeta(this.source.id, {
             title: this.title,
-            mainFile: this.mainFile,
+            mainFile: this.storedMainFile,
             lastOpened: Date.now(),
         });
     }
@@ -267,11 +363,30 @@ function setCurrent(next: OpenProject | null) {
     current = next;
 }
 
-// Opens a project at its main file
-async function start(fs: ProjectFileSystem, source: ProjectSource, mainFile: string, title = "") {
-    const opened = new OpenProject(fs, source, mainFile);
+// The main file named by a project's squiffy.json, if it has a valid one and that file exists
+export async function projectMainFile(fs: ProjectFileSystem): Promise<string | null> {
+    try {
+        if (!(await fs.exists(PROJECT_FILENAME))) return null;
+        const parsed = parseProjectFile(await fs.readText(PROJECT_FILENAME));
+        if (!parsed.success) {
+            showToast(parsed.error);
+            return null;
+        }
+        if (await fs.exists(parsed.project.main)) return parsed.project.main;
+        showToast(`${PROJECT_FILENAME} names ${parsed.project.main} as the main file, but it doesn't exist.`);
+    } catch {
+        // Treated as no project file
+    }
+    return null;
+}
+
+// Opens a project at its main file: squiffy.json's, or else the one remembered in the browser
+async function start(fs: ProjectFileSystem, source: ProjectSource, storedMainFile: string, title = "") {
+    const opened = new OpenProject(fs, source, (await projectMainFile(fs)) ?? storedMainFile);
     if (title) opened.title = title;
-    await Promise.all([opened.open(mainFile), opened.refreshFiles()]);
+    await opened.refreshFiles();
+    // A squiffy.json whose main file is missing still leaves something to open
+    await opened.open((await fs.exists(opened.mainFile)) ? opened.mainFile : opened.storedMainFile);
     setCurrent(opened);
     await opened.touch();
 }
@@ -283,10 +398,12 @@ export async function closeProject(): Promise<void> {
     setCurrent(null);
 }
 
+// A new draft with one .squiffy file, and a squiffy.json naming it
 async function createDraft(mainFile: string, text: string): Promise<string> {
     const id = crypto.randomUUID();
     const fs = await drafts.create(id, { title: "", mainFile, lastOpened: Date.now() });
     await fs.write(mainFile, text);
+    await fs.write(PROJECT_FILENAME, formatProjectFile({ main: mainFile }));
     return id;
 }
 
@@ -297,7 +414,7 @@ export async function newDraft(): Promise<string> {
 export async function openDraft(id: string): Promise<void> {
     const meta = await drafts.getMeta(id);
     const fs = await drafts.open(id);
-    const mainFile = meta?.mainFile ?? DEFAULT_MAIN_FILE;
+    const mainFile = (await projectMainFile(fs)) ?? meta?.mainFile ?? DEFAULT_MAIN_FILE;
     // Say so, rather than quietly opening an empty story in its place
     if (!(await fs.exists(mainFile))) throw new Error(`its story file, ${mainFile}, is missing.`);
     await start(fs, { kind: "draft", id }, mainFile, meta?.title);
@@ -323,9 +440,9 @@ export async function draftFromText(fileName: string | undefined, text: string):
 // the draft's id.
 export async function importFile(file: File): Promise<string> {
     if (file.name.toLowerCase().endsWith(".zip")) {
-        const { readProjectZip, guessMainFile } = await import("./export.js");
+        const { readProjectZip, zipMainFile } = await import("./export.js");
         const files = readProjectZip(new Uint8Array(await file.arrayBuffer()));
-        const mainFile = guessMainFile(files.keys());
+        const mainFile = zipMainFile(files);
         if (!mainFile) throw new Error(`There's no .squiffy file in ${file.name}.`);
         const id = crypto.randomUUID();
         const fs = await drafts.create(id, { title: "", mainFile, lastOpened: Date.now() });
@@ -358,7 +475,7 @@ export async function openRecentFolder(id: string, ask: boolean): Promise<boolea
     if (!folder) return false;
     const fs = ask ? await fsaOpener.reopen(folder.handle) : (await hasPermission(folder.handle)) ? new DirectoryHandleFileSystem(folder.handle) : null;
     if (!fs) return false;
-    let mainFile: string | null = folder.mainFile;
+    let mainFile: string | null = (await projectMainFile(fs)) ?? folder.mainFile;
     if (!(await fs.exists(mainFile))) {
         // Moved or deleted since: ask again
         mainFile = await chooseMainFile(fs);
@@ -370,8 +487,11 @@ export async function openRecentFolder(id: string, ask: boolean): Promise<boolea
 
 export { forgetFolder, listRecentFolders, type RecentFolder } from "./recent.js";
 
-// The main .squiffy file in a folder: the only one, or the one the author picks, or a new one
+// The main .squiffy file in a folder: the one its squiffy.json names, the only one, or the one
+// the author picks, or a new one
 async function chooseMainFile(fs: ProjectFileSystem): Promise<string | null> {
+    const fromProject = await projectMainFile(fs);
+    if (fromProject) return fromProject;
     const files = (await findFiles(fs, SQUIFFY_FILES)).map(f => f.path);
     let mainFile: string | null;
     if (files.length === 0) {
@@ -381,6 +501,7 @@ async function chooseMainFile(fs: ProjectFileSystem): Promise<string | null> {
         ]);
         if (!create) return null;
         await fs.write(DEFAULT_MAIN_FILE, NEW_STORY);
+        if (!(await fs.exists(PROJECT_FILENAME))) await fs.write(PROJECT_FILENAME, formatProjectFile({ main: DEFAULT_MAIN_FILE }));
         mainFile = DEFAULT_MAIN_FILE;
     } else if (files.length === 1) {
         mainFile = files[0];
@@ -405,3 +526,43 @@ export async function downloadFile(path: string): Promise<void> {
 }
 
 export { relativePath, storyPath } from "./paths.js";
+
+// What happened when the editor offered to make a folder one story
+export type ProjectOffer = "created" | "declined" | "cancelled";
+
+// Offers to make the folder one story with a squiffy.json, when the author adds a second .squiffy
+// file (`adding`) or makes another file the main one (`main`). If the folder already has other
+// .squiffy files, the author is asked first and can leave some out, so files that belong to some
+// other story are never pulled in without asking. Otherwise the file is created, with a note.
+export async function offerProjectFile(p: OpenProject, options: { main: string; adding?: string }): Promise<ProjectOffer> {
+    const { main, adding } = options;
+    const squiffyFiles = p.files.map(f => f.path).filter(path => path.toLowerCase().endsWith(".squiffy"));
+    const others = getStoryFiles({ version: 1, main, exclude: [] }, adding ? [...squiffyFiles, adding] : squiffyFiles)
+        .included.filter(path => path !== adding);
+    let exclude: string[] = [];
+
+    if (others.length) {
+        const total = others.length + 1 + (adding ? 1 : 0);
+        const fixed = [main, ...(adding ? [adding] : [])];
+        const result = await checklistDialog(
+            `Make all ${total} .squiffy files in this folder part of this story?\n\n` +
+            `This adds a ${PROJECT_FILENAME} project file, and then every .squiffy file is part of the story without an @import. Untick any that belong to something else.`,
+            [
+                ...fixed.map(path => ({ label: path === main ? `${path} (main file)` : path, checked: true, disabled: true })),
+                ...others.map(path => ({ label: path, checked: true })),
+            ],
+            [
+                { label: "Cancel", value: "cancelled" as const },
+                { label: adding ? `No, just @import ${adding}` : "No, just change the main file", value: "declined" as const },
+                { label: "Make one story", value: "created" as const },
+            ],
+        );
+        if (!result || result.value === "cancelled") return "cancelled";
+        if (result.value === "declined") return "declined";
+        exclude = others.filter((_, i) => !result.checked[fixed.length + i]);
+    }
+
+    await p.createProjectFile(main, exclude);
+    showToast(`Added ${PROJECT_FILENAME}, which makes this folder one story: every .squiffy file in it is part of the story, starting from the main file (★). Use a file's ⋯ menu to leave it out.`, "info", 12000);
+    return "created";
+}
