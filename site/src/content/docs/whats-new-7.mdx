@@ -5,7 +5,7 @@ sidebar:
     order: 19
 ---
 
-Squiffy 7 brings a new editor. The language is the same as in Squiffy 6, so your stories work unchanged, apart from [one fix](#where-the-story-starts) to where a story starts. See [Using the editor](/editor/) for a tour.
+Squiffy 7 brings a new editor. The language is the same as in Squiffy 6, so your stories work unchanged. See [Using the editor](/editor/) for a tour.
 
 ## The new editor
 
@@ -24,7 +24,5 @@ If you had unsaved work in the Squiffy 6 editor, the home page offers to open it
 
 The Squiffy 6 editor opened and saved a single `.squiffy` file. To edit a story's file where it is, open the folder it's in. Otherwise, use **Open file** to copy it into a draft.
 
-### Where the story starts
-
-A story begins in the main file's first section, unless you choose another with [`@start`](/basic-concepts/#set-the-start-section). In Squiffy 6, an `@import` above that section made the story begin in the imported file instead. Squiffy 7 begins in the main file, wherever the `@import` is. If your story relied on starting in an imported file, add `@start` with that section's name.
+In Squiffy 6, an `@import` above the main file's first section made the story begin in the imported file. Squiffy 7 begins in the main file. If your story relied on the old behaviour, choose the start section with [`@start`](/basic-concepts/#set-the-start-section).
 
