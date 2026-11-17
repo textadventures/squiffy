@@ -7,7 +7,7 @@ import { findAssets, getStoryText } from "./assets.js";
 import { createPackage, PackageOptions } from "@textadventures/squiffy-packager";
 
 // A story given as a filename is just that file and its @imports, as with no squiffy.json
-const toStory = (input: string | StoryOnDisk): StoryOnDisk => typeof input == "string" ? { mainFile: input } : input;
+const toStory = (input: string | StoryOnDisk): StoryOnDisk => typeof input == "string" ? { mainFile: input, expressions: false } : input;
 
 async function getCompileResult(story: StoryOnDisk) {
     const inputFilename = story.mainFile;
@@ -21,6 +21,7 @@ async function getCompileResult(story: StoryOnDisk) {
         script: inputText,
         externalFiles: externalFiles(inputFilename),
         storyFiles: story.storyFiles,
+        expressions: story.expressions,
         globalJs: true,
     });
     for (const diagnostic of result.diagnostics) {

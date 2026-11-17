@@ -155,19 +155,29 @@ export interface TransformResult {
     noNextSection: NoNextSection[];
 }
 
-function extractLinkFunctions(link: string): { target: string, setters: string } {
-    const fragments = link.split(",");
+// The target is everything before the first comma, and the setters everything after it. With
+// expressions, they're kept as written, since a setter can contain commas in quotes, and the
+// runtime splits them. Without, a space is added after each comma, as Squiffy 6 did.
+function extractLinkFunctions(link: string, expressions: boolean): { target: string, setters: string } {
+    if (!expressions) {
+        const fragments = link.split(",");
+        return {
+            target: fragments[0].trim(),
+            setters: fragments.slice(1).join(", ")
+        };
+    }
+    const comma = link.indexOf(",");
     return {
-        target: fragments[0].trim(),
-        setters: fragments.slice(1).join(", ")
+        target: (comma == -1 ? link : link.substring(0, comma)).trim(),
+        setters: comma == -1 ? "" : link.substring(comma + 1),
     };
 }
 
-function getAdditionalLinkParameters(link: string): { target: string, additionalParameters: string } {
-    const functions = extractLinkFunctions(link);
+function getAdditionalLinkParameters(link: string, expressions: boolean): { target: string, additionalParameters: string } {
+    const functions = extractLinkFunctions(link, expressions);
     let additionalParameters = "";
-    if (functions.setters.length > 0) {
-        additionalParameters += ` set="${functions.setters}"`;
+    if (functions.setters.trim().length > 0) {
+        additionalParameters += ` set="${escapeForHandlebarsString(functions.setters)}"`;
     }
     return {
         target: functions.target,
@@ -181,7 +191,8 @@ function escapeForHandlebarsString(s: string): string {
 
 // getNextSectionName returns the section after this one, for [[text>]] links, or null if
 // there isn't one.
-export function transformText(text: string, getNextSectionName: () => string | null): TransformResult {
+// expressions: whether link setters take expressions (see AnalyseSettings.expressions)
+export function transformText(text: string, getNextSectionName: () => string | null, expressions = false): TransformResult {
     const input = new MappedString(text);
     const links: TextLink[] = [];
     const embeds: TextEmbed[] = [];
@@ -237,7 +248,7 @@ export function transformText(text: string, getNextSectionName: () => string | n
         }
         addLink({ linkType: "section", form: "next", text, target: rest }, offset, match.length, offset + 2 + rawText.length + 4, rawRest.length);
         // rest could be empty or ", setter=value"
-        const parsedName = getAdditionalLinkParameters(nextSectionName + rest);
+        const parsedName = getAdditionalLinkParameters(nextSectionName + rest, expressions);
         return `{{section "${escapeForHandlebarsString(parsedName.target)}" text="${escapeForHandlebarsString(text)}"${parsedName.additionalParameters}}}`;
     });
 
@@ -254,7 +265,7 @@ export function transformText(text: string, getNextSectionName: () => string | n
         const text = restore(rawText);
         const name = restore(rawName);
         addLink({ linkType: "section", form: "named", text, target: name }, offset, match.length, offset + 2 + rawText.length + 3, rawName.length);
-        const parsedName = getAdditionalLinkParameters(name);
+        const parsedName = getAdditionalLinkParameters(name, expressions);
         return `{{section "${escapeForHandlebarsString(parsedName.target)}" text="${escapeForHandlebarsString(text)}"${parsedName.additionalParameters}}}`;
     });
 
@@ -272,7 +283,7 @@ export function transformText(text: string, getNextSectionName: () => string | n
         const text = restore(rawText);
         const name = restore(rawName);
         addLink({ linkType: "passage", form: "named", text, target: name }, offset, match.length, offset + 1 + rawText.length + 2, rawName.length);
-        const parsedName = getAdditionalLinkParameters(name);
+        const parsedName = getAdditionalLinkParameters(name, expressions);
         return `{{passage "${escapeForHandlebarsString(parsedName.target)}" text="${escapeForHandlebarsString(text)}"${parsedName.additionalParameters}}}`;
     });
 

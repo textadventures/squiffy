@@ -33,6 +33,8 @@ interface CompilerSettings {
     parseCache?: ParseCache;
     // In folder mode, the story's other .squiffy files: see AnalyseSettings.storyFiles
     storyFiles?: string[];
+    // Whether @set and link setters take expressions: see AnalyseSettings.expressions
+    expressions?: boolean;
 }
 
 export interface CompileError {

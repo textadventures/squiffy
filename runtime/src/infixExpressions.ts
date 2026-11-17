@@ -334,12 +334,16 @@ function emit(node: Node): string {
     return `(${node.name} ${node.args.map(emit).join(" ")})`;
 }
 
-type Mode = "condition" | "arguments" | "display";
+// "value" is a whole expression whose value is used, e.g. the right-hand side of @set
+type Mode = "condition" | "arguments" | "display" | "value";
 
 // Parses `text` and returns the rewritten nodes, or null if it should be left alone: it
 // doesn't use infix syntax, or it can't be parsed and has no operators (which leaves malformed
 // prefix syntax for Handlebars to report).
 function rewrite(text: string, mode: Mode, label: string): Node[] | null {
+    // Whether errors are always reported, and the result always returned, rather than leaving
+    // anything that isn't infix syntax for Handlebars
+    const strict = mode === "display" || mode === "value";
     // Errors are thrown after the try/catch blocks, as new errors with the expression in the message
     let error: ExpressionError | null = null;
     let tokens: Token[] = [];
@@ -347,7 +351,7 @@ function rewrite(text: string, mode: Mode, label: string): Node[] | null {
         tokens = tokenize(text);
     } catch (e) {
         // Leave anything we can't tokenize for Handlebars to report, except {{= }}
-        if (mode !== "display" || !(e instanceof ExpressionError)) return null;
+        if (!strict || !(e instanceof ExpressionError)) return null;
         error = e;
     }
     const hasOperators = tokens.some(t => t.type === "op");
@@ -359,14 +363,14 @@ function rewrite(text: string, mode: Mode, label: string): Node[] | null {
                 : mode === "arguments" ? parser.parseArguments(1)
                 : [parser.parseExpression()];
         } catch (e) {
-            if (!(e instanceof ExpressionError) || (!hasOperators && mode !== "display")) return null;
+            if (!(e instanceof ExpressionError) || (!hasOperators && !strict)) return null;
             error = e;
         }
     }
     if (error) {
         throw new Error(`Invalid ${label} "${text.trim()}": ${error.message}`);
     }
-    if (!parser.usedInfix && mode !== "display") return null;
+    if (!parser.usedInfix && !strict) return null;
     return nodes;
 }
 
@@ -394,6 +398,38 @@ export function rewriteDisplayExpression(expression: string): string {
         throw new Error(`Invalid expression "${expression.trim()}": expected an attribute or a calculation`);
     }
     return node.text;
+}
+
+// Rewrites an expression whose value is used (the right-hand side of @set and link setters, when a
+// story uses expressions there) into a Handlebars value: a helper call in parentheses, an
+// attribute name or a literal. Throws if it isn't a valid expression.
+export function rewriteValueExpression(expression: string): string {
+    return emit(rewrite(expression, "value", "expression")![0]);
+}
+
+// Splits a list of link setters on the commas between them, but not on commas inside quotes or
+// parentheses: greeting = "Hi, there", gold -= price is two setters.
+export function splitSetters(setters: string): string[] {
+    const result: string[] = [];
+    let depth = 0;
+    let quote: string | null = null;
+    let start = 0;
+    for (let i = 0; i < setters.length; i++) {
+        const c = setters[i];
+        if (quote) {
+            if (c === "\\") i++;
+            else if (c === quote) quote = null;
+        }
+        else if (c === "\"" || c === "'") quote = c;
+        else if (c === "(") depth++;
+        else if (c === ")") depth = Math.max(0, depth - 1);
+        else if (c === "," && depth === 0) {
+            result.push(setters.slice(start, i));
+            start = i + 1;
+        }
+    }
+    result.push(setters.slice(start));
+    return result.map(s => s.trim()).filter(s => s !== "");
 }
 
 const tagStart = /(\\*)\{\{(~?\s*)(?:(#if|#unless|else\s+if|else\s+unless)(?=[\s(!])|(set|inc|dec)(?=\s)|(=))/g;

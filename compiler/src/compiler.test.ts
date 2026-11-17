@@ -263,6 +263,29 @@ You took the gold!
     expect(result.output.story.sections.start.text).toContain('{{section "_continue1" text="Take the gold" set=" treasure=gold"}}');
 });
 
+test("A story with expressions is flagged in the output, and keeps link setters as written (#373)", async () => {
+    const script = `[[start]]:
+[[Buy]](shop, gold -= price, message = "Hi,  there")
+{{section "shop" set="x = 1"}}
+
+[[shop]]:
+Shop.`;
+    const result = await compile({ scriptBaseFilename: "test.squiffy", script, expressions: true });
+
+    assertSuccess(result);
+    expect(result.output.story.expressions).toBe(true);
+    expect(result.output.story.sections.start.text).toContain('{{section "shop" text="Buy" set=" gold -= price, message = \\"Hi,  there\\""}}');
+    expect(await result.getJs()).toContain("story.expressions = true;");
+});
+
+test("A story without expressions isn't flagged (#373)", async () => {
+    const result = await compile({ scriptBaseFilename: "test.squiffy", script: "[[start]]:\nHello." });
+
+    assertSuccess(result);
+    expect(result.output.story.expressions).toBeUndefined();
+    expect(await result.getJs()).not.toContain("story.expressions");
+});
+
 test("Warning when [[text>]] has no following section", async () => {
     const script = `
 [[only]]:

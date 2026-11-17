@@ -350,6 +350,7 @@ export function createLanguageService(options: LanguageServiceOptions): Language
             parseCache,
             recover: true,
             ...(project.projectFile ? { storyFiles: project.storyFiles } : {}),
+            expressions: !!project.projectFile,
         });
         if (project.error) {
             // A broken squiffy.json stops the story building, as it does in the CLI

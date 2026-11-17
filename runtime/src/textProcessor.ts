@@ -2,7 +2,7 @@ import * as marked from "marked";
 import Handlebars from "handlebars";
 import { Section, Story } from "./types.js";
 import { State } from "./state.js";
-import { rewriteInfixExpressions } from "./infixExpressions.js";
+import { rewriteInfixExpressions, rewriteValueExpression, splitSetters } from "./infixExpressions.js";
 import { isNumeric, isBlank, toNumber } from "./numbers.js";
 
 export class TextProcessor {
@@ -52,6 +52,12 @@ export class TextProcessor {
         // These execute at render time, so they respect {{#if}} conditions
         this.handlebars.registerHelper("set", (attribute: string, value: any) => {
             this.state.set(attribute, unwrapValue(value));
+            return "";
+        });
+
+        // Captures a value for evaluate()
+        this.handlebars.registerHelper("__value", (value: unknown) => {
+            this.evaluated = unwrapValue(value);
             return "";
         });
 
@@ -210,16 +216,18 @@ export class TextProcessor {
             return arr.length;
         });
 
+        const escapeAttr = (s: unknown) => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+
         const addAdditionalParameters = (options: any) => {
             let result = "";
             const setters = options.hash.set as string || "";
             if (setters) {
-                result += ` data-set='${JSON.stringify(setters.split(",").map(s => s.trim()))}'`;
+                // With expressions, a setter can have commas inside quotes, e.g. greeting = "Hi, there"
+                const list = this.getStory().expressions ? splitSetters(setters) : setters.split(",").map(s => s.trim());
+                result += ` data-set="${escapeAttr(JSON.stringify(list))}"`;
             }
             return result;
         };
-
-        const escapeAttr = (s: unknown) => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;");
 
         this.handlebars.registerHelper("section", (section: string, options) => {
             const text = options.hash.text as string || section;
@@ -231,6 +239,23 @@ export class TextProcessor {
             return new Handlebars.SafeString(`<a class="squiffy-link link-passage" data-passage="${escapeAttr(passage)}"${addAdditionalParameters(options)} role="link" tabindex="0">${text}</a>`);
         });
     }
+
+    // Evaluates an expression, such as gold + price * 2, with the same rules and helpers as
+    // {{#if}} and {{set}}. Throws if it isn't valid, or a helper fails.
+    evaluate(expression: string): unknown {
+        let template = this.expressionCache.get(expression);
+        if (!template) {
+            template = this.handlebars.compile(`{{__value ${rewriteValueExpression(expression)}}}`);
+            this.expressionCache.set(expression, template);
+        }
+        this.evaluated = undefined;
+        template(this.state.getStore());
+        return this.evaluated;
+    }
+
+    private expressionCache = new Map<string, HandlebarsTemplateDelegate>();
+    // Where the __value helper puts the value of the expression being evaluated
+    private evaluated: unknown;
 
     process(text: string, inline: boolean) {
         try {

@@ -18,6 +18,9 @@ export interface StoryOnDisk {
     projectFile?: string;
     // Something to tell the author, e.g. that a squiffy.json was ignored
     note?: string;
+    // Whether @set and link setters take expressions (#373): true if there's a squiffy.json in
+    // the story's folder or above, even if it's only building one file
+    expressions: boolean;
 }
 
 // A problem finding the story, with a message to show the author as is
@@ -92,7 +95,7 @@ async function folderStory(projectFile: string, options: FindStoryOptions): Prom
         throw new StoryNotFoundError(`The main file in ${projectFile}, ${project.main}, doesn't exist.`);
     }
     const story = getStoryFiles(project, await listSquiffyFiles(root), options.skip);
-    return { mainFile, storyFiles: story.included.map(file => path.resolve(root, file)), projectFile };
+    return { mainFile, storyFiles: story.included.map(file => path.resolve(root, file)), projectFile, expressions: true };
 }
 
 // Finds the story to build from what the author gave: a folder with a squiffy.json in it, or a
@@ -116,7 +119,7 @@ export async function findStory(input: string, options: FindStoryOptions = {}): 
     }
 
     const projectFile = await findProjectFile(path.dirname(resolved));
-    if (!projectFile) return { mainFile: resolved };
+    if (!projectFile) return { mainFile: resolved, expressions: false };
     const project = await readProject(projectFile);
     if (path.resolve(path.dirname(projectFile), project.main) == resolved) {
         return folderStory(projectFile, options);
@@ -124,5 +127,6 @@ export async function findStory(input: string, options: FindStoryOptions = {}): 
     return {
         mainFile: resolved,
         note: `Building just ${path.basename(resolved)}, as it isn't the main file in ${projectFile} (${project.main}).`,
+        expressions: true,
     };
 }

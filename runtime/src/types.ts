@@ -79,6 +79,9 @@ export interface Story {
     start: string;
     id?: string | null;
     uiJsIndex?: number;
+    // Whether @set and link setters take expressions, with the same rules as {{#if}}: attributes
+    // by name, and text in quotes. True for a story with a squiffy.json (#373).
+    expressions?: boolean;
     sections: Record<string, Section>;
 }
 

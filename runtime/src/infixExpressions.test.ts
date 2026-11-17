@@ -1,5 +1,5 @@
 import { expect, test, describe } from "vitest";
-import { rewriteDisplayExpression, rewriteInfixArguments, rewriteInfixCondition, rewriteInfixExpressions } from "./infixExpressions.js";
+import { rewriteDisplayExpression, rewriteInfixArguments, rewriteInfixCondition, rewriteInfixExpressions, rewriteValueExpression, splitSetters } from "./infixExpressions.js";
 
 describe("rewriteInfixCondition", () => {
     test.each([
@@ -343,5 +343,37 @@ describe("rewriteInfixExpressions", () => {
     test("throws for malformed {{set}} and {{= }}", () => {
         expect(() => rewriteInfixExpressions("{{set \"x\" a +}}")).toThrow("Invalid expression \"\"x\" a +\"");
         expect(() => rewriteInfixExpressions("{{= a +}}")).toThrow("Invalid expression \"a +\"");
+    });
+});
+
+describe("rewriteValueExpression", () => {
+    test.each([
+        ["gold", "gold"],
+        ["10", "10"],
+        ['"sword"', '"sword"'],
+        ["true", "true"],
+        ["gold + price * 2", "(add gold (mul price 2))"],
+        ["gold > 100", "(gt gold 100)"],
+        ["not has_key", "(not has_key)"],
+        ['(seen "intro")', '(seen "intro")'],
+    ])("%s -> %s", (input, expected) => {
+        expect(rewriteValueExpression(input)).toBe(expected);
+    });
+
+    test.each(["", "gold +", "gold price", "(gold"])("rejects %j", input => {
+        expect(() => rewriteValueExpression(input)).toThrow(/Invalid expression/);
+    });
+});
+
+describe("splitSetters", () => {
+    test.each([
+        ["a = 1, b += 2", ["a = 1", "b += 2"]],
+        [' message = "Hi, there", done', ['message = "Hi, there"', "done"]],
+        ["name = 'Bob, the Brave', x", ["name = 'Bob, the Brave'", "x"]],
+        ['a = "say \\"hi, there\\"", b', ['a = "say \\"hi, there\\""', "b"]],
+        ["a = (add b 1), c", ["a = (add b 1)", "c"]],
+        ["a = 1,, b = 2,", ["a = 1", "b = 2"]],
+    ])("%j", (input, expected) => {
+        expect(splitSetters(input)).toEqual(expected);
     });
 });
