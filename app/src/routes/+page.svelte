@@ -20,7 +20,9 @@
     import HomeHeader from "#components/HomeHeader.svelte";
     import BetaBanner from "#components/BetaBanner.svelte";
 
-    const isBeta = import.meta.env.VITE_BETA_APP === "true";
+    // The banner points beta users at the current version. The first stable desktop app is 7.0.0,
+    // so until then Squiffy Beta has nothing to point at, and doesn't show it.
+    const showBetaBanner = import.meta.env.VITE_BETA_APP === "true" && !(isDesktop && __APP_VERSION__.startsWith("7.0.0-"));
     import FilePlus from "@lucide/svelte/icons/file-plus";
     import FolderOpen from "@lucide/svelte/icons/folder-open";
     import FileUp from "@lucide/svelte/icons/file-up";
@@ -128,7 +130,7 @@
     const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" });
 </script>
 
-{#if isBeta}
+{#if showBetaBanner}
     <BetaBanner />
 {/if}
 <HomeHeader />
@@ -145,7 +147,7 @@
                     Try allowing this site in the add-on or settings and reloading, or use another browser.
                 </p>
                 {#if canOpenFolders}
-                    <p>You can still use Open folder to edit a story's files where they are.</p>
+                    <p>You can still use Open folder to work on a story's folder on your computer.</p>
                 {/if}
                 <p class="text-xs text-surface-600-400">Details: {storageBlocked}</p>
             </div>
@@ -177,7 +179,7 @@
                 <button type="button" class="card start-card preset-outlined-surface-200-800" disabled={busy} onclick={handleOpenFolder}>
                     <FolderOpen size={22} class="text-primary-500" />
                     <span class="font-medium">Open folder</span>
-                    <span class="text-xs text-surface-600-400">Edit a story's files where they are</span>
+                    <span class="text-xs text-surface-600-400">A story's folder on your computer</span>
                 </button>
             {/if}
             <button type="button" class="card start-card preset-outlined-surface-200-800" disabled={busy || !!storageBlocked} onclick={() => isDesktop ? openInEditor(pickDesktopFile) : fileInput?.click()}>
@@ -197,7 +199,7 @@
         {/if}
         {#if !canOpenFolders}
             <p class="text-xs text-surface-600-400">
-                This browser can't edit files where they are, so stories are kept in the browser. Use File, Download project
+                This browser can't open folders on your computer, so stories are kept in the browser. Use File, Download project
                 in the editor to keep a copy, and Open file to bring it back.
             </p>
         {/if}
