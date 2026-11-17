@@ -74,6 +74,14 @@ export const squiffyHighlightStyle = HighlightStyle.define([
     { tag: t.number, color: "var(--color-tertiary-500)" },
     { tag: [t.tagName, t.attributeName], color: "var(--color-primary-500)" },
     { tag: [t.bracket, t.paren, t.squareBracket, t.brace], color: "var(--color-surface-600-400)" },
+    // CSS and JavaScript files (@codemirror/lang-css, @codemirror/lang-javascript). Keywords, strings,
+    // comments, numbers and brackets are covered above.
+    { tag: [t.atom, t.bool, t.null, t.unit, t.color, t.escape], color: "var(--color-tertiary-600-400)" },
+    { tag: [t.className, t.labelName, t.typeName, t.namespace], color: "var(--color-primary-600-400)" },
+    { tag: t.propertyName, color: "var(--color-secondary-600-400)" },
+    { tag: [t.function(t.variableName), t.function(t.propertyName)], color: "var(--color-primary-700-300)" },
+    { tag: t.definition(t.variableName), color: "var(--color-surface-950-50)" },
+    { tag: [t.punctuation, t.meta], color: "var(--color-surface-600-400)" },
     // Squiffy (@textadventures/squiffy-codemirror): section and passage headers, links, the text processor, and
     // indented JavaScript
     { tag: t.heading, color: "var(--color-primary-600-400)", fontWeight: "bold" },

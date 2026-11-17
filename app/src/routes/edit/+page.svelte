@@ -7,13 +7,15 @@
     import { EditorView } from "@codemirror/view";
     import type { Extension } from "@codemirror/state";
     import type { DocumentSymbol, Location, WorkspaceEdit } from "squiffy-compiler/language-service";
-    import { basename, dirname, guessMimeType, joinPath, parsePath } from "@textadventures/project-fs";
+    import { basename, dirname, extname, guessMimeType, joinPath, parsePath } from "@textadventures/project-fs";
     import { base } from "#lib/base-path.js";
     import { project, openDraft, openRecentFolder, downloadFile, storyPath } from "#lib/project.svelte.js";
     import { isAsset, isSquiffyFile, isTextFile } from "#lib/file-types.js";
     import { createLanguageClient, type LanguageClient } from "#lib/language/client.js";
     import { applyEditsToString, applyTextEdits, languageFeatures, toOffset, toPosition } from "#lib/language/codemirror.js";
     import { squiffyLanguage } from "@textadventures/squiffy-codemirror";
+    import { css } from "@codemirror/lang-css";
+    import { javascript } from "@codemirror/lang-javascript";
     import { isNarrow } from "#lib/layout.svelte.js";
     import { showToast } from "#lib/toast.js";
     import { chooseDialog, confirmDialog, promptDialog } from "#lib/confirm.js";
@@ -179,10 +181,32 @@
         extensionCache = new Map();
     });
 
+    // Other files the editor highlights, by extension. These don't depend on the file or the
+    // language service, so one set of extensions does for every file of that kind.
+    const otherLanguages: Record<string, () => Extension[]> = {
+        ".css": () => [css()],
+        ".js": () => [javascript()],
+        ".mjs": () => [javascript()],
+    };
+    const otherLanguageCache = new Map<string, Extension[]>();
+
+    function otherLanguageFor(path: string): Extension[] {
+        const ext = extname(path).toLowerCase();
+        const make = otherLanguages[ext];
+        if (!make) return [];
+        let extensions = otherLanguageCache.get(ext);
+        if (!extensions) {
+            extensions = make();
+            otherLanguageCache.set(ext, extensions);
+        }
+        return extensions;
+    }
+
     function extensionsFor(path: string): Extension[] {
+        if (!isSquiffyFile(path)) return otherLanguageFor(path);
         const c = client;
         const current = p;
-        if (!c || !current || !isSquiffyFile(path)) return [];
+        if (!c || !current) return [];
         let extensions = extensionCache.get(path);
         if (!extensions) {
             extensions = [
