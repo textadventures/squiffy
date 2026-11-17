@@ -1,5 +1,28 @@
 # Changelog
 
+## [7.0.0-beta.2](https://github.com/textadventures/squiffy/compare/v7.0.0-beta.1...v7.0.0-beta.2) (2026-11-17)
+
+
+### Features
+
+* add a TextMate grammar for .squiffy files, and highlight the docs' Squiffy samples ([#356](https://github.com/textadventures/squiffy/issues/356)) ([60a60d1](https://github.com/textadventures/squiffy/commit/60a60d1428fbc22941b52beba5825b03457a976e))
+* dark mode and a refreshed default style for published stories ([#370](https://github.com/textadventures/squiffy/issues/370)) ([58c5524](https://github.com/textadventures/squiffy/commit/58c55247fedcafec0729638fb70694e4c1324367))
+* highlight CSS and JavaScript files in the editor ([#363](https://github.com/textadventures/squiffy/issues/363)) ([690421c](https://github.com/textadventures/squiffy/commit/690421cc74cea683f008cf17e084a386b1c8ddb4))
+* squiffy.json project files in the editor ([#367](https://github.com/textadventures/squiffy/issues/367)) ([5f9bcf7](https://github.com/textadventures/squiffy/commit/5f9bcf778434e1ca0251c61787dea3ca277cebd8))
+* story graph in the language service, with unreachable section and dead end checks ([#381](https://github.com/textadventures/squiffy/issues/381)) ([67b75ec](https://github.com/textadventures/squiffy/commit/67b75ec816f24e8ba322cb4f728404ba15b6e1c0))
+* story map in the editor ([#382](https://github.com/textadventures/squiffy/issues/382)) ([5562e28](https://github.com/textadventures/squiffy/commit/5562e2898ce133e2f8fc02ff6bf5eeab2bb5d5b9))
+* treat a folder with a squiffy.json as one story ([#366](https://github.com/textadventures/squiffy/issues/366)) ([a8e3c8d](https://github.com/textadventures/squiffy/commit/a8e3c8d8ac3974a083140cef58a370e813fe9c8d))
+* warn when a section name is used more than once ([#365](https://github.com/textadventures/squiffy/issues/365)) ([e94bc82](https://github.com/textadventures/squiffy/commit/e94bc8206319c133e7e7060c591a162299bf7798))
+
+
+### Bug Fixes
+
+* explain when the browser blocks the editor's storage ([#362](https://github.com/textadventures/squiffy/issues/362)) ([09b95f1](https://github.com/textadventures/squiffy/commit/09b95f1949b997d01f43dfe2bb5b69781c04b167))
+* import wildcard matches in a predictable order in the CLI and Vite plugin ([#364](https://github.com/textadventures/squiffy/issues/364)) ([c442a74](https://github.com/textadventures/squiffy/commit/c442a74e819bd3b156d7ef3d0de711e89b190dd5))
+* show "(Start)" and +++/--- lines in the outline instead of internal section names ([#369](https://github.com/textadventures/squiffy/issues/369)) ([55c9dd1](https://github.com/textadventures/squiffy/commit/55c9dd1f03cfb5882b04647b8eaf20a48b718c2f))
+* smooth resizing of the editor's preview and sidebar panes ([#368](https://github.com/textadventures/squiffy/issues/368)) ([ef44760](https://github.com/textadventures/squiffy/commit/ef4476066a2f1b5e04125ae17fde33afbe24858d))
+* start the story at the main file's first section, even after an [@import](https://github.com/import) ([#360](https://github.com/textadventures/squiffy/issues/360)) ([910f0c8](https://github.com/textadventures/squiffy/commit/910f0c8d845a375b614328346452a852b58069ac))
+
 ## [7.0.0-beta.1](https://github.com/textadventures/squiffy/compare/v6.0.1...v7.0.0-beta.1) (2026-11-16)
 
 
