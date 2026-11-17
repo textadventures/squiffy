@@ -180,6 +180,17 @@ describe("Electron main-process handlers", () => {
         await expect(main.approveRoot(env.win, join(root, "story.squiffy"))).rejects.toMatchObject({ code: "NOT_A_DIRECTORY" });
     });
 
+    test("rootPath gives a window's own roots only", async () => {
+        const info = await main.approveRoot(env.win, root);
+        expect(main.rootPath(env.win, info.rootId)).toBe(info.displayPath);
+        const other = new FakeWindow(env.ipcMain);
+        expect(main.rootPath(other, info.rootId)).toBeNull();
+        expect(main.rootPath(env.win, "nope")).toBeNull();
+        expect(main.rootPath(env.win, 42)).toBeNull();
+        await env.bridge.release(info.rootId);
+        expect(main.rootPath(env.win, info.rootId)).toBeNull();
+    });
+
     test("change events go only to the window watching that root", async () => {
         const info = await openRoot();
         const fs = new ElectronFileSystem(env.bridge, info);

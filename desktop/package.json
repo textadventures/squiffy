@@ -1,0 +1,31 @@
+{
+  "name": "squiffy-desktop",
+  "productName": "Squiffy",
+  "version": "7.0.0-beta.2",
+  "private": true,
+  "description": "The Squiffy desktop app: the editor from app.squiffystory.com, with stories kept in folders on disk",
+  "license": "MIT",
+  "author": "Alex Warren",
+  "homepage": "https://squiffystory.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/textadventures/squiffy.git",
+    "directory": "desktop"
+  },
+  "type": "module",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "check": "tsc --noEmit",
+    "start": "npm run build && electron .",
+    "dev": "npm run build && electron . --dev-server"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@textadventures/project-fs": "file:../project-fs",
+    "@types/node": "^24.10.0",
+    "electron": "^45.3.3",
+    "esbuild": "^0.28.2",
+    "typescript": "^6.0.3"
+  }
+}

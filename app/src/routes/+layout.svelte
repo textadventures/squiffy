@@ -9,6 +9,7 @@
     import SettingsModal from "#components/SettingsModal.svelte";
     import UpdateBanner from "#components/UpdateBanner.svelte";
     import { registerServiceWorker } from "#lib/updates.svelte.js";
+    import { initDesktopShell } from "#lib/desktop-shell.js";
 
     let { children }: { children: Snippet } = $props();
 
@@ -23,6 +24,7 @@
         initTheme();
         initSettings();
         void registerServiceWorker();
+        return initDesktopShell();
     });
 </script>
 

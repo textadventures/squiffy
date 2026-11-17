@@ -7,21 +7,24 @@
 //   - a folder on disk, opened with File System Access (Chromium browsers)
 //   - a local draft, kept in the browser's origin-private file system (every modern browser):
 //     New, and Open file, which imports a .squiffy file into a new draft
-// The Electron desktop app (#276) will add a third, through project-fs's Electron bridge.
+//   - in the Electron desktop app (#276), a folder on disk through project-fs's Electron bridge.
+//     There are no drafts there: New makes a folder, and Open file opens a file's folder.
 //
 // Each open file saves on its own, shortly after typing stops, as in Quest Viva, and Save
 // (Ctrl+S) saves them all at once.
 import {
-    DirectoryHandleFileSystem, OpfsProjectStore, basename, findFiles, fsaOpener, hasFileSystemAccess, moveFile,
+    DirectoryHandleFileSystem, ElectronFileSystem, OpfsProjectStore, basename, electronOpener, findFiles, fsaOpener,
+    hasFileSystemAccess, moveFile,
     type FileEntry, type FileTypeFilter, type ProjectFileSystem,
 } from "@textadventures/project-fs";
 import {
     formatProjectFile, getStoryFiles, isExcluded, parseProjectFile, PROJECT_FILENAME, updateProjectFile,
     type MapPositions, type ProjectFile, type StoryFiles,
 } from "squiffy-compiler";
-import { checklistDialog, chooseDialog } from "./confirm.js";
+import { checklistDialog, chooseDialog, confirmDialog } from "./confirm.js";
 import { showToast } from "./toast.js";
-import { findRecentFolder, hasPermission, rememberFolder, updateRecentFolder } from "./recent.js";
+import { findRecentFolder, forgetFolder as forgetBrowserFolder, hasPermission, listRecentFolders as listBrowserFolders, rememberFolder, updateRecentFolder } from "./recent.js";
+import { desktopApi } from "./desktop.js";
 
 export const SQUIFFY_FILES: FileTypeFilter[] = [
     { description: "Squiffy stories", extensions: [".squiffy"], mimeType: "text/plain" },
@@ -62,7 +65,11 @@ export type ProjectSource = { kind: "draft"; id: string } | { kind: "folder"; id
 
 export const drafts = new OpfsProjectStore<DraftMeta>({ baseDir: "drafts" });
 
-export const canOpenFolders = hasFileSystemAccess();
+// The desktop app's bridges, or null in a browser
+const desktop = desktopApi();
+export const isDesktop = desktop !== null;
+
+export const canOpenFolders = isDesktop || hasFileSystemAccess();
 
 // A file open in the editor, with its own unsaved text
 class OpenFile {
@@ -343,7 +350,8 @@ class OpenProject {
     // title, or in the recent folders list
     async touch() {
         if (this.source.kind === "folder") {
-            await updateRecentFolder(this.source.id, this.storedMainFile);
+            if (desktop) await desktop.desktop.recent.update(this.source.id, this.storedMainFile);
+            else await updateRecentFolder(this.source.id, this.storedMainFile);
             return;
         }
         await drafts.setMeta(this.source.id, {
@@ -370,6 +378,8 @@ export const project = {
 
 function setCurrent(next: OpenProject | null) {
     current?.closeAll();
+    // The desktop app's main process holds each folder it's approved until it's released
+    if (current && current !== next && current.fs instanceof ElectronFileSystem) void current.fs.release().catch(() => {});
     current = next;
 }
 
@@ -468,6 +478,10 @@ export async function importFile(file: File): Promise<string> {
 // Opens a folder with File System Access, and the main .squiffy file in it, and adds it to the
 // recent folders. Returns the folder's id there, or null if the user cancels.
 export async function openFolder(): Promise<string | null> {
+    if (desktop) {
+        const picked = await pickDesktopFolder();
+        return picked && openPicked(picked);
+    }
     const fs = await fsaOpener.openFolder({ id: "squiffy-project" });
     if (!fs) return null;
     const mainFile = await chooseMainFile(fs);
@@ -481,6 +495,11 @@ export async function openFolder(): Promise<string | null> {
 // again, which must be from a click; without it, this only succeeds if the folder can be used
 // already (e.g. after a reload). Returns false if it can't be opened.
 export async function openRecentFolder(id: string, ask: boolean): Promise<boolean> {
+    if (desktop) {
+        const picked = await pickDesktopRecent(id);
+        if (picked) await openPicked(picked);
+        return !!picked;
+    }
     const folder = await findRecentFolder(id);
     if (!folder) return false;
     const fs = ask ? await fsaOpener.reopen(folder.handle) : (await hasPermission(folder.handle)) ? new DirectoryHandleFileSystem(folder.handle) : null;
@@ -495,7 +514,141 @@ export async function openRecentFolder(id: string, ask: boolean): Promise<boolea
     return true;
 }
 
-export { forgetFolder, listRecentFolders, type RecentFolder } from "./recent.js";
+// A folder in the recent folders list: kept by the browser, or by the desktop app
+export interface RecentFolder {
+    id: string;
+    name: string;
+    mainFile: string;
+    lastOpened: number;
+    // The folder's path, in the desktop app
+    displayPath?: string;
+}
+
+export async function listRecentFolders(): Promise<RecentFolder[]> {
+    return desktop ? desktop.desktop.recent.list() : listBrowserFolders();
+}
+
+export async function forgetFolder(id: string): Promise<void> {
+    if (desktop) await desktop.desktop.recent.forget(id);
+    else await forgetBrowserFolder(id);
+}
+
+// The desktop app (#276). Opening is in two steps, picking and then opening, so that the editor
+// can save and close the story that's open only once the author has picked another.
+
+// A folder picked in the desktop app, not opened yet
+export interface PickedFolder {
+    fs: ElectronFileSystem;
+    mainFile: string;
+    // Its id in the recent folders list, if it came from there
+    recentId?: string;
+}
+
+function desktopOrThrow() {
+    if (!desktop) throw new Error("Only in the desktop app");
+    return { ...desktop, opener: electronOpener(desktop.projectFs) };
+}
+
+const ZIP_FILES: FileTypeFilter[] = [{ description: "Project zip files", extensions: [".zip"], mimeType: "application/zip" }];
+
+// Open folder
+export async function pickDesktopFolder(): Promise<PickedFolder | null> {
+    const fs = await desktopOrThrow().opener.openFolder({ title: "Open a story folder", buttonLabel: "Open" });
+    if (!fs) return null;
+    const mainFile = await chooseMainFile(fs);
+    if (!mainFile) {
+        await fs.release();
+        return null;
+    }
+    return { fs, mainFile };
+}
+
+// Open file: a .squiffy file opens its folder, and a project zip (from Download project) is
+// unpacked into a folder the author chooses
+export async function pickDesktopFile(): Promise<PickedFolder | null> {
+    const picked = await desktopOrThrow().opener.openFile({ title: "Open a story file", filters: [...SQUIFFY_FILES, ...ZIP_FILES] });
+    if (!picked) return null;
+    const { fs, mainFile } = picked;
+    if (mainFile.toLowerCase().endsWith(".zip")) {
+        const data = await fs.read(mainFile);
+        await fs.release();
+        return unpackZip(mainFile, data);
+    }
+    return { fs, mainFile: (await projectMainFile(fs)) ?? mainFile };
+}
+
+async function unpackZip(zipName: string, data: Uint8Array): Promise<PickedFolder | null> {
+    const { readProjectZip, zipMainFile } = await import("./export.js");
+    const files = readProjectZip(data);
+    const mainFile = zipMainFile(files);
+    if (!mainFile) throw new Error(`There's no .squiffy file in ${zipName}.`);
+    const fs = await desktopOrThrow().opener.pickNewRoot({
+        title: `Choose a folder to unpack ${zipName} into`,
+        message: `Choose a folder to unpack ${zipName} into`,
+        buttonLabel: "Unpack here",
+    });
+    if (!fs) return null;
+    const existing = new Set((await fs.list()).map(f => f.path));
+    const clashes = [...files.keys()].filter(path => existing.has(path));
+    if (clashes.length && !(await confirmDialog(
+        `${fs.name} already has ${clashes.length === 1 ? clashes[0] : `${clashes.length} of the files in ${zipName}`}. Replace ${clashes.length === 1 ? "it" : "them"}?`,
+        { confirmLabel: "Replace", danger: true },
+    ))) {
+        await fs.release();
+        return null;
+    }
+    for (const [path, content] of files) await fs.write(path, content);
+    return { fs, mainFile };
+}
+
+// New story: a folder the author chooses (or makes, in the dialog), with a story file and a
+// squiffy.json. If the folder has a story already, it offers to open that instead.
+export async function pickDesktopNewStory(): Promise<PickedFolder | null> {
+    const fs = await desktopOrThrow().opener.pickNewRoot({
+        title: "Choose a folder for the new story",
+        message: "Choose or create a folder for the new story",
+        buttonLabel: "Create story",
+    });
+    if (!fs) return null;
+    let mainFile: string | null;
+    if ((await findFiles(fs, SQUIFFY_FILES)).length > 0) {
+        const open = await confirmDialog(`${fs.name} already has a story in it. Open it?`, { confirmLabel: "Open it" });
+        mainFile = open ? await chooseMainFile(fs) : null;
+    } else {
+        await fs.write(DEFAULT_MAIN_FILE, NEW_STORY);
+        if (!(await fs.exists(PROJECT_FILENAME))) await fs.write(PROJECT_FILENAME, formatProjectFile({ main: DEFAULT_MAIN_FILE }));
+        mainFile = DEFAULT_MAIN_FILE;
+    }
+    if (!mainFile) {
+        await fs.release();
+        return null;
+    }
+    return { fs, mainFile };
+}
+
+// A folder from the recent folders list. Null if it's not there or has gone.
+export async function pickDesktopRecent(id: string): Promise<PickedFolder | null> {
+    const { desktop: api, projectFs } = desktopOrThrow();
+    const info = await api.recent.open(id);
+    if (!info) return null;
+    const fs = new ElectronFileSystem(projectFs, info);
+    let mainFile: string | null = (await projectMainFile(fs)) ?? info.mainFile;
+    // Moved or deleted since, or a folder the OS opened, with no main file yet
+    if (!mainFile || !(await fs.exists(mainFile))) mainFile = await chooseMainFile(fs);
+    if (!mainFile) {
+        await fs.release();
+        return null;
+    }
+    return { fs, mainFile, recentId: id };
+}
+
+// Opens a picked folder and puts it at the top of the recent folders. Returns its id there.
+export async function openPicked(picked: PickedFolder): Promise<string> {
+    const { desktop: api } = desktopOrThrow();
+    const id = picked.recentId ?? await api.recent.remember(picked.fs.rootId, picked.mainFile);
+    await start(picked.fs, { kind: "folder", id }, picked.mainFile);
+    return id;
+}
 
 // The main .squiffy file in a folder: the one its squiffy.json names, the only one, or the one
 // the author picks, or a new one

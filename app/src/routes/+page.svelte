@@ -1,12 +1,16 @@
 <script lang="ts">
-    // Home: start a new story, open one, or carry on with a draft kept in this browser.
+    // Home: start a new story, open one, or carry on with a draft kept in this browser. In the
+    // desktop app there are no drafts: stories are folders on disk.
     import { onMount } from "svelte";
     import { goto } from "$app/navigation";
     import { base } from "#lib/base-path.js";
     import {
-        canOpenFolders, deleteDraft, forgetFolder, importFile, listDrafts, listRecentFolders, newDraft, openFolder,
-        openRecentFolder, draftFromText, type DraftMeta, type RecentFolder,
+        canOpenFolders, deleteDraft, forgetFolder, importFile, isDesktop, listDrafts, listRecentFolders, newDraft, openFolder,
+        openRecentFolder, draftFromText, pickDesktopFile, pickDesktopFolder, pickDesktopNewStory, pickDesktopRecent,
+        type DraftMeta, type RecentFolder,
     } from "#lib/project.svelte.js";
+    import { openInEditor } from "#lib/desktop-shell.js";
+    import { desktopApi } from "#lib/desktop.js";
     import type { StoredProject } from "@textadventures/project-fs";
     import { clearLegacyAutoSave, getLegacyAutoSave, type LegacyAutoSave } from "#lib/legacy.js";
     import { confirmDialog } from "#lib/confirm.js";
@@ -35,6 +39,7 @@
 
     async function refresh() {
         if (canOpenFolders) recentFolders = await listRecentFolders();
+        if (isDesktop) return;
         const storage = await checkDraftStorage();
         if (!storage.ok) {
             storageBlocked = storage.detail;
@@ -49,6 +54,7 @@
 
     onMount(() => {
         void refresh();
+        if (isDesktop) return desktopApi()?.desktop.recent.onChanged(() => void refresh());
         void getLegacyAutoSave().then(saved => { legacy = saved; });
     });
 
@@ -80,20 +86,22 @@
 
     const editDraft = (id: string) => goto(`${base}/edit?draft=${encodeURIComponent(id)}`);
 
-    const handleNew = () => run(async () => editDraft(await newDraft()));
+    const handleNew = () => isDesktop ? openInEditor(pickDesktopNewStory) : run(async () => editDraft(await newDraft()));
 
     const editFolder = (id: string) => goto(`${base}/edit?folder=${encodeURIComponent(id)}`);
 
-    const handleOpenFolder = () => run(async () => {
+    const handleOpenFolder = () => isDesktop ? openInEditor(pickDesktopFolder) : run(async () => {
         const id = await openFolder();
         if (id) await editFolder(id);
     });
 
     // The click is what lets the browser ask for permission to the folder again
-    const handleOpenRecent = (folder: RecentFolder) => run(async () => {
-        if (await openRecentFolder(folder.id, true)) await editFolder(folder.id);
-        else showToast(`Couldn't open ${folder.name}. The browser may not have been given permission, or the folder has moved.`, "info");
-    });
+    const handleOpenRecent = (folder: RecentFolder) => isDesktop
+        ? openInEditor(() => pickDesktopRecent(folder.id), `Couldn't open ${folder.name}. It may have been moved or deleted.`)
+        : run(async () => {
+            if (await openRecentFolder(folder.id, true)) await editFolder(folder.id);
+            else showToast(`Couldn't open ${folder.name}. The browser may not have been given permission, or the folder has moved.`, "info");
+        });
 
     async function handleForget(folder: RecentFolder) {
         await forgetFolder(folder.id);
@@ -162,7 +170,7 @@
             <button type="button" class="card start-card preset-outlined-surface-200-800" disabled={busy || !!storageBlocked} onclick={handleNew}>
                 <FilePlus size={22} class="text-primary-500" />
                 <span class="font-medium">New story</span>
-                <span class="text-xs text-surface-600-400">Kept in this browser as a draft</span>
+                <span class="text-xs text-surface-600-400">{isDesktop ? "In a folder you choose" : "Kept in this browser as a draft"}</span>
             </button>
             {#if canOpenFolders}
                 <button type="button" class="card start-card preset-outlined-surface-200-800" disabled={busy} onclick={handleOpenFolder}>
@@ -171,10 +179,12 @@
                     <span class="text-xs text-surface-600-400">Edit a story's files where they are</span>
                 </button>
             {/if}
-            <button type="button" class="card start-card preset-outlined-surface-200-800" disabled={busy || !!storageBlocked} onclick={() => fileInput?.click()}>
+            <button type="button" class="card start-card preset-outlined-surface-200-800" disabled={busy || !!storageBlocked} onclick={() => isDesktop ? openInEditor(pickDesktopFile) : fileInput?.click()}>
                 <FileUp size={22} class="text-primary-500" />
                 <span class="font-medium">Open file</span>
-                <span class="text-xs text-surface-600-400">Copy a .squiffy file, or a project .zip, into a new draft</span>
+                <span class="text-xs text-surface-600-400">
+                    {isDesktop ? "A .squiffy file, or a project .zip to unpack into a folder" : "Copy a .squiffy file, or a project .zip, into a new draft"}
+                </span>
             </button>
             <input bind:this={fileInput} type="file" accept=".squiffy,.zip" class="hidden" onchange={handleFileChosen} />
         </div>
@@ -196,7 +206,9 @@
                             <FolderOpen size={16} class="shrink-0 text-surface-600-400" />
                             <span class="flex flex-col min-w-0">
                                 <span class="font-medium truncate">{folder.name}</span>
-                                <span class="text-xs text-surface-600-400 truncate">{folder.mainFile} · Last opened {dateFormat.format(folder.lastOpened)}</span>
+                                <span class="text-xs text-surface-600-400 truncate" title={folder.displayPath}>
+                                    {folder.displayPath ?? folder.mainFile} · Last opened {dateFormat.format(folder.lastOpened)}
+                                </span>
                             </span>
                         </button>
                         <button
@@ -213,39 +225,41 @@
         </section>
     {/if}
 
-    <section aria-labelledby="drafts-heading" class="flex flex-col gap-3">
-        <h2 id="drafts-heading" class="text-sm font-semibold text-surface-600-400 uppercase tracking-wide">Drafts</h2>
-        {#if storageBlocked}
-            <p class="text-sm text-surface-600-400">Drafts can't be kept while the browser is blocking storage.</p>
-        {:else if draftsError}
-            <p class="text-sm text-error-500">Drafts aren't available in this browser: {draftsError}</p>
-        {:else if draftList === null}
-            <p class="text-sm text-surface-600-400">Loading…</p>
-        {:else if draftList.length === 0}
-            <p class="text-sm text-surface-600-400">No drafts yet.</p>
-        {:else}
-            <ul class="card preset-outlined-surface-200-800 divide-y divide-surface-200-800">
-                {#each draftList as draft (draft.id)}
-                    <li class="flex items-center gap-2 pr-2">
-                        <button type="button" class="draft-row flex-1 min-w-0 text-left px-4 py-2.5 flex flex-col" disabled={busy} onclick={() => run(() => editDraft(draft.id))}>
-                            <span class="font-medium truncate">{draft.meta?.title || draft.meta?.mainFile || "Untitled"}</span>
-                            {#if draft.meta?.lastOpened}
-                                <span class="text-xs text-surface-600-400">Last opened {dateFormat.format(draft.meta.lastOpened)}</span>
-                            {/if}
-                        </button>
-                        <button
-                            type="button"
-                            class="btn-icon btn-icon-sm hover:preset-tonal-error"
-                            title="Delete draft"
-                            aria-label="Delete {draft.meta?.title || "draft"}"
-                            disabled={busy}
-                            onclick={() => handleDelete(draft)}
-                        ><Trash2 size={15} /></button>
-                    </li>
-                {/each}
-            </ul>
-        {/if}
-    </section>
+    {#if !isDesktop}
+        <section aria-labelledby="drafts-heading" class="flex flex-col gap-3">
+            <h2 id="drafts-heading" class="text-sm font-semibold text-surface-600-400 uppercase tracking-wide">Drafts</h2>
+            {#if storageBlocked}
+                <p class="text-sm text-surface-600-400">Drafts can't be kept while the browser is blocking storage.</p>
+            {:else if draftsError}
+                <p class="text-sm text-error-500">Drafts aren't available in this browser: {draftsError}</p>
+            {:else if draftList === null}
+                <p class="text-sm text-surface-600-400">Loading…</p>
+            {:else if draftList.length === 0}
+                <p class="text-sm text-surface-600-400">No drafts yet.</p>
+            {:else}
+                <ul class="card preset-outlined-surface-200-800 divide-y divide-surface-200-800">
+                    {#each draftList as draft (draft.id)}
+                        <li class="flex items-center gap-2 pr-2">
+                            <button type="button" class="draft-row flex-1 min-w-0 text-left px-4 py-2.5 flex flex-col" disabled={busy} onclick={() => run(() => editDraft(draft.id))}>
+                                <span class="font-medium truncate">{draft.meta?.title || draft.meta?.mainFile || "Untitled"}</span>
+                                {#if draft.meta?.lastOpened}
+                                    <span class="text-xs text-surface-600-400">Last opened {dateFormat.format(draft.meta.lastOpened)}</span>
+                                {/if}
+                            </button>
+                            <button
+                                type="button"
+                                class="btn-icon btn-icon-sm hover:preset-tonal-error"
+                                title="Delete draft"
+                                aria-label="Delete {draft.meta?.title || "draft"}"
+                                disabled={busy}
+                                onclick={() => handleDelete(draft)}
+                            ><Trash2 size={15} /></button>
+                        </li>
+                    {/each}
+                </ul>
+            {/if}
+        </section>
+    {/if}
 </main>
 
 <style>

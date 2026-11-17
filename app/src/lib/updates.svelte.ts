@@ -2,11 +2,13 @@
 // for the update banner. Only in a built app: in development there's nothing to cache.
 import { dev } from "$app/env";
 import { base } from "./base-path.js";
+import { isElectron } from "./runtime.js";
 
 export const update = $state({ waiting: null as ServiceWorker | null });
 
 export async function registerServiceWorker() {
-    if (dev || !("serviceWorker" in navigator)) return;
+    // The desktop app has the editor's files already, and is updated by installing a new version
+    if (dev || isElectron() || !("serviceWorker" in navigator)) return;
     let registration: ServiceWorkerRegistration;
     try {
         registration = await navigator.serviceWorker.register(`${base}/service-worker.js`);
