@@ -185,6 +185,11 @@ function getAdditionalLinkParameters(link: string, expressions: boolean): { targ
     };
 }
 
+// Text with balanced brackets, nested up to three deep, as few characters as possible
+const noBrackets = "[^()]";
+const nested = (inner: string) => `\\((?:${noBrackets}|${inner})*\\)`;
+export const balancedTarget = `(?:${noBrackets}|${nested(nested(nested(noBrackets)))})*?`;
+
 function escapeForHandlebarsString(s: string): string {
     return s.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
 }
@@ -220,6 +225,11 @@ export function transformText(text: string, getNextSectionName: () => string | n
     });
     const restore = (s: string) => s.replace(/(\d+)/g, (_match, i) => mustaches[Number(i)]);
 
+    // A link's target, inside its (...). With expressions, a setter can have brackets in it, e.g.
+    // [[Buy]](shop, gold -= (price - 1) * 2), so the target can contain balanced brackets, up to
+    // three deep. Without, it ends at the first ")", as in Squiffy 6.
+    const target = expressions ? balancedTarget : "(?:.*?)";
+
     // nextSectionLinkRegex matches [[text>]] - a link to the next section
     const nextSectionLinkRegex = /\[\[([^\]]*?)>\]\]/g;
 
@@ -236,7 +246,7 @@ export function transformText(text: string, getNextSectionName: () => string | n
 
     // namedNextSectionLinkRegex matches [[text]](>) or [[text]](>, setter=value)
     // - a named link where target starts with >
-    const namedNextSectionLinkRegex = /\[\[([^\]]*?)\]\]\(>(.*?)\)/g;
+    const namedNextSectionLinkRegex = new RegExp(`\\[\\[([^\\]]*?)\\]\\]\\(>(${target})\\)`, "g");
 
     input.replace(namedNextSectionLinkRegex, ([match, rawText, rawRest], offset) => {
         const text = restore(rawText);
@@ -259,7 +269,7 @@ export function transformText(text: string, getNextSectionName: () => string | n
     //   open bracket
     //   any text - the name of the section
     //   closing bracket
-    const namedSectionLinkRegex = /\[\[([^\]]*?)\]\]\((.*?)\)/g;
+    const namedSectionLinkRegex = new RegExp(`\\[\\[([^\\]]*?)\\]\\]\\((${target})\\)`, "g");
 
     input.replace(namedSectionLinkRegex, ([match, rawText, rawName], offset) => {
         const text = restore(rawText);
@@ -277,7 +287,7 @@ export function transformText(text: string, getNextSectionName: () => string | n
     //   open bracket, but not http(s):// after it
     //   any text - the name of the passage
     //   closing bracket
-    const namedPassageLinkRegex = /(?<!!)\[([^\]]*?)\]\(((?!https?:\/\/).*?)\)/g;
+    const namedPassageLinkRegex = new RegExp(`(?<!!)\\[([^\\]]*?)\\]\\(((?!https?:\\/\\/)${target})\\)`, "g");
 
     input.replace(namedPassageLinkRegex, ([match, rawText, rawName], offset) => {
         const text = restore(rawText);

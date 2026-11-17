@@ -2013,6 +2013,29 @@ The end.
     expect(squiffyApi.get("done")).toBe(true);
 });
 
+test("link setters can have brackets in them", async () => {
+    const script = `
+[[start]]:
+@set gold = 10
+@set price = 3
+[[Buy]](shop, gold *= (price - 1), title = "Shop (open)")
+
+[[shop]]:
+{{title}}
+[Haggle](deal, gold = (gold + (price * 2)) / 2)
+
+[deal]:
+Done.
+`;
+    const { squiffyApi, element } = await initScript(script, true);
+    await squiffyApi.clickLink(findLink(element, "section", "Buy"));
+    expect(squiffyApi.get("gold")).toBe(20);
+    expect(squiffyApi.get("title")).toBe("Shop (open)");
+    await squiffyApi.clickLink(findLink(element, "passage", "Haggle"));
+    expect(squiffyApi.get("gold")).toBe(13);
+    expect(element.querySelector(".squiffy-error")).toBeNull();
+});
+
 test("passage link setters take expressions", async () => {
     const script = `
 [[start]]:

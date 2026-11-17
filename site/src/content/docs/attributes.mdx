@@ -138,7 +138,7 @@ These work both with `@set` and in links:
 
 `+=`, `-=`, `*=` and `/=` only work on numbers. To add text to the end of some text, use `+`: `@set title = name + " the Brave"`.
 
-In a link, the assignments are separated by commas, but a comma inside quotes is part of the text: `[[Say hello]](next, greeting = "Hello, friend", met = true)`.
+In a link, the assignments are separated by commas, but a comma inside quotes is part of the text: `[[Say hello]](next, greeting = "Hello, friend", met = true)`. They can use brackets, as long as each `(` has a matching `)`: `[[Buy]](shop, gold -= (price - 1) * 2)`.
 
 For example, this link copies the current score into `final_score` and doubles the bonus:
 

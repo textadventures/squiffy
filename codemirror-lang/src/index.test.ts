@@ -34,6 +34,11 @@ describe("squiffy-codemirror", () => {
         expect(spans.some(s => s.startsWith("    not js"))).toBe(false);
     });
 
+    test("a link's target can have brackets in it", () => {
+        expect(highlight("[[Buy]](shop, gold -= (price - 1) * 2) now")).toContain("[[Buy]](shop, gold -= (price - 1) * 2): tok-link");
+        expect(highlight("[a](b) (aside)")).toContain("[a](b): tok-link");
+    });
+
     test("handlebars", () => {
         expect(highlight("You have {{score}} points.")).toContain("{{score}}: tok-processingInstruction");
         expect(highlight("{{#if a > 1}}yes{{/if}}")).toEqual([

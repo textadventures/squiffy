@@ -117,6 +117,13 @@ describe("TextMate grammar", () => {
         expect(scopeOf(code, 0, "price")).toContain("variable.parameter.attribute");
     });
 
+    test("a link's setters can have brackets in them", () => {
+        const code = "[[Buy]](shop, gold *= (price - 1)) then [look](door, x = (a + (b * 2))) (aside)";
+        expect(scopeOf(code, 0, "price")).toContain("meta.link.section.squiffy");
+        expect(scopeOf(code, 0, "b")).toContain("meta.link.passage.squiffy");
+        expect(scopeOf(code, 0, " (aside)")).not.toContain("meta.link");
+    });
+
     test("handlebars", () => {
         expect(scopeOf("{{score}}", 0, "score")).toContain("variable.parameter.attribute.handlebars.squiffy");
         expect(scopeOf("{{get \"score\"}}", 0, "get")).toContain("support.function.helper.handlebars.squiffy");
