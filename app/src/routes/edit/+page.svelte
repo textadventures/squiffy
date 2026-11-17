@@ -611,14 +611,19 @@
         view.focus();
     }
 
-    // Drags a splitter: the sidebar's is on its right, the preview's on its left
+    // Drags a splitter: the sidebar's is on its right, the preview's on its left. The
+    // splitter captures the pointer, and iframes stop taking pointer events while it's
+    // dragged, as otherwise the preview's iframe swallows the moves whenever the pointer
+    // crosses into it, and the resize stutters.
     function handleSplitterPointerDown(e: PointerEvent, panel: "sidebar" | "preview") {
+        if (e.button !== 0) return;
         e.preventDefault();
+        const splitter = e.currentTarget as HTMLElement;
         const startX = e.clientX;
         const startWidth = panel === "sidebar" ? sidebarWidth : previewWidth;
         const [min, max] = panel === "sidebar" ? SIDEBAR_LIMITS : PREVIEW_LIMITS;
-        document.body.style.cursor = "col-resize";
-        document.body.style.userSelect = "none";
+        splitter.setPointerCapture(e.pointerId);
+        document.body.classList.add("splitter-dragging");
 
         function onMove(moveEvent: PointerEvent) {
             const delta = moveEvent.clientX - startX;
@@ -627,13 +632,14 @@
             else previewWidth = next;
         }
         function onUp() {
-            document.removeEventListener("pointermove", onMove);
-            document.removeEventListener("pointerup", onUp);
-            document.body.style.cursor = "";
-            document.body.style.userSelect = "";
+            splitter.removeEventListener("pointermove", onMove);
+            splitter.removeEventListener("pointerup", onUp);
+            splitter.removeEventListener("pointercancel", onUp);
+            document.body.classList.remove("splitter-dragging");
         }
-        document.addEventListener("pointermove", onMove);
-        document.addEventListener("pointerup", onUp);
+        splitter.addEventListener("pointermove", onMove);
+        splitter.addEventListener("pointerup", onUp);
+        splitter.addEventListener("pointercancel", onUp);
     }
 </script>
 
@@ -775,5 +781,12 @@
     }
     .splitter:active {
         background-color: color-mix(in srgb, var(--color-primary-500) 70%, transparent);
+    }
+    :global(body.splitter-dragging) {
+        cursor: col-resize;
+        user-select: none;
+    }
+    :global(body.splitter-dragging iframe) {
+        pointer-events: none;
     }
 </style>
