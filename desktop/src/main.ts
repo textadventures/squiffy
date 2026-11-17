@@ -22,7 +22,7 @@ function staticRoot(): string {
 }
 
 // The app's icon as a PNG, for the window on Linux (elsewhere it comes from the app bundle) and
-// the About panel. scripts/dist.mjs puts the right channel's in the resources.
+// the About panel on Windows and Linux. scripts/dist.mjs puts the right channel's in the resources.
 function iconPath(): string {
     return app.isPackaged ? nodePath.join(process.resourcesPath, "icon.png") : nodePath.resolve(app.getAppPath(), "build/icons/512x512.png");
 }
@@ -52,13 +52,23 @@ app.on("open-file", (event, path) => {
 async function start() {
     await app.whenReady();
     if (!devServer) handleAppScheme(staticRoot());
-    app.setAboutPanelOptions({
-        applicationName: app.getName(),
-        applicationVersion: app.getVersion(),
-        copyright: "MIT License",
-        website: "https://squiffystory.com",
-        iconPath: iconPath(),
-    });
+    if (process.platform === "darwin") {
+        // As Quest Viva does: the name, icon and copyright (electron-builder's default,
+        // "Copyright © <year> <author>") come from the app bundle. macOS shows the build number
+        // after the version, and Electron makes that the version too, so it's emptied rather
+        // than showing the version twice. Passing iconPath would show a PNG instead of the
+        // bundle's icon, which macOS draws in a grey frame.
+        app.setAboutPanelOptions({ version: "" });
+    } else {
+        // Windows and Linux have no defaults: anything left unset is blank
+        app.setAboutPanelOptions({
+            applicationName: app.getName(),
+            applicationVersion: app.getVersion(),
+            copyright: `Copyright © ${new Date().getFullYear()} Alex Warren`,
+            website: "https://squiffystory.com",
+            iconPath: iconPath(),
+        });
+    }
 
     const projectFs = registerProjectFsHandlers({
         ipcMain,
