@@ -93,6 +93,19 @@ describe("vite-plugin-squiffy", () => {
         expect(await getWatchFiles("game.squiffy")).toEqual([path.join(root, "chapters", "one.squiffy")]);
     });
 
+    test("imports wildcard matches in sorted order", async () => {
+        await writeFiles({
+            "main.js": "export { story } from \"./game.squiffy\";",
+            "game.squiffy": "@import chapters/*.squiffy\n\n[[start]]:\nHello.\n",
+            "chapters/c.squiffy": "[[c]]:\nC.\n",
+            "chapters/a.squiffy": "[[a]]:\nA.\n",
+            "chapters/B.squiffy": "[[b]]:\nB.\n",
+        });
+
+        expect(await getWatchFiles("game.squiffy")).toEqual(
+            ["B", "a", "c"].map(name => path.join(root, "chapters", `${name}.squiffy`)));
+    });
+
     test("bundles @import-ed scripts and stylesheets", async () => {
         await writeFiles({
             "main.js": "export { story } from \"./game.squiffy\";",

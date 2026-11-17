@@ -21,7 +21,14 @@ const externalFiles = (inputFilename: string, readFiles: string[]) => {
     return {
         getMatchingFilenames: async (pattern: string): Promise<string[]> => {
             const result = await glob(path.join(basePath, pattern).split(path.sep).join("/"), { absolute: true });
-            return result.filter(filename => !readFiles.includes(filename));
+            // Sort the matches, as the editor and CLI do, since glob's order isn't
+            // guaranteed and decides which same-named section wins.
+            const relative = (filename: string) => path.relative(basePath, filename).split(path.sep).join("/");
+            return result
+                .filter(filename => !readFiles.includes(filename))
+                .map(filename => ({ filename, key: relative(filename) }))
+                .sort((a, b) => a.key < b.key ? -1 : a.key > b.key ? 1 : 0)
+                .map(f => f.filename);
         },
         getContent: async (filename: string): Promise<string> => {
             const resolvedPath = path.resolve(basePath, filename);

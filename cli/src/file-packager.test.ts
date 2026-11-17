@@ -184,6 +184,20 @@ describe("external-files", () => {
         expect(matches.some(f => f.includes("other.md"))).toBe(false);
     });
 
+    test("getMatchingFilenames returns matches sorted by relative path", async () => {
+        await fs.mkdir(path.join(TEST_DIR, "b"), { recursive: true });
+        for (const name of ["c.txt", "a.txt", "B.txt", "b/a.txt", "a-b.txt"]) {
+            await fs.writeFile(path.join(TEST_DIR, name), name);
+        }
+
+        const ext = externalFiles(path.join(TEST_DIR, "main.squiffy"));
+        const matches = await ext.getMatchingFilenames("**/*.txt");
+
+        // The same plain string sort on "/"-separated relative paths as the editor
+        expect(matches.map(f => ext.getLocalFilename(f).split(path.sep).join("/")))
+            .toEqual(["B.txt", "a-b.txt", "a.txt", "b/a.txt", "c.txt"]);
+    });
+
     test("getContent reads file content", async () => {
         const contentFile = path.join(TEST_DIR, "content.txt");
         await fs.writeFile(contentFile, "Hello from external file!");
