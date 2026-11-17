@@ -144,6 +144,9 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
     const legacyErrors: string[] = [];
     const legacyWarnings: string[] = [];
     let autoSectionCount = 0;
+    // The story starts at the main file's first section by default, even if an @import
+    // above it has already added sections from other files.
+    let mainFirstSection: string | undefined;
 
     const report = (severity: DiagnosticSeverity, code: DiagnosticCode, filename: string | undefined, range: Range, message: string, legacyLine: number) => {
         diagnostics.push({ file: filename ?? "", range, severity, code, message });
@@ -162,16 +165,20 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
         let passage: Passage | null = null;
         let inUiBlock = false;
 
+        const addSection = (name: string, line: number, node: SectionNode | undefined) => {
+            if (isFirst && !mainFirstSection) mainFirstSection = name;
+            return story.addSection(name, filename, line, node);
+        };
         const ensureSectionExists = (line: number) => {
             if (!section && isFirst) {
-                return story.addSection("_default", filename, line, file.preamble);
+                return addSection("_default", line, file.preamble);
             }
             return section;
         };
         const addAutoSection = (node: SectionNode, line: number) => {
             autoSectionCount++;
             const autoSectionName = `_continue${autoSectionCount}`;
-            section = story.addSection(autoSectionName, filename, line, node);
+            section = addSection(autoSectionName, line, node);
             passage = null;
             return autoSectionName;
         };
@@ -187,7 +194,7 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
             const lineCount = header.range.start.line + 1;
             switch (header.type) {
                 case "section-header":
-                    section = story.addSection(header.name, filename, lineCount, node);
+                    section = addSection(header.name, lineCount, node);
                     passage = null;
                     return true;
                 case "continue": {
@@ -437,7 +444,7 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
             story.addSection("_default", settings.scriptBaseFilename, 0, undefined);
         }
         if (!story.start) {
-            story.start = Object.keys(story.sections)[0];
+            story.start = mainFirstSection ?? Object.keys(story.sections)[0];
         }
         sectionNames = Object.keys(story.sections);
         sectionIndexes = new Map(sectionNames.map((name, i) => [name, i]));

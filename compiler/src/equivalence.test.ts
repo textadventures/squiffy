@@ -99,7 +99,20 @@ async function expectSameResult(settings: Settings) {
         expect("threw" in actual, "the new compiler shouldn't throw").toBe(false);
         return;
     }
+    if (settings.externalFiles && /^@import .*\.squiffy/m.test(settings.script)) {
+        // The old compiler started the story at the first section of the first file it read, so
+        // an @import above the main file's first section made the story start in the imported
+        // file. The new one starts at the main file's first section (tested in compiler.test.ts).
+        expect(ignoreStart(actual)).toEqual(ignoreStart(expected));
+        return;
+    }
     expect(actual).toEqual(expected);
+}
+
+function ignoreStart<T>(result: T): T {
+    return JSON.parse(JSON.stringify(result)
+        .replace(/story\.start = \\"[^"\\]*\\"/g, "story.start = <start>")
+        .replace(/\\"start\\":\\"[^"\\]*\\"/g, "<start>"));
 }
 
 describe("story corpus", async () => {

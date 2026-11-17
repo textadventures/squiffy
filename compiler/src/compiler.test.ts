@@ -554,3 +554,51 @@ Some content
         "WARNING: test.squiffy line 2: \"@ui ui.js\" was ignored, as other files can't be loaded here",
     ]);
 });
+
+const inMemoryFiles = (files: Record<string, string>) => ({
+    getMatchingFilenames: async (pattern: string) => Object.keys(files).filter(name => name == pattern),
+    getContent: async (filename: string) => files[filename],
+    getLocalFilename: (filename: string) => filename,
+});
+
+test("The story starts at the main file's first section, even after an @import", async () => {
+    const result = await compile({
+        scriptBaseFilename: "story.squiffy",
+        script: `@title New Story
+@import chapter2.squiffy
+
+Start writing! [[chapter2]]
+`,
+        externalFiles: inMemoryFiles({ "chapter2.squiffy": "[[chapter2]]:\nhello\n" }),
+    });
+
+    assertSuccess(result);
+    expect(result.output.story.start).toBe("_default");
+    expect(Object.keys(result.output.story.sections)).toEqual(["chapter2", "_default"]);
+});
+
+test("The story starts at the main file's first named section, even after an @import", async () => {
+    const result = await compile({
+        scriptBaseFilename: "story.squiffy",
+        script: `@import chapter2.squiffy
+
+[[intro]]:
+Go to [[chapter2]].
+`,
+        externalFiles: inMemoryFiles({ "chapter2.squiffy": "[[chapter2]]:\nhello\n" }),
+    });
+
+    assertSuccess(result);
+    expect(result.output.story.start).toBe("intro");
+});
+
+test("A main file with only @imports starts at the first imported section", async () => {
+    const result = await compile({
+        scriptBaseFilename: "story.squiffy",
+        script: "@import chapter2.squiffy\n",
+        externalFiles: inMemoryFiles({ "chapter2.squiffy": "[[chapter2]]:\nhello\n" }),
+    });
+
+    assertSuccess(result);
+    expect(result.output.story.start).toBe("chapter2");
+});
