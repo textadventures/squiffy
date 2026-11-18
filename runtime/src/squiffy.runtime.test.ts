@@ -3633,3 +3633,95 @@ Start {{visits "start"}}, cave {{visits "cave"}}, lake {{visits "lake"}}, turns 
     localStorage.clear();
 });
 
+
+test("previous and previous_section say where the player was before (#56)", async () => {
+    const script = `
+[[start]]:
+Start, previous "{{previous}}". [a] [b] [[cave]]
+
+[a]:
+A after {{previous}}.
+
+[b]:
+B after {{previous}}.
+
+[[cave]]:
+Cave after {{previous}}, from section {{previous_section}}. [c]
+
+[c]:
+C after {{previous}}, from section {{previous_section}}.
+`;
+    const { squiffyApi, element } = await initScript(script);
+    expect(visibleText(element)).toContain("Start, previous \"\".");
+    expect(squiffyApi.get("previous")).toBeNull();
+    await squiffyApi.clickLink(findLink(element, "passage", "a"));
+    expect(visibleText(element)).toContain("A after start.");
+    await squiffyApi.clickLink(findLink(element, "passage", "b"));
+    expect(visibleText(element)).toContain("B after a.");
+    await squiffyApi.clickLink(findLink(element, "section", "cave"));
+    expect(visibleText(element)).toContain("Cave after b, from section start.");
+    await squiffyApi.clickLink(findLink(element, "passage", "c"));
+    expect(visibleText(element)).toContain("C after cave, from section start.");
+});
+
+test("previous works in conditions", async () => {
+    const script = `
+[[start]]:
+[[river]] [[forest]]
+
+[[river]]:
+[[cave]]
+
+[[forest]]:
+[[cave]]
+
+[[cave]]:
+{{#if previous_section = "river"}}You squeeze out of the water.{{else}}You step in from the trees.{{/if}}
+`;
+    const { squiffyApi, element } = await initScript(script, true);
+    await squiffyApi.clickLink(findLink(element, "section", "river"));
+    await squiffyApi.clickLink(findLink(element, "section", "cave"));
+    expect(visibleText(element)).toContain("You squeeze out of the water.");
+});
+
+test("A section reached with {{goto}} has the section before it as previous", async () => {
+    const script = `
+[[start]]:
+[[fight]]
+
+[[fight]]:
+{{goto "death"}}
+
+[[death]]:
+Died after {{previous}}.
+`;
+    const { squiffyApi, element } = await initScript(script);
+    await squiffyApi.clickLink(findLink(element, "section", "fight"));
+    expect(visibleText(element)).toContain("Died after fight.");
+    expect(squiffyApi.get("previous_section")).toBe("fight");
+});
+
+test("Going back undoes previous and previous_section", async () => {
+    const script = `
+[[start]]:
+[a] [[next]]
+
+[a]:
+A.
+
+[[next]]:
+Next.
+`;
+    const { squiffyApi, element } = await initScript(script);
+    await squiffyApi.clickLink(findLink(element, "passage", "a"));
+    await squiffyApi.clickLink(findLink(element, "section", "next"));
+    expect(squiffyApi.get("previous")).toBe("a");
+    expect(squiffyApi.get("previous_section")).toBe("start");
+
+    squiffyApi.goBack();
+    expect(squiffyApi.get("previous")).toBe("start");
+    expect(squiffyApi.get("previous_section")).toBeNull();
+
+    squiffyApi.goBack();
+    expect(squiffyApi.get("previous")).toBeNull();
+});

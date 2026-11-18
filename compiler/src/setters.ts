@@ -420,6 +420,9 @@ export function findUnquotedText(file: SquiffyFile, isSet: (name: string) => boo
 export const BUILT_IN_ATTRIBUTES: ReadonlyMap<string, string> = new Map([
     // #377: stories written before Squiffy counted turns often kept their own count called "turns"
     ["turns", "the number of links clicked in the story so far"],
+    // #56: and a story may have kept track of where the player had been
+    ["previous", "the section or passage the player saw just before this one"],
+    ["previous_section", "the section the player was in before this one"],
 ]);
 
 export interface BuiltInAttributeSet {

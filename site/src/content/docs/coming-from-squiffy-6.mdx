@@ -32,6 +32,10 @@ Anything that can't be converted exactly, such as text with both kinds of quote 
 
 Squiffy 7 counts the links the player clicks in an attribute called [`turns`](/attributes/#counting-turns). If your story keeps its own count called `turns`, for example with `@inc turns` in a master section, Squiffy now adds to it as well, so your count will go up twice as fast. You can take your own counting out and use Squiffy's, or rename your attribute. The editor underlines anywhere a story sets `turns`.
 
+## The `previous` and `previous_section` attributes
+
+Squiffy 7 keeps the section or passage the player saw before this one in [`previous`, and the section they were in before this one in `previous_section`](/attributes/#where-the-player-came-from). It changes them every time the player moves on, so if your story has its own attributes with either name, rename them. The editor underlines anywhere a story sets them.
+
 ## Starting the story
 
 In Squiffy 6, an `@import` above the main file's first section made the story begin in the imported file. Squiffy 7 begins in the main file. If your story relied on the old behaviour, choose the start section with [`@start`](/basic-concepts/#set-the-start-section).

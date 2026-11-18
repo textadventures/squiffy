@@ -25,6 +25,7 @@ Squiffy 7 brings a new editor. The language adds the [`@end`](/basic-concepts/#e
 - **`@set` and link assignments work like `{{#if}}`.** Text goes in quotes and attributes don't need an `@`, so a value can be a calculation or a comparison: `@set weapon = "sword"`, `@set gold = gold + price * 2`, `@set rich = gold > 100`, or `[[Buy]](shop, gold -= price)`. See [Setting attributes](/attributes/#setting-attributes).
 - **Go to another section from your text.** [`{{goto "section"}}`](/basic-concepts/#go-to-another-section) moves the story on without a link, for example `{{#if health <= 0}}{{goto "death"}}{{/if}}`, and `{{goto "darkness" after=3000}}` does it after a delay.
 - **Visit and turn counts.** [`{{visits "cave"}}`](/attributes/#the-visits-helper) says how many times the player has been to a section or passage, for example `{{#if (visits "cave") > 2}}`, and the [`turns` attribute](/attributes/#counting-turns) counts the links clicked in the whole story.
+- **Where the player came from.** The [`previous_section` and `previous` attributes](/attributes/#where-the-player-came-from) say which section, and which section or passage, the player saw before this one, so a section can begin differently depending on how they got there: `{{#if previous_section = "river"}}`.
 - **Endings.** Mark the sections where your story ends with [`@end`](/basic-concepts/#endings), and the editor won't report them as dead ends.
 
 ## Published stories
