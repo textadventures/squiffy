@@ -440,7 +440,7 @@ export function storyGraphDiagnostics(graph: StoryGraph): Diagnostic[] {
                 range: node.location.range,
                 severity: "warning",
                 code: "squiffy/unreachable-section",
-                message: "This section can't be reached from the start of the story, as nothing the player can reach links to it.",
+                message: `The section "${node.name}" can't be reached from the start of the story, as nothing the player can reach links to it.`,
             });
         }
         else if (node.deadEnd) {
@@ -449,7 +449,7 @@ export function storyGraphDiagnostics(graph: StoryGraph): Diagnostic[] {
                 range: node.location.range,
                 severity: "warning",
                 code: "squiffy/dead-end",
-                message: "This section has no way out, as it has no links to another section. If it's one of the story's endings, add @end to say so.",
+                message: `The section "${node.name}" has no way out, as it has no links to another section. If it's one of the story's endings, add @end to say so.`,
             });
         }
     }
