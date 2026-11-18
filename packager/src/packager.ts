@@ -23,6 +23,8 @@ export interface PackageOptions {
      * e.g. "cat.png" or "images/cat.png". They're added to the zip at those paths. With inlineHtml,
      * they're embedded in index.html as data: URIs, which the runtime uses via its resolveAssetUrl option.
      * They're not added to Package.files, as those are text files, and the caller already has the assets.
+     * With inlineHtml, the story's own stylesheets and scripts (@import of .css and .js files) are looked
+     * for here too, and included in index.html as <style> and <script> elements.
      */
     assets?: Record<string, Uint8Array>;
 }
@@ -96,8 +98,6 @@ export const createPackage = async (input: CompileSuccess, createZipOrOptions: b
     const uiInfo = input.getUiInfo();
 
     const infoComment = `<!--\n\nCreated with Squiffy ${version}\n\nhttps://squiffystory.com\nhttps://github.com/textadventures/squiffy\n\n-->`;
-    const scriptData = uiInfo.externalScripts.map(script => `<script src="${script}"></script>`).join("\n");
-    const stylesheetData = uiInfo.externalStylesheets.map(sheet => `<link rel="stylesheet" href="${sheet}"/>`).join("\n");
     const combinedCss = runtimeCss.toString() + "\n\n" + pageCss.toString();
 
     const storyJs = await input.getJs();
@@ -106,7 +106,35 @@ export const createPackage = async (input: CompileSuccess, createZipOrOptions: b
     for (const [path, bytes] of Object.entries(options.assets ?? {})) {
         assets[normaliseAssetPath(path)] = bytes;
     }
-    const hasAssets = Object.keys(assets).length > 0;
+
+    // The story's own stylesheets and scripts. A single-file export includes the ones it has the
+    // contents of, as it can't refer to separate files, and links to any others as before.
+    const inlined = new Set<string>();
+    const inlineText = (path: string) => {
+        if (!options.inlineHtml) return undefined;
+        let normalised: string;
+        try {
+            normalised = normaliseAssetPath(path);
+        } catch {
+            return undefined;
+        }
+        const bytes = assets[normalised];
+        if (!bytes) return undefined;
+        inlined.add(normalised);
+        return new TextDecoder().decode(bytes);
+    };
+    const scriptData = uiInfo.externalScripts.map(script => {
+        const text = inlineText(script);
+        return text === undefined
+            ? `<script src="${script}"></script>`
+            : "<script>\n" + text.replace(/<\/(script)/gi, "<\\/$1") + "\n    </script>";
+    }).join("\n");
+    const stylesheetData = uiInfo.externalStylesheets.map(sheet => {
+        const text = inlineText(sheet);
+        return text === undefined
+            ? `<link rel="stylesheet" href="${sheet}"/>`
+            : "<style>\n" + text.replace(/<\/(style)/gi, "<\\/$1") + "\n    </style>";
+    }).join("\n");
     let assetOptions = "";
 
     // Generate content for placeholders based on inline vs external mode
@@ -122,9 +150,9 @@ export const createPackage = async (input: CompileSuccess, createZipOrOptions: b
         runtimeContent = "<script>\n" + squiffyRuntime + "\n    </script>";
         storyContent = "<script>\n" + storyJs + "\n    </script>";
 
-        if (hasAssets) {
+        if (Object.keys(assets).some(path => !inlined.has(path))) {
             // A single-file export can't refer to separate asset files, so embed them as data: URIs.
-            const dataUris = Object.fromEntries(Object.entries(assets).map(([path, bytes]) =>
+            const dataUris = Object.fromEntries(Object.entries(assets).filter(([path]) => !inlined.has(path)).map(([path, bytes]) =>
                 [path, `data:${getMimeType(path)};base64,${toBase64(bytes)}`]));
             storyContent += "\n    <script>\nvar squiffyAssetUrls = " + scriptSafeJson(dataUris) + ";\n    </script>";
             assetOptions = "resolveAssetUrl: function (path) { return squiffyAssetUrls[path.replace(/^(\\.\\/)+/, \"\")] || path; },";

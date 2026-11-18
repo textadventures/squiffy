@@ -89,4 +89,38 @@ describe("createPackageFiles with assets", () => {
         const html = await fs.readFile(path.join(STORY_DIR, "index.html"), "utf8");
         expect(html).toContain('"cat.png":"data:image/png;base64,iVBORw=="');
     });
+
+    const importingStory = `@title Imports
+@import my_style.css
+@import my_script.js
+
+![A cat](cat.png)`;
+
+    test("includes the story's own stylesheets and scripts in inline HTML", async () => {
+        await writeFile("story.squiffy", importingStory);
+        await writeFile("cat.png");
+        await writeFile("my_style.css", "#squiffy { color: rebeccapurple; }");
+        await writeFile("my_script.js", "window.storyScriptRan = true;");
+
+        expect(await createPackageFiles(storyFile, STORY_DIR, { inlineHtml: true })).toBe(true);
+
+        const html = await fs.readFile(path.join(STORY_DIR, "index.html"), "utf8");
+        expect(html).toContain("#squiffy { color: rebeccapurple; }");
+        expect(html).toContain("window.storyScriptRan = true;");
+        expect(html).not.toContain('href="my_style.css"');
+        expect(html).not.toContain('src="my_script.js"');
+        expect(html).toContain('"cat.png":"data:image/png;base64,iVBORw=="');
+    });
+
+    test("adds the story's own stylesheets and scripts to the zip", async () => {
+        await writeFile("story.squiffy", importingStory);
+        await writeFile("cat.png");
+        await writeFile("my_style.css", "#squiffy { color: rebeccapurple; }");
+        await writeFile("my_script.js", "window.storyScriptRan = true;");
+
+        expect(await createPackageFiles(storyFile, STORY_DIR, { createZip: true })).toBe(true);
+
+        const zip = unzipSync(new Uint8Array(await fs.readFile(path.join(STORY_DIR, "output.zip"))));
+        expect(Object.keys(zip).sort()).toEqual(["cat.png", "index.html", "my_script.js", "my_style.css", "squiffy.runtime.global.js", "story.js", "style.css"]);
+    });
 });
