@@ -3,7 +3,7 @@ import * as path from "path";
 import { compile, convertSetters, findV5Syntax, formatDiagnostic } from "squiffy-compiler";
 import type { StoryOnDisk } from "squiffy-compiler/node";
 import { externalFiles } from "./external-files.js";
-import { findAssets, getStoryText } from "./assets.js";
+import { findAssets, findImportedFiles, getStoryText } from "./assets.js";
 import { createPackage, PackageOptions } from "@textadventures/squiffy-packager";
 
 // A story given as a filename is just that file and its @imports, as with no squiffy.json
@@ -70,9 +70,13 @@ export const createPackageFiles = async (input: string | StoryOnDisk, outputPath
         return false;
     }
 
-    // Asset files (images etc.) referenced by the story. The other package files are written to the
-    // story's folder, alongside these, so they only need to be passed on for the zip or for inlining.
-    const assets = options.assets ?? findAssets(inputFilename, getStoryText(result));
+    // Asset files (images etc.) referenced by the story, and its own stylesheets and scripts. The other
+    // package files are written to the story's folder, alongside these, so they only need to be passed
+    // on for the zip or for inlining.
+    const assets = options.assets ?? {
+        ...findAssets(inputFilename, getStoryText(result)),
+        ...findImportedFiles(inputFilename, result),
+    };
     const assetPaths = Object.keys(assets);
     if (assetPaths.length > 0 && (options.createZip || options.inlineHtml)) {
         console.log(`Including asset${assetPaths.length == 1 ? "" : "s"}: ${assetPaths.join(", ")}`);

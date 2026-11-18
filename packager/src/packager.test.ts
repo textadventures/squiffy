@@ -316,3 +316,80 @@ test("Asset paths outside the package are rejected", () => {
     expect(() => normaliseAssetPath("/etc/cat.png")).toThrow();
     expect(() => normaliseAssetPath("C:/cat.png")).toThrow();
 });
+
+// A story that @imports a stylesheet and a script, as the CLI and editor compile them
+const compileWithImports = async (script: string, files: string[]) => {
+    const compileResult = await compile({
+        script,
+        externalFiles: {
+            getMatchingFilenames: async pattern => files.filter(f => f === pattern),
+            getContent: async () => "",
+            getLocalFilename: filename => filename,
+        },
+    });
+    if (!compileResult.success) throw new Error("Compile failed");
+    return compileResult;
+};
+
+const storyCss = "#squiffy { color: rebeccapurple; }";
+const storyScript = "window.storyScriptRan = true;";
+const encode = (text: string) => new TextEncoder().encode(text);
+
+test("Inline HTML includes the story's own stylesheets and scripts", async () => {
+    const result = await compileWithImports("@import my_style.css\n@import scripts/my_script.js\n\nHello", ["my_style.css", "scripts/my_script.js"]);
+    const pkg = await createPackage(result, {
+        inlineHtml: true,
+        assets: { "my_style.css": encode(storyCss), "scripts/my_script.js": encode(storyScript), "cat.png": pngBytes },
+    });
+    const html = pkg.files["index.html"];
+
+    expect(html).not.toContain('href="my_style.css"');
+    expect(html).not.toContain('src="scripts/my_script.js"');
+    expect(html).toContain(storyCss);
+    expect(html).toContain(storyScript);
+
+    // The story's styles come after Squiffy's, so they win
+    expect(html.indexOf(storyCss)).toBeGreaterThan(html.indexOf("#squiffy-container"));
+    // The story's script runs before the story starts, as it does from a separate file
+    expect(html.indexOf(storyScript)).toBeLessThan(html.indexOf("squiffyRuntime.init"));
+
+    // They're not embedded again as data URIs, but other assets still are
+    expect(html).toContain('"cat.png":"data:image/png');
+    expect(html).not.toContain('"my_style.css":');
+    expect(html).not.toContain('"scripts/my_script.js":');
+});
+
+test("Inlined stylesheets and scripts can't close their elements", async () => {
+    const result = await compileWithImports("@import a.css\n@import a.js\n\nHello", ["a.css", "a.js"]);
+    const pkg = await createPackage(result, {
+        inlineHtml: true,
+        assets: { "a.css": encode("/* </style><b>css</b> */"), "a.js": encode("// </script><b>js</b>") },
+    });
+    const html = pkg.files["index.html"];
+    expect(html).not.toContain("</style><b>css");
+    expect(html).not.toContain("</script><b>js");
+    expect(html).toContain("<\\/style><b>css");
+    expect(html).toContain("<\\/script><b>js");
+});
+
+test("Inline HTML still links to a stylesheet or script it wasn't given", async () => {
+    const result = await compileWithImports("@import my_style.css\n@import my_script.js\n\nHello", ["my_style.css", "my_script.js"]);
+    const html = (await createPackage(result, { inlineHtml: true })).files["index.html"];
+    expect(html).toContain('<link rel="stylesheet" href="my_style.css"/>');
+    expect(html).toContain('<script src="my_script.js"></script>');
+});
+
+test("Multi-file packages link to the story's own stylesheets and scripts", async () => {
+    const result = await compileWithImports("@import my_style.css\n@import my_script.js\n\nHello", ["my_style.css", "my_script.js"]);
+    const pkg = await createPackage(result, {
+        createZip: true,
+        assets: { "my_style.css": encode(storyCss), "my_script.js": encode(storyScript) },
+    });
+    const html = pkg.files["index.html"];
+    expect(html).toContain('<link rel="stylesheet" href="my_style.css"/>');
+    expect(html).toContain('<script src="my_script.js"></script>');
+    expect(html).not.toContain(storyCss);
+    const zip = unzipSync(pkg.zip!);
+    expect(strFromU8(zip["my_style.css"])).toBe(storyCss);
+    expect(strFromU8(zip["my_script.js"])).toBe(storyScript);
+});

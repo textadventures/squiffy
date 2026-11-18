@@ -35,23 +35,41 @@ export const findAssets = (inputFilename: string, storyText: string): Record<str
             // Not valid percent-encoding - use it as it is
         }
         if (reference in result) continue;
-
-        const filename = path.resolve(basePath, reference);
-        const relative = path.relative(basePath, filename);
-        if (!relative || relative.startsWith("..") || path.isAbsolute(relative)) continue;
-
-        let stat: fs.Stats;
-        try {
-            stat = fs.statSync(filename);
-        } catch {
-            continue;
-        }
-        if (!stat.isFile()) continue;
-
-        result[relative.split(path.sep).join("/")] = fs.readFileSync(filename);
+        readFileInFolder(basePath, reference, result);
     }
 
     return result;
+};
+
+// Adds a file to result, by its path relative to basePath, if it's a file in that folder (or below it)
+const readFileInFolder = (basePath: string, reference: string, result: Record<string, Uint8Array>) => {
+    const filename = path.resolve(basePath, reference);
+    const relative = path.relative(basePath, filename);
+    if (!relative || relative.startsWith("..") || path.isAbsolute(relative)) return;
+
+    let stat: fs.Stats;
+    try {
+        stat = fs.statSync(filename);
+    } catch {
+        return;
+    }
+    if (!stat.isFile()) return;
+
+    result[relative.split(path.sep).join("/")] = fs.readFileSync(filename);
+};
+
+/**
+ * Reads the story's own stylesheets and scripts (@import of .css and .js files), which the compiler
+ * names relative to the story folder, so they can go in the zip or be included in a single HTML file.
+ */
+export const findImportedFiles = (inputFilename: string, result: CompileSuccess): Record<string, Uint8Array> => {
+    const basePath = path.resolve(path.dirname(inputFilename));
+    const { externalStylesheets, externalScripts } = result.getUiInfo();
+    const files: Record<string, Uint8Array> = {};
+    for (const reference of [...externalStylesheets, ...externalScripts]) {
+        readFileInFolder(basePath, reference, files);
+    }
+    return files;
 };
 
 // All the text and script in a compiled story, which is where we look for asset references.
