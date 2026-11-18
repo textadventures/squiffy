@@ -1,14 +1,14 @@
-// Whether the browser lets the editor use the origin-private file system (OPFS), where drafts
+// Whether the browser lets the editor use the origin-private file system (OPFS), where stories
 // are kept (project.svelte.ts). Strict privacy settings (e.g. Firefox blocking all cookies),
 // private windows and privacy add-ons can block it: navigator.storage.getDirectory() then throws (often a
 // SecurityError), or navigator.storage isn't there at all. Checked once at startup, so the home
-// page can say so plainly instead of every draft action failing with the browser's own message.
+// page can say so plainly instead of every action on them failing with the browser's own message.
 
 export type StorageCheck = { ok: true } | { ok: false; detail: string };
 
 type StorageLike = { getDirectory?: () => Promise<unknown> } | undefined;
 
-export async function checkDraftStorage(
+export async function checkBrowserStorage(
     storage: StorageLike = typeof navigator !== "undefined" ? navigator.storage : undefined,
 ): Promise<StorageCheck> {
     if (typeof storage?.getDirectory !== "function") {

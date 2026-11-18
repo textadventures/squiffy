@@ -10,7 +10,7 @@
     import { PROJECT_FILENAME, type MapPositions } from "squiffy-compiler";
     import { basename, dirname, extname, guessMimeType, joinPath, parsePath } from "@textadventures/project-fs";
     import { base } from "#lib/base-path.js";
-    import { project, openDraft, openRecentFolder, downloadFile, storyPath, offerProjectFile, setterConversionMessage, type ProjectOffer } from "#lib/project.svelte.js";
+    import { project, openBrowserStory, openRecentFolder, downloadFile, storyPath, offerProjectFile, setterConversionMessage, type ProjectOffer } from "#lib/project.svelte.js";
     import { isAsset, isSquiffyFile, isTextFile } from "#lib/file-types.js";
     import { createLanguageClient, type LanguageClient } from "#lib/language/client.js";
     import { applyEditsToString, applyTextEdits, languageFeatures, recheckProblems, toOffset, toPosition } from "#lib/language/codemirror.js";
@@ -20,6 +20,7 @@
     import { isNarrow } from "#lib/layout.svelte.js";
     import { showToast } from "#lib/toast.js";
     import { chooseDialog, confirmDialog, promptDialog } from "#lib/confirm.js";
+    import BackupBanner from "#components/BackupBanner.svelte";
     import Toolbar from "#components/Toolbar.svelte";
     import FilesPanel from "#components/FilesPanel.svelte";
     import OutlinePanel from "#components/OutlinePanel.svelte";
@@ -98,12 +99,12 @@
 
     onMount(() => {
         void (async () => {
-            const draftId = page.url.searchParams.get("draft");
+            const storyId = page.url.searchParams.get("story");
             const folderId = page.url.searchParams.get("folder");
             const current = project.current;
-            const isOpen = current !== null && current.source.id === (draftId ?? folderId);
+            const isOpen = current !== null && current.source.id === (storyId ?? folderId);
             try {
-                if (draftId && !isOpen) await openDraft(draftId);
+                if (storyId && !isOpen) await openBrowserStory(storyId);
                 // After a reload: only if the browser still lets us use the folder, since asking
                 // again needs a click. Otherwise it's on the home page's Recent folders.
                 if (folderId && !isOpen && !(await openRecentFolder(folderId, false))) {
@@ -798,6 +799,7 @@
         try {
             const { fileName, saveBlob, zipProject } = await import("#lib/export.js");
             saveBlob(new Blob([await zipProject(current) as BlobPart], { type: "application/zip" }), fileName(current.displayName, ".zip"));
+            await current.resolveBackupReminder();
         } catch (err) {
             showToast(`Couldn't download the project: ${errorText(err)}`);
         }
@@ -1005,6 +1007,7 @@
             onabout={() => { aboutOpen = true; }}
             onplaytab={handlePlayInTab}
         />
+        <BackupBanner ondownload={handleDownloadProject} />
         <div class="flex flex-1 overflow-hidden">
             {#if isNarrow.current ? narrowPane === "outline" : !(mapOpen && mapMaximized)}
                 <div

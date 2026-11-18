@@ -15,7 +15,7 @@ Squiffy 7 brings a new editor. The language adds the [`@end`](/basic-concepts/#e
 - **A [story map](/editor/#the-story-map)** shows your sections, passages and links as a map you can move around, drawn from your script as you type. Problems show on it too, as does the way you went through the story when you test it. You can add links and sections, and rename them, from the map.
 - **An outline** of your sections and passages, with a search box, replaces the section and passage dropdowns.
 - **Run from any section**, so you can test the part you're working on without playing through from the start. As you click through the story, the script follows.
-- **Drafts** keep stories in your browser without choosing a file, in every browser. Download a draft as a `.zip` to keep a copy.
+- **Stories in your browser**, without choosing a file, in every browser. Download one as a `.zip` to keep a copy.
 - **Folders.** In Chrome and Edge, the editor can open a story's folder on your computer, and remembers the folders you've opened.
 - **A dark theme**, and a text size setting. The preview follows it.
 - **A [desktop app](/desktop-app/)** for Mac, Windows and Linux, with the same editor, which keeps your stories in folders on your computer.
@@ -36,9 +36,9 @@ Squiffy 7 brings a new editor. The language adds the [`@end`](/basic-concepts/#e
 
 ## Coming from Squiffy 6
 
-If you had unsaved work in the Squiffy 6 editor, the home page offers to open it as a draft.
+If you had unsaved work in the Squiffy 6 editor, the home page offers to open it.
 
-The Squiffy 6 editor opened and saved a single `.squiffy` file. To edit a story's file where it is, open the folder it's in. Otherwise, use **Open file** to copy it into a draft.
+The Squiffy 6 editor opened and saved a single `.squiffy` file. To edit a story's file where it is, open the folder it's in. Otherwise, use **Open file** to copy it into your browser.
 
 ### Setting attributes
 
@@ -54,7 +54,7 @@ Numbers, `true` and `false`, `@set has_key`, `@set not has_key`, `:=`, `@inc` an
 
 A story without a `squiffy.json` keeps the Squiffy 6 rules, so it works unchanged. When a story gets a `squiffy.json`, its assignments are converted:
 
-- **Editor:** opening a Squiffy 6 file as a draft converts it, and so does adding a `squiffy.json` to a folder (when you add a second file, or use the story map). Open files are changed in the editor, so you can use Undo.
+- **Editor:** opening a Squiffy 6 file in the browser converts it, and so does adding a `squiffy.json` to a folder (when you add a second file, or use the story map). Open files are changed in the editor, so you can use Undo.
 - **CLI:** run with `--convert-v6`, which converts the story and adds a `squiffy.json`. See [Converting from Squiffy 6](/cli/#converting-from-squiffy-6).
 
 Anything that can't be converted exactly, such as text with both kinds of quote in it, is left as it is and listed so you can change it by hand. In a story with a `squiffy.json`, the editor underlines assignments that still look like Squiffy 6, with a quick fix: an attribute written as `@score`, and text without quotes, such as `@set greeting = Hello there`, or `@set weapon = sword` when there's no attribute called `sword`.
