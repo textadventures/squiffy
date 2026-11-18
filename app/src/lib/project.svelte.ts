@@ -5,10 +5,10 @@
 // .squiffy file in the folder is part of the story. Without one, the main file is the one
 // remembered in the browser, which @imports the others. A project comes from one of:
 //   - a folder on disk, opened with File System Access (Chromium browsers)
-//   - a local draft, kept in the browser's origin-private file system (every modern browser):
-//     New, and Open file, which imports a .squiffy file into a new draft
+//   - a story kept in the browser's origin-private file system (every modern browser):
+//     New, and Open file, which imports a .squiffy file into a new one
 //   - in the Electron desktop app (#276), a folder on disk through project-fs's Electron bridge.
-//     There are no drafts there: New makes a folder, and Open file opens a file's folder.
+//     There are no stories in the browser there: New makes a folder, and Open file opens a file's folder.
 //
 // Each open file saves on its own, shortly after typing stops, as in Quest Viva, and Save
 // (Ctrl+S) saves them all at once.
@@ -25,6 +25,7 @@ import { checklistDialog, chooseDialog, confirmDialog } from "./confirm.js";
 import { showToast } from "./toast.js";
 import { findRecentFolder, forgetFolder as forgetBrowserFolder, hasPermission, listRecentFolders as listBrowserFolders, rememberFolder, updateRecentFolder } from "./recent.js";
 import { desktopApi } from "./desktop.js";
+import { needsBackup } from "./backup.js";
 import { convertTwineFile, TWINE_FILE_PATTERN, twineImportMessage } from "./twine-import.js";
 
 export const SQUIFFY_FILES: FileTypeFilter[] = [
@@ -54,17 +55,21 @@ When a new section appears, any passage links in the previous section that weren
 This section has no links, so the story ends here. The @end above says that's on purpose. Without it, the editor would warn you about a dead end.
 `;
 
-// Kept beside each draft in OPFS (projects/<id>/meta.json)
-export interface DraftMeta {
+// Kept beside each story in the browser, in OPFS (stories/<id>/meta.json)
+export interface BrowserStoryMeta {
     title: string;
     mainFile: string;
     lastOpened: number;
+    // When the author last changed a file, and when they last downloaded the project or
+    // dismissed the reminder to (backup.ts)
+    lastEdited?: number;
+    backupReminderResolved?: number;
 }
 
 // A folder's id is its place in the recent folders list (recent.ts)
-export type ProjectSource = { kind: "draft"; id: string } | { kind: "folder"; id: string };
+export type ProjectSource = { kind: "browser"; id: string } | { kind: "folder"; id: string };
 
-export const drafts = new OpfsProjectStore<DraftMeta>({ baseDir: "drafts" });
+export const browserStories = new OpfsProjectStore<BrowserStoryMeta>({ baseDir: "stories" });
 
 // The desktop app's bridges, or null in a browser
 const desktop = desktopApi();
@@ -115,7 +120,7 @@ class OpenFile {
             // The language service reads .squiffy files from their editors, but anything else,
             // such as squiffy.json, from the project
             if (!this.path.toLowerCase().endsWith(".squiffy")) this.project.onFileChanged?.(this.path);
-            await this.project.touch();
+            await this.project.touch(true);
         } catch (err) {
             this.saveError = err instanceof Error ? err.message : String(err);
         } finally {
@@ -133,7 +138,7 @@ export type { OpenFile };
 class OpenProject {
     fs: ProjectFileSystem;
     source: ProjectSource;
-    // The main file remembered in the browser (a draft's meta.json, or the recent folders list),
+    // The main file remembered in the browser (a browser story's meta.json, or the recent folders list),
     // used when there's no squiffy.json
     storedMainFile = $state("");
     title = $state("");
@@ -163,6 +168,13 @@ class OpenProject {
     dirty = $derived(this.openFiles.some(f => f.dirty));
     saving = $derived(this.openFiles.some(f => f.saving));
     saveError = $derived(this.openFiles.find(f => f.saveError)?.saveError ?? null);
+
+    // For a story kept in the browser, from its meta.json: see needsBackup
+    lastEdited = $state<number | undefined>(undefined);
+    backupReminderResolved = $state<number | undefined>(undefined);
+    get showBackupReminder(): boolean {
+        return this.source.kind === "browser" && needsBackup(this, Date.now());
+    }
 
     // Told about every file this project adds, changes on disk, deletes or renames (after the
     // file list is up to date), so the language service and the preview can catch up
@@ -328,6 +340,7 @@ class OpenProject {
         if (await this.fs.exists(path)) throw new Error(`There's already a file called ${path}.`);
         await this.fs.write(path, text);
         await this.refreshFiles();
+        await this.touch(true);
         this.onFileChanged?.(path);
     }
 
@@ -335,6 +348,7 @@ class OpenProject {
     async writeFile(path: string, data: Uint8Array) {
         await this.fs.write(path, data);
         await this.refreshFiles();
+        await this.touch(true);
         this.onFileChanged?.(path);
     }
 
@@ -349,6 +363,7 @@ class OpenProject {
             if (this.activePath === from) this.activePath = to;
         }
         await this.refreshFiles();
+        await this.touch(true);
         if (this.mainFile === from || this.storedMainFile === from) await this.setMainFile(to);
         this.onFileChanged?.(from);
         this.onFileChanged?.(to);
@@ -363,22 +378,34 @@ class OpenProject {
         }
         await this.fs.delete(path);
         await this.refreshFiles();
+        await this.touch(true);
         this.onFileChanged?.(path);
     }
 
-    // Records the main file and when the project was last used: in a draft's meta.json, with its
-    // title, or in the recent folders list
-    async touch() {
+    // Records the main file and when the project was last used (and, with `edited`, changed): in
+    // a browser story's meta.json, with its title, or in the recent folders list
+    async touch(edited = false) {
         if (this.source.kind === "folder") {
             if (desktop) await desktop.desktop.recent.update(this.source.id, this.storedMainFile);
             else await updateRecentFolder(this.source.id, this.storedMainFile);
             return;
         }
-        await drafts.setMeta(this.source.id, {
+        const now = Date.now();
+        if (edited) this.lastEdited = now;
+        await browserStories.setMeta(this.source.id, {
             title: this.title,
             mainFile: this.storedMainFile,
-            lastOpened: Date.now(),
+            lastOpened: now,
+            lastEdited: this.lastEdited,
+            backupReminderResolved: this.backupReminderResolved,
         });
+    }
+
+    // After downloading the project, or dismissing the reminder to
+    async resolveBackupReminder() {
+        if (this.source.kind !== "browser") return;
+        this.backupReminderResolved = Date.now();
+        await this.touch();
     }
 
     closeAll() {
@@ -421,9 +448,11 @@ export async function projectMainFile(fs: ProjectFileSystem): Promise<string | n
 }
 
 // Opens a project at its main file: squiffy.json's, or else the one remembered in the browser
-async function start(fs: ProjectFileSystem, source: ProjectSource, storedMainFile: string, title = "") {
+async function start(fs: ProjectFileSystem, source: ProjectSource, storedMainFile: string, meta?: BrowserStoryMeta | null) {
     const opened = new OpenProject(fs, source, (await projectMainFile(fs)) ?? storedMainFile);
-    if (title) opened.title = title;
+    if (meta?.title) opened.title = meta.title;
+    opened.lastEdited = meta?.lastEdited;
+    opened.backupReminderResolved = meta?.backupReminderResolved;
     await opened.refreshFiles();
     // A squiffy.json whose main file is missing still leaves something to open
     await opened.open((await fs.exists(opened.mainFile)) ? opened.mainFile : opened.storedMainFile);
@@ -458,11 +487,11 @@ export function setterConversionMessage(conversion: SetterConversion): string {
     return message;
 }
 
-// A new draft with one .squiffy file, and a squiffy.json naming it. A draft is a copy, and has a
-// squiffy.json, so its setters are converted to Squiffy 7's rules (#373).
-async function createDraft(mainFile: string, text: string): Promise<string> {
+// A new story in the browser with one .squiffy file, and a squiffy.json naming it. It's a copy,
+// and has a squiffy.json, so its setters are converted to Squiffy 7's rules (#373).
+async function createBrowserStory(mainFile: string, text: string): Promise<string> {
     const id = crypto.randomUUID();
-    const fs = await drafts.create(id, { title: "", mainFile, lastOpened: Date.now() });
+    const fs = await browserStories.create(id, { title: "", mainFile, lastOpened: Date.now() });
     const conversion = convertSetters(text);
     text = conversion.script;
     const message = setterConversionMessage({ converted: conversion.converted, problems: conversion.problems.map(p => `line ${p.line}`) });
@@ -472,43 +501,43 @@ async function createDraft(mainFile: string, text: string): Promise<string> {
     return id;
 }
 
-export async function newDraft(): Promise<string> {
-    return createDraft(DEFAULT_MAIN_FILE, NEW_STORY);
+export async function newBrowserStory(): Promise<string> {
+    return createBrowserStory(DEFAULT_MAIN_FILE, NEW_STORY);
 }
 
-export async function openDraft(id: string): Promise<void> {
-    const meta = await drafts.getMeta(id);
-    const fs = await drafts.open(id);
+export async function openBrowserStory(id: string): Promise<void> {
+    const meta = await browserStories.getMeta(id);
+    const fs = await browserStories.open(id);
     const mainFile = (await projectMainFile(fs)) ?? meta?.mainFile ?? DEFAULT_MAIN_FILE;
     // Say so, rather than quietly opening an empty story in its place
     if (!(await fs.exists(mainFile))) throw new Error(`its story file, ${mainFile}, is missing.`);
-    await start(fs, { kind: "draft", id }, mainFile, meta?.title);
+    await start(fs, { kind: "browser", id }, mainFile, meta);
 }
 
-export async function deleteDraft(id: string): Promise<void> {
-    if (current?.source.kind === "draft" && current.source.id === id) setCurrent(null);
-    await drafts.delete(id);
+export async function deleteBrowserStory(id: string): Promise<void> {
+    if (current?.source.kind === "browser" && current.source.id === id) setCurrent(null);
+    await browserStories.delete(id);
 }
 
-export async function listDrafts() {
-    const list = await drafts.listProjects();
+export async function listBrowserStories() {
+    const list = await browserStories.listProjects();
     return list.sort((a, b) => (b.meta?.lastOpened ?? 0) - (a.meta?.lastOpened ?? 0));
 }
 
-// A new draft with one .squiffy file, e.g. unsaved work from the 6.x editor. Returns its id.
-export async function draftFromText(fileName: string | undefined, text: string): Promise<string> {
+// A new story in the browser with one .squiffy file, e.g. unsaved work from the 6.x editor. Returns its id.
+export async function browserStoryFromText(fileName: string | undefined, text: string): Promise<string> {
     const name = fileName && /^[^/\\:*?"<>|]+\.squiffy$/i.test(fileName) ? fileName : DEFAULT_MAIN_FILE;
-    return createDraft(name, text);
+    return createBrowserStory(name, text);
 }
 
 // Imports a .squiffy file, a project zip (from Download project), or a Twine story (converted,
-// if the author says to), into a new draft. Returns the draft's id, or null if they cancel.
+// if the author says to), into a new story in the browser. Returns its id, or null if they cancel.
 export async function importFile(file: File): Promise<string | null> {
     if (TWINE_FILE_PATTERN.test(file.name)) {
         const converted = await convertTwineFile(file.name, await file.text());
         if (!converted) return null;
         const id = crypto.randomUUID();
-        const fs = await drafts.create(id, { title: converted.title, mainFile: converted.mainFile, lastOpened: Date.now() });
+        const fs = await browserStories.create(id, { title: converted.title, mainFile: converted.mainFile, lastOpened: Date.now() });
         for (const [path, text] of converted.files) await fs.write(path, text);
         showToast(twineImportMessage(converted), "info", 12000);
         return id;
@@ -519,14 +548,14 @@ export async function importFile(file: File): Promise<string | null> {
         const mainFile = zipMainFile(files);
         if (!mainFile) throw new Error(`There's no .squiffy file in ${file.name}.`);
         const id = crypto.randomUUID();
-        const fs = await drafts.create(id, { title: "", mainFile, lastOpened: Date.now() });
+        const fs = await browserStories.create(id, { title: "", mainFile, lastOpened: Date.now() });
         for (const [path, data] of files) await fs.write(path, data);
         return id;
     }
     const text = await file.text();
     // Keep the file's name when it's a valid project path, else fall back to the default
     const name = /^[^/\\:*?"<>|]+\.squiffy$/i.test(file.name) ? file.name : DEFAULT_MAIN_FILE;
-    return createDraft(name, text);
+    return createBrowserStory(name, text);
 }
 
 // Opens a folder with File System Access, and the main .squiffy file in it, and adds it to the

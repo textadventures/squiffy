@@ -1,6 +1,6 @@
 // Getting stories out of the editor, and back in: publishing (with the packager, in the language
-// worker), and the whole project as a zip, which Open file reads back as a new draft. A zip is how
-// to keep a copy of a draft, which lives only in this browser.
+// worker), and the whole project as a zip, which Open file reads back as a new story. A zip is how
+// to keep a copy of a story kept in the browser, which lives only there.
 import { strToU8, unzipSync, zipSync } from "fflate";
 import { isJunkFile, isSkippedDirectory, parsePath } from "@textadventures/project-fs";
 import { parseProjectFile, PROJECT_FILENAME } from "squiffy-compiler";

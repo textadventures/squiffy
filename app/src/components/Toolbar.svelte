@@ -1,6 +1,8 @@
 <script lang="ts">
     // The editor's toolbar, laid out like Quest Viva's: home, the story's name and save state on
-    // the left; actions and the overflow menu on the right.
+    // the left; on the right, in groups, as a menu bar would be: File, adding to the story (Add,
+    // images), Undo and Redo, views of the story (problems, map), then Run and the overflow menu.
+    // Menus open from their button's left edge, as a menu bar's do, unless that's off the screen.
     import { AppBar } from "@skeletonlabs/skeleton-svelte";
     import { goto } from "$app/navigation";
     import { base } from "#lib/base-path.js";
@@ -181,10 +183,6 @@
                 ><Home size={16} /></button>
                 {#if p}
                     <span class="text-sm font-medium truncate min-w-0" title={p.source.kind === "folder" ? p.fs.name : p.mainFile}>{p.displayName}</span>
-                    {#if p.source.kind === "draft"}
-                        <!-- Left out on a phone, where the toolbar's buttons need the room -->
-                        <span class="badge preset-tonal text-[11px] ml-2 shrink-0 hidden md:inline-flex" title="Kept in this browser. Download it to keep a copy.">Draft</span>
-                    {/if}
                     <span role="status" aria-live="polite" class="contents">
                         {#if p.saveError}
                             <button
@@ -211,7 +209,22 @@
         </AppBar.Lead>
         <AppBar.Trail>
             <div class="flex gap-1 md:gap-1.5 items-center">
-                <DropdownMenu items={insertMenuItems}>
+                {#if !isNarrow.current}
+                    <DropdownMenu items={fileMenuItems} align="left">
+                        {#snippet trigger(toggle, open)}
+                            <button
+                                type="button"
+                                class="btn btn-xs preset-outlined-primary-500"
+                                onclick={toggle}
+                                title="File"
+                                aria-haspopup="menu"
+                                aria-expanded={open}
+                            >File <ChevronDown size={12} /></button>
+                        {/snippet}
+                    </DropdownMenu>
+                    <div class="toolbar-divider"></div>
+                {/if}
+                <DropdownMenu items={insertMenuItems} align="left">
                     {#snippet trigger(toggle, open)}
                         <button
                             type="button"
@@ -233,22 +246,11 @@
                         aria-pressed={outlineOpen}
                     ><ListTree size={16} /></button>
                 {:else}
+                    <button type="button" class="toolbar-icon-btn" onclick={onassets} title="Images and other files" aria-label="Images and other files"><ImageIcon size={16} /></button>
+                    <div class="toolbar-divider"></div>
                     <button type="button" class="toolbar-icon-btn" onclick={() => oncommand?.("undo")} title="Undo ({mod}Z)" aria-label="Undo"><Undo2 size={16} /></button>
                     <button type="button" class="toolbar-icon-btn" onclick={() => oncommand?.("redo")} title="Redo ({mod}Shift+Z)" aria-label="Redo"><Redo2 size={16} /></button>
                     <div class="toolbar-divider"></div>
-                    <button type="button" class="toolbar-icon-btn" onclick={onassets} title="Images and other files" aria-label="Images and other files"><ImageIcon size={16} /></button>
-                    <DropdownMenu items={fileMenuItems}>
-                        {#snippet trigger(toggle, open)}
-                            <button
-                                type="button"
-                                class="btn btn-xs preset-outlined-primary-500"
-                                onclick={toggle}
-                                title="File"
-                                aria-haspopup="menu"
-                                aria-expanded={open}
-                            >File <ChevronDown size={12} /></button>
-                        {/snippet}
-                    </DropdownMenu>
                 {/if}
                 <button
                     type="button"
@@ -282,29 +284,30 @@
                     aria-label="Story map"
                     aria-pressed={mapOpen}
                 ><MapIcon size={16} /></button>
-                <!-- Run and its options as one split button: stretch both halves to the same height -->
-                <div class="flex items-stretch">
-                    <button
-                        type="button"
-                        class="btn btn-xs preset-filled-primary-500 rounded-r-none"
-                        onclick={() => onrun?.(false)}
-                        title="Run the story ({mod}Enter)"
-                    ><Play size={14} /> <span class="hidden md:inline">Run</span></button>
-                    <DropdownMenu items={runMenuItems}>
-                        {#snippet trigger(toggle, open)}
+                <!-- Run and its options as one split button, with the menu lined up with the whole of it.
+                     Stretch both halves to the same height. -->
+                <DropdownMenu items={runMenuItems} align="left">
+                    {#snippet trigger(toggle, open)}
+                        <div class="flex items-stretch">
                             <button
                                 type="button"
-                                class="btn btn-xs preset-filled-primary-500 rounded-l-none h-full border-l border-white/30 px-1.5"
+                                class="btn btn-xs preset-filled-primary-500 rounded-r-none"
+                                onclick={() => onrun?.(false)}
+                                title="Run the story ({mod}Enter)"
+                            ><Play size={14} /> <span class="hidden md:inline">Run</span></button>
+                            <button
+                                type="button"
+                                class="btn btn-xs preset-filled-primary-500 rounded-l-none border-l border-white/30 px-1.5"
                                 onclick={toggle}
                                 title="Run options"
                                 aria-label="Run options"
                                 aria-haspopup="menu"
                                 aria-expanded={open}
                             ><ChevronDown size={12} /></button>
-                        {/snippet}
-                    </DropdownMenu>
-                </div>
-                <DropdownMenu items={overflowItems}>
+                        </div>
+                    {/snippet}
+                </DropdownMenu>
+                <DropdownMenu items={overflowItems} align="left">
                     {#snippet trigger(toggle, open)}
                         <button type="button" class="toolbar-icon-btn" onclick={toggle} title="More" aria-label="More" aria-haspopup="menu" aria-expanded={open}><Ellipsis size={16} /></button>
                     {/snippet}
