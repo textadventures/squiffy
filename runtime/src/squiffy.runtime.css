@@ -154,6 +154,19 @@ div.squiffy-output-section:not(:last-child)
     border-bottom: 1px solid var(--squiffy-border);
 }
 
+/* ...but a block, passage or section that output no text (such as a passage that only does
+   {{replace}}) gets no line, and nor does one followed only by those, so they don't add extra lines */
+div.squiffy-output-block:not(:has(> div:not(:empty))),
+div.squiffy-output-block:not(:has(~ div.squiffy-output-block > div:not(:empty), ~ div.squiffy-output-passage > div.squiffy-output-block > div:not(:empty))),
+div.squiffy-output-passage:not(:has(> div.squiffy-output-block > div:not(:empty))),
+div.squiffy-output-passage:not(:has(~ div.squiffy-output-block > div:not(:empty), ~ div.squiffy-output-passage > div.squiffy-output-block > div:not(:empty))),
+div.squiffy-output-section:not(:has(div.squiffy-output-block > div:not(:empty))),
+div.squiffy-output-section:not(:has(~ div.squiffy-output-section div.squiffy-output-block > div:not(:empty)))
+{
+    margin-bottom: 0;
+    border-bottom: none;
+}
+
 /* Fade animations */
 .fade-out {
     opacity: 0;
