@@ -13,7 +13,7 @@ The home page lets you start a new story, open a folder, or open a file.
 
 - **New story** creates a draft, which is kept in your browser.
 - **Open folder** opens a story's folder on your computer. This needs **Chrome** or **Edge**, which support the File System Access API. Folders you've opened are listed under **Recent folders**, so you can open them again with a click. Your browser may ask for permission again.
-- **Open file** copies a `.squiffy` file, or a project `.zip`, into a new draft.
+- **Open file** copies a `.squiffy` file, or a project `.zip`, into a new draft. It can also open a Twine story, and convert it: see [Opening Twine stories](#opening-twine-stories).
 
 Your drafts are listed on the home page too.
 
@@ -119,6 +119,10 @@ When your story is ready, use the **File** menu to publish it. See [Publishing y
 ## Opening Squiffy 5 stories
 
 If you open a story that uses the Squiffy 5 text processor syntax, such as `{if x:...}`, the editor offers to convert it to Squiffy 6's. Review the changes afterwards, and use Undo if you want to go back. Anything that can't be converted automatically is marked as a problem. See [Upgrading from v5](/whats-new/#upgrading-from-v5).
+
+## Opening Twine stories
+
+**Open file** can also open a [Twine](https://twinery.org/) story, written in Harlowe or SugarCube: its published or archive HTML file, or a Twee file. The editor asks before converting it to Squiffy. The converted story has a file called `twine-import.txt`, which lists anything that couldn't be converted exactly. See [Coming from Twine](/coming-from-twine/).
 
 ## Settings
 

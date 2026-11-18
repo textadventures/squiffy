@@ -157,6 +157,16 @@ You can optionally specify a custom filename:
 ```bash
 npx @textadventures/squiffy-cli mygame.squiffy --scriptonly myscript.js
 ```
+### Converting from Twine
+
+Use `--convert-twine` to convert a [Twine](https://twinery.org/) story, written in Harlowe or SugarCube, to Squiffy. Give it Twine's published or archive HTML file, or a Twee file:
+
+```bash
+npx @textadventures/squiffy-cli mygame.html --convert-twine
+```
+
+This creates a folder next to the file, with the same name (`mygame` here), with the Squiffy story in it, and `twine-import.txt`, which lists anything that couldn't be converted exactly. To put it somewhere else, add `--out` and a folder that's empty or doesn't exist yet. See [Coming from Twine](/coming-from-twine/) for what's converted, and how.
+
 ### Converting from Squiffy 6
 
 In a story with a `squiffy.json`, text in `@set` and link assignments goes in quotes, and attributes are written without an `@` (see [Coming from Squiffy 6](/whats-new-7/#coming-from-squiffy-6)). A Squiffy 6 story has no `squiffy.json`, so it keeps the old rules. When the CLI builds one whose assignments would need changing, it says so. Use `--convert-v6`, giving it the story's main file, to convert it and add a `squiffy.json`:

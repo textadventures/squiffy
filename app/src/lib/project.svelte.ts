@@ -25,6 +25,7 @@ import { checklistDialog, chooseDialog, confirmDialog } from "./confirm.js";
 import { showToast } from "./toast.js";
 import { findRecentFolder, forgetFolder as forgetBrowserFolder, hasPermission, listRecentFolders as listBrowserFolders, rememberFolder, updateRecentFolder } from "./recent.js";
 import { desktopApi } from "./desktop.js";
+import { convertTwineFile, TWINE_FILE_PATTERN, twineImportMessage } from "./twine-import.js";
 
 export const SQUIFFY_FILES: FileTypeFilter[] = [
     { description: "Squiffy stories", extensions: [".squiffy"], mimeType: "text/plain" },
@@ -500,9 +501,18 @@ export async function draftFromText(fileName: string | undefined, text: string):
     return createDraft(name, text);
 }
 
-// Imports a .squiffy file, or a project zip (from Download project), into a new draft. Returns
-// the draft's id.
-export async function importFile(file: File): Promise<string> {
+// Imports a .squiffy file, a project zip (from Download project), or a Twine story (converted,
+// if the author says to), into a new draft. Returns the draft's id, or null if they cancel.
+export async function importFile(file: File): Promise<string | null> {
+    if (TWINE_FILE_PATTERN.test(file.name)) {
+        const converted = await convertTwineFile(file.name, await file.text());
+        if (!converted) return null;
+        const id = crypto.randomUUID();
+        const fs = await drafts.create(id, { title: converted.title, mainFile: converted.mainFile, lastOpened: Date.now() });
+        for (const [path, text] of converted.files) await fs.write(path, text);
+        showToast(twineImportMessage(converted), "info", 12000);
+        return id;
+    }
     if (file.name.toLowerCase().endsWith(".zip")) {
         const { readProjectZip, zipMainFile } = await import("./export.js");
         const files = readProjectZip(new Uint8Array(await file.arrayBuffer()));
@@ -594,6 +604,7 @@ function desktopOrThrow() {
 }
 
 const ZIP_FILES: FileTypeFilter[] = [{ description: "Project zip files", extensions: [".zip"], mimeType: "application/zip" }];
+const TWINE_FILES: FileTypeFilter[] = [{ description: "Twine stories", extensions: [".twee", ".tw", ".html", ".htm"], mimeType: "text/html" }];
 
 // Open folder
 export async function pickDesktopFolder(): Promise<PickedFolder | null> {
@@ -607,16 +618,25 @@ export async function pickDesktopFolder(): Promise<PickedFolder | null> {
     return { fs, mainFile };
 }
 
-// Open file: a .squiffy file opens its folder, and a project zip (from Download project) is
-// unpacked into a folder the author chooses
+// Open file: a .squiffy file opens its folder, a project zip (from Download project) is
+// unpacked into a folder the author chooses, and a Twine story is converted into one
 export async function pickDesktopFile(): Promise<PickedFolder | null> {
-    const picked = await desktopOrThrow().opener.openFile({ title: "Open a story file", filters: [...SQUIFFY_FILES, ...ZIP_FILES] });
+    const picked = await desktopOrThrow().opener.openFile({ title: "Open a story file", filters: [...SQUIFFY_FILES, ...ZIP_FILES, ...TWINE_FILES] });
     if (!picked) return null;
     const { fs, mainFile } = picked;
     if (mainFile.toLowerCase().endsWith(".zip")) {
         const data = await fs.read(mainFile);
         await fs.release();
         return unpackZip(mainFile, data);
+    }
+    if (TWINE_FILE_PATTERN.test(mainFile)) {
+        const text = new TextDecoder().decode(await fs.read(mainFile));
+        await fs.release();
+        const converted = await convertTwineFile(mainFile, text);
+        if (!converted) return null;
+        const folder = await writeIntoNewFolder(`the Squiffy version of ${mainFile}`, converted.files, converted.mainFile);
+        if (folder) showToast(twineImportMessage(converted), "info", 12000);
+        return folder;
     }
     return { fs, mainFile: (await projectMainFile(fs)) ?? mainFile };
 }
@@ -626,16 +646,20 @@ async function unpackZip(zipName: string, data: Uint8Array): Promise<PickedFolde
     const files = readProjectZip(data);
     const mainFile = zipMainFile(files);
     if (!mainFile) throw new Error(`There's no .squiffy file in ${zipName}.`);
-    const fs = await desktopOrThrow().opener.pickNewRoot({
-        title: `Choose a folder to unpack ${zipName} into`,
-        message: `Choose a folder to unpack ${zipName} into`,
-        buttonLabel: "Unpack here",
-    });
+    return writeIntoNewFolder(zipName, files, mainFile, { title: `Choose a folder to unpack ${zipName} into`, buttonLabel: "Unpack here" });
+}
+
+// Writes files into a folder the author chooses, asking before replacing any that are there
+async function writeIntoNewFolder(
+    what: string, files: Map<string, Uint8Array | string>, mainFile: string,
+    dialog = { title: `Choose a folder for ${what}`, buttonLabel: "Save here" },
+): Promise<PickedFolder | null> {
+    const fs = await desktopOrThrow().opener.pickNewRoot({ title: dialog.title, message: dialog.title, buttonLabel: dialog.buttonLabel });
     if (!fs) return null;
     const existing = new Set((await fs.list()).map(f => f.path));
     const clashes = [...files.keys()].filter(path => existing.has(path));
     if (clashes.length && !(await confirmDialog(
-        `${fs.name} already has ${clashes.length === 1 ? clashes[0] : `${clashes.length} of the files in ${zipName}`}. Replace ${clashes.length === 1 ? "it" : "them"}?`,
+        `${fs.name} already has ${clashes.length === 1 ? clashes[0] : `${clashes.length} of the files in ${what}`}. Replace ${clashes.length === 1 ? "it" : "them"}?`,
         { confirmLabel: "Replace", danger: true },
     ))) {
         await fs.release();

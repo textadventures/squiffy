@@ -114,6 +114,7 @@ CLI options:
 - `--scriptonly [filename]`: Only generate JavaScript file
 - `--zip`: Create zip file
 - `--convert-v5`: Convert Squiffy 5 text processor syntax to Squiffy 6 (keeps a `.bak` of the original)
+- `--convert-twine`: Convert a Twine story (Twee, or Twine's published or archive HTML; Harlowe or SugarCube) into a new Squiffy story folder, with `twine-import.txt` listing what couldn't be converted exactly (#378). `--out` chooses the folder
 - `--convert-v6`: Convert a Squiffy 6 story's `@set` and link setters to Squiffy 7's rules (#373) and add a `squiffy.json`, which is what turns those rules on (keeps a `.bak` of each file changed)
 
 ## Architecture
