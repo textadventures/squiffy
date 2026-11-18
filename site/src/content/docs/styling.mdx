@@ -78,7 +78,7 @@ If you've [kept your story in one mode](#light-and-dark-mode), you can give just
 | `--squiffy-text` | The story text | `#1f2328` | `#e4e4e7` |
 | `--squiffy-link` | Links, [continue](/dynamic-text/#animation) links and the keyboard focus outline | `#1d5fd6` | `#7aa7ff` |
 | `--squiffy-link-hover` | Links under the mouse pointer | `#0f3f99` | `#b0cbff` |
-| `--squiffy-muted` | The Restart button, and links waiting for [valid input](/player-input/#input-validation) | `#6b6f76` | `#9a9ca3` |
+| `--squiffy-muted` | The Back, Restart and light/dark buttons, and links waiting for [valid input](/player-input/#input-validation) | `#6b6f76` | `#9a9ca3` |
 | `--squiffy-border` | The lines between sections | `#e2e2e6` | `#34343a` |
 | `--squiffy-error` | Inputs that fail validation | `#c62828` | `#ff7b72` |
 | `--squiffy-success` | Inputs that pass validation | `#2e7d32` | `#6cc070` |
@@ -150,21 +150,15 @@ button#squiffy-theme {
 
 To leave out the Back button, set `"backButton": false` in your story's [`squiffy.json`](/multiple-files/#the-back-button), rather than hiding it with CSS.
 
-### Changing the Restart button text
-
-The text of the Restart button is in the HTML, not the CSS. To change it, for example to translate it, edit this line in `index.html`:
-
-```html
-<button class="squiffy-header-button" id="restart" tabindex="0">Restart</button>
-```
-
-The confirmation message (`Are you sure you want to restart?`) is in the `<script>` block near the top of the same file. To hide the button altogether:
+### Hiding the Restart button
 
 ```css
 button#restart {
     display: none;
 }
 ```
+
+To translate the buttons' tooltips, and the message that asks the player whether they're sure they want to restart, see [The page's text in another language](/multiple-files/#the-pages-text-in-another-language).
 
 <Aside type="caution">
 If you build with the command-line tool, rebuilding overwrites `index.html`. Use `--scriptonly` to update only `story.js` once you've changed the other files. See [Using Squiffy from the command line](/cli/).
@@ -181,8 +175,8 @@ The exported `style.css` combines two sets of rules: the page layout, and the st
 | `:root` | The whole page | `color-scheme: light dark`, `--squiffy-max-width: 42rem` |
 | `body` | The page | `background-color: var(--squiffy-background)`, `color: var(--squiffy-text)`, no margin |
 | `div#squiffy-container` | Wraps the header and the story | `max-width: var(--squiffy-max-width)`, centred, `line-height: 1.6`, a serif font (Charter, Sitka Text, Cambria or Georgia, whichever the reader has) |
-| `div#squiffy-header` | The bar above the story containing the Restart and light/dark buttons | Stays at the top of the window (`position: sticky`), with a short fade underneath. `font-size: 0.875rem`, right-aligned |
-| `button#squiffy-theme` | The light/dark button | A moon or sun icon, in the same colour as the Restart button |
+| `div#squiffy-header` | The bar above the story containing the Back, Restart and light/dark buttons | Stays at the top of the window (`position: sticky`), with a short fade underneath. `font-size: 0.875rem`, right-aligned |
+| `button#squiffy-back`, `button#restart`, `button#squiffy-theme` | The Back, Restart and light/dark buttons | An arrow, a circular arrow, and a moon or sun |
 | `div#squiffy` | The story text | `font-size: 1.125rem` |
 | `div#squiffy img` | Images in the story | `max-width: 100%`, so they never overflow the page |
 
@@ -195,7 +189,7 @@ The exported `style.css` combines two sets of rules: the page layout, and the st
 | `a.squiffy-link[data-handler="rotate"]`, `a.squiffy-link[data-handler="sequence"]` | [Rotate and sequence](/dynamic-text/#rotate) links | Dotted underline, since they change in place rather than moving the story on |
 | `a.squiffy-link.disabled` | Links that can no longer be clicked | Same colour as the surrounding text, no underline |
 | `a.squiffy-link.validation-disabled` | Links disabled until the player fills in the [inputs](/player-input/#input-validation) correctly | `color: var(--squiffy-muted)`, no underline |
-| `button.squiffy-header-button` | The Restart button | `color: var(--squiffy-muted)`, no border or background, underlined when the mouse pointer is over it |
+| `button.squiffy-header-button` | The Back, Restart and light/dark buttons | `color: var(--squiffy-muted)`, no border or background, with a faint background when the mouse pointer is over it. The icons are `1.25em` across |
 | `.squiffy-output-section` | Each section's output | A `1px solid var(--squiffy-border)` line underneath, and a `1em` gap, except for the latest one |
 | `.squiffy-output-passage` | Each passage's output | As above |
 | `input.squiffy-invalid` (and `textarea`, `select`) | An input that fails validation | `border-color: var(--squiffy-error)` |

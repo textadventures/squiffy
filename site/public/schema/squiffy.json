@@ -33,6 +33,18 @@
       "type": "boolean",
       "default": true
     },
+    "strings": {
+      "description": "The text on the published page around the story, for a story in another language. Anything left out is in English.",
+      "type": "object",
+      "properties": {
+        "back": { "description": "The Back button's tooltip.", "type": "string", "default": "Back" },
+        "restart": { "description": "The Restart button's tooltip.", "type": "string", "default": "Restart" },
+        "restartConfirm": { "description": "Asks the player whether they're sure, when they click Restart.", "type": "string", "default": "Are you sure you want to restart?" },
+        "switchToDark": { "description": "The light/dark button's tooltip, in light mode.", "type": "string", "default": "Switch to dark mode" },
+        "switchToLight": { "description": "The light/dark button's tooltip, in dark mode.", "type": "string", "default": "Switch to light mode" }
+      },
+      "additionalProperties": false
+    },
     "map": {
       "description": "Where sections and passages have been put on the editor's story map. The editor writes this: only what's been moved by hand is here, and the map lays out the rest.",
       "type": "object",

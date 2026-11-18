@@ -43,6 +43,11 @@ describe("findStory", () => {
         expect((await findStory(dir)).backButton).toBe(false);
     });
 
+    test("a project's strings come with it", async () => {
+        await write({ "squiffy.json": "{ \"version\": 1, \"main\": \"story.squiffy\", \"strings\": { \"back\": \"Retour\" } }", "story.squiffy": "" });
+        expect((await findStory(dir)).strings).toEqual({ back: "Retour" });
+    });
+
     test("the main file builds the project, even from a subfolder's squiffy.json", async () => {
         await write({ "squiffy.json": "{ \"version\": 1, \"main\": \"src/story.squiffy\" }", "src/story.squiffy": "", "src/b.squiffy": "" });
         const story = await findStory(path.join(dir, "src/story.squiffy"));

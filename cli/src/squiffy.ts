@@ -96,6 +96,7 @@ else {
         createZip: !!options.zip,
         inlineHtml: !!options.inline,
         backButton: story.backButton,
+        strings: story.strings,
     });
 
     if (result && options.serve) {

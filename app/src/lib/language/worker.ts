@@ -21,6 +21,7 @@ async function exportStory(kind: ExportKind, assets: Record<string, Uint8Array>)
     const { projectFile } = await current().getProjectInfo();
     const pkg = await createPackage(result, {
         createZip: kind === "zip", inlineHtml: kind === "html", assets, backButton: projectFile?.backButton,
+        strings: projectFile?.strings,
     });
     return { success: true, files: pkg.files, zip: pkg.zip };
 }

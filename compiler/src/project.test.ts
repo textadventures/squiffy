@@ -26,6 +26,13 @@ describe("parseProjectFile", () => {
         });
     });
 
+    test("strings are kept, leaving out any Squiffy doesn't know", () => {
+        const text = JSON.stringify({ version: 1, main: "a.squiffy", strings: { restart: "Recommencer", future: "x", toString: "y" } });
+        expect(parseProjectFile(text)).toEqual({
+            success: true, project: { version: 1, main: "a.squiffy", exclude: [], strings: { restart: "Recommencer" } },
+        });
+    });
+
     test("exclude is optional, other properties are ignored, and main is normalised", () => {
         expect(parseProjectFile("{ \"$schema\": \"x\", \"version\": 1, \"main\": \"./src\\\\story.squiffy\" }")).toEqual({
             success: true, project: { version: 1, main: "src/story.squiffy", exclude: [] },
@@ -42,6 +49,8 @@ describe("parseProjectFile", () => {
         ["main not a .squiffy file", "{ \"version\": 1, \"main\": \"a.txt\" }", "should be a .squiffy file"],
         ["exclude not a list", "{ \"version\": 1, \"main\": \"a.squiffy\", \"exclude\": \"x\" }", "should be a list"],
         ["backButton not true or false", "{ \"version\": 1, \"main\": \"a.squiffy\", \"backButton\": \"no\" }", "should be true or false"],
+        ["strings not an object", "{ \"version\": 1, \"main\": \"a.squiffy\", \"strings\": [] }", "should be an object of text"],
+        ["a string that isn't text", "{ \"version\": 1, \"main\": \"a.squiffy\", \"strings\": { \"back\": 1 } }", "should be an object of text"],
     ])("refuses %s", (_, text, error) => {
         const result = parseProjectFile(text);
         expect(result.success).toBe(false);
