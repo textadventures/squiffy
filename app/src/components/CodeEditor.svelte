@@ -12,7 +12,7 @@
     import { searchKeymap, highlightSelectionMatches } from "@codemirror/search";
     import { lintKeymap } from "@codemirror/lint";
     import { editorExtensions } from "#lib/codemirror-theme.js";
-    import { foldingChanged } from "#lib/codemirror-folding.js";
+    import { foldingChanged, foldMarker } from "#lib/codemirror-folding.js";
 
     interface Props {
         value: string;
@@ -49,7 +49,7 @@
             parent: editorEl,
             extensions: [
                 lineNumbers(),
-                foldGutter({ foldingChanged }),
+                foldGutter({ foldingChanged, markerDOM: foldMarker }),
                 codeFolding(),
                 highlightActiveLine(),
                 highlightActiveLineGutter(),

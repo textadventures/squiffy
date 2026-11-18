@@ -25,7 +25,7 @@
                 onclick={() => { project.activePath = file.path; }}
             >
                 {#if file.path === project.mainFile}
-                    <Star size={11} class="text-warning-500" aria-label="Main file" />
+                    <Star size={11} class="text-warning-700-300" aria-label="Main file" />
                 {/if}
                 {basename(file.path)}
             </button>

@@ -108,7 +108,7 @@
                                 <span class="truncate text-[11px] text-surface-600-400">project file</span>
                             {/if}
                             {#if row.path === project.mainFile}
-                                <Star size={11} class="shrink-0 text-warning-500" aria-label="Main file" />
+                                <Star size={11} class="shrink-0 text-warning-700-300" aria-label="Main file" />
                             {/if}
                         </button>
                         <DropdownMenu items={menuItems(row.path)} fixed>
