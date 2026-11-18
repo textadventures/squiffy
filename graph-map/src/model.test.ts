@@ -82,6 +82,85 @@ describe("layered layout", () => {
     });
 });
 
+// A long story: a chain of `length` nodes, each linking to the next
+function chain(length: number, prefix = "c") {
+    const nodes = Array.from({ length }, (_, i) => node(`${prefix}${i}`, i));
+    const edges = nodes.slice(1).map((n, i) => edge(nodes[i].id, n.id));
+    return { nodes, edges };
+}
+
+function bounds(model: MapModel<Node>) {
+    const nodes = [...model.nodes.values()];
+    const width = Math.max(...nodes.map(n => n.x + n.width / 2)) - Math.min(...nodes.map(n => n.x - n.width / 2));
+    const height = Math.max(...nodes.map(n => n.y + n.height / 2)) - Math.min(...nodes.map(n => n.y - n.height / 2));
+    return { width, height };
+}
+
+describe("folding", () => {
+    test("rows that would make a tall, thin map fold into columns side by side", () => {
+        const model = new MapModel(layout());
+        model.update(chain(60));
+        settle(model);
+        const { width, height } = bounds(model);
+        expect(width / height).toBeGreaterThan(0.8);
+        expect(width / height).toBeLessThan(3);
+        const x = (i: number) => model.position(`c${i}`)!.x;
+        const y = (i: number) => model.position(`c${i}`)!.y;
+        // Each column reads from the top, and the next one starts at the top again, to the right
+        const tops = [...Array(60).keys()].filter(i => i > 0 && y(i) < y(i - 1));
+        expect(tops.length).toBeGreaterThan(1);
+        for (const i of tops) expect(x(i)).toBeGreaterThan(x(i - 1) + 100);
+        for (let i = 1; i < 60; i++) if (!tops.includes(i)) expect(y(i)).toBeGreaterThan(y(i - 1));
+    });
+
+    test("a map that's already wide enough doesn't fold", () => {
+        const model = new MapModel(layout());
+        model.update(story);
+        settle(model);
+        expect(model.position("l1")!.y).toBeGreaterThan(model.position("left")!.y);
+        expect(model.position("left")!.y).toBeGreaterThan(model.position("start")!.y);
+    });
+
+    test("aspect 0 never folds", () => {
+        const model = new MapModel(layeredLayout<Node, MapEdge>({ rank: n => n.rank, aspect: 0 }));
+        model.update(chain(60));
+        settle(model);
+        for (let i = 1; i < 60; i++) expect(model.position(`c${i}`)!.y).toBeGreaterThan(model.position(`c${i - 1}`)!.y);
+    });
+
+    test("columns are cut where fewest links cross", () => {
+        // Two chains of 40, side by side, where each row of each chain also links to the next
+        // row of the other, apart from row 20 to 21
+        const a = chain(40, "a"), b = chain(40, "b");
+        const edges = [...a.edges, ...b.edges];
+        for (let i = 0; i < 39; i++) {
+            if (i == 20) continue;
+            edges.push(edge(`a${i}`, `b${i + 1}`), edge(`b${i}`, `a${i + 1}`));
+        }
+        const model = new MapModel(layout());
+        model.update({ nodes: [...a.nodes, ...b.nodes], edges });
+        settle(model);
+        const y = (id: string) => model.position(id)!.y;
+        const tops = [...Array(40).keys()].filter(i => i > 0 && y(`a${i}`) < y(`a${i - 1}`));
+        expect(tops).toContain(21);
+    });
+
+    test("adding a row keeps the columns as they were, and puts it in the column of the row above", () => {
+        const model = new MapModel(layout());
+        const before = chain(60);
+        model.update(before);
+        settle(model);
+        const was = positions(model);
+        const after = chain(61);
+        model.update(after);
+        settle(model);
+        const now = positions(model);
+        for (let i = 0; i < 59; i++) expect(now[`c${i}`]).toEqual(was[`c${i}`]);
+        expect(Math.abs(now.c60[0] - now.c59[0])).toBeLessThan(200);
+        expect(now.c60[1]).toBeGreaterThan(now.c59[1]);
+    });
+});
+
 describe("stability", () => {
     test("adding a node moves only it and what it's linked to", () => {
         const model = new MapModel(layout());

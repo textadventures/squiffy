@@ -451,6 +451,10 @@
     .story-map :global(.trace .gm-edge-arrow) {
         fill: var(--color-success-500);
     }
+    /* The way the player went stands out, however long its links */
+    .story-map :global(.gm-edge.trace[data-long]) {
+        opacity: 1;
+    }
 
     .map-key svg {
         overflow: visible;
