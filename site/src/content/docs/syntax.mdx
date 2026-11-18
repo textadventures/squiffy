@@ -1,0 +1,127 @@
+---
+title: Syntax cheat sheet
+description: Every kind of line, link and directive in a Squiffy story, on one page
+sidebar:
+    label: Syntax cheat sheet
+---
+
+import { Aside } from "@astrojs/starlight/components";
+
+Everything you can write in a `.squiffy` file, in one place. Each row links to where it's explained in full.
+
+## Sections and passages
+
+| Write | What it does | See |
+|---|---|---|
+| `[[name]]:` | Starts a section called "name" | [Sections](/basic-concepts/#sections) |
+| `[name]:` | Starts a passage called "name", in the section above it | [Passages](/basic-concepts/#passages) |
+| `+++Continue...` | Ends this section with a link saying "Continue...", and starts a new section that it goes to | [Continue links](/basic-concepts/#continue-links) |
+| `---` | Starts a new section with no name, for `[[text>]]` links to go to | [Section dividers](/basic-concepts/#section-dividers-and-next-section-links) |
+| `[[]]:` | The master section: runs with every section | [Master sections](/basic-concepts/#master-sections-and-passages) |
+| `[]:` | A master passage: runs with every passage in its section, or in every section if it's in the master section | [Master sections](/basic-concepts/#master-sections-and-passages) |
+| `[@1]:`, `[@2]:`... | A passage that runs after the player has clicked that many passage links in the section | [Running a passage after some clicks](/basic-concepts/#running-a-passage-after-some-clicks) |
+| `[@last]:` | A passage that runs once the player has clicked every passage link in the section | [Running a passage after some clicks](/basic-concepts/#running-a-passage-after-some-clicks) |
+| `[snippet: name]:` | A snippet for the editor's **Add** menu. It isn't part of the story | [Snippets](/snippets/#user-defined-snippets) |
+
+Text before the first section is the start of the story, unless `@start` says otherwise. Section names must be unique in the story, and passage names in their section.
+
+## Links
+
+| Write | What it does | See |
+|---|---|---|
+| `[[cave]]` | A link to the section "cave", saying "cave" | [Sections](/basic-concepts/#sections) |
+| `[[Go in]](cave)` | A link to the section "cave", saying "Go in" | [Sections](/basic-concepts/#sections) |
+| `[look]` | A link to the passage "look" in this section | [Passages](/basic-concepts/#passages) |
+| `[Look around](look)` | A link to the passage "look", saying "Look around" | [Passages](/basic-concepts/#passages) |
+| `[[Go in]](cave, torch = true)` | A link that also sets attributes. Separate several with commas | [Setting from links](/attributes/#setting-from-links) |
+| `[Take it](take, coins += 1)` | A passage link that sets attributes | [Setting from links](/attributes/#setting-from-links) |
+| `[[Next>]]` | A link to the next section in the file | [Section dividers](/basic-concepts/#section-dividers-and-next-section-links) |
+| `[[Next]](>, score = 10)` | A link to the next section that sets attributes | [Section dividers](/basic-concepts/#section-dividers-and-next-section-links) |
+| `[a website](https://example.com)` | An ordinary web link, as in Markdown | [Basic concepts](/basic-concepts/) |
+
+<Aside type="caution">
+Any text in square brackets is a passage link, so `[like this]` in your story becomes a link to a passage called "like this". Links to web pages that start with `http://` or `https://`, and Markdown images, `![alt](cat.png)`, are left alone.
+</Aside>
+
+## Directives
+
+Directives go on a line of their own. Those that change attributes run when their section or passage is shown, before its text.
+
+| Write | What it does | See |
+|---|---|---|
+| `@title The Island` | The story's title, shown in the browser tab. Main file only | [Set the title](/basic-concepts/#set-the-title) |
+| `@start cave` | Starts the story in the section "cave". Main file only | [Set the start section](/basic-concepts/#set-the-start-section) |
+| `@set gold = 10` | Sets an attribute to a number | [Setting attributes](/attributes/#using-directives) |
+| `@set name = "Alice"` | Sets an attribute to some text | [Setting attributes](/attributes/#using-directives) |
+| `@set best = score` | Copies another attribute | [Setting attributes](/attributes/#using-directives) |
+| `@set gold = gold + price * 2` | Sets an attribute to a calculation | [Calculating values](/attributes/#calculating-values) |
+| `@set gold += 5` | Also `-=`, `*=` and `/=` | [More ways to set values](/attributes/#more-ways-to-set-values) |
+| `@set greeting := Hello, {{name}}!` | Sets an attribute to text, after processing any `{{...}}` in it | [More ways to set values](/attributes/#more-ways-to-set-values) |
+| `@set has_key` | Sets an attribute to `true` | [Setting attributes](/attributes/#using-directives) |
+| `@set not has_key`, `@unset has_key` | Sets an attribute to `false` | [Setting attributes](/attributes/#using-directives) |
+| `@inc score`, `@dec health` | Adds or takes away 1 | [Setting attributes](/attributes/#using-directives) |
+| `@inc score 10`, `@dec health 5` | Adds or takes away a whole number. For a calculation, use `@set score += ...` | [Setting attributes](/attributes/#using-directives) |
+| `@clear` | Clears the screen before showing this section or passage | [Clear the screen](/basic-concepts/#clear-the-screen) |
+| `@end` | Marks the section as one of the story's endings | [Endings](/basic-concepts/#endings) |
+| `@import chapter2.squiffy` | Adds another file to the story. Wildcards work: `@import *.squiffy` | [Importing files](/multiple-files/#importing-files) |
+| `@import style.css`, `@import script.js` | Adds a stylesheet or script to the page | [Importing files](/multiple-files/#importing-files) |
+| `@ui`, then `---` | A block of JavaScript, indented, that runs once when the story starts | [Running code when the story starts](/javascript/#running-code-when-the-story-starts) |
+| `@ui helpers.js` | Runs a JavaScript file when the story starts | [Running code when the story starts](/javascript/#running-code-when-the-story-starts) |
+
+## JavaScript
+
+Lines indented with four spaces or a tab, at the start of a section or passage, are JavaScript, which runs when it's shown. An indented line after some text is text. See [JavaScript](/javascript/).
+
+```squiffy
+[[cave]]:
+    squiffy.set("visited_cave", true);
+You go into the cave.
+```
+
+## The text processor
+
+Anything in `{{double curly brackets}}` is worked out as the text is shown. See [Dynamic text](/dynamic-text/) and the [Helpers reference](/helpers-reference/).
+
+| Write | What it does | See |
+|---|---|---|
+| `{{score}}` | Shows an attribute | [Reading attributes](/attributes/#reading-attributes) |
+| `{{get "player name"}}` | Shows an attribute whose name has spaces, or is in another attribute | [Reading attributes](/attributes/#reading-attributes) |
+| `{{= price * 2}}` | Shows a calculation | [Calculating values](/attributes/#calculating-values) |
+| `{{#if gold > 5}}...{{/if}}` | Shows text only if a condition is true | [Conditions](/dynamic-text/#conditions) |
+| `{{else if gold > 2}}`, `{{else}}` | Other choices inside `{{#if}}` | [Conditions](/dynamic-text/#conditions) |
+| `{{#unless has_key}}...{{/unless}}` | Shows text only if a condition is false | [Conditions](/dynamic-text/#conditions) |
+| `=`, `!=`, `>`, `>=`, `<`, `<=` | Comparisons | [Conditions](/helpers-reference/#conditions) |
+| `and`, `or`, `not` | Combine conditions | [Conditions](/helpers-reference/#conditions) |
+| `+`, `-`, `*`, `/`, `%` | Calculations. Put spaces around `-` and `/` | [Calculations](/helpers-reference/#calculations) |
+| `{{set "gold" 10}}`, `{{inc "gold" 5}}`, `{{dec "gold"}}`, `{{unset "has_key"}}` | Change an attribute at that point in the text, so they respect `{{#if}}` | [Conditional attribute changes](/attributes/#conditional-attribute-changes) |
+| `(seen "cave")`, `(visits "cave")`, `(at "cave")` | Whether the player has seen a section or passage, how many times, and whether they're there now | [Tracking sections and passages](/attributes/#tracking-sections-and-passages) |
+| `turns` | The number of links the player has clicked in the whole story | [Counting turns](/attributes/#counting-turns) |
+| `{{embed "map"}}` | Shows the text of another section, or a passage in this one | [Embed text](/basic-concepts/#embed-text) |
+| `{{goto "cave"}}`, `{{goto "cave" after=3000}}` | Goes to another section without a click, straight away or after a delay in milliseconds | [Go to another section](/basic-concepts/#go-to-another-section) |
+| `{{random (array "a" "b")}}` | Picks one at random | [Random](/dynamic-text/#random) |
+| `{{rotate (array "a" "b") set="x"}}` | A link that cycles through options | [Rotate](/dynamic-text/#rotate) |
+| `{{sequence (array "a" "b")}}` | A link that goes through options once | [Sequence](/dynamic-text/#sequence) |
+| `{{live "score"}}` | Shows an attribute, and updates when it changes | [Live](/dynamic-text/#live) |
+| `{{#animate "typewriter"}}...{{/animate}}` | Animates some text. Also `toast`, `fadeIn` and `continue` | [Animation](/dynamic-text/#animation) |
+| `{{#label "x"}}...{{/label}}`, `{{#replace "x"}}...{{/replace}}` | Marks some text, and replaces it later | [Replace](/dynamic-text/#replace) |
+| `{{section "cave" text="Go in"}}`, `{{passage "look"}}` | Links, made by a helper | [Creating links with helpers](/attributes/#creating-links-with-helpers) |
+| `(array "a" "b")`, `{{append "bag" "key"}}`, `(contains "bag" "key")` | Arrays | [Array management helpers](/helpers-reference/#array-management-helpers) |
+| `{{!-- a comment --}}` | A comment, which the player doesn't see | [Text processing](/helpers-reference/#text-processing) |
+
+## Formatting
+
+Text is [Markdown](https://daringfireball.net/projects/markdown/syntax): `**bold**`, `_italic_`, lists, headings and so on. Leave a blank line between paragraphs, as a single line break is just a space. You can use HTML too, such as `<span style="color: red">`, and images, sound and video: see [Images, sound and other files](/images-and-files/).
+
+`<input data-attribute="name">` asks the player for some text, and stores it in an attribute: see [Player input](/player-input/).
+
+## squiffy.json
+
+The project file, which makes a folder of `.squiffy` files one story. See [Stories in several files](/multiple-files/).
+
+| Property | What it does |
+|---|---|
+| `"version": 1` | The version of the file's format. Required |
+| `"main": "story.squiffy"` | The story's main file, where it starts. Required |
+| `"exclude": ["drafts/**"]` | `.squiffy` files that aren't part of the story |
+| `"backButton": false` | Leaves out the Back button for players. See [The Back button](/multiple-files/#the-back-button) |
+| `"map"` | Where you've put things on the editor's story map. The editor writes this |
