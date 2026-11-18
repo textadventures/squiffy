@@ -11,9 +11,14 @@ export const RELEASES_API_URL = "https://api.github.com/repos/textadventures/squ
 const DISMISSED_KEY = "squiffy-desktop-update-dismissed";
 const CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000;
 
+// Where to download a release: the docs' desktop app page, whose download button offers the newest
+// stable release on squiffystory.com and the newest prerelease on beta.squiffystory.com. So a beta
+// told about the stable release that ends its series goes to squiffystory.com.
+export const STABLE_DOWNLOAD_URL = "https://squiffystory.com/desktop-app/";
+export const BETA_DOWNLOAD_URL = "https://beta.squiffystory.com/desktop-app/";
+
 export interface Release {
     tag_name: string;
-    html_url: string;
     draft?: boolean;
     prerelease?: boolean;
     assets: { name: string }[];
@@ -77,7 +82,9 @@ export function findUpdate(releases: Release[], current: string, platform: Platf
         if (compareVersions(release.tag_name, current) <= 0) continue;
         if (!best || compareVersions(release.tag_name, best.tag_name) > 0) best = release;
     }
-    return best && { version: best.tag_name.replace(/^v/, ""), url: best.html_url };
+    if (!best) return null;
+    const version = best.tag_name.replace(/^v/, "");
+    return { version, url: version.includes("-") ? BETA_DOWNLOAD_URL : STABLE_DOWNLOAD_URL };
 }
 
 async function check(platform: Platform) {
