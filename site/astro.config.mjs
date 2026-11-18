@@ -57,6 +57,7 @@ export default defineConfig({
                         "images-and-files",
                         "multiple-files",
                         "javascript",
+                        "cookbook",
                     ],
                 },
                 {

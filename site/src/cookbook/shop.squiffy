@@ -1,0 +1,17 @@
+@set gold = 12
+@set swords = 0
+@set loaves = 0
+You have {{gold}} gold. [[Go into the shop]](shop)
+
+[[shop]]:
+"What'll it be?" asks the shopkeeper. You have {{gold}} gold.
+
+{{#if gold >= 5}}[[Buy a sword (5 gold)]](shop, gold -= 5, swords += 1){{else}}You can't afford a sword.{{/if}}
+
+{{#if gold >= 2}}[[Buy a loaf (2 gold)]](shop, gold -= 2, loaves += 1){{else}}You can't afford a loaf.{{/if}}
+
+[[Leave the shop]](outside)
+
+[[outside]]:
+@end
+You leave the shop with {{gold}} gold left. Swords: {{swords}}. Loaves: {{loaves}}.

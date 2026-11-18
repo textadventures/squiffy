@@ -1,0 +1,18 @@
+@set health = 10
+A goblin jumps out at you! Your health is {{health}}.
+
+[[Fight it]](fight)
+
+[[fight]]:
+@dec health 4
+The goblin hits you. Your health is {{health}}.
+
+{{#if health <= 0}}{{goto "dead"}}{{else}}[[Keep fighting]](fight), or [[run away]](escape).{{/if}}
+
+[[dead]]:
+@end
+You fall to the ground, and everything goes dark.
+
+[[escape]]:
+@end
+You get away, with {{health}} health left.

@@ -1,0 +1,10 @@
+The bridge starts to crack under your feet. Quick, [[run for the far side]](safe)!
+{{goto "fall" after=4000}}
+
+[[safe]]:
+@end
+You leap onto the far bank as the bridge crashes into the river below.
+
+[[fall]]:
+@end
+Too slow! The bridge gives way, and you fall into the river.

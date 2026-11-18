@@ -1,0 +1,111 @@
+---
+title: Cookbook
+description: Ready-made patterns for common things in interactive stories - inventories, health, shops, stat checks, random events and more
+---
+
+import Sample from "@components/Sample.astro";
+import inventory from "../../cookbook/inventory.squiffy?raw";
+import health from "../../cookbook/health.squiffy?raw";
+import status from "../../cookbook/status.squiffy?raw";
+import shop from "../../cookbook/shop.squiffy?raw";
+import stats from "../../cookbook/stats.squiffy?raw";
+import hub from "../../cookbook/hub.squiffy?raw";
+import random from "../../cookbook/random.squiffy?raw";
+import timed from "../../cookbook/timed.squiffy?raw";
+import endings from "../../cookbook/endings.squiffy?raw";
+
+Short, complete examples of things that come up in a lot of stories. Play each one on the right, change it on the left, and copy what you need into your own story.
+
+If you're new to Squiffy, start with the [tutorial](/tutorial/).
+
+## An inventory
+
+Keep the things the player is carrying in an [array](/helpers-reference/#array-management-helpers). `{{append}}` adds to it, and `(contains)` checks what's in it.
+
+<Sample script={inventory}></Sample>
+
+- `{{set "inventory" (array)}}` starts the inventory off empty.
+- The player can go back to the storeroom, where the passage links work again, so each passage checks the item isn't there already.
+- `{{#each inventory}}...{{/each}}` shows each item in turn, as `{{this}}`. `@first` is true for the first one, so there's a comma before each of the others. The `{{else}}` inside it shows "nothing" when the bag is empty.
+- `{{length "inventory"}}` says how many things there are, for example for `{{#if (length "inventory") > 3}}`.
+
+If you only have a few things to keep track of, an attribute for each, such as `@set has_key`, is simpler.
+
+## Health, and dying
+
+Take away health with `@dec`, and when it runs out, go to a death scene with [`{{goto}}`](/basic-concepts/#go-to-another-section).
+
+<Sample script={health}></Sample>
+
+- `@dec health 4` runs each time the fight section is shown, so each round of the fight takes away 4.
+- A link can go to the section it's in, `[[Keep fighting]](fight)`, which shows the section again.
+- The links to carry on are in the `{{else}}`, so the player doesn't see them once they've died.
+
+## A status line
+
+Text in the [master section](/basic-concepts/#master-sections-and-passages), `[[]]:`, is shown at the start of every section. Use it to show the player's health, score or anything else.
+
+<Sample script={status}></Sample>
+
+- The master section runs before each section, including before the section's own `@set` lines. So the starting values are set by the link that begins the story, and `{{#if playing}}` leaves the status line out until then.
+- Link setters, like `gold += 5`, change the attribute before the next section is shown, so the status line is always up to date.
+
+To show a value that updates as the player clicks passages too, use [`{{live}}`](/dynamic-text/#live).
+
+## A shop
+
+Check the player can afford something with `{{#if}}`, and take the money away in the link with a [setter](/attributes/#setting-from-links). The link goes back to the shop, so the player can buy as much as they like.
+
+<Sample script={shop}></Sample>
+
+Start the counts at 0 with `@set`, so the story can show them even if the player doesn't buy anything.
+
+## Choices that need a stat
+
+Show a choice only when the player is strong enough, clever enough or rich enough. It's worth saying what they're missing, so they know there was another way.
+
+<Sample script={stats}></Sample>
+
+Here the player chooses their strength with a link at the start. You could also set it with `@set`, add to it as the story goes on with `@inc`, or [ask the player](/player-input/).
+
+## A place to come back to
+
+A hub, such as a village square, that the player can leave and come back to. [`(visits)`](/attributes/#the-visits-helper) says how many times the player has been somewhere, including this time, so the text can be different the second time. [`(seen)`](/attributes/#the-seen-helper) says whether they've been somewhere at all.
+
+<Sample script={hub}></Sample>
+
+Each time the player comes back, the section is shown again, with links that work again. If you'd rather each visit replaced the last on the screen, add [`@clear`](/basic-concepts/#clear-the-screen) at the start of each section.
+
+## Random events
+
+Choose something at random with [`(random)`](/dynamic-text/#random), keep it in an attribute, and use `{{#if}}` to show what happens.
+
+<Sample script={random}></Sample>
+
+`{{set "encounter" (random ...)}}` chooses again each time the section is shown. To send the player to a random section instead, use `{{goto (random (array "wolf" "deer"))}}`.
+
+## A choice against the clock
+
+Give the player a few seconds to act, with [`{{goto}}` and `after=`](/dynamic-text/#moving-on-after-a-delay). If they click a link in time, the story doesn't move on.
+
+<Sample script={timed} alwaysShowRestart={true}></Sample>
+
+The time is in milliseconds, so 4000 is 4 seconds. Not every player reads at the same speed, so give them plenty of time.
+
+## Endings that depend on the player's choices
+
+Keep a score of the player's choices as they go, and at the end, choose an ending with `{{goto}}`.
+
+<Sample script={endings}></Sample>
+
+- Each kind choice adds 1 to `kindness` with a link setter.
+- The `final` section has nothing in it but the `{{goto}}`, so the player goes straight on to their ending.
+- Each ending is marked with [`@end`](/basic-concepts/#endings).
+
+You can do the same with several attributes, for example to give each character their own opinion of the player, and choose the ending from all of them.
+
+## More ideas
+
+- The [Examples](/featured-examples/) are complete stories that use many of these together.
+- [Dynamic text](/dynamic-text/) has more ways to change text, such as text that replaces itself, rotating links and animation.
+- The [Syntax cheat sheet](/syntax/) has everything you can write in a story, on one page.
