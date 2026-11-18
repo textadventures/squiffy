@@ -1,4 +1,4 @@
-import { SquiffyApi, SquiffyInitOptions, Story, Section, Passage, StartAt } from "./types.js";
+import { SquiffyApi, SquiffyInitOptions, Story, Section, Passage, StartAt, SavedGame, LoadSaveResult } from "./types.js";
 import { TextProcessor, errorHtml } from "./textProcessor.js";
 import { toNumber } from "./numbers.js";
 import { Emitter, SquiffyEventMap } from "./events.js";
@@ -12,8 +12,12 @@ import { imports } from "./import.js";
 import { areInputsValid, setupInputValidation } from "./inputValidation.js";
 import { createAssetHtmlResolver } from "./assets.js";
 
-export type { SquiffyApi } from "./types.js";
+export type { SquiffyApi, SavedGame, LoadSaveResult } from "./types.js";
 export type { SquiffyEventHandler, SquiffyEventMap } from "./events.js";
+export { createSavesDialog, formatSaveTime, SAVES_STRINGS, SAVE_FILE_EXTENSION } from "./savesDialog.js";
+export type { SavesDialog, SavesDialogOptions, SavesStringName } from "./savesDialog.js";
+export { indexedDbSaveSlots, memorySaveSlots } from "./saveSlots.js";
+export type { SaveSlot, SaveSlots } from "./saveSlots.js";
 
 export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => {
     let story: Story;
@@ -128,6 +132,10 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             return;
         }
         // Saved while waiting for a {{goto}}, so carry on waiting
+        await resumeGoto();
+    }
+
+    async function resumeGoto() {
         const element = currentPassageElement ?? currentSectionElement;
         const section = element?.getAttribute("data-goto");
         if (section && section in story.sections) {
@@ -515,6 +523,15 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             return false;
         }
 
+        showSavedOutput(output);
+        runUiJs();
+        pluginManager.onLoad();
+        setupInputValidation(currentSectionElement);
+        return true;
+    }
+
+    // Puts a saved game's text back on screen, and carries on from the end of it
+    function showSavedOutput(output: string) {
         // Saved output may contain asset URLs that are no longer valid (e.g. blob: URLs), so resolve them again
         outputElement.innerHTML = resolveAssetsInHtml(output);
 
@@ -523,10 +540,97 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         currentBlockOutputElement = outputElement.querySelector(".squiffy-output-block:last-child");
 
         currentSection = story.sections[get("_section")];
-        runUiJs();
+    }
+
+    // The game as it is now. The attributes include the text on screen (_output), and the undo
+    // log is in that text, so a loaded game can go back too.
+    function getSave(): SavedGame {
+        return {
+            format: "squiffy-save",
+            version: 1,
+            storyId: story.projectId ?? null,
+            section: get("_section"),
+            passage: get("_passage"),
+            summary: getSummary(),
+            savedAt: new Date().toISOString(),
+            state: structuredClone(state.store),
+        };
+    }
+
+    // The start of the text in the current section, to tell saves apart by. If it starts with a
+    // heading, that's it, as it's likely to name where the player is.
+    function getSummary() {
+        const MAX_LENGTH = 100;
+        const blocks = currentSectionElement?.querySelectorAll(".squiffy-output-block") ?? [];
+        for (const block of blocks) {
+            const text = textOf(block);
+            if (!text) continue;
+            const first = [...block.querySelectorAll("h1, h2, h3, h4, h5, h6, p, li")].find(child => textOf(child));
+            if (first && /^H[1-6]$/.test(first.tagName) && textOf(block).startsWith(textOf(first))) {
+                return textOf(first).substring(0, MAX_LENGTH);
+            }
+            if (text.length <= MAX_LENGTH) return text;
+            const cut = text.substring(0, MAX_LENGTH);
+            const space = cut.lastIndexOf(" ");
+            return (space > MAX_LENGTH / 2 ? cut.substring(0, space) : cut) + "…";
+        }
+        return "";
+    }
+
+    // An element's text, with a space between paragraphs, headings and lines
+    function textOf(element: Element) {
+        const clone = element.cloneNode(true) as Element;
+        clone.querySelectorAll("p, h1, h2, h3, h4, h5, h6, li, div, br, tr, blockquote").forEach(el => el.after(" "));
+        return (clone.textContent ?? "").replace(/\s+/g, " ").trim();
+    }
+
+    function isSavedGame(save: unknown): save is SavedGame {
+        if (!save || typeof save != "object") return false;
+        const s = save as Partial<SavedGame>;
+        return s.format === "squiffy-save" && s.version === 1 && !!s.state && typeof s.state == "object"
+            && !Array.isArray(s.state) && typeof s.state._output == "string";
+    }
+
+    async function loadSave(save: SavedGame): Promise<LoadSaveResult> {
+        if (!isSavedGame(save)) return { success: false, error: "notASave" };
+        // A story without an id, or a save from one, can't be checked, so it's loaded
+        if (save.storyId && story.projectId && save.storyId !== story.projectId) {
+            return { success: false, error: "wrongStory" };
+        }
+
+        // Wait for anything being shown to finish, so it doesn't carry on into the loaded game
+        while (runningTransitions) {
+            await new Promise(resolve => setTimeout(resolve, 50));
+        }
+        cancelGoto();
+        pendingErrors.length = 0;
+        state.reset();
+        for (const [attribute, value] of Object.entries(save.state)) {
+            state.setInternal(attribute, value, false);
+        }
+        undoLog = {};
+        scrollPosition = 0;
+        scrollToTop = false;
+        showSavedOutput(save.state._output as string);
+
+        if (!currentSection) {
+            // The section the game was saved in isn't in the story any more, so start again from
+            // the beginning, keeping the attributes
+            outputElement.innerHTML = "";
+            await go(story.start);
+            emitter.emit("canGoBackChanged", { canGoBack: canGoBack() });
+            return { success: true };
+        }
+
         pluginManager.onLoad();
         setupInputValidation(currentSectionElement);
-        return true;
+        emitter.emit("canGoBackChanged", { canGoBack: canGoBack() });
+        const passage = get("_passage");
+        emitter.emit("navigated", passage ? { section: get("_section"), passage } : { section: get("_section") });
+
+        // Saved while waiting for a {{goto}}, so carry on waiting
+        await resumeGoto();
+        return { success: true };
     }
 
     function newBlockOutputElement() {
@@ -973,6 +1077,8 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         update: update,
         goBack: goBack,
         canGoBack: canGoBack,
+        getSave: getSave,
+        loadSave: loadSave,
         on: (e, h) => emitter.on(e, h),
         off: (e, h) => emitter.off(e, h),
         once: (e, h) => emitter.once(e, h),

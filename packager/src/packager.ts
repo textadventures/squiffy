@@ -33,6 +33,12 @@ export interface PackageOptions {
      */
     backButton?: boolean;
     /**
+     * Whether the page has a Save button, which opens the Saved games dialog, where the player can
+     * keep saved games and save them to files. On unless this is false: the story's squiffy.json
+     * can turn it off with "saveButton": false.
+     */
+    saveButton?: boolean;
+    /**
      * The page's own text, such as the Restart button's tooltip, from the story's squiffy.json's
      * "strings". Anything left out is in English.
      */
@@ -186,9 +192,13 @@ export const createPackage = async (input: CompileSuccess, createZipOrOptions: b
     // could contain {{...}} of its own
     htmlData = htmlData.replace(/[ \t]*<!-- BACK_BUTTON -->\n([^]*?)[ \t]*<!-- \/BACK_BUTTON -->\n/,
         (_, button: string) => options.backButton === false ? "" : button);
+    htmlData = htmlData.replace(/[ \t]*<!-- SAVE_BUTTON -->\n([^]*?)[ \t]*<!-- \/SAVE_BUTTON -->\n/,
+        (_, button: string) => options.saveButton === false ? "" : button);
     const strings: Record<string, string> = { ...PAGE_STRINGS, ...options.strings };
     htmlData = htmlData.replace(/\{\{(\w+)\}\}/g, (match, name: string) =>
         Object.prototype.hasOwnProperty.call(strings, name) ? escapeAttribute(strings[name]) : match);
+    // The Saved games dialog's text, which the page's script gives to the runtime
+    htmlData = htmlData.replace("/* PAGE_STRINGS */", () => scriptSafeJson(strings));
     htmlData = htmlData.replace("<!-- INFO -->", () => infoComment);
     htmlData = htmlData.replace("<!-- TITLE -->", () => uiInfo.title);
     htmlData = htmlData.replace("<!-- SCRIPTS -->", () => scriptData);

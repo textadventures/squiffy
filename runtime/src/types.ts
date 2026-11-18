@@ -41,6 +41,11 @@ export interface SquiffyApi {
     goBack: () => void;
     // Whether goBack() would go anywhere, e.g. to enable a Back button. canGoBackChanged says when it changes.
     canGoBack: () => boolean;
+    // The game as it is now, to keep and load again later with loadSave()
+    getSave: () => SavedGame;
+    // Carries on from a saved game, in place of the game as it is now. A save from a different
+    // story (by its squiffy.json "id") isn't loaded.
+    loadSave: (save: SavedGame) => Promise<LoadSaveResult>;
 
     on<E extends keyof SquiffyEventMap>(
         event: E,
@@ -81,6 +86,8 @@ export interface Story {
     ) => void)[];
     start: string;
     id?: string | null;
+    // squiffy.json's "id", which a saved game is checked against
+    projectId?: string;
     uiJsIndex?: number;
     // Whether @set and link setters take expressions, with the same rules as {{#if}}: attributes
     // by name, and text in quotes. True for a story with a squiffy.json (#373).
@@ -103,3 +110,25 @@ export interface Passage {
     attributes?: string[];
     jsIndex?: number;
 }
+// A saved game, from SquiffyApi.getSave(). It's JSON, so it can be kept as text or in a file.
+export interface SavedGame {
+    format: "squiffy-save";
+    version: 1;
+    // The story's squiffy.json "id", if it has one
+    storyId: string | null;
+    // Where the player was
+    section: string | null;
+    passage: string | null;
+    // The start of the text the player was reading, to tell saves apart by
+    summary: string;
+    // When it was saved, as an ISO date
+    savedAt: string;
+    // Every attribute, including the text on screen (_output)
+    state: Record<string, unknown>;
+}
+
+export type LoadSaveResult =
+    | { success: true }
+    // notASave: it isn't a saved game, or it's from a newer version of Squiffy.
+    // wrongStory: it's from a different story.
+    | { success: false; error: "notASave" | "wrongStory" };

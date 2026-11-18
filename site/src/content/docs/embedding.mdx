@@ -228,6 +228,47 @@ Returns whether there's anything to go back to, for example to enable a Back but
 backButton.disabled = !squiffyApi.canGoBack();
 ```
 
+### getSave()
+
+Returns the game as it is now, as an object you can keep, for example as JSON in a file or a database, and load again with `loadSave()`. It has the story's [`id`](/multiple-files/#saved-games), where the player was, the start of the text they were reading (`summary`), when it was saved, and every attribute, including the text on screen:
+
+```javascript
+const save = squiffyApi.getSave();
+localStorage.setItem('my-save', JSON.stringify(save));
+```
+
+### loadSave(save)
+
+Carries on from a saved game, replacing the game as it is now. A save from a story with a different `id` isn't loaded:
+
+```javascript
+const result = await squiffyApi.loadSave(JSON.parse(localStorage.getItem('my-save')));
+if (!result.success) {
+    console.log(result.error); // "wrongStory", or "notASave" if it isn't a saved game
+}
+```
+
+## The Saved games dialog
+
+The published page's [Saved games](/multiple-files/#saved-games) dialog is part of the runtime, so you can use it too. `createSavesDialog()` adds it to the page, and `open()` shows it:
+
+```javascript
+const savesDialog = squiffyRuntime.createSavesDialog(squiffyApi);
+saveButton.addEventListener('click', () => savesDialog.open());
+```
+
+The saves are kept in the browser's IndexedDB, under the page's path. These options change that:
+
+| Option | Description |
+|---|---|
+| `key` | Which story the saves are for, if not the page's path |
+| `slots` | Somewhere else to keep the saves: an object with `list`, `get`, `add`, `overwrite`, `rename` and `delete` methods, like the runtime's `memorySaveSlots()` |
+| `strings` | The dialog's text, using the [names in `squiffy.json`](/multiple-files/#the-pages-text-in-another-language) |
+| `fileName` | The name Save to file gives the file, before `.squiffy-save`. The page's title by default |
+| `container` | Where to put the dialog in the page. The end of the body by default |
+
+Its styles are in `squiffy.runtime.css`.
+
 ## Events
 
 You can listen for events using `on()`, `off()`, and `once()`:

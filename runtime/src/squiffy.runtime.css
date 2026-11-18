@@ -235,3 +235,285 @@ div.squiffy-output-section:not(:has(~ div.squiffy-output-section div.squiffy-out
         animation: none;
     }
 }
+
+/* The Saved games dialog, opened by the page's Save button */
+dialog.squiffy-saves
+{
+    width: min(28rem, calc(100vw - 2rem));
+    max-height: calc(100vh - 2rem);
+    box-sizing: border-box;
+    padding: 1rem 1.25rem 1.25rem;
+    border: 1px solid var(--squiffy-border);
+    border-radius: 0.75rem;
+    background-color: var(--squiffy-background);
+    color: var(--squiffy-text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 0.9375rem;
+    line-height: 1.4;
+    box-shadow: 0 1rem 3rem rgb(0 0 0 / 0.25);
+}
+
+dialog.squiffy-saves::backdrop
+{
+    background-color: rgb(0 0 0 / 0.4);
+}
+
+dialog.squiffy-saves svg
+{
+    width: 1.25em;
+    height: 1.25em;
+    flex: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.squiffy-saves-header
+{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+}
+
+.squiffy-saves-header h2
+{
+    margin: 0;
+    font-size: 1.125rem;
+}
+
+.squiffy-saves button
+{
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+}
+
+.squiffy-saves button:focus-visible,
+.squiffy-saves input:focus-visible
+{
+    outline: 2px solid var(--squiffy-link);
+    outline-offset: 2px;
+}
+
+.squiffy-saves-button
+{
+    flex: none;
+    padding: 0.3em 0.8em;
+    border: 1px solid var(--squiffy-border);
+    border-radius: 0.375em;
+    background: none;
+}
+
+.squiffy-saves-button:hover
+{
+    background-color: color-mix(in srgb, currentColor 8%, transparent);
+}
+
+.squiffy-saves .squiffy-saves-primary
+{
+    border-color: var(--squiffy-link);
+    background-color: var(--squiffy-link);
+    color: var(--squiffy-background);
+}
+
+.squiffy-saves .squiffy-saves-danger-button
+{
+    border-color: var(--squiffy-error);
+    background-color: var(--squiffy-error);
+    color: var(--squiffy-background);
+}
+
+.squiffy-saves-icon-button
+{
+    display: inline-flex;
+    padding: 0.3em;
+    border: none;
+    border-radius: 0.375em;
+    background: none;
+    color: var(--squiffy-muted) !important;
+}
+
+.squiffy-saves-icon-button:hover,
+.squiffy-saves-icon-button[aria-expanded="true"]
+{
+    color: var(--squiffy-text) !important;
+    background-color: color-mix(in srgb, currentColor 10%, transparent);
+}
+
+.squiffy-saves-error
+{
+    margin: 0 0 0.75rem;
+    color: var(--squiffy-error);
+}
+
+.squiffy-saves-new
+{
+    display: flex;
+    gap: 0.5rem;
+}
+
+.squiffy-saves input[type="text"]
+{
+    flex: 1;
+    min-width: 0;
+    padding: 0.3em 0.6em;
+    border: 1px solid var(--squiffy-border);
+    border-radius: 0.375em;
+    background-color: var(--squiffy-background);
+    color: inherit;
+    font: inherit;
+}
+
+.squiffy-saves-list
+{
+    list-style: none;
+    margin: 0.75rem 0 0;
+    padding: 0;
+    max-height: 50vh;
+    overflow-y: auto;
+}
+
+.squiffy-saves-empty
+{
+    padding: 0.75rem 0;
+    color: var(--squiffy-muted);
+}
+
+.squiffy-saves-row
+{
+    padding: 0.5rem 0;
+    border-top: 1px solid var(--squiffy-border);
+}
+
+.squiffy-saves-line
+{
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.squiffy-saves-info
+{
+    flex: 1;
+    min-width: 0;
+}
+
+.squiffy-saves-title
+{
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.squiffy-saves-meta
+{
+    color: var(--squiffy-muted);
+    font-size: 0.8125rem;
+}
+
+.squiffy-saves-options
+{
+    position: relative;
+}
+
+.squiffy-saves-menu
+{
+    position: absolute;
+    right: 0;
+    top: 100%;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 10rem;
+    margin-top: 0.25rem;
+    padding: 0.25rem;
+    border: 1px solid var(--squiffy-border);
+    border-radius: 0.5rem;
+    background-color: var(--squiffy-background);
+    box-shadow: 0 0.5rem 1.5rem rgb(0 0 0 / 0.2);
+}
+
+.squiffy-saves-menu[hidden]
+{
+    display: none;
+}
+
+/* In the top layer, placed by the script */
+.squiffy-saves-menu:popover-open
+{
+    position: fixed;
+    right: auto;
+    bottom: auto;
+    margin: 0;
+    color: inherit;
+}
+
+.squiffy-saves-menu button
+{
+    padding: 0.4em 0.75em;
+    border: none;
+    border-radius: 0.25em;
+    background: none;
+    text-align: left;
+}
+
+.squiffy-saves-menu button:hover,
+.squiffy-saves-menu button:focus-visible
+{
+    background-color: color-mix(in srgb, currentColor 10%, transparent);
+}
+
+.squiffy-saves .squiffy-saves-danger
+{
+    color: var(--squiffy-error);
+}
+
+.squiffy-saves-confirm
+{
+    margin-top: 0.5rem;
+    padding: 0.75rem;
+    border: 1px solid var(--squiffy-border);
+    border-radius: 0.5rem;
+    background-color: color-mix(in srgb, var(--squiffy-text) 5%, transparent);
+}
+
+.squiffy-saves-confirm p
+{
+    margin: 0 0 0.5rem;
+}
+
+.squiffy-saves-confirm-buttons
+{
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+.squiffy-saves-footer
+{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.25rem;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--squiffy-border);
+}
+
+.squiffy-saves-link
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375em;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--squiffy-link) !important;
+}
+
+.squiffy-saves-link:hover
+{
+    text-decoration: underline;
+}

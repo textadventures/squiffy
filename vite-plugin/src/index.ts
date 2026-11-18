@@ -98,6 +98,7 @@ export default function squiffyPlugin(options: SquiffyPluginOptions = {}): Plugi
                 externalFiles: externalFiles(filename, readFiles),
                 storyFiles: story.storyFiles,
                 expressions: story.expressions,
+                projectId: story.projectId,
             });
 
             for (const file of readFiles.slice(1)) {

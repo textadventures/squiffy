@@ -25,6 +25,7 @@ async function getCompileResult(story: StoryOnDisk) {
         externalFiles: externalFiles(inputFilename),
         storyFiles: story.storyFiles,
         expressions: story.expressions,
+        projectId: story.projectId,
         globalJs: true,
     });
     for (const diagnostic of result.diagnostics) {
