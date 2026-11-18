@@ -357,6 +357,51 @@ You can also use JavaScript:
     }
 ```
 
+Sections and passages are looked up by name, so if two sections each have a passage with the same name, `{{seen}}` can't tell them apart. If that matters, give the passages different names.
+
+### The `{{visits}}` helper
+
+`{{visits}}` says how many times the player has visited a section or passage, or 0 if they haven't. Use it to show something different each time, or in a condition with `>`, `<` and the other comparison operators. Try going into the cave a few times:
+
+<Sample script="[[start]]:
+You're outside a cave. [[Go in]](cave)
+
+[[cave]]:
+{{#if (visits &quot;cave&quot;) = 1}}
+It's dark inside. You can't see a thing.
+{{else if (visits &quot;cave&quot;) < 4}}
+You've been here before. Your eyes adjust to the gloom.
+{{else}}
+You know this cave like the back of your hand. You've been here {{visits &quot;cave&quot;}} times.
+{{/if}}
+
+[[Go back outside]](start)"></Sample>
+
+`{{seen "cave"}}` is the same as `(visits "cave") > 0`. Like `{{seen}}`, `{{visits}}` counts a section reached with [`{{goto}}`](/basic-concepts/#go-to-another-section) or `squiffy.story.go`, and going back with the Back button takes the visit away again.
+
+In JavaScript, use `squiffy.story.visits("cave")`.
+
+### Counting turns
+
+Squiffy keeps the number of section and passage links the player has clicked in the whole story so far in the `turns` attribute, starting at 0. Use it for time limits, or anything that should change as the story goes on:
+
+<Sample script="The candle is burning down. [Read the letter], [look out of the window], or [[leave]].
+
+[Read the letter]:
+{{#if turns > 2}}It's too dark to read now.{{else}}The letter is from your sister.{{/if}}
+
+[look out of the window]:
+It's raining.
+
+[[leave]]:
+You left after {{turns}} turns."></Sample>
+
+Following a [`{{goto}}`](/basic-concepts/#go-to-another-section) isn't a turn, as the player didn't click anything, and going back with the Back button takes the turn away again.
+
+Squiffy sets `turns` itself, so don't set it in your story: the editor underlines it if you do.
+
+This is different from [turn counting within a section](/basic-concepts/#turn-counting), which counts passage clicks in the current section only, and starts again in each new section.
+
 ### The `{{at}}` helper
 
 The `{{at}}` helper checks if you're currently at a specific section. It can take a single section name or an array of section names.

@@ -71,6 +71,8 @@ describe("preview", () => {
         expect(element.textContent).toContain("Welcome.");
         expect(messages).toEqual([
             { type: "canGoBackChanged", canGoBack: false },
+            // The story-wide turn count (#377), which isn't internal, so it's reported
+            { type: "attributeSet", name: "turns", value: 0 },
             { type: "attributeSet", name: "score", value: 1 },
             { type: "navigated", section: "start" },
             { type: "loaded" },
@@ -80,6 +82,7 @@ describe("preview", () => {
         element.querySelector<HTMLElement>("a[data-passage='look']")!.click();
         await vi.waitFor(() => expect(messages.some(m => m.type == "navigated")).toBe(true));
         expect(messages).toEqual([
+            { type: "attributeSet", name: "turns", value: 1 },
             { type: "attributeSet", name: "looked", value: true },
             { type: "canGoBackChanged", canGoBack: true },
             { type: "navigated", section: "start", passage: "look" },

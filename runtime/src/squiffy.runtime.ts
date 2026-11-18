@@ -54,6 +54,8 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
 
         if (passage !== null || section !== null) {
             gotoHops = 0;
+            // The story-wide turn count (#377). A {{goto}} isn't a turn, as the player didn't click it.
+            set("turns", (get("turns") || 0) + 1);
         }
 
         if (passage !== null) {
@@ -293,6 +295,9 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         currentSection = story.sections[sectionName];
         if (!currentSection) return;
         set("_section", sectionName);
+        // The story-wide turn count starts at 0 (#377), in a new story or one saved before it existed.
+        // It isn't a change the player made, so it isn't undone.
+        if (get("turns") === null) state.setInternal("turns", 0, false);
         state.setSeen(sectionName);
         const master = story.sections[""];
         if (master?.clear || currentSection.clear) {
@@ -344,6 +349,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             story: {
                 go: go,
                 seen: (sectionOrPassage: string) => state.getSeen(sectionOrPassage),
+                visits: (sectionOrPassage: string) => state.getVisits(sectionOrPassage),
             },
             element: outputElementContainer,
             import: imports,

@@ -415,3 +415,47 @@ export function findUnquotedText(file: SquiffyFile, isSet: (name: string) => boo
     }
     return result;
 }
+
+// Attributes that Squiffy sets itself, which a story shouldn't set as well, with what they are
+export const BUILT_IN_ATTRIBUTES: ReadonlyMap<string, string> = new Map([
+    // #377: stories written before Squiffy counted turns often kept their own count called "turns"
+    ["turns", "the number of links clicked in the story so far"],
+]);
+
+export interface BuiltInAttributeSet {
+    name: string;
+    // The attribute's name where it's set
+    range: Range;
+}
+
+// Finds where a file sets one of the BUILT_IN_ATTRIBUTES: on the left of a setter, in @inc, @dec
+// and @unset, and as the quoted first argument of set, inc, dec or unset, which covers
+// {{set "turns" 1}} and squiffy.set("turns", 1) in JavaScript.
+export function findBuiltInAttributeSets(file: SquiffyFile, text: string): BuiltInAttributeSet[] {
+    const result: BuiltInAttributeSet[] = [];
+    const add = (name: string, line: number, character: number) => {
+        if (BUILT_IN_ATTRIBUTES.has(name)) {
+            result.push({ name, range: { start: { line, character }, end: { line, character: character + name.length } } });
+        }
+    };
+    for (const site of setterSites(file)) {
+        const match = /^(\s*(?:not\s+)?)(\w+)/.exec(site.text);
+        if (match) add(match[2], site.line, site.character + match[1].length);
+    }
+    for (const section of [file.preamble, ...file.sections] as (SectionNode | SnippetNode)[]) {
+        if (section.type !== "section") continue;
+        for (const container of [section, ...section.passages]) {
+            for (const node of container.body) {
+                if (node.type !== "attribute" || node.directive === "set") continue;
+                const match = /^(\s*)(\w+)/.exec(node.value);
+                if (match) add(match[2], node.valueRange.start.line, node.valueRange.start.character + match[1].length);
+            }
+        }
+    }
+    text.replace(/\r/g, "").split("\n").forEach((line, i) => {
+        for (const match of line.matchAll(/\b(?:set|inc|dec|unset)\s*\(?\s*(["'])(\w+)\1/g)) {
+            add(match[2], i, match.index! + match[0].length - match[2].length - 1);
+        }
+    });
+    return result.sort((a, b) => a.range.start.line - b.range.start.line || a.range.start.character - b.range.start.character);
+}

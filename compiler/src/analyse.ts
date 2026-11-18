@@ -5,7 +5,7 @@ import type {
 import { positionMapper, SourceLine, transformText } from "./text.js";
 import { PROJECT_FILENAME } from "./project.js";
 import { findV5Syntax } from "./v5.js";
-import { attributesSetIn, findAtAttributes, findUnquotedText } from "./setters.js";
+import { attributesSetIn, BUILT_IN_ATTRIBUTES, findAtAttributes, findBuiltInAttributeSets, findUnquotedText } from "./setters.js";
 
 export interface ExternalFiles {
     getMatchingFilenames(pattern: string): Promise<string[]>;
@@ -579,6 +579,15 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
     if (settings.expressions) {
         warnAboutUnquotedText();
     }
+
+    // A story setting an attribute that Squiffy sets itself, such as turns (#377)
+    files.forEach((file, i) => {
+        for (const found of findBuiltInAttributeSets(file, texts[i])) {
+            report("warning", "squiffy/built-in-attribute", file.filename, found.range,
+                `Squiffy sets ${found.name} itself: it's ${BUILT_IN_ATTRIBUTES.get(found.name)}. Use a different name for your own attribute.`,
+                found.range.start.line + 1);
+        }
+    });
 
     const analysis: Analysis = {
         success,

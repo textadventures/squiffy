@@ -3408,3 +3408,186 @@ You died.
     expect(squiffyApi.get("_section")).toBe("death");
     expect(element.querySelector(".squiffy-error")).toBeNull();
 });
+
+// Visit counts and the story-wide turn count (#377)
+
+test("{{visits}} counts visits to sections and passages", async () => {
+    const script = `
+[[start]]:
+Start. [look] [[cave]]
+
+[look]:
+You look. Looked {{visits "look"}} times.
+
+[[cave]]:
+Cave visit {{visits "cave"}}. Start {{visits "start"}}, nowhere {{visits "nowhere"}}. [[start]]
+`;
+    const { squiffyApi, element } = await initScript(script);
+    expect(squiffyApi.get("_visits")).toEqual({ start: 1 });
+
+    await squiffyApi.clickLink(findLink(element, "passage", "look"));
+    expect(visibleText(element)).toContain("Looked 1 times.");
+
+    await squiffyApi.clickLink(findLink(element, "section", "cave"));
+    expect(visibleText(element)).toContain("Cave visit 1. Start 1, nowhere 0.");
+
+    await squiffyApi.clickLink(findLink(element, "section", "start", true));
+    await squiffyApi.clickLink(findLink(element, "passage", "look", true));
+    expect(visibleText(element)).toContain("Looked 2 times.");
+    await squiffyApi.clickLink(findLink(element, "section", "cave", true));
+    expect(visibleText(element)).toContain("Cave visit 2. Start 2, nowhere 0.");
+});
+
+for (const expressions of [false, true]) {
+    test(`{{visits}} works in conditions${expressions ? " in a story with a squiffy.json" : ""}`, async () => {
+        const script = `
+[[start]]:
+[[cave]]
+
+[[cave]]:
+{{#if (visits "cave") > 1}}Back again.{{else}}A new cave.{{/if}} [[start]]
+`;
+        const { squiffyApi, element } = await initScript(script, expressions);
+        await squiffyApi.clickLink(findLink(element, "section", "cave"));
+        expect(visibleText(element)).toContain("A new cave.");
+        await squiffyApi.clickLink(findLink(element, "section", "start", true));
+        await squiffyApi.clickLink(findLink(element, "section", "cave", true));
+        expect(visibleText(element)).toContain("Back again.");
+    });
+}
+
+test("squiffy.story.visits() in JS", async () => {
+    // Note: the 4-space indent on the JS lines is the squiffy JS syntax - don't trim it!
+    const script = `Click [a] then [check].
+
+[a]:
+Passage a.
+
+[check]:
+    squiffy.set("visits_a", squiffy.story.visits("a"));
+    squiffy.set("visits_b", squiffy.story.visits("b"));
+Checked.`;
+    const { squiffyApi, element } = await initScript(script);
+    await squiffyApi.clickLink(findLink(element, "passage", "a"));
+    await squiffyApi.clickLink(findLink(element, "passage", "check"));
+    expect(squiffyApi.get("visits_a")).toBe(1);
+    expect(squiffyApi.get("visits_b")).toBe(0);
+});
+
+test("turns counts every section and passage link clicked, across sections", async () => {
+    const script = `
+[[start]]:
+Turn {{turns}}. [a] [b] [[next]]
+
+[a]:
+A at turn {{turns}}, section turn {{_turncount}}.
+
+[b]:
+B.
+
+[[next]]:
+Next at turn {{turns}}. [c]
+
+[c]:
+C at turn {{turns}}, section turn {{_turncount}}.
+`;
+    const { squiffyApi, element } = await initScript(script);
+    expect(visibleText(element)).toContain("Turn 0.");
+    await squiffyApi.clickLink(findLink(element, "passage", "a"));
+    expect(visibleText(element)).toContain("A at turn 1, section turn 1.");
+    await squiffyApi.clickLink(findLink(element, "passage", "b"));
+    await squiffyApi.clickLink(findLink(element, "section", "next"));
+    expect(visibleText(element)).toContain("Next at turn 3.");
+    await squiffyApi.clickLink(findLink(element, "passage", "c"));
+    expect(visibleText(element)).toContain("C at turn 4, section turn 1.");
+    expect(squiffyApi.get("turns")).toBe(4);
+});
+
+test("turns works in conditions", async () => {
+    const script = `
+[[start]]:
+[a] [b] [c]
+
+[a]:
+A.
+
+[b]:
+B.
+
+[c]:
+{{#if turns > 2}}Late.{{else}}Early.{{/if}}
+`;
+    const { squiffyApi, element } = await initScript(script, true);
+    await squiffyApi.clickLink(findLink(element, "passage", "a"));
+    await squiffyApi.clickLink(findLink(element, "passage", "b"));
+    await squiffyApi.clickLink(findLink(element, "passage", "c"));
+    expect(visibleText(element)).toContain("Late.");
+});
+
+test("{{goto}} counts as a visit but not a turn", async () => {
+    const script = `
+[[start]]:
+[[fight]]
+
+[[fight]]:
+{{goto "death"}}
+
+[[death]]:
+Died at turn {{turns}}, visit {{visits "death"}}.
+`;
+    const { squiffyApi, element } = await initScript(script);
+    await squiffyApi.clickLink(findLink(element, "section", "fight"));
+    expect(squiffyApi.get("_section")).toBe("death");
+    expect(visibleText(element)).toContain("Died at turn 1, visit 1.");
+    expect(squiffyApi.get("_visits")).toEqual({ start: 1, fight: 1, death: 1 });
+});
+
+test("Going back undoes visit counts and turns", async () => {
+    const script = `
+[[start]]:
+[a] [[next]]
+
+[a]:
+A.
+
+[[next]]:
+Next.
+`;
+    const { squiffyApi, element } = await initScript(script);
+    await squiffyApi.clickLink(findLink(element, "passage", "a"));
+    await squiffyApi.clickLink(findLink(element, "section", "next"));
+    expect(squiffyApi.get("turns")).toBe(2);
+    expect(squiffyApi.get("_visits")).toEqual({ start: 1, a: 1, next: 1 });
+
+    squiffyApi.goBack();
+    expect(squiffyApi.get("turns")).toBe(1);
+    expect(squiffyApi.get("_visits")).toEqual({ start: 1, a: 1 });
+
+    squiffyApi.goBack();
+    expect(squiffyApi.get("turns")).toBe(0);
+    expect(squiffyApi.get("_visits")).toEqual({ start: 1 });
+
+    await squiffyApi.clickLink(findLink(element, "passage", "a", true));
+    expect(squiffyApi.get("_visits")).toEqual({ start: 1, a: 1 });
+});
+
+test("A save from before visit counts treats each seen section or passage as visited once", async () => {
+    const script = `
+[[start]]:
+Start {{visits "start"}}, cave {{visits "cave"}}, lake {{visits "lake"}}, turns {{turns}}.
+`;
+    const storyId = "00000000-0000-0000-0000-000000000000";
+    localStorage[`${storyId}-_seen_sections`] = JSON.stringify(["start", "cave"]);
+
+    const element = document.getElementById("squiffy")!;
+    const compileResult = await compile(script, "old-save.squiffy");
+    const squiffyApi = await init({ element, story: compileResult.story, persist: true, storyId });
+    await squiffyApi.begin();
+
+    // Going to start makes it the second visit
+    expect(visibleText(element)).toContain("Start 2, cave 1, lake 0, turns 0.");
+    expect(squiffyApi.get("_visits")).toEqual({ start: 2 });
+
+    localStorage.clear();
+});
+

@@ -31,6 +31,7 @@ export class TextProcessor {
         });
 
         this.handlebars.registerHelper("seen", (name: string) => this.state.getSeen(name));
+        this.handlebars.registerHelper("visits", (name: string) => this.state.getVisits(name));
         this.handlebars.registerHelper("get", (attribute: string) => this.state.get(attribute));
         this.handlebars.registerHelper("at", (section: string | string[]) => {
             const currentSection = this.state.get("_section");

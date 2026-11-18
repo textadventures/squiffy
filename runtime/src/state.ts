@@ -107,9 +107,15 @@ export class State {
         }
     }
 
+    // Records a visit to a section or passage: adds it to _seen_sections, and counts it in
+    // _visits (#377). Both are attributes, so going back undoes them.
     setSeen(sectionName: string) {
         let seenSections = this.get("_seen_sections");
         if (!seenSections) seenSections = [];
+        const visits = this.get("_visits") || {};
+        // A save from before _visits has the name in _seen_sections with no count: that's one visit
+        visits[sectionName] = this.getVisitsFrom(visits, seenSections, sectionName) + 1;
+        this.set("_visits", visits);
         if (seenSections.indexOf(sectionName) == -1) {
             seenSections.push(sectionName);
             this.set("_seen_sections", seenSections);
@@ -120,5 +126,15 @@ export class State {
         const seenSections = this.get("_seen_sections");
         if (!seenSections) return false;
         return (seenSections.indexOf(sectionName) > -1);
+    }
+
+    // How many times a section or passage has been visited, or 0 if it hasn't
+    getVisits(sectionName: string): number {
+        return this.getVisitsFrom(this.get("_visits") || {}, this.get("_seen_sections") || [], sectionName);
+    }
+
+    private getVisitsFrom(visits: Record<string, number>, seenSections: string[], sectionName: string): number {
+        if (Object.prototype.hasOwnProperty.call(visits, sectionName)) return visits[sectionName];
+        return seenSections.indexOf(sectionName) > -1 ? 1 : 0;
     }
 }

@@ -67,6 +67,7 @@ interface SquiffyJsFunctionApi {
     story: {
         go: (section: string) => void;
         seen: (sectionOrPassage: string) => boolean;
+        visits: (sectionOrPassage: string) => number;
     };
 }
 
