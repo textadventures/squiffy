@@ -41,6 +41,8 @@ interface CompilerSettings {
     storyFiles?: string[];
     // Whether @set and link setters take expressions: see AnalyseSettings.expressions
     expressions?: boolean;
+    // squiffy.json's "id": see EmitSettings.projectId
+    projectId?: string;
 }
 
 export interface CompileError {
@@ -69,5 +71,5 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         };
     }
 
-    return emit(analysis, { globalJs: settings.globalJs });
+    return emit(analysis, { globalJs: settings.globalJs, projectId: settings.projectId });
 }

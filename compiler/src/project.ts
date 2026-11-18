@@ -18,6 +18,9 @@ export const PROJECT_SCHEMA_URL = "https://squiffystory.com/schema/squiffy.json"
 
 export interface ProjectFile {
     version: number;
+    // Identifies the story, whatever its title or files are called, so a player's saved game can
+    // be loaded only into the story it came from. A new project file is given a random UUID.
+    id?: string;
     // The story's main file, relative to the project file's folder, with "/" separators.
     main: string;
     // Glob patterns for .squiffy files that aren't part of the story, relative to the project
@@ -28,23 +31,50 @@ export interface ProjectFile {
     map?: MapPositions;
     // Whether the published story has a Back button for players. Undefined means it does.
     backButton?: boolean;
+    // Whether the published story has a Save button, which opens the Saved games dialog.
+    // Undefined means it does.
+    saveButton?: boolean;
     // The published page's own text, such as the Restart button's tooltip, for a story in another
     // language. Anything left out is in English.
     strings?: PageStrings;
 }
 
 // The text on the published page around the story, by name. See PAGE_STRINGS for the English.
-export type PageStringName = "back" | "restart" | "restartConfirm" | "switchToDark" | "switchToLight";
+export type PageStringName = keyof typeof PAGE_STRINGS;
 export type PageStrings = Partial<Record<PageStringName, string>>;
 
 // The published page's text in English, which squiffy.json's "strings" can replace
-export const PAGE_STRINGS: Record<PageStringName, string> = {
+export const PAGE_STRINGS = {
     back: "Back",
     restart: "Restart",
     restartConfirm: "Are you sure you want to restart?",
     switchToDark: "Switch to dark mode",
     switchToLight: "Switch to light mode",
-};
+    // The Saved games dialog, opened by the Save button. [name] and [time] are filled in.
+    saves: "Saved games",
+    saveName: "Name (optional)",
+    save: "Save",
+    noSaves: "No saved games yet.",
+    savedGame: "Saved game",
+    savedToday: "Today, [time]",
+    savedYesterday: "Yesterday, [time]",
+    load: "Load",
+    loadConfirm: "Load \"[name]\"? You'll lose anything you've done since you last saved.",
+    saveOptions: "Options for [name]",
+    overwrite: "Overwrite",
+    overwriteConfirm: "Overwrite \"[name]\"?",
+    rename: "Rename",
+    newName: "New name",
+    saveToFile: "Save to file",
+    loadFromFile: "Load from file",
+    delete: "Delete",
+    deleteConfirm: "Delete \"[name]\"? This can't be undone.",
+    cancel: "Cancel",
+    close: "Close",
+    wrongStory: "This saved game is for a different story.",
+    notASave: "This file isn't a saved game.",
+    cantSave: "The game couldn't be saved. Try Save to file instead.",
+} satisfies Record<string, string>;
 
 // Positions on the story map, by section name, and passages by section and passage name. Only
 // sections and passages the author has moved by hand are saved: the map lays out the rest.
@@ -103,9 +133,19 @@ export function parseProjectFile(text: string): ParsedProjectFile {
         return fail(`${PROJECT_FILENAME}'s "exclude" should be a list of file patterns, such as ["drafts/**"].`);
     }
 
+    const id = data.id;
+    if (id !== undefined && (typeof id != "string" || !id.trim())) {
+        return fail(`${PROJECT_FILENAME}'s "id" should be text that identifies the story, such as "${EXAMPLE_ID}".`);
+    }
+
     const backButton = data.backButton;
     if (backButton !== undefined && typeof backButton != "boolean") {
         return fail(`${PROJECT_FILENAME}'s "backButton" should be true or false.`);
+    }
+
+    const saveButton = data.saveButton;
+    if (saveButton !== undefined && typeof saveButton != "boolean") {
+        return fail(`${PROJECT_FILENAME}'s "saveButton" should be true or false.`);
     }
 
     const strings = data.strings;
@@ -118,8 +158,10 @@ export function parseProjectFile(text: string): ParsedProjectFile {
         success: true,
         project: {
             version, main: mainPath, exclude: exclude as string[],
+            ...(id !== undefined ? { id: (id as string).trim() } : {}),
             ...(map ? { map } : {}),
             ...(backButton !== undefined ? { backButton } : {}),
+            ...(saveButton !== undefined ? { saveButton } : {}),
             ...(strings !== undefined ? { strings: pickPageStrings(strings as Record<string, string>) } : {}),
         },
     };
@@ -130,6 +172,8 @@ export function parseProjectFile(text: string): ParsedProjectFile {
 function pickPageStrings(strings: Record<string, string>): PageStrings {
     return Object.fromEntries(Object.entries(strings).filter(([name]) => Object.prototype.hasOwnProperty.call(PAGE_STRINGS, name)));
 }
+
+const EXAMPLE_ID = "0b7c6d9e-3f1a-4e2b-9c5d-8a7f6e5d4c3b";
 
 const isPosition = (value: unknown): value is [number, number] =>
     Array.isArray(value) && value.length == 2 && value.every(n => typeof n == "number" && Number.isFinite(n));
@@ -252,11 +296,12 @@ export function getStoryFiles(project: ProjectFile, paths: Iterable<string>, ski
     return { main: project.main, included: included.sort(comparePaths), excluded: excluded.sort(comparePaths) };
 }
 
-// The text of a new project file
-export function formatProjectFile(project: { main: string; exclude?: string[]; map?: MapPositions }): string {
+// The text of a new project file. It's given a new random id, unless one is passed in.
+export function formatProjectFile(project: { main: string; exclude?: string[]; map?: MapPositions; id?: string }): string {
     const json: Record<string, unknown> = {
         $schema: PROJECT_SCHEMA_URL,
         version: PROJECT_FILE_VERSION,
+        id: project.id ?? crypto.randomUUID(),
         main: project.main,
     };
     if (project.exclude?.length) json.exclude = project.exclude;

@@ -723,3 +723,15 @@ test("Warning when a section is named like one the compiler names itself", async
         "WARNING: story.squiffy line 3: There's already a section called [[_continue1]], at line 1. This one replaces it.",
     ]);
 });
+
+test("A story's squiffy.json id is in its output, for checking saved games against", async () => {
+    const withId = await compile({ script: "Hello", projectId: "abc-123" });
+    assertSuccess(withId);
+    expect(withId.output.story.projectId).toBe("abc-123");
+    expect(await withId.getJs()).toContain("story.projectId = \"abc-123\";");
+
+    const without = await compile({ script: "Hello" });
+    assertSuccess(without);
+    expect(without.output.story.projectId).toBeUndefined();
+    expect(await without.getJs()).not.toContain("projectId");
+});

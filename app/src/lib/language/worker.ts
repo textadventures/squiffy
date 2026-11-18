@@ -14,14 +14,14 @@ async function exportStory(kind: ExportKind, assets: Record<string, Uint8Array>)
     const analysis = await current().getAnalysis();
     const errors = errorsIn(analysis);
     if (errors) return { success: false, errors };
+    const { projectFile } = await current().getProjectInfo();
     // A published story declares a global, which the packager's page loads with a <script>
-    const result = emit(analysis, { globalJs: true });
+    const result = emit(analysis, { globalJs: true, projectId: projectFile?.id });
     if (kind === "js") return { success: true, files: { "story.js": await result.getJs() } };
     const { createPackage } = await import("@textadventures/squiffy-packager");
-    const { projectFile } = await current().getProjectInfo();
     const pkg = await createPackage(result, {
         createZip: kind === "zip", inlineHtml: kind === "html", assets, backButton: projectFile?.backButton,
-        strings: projectFile?.strings,
+        saveButton: projectFile?.saveButton, strings: projectFile?.strings,
     });
     return { success: true, files: pkg.files, zip: pkg.zip };
 }

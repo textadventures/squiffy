@@ -1,5 +1,6 @@
 {
   "$schema": "https://squiffystory.com/schema/squiffy.json",
   "version": 1,
+  "id": "69f98581-092f-442a-a592-70e2d41cf2ee",
   "main": "gameshow.squiffy"
 }

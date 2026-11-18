@@ -1,5 +1,6 @@
 import { expect, test } from "vitest";
-import { compile } from "squiffy-compiler";
+import { compile, PAGE_STRINGS } from "squiffy-compiler";
+import { SAVES_STRINGS } from "squiffy-runtime";
 import { unzipSync, strFromU8 } from "fflate";
 import { createPackage, normaliseAssetPath } from "./packager.js";
 
@@ -59,6 +60,43 @@ test("Exported page has a Back button, unless it's turned off", async () => {
     expect(without).not.toContain('id="squiffy-back"');
     expect(without).not.toContain("BACK_BUTTON");
     expect(without).toContain('id="restart"');
+});
+
+test("Exported page has a Save button, which opens the Saved games dialog, unless it's turned off", async () => {
+    const compileResult = await compile({ script: "Hello world!" });
+    if (!compileResult.success) throw new Error("Compile failed");
+
+    const html = (await createPackage(compileResult, {})).files["index.html"];
+    expect(html).toContain('id="squiffy-saves-button" type="button" title="Saved games" aria-label="Saved games"');
+    expect(html).not.toContain("SAVE_BUTTON");
+    expect(html.indexOf('id="squiffy-saves-button"')).toBeLessThan(html.indexOf('id="restart"'));
+    expect(html).toContain("squiffyRuntime.createSavesDialog(squiffyApi");
+    expect(html).not.toContain("/* PAGE_STRINGS */");
+
+    const without = (await createPackage(compileResult, { saveButton: false })).files["index.html"];
+    expect(without).not.toContain('id="squiffy-saves-button"');
+    expect(without).not.toContain("SAVE_BUTTON");
+});
+
+test("The Saved games dialog gets the page's strings, safely", async () => {
+    const compileResult = await compile({ script: "Hello world!" });
+    if (!compileResult.success) throw new Error("Compile failed");
+
+    const html = (await createPackage(compileResult, {
+        strings: { save: "Sauvegarder", load: "</script><b>" },
+    })).files["index.html"];
+    const json = /strings: (\{.*\}),\n/.exec(html)![1];
+    expect(json).not.toContain("</script>");
+    const strings = JSON.parse(json);
+    expect(strings.save).toBe("Sauvegarder");
+    expect(strings.load).toBe("</script><b>");
+    expect(strings.saves).toBe("Saved games");
+});
+
+test("The runtime's Saved games dialog has the same English as PAGE_STRINGS", () => {
+    for (const [name, text] of Object.entries(SAVES_STRINGS)) {
+        expect(PAGE_STRINGS[name as keyof typeof PAGE_STRINGS], name).toBe(text);
+    }
 });
 
 test("Header buttons are labelled in English, or with the story's own strings", async () => {

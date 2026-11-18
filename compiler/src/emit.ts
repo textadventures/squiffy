@@ -12,6 +12,8 @@ export interface Output {
 interface OutputStory {
     start: string;
     id: string | null;
+    // squiffy.json's "id", which a saved game is checked against
+    projectId?: string;
     uiJsIndex?: number;
     // Whether @set and link setters take expressions (#373)
     expressions?: boolean;
@@ -43,6 +45,8 @@ export interface UiInfo {
 export interface EmitSettings {
     // Declare the story as a global variable instead of exporting it from a module.
     globalJs?: boolean;
+    // squiffy.json's "id", if the story has one: see ProjectFile.id
+    projectId?: string;
 }
 
 export interface CompileSuccess {
@@ -76,6 +80,10 @@ export function emit(analysis: Analysis, settings: EmitSettings = {}): CompileSu
 
     if (analysis.expressions) {
         output.story.expressions = true;
+    }
+
+    if (settings.projectId) {
+        output.story.projectId = settings.projectId;
     }
 
     if (story.uiJs.length > 0) {
@@ -149,6 +157,9 @@ export function emit(analysis: Analysis, settings: EmitSettings = {}): CompileSu
             outputJs.push("export const story = {};");
         }
         outputJs.push(`story.id = ${JSON.stringify(output.story.id, null, 4)};`);
+        if (output.story.projectId) {
+            outputJs.push(`story.projectId = ${JSON.stringify(output.story.projectId)};`);
+        }
         if (output.story.uiJsIndex !== undefined) {
             outputJs.push(`story.uiJsIndex = ${output.story.uiJsIndex};`);
         }

@@ -25,6 +25,10 @@ export interface StoryOnDisk {
     backButton?: boolean;
     // squiffy.json's "strings", in folder mode
     strings?: PageStrings;
+    // squiffy.json's "saveButton", in folder mode
+    saveButton?: boolean;
+    // squiffy.json's "id", in folder mode
+    projectId?: string;
 }
 
 // A problem finding the story, with a message to show the author as is
@@ -103,6 +107,8 @@ async function folderStory(projectFile: string, options: FindStoryOptions): Prom
         mainFile, storyFiles: story.included.map(file => path.resolve(root, file)), projectFile, expressions: true,
         ...(project.backButton !== undefined ? { backButton: project.backButton } : {}),
         ...(project.strings !== undefined ? { strings: project.strings } : {}),
+        ...(project.saveButton !== undefined ? { saveButton: project.saveButton } : {}),
+        ...(project.id !== undefined ? { projectId: project.id } : {}),
     };
 }
 

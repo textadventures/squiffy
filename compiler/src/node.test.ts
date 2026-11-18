@@ -43,6 +43,13 @@ describe("findStory", () => {
         expect((await findStory(dir)).backButton).toBe(false);
     });
 
+    test("a project's id and saveButton setting come with it", async () => {
+        await write({ "squiffy.json": "{ \"version\": 1, \"id\": \"abc\", \"main\": \"story.squiffy\", \"saveButton\": false }", "story.squiffy": "" });
+        const story = await findStory(dir);
+        expect(story.projectId).toBe("abc");
+        expect(story.saveButton).toBe(false);
+    });
+
     test("a project's strings come with it", async () => {
         await write({ "squiffy.json": "{ \"version\": 1, \"main\": \"story.squiffy\", \"strings\": { \"back\": \"Retour\" } }", "story.squiffy": "" });
         expect((await findStory(dir)).strings).toEqual({ back: "Retour" });

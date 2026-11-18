@@ -46,6 +46,18 @@
                 });
             }
 
+            // The Save button, which opens the Saved games dialog, unless the story's squiffy.json
+            // turns it off
+            const savesButton = document.getElementById('squiffy-saves-button');
+            if (savesButton) {
+                const savesDialog = squiffyRuntime.createSavesDialog(squiffyApi, {
+                    strings: /* PAGE_STRINGS */,
+                });
+                savesButton.addEventListener('click', function () {
+                    savesDialog.open();
+                });
+            }
+
             await squiffyApi.begin();
             // A saved game may have somewhere to go back to
             if (backButton) backButton.disabled = !squiffyApi.canGoBack();
@@ -61,6 +73,11 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
         </button>
         <!-- /BACK_BUTTON -->
+        <!-- SAVE_BUTTON -->
+        <button class="squiffy-header-button" id="squiffy-saves-button" type="button" title="{{saves}}" aria-label="{{saves}}" aria-haspopup="dialog">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></svg>
+        </button>
+        <!-- /SAVE_BUTTON -->
         <button class="squiffy-header-button" id="restart" type="button" title="{{restart}}" aria-label="{{restart}}" data-confirm="{{restartConfirm}}">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
         </button>

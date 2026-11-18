@@ -26,6 +26,12 @@ describe("parseProjectFile", () => {
         });
     });
 
+    test("id and saveButton are kept when they're given", () => {
+        expect(parseProjectFile("{ \"version\": 1, \"id\": \" abc \", \"main\": \"a.squiffy\", \"saveButton\": false }")).toEqual({
+            success: true, project: { version: 1, id: "abc", main: "a.squiffy", exclude: [], saveButton: false },
+        });
+    });
+
     test("strings are kept, leaving out any Squiffy doesn't know", () => {
         const text = JSON.stringify({ version: 1, main: "a.squiffy", strings: { restart: "Recommencer", future: "x", toString: "y" } });
         expect(parseProjectFile(text)).toEqual({
@@ -49,6 +55,9 @@ describe("parseProjectFile", () => {
         ["main not a .squiffy file", "{ \"version\": 1, \"main\": \"a.txt\" }", "should be a .squiffy file"],
         ["exclude not a list", "{ \"version\": 1, \"main\": \"a.squiffy\", \"exclude\": \"x\" }", "should be a list"],
         ["backButton not true or false", "{ \"version\": 1, \"main\": \"a.squiffy\", \"backButton\": \"no\" }", "should be true or false"],
+        ["saveButton not true or false", "{ \"version\": 1, \"main\": \"a.squiffy\", \"saveButton\": 0 }", "should be true or false"],
+        ["an id that isn't text", "{ \"version\": 1, \"main\": \"a.squiffy\", \"id\": 5 }", "\"id\" should be text"],
+        ["an empty id", "{ \"version\": 1, \"main\": \"a.squiffy\", \"id\": \" \" }", "\"id\" should be text"],
         ["strings not an object", "{ \"version\": 1, \"main\": \"a.squiffy\", \"strings\": [] }", "should be an object of text"],
         ["a string that isn't text", "{ \"version\": 1, \"main\": \"a.squiffy\", \"strings\": { \"back\": 1 } }", "should be an object of text"],
     ])("refuses %s", (_, text, error) => {
@@ -109,10 +118,19 @@ describe("getStoryFiles", () => {
 
 describe("writing project files", () => {
     test("a new file", () => {
-        expect(JSON.parse(formatProjectFile({ main: "story.squiffy", exclude: ["x.squiffy"] }))).toEqual({
-            $schema: "https://squiffystory.com/schema/squiffy.json", version: 1, main: "story.squiffy", exclude: ["x.squiffy"],
+        expect(JSON.parse(formatProjectFile({ main: "story.squiffy", exclude: ["x.squiffy"], id: "abc" }))).toEqual({
+            $schema: "https://squiffystory.com/schema/squiffy.json", version: 1, id: "abc", main: "story.squiffy", exclude: ["x.squiffy"],
         });
         expect(JSON.parse(formatProjectFile({ main: "story.squiffy" })).exclude).toBeUndefined();
+    });
+
+    test("a new file gets a new random id", () => {
+        const randomUUID = vi.spyOn(crypto, "randomUUID")
+            .mockReturnValueOnce("1-1-1-1-1")
+            .mockReturnValueOnce("2-2-2-2-2");
+        expect(JSON.parse(formatProjectFile({ main: "story.squiffy" })).id).toBe("1-1-1-1-1");
+        expect(JSON.parse(formatProjectFile({ main: "story.squiffy" })).id).toBe("2-2-2-2-2");
+        randomUUID.mockRestore();
     });
 
     test("updates keep other properties and the indentation", () => {

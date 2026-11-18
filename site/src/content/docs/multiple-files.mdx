@@ -10,6 +10,7 @@ A story can be split across several `.squiffy` files. To make a folder of files 
 {
   "$schema": "https://squiffystory.com/schema/squiffy.json",
   "version": 1,
+  "id": "0b7c6d9e-3f1a-4e2b-9c5d-8a7f6e5d4c3b",
   "main": "story.squiffy"
 }
 ```
@@ -23,6 +24,7 @@ A `squiffy.json` also means the story uses Squiffy 7's rules for [setting attrib
 - A section in one file can link to a section in any other.
 - Paths to images and other files, and in `@import`, are relative to the main file's folder, whichever file they're in. So you can move a file into a subfolder without changing it.
 - `version` is the version of the project file format, which is 1. A version of Squiffy that doesn't know the version refuses to build the story, saying you need a newer Squiffy.
+- `id` identifies your story, so a player's [saved game](#saved-games) can only be loaded into the story it came from. The editor and the command-line tool give a new `squiffy.json` a random one. Keep it the same when you publish a new version of your story, and don't copy it into another story.
 
 The `$schema` line is optional. It lets text editors such as VS Code check the file and suggest what can go in it.
 
@@ -38,9 +40,29 @@ A published story has a **Back** button, which lets the player undo their choice
 }
 ```
 
+## Saved games
+
+A published story has a **Save** button, which opens the player's list of saved games. They can save as often as they like, optionally giving each save a name, and later load, overwrite, rename or delete them. A save without a name is shown by the start of the text the player was reading, or by the heading it starts with. The player can also save the game to a file, and load it from a file, to keep it safe or carry on in another browser.
+
+Saved games are kept in the player's browser, separately for each story. They're as well as the automatic save, which lets the player close the page and carry on where they left off: loading a saved game replaces it.
+
+A saved game from a different story isn't loaded: the player is told it's for a different story. Squiffy tells them apart by their [`id`](#stories-in-several-files). A story without an `id` loads any saved game, so give yours one if it hasn't got one: any text will do, as long as no other story has it.
+
+If you publish a new version of your story, players can still load their saved games, carrying on with the new version from where they were. If the section they were in has gone, the story starts again from the beginning, keeping their attributes.
+
+To leave out the Save button, set `saveButton` to `false`:
+
+```json
+{
+  "version": 1,
+  "main": "story.squiffy",
+  "saveButton": false
+}
+```
+
 ## The page's text in another language
 
-A published story's buttons are icons, with a tooltip that says what each one does, which screen readers read out too. Clicking Restart asks the player whether they're sure. This text is in English unless you give your own under `strings`:
+A published story's buttons are icons, with a tooltip that says what each one does, which screen readers read out too. Clicking Restart asks the player whether they're sure. This text, and the text of the [Saved games](#saved-games) dialog, is in English unless you give your own under `strings`:
 
 ```json
 {
@@ -63,6 +85,31 @@ A published story's buttons are icons, with a tooltip that says what each one do
 | `restartConfirm` | Are you sure you want to restart? |
 | `switchToDark` | Switch to dark mode |
 | `switchToLight` | Switch to light mode |
+| `saves` | Saved games |
+| `saveName` | Name (optional) |
+| `save` | Save |
+| `noSaves` | No saved games yet. |
+| `savedGame` | Saved game |
+| `savedToday` | Today, [time] |
+| `savedYesterday` | Yesterday, [time] |
+| `load` | Load |
+| `loadConfirm` | Load "[name]"? You'll lose anything you've done since you last saved. |
+| `saveOptions` | Options for [name] |
+| `overwrite` | Overwrite |
+| `overwriteConfirm` | Overwrite "[name]"? |
+| `rename` | Rename |
+| `newName` | New name |
+| `saveToFile` | Save to file |
+| `loadFromFile` | Load from file |
+| `delete` | Delete |
+| `deleteConfirm` | Delete "[name]"? This can't be undone. |
+| `cancel` | Cancel |
+| `close` | Close |
+| `wrongStory` | This saved game is for a different story. |
+| `notASave` | This file isn't a saved game. |
+| `cantSave` | The game couldn't be saved. Try Save to file instead. |
+
+`[name]` is replaced with the name of the save, and `[time]` with the time it was saved.
 
 Anything you leave out stays in English. A story without a `squiffy.json` is always in English.
 
