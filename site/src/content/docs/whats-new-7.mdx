@@ -25,6 +25,7 @@ Squiffy 7 brings a new editor. The language adds the [`@end`](/basic-concepts/#e
 - **Calculations.** Work out values with `+`, `-`, `*`, `/` and `%` in conditions, in `{{set}}`, `{{inc}}` and `{{dec}}`, and in the new `{{= ...}}`, which displays the result: `{{set "gold" gold + price * 2}}`, `{{#if gold >= price * 2}}`, or `That costs {{= price * 2}} gold.` There are matching [maths helpers](/helpers-reference/#maths-helpers) too: `add`, `sub`, `mul`, `div` and `mod`. See [Calculating values](/attributes/#calculating-values).
 - **`@set` and link assignments work like `{{#if}}`.** Text goes in quotes and attributes don't need an `@`, so a value can be a calculation or a comparison: `@set weapon = "sword"`, `@set gold = gold + price * 2`, `@set rich = gold > 100`, or `[[Buy]](shop, gold -= price)`. See [Setting attributes](/attributes/#setting-attributes).
 - **Go to another section from your text.** [`{{goto "section"}}`](/basic-concepts/#go-to-another-section) moves the story on without a link, for example `{{#if health <= 0}}{{goto "death"}}{{/if}}`, and `{{goto "darkness" after=3000}}` does it after a delay.
+- **Visit and turn counts.** [`{{visits "cave"}}`](/attributes/#the-visits-helper) says how many times the player has been to a section or passage, for example `{{#if (visits "cave") > 2}}`, and the [`turns` attribute](/attributes/#counting-turns) counts the links clicked in the whole story.
 - **Endings.** Mark the sections where your story ends with [`@end`](/basic-concepts/#endings), and the editor won't report them as dead ends.
 
 ## Published stories
@@ -56,6 +57,10 @@ A story without a `squiffy.json` keeps the Squiffy 6 rules, so it works unchange
 - **CLI:** run with `--convert-v6`, which converts the story and adds a `squiffy.json`. See [Converting from Squiffy 6](/cli/#converting-from-squiffy-6).
 
 Anything that can't be converted exactly, such as text with both kinds of quote in it, is left as it is and listed so you can change it by hand. In a story with a `squiffy.json`, the editor underlines assignments that still look like Squiffy 6, with a quick fix: an attribute written as `@score`, and text without quotes, such as `@set greeting = Hello there`, or `@set weapon = sword` when there's no attribute called `sword`.
+
+### The `turns` attribute
+
+Squiffy 7 counts the links the player clicks in an attribute called [`turns`](/attributes/#counting-turns). If your story keeps its own count called `turns`, for example with `@inc turns` in a master section, Squiffy now adds to it as well, so your count will go up twice as fast. You can take your own counting out and use Squiffy's, or rename your attribute. The editor underlines anywhere a story sets `turns`.
 
 ### Starting the story
 

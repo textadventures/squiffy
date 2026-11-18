@@ -287,6 +287,15 @@ describe("completion", () => {
         expect(labels).toEqual(["cellar", "start", "outside"]);
     });
 
+    test("section and passage names for seen and visits", async () => {
+        expect((await complete("{{seen \"", "")).map(i => i.label)).toEqual(["cellar", "start", "outside"]);
+        expect((await complete("{{#if (visits '", "")).map(i => i.label)).toEqual(["cellar", "start", "outside"]);
+        const files = memoryFiles({ "s.squiffy": "[[a]]:\n{{#if (seen \"\n[p1]:\n[@last]:" });
+        const ls = createLanguageService({ files, mainFile: "s.squiffy" });
+        const items = await ls.getCompletions("s.squiffy", { line: 1, character: 13 });
+        expect(items.map(i => i.label)).toEqual(["p1", "a"]);
+    });
+
     test("attribute names", async () => {
         const files = memoryFiles({ "s.squiffy": "[[a]]:\n@set score=1\n    squiffy.set(\"gold\", 2);\n[[b]](a, not seen)\n@inc " });
         const ls = createLanguageService({ files, mainFile: "s.squiffy" });
@@ -414,6 +423,28 @@ describe("code actions", () => {
         const text = "[[a]]:\n@set best = @score\n\nA";
         const ls = createLanguageService({ files: memoryFiles({ "s.squiffy": text }), mainFile: "s.squiffy" });
         expect((await ls.getDiagnostics("s.squiffy")).some(d => d.code == "squiffy/at-attribute")).toBe(false);
+    });
+
+    test("warning for setting turns, which Squiffy counts itself", async () => {
+        const text = [
+            "[[]]:",
+            "@inc turns",
+            "    squiffy.set(\"turns\", 0);",
+            "[[a]]:",
+            "@set turns = 0",
+            "@set score = turns + 1",
+            "[[Go]](b, turns = 5)",
+            "{{set \"turns\" 1}} {{inc 'turns'}} {{turns}} {{#if turns > 2}}Late{{/if}}",
+            "[[b]]:",
+            "B",
+        ].join("\n");
+        const ls = createLanguageService({ files: memoryFiles({ "s.squiffy": text }), mainFile: "s.squiffy" });
+        const diagnostics = (await ls.getDiagnostics("s.squiffy")).filter(d => d.code == "squiffy/built-in-attribute");
+        expect(diagnostics.map(d => [d.range.start.line, slice(text, d.range)])).toEqual([
+            [1, "turns"], [2, "turns"], [4, "turns"], [6, "turns"], [7, "turns"], [7, "turns"],
+        ]);
+        expect(diagnostics[0].severity).toBe("warning");
+        expect(diagnostics[0].message).toBe("Squiffy sets turns itself: it's the number of links clicked in the story so far. Use a different name for your own attribute.");
     });
 
     test("convert Squiffy 5 syntax", async () => {

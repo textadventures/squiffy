@@ -236,6 +236,7 @@ Your JavaScript can use these functions:
 | `squiffy.set("name", value)` | Set the value of an attribute |
 | `squiffy.story.go("section")` | Go to a section |
 | `squiffy.story.seen("name")` | Returns `true` if the player has seen a section or passage |
+| `squiffy.story.visits("name")` | Returns the number of times the player has visited a section or passage, or 0 |
 | `squiffy.ui.write("text")` | Write some text, which can include Markdown and `{{...}}` |
 | `squiffy.ui.transition(fn)` | Run a transition effect, such as fading the screen to black. `fn` returns a Promise that resolves when the effect has finished, and links can't be clicked until then. See the [transitions example](https://github.com/textadventures/squiffy/tree/main/examples/transitions) |
 | `squiffy.ui.scrollToEnd()` | Scroll to the end of the story |
@@ -246,6 +247,8 @@ Your JavaScript can use these functions:
 ## Turn counting
 
 You can trigger a passage after the player has made a certain number of clicks within a section. For example, you can display some extra text, to indicate the passage of time. Or, the passage might run some JavaScript to automatically move the player to another section.
+
+To count clicks across the whole story instead, use the [`turns` attribute](/attributes/#counting-turns).
 
 In the example below, the text "We're nearly here. The train is pulling into the platform." is always written after the first passage click. After the second passage click, we are moved into the next section.
 
@@ -380,13 +383,12 @@ Set the title like this:
 
 An empty name for a section or passage creates a "master", which is triggered for every section or passage in the game. (A master passage defined in a named section will only be triggered for every passage in that section)
 
-e.g. to clear the screen before every section, and to increase a global turn counter:
+e.g. to clear the screen before every section, and to count how many sections the player has been through:
 
 ```squiffy
 [[]]:
 @clear
-@inc turns
-    if (squiffy.get("turns") > 5) ...
+@inc sections_visited
 ```
 
 ## Stories in several files

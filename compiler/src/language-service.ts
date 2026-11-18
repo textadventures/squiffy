@@ -759,6 +759,10 @@ export function createLanguageService(options: LanguageServiceOptions): Language
             if ((match = /\{\{~?\s*embed\s+["']([^"']*)$/.exec(prefix))) {
                 return [...passageItems(match[1]), ...sectionItems(match[1])];
             }
+            // {{seen "name"}}, (visits "name") etc., which take a section or passage (#377)
+            if ((match = /(?:\{\{~?|\()\s*(?:seen|visits)\s+["']([^"']*)$/.exec(prefix))) {
+                return [...passageItems(match[1]), ...sectionItems(match[1])];
+            }
             if ((match = /\{\{~?\s*goto\s+["']([^"']*)$/.exec(prefix))) {
                 return sectionItems(match[1]);
             }
