@@ -38,6 +38,11 @@ describe("findStory", () => {
         });
     });
 
+    test("a project's backButton setting comes with it", async () => {
+        await write({ "squiffy.json": "{ \"version\": 1, \"main\": \"story.squiffy\", \"backButton\": false }", "story.squiffy": "" });
+        expect((await findStory(dir)).backButton).toBe(false);
+    });
+
     test("the main file builds the project, even from a subfolder's squiffy.json", async () => {
         await write({ "squiffy.json": "{ \"version\": 1, \"main\": \"src/story.squiffy\" }", "src/story.squiffy": "", "src/b.squiffy": "" });
         const story = await findStory(path.join(dir, "src/story.squiffy"));

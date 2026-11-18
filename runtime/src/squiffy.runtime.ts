@@ -777,6 +777,9 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         do {
             undoLast();
         } while ((currentPassageElement ?? currentSectionElement).hasAttribute("data-goto") && getHistoryCount() > 1);
+        // The attributes were saved as they were undone, so save the output to match. Otherwise a saved
+        // game would come back with the text that was undone.
+        save();
 
         if (!canGoBack()) {
             emitter.emit("canGoBackChanged", { canGoBack: false });
@@ -959,6 +962,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         clickLink: handleLink,
         update: update,
         goBack: goBack,
+        canGoBack: canGoBack,
         on: (e, h) => emitter.on(e, h),
         off: (e, h) => emitter.off(e, h),
         once: (e, h) => emitter.once(e, h),

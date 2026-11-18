@@ -44,6 +44,23 @@ test("Exported page has a light/dark button, and applies the saved choice before
     expect(head.indexOf("squiffyTheme")).toBeLessThan(head.indexOf('href="style.css"'));
 });
 
+test("Exported page has a Back button, unless it's turned off", async () => {
+    const compileResult = await compile({ script: "Hello world!" });
+    if (!compileResult.success) throw new Error("Compile failed");
+
+    const html = (await createPackage(compileResult, {})).files["index.html"];
+    expect(html).toContain('id="squiffy-back"');
+    expect(html).not.toContain("BACK_BUTTON");
+    // It's before Restart, and starts disabled until there's somewhere to go back to
+    expect(html.indexOf('id="squiffy-back"')).toBeLessThan(html.indexOf('id="restart"'));
+    expect(html).toMatch(/id="squiffy-back"[^>]*disabled/);
+
+    const without = (await createPackage(compileResult, { backButton: false })).files["index.html"];
+    expect(without).not.toContain('id="squiffy-back"');
+    expect(without).not.toContain("BACK_BUTTON");
+    expect(without).toContain('id="restart"');
+});
+
 test("Create package with zip", async () => {
     const script = "Test story";
     const compileResult = await compile({ script });

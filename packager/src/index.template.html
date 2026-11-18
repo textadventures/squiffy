@@ -35,7 +35,20 @@
                 }
             });
 
+            // The Back button, unless the story's squiffy.json turns it off
+            const backButton = document.getElementById('squiffy-back');
+            if (backButton) {
+                backButton.addEventListener('click', function () {
+                    squiffyApi.goBack();
+                });
+                squiffyApi.on('canGoBackChanged', function (event) {
+                    backButton.disabled = !event.canGoBack;
+                });
+            }
+
             await squiffyApi.begin();
+            // A saved game may have somewhere to go back to
+            if (backButton) backButton.disabled = !squiffyApi.canGoBack();
         });
     </script>
     <!-- STYLESHEETS -->
@@ -43,6 +56,7 @@
 <body>
 <div id="squiffy-container">
     <div id="squiffy-header">
+        <!-- BACK_BUTTON -->
         <button class="squiffy-header-button" id="restart" tabindex="0">Restart</button>
         <button class="squiffy-header-button" id="squiffy-theme" type="button">
             <svg class="squiffy-icon-dark" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>

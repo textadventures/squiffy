@@ -27,6 +27,11 @@ export interface PackageOptions {
      * for here too, and included in index.html as <style> and <script> elements.
      */
     assets?: Record<string, Uint8Array>;
+    /**
+     * Whether the page has a Back button, which takes the player back a section or passage at a time.
+     * On unless this is false: the story's squiffy.json can turn it off with "backButton": false.
+     */
+    backButton?: boolean;
 }
 
 const mimeTypes: Record<string, string> = {
@@ -175,6 +180,8 @@ export const createPackage = async (input: CompileSuccess, createZipOrOptions: b
     htmlData = htmlData.replace("<!-- STYLESHEETS -->", () => stylesheetData);
     htmlData = htmlData.replace("<!-- STYLE_CONTENT -->", () => styleContent);
     htmlData = htmlData.replace("<!-- RUNTIME_CONTENT -->", () => runtimeContent);
+    htmlData = htmlData.replace(/[ \t]*<!-- BACK_BUTTON -->\n/, () => options.backButton === false ? ""
+        : "        <button class=\"squiffy-header-button\" id=\"squiffy-back\" type=\"button\" disabled>Back</button>\n");
     htmlData = htmlData.replace("<!-- STORY_CONTENT -->", () => storyContent);
     htmlData = htmlData.replace(/\n([ \t]*)\/\* ASSET_OPTIONS \*\//, (_, indent: string) => assetOptions ? "\n" + indent + assetOptions : "");
 

@@ -20,6 +20,12 @@ describe("parseProjectFile", () => {
         });
     });
 
+    test("backButton is kept when it's given", () => {
+        expect(parseProjectFile("{ \"version\": 1, \"main\": \"a.squiffy\", \"backButton\": false }")).toEqual({
+            success: true, project: { version: 1, main: "a.squiffy", exclude: [], backButton: false },
+        });
+    });
+
     test("exclude is optional, other properties are ignored, and main is normalised", () => {
         expect(parseProjectFile("{ \"$schema\": \"x\", \"version\": 1, \"main\": \"./src\\\\story.squiffy\" }")).toEqual({
             success: true, project: { version: 1, main: "src/story.squiffy", exclude: [] },
@@ -35,6 +41,7 @@ describe("parseProjectFile", () => {
         ["main outside the folder", "{ \"version\": 1, \"main\": \"../a.squiffy\" }", "a path inside the project's folder"],
         ["main not a .squiffy file", "{ \"version\": 1, \"main\": \"a.txt\" }", "should be a .squiffy file"],
         ["exclude not a list", "{ \"version\": 1, \"main\": \"a.squiffy\", \"exclude\": \"x\" }", "should be a list"],
+        ["backButton not true or false", "{ \"version\": 1, \"main\": \"a.squiffy\", \"backButton\": \"no\" }", "should be true or false"],
     ])("refuses %s", (_, text, error) => {
         const result = parseProjectFile(text);
         expect(result.success).toBe(false);

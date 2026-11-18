@@ -21,6 +21,8 @@ export interface StoryOnDisk {
     // Whether @set and link setters take expressions (#373): true if there's a squiffy.json in
     // the story's folder or above, even if it's only building one file
     expressions: boolean;
+    // squiffy.json's "backButton", in folder mode
+    backButton?: boolean;
 }
 
 // A problem finding the story, with a message to show the author as is
@@ -95,7 +97,10 @@ async function folderStory(projectFile: string, options: FindStoryOptions): Prom
         throw new StoryNotFoundError(`The main file in ${projectFile}, ${project.main}, doesn't exist.`);
     }
     const story = getStoryFiles(project, await listSquiffyFiles(root), options.skip);
-    return { mainFile, storyFiles: story.included.map(file => path.resolve(root, file)), projectFile, expressions: true };
+    return {
+        mainFile, storyFiles: story.included.map(file => path.resolve(root, file)), projectFile, expressions: true,
+        ...(project.backButton !== undefined ? { backButton: project.backButton } : {}),
+    };
 }
 
 // Finds the story to build from what the author gave: a folder with a squiffy.json in it, or a

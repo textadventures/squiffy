@@ -26,6 +26,8 @@ export interface ProjectFile {
     exclude: string[];
     // Where the author has put sections and passages on the editor's story map, if anywhere
     map?: MapPositions;
+    // Whether the published story has a Back button for players. Undefined means it does.
+    backButton?: boolean;
 }
 
 // Positions on the story map, by section name, and passages by section and passage name. Only
@@ -85,8 +87,20 @@ export function parseProjectFile(text: string): ParsedProjectFile {
         return fail(`${PROJECT_FILENAME}'s "exclude" should be a list of file patterns, such as ["drafts/**"].`);
     }
 
+    const backButton = data.backButton;
+    if (backButton !== undefined && typeof backButton != "boolean") {
+        return fail(`${PROJECT_FILENAME}'s "backButton" should be true or false.`);
+    }
+
     const map = parseMapPositions(data.map);
-    return { success: true, project: { version, main: mainPath, exclude: exclude as string[], ...(map ? { map } : {}) } };
+    return {
+        success: true,
+        project: {
+            version, main: mainPath, exclude: exclude as string[],
+            ...(map ? { map } : {}),
+            ...(backButton !== undefined ? { backButton } : {}),
+        },
+    };
 }
 
 const isPosition = (value: unknown): value is [number, number] =>

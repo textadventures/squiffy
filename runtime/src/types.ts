@@ -39,6 +39,8 @@ export interface SquiffyApi {
     clickLink: (link: HTMLElement) => Promise<boolean>;
     update: (story: Story) => void;
     goBack: () => void;
+    // Whether goBack() would go anywhere, e.g. to enable a Back button. canGoBackChanged says when it changes.
+    canGoBack: () => boolean;
 
     on<E extends keyof SquiffyEventMap>(
         event: E,
