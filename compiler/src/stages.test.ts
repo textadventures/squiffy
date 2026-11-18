@@ -122,6 +122,15 @@ describe("parse", () => {
 });
 
 describe("analyse", () => {
+    test("{{goto}} to a section that doesn't exist", async () => {
+        const script = "[[start]]:\n{{goto \"nowhere\"}} {{goto \"start\"}} {{goto (get \"x\")}}\n\n[p]:\n{{goto 'p'}}";
+        const analysis = await analyse({ script, scriptBaseFilename: "story.squiffy" });
+        expect(analysis.diagnostics.map(d => [d.code, slice(script, d.range), d.message])).toEqual([
+            ["squiffy/unknown-goto", "{{goto \"nowhere\"", "In section 'start' there is a {{goto \"nowhere\"}}, but no section with that name exists"],
+            ["squiffy/unknown-goto", "{{goto 'p'", "In section 'start', passage 'p' there is a {{goto \"p\"}}, but no section with that name exists ({{goto}} can't go to a passage: use {{embed \"p\"}} to show it here)"],
+        ]);
+    });
+
     test("link diagnostics point at the link", async () => {
         const script = "[[start]]:\nSome text.\nGo [[nowhere]] or [[nope]](missing, x=1).\n\n[p]:\nTry [q] and {{embed \"zzz\"}}.";
         const analysis = await analyse({ script, scriptBaseFilename: "story.squiffy" });

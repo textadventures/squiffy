@@ -116,6 +116,32 @@ The `continue` animation supports different visual styles via the `style` parame
 {{#animate &quot;typewriter&quot;}}You venture into the darkness...{{/animate}}
 "></Sample>
 
+## Moving on after a delay
+
+[`{{goto}}`](/basic-concepts/#go-to-another-section) with `after=` moves the story on to another section after a number of milliseconds, without the player clicking anything:
+
+<Sample alwaysShowRestart={true} script="The lights flicker, and go out.
+{{goto &quot;darkness&quot; after=3000}}
+
+[[darkness]]:
+@end
+Something moves in the dark."></Sample>
+
+If the player follows a link before the time is up, the story doesn't move on, so you can give them a limited time to act:
+
+<Sample alwaysShowRestart={true} script="The floor starts to crumble. [[Jump!]](safe)
+{{goto &quot;fall&quot; after=4000}}
+
+[[safe]]:
+@end
+You make it to the other side.
+
+[[fall]]:
+@end
+Too slow. You fall."></Sample>
+
+The delay starts once the section has been written, so `{{goto}}` doesn't wait for an [animation](#animation) to finish. Add the animation's length to `after=` instead.
+
 ## Replace
 
 By creating labels, you can replace existing output when a link is clicked or when a passage or section is displayed. In the example below, we create a label called "1" using `{{#label}}`, and in the next passage we replace the text inside that label:

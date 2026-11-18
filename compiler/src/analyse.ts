@@ -530,6 +530,15 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
                     `${where} there is an embed of {{embed "${embed.name}"}}, but no section or passage with that name exists`);
             }
         }
+
+        // {{goto}} only goes to sections
+        for (const goto of result.gotos) {
+            if (!goto.name || !(goto.name in story.sections)) {
+                const passage = goto.name in section.passages ? ` ({{goto}} can't go to a passage: use {{embed "${goto.name}"}} to show it here)` : "";
+                warn("squiffy/unknown-goto", goto.start, goto.end,
+                    `${where} there is a {{goto "${goto.name}"}}, but no section with that name exists${passage}`);
+            }
+        }
     }
 
     // With recover, processFile carries on after errors, so check for them too

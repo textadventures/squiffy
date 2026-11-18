@@ -26,6 +26,7 @@ export type DiagnosticCode =
     | "squiffy/external-files-unavailable"
     | "squiffy/no-next-section"
     | "squiffy/unknown-embed"
+    | "squiffy/unknown-goto"
     | "squiffy/unknown-section-link"
     | "squiffy/unknown-passage-link"
     | "squiffy/duplicate-section"
@@ -81,9 +82,10 @@ export interface SectionNode {
     range: Range;
     body: StatementNode[];
     passages: PassageNode[];
-    // Links and embeds in the section's own text (not in its passages).
+    // Links, embeds and gotos in the section's own text (not in its passages).
     links: LinkNode[];
     embeds: EmbedNode[];
+    gotos: GotoNode[];
 }
 
 export interface PassageNode {
@@ -95,6 +97,7 @@ export interface PassageNode {
     body: StatementNode[];
     links: LinkNode[];
     embeds: EmbedNode[];
+    gotos: GotoNode[];
 }
 
 // [snippet: name]: blocks run until the next section header. Their content isn't compiled.
@@ -251,6 +254,14 @@ export interface LinkNode {
 // {{embed "name"}} with a literal name
 export interface EmbedNode {
     type: "embed";
+    name: string;
+    range: Range;
+    nameRange: Range;
+}
+
+// {{goto "name"}} with a literal name (#375)
+export interface GotoNode {
+    type: "goto";
     name: string;
     range: Range;
     nameRange: Range;

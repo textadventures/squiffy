@@ -174,6 +174,49 @@ You can also use the explicit form `[[link text]](>)` if you prefer, or if you n
 [[Begin]](>, score=10)
 ```
 
+## Go to another section
+
+`{{goto "section name"}}` moves the story on to another section without the player clicking a link. It's most useful inside `{{#if}}`, for example to end the story when the player runs out of health:
+
+<Sample script="[[start]]:
+@set health = 1
+A troll blocks the bridge. [[Fight it]](fight, health -= 1) or [[run away]](escape).
+
+[[fight]]:
+The troll swings its club.
+{{#if health <= 0}}{{goto &quot;death&quot;}}{{else}}You duck just in time. [[Cross the bridge]](escape){{/if}}
+
+[[death]]:
+@end
+Everything goes dark. THE END.
+
+[[escape]]:
+@end
+You get away."></Sample>
+
+The section with the `{{goto}}` is shown first, and the story moves on once it's been written. All of the section is shown, including any text after the `{{goto}}`, so put text the player shouldn't see when they move on in an `{{else}}`, as above.
+
+To move on after a delay, add `after=` with a number of milliseconds:
+
+```squiffy
+The lights go out.
+{{goto "darkness" after=3000}}
+```
+
+If the player follows a link before then, the story doesn't move on. See [Moving on after a delay](/dynamic-text/#moving-on-after-a-delay).
+
+`{{goto}}` only goes to sections. To show a passage's text, use [`{{embed}}`](#embed-text). The section name can come from an expression, so this goes to one of three sections at random:
+
+```squiffy
+{{goto (random (array "cave" "forest" "river"))}}
+```
+
+If the player goes back, they go back past sections and passages that moved on with `{{goto}}`, to where they last clicked a link.
+
+<Aside>
+A `{{goto}}` in the [master section](#master-sections-and-passages) runs in every section, including the one it goes to. Use [`at`](/helpers-reference/#navigation-helpers) to leave that one out: `{{#if health <= 0 and not (at "death")}}{{goto "death"}}{{/if}}`.
+</Aside>
+
 ## JavaScript
 
 Any section or passage can call some JavaScript when it is displayed. Simply indent with four spaces or a tab, before the text.
