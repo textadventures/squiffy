@@ -621,7 +621,11 @@ export async function pickDesktopFolder(): Promise<PickedFolder | null> {
 // Open file: a .squiffy file opens its folder, a project zip (from Download project) is
 // unpacked into a folder the author chooses, and a Twine story is converted into one
 export async function pickDesktopFile(): Promise<PickedFolder | null> {
-    const picked = await desktopOrThrow().opener.openFile({ title: "Open a story file", filters: [...SQUIFFY_FILES, ...ZIP_FILES, ...TWINE_FILES] });
+    // On macOS, a dialog with several filters only allows the first one's files until the
+    // author picks another from its Format menu, so the first filter takes them all
+    const filters = [...SQUIFFY_FILES, ...ZIP_FILES, ...TWINE_FILES];
+    const all: FileTypeFilter = { description: "All supported files", extensions: filters.flatMap(f => f.extensions) };
+    const picked = await desktopOrThrow().opener.openFile({ title: "Open a story file", filters: [all, ...filters] });
     if (!picked) return null;
     const { fs, mainFile } = picked;
     if (mainFile.toLowerCase().endsWith(".zip")) {
