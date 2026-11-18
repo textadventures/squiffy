@@ -43,8 +43,8 @@ div#squiffy-container
     line-height: 1.6;
 }
 
-/* The bar above the story containing the Restart and light/dark buttons. It stays at the top of
-   the window as the story scrolls under it. */
+/* The bar above the story containing the Back, Restart and light/dark buttons. It stays at the
+   top of the window as the story scrolls under it. */
 div#squiffy-header
 {
     position: sticky;
@@ -70,26 +70,14 @@ div#squiffy-header::after
     pointer-events: none;
 }
 
+/* Space between the Back, Restart and light/dark buttons */
+button.squiffy-header-button + button.squiffy-header-button
+{
+    margin-left: 0.25em;
+}
+
 /* The button that switches between light and dark mode. It shows a moon in light mode and a sun
    in dark mode. */
-button#squiffy-theme
-{
-    margin-left: 0.75em;
-}
-
-/* Centred on the capital letters of "Restart", rather than on the line, which looks too low */
-button#squiffy-theme svg
-{
-    width: 1.1em;
-    height: 1.1em;
-    vertical-align: -0.25em;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-}
-
 button#squiffy-theme:not([data-next="light"]) .squiffy-icon-light,
 button#squiffy-theme[data-next="light"] .squiffy-icon-dark
 {

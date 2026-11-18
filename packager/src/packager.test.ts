@@ -61,6 +61,27 @@ test("Exported page has a Back button, unless it's turned off", async () => {
     expect(without).toContain('id="restart"');
 });
 
+test("Header buttons are labelled in English, or with the story's own strings", async () => {
+    const compileResult = await compile({ script: "Hello {{back}}!" });
+    if (!compileResult.success) throw new Error("Compile failed");
+
+    const html = (await createPackage(compileResult, { inlineHtml: true })).files["index.html"];
+    expect(html).toContain('id="squiffy-back" type="button" title="Back" aria-label="Back"');
+    expect(html).toContain('title="Restart" aria-label="Restart" data-confirm="Are you sure you want to restart?"');
+    expect(html).toContain('data-switch-to-dark="Switch to dark mode" data-switch-to-light="Switch to light mode"');
+    // The story's own text is left alone
+    expect(html).toContain("Hello {{back}}!");
+
+    const french = (await createPackage(compileResult, {
+        strings: { restart: "Recommencer", restartConfirm: "Voulez-vous vraiment recommencer ?", back: "\"<Retour>\" & 'co'" },
+    })).files["index.html"];
+    expect(french).toContain('title="Recommencer" aria-label="Recommencer" data-confirm="Voulez-vous vraiment recommencer ?"');
+    expect(french).toContain('title="&#34;&#60;Retour&#62;&#34; &#38; &#39;co&#39;"');
+    // Anything left out is in English
+    expect(french).toContain('data-switch-to-dark="Switch to dark mode"');
+    expect(french).not.toMatch(/\{\{\w+\}\}/);
+});
+
 test("Create package with zip", async () => {
     const script = "Test story";
     const compileResult = await compile({ script });

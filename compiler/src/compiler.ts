@@ -23,9 +23,9 @@ export type { EmitSettings, Output, UiInfo, CompileSuccess } from "./emit.js";
 export { formatDiagnostic } from "./syntax.js";
 export {
     PROJECT_FILENAME, PROJECT_FILE_VERSION, PROJECT_SCHEMA_URL, parseProjectFile, getStoryFiles, isExcluded,
-    isAlwaysSkipped, formatProjectFile, updateProjectFile,
+    isAlwaysSkipped, formatProjectFile, updateProjectFile, PAGE_STRINGS,
 } from "./project.js";
-export type { MapPositions, ProjectFile, ParsedProjectFile, StoryFiles } from "./project.js";
+export type { MapPositions, PageStringName, PageStrings, ProjectFile, ParsedProjectFile, StoryFiles } from "./project.js";
 export type * from "./syntax.js";
 
 interface CompilerSettings {

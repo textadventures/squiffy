@@ -1,5 +1,5 @@
 import { strToU8, zipSync } from "fflate";
-import { CompileSuccess } from "squiffy-compiler";
+import { CompileSuccess, PAGE_STRINGS, type PageStrings } from "squiffy-compiler";
 
 import squiffyRuntime from "squiffy-runtime/dist/squiffy.runtime.global.js?raw";
 import runtimeCss from "squiffy-runtime/dist/squiffy.runtime.css?raw";
@@ -32,6 +32,11 @@ export interface PackageOptions {
      * On unless this is false: the story's squiffy.json can turn it off with "backButton": false.
      */
     backButton?: boolean;
+    /**
+     * The page's own text, such as the Restart button's tooltip, from the story's squiffy.json's
+     * "strings". Anything left out is in English.
+     */
+    strings?: PageStrings;
 }
 
 const mimeTypes: Record<string, string> = {
@@ -89,6 +94,9 @@ const toBase64 = (bytes: Uint8Array) => {
     }
     return btoa(binary);
 };
+
+// Escapes text so that it's safe inside a quoted HTML attribute.
+const escapeAttribute = (text: string) => text.replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 
 // Escapes JSON so that it's safe inside a <script> element.
 const scriptSafeJson = (value: unknown) => JSON.stringify(value).replace(/</g, "\\u003c");
@@ -174,14 +182,19 @@ export const createPackage = async (input: CompileSuccess, createZipOrOptions: b
     }
 
     let htmlData = htmlTemplateFile.toString();
+    // The Back button and the page's own text go in first, before anything from the story, which
+    // could contain {{...}} of its own
+    htmlData = htmlData.replace(/[ \t]*<!-- BACK_BUTTON -->\n([^]*?)[ \t]*<!-- \/BACK_BUTTON -->\n/,
+        (_, button: string) => options.backButton === false ? "" : button);
+    const strings: Record<string, string> = { ...PAGE_STRINGS, ...options.strings };
+    htmlData = htmlData.replace(/\{\{(\w+)\}\}/g, (match, name: string) =>
+        Object.prototype.hasOwnProperty.call(strings, name) ? escapeAttribute(strings[name]) : match);
     htmlData = htmlData.replace("<!-- INFO -->", () => infoComment);
     htmlData = htmlData.replace("<!-- TITLE -->", () => uiInfo.title);
     htmlData = htmlData.replace("<!-- SCRIPTS -->", () => scriptData);
     htmlData = htmlData.replace("<!-- STYLESHEETS -->", () => stylesheetData);
     htmlData = htmlData.replace("<!-- STYLE_CONTENT -->", () => styleContent);
     htmlData = htmlData.replace("<!-- RUNTIME_CONTENT -->", () => runtimeContent);
-    htmlData = htmlData.replace(/[ \t]*<!-- BACK_BUTTON -->\n/, () => options.backButton === false ? ""
-        : "        <button class=\"squiffy-header-button\" id=\"squiffy-back\" type=\"button\" disabled>Back</button>\n");
     htmlData = htmlData.replace("<!-- STORY_CONTENT -->", () => storyContent);
     htmlData = htmlData.replace(/\n([ \t]*)\/\* ASSET_OPTIONS \*\//, (_, indent: string) => assetOptions ? "\n" + indent + assetOptions : "");
 

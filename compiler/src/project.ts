@@ -28,7 +28,23 @@ export interface ProjectFile {
     map?: MapPositions;
     // Whether the published story has a Back button for players. Undefined means it does.
     backButton?: boolean;
+    // The published page's own text, such as the Restart button's tooltip, for a story in another
+    // language. Anything left out is in English.
+    strings?: PageStrings;
 }
+
+// The text on the published page around the story, by name. See PAGE_STRINGS for the English.
+export type PageStringName = "back" | "restart" | "restartConfirm" | "switchToDark" | "switchToLight";
+export type PageStrings = Partial<Record<PageStringName, string>>;
+
+// The published page's text in English, which squiffy.json's "strings" can replace
+export const PAGE_STRINGS: Record<PageStringName, string> = {
+    back: "Back",
+    restart: "Restart",
+    restartConfirm: "Are you sure you want to restart?",
+    switchToDark: "Switch to dark mode",
+    switchToLight: "Switch to light mode",
+};
 
 // Positions on the story map, by section name, and passages by section and passage name. Only
 // sections and passages the author has moved by hand are saved: the map lays out the rest.
@@ -92,6 +108,11 @@ export function parseProjectFile(text: string): ParsedProjectFile {
         return fail(`${PROJECT_FILENAME}'s "backButton" should be true or false.`);
     }
 
+    const strings = data.strings;
+    if (strings !== undefined && (!isObject(strings) || Object.values(strings).some(value => typeof value != "string"))) {
+        return fail(`${PROJECT_FILENAME}'s "strings" should be an object of text, such as { "restart": "Recommencer" }.`);
+    }
+
     const map = parseMapPositions(data.map);
     return {
         success: true,
@@ -99,8 +120,15 @@ export function parseProjectFile(text: string): ParsedProjectFile {
             version, main: mainPath, exclude: exclude as string[],
             ...(map ? { map } : {}),
             ...(backButton !== undefined ? { backButton } : {}),
+            ...(strings !== undefined ? { strings: pickPageStrings(strings as Record<string, string>) } : {}),
         },
     };
+}
+
+// The page strings Squiffy knows about. Others are left out, so a story written for a newer Squiffy,
+// with strings this one doesn't have, still builds.
+function pickPageStrings(strings: Record<string, string>): PageStrings {
+    return Object.fromEntries(Object.entries(strings).filter(([name]) => Object.prototype.hasOwnProperty.call(PAGE_STRINGS, name)));
 }
 
 const isPosition = (value: unknown): value is [number, number] =>

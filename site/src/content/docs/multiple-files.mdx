@@ -38,6 +38,34 @@ A published story has a **Back** button, which lets the player undo their choice
 }
 ```
 
+## The page's text in another language
+
+A published story's buttons are icons, with a tooltip that says what each one does, which screen readers read out too. Clicking Restart asks the player whether they're sure. This text is in English unless you give your own under `strings`:
+
+```json
+{
+  "version": 1,
+  "main": "story.squiffy",
+  "strings": {
+    "back": "Retour",
+    "restart": "Recommencer",
+    "restartConfirm": "Voulez-vous vraiment recommencer ?",
+    "switchToDark": "Passer en mode sombre",
+    "switchToLight": "Passer en mode clair"
+  }
+}
+```
+
+| String | English |
+|---|---|
+| `back` | Back |
+| `restart` | Restart |
+| `restartConfirm` | Are you sure you want to restart? |
+| `switchToDark` | Switch to dark mode |
+| `switchToLight` | Switch to light mode |
+
+Anything you leave out stays in English. A story without a `squiffy.json` is always in English.
+
 ## Leaving files out
 
 To keep a `.squiffy` file in the folder without it being part of the story, list it under `exclude`:

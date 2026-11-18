@@ -8,7 +8,7 @@
 {
     --squiffy-text: light-dark(#1f2328, #e4e4e7);
     --squiffy-background: light-dark(#ffffff, #18181b);
-    /* Secondary text: the Restart button, and links waiting for valid input */
+    /* Secondary text: the header buttons, and links waiting for valid input */
     --squiffy-muted: light-dark(#6b6f76, #9a9ca3);
     /* The lines between sections */
     --squiffy-border: light-dark(#e2e2e6, #34343a);
@@ -99,25 +99,43 @@ select.squiffy-invalid:focus
     box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--squiffy-error) 50%, transparent);
 }
 
-/* Header button styles: the Back and Restart buttons */
+/* Header button styles: the Back, Restart and light/dark buttons, which are icons */
 button.squiffy-header-button
 {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     color: var(--squiffy-muted);
     cursor: pointer;
     background: none;
     border: none;
-    padding: 0.25em 0;
+    border-radius: 0.375em;
+    padding: 0.375em;
     font: inherit;
-    text-decoration: underline;
-    text-decoration-color: transparent;
-    text-underline-offset: 0.15em;
-    transition: color 0.2s ease-in-out, text-decoration-color 0.2s ease-in-out;
+    transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out;
 }
 
 button.squiffy-header-button:hover:not(:disabled)
 {
     color: var(--squiffy-text);
-    text-decoration-color: currentColor;
+    background-color: color-mix(in srgb, currentColor 10%, transparent);
+}
+
+button.squiffy-header-button svg
+{
+    width: 1.25em;
+    height: 1.25em;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* The light/dark button, when the story's CSS fixes the theme */
+button.squiffy-header-button[hidden]
+{
+    display: none;
 }
 
 /* The Back button, when there's nothing to go back to */

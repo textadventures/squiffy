@@ -6,7 +6,7 @@
 
 import fs from "fs/promises";
 import path from "path";
-import { getStoryFiles, isAlwaysSkipped, parseProjectFile, PROJECT_FILENAME } from "./project.js";
+import { getStoryFiles, isAlwaysSkipped, parseProjectFile, PROJECT_FILENAME, type PageStrings } from "./project.js";
 
 export interface StoryOnDisk {
     // The story's main file, as an absolute path
@@ -23,6 +23,8 @@ export interface StoryOnDisk {
     expressions: boolean;
     // squiffy.json's "backButton", in folder mode
     backButton?: boolean;
+    // squiffy.json's "strings", in folder mode
+    strings?: PageStrings;
 }
 
 // A problem finding the story, with a message to show the author as is
@@ -100,6 +102,7 @@ async function folderStory(projectFile: string, options: FindStoryOptions): Prom
     return {
         mainFile, storyFiles: story.included.map(file => path.resolve(root, file)), projectFile, expressions: true,
         ...(project.backButton !== undefined ? { backButton: project.backButton } : {}),
+        ...(project.strings !== undefined ? { strings: project.strings } : {}),
     };
 }
 
