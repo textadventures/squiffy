@@ -1,7 +1,7 @@
 ---
 title: Using Squiffy from the command line
 sidebar:
-    order: 16
+    label: Command line
 ---
 
 ## Installing
@@ -16,17 +16,13 @@ You can then run the CLI directly using `npx`:
 npx @textadventures/squiffy-cli mygame.squiffy
 ```
 
-Alternatively, install it globally:
+`npx` downloads Squiffy the first time, and runs it. Alternatively, install it globally:
 
 ```bash
 npm install @textadventures/squiffy-cli -g
 ```
 
-**If the install fails:** On a Mac or Linux, if you get an error installing, try using `sudo`:
-
-```bash
-sudo npm install @textadventures/squiffy-cli -g
-```
+Then you can run it as `squiffy-packager`, for example `squiffy-packager mygame.squiffy`.
 
 ## Usage
 
@@ -56,7 +52,7 @@ The browser's local storage will be used to save the state of the game. This mea
 
 ### Stories in several files
 
-If your story is split across several `.squiffy` files with a [`squiffy.json` project file](/basic-concepts/#stories-in-several-files), run Squiffy in the story's folder without a file name:
+If your story is split across several `.squiffy` files with a [`squiffy.json` project file](/multiple-files/), run Squiffy in the story's folder without a file name:
 
 ```bash
 npx @textadventures/squiffy-cli
@@ -118,7 +114,7 @@ npx @textadventures/squiffy-cli mygame.squiffy --inline --zip
 
 ### Images and other files
 
-Images, sounds and other files that your story [refers to](/basic-concepts/#images-and-other-files) are included automatically, as long as they're in the same folder as the `.squiffy` file or a folder below it:
+Images, sounds and other files that your story [refers to](/images-and-files/) are included automatically, as long as they're in the same folder as the `.squiffy` file or a folder below it:
 
 - With the standard output, they're already in the right place, next to `index.html`.
 - With `--zip`, they're added to `output.zip` at the same paths.
@@ -169,7 +165,7 @@ This creates a folder next to the file, with the same name (`mygame` here), with
 
 ### Converting from Squiffy 6
 
-In a story with a `squiffy.json`, text in `@set` and link assignments goes in quotes, and attributes are written without an `@` (see [Coming from Squiffy 6](/whats-new-7/#coming-from-squiffy-6)). A Squiffy 6 story has no `squiffy.json`, so it keeps the old rules. When the CLI builds one whose assignments would need changing, it says so. Use `--convert-v6`, giving it the story's main file, to convert it and add a `squiffy.json`:
+In a story with a `squiffy.json`, text in `@set` and link assignments goes in quotes, and attributes are written without an `@` (see [Coming from Squiffy 6](/coming-from-squiffy-6/)). A Squiffy 6 story has no `squiffy.json`, so it keeps the old rules. When the CLI builds one whose assignments would need changing, it says so. Use `--convert-v6`, giving it the story's main file, to convert it and add a `squiffy.json`:
 
 ```bash
 npx @textadventures/squiffy-cli mygame.squiffy --convert-v6

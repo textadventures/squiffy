@@ -5,7 +5,7 @@ Squiffy is a free, open source tool for creating multiple-choice interactive sto
 - **Web editor**: [app.squiffystory.com](https://app.squiffystory.com) - works offline as a PWA, no account required
 - **Documentation**: [squiffystory.com](https://squiffystory.com)
 
-> **Note:** Squiffy v6 is a complete rewrite of [Squiffy v5](https://github.com/textadventures/squiffy/tree/v5). See [What's New in v6](https://squiffystory.com/whats-new/).
+> **Note:** Squiffy 6 was a complete rewrite of [Squiffy 5](https://github.com/textadventures/squiffy/tree/v5), and Squiffy 7 builds on it. See [What's new](https://squiffystory.com/whats-new/).
 
 ## Quick Example
 

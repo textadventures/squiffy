@@ -1,7 +1,5 @@
 ---
 title: Dynamic text
-sidebar:
-    order: 5
 ---
 
 import Sample from "@components/Sample.astro"
@@ -66,7 +64,7 @@ There are other effects you can use too:
 Be careful not to overuse them though!
 "></Sample>
 
-Squiffy includes [Anime.js](https://animejs.com/), and you can define your own custom animations by setting them up in a `@ui` section. See the [example on GitHub](https://github.com/textadventures/squiffy/tree/main/examples/animate).
+Squiffy includes [Anime.js](https://animejs.com/), and you can define your own animations with JavaScript. See [Custom animations](/javascript/#custom-animations).
 
 ### Animation options
 
@@ -237,9 +235,9 @@ further helpers.
 
 [[colourDescription]]:
 {{#if colour = &quot;red&quot;}}
-    The colour of fire and blood.
+The colour of fire and blood.
 {{else if colour = &quot;green&quot;}}
-    The colour of nature and life.
+The colour of nature and life.
 {{else if colour = &quot;blue&quot;}}
-    The colour of the sky and the sea.
+The colour of the sky and the sea.
 {{/if}}"></Sample>

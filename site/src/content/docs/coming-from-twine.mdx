@@ -1,8 +1,6 @@
 ---
 title: Coming from Twine
 description: Converting a Twine story, written in Harlowe or SugarCube, to Squiffy
-sidebar:
-    order: 18
 ---
 
 import {Aside} from "@astrojs/starlight/components";
@@ -32,7 +30,7 @@ Then either:
 The converted story is a folder with:
 
 - `story.squiffy`, the story itself. Each Twine passage becomes a section with the same name.
-- `squiffy.json`, the [project file](/basic-concepts/#stories-in-several-files). It also keeps where the passages were on Twine's story map, so the editor's [story map](/editor/#the-story-map) is laid out the way you arranged it in Twine, stretched sideways a little to fit the map's wider boxes. If you never arranged the passages in Twine, or the Twee file doesn't say where they go, the map lays the story out itself. **Lay out again**, above the map, swaps Twine's arrangement for the map's own.
+- `squiffy.json`, the [project file](/multiple-files/). It also keeps where the passages were on Twine's story map, so the editor's [story map](/story-map/) is laid out the way you arranged it in Twine, stretched sideways a little to fit the map's wider boxes. If you never arranged the passages in Twine, or the Twee file doesn't say where they go, the map lays the story out itself. **Lay out again**, above the map, swaps Twine's arrangement for the map's own.
 - `story.css`, the story's stylesheet, if it has one, which `story.squiffy` imports.
 - `story.js`, the story's JavaScript, if it has some. It isn't part of the story yet: see [JavaScript](#javascript) below.
 - `twine-import.txt`, which lists everything that couldn't be converted exactly, passage by passage.
@@ -45,7 +43,7 @@ Anything that couldn't be converted at all is kept in the story as a comment, so
 {{!-- Twine: (alert: "Watch out!") --}}
 ```
 
-Search for `Twine:` to find them all. The editor's [story map](/editor/#the-story-map) is a good way to get to know the converted story, and to spot links that go nowhere.
+Search for `Twine:` to find them all. The editor's [story map](/story-map/) is a good way to get to know the converted story, and to spot links that go nowhere.
 
 <Aside>
 Play the story through after converting it. Twine and Squiffy work differently in places, so some things are converted to the nearest thing Squiffy has, rather than exactly: these are listed in `twine-import.txt` too.
@@ -71,7 +69,7 @@ Play the story through after converting it. Twine and Squiffy work differently i
 | `(click: ?page)[...]` | A **Continue** link |
 | `(either: "a", "b")`, `(random: 1, 6)` | `{{random (array "a" "b")}}`, `{{random (array 1 2 3 4 5 6)}}` |
 | `(cycling-link: bind $size, "S", "L")` | `{{rotate (array "S" "L") set="size"}}` |
-| `(input-box: bind $name)`, `(dropdown:)` | `<input data-attribute="name">`, `<select>` (see [User input](/basic-concepts/#user-input)) |
+| `(input-box: bind $name)`, `(dropdown:)` | `<input data-attribute="name">`, `<select>` (see [User input](/player-input/)) |
 | `(set: $hero to (dm: "hp", 10))`, `$hero's hp` | `@set hero_hp = 10`, `{{hero_hp}}`: each value is an attribute of its own |
 | `(storylet:)` and `(link-storylet:)` | A link to each storylet whose condition is true |
 | `''bold''`, `//italic//`, `(text-colour: red)[...]` | Markdown and HTML |
@@ -113,7 +111,7 @@ Changers and text styles that only change how something looks, such as `(link-st
 
 ### JavaScript
 
-A Twine story's JavaScript is written for its story format, so it won't work in Squiffy as it is. It's put in `story.js` so you have it, but the story doesn't use it. To use some of it, change it to use Squiffy's [JavaScript functions](/basic-concepts/#javascript), and add `@ui story.js` at the top of `story.squiffy`.
+A Twine story's JavaScript is written for its story format, so it won't work in Squiffy as it is. It's put in `story.js` so you have it, but the story doesn't use it. To use some of it, change it to use Squiffy's [JavaScript functions](/javascript/), and add `@ui story.js` at the top of `story.squiffy`.
 
 ### Styles
 
