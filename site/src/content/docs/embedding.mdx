@@ -220,6 +220,14 @@ Goes back to the previous section or passage (undo):
 squiffyApi.goBack();
 ```
 
+### canGoBack()
+
+Returns whether there's anything to go back to, for example to enable a Back button when the story starts. After that, the `canGoBackChanged` event says when it changes:
+
+```javascript
+backButton.disabled = !squiffyApi.canGoBack();
+```
+
 ## Events
 
 You can listen for events using `on()`, `off()`, and `once()`:
@@ -355,6 +363,8 @@ Here's a more complete example with custom controls:
             });
 
             await squiffyApi.begin();
+            // A saved game may have somewhere to go back to
+            backButton.disabled = !squiffyApi.canGoBack();
         });
     </script>
 </body>

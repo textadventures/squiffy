@@ -26,6 +26,18 @@ A `squiffy.json` also means the story uses Squiffy 7's rules for [setting attrib
 
 The `$schema` line is optional. It lets text editors such as VS Code check the file and suggest what can go in it.
 
+## The Back button
+
+A published story has a **Back** button, which lets the player undo their choices, a section or passage at a time. To leave it out, so that the player's choices are final, set `backButton` to `false`:
+
+```json
+{
+  "version": 1,
+  "main": "story.squiffy",
+  "backButton": false
+}
+```
+
 ## Leaving files out
 
 To keep a `.squiffy` file in the folder without it being part of the story, list it under `exclude`:

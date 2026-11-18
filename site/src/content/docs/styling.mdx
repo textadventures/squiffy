@@ -124,7 +124,7 @@ Each section's output has a `data-section` attribute with the section's name, an
 
 ### The header
 
-The Restart and light/dark buttons are in a header that stays at the top of the window as the story scrolls under it. Its background is `--squiffy-background`, so if you change the page's background, set that [variable](#colours) rather than styling `body`. To make the header scroll away with the story instead:
+The Back, Restart and light/dark buttons are in a header that stays at the top of the window as the story scrolls under it. Its background is `--squiffy-background`, so if you change the page's background, set that [variable](#colours) rather than styling `body`. To make the header scroll away with the story instead:
 
 ```css
 div#squiffy-header {
@@ -145,6 +145,10 @@ button#squiffy-theme {
     display: none;
 }
 ```
+
+### Hiding the Back button
+
+To leave out the Back button, set `"backButton": false` in your story's [`squiffy.json`](/multiple-files/#the-back-button), rather than hiding it with CSS.
 
 ### Changing the Restart button text
 

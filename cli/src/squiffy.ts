@@ -94,7 +94,8 @@ else {
     const outputPath = path.dirname(story.mainFile);
     const result = await createPackageFiles(story, outputPath, {
         createZip: !!options.zip,
-        inlineHtml: !!options.inline
+        inlineHtml: !!options.inline,
+        backButton: story.backButton,
     });
 
     if (result && options.serve) {

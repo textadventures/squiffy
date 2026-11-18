@@ -99,7 +99,7 @@ select.squiffy-invalid:focus
     box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--squiffy-error) 50%, transparent);
 }
 
-/* Header button styles: the Restart button */
+/* Header button styles: the Back and Restart buttons */
 button.squiffy-header-button
 {
     color: var(--squiffy-muted);
@@ -114,10 +114,17 @@ button.squiffy-header-button
     transition: color 0.2s ease-in-out, text-decoration-color 0.2s ease-in-out;
 }
 
-button.squiffy-header-button:hover
+button.squiffy-header-button:hover:not(:disabled)
 {
     color: var(--squiffy-text);
     text-decoration-color: currentColor;
+}
+
+/* The Back button, when there's nothing to go back to */
+button.squiffy-header-button:disabled
+{
+    cursor: default;
+    opacity: 0.5;
 }
 
 /* Output block spacing */
