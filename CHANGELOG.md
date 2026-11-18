@@ -1,5 +1,29 @@
 # Changelog
 
+## [7.0.0-beta.5](https://github.com/textadventures/squiffy/compare/v7.0.0-beta.4...v7.0.0-beta.5) (2026-11-18)
+
+
+### Features
+
+* {{goto}} helper to go to another section from story text ([#402](https://github.com/textadventures/squiffy/issues/402)) ([b62fffd](https://github.com/textadventures/squiffy/commit/b62fffd25bf60a693364d3671546a1cb44a987ea))
+* a Back button for players in published stories ([#417](https://github.com/textadventures/squiffy/issues/417)) ([029bacf](https://github.com/textadventures/squiffy/commit/029bacf5c3109076d8d071e2c67721a6ddfeffb3))
+* a Problems panel listing every problem in the story ([#410](https://github.com/textadventures/squiffy/issues/410)) ([cfc2ebf](https://github.com/textadventures/squiffy/commit/cfc2ebf822797958458b169ff66c3162eda7692a))
+* call stories kept in the browser that, not drafts, and remind authors to download a copy ([#412](https://github.com/textadventures/squiffy/issues/412)) ([ca8a3f1](https://github.com/textadventures/squiffy/commit/ca8a3f114444b2b9e2cc8f8a293a061c96247e2c))
+* fewer crossing links on the story map ([#408](https://github.com/textadventures/squiffy/issues/408)) ([76ec854](https://github.com/textadventures/squiffy/commit/76ec8546544ec03c3f41b1ddbffddb9c016908fb))
+* fold a long story's map into columns, and fade long links ([#405](https://github.com/textadventures/squiffy/issues/405)) ([e5f708c](https://github.com/textadventures/squiffy/commit/e5f708c9b1701c9e4a42315a4f3c54ce802530ee))
+* import Twine stories (Twee and Twine HTML; Harlowe and SugarCube) ([#404](https://github.com/textadventures/squiffy/issues/404)) ([85079c9](https://github.com/textadventures/squiffy/commit/85079c9077762054338b2a9187307d047c3ccd8e))
+* keep a Twine story's map layout when importing it ([#407](https://github.com/textadventures/squiffy/issues/407)) ([6f6c0ff](https://github.com/textadventures/squiffy/commit/6f6c0ff9e81f32c9d52d2c3e80033377d2ad6ded))
+* resize the Problems panel, and name the section in its section warnings ([#411](https://github.com/textadventures/squiffy/issues/411)) ([0ee8989](https://github.com/textadventures/squiffy/commit/0ee8989a1094d73389172ea25128f2fb964ce5da))
+* visit counts and a story-wide turn count ([#403](https://github.com/textadventures/squiffy/issues/403)) ([b00578f](https://github.com/textadventures/squiffy/commit/b00578fb08c16cbb3815cae780183871b0335bb6))
+
+
+### Bug Fixes
+
+* include a story's own CSS and JS in single-file exports ([#414](https://github.com/textadventures/squiffy/issues/414)) ([249ddde](https://github.com/textadventures/squiffy/commit/249ddde7ddb7e163ae3be9eac8ff7b51f9a61809))
+* let the desktop app's Open file dialog pick Twine and zip files ([#406](https://github.com/textadventures/squiffy/issues/406)) ([b4b4f2d](https://github.com/textadventures/squiffy/commit/b4b4f2d365fd214913429f7ae3e3490b6a4f737f))
+* line up the editor's fold chevrons, and make its warning icons easier to see ([#409](https://github.com/textadventures/squiffy/issues/409)) ([b2838ec](https://github.com/textadventures/squiffy/commit/b2838ecea83c72fdc8c56ff3d9da8cc2a1c6af38))
+* link the desktop app's update banner to the download page in the docs ([#400](https://github.com/textadventures/squiffy/issues/400)) ([6eab6b4](https://github.com/textadventures/squiffy/commit/6eab6b466e9026dc645bb12dbd4731ea6ec96d9f))
+
 ## [7.0.0-beta.4](https://github.com/textadventures/squiffy/compare/v7.0.0-beta.3...v7.0.0-beta.4) (2026-11-17)
 
 
