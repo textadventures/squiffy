@@ -9,7 +9,7 @@ import "squiffy-runtime/squiffy.runtime.css";
 
 const { script, alwaysShowRestart } = Astro.props;
 
-const restartClass = "sample-button restart" + (!alwaysShowRestart ? " hidden" : "");
+const buttonsClass = "sample-buttons" + (!alwaysShowRestart ? " hidden" : "");
 ---
 
 <style is:global>
@@ -25,42 +25,148 @@ const restartClass = "sample-button restart" + (!alwaysShowRestart ? " hidden" :
     .viewer p {
         margin-bottom: 1rem;
     }
+    /* Icon buttons, like the Back and Restart buttons in a published story's header
+       (button.squiffy-header-button in the runtime's CSS), in Starlight's colours */
+    .sample-buttons {
+        display: flex;
+        gap: 0.25rem;
+    }
+    .sample-buttons.hidden {
+        display: none;
+    }
     .sample-button {
-        background: transparent;
-        color: var(--sl-color-accent, #4f46e5);
-        border: 1px solid var(--sl-color-accent, #4f46e5);
-        border-radius: 0.5rem;
-        padding: 0.4rem 1rem;
-        font-size: 0.8rem;
-        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--sl-color-gray-3);
         cursor: pointer;
-        transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
+        background: none;
+        border: none;
+        border-radius: 0.375rem;
+        padding: 0.375rem;
+        transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out, opacity 0.2s ease-in-out;
     }
-    .sample-button:hover {
-        background: color-mix(in srgb, var(--sl-color-accent, #4f46e5) 15%, white);
-        color: var(--sl-color-accent, #4f46e5);
-        transform: translateY(-2px);
+    .sample-button:hover:not(:disabled) {
+        color: var(--sl-color-white);
+        background-color: color-mix(in srgb, currentColor 10%, transparent);
     }
-    .sample-button:active {
-        transform: translateY(0);
-        background: color-mix(in srgb, var(--sl-color-accent, #4f46e5) 25%, white);
+    .sample-button:disabled {
+        opacity: 0.4;
+        cursor: default;
     }
-    .sample-button:focus {
-        outline: 2px solid var(--sl-color-accent, #4f46e5);
+    .sample-button:focus-visible {
+        outline: 2px solid var(--sl-color-accent);
         outline-offset: 2px;
     }
-    .restart.hidden {
-        display: none;
+    .sample-button svg {
+        width: 1.25rem;
+        height: 1.25rem;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+    .sample .editor {
+        position: relative;
+    }
+    /* Like the copy button on the docs' static code blocks (Expressive Code's), shown on hover
+       where there's a mouse, and always on touch screens */
+    .sample .copy {
+        position: absolute;
+        top: 0.25rem;
+        right: 0.25rem;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+    /* Keep the text clear of the copy button. The lines wrap, so it's every line, not just the first. */
+    .sample .editor .cm-line {
+        padding-right: 2.25rem;
+    }
+    @media (scripting: none) {
+        .sample .copy {
+            display: none;
+        }
+    }
+    .sample .copy button {
+        display: grid;
+        place-items: center;
+        width: 2.5rem;
+        height: 2.5rem;
+        padding: 0;
+        margin: 0;
+        color: var(--sl-color-gray-2);
+        background: var(--sl-color-gray-6);
+        border: 1px solid var(--sl-color-gray-4);
+        border-radius: 0.2rem;
+        cursor: pointer;
+        opacity: 0.75;
+        transition: opacity 0.2s ease, background 0.2s ease;
+    }
+    .sample .copy button svg {
+        width: 1rem;
+        height: 1rem;
+    }
+    .sample .copy button:hover,
+    .sample .copy button:focus-visible {
+        opacity: 1;
+        background: var(--sl-color-gray-5);
+    }
+    @media (hover: hover) {
+        .sample .copy button {
+            opacity: 0;
+            width: 2rem;
+            height: 2rem;
+        }
+        .sample .editor:hover .copy button:not(:hover),
+        .sample .editor:focus-within .copy button:not(:hover),
+        .sample .copy .feedback.show ~ button:not(:hover) {
+            opacity: 0.75;
+        }
+    }
+    .sample .copy .feedback {
+        padding: 0.125rem 0.75rem;
+        border-radius: 0.2rem;
+        font-size: 0.8rem;
+        color: white;
+        background: #0a5c3a;
+        pointer-events: none;
+        user-select: none;
+        opacity: 0;
+        transform: translateY(0.25rem);
+        transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+    }
+    .sample .copy .feedback.show {
+        opacity: 1;
+        transform: translateY(0);
     }
 </style>
 
 <squiffy-sample class="sample not-content" data-squiffy-script={script} data-always-show-restart={alwaysShowRestart}>
     <Split gap="0.75rem" min="200px">
         <div slot="left" class="editor">
+            <div class="copy">
+                <div class="feedback" aria-live="polite"></div>
+                <button type="button" title="Copy to clipboard" aria-label="Copy to clipboard">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+                        <path d="M3 19a2 2 0 0 1-1-2V2a2 2 0 0 1 1-1h13a2 2 0 0 1 2 1"/>
+                        <rect x="6" y="5" width="16" height="18" rx="1.5" ry="1.5"/>
+                    </svg>
+                </button>
+            </div>
         </div>
         <div slot="right" class="viewer-container">
             <div class="viewer"></div>
-            <button class={restartClass}>Restart</button>
+            <div class={buttonsClass}>
+                <button type="button" class="sample-button back" title="Back" aria-label="Back" disabled>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                </button>
+                <button type="button" class="sample-button restart" title="Restart" aria-label="Restart">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                </button>
+            </div>
         </div>
     </Split>
 </squiffy-sample>
@@ -101,9 +207,10 @@ const restartClass = "sample-button restart" + (!alwaysShowRestart ? " hidden" :
             let loaded = false;
 
             const restart = this.querySelector('.restart') as HTMLButtonElement;
+            const back = this.querySelector('.back') as HTMLButtonElement;
 
             const init = async () => {
-                await initRuntime(script, viewer, restart);
+                await initRuntime(script, viewer, restart, back);
             };
 
             const updateListener = EditorView.updateListener.of(async (update) => {
@@ -120,7 +227,7 @@ const restartClass = "sample-button restart" + (!alwaysShowRestart ? " hidden" :
                 }
             });
 
-            new EditorView({
+            const editorView = new EditorView({
                 doc: this.dataset.squiffyScript,
                 extensions: [
                     basicSetup,
@@ -154,9 +261,40 @@ const restartClass = "sample-button restart" + (!alwaysShowRestart ? " hidden" :
                 parent: editor
             });
 
+            // Copies the script as it is now, with any changes the reader has made
+            const copyButton = this.querySelector('.copy button') as HTMLButtonElement;
+            const copyFeedback = this.querySelector('.copy .feedback') as HTMLElement;
+            let hideFeedback: ReturnType<typeof setTimeout> | undefined;
+            copyButton.addEventListener('click', async () => {
+                const text = editorView.state.doc.toString();
+                try {
+                    await navigator.clipboard.writeText(text);
+                } catch {
+                    // As Expressive Code's copy button does, fall back to the old way where the
+                    // Clipboard API isn't allowed
+                    const textarea = document.createElement('textarea');
+                    textarea.value = text;
+                    textarea.style.position = 'fixed';
+                    textarea.style.opacity = '0';
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    const copied = document.execCommand('copy');
+                    textarea.remove();
+                    copyButton.focus();
+                    if (!copied) return;
+                }
+                copyFeedback.textContent = 'Copied!';
+                copyFeedback.classList.add('show');
+                clearTimeout(hideFeedback);
+                hideFeedback = setTimeout(() => {
+                    copyFeedback.classList.remove('show');
+                    copyFeedback.textContent = '';
+                }, 1500);
+            });
+
             const alwaysShowRestart = this.dataset.alwaysShowRestart === 'true';
 
-            async function initRuntime(script: string, outputContainer: HTMLElement, restartButton: HTMLElement) {
+            async function initRuntime(script: string, outputContainer: HTMLElement, restartButton: HTMLElement, backButton: HTMLElement) {
                 const result = await squiffyCompile({
                     script: script,
                     // As in a story with a squiffy.json, which every story made in the editor has:
@@ -197,20 +335,35 @@ const restartClass = "sample-button restart" + (!alwaysShowRestart ? " hidden" :
 
                     await squiffyApi.begin();
 
-                    const showRestartOnLinkClick = () => {
+                    // The buttons appear once a link is clicked (or straight away, with alwaysShowRestart)
+                    const buttons = restartButton.parentElement!;
+                    const showButtonsOnLinkClick = () => {
                         squiffyApi?.once('linkClick', () => {
-                            restartButton.classList.remove('hidden');
+                            buttons.classList.remove('hidden');
                         });
                     };
 
-                    showRestartOnLinkClick();
+                    showButtonsOnLinkClick();
+
+                    // As in a published story, Back is disabled when there's nowhere to go back to,
+                    // rather than hidden, so Restart doesn't move
+                    const updateBack = () => {
+                        (backButton as HTMLButtonElement).disabled = !squiffyApi?.canGoBack();
+                    };
+                    squiffyApi.on('canGoBackChanged', updateBack);
+
+                    backButton.addEventListener('click', () => {
+                        squiffyApi?.goBack();
+                        updateBack();
+                    });
 
                     restartButton.addEventListener('click', () => {
                         squiffyApi?.restart();
                         if (!alwaysShowRestart) {
-                            restartButton.classList.add('hidden');
+                            buttons.classList.add('hidden');
                         }
-                        showRestartOnLinkClick();
+                        showButtonsOnLinkClick();
+                        updateBack();
                     });
                 }
             }
