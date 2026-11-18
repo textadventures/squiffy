@@ -16,6 +16,7 @@ import type {
 } from "squiffy-compiler/language-service";
 import { squiffyLanguage } from "@textadventures/squiffy-codemirror";
 import { refreshFolding } from "../codemirror-folding.js";
+import { diagnosticKey, fixesByDiagnostic } from "../problems.js";
 import type { LanguageClient } from "./client.js";
 
 const DELAY_MS = 300;
@@ -240,20 +241,7 @@ export function languageFeatures(options: LanguageFeatureOptions): Extension[] {
     // Quick fixes, as lint actions on the diagnostics they fix. `doc` is the text they were made
     // for; if the author has typed since, the fix waits for the next analysis.
     function toActions(actions: CodeAction[], doc: Text): Map<string, Action[]> {
-        const byDiagnostic = new Map<string, Action[]>();
-        const fileWide = actions.filter(a => !a.diagnostic);
-        for (const action of actions) {
-            if (!action.diagnostic) continue;
-            const key = diagnosticKey(action.diagnostic);
-            const list = byDiagnostic.get(key) ?? [];
-            list.push(lintAction(action, doc));
-            byDiagnostic.set(key, list);
-        }
-        // "Convert all" goes on every diagnostic of the kind it fixes
-        for (const [key, list] of byDiagnostic) {
-            if (key.startsWith("squiffy/v5-syntax")) list.push(...fileWide.map(a => lintAction(a, doc)));
-        }
-        return byDiagnostic;
+        return fixesByDiagnostic(actions, a => lintAction(a, doc));
     }
 
     function lintAction(action: CodeAction, doc: Text): Action {
@@ -268,9 +256,6 @@ export function languageFeatures(options: LanguageFeatureOptions): Extension[] {
             },
         };
     }
-
-    const diagnosticKey = (d: { code: string; range: { start: Position } }) =>
-        `${d.code}@${d.range.start.line}:${d.range.start.character}`;
 
     return [
         linter(async view => {
