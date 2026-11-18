@@ -202,6 +202,48 @@ test("Click a section link and go back", async () => {
     expect(await squiffyApi.clickLink(linkToPassage)).toBe(true);
 });
 
+test("canGoBack says whether there's anything to go back to", async () => {
+    const { squiffyApi, element } = await initScript("[[a]]:\nGo to [[b]].\n\n[[b]]:\nThe end.");
+    expect(squiffyApi.canGoBack()).toBe(false);
+
+    await squiffyApi.clickLink(findLink(element, "section", "b"));
+    expect(squiffyApi.canGoBack()).toBe(true);
+
+    squiffyApi.goBack();
+    expect(squiffyApi.canGoBack()).toBe(false);
+});
+
+test("canGoBack is true for a saved game that has somewhere to go back to", async () => {
+    const element = document.getElementById("squiffy")!;
+    const compileResult = await compile("[[a]]:\nGo to [[b]].\n\n[[b]]:\nThe end.");
+    const first = await init({ element, story: compileResult.story, persist: true });
+    await first.begin();
+    await first.clickLink(findLink(element, "section", "b"));
+
+    // A new page loads the saved game, which doesn't fire canGoBackChanged
+    element.innerHTML = "";
+    const second = await init({ element, story: compileResult.story, persist: true });
+    await second.begin();
+    expect(second.canGoBack()).toBe(true);
+});
+
+test("Going back is saved, so a saved game doesn't bring back what was undone", async () => {
+    const element = document.getElementById("squiffy")!;
+    const compileResult = await compile("[[a]]:\nGo to [[b]].\n\n[[b]]:\nLook at the [view].\n\n[view]:\nIt's lovely.");
+    const first = await init({ element, story: compileResult.story, persist: true });
+    await first.begin();
+    await first.clickLink(findLink(element, "section", "b"));
+    await first.clickLink(findLink(element, "passage", "view"));
+    first.goBack();
+    expect(element.innerHTML).not.toContain("lovely");
+
+    element.innerHTML = "";
+    const second = await init({ element, story: compileResult.story, persist: true });
+    await second.begin();
+    expect(element.innerHTML).toContain("Look at the");
+    expect(element.innerHTML).not.toContain("lovely");
+});
+
 test("Click a passage link", async () => {
     const script = await fs.readFile("../examples/test/example.squiffy", "utf-8");
     const { squiffyApi, element } = await initScript(script);

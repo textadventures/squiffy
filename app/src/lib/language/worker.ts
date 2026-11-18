@@ -18,7 +18,10 @@ async function exportStory(kind: ExportKind, assets: Record<string, Uint8Array>)
     const result = emit(analysis, { globalJs: true });
     if (kind === "js") return { success: true, files: { "story.js": await result.getJs() } };
     const { createPackage } = await import("@textadventures/squiffy-packager");
-    const pkg = await createPackage(result, { createZip: kind === "zip", inlineHtml: kind === "html", assets });
+    const { projectFile } = await current().getProjectInfo();
+    const pkg = await createPackage(result, {
+        createZip: kind === "zip", inlineHtml: kind === "html", assets, backButton: projectFile?.backButton,
+    });
     return { success: true, files: pkg.files, zip: pkg.zip };
 }
 
