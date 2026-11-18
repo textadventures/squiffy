@@ -16,9 +16,41 @@
         onselect: (problem: Problem) => void;
         onfix: (fix: CodeAction) => void;
         onclose: () => void;
+        // The panel's height in pixels, which dragging its top edge changes
+        height?: number;
     }
 
-    let { problems, counts, onselect, onfix, onclose }: Props = $props();
+    let { problems, counts, onselect, onfix, onclose, height = $bindable(200) }: Props = $props();
+
+    const MIN_HEIGHT = 60;
+
+    // Drags the top edge to resize the panel, as the editor's other splitters do. It can grow to
+    // leave the editor a few lines (the space above it, less 80px).
+    function handleSplitterPointerDown(e: PointerEvent) {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        const splitter = e.currentTarget as HTMLElement;
+        const panel = splitter.parentElement!;
+        const container = panel.parentElement!;
+        const startY = e.clientY;
+        const startHeight = panel.getBoundingClientRect().height;
+        const max = Math.max(MIN_HEIGHT, startHeight + panel.getBoundingClientRect().top - container.getBoundingClientRect().top - 80);
+        splitter.setPointerCapture(e.pointerId);
+        document.body.classList.add("splitter-dragging-rows");
+
+        function onMove(moveEvent: PointerEvent) {
+            height = Math.round(Math.min(max, Math.max(MIN_HEIGHT, startHeight + startY - moveEvent.clientY)));
+        }
+        function onUp() {
+            splitter.removeEventListener("pointermove", onMove);
+            splitter.removeEventListener("pointerup", onUp);
+            splitter.removeEventListener("pointercancel", onUp);
+            document.body.classList.remove("splitter-dragging-rows");
+        }
+        splitter.addEventListener("pointermove", onMove);
+        splitter.addEventListener("pointerup", onUp);
+        splitter.addEventListener("pointercancel", onUp);
+    }
 
     let list = $state<HTMLUListElement>();
 
@@ -55,7 +87,8 @@
     }
 </script>
 
-<section aria-label="Problems" class="flex flex-col max-h-[30vh] border-t border-surface-200-800 bg-surface-50-950">
+<section aria-label="Problems" class="relative flex flex-col shrink-0 border-t border-surface-200-800 bg-surface-50-950" style="height: {height}px">
+    <div role="separator" aria-orientation="horizontal" aria-label="Resize problems" class="splitter-rows" onpointerdown={handleSplitterPointerDown}></div>
     <header class="flex items-center gap-2 px-3 py-1.5 border-b border-surface-200-800">
         <h2 class="text-xs font-semibold">Problems</h2>
         <span class="text-xs text-surface-600-400 flex-1 truncate" role="status">{problems.length ? summary : "None"}</span>
@@ -65,7 +98,7 @@
         <p class="px-3 py-2 text-xs text-surface-600-400">No problems in the story.</p>
     {:else}
         <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-        <ul bind:this={list} class="overflow-y-auto text-xs" onkeydown={handleKeydown}>
+        <ul bind:this={list} class="flex-1 min-h-0 overflow-y-auto text-xs" onkeydown={handleKeydown}>
             {#each problems as problem, i (i)}
                 {@const d = problem.diagnostic}
                 <li class="row">
@@ -97,6 +130,29 @@
 </section>
 
 <style>
+    .splitter-rows {
+        position: absolute;
+        top: -0.2rem;
+        left: 0;
+        right: 0;
+        height: 0.4rem;
+        z-index: 10;
+        cursor: row-resize;
+        transition: background-color 150ms;
+    }
+    .splitter-rows:hover {
+        background-color: color-mix(in srgb, var(--color-primary-500) 50%, transparent);
+    }
+    .splitter-rows:active {
+        background-color: color-mix(in srgb, var(--color-primary-500) 70%, transparent);
+    }
+    :global(body.splitter-dragging-rows) {
+        cursor: row-resize;
+        user-select: none;
+    }
+    :global(body.splitter-dragging-rows iframe) {
+        pointer-events: none;
+    }
     .row:hover,
     .row:focus-within {
         background-color: var(--color-surface-100-900);

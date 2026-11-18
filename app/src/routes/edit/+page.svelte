@@ -52,6 +52,8 @@
     let problems = $state.raw<Problem[]>([]);
     let problemCounts = $derived(countProblems(problems));
     let problemsOpen = $state(false);
+    // Session-only, like the other panels' sizes
+    let problemsHeight = $state(200);
     let problemsPanel = $state<ReturnType<typeof ProblemsPanel>>();
     // The text of each open file when the problems were found, as their fixes are for that text
     let problemTexts = new Map<string, string>();
@@ -1060,6 +1062,7 @@
                 {#if problemsOpen}
                     <ProblemsPanel
                         bind:this={problemsPanel}
+                        bind:height={problemsHeight}
                         {problems}
                         counts={problemCounts}
                         onselect={goToProblem}
