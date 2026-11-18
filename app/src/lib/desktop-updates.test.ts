@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { compareVersions, findUpdate, type Release } from "./desktop-updates.svelte.js";
+import { BETA_DOWNLOAD_URL, compareVersions, findUpdate, STABLE_DOWNLOAD_URL, type Release } from "./desktop-updates.svelte.js";
 
 describe("compareVersions", () => {
     test.each([
@@ -20,7 +20,6 @@ describe("compareVersions", () => {
 
 const release = (tag: string, assets: string[], extra: Partial<Release> = {}): Release => ({
     tag_name: tag,
-    html_url: `https://github.com/textadventures/squiffy/releases/tag/${tag}`,
     prerelease: tag.includes("-"),
     assets: assets.map(name => ({ name })),
     ...extra,
@@ -35,15 +34,15 @@ describe("findUpdate", () => {
     ];
 
     test("the stable app is told about the newest stable release", () => {
-        expect(findUpdate(releases, "7.0.0", "mac")).toEqual({ version: "7.0.1", url: releases[1].html_url });
+        expect(findUpdate(releases, "7.0.0", "mac")).toEqual({ version: "7.0.1", url: STABLE_DOWNLOAD_URL });
     });
 
     test("the beta is told about prereleases too", () => {
-        expect(findUpdate(releases, "7.0.1-beta.3", "mac")?.version).toBe("7.1.0-beta.1");
+        expect(findUpdate(releases, "7.0.1-beta.3", "mac")).toEqual({ version: "7.1.0-beta.1", url: BETA_DOWNLOAD_URL });
     });
 
     test("the beta is told about the stable release that ends its series", () => {
-        expect(findUpdate([release("v7.0.0", ["Squiffy-7.0.0-arm64.dmg"])], "7.0.0-beta.5", "mac")?.version).toBe("7.0.0");
+        expect(findUpdate([release("v7.0.0", ["Squiffy-7.0.0-arm64.dmg"])], "7.0.0-beta.5", "mac")).toEqual({ version: "7.0.0", url: STABLE_DOWNLOAD_URL });
     });
 
     test("only releases with an installer for this platform count", () => {

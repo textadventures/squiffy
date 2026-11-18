@@ -12,7 +12,7 @@
         <span class="flex-1 basis-80">
             This is Squiffy Beta, the beta of the next version of Squiffy. It's a separate app from Squiffy, so you can have both.
         </span>
-        <a href="https://github.com/textadventures/squiffy/releases/latest" class="anchor font-semibold">Get the current version</a>
+        <a href="https://squiffystory.com/desktop-app/" class="anchor font-semibold">Get the current version</a>
     {:else}
         <span class="flex-1 basis-80">
             This is the beta of the next version of Squiffy. Drafts here are kept separately from the ones on
