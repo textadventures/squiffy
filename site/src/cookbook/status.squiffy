@@ -1,0 +1,14 @@
+You're about to go exploring. [[Begin]](start, health = 10, gold = 0, playing = true)
+
+[[]]:
+{{#if playing}}**Health:** {{health}} · **Gold:** {{gold}}{{/if}}
+
+[[start]]:
+You find a purse with 5 gold in it. [[Take it]](cave, gold += 5)
+
+[[cave]]:
+A bat swoops out of the dark, and scratches you. [[Run outside]](outside, health -= 2)
+
+[[outside]]:
+@end
+You're out in the fresh air again.

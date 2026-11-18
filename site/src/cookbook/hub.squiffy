@@ -1,0 +1,18 @@
+[[village square]]:
+{{#if (visits "village square") = 1}}
+You arrive in a small village. Its square is busy with market stalls.
+{{else}}
+You're back in the village square.
+{{/if}}
+
+From here you can visit the [[bakery]] or the [[well]], or [[leave the village]](leave).
+
+[[bakery]]:
+{{#if (visits "bakery") = 1}}The baker gives you a warm bun.{{else}}The baker waves at you again.{{/if}} [[Back to the square]](village square)
+
+[[well]]:
+You look down the well, but it's too dark to see the bottom. [[Back to the square]](village square)
+
+[[leave]]:
+@end
+You leave the village{{#if (seen "bakery")}}, still eating your bun{{/if}}.

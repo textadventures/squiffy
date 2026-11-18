@@ -1,0 +1,16 @@
+Are you [[strong]](river, strength = 8) or [[clever]](river, strength = 3)?
+
+[[river]]:
+A fallen tree blocks the river.
+
+{{#if strength >= 5}}You could [[lift the tree]](lift).{{else}}It's far too heavy for you to lift.{{/if}}
+
+Or you could [[swim around it]](swim).
+
+[[lift]]:
+@end
+You heave the tree out of the way, and carry on down the river.
+
+[[swim]]:
+@end
+You swim around the tree. The water is freezing.

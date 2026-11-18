@@ -1,0 +1,27 @@
+{{set "inventory" (array)}}
+You're standing in a long corridor, with a [[storeroom]] at one end and a door at the other.
+
+[[storeroom]]:
+On the shelves there's a [lamp], a [rope] and a [key]. When you're done, go back to the [[corridor]].
+
+[lamp]:
+{{#if (contains "inventory" "lamp")}}You already have the lamp.{{else}}{{append "inventory" "lamp"}}You take the lamp.{{/if}}
+
+[rope]:
+{{#if (contains "inventory" "rope")}}You already have the rope.{{else}}{{append "inventory" "rope"}}You take the rope.{{/if}}
+
+[key]:
+{{#if (contains "inventory" "key")}}You already have the key.{{else}}{{append "inventory" "key"}}You take the key.{{/if}}
+
+[[corridor]]:
+In your bag: {{#each inventory}}{{#unless @first}}, {{/unless}}{{this}}{{else}}nothing{{/each}}.
+
+{{#if (contains "inventory" "key")}}
+You unlock the door. [[Go through it]](outside)
+{{else}}
+The door is locked. Perhaps there's a key in the [[storeroom]].
+{{/if}}
+
+[[outside]]:
+@end
+You step out into the sunshine.

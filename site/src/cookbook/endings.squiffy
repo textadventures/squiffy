@@ -1,0 +1,20 @@
+@set kindness = 0
+An old man asks you for some food. Do you [[share your bread]](child, kindness += 1) or [[walk on]](child)?
+
+[[child]]:
+A lost child is crying by the road. Do you [[help her find her way]](final, kindness += 1) or [[ignore her]](final)?
+
+[[final]]:
+{{#if kindness = 2}}{{goto "hero"}}{{else if kindness = 1}}{{goto "traveller"}}{{else}}{{goto "stranger"}}{{/if}}
+
+[[hero]]:
+@end
+Word of your kindness spreads, and you're welcomed in every village you pass through.
+
+[[traveller]]:
+@end
+You carry on your way, a little wiser.
+
+[[stranger]]:
+@end
+You reach the city alone, and nobody knows your name.

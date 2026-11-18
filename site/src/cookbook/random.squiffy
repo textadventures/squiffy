@@ -1,0 +1,17 @@
+[[forest]]:
+{{set "encounter" (random (array "wolf" "deer" "nothing"))}}
+You walk deeper into the forest.
+
+{{#if encounter = "wolf"}}
+A wolf howls nearby. You'd better be quick.
+{{else if encounter = "deer"}}
+A deer looks up at you, then bounds away.
+{{else}}
+All is quiet.
+{{/if}}
+
+[[Keep walking]](forest), or [[go home]](home).
+
+[[home]]:
+@end
+You head home, and put the kettle on.
