@@ -302,6 +302,7 @@ export function storyMapLayout(): Layout<StoryMapNode, StoryMapEdge> {
         edgeStrength: e => e.kind == "section-link" || e.kind == "goto" ? 0.6 : e.kind == "script" ? 0.4 : 0.2,
         rowGap: 90,
         columnGap: 28,
+        sweeps: 8,
     });
 }
 
