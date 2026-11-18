@@ -86,6 +86,23 @@ const handlers: WorkerApi = {
             complete: analysis.success,
         };
     },
+    async getProblems() {
+        const service = current();
+        const analysis = await service.getAnalysis();
+        // The story's files, and any other file the analysis found a problem in. The story graph's
+        // problems (dead ends and so on) are only ever in the story's files.
+        const files = new Set([
+            ...analysis.files.map(f => f.filename),
+            ...analysis.diagnostics.map(d => d.file),
+        ].filter((f): f is string => !!f));
+        const everything = { start: { line: 0, character: 0 }, end: { line: Number.MAX_SAFE_INTEGER, character: 0 } };
+        const results = await Promise.all([...files].map(async file => {
+            const diagnostics = await service.getDiagnostics(file);
+            if (!diagnostics.length) return null;
+            return { file, diagnostics, actions: await service.getCodeActions(file, everything) };
+        }));
+        return results.filter(r => r !== null);
+    },
     async findSection(section, passage) {
         const symbol = (await current().getAnalysis()).sections.find(s => s.name === section);
         const node = passage ? symbol?.passages.find(p => p.name === passage)?.node : symbol?.node;

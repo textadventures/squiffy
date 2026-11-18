@@ -45,6 +45,9 @@
     import Gamepad2 from "@lucide/svelte/icons/gamepad-2";
     import Bug from "@lucide/svelte/icons/bug";
     import DiscordIcon from "#components/DiscordIcon.svelte";
+    import CircleX from "@lucide/svelte/icons/circle-x";
+    import CircleCheck from "@lucide/svelte/icons/circle-check";
+    import type { ProblemCounts } from "#lib/problems.js";
 
     interface Props {
         // On a narrow screen, whether the outline is showing instead of the editor
@@ -53,6 +56,10 @@
         // Whether the story map is showing
         mapOpen?: boolean;
         ontogglemap?: () => void;
+        // How many problems the story has, and whether the Problems panel is showing
+        problemCounts?: ProblemCounts;
+        problemsOpen?: boolean;
+        ontoggleproblems?: () => void;
         // Runs the story in the preview, from the start or from the section the cursor is in
         onrun?: (fromCursor: boolean) => void;
         // Opens the Assets dialog
@@ -74,7 +81,7 @@
         onplaytab?: () => void;
     }
 
-    let { outlineOpen = false, ontoggleoutline, mapOpen = false, ontogglemap, onrun, onassets, ondownloadproject, onexport, oncommand, onadd, onsnippet, snippets = [], onabout, onplaytab }: Props = $props();
+    let { outlineOpen = false, ontoggleoutline, mapOpen = false, ontogglemap, problemCounts = { error: 0, warning: 0, hint: 0 }, problemsOpen = false, ontoggleproblems, onrun, onassets, ondownloadproject, onexport, oncommand, onadd, onsnippet, snippets = [], onabout, onplaytab }: Props = $props();
 
     const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform);
     const mod = isMac ? "⌘" : "Ctrl+";
@@ -86,6 +93,13 @@
     ]);
 
     const p = $derived(project.current);
+
+    const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
+    let problemsLabel = $derived.by(() => {
+        const { error, warning, hint } = problemCounts;
+        if (!error && !warning && !hint) return "Problems: none";
+        return `Problems: ${[error && plural(error, "error"), warning && plural(warning, "warning"), hint && plural(hint, "hint")].filter(Boolean).join(", ")}`;
+    });
 
     function openLink(url: string) {
         window.open(url, "_blank", "noopener,noreferrer");
@@ -168,7 +182,8 @@
                 {#if p}
                     <span class="text-sm font-medium truncate min-w-0" title={p.source.kind === "folder" ? p.fs.name : p.mainFile}>{p.displayName}</span>
                     {#if p.source.kind === "draft"}
-                        <span class="badge preset-tonal text-[11px] ml-2 shrink-0" title="Kept in this browser. Download it to keep a copy.">Draft</span>
+                        <!-- Left out on a phone, where the toolbar's buttons need the room -->
+                        <span class="badge preset-tonal text-[11px] ml-2 shrink-0 hidden md:inline-flex" title="Kept in this browser. Download it to keep a copy.">Draft</span>
                     {/if}
                     <span role="status" aria-live="polite" class="contents">
                         {#if p.saveError}
@@ -195,7 +210,7 @@
             </div>
         </AppBar.Lead>
         <AppBar.Trail>
-            <div class="flex gap-1.5 items-center">
+            <div class="flex gap-1 md:gap-1.5 items-center">
                 <DropdownMenu items={insertMenuItems}>
                     {#snippet trigger(toggle, open)}
                         <button
@@ -235,6 +250,30 @@
                         {/snippet}
                     </DropdownMenu>
                 {/if}
+                <button
+                    type="button"
+                    class="problems-btn"
+                    onclick={ontoggleproblems}
+                    title="{problemsLabel} ({mod}Shift+M)"
+                    aria-label={problemsLabel}
+                    aria-pressed={problemsOpen}
+                >
+                    {#if isNarrow.current && problemCounts.error && problemCounts.warning}
+                        <!-- One count on a phone, where there's less room -->
+                        <span class="problems-count problems-error"><CircleX size={14} />{problemCounts.error + problemCounts.warning}</span>
+                    {:else if problemCounts.error || problemCounts.warning}
+                        {#if problemCounts.error}
+                            <span class="problems-count problems-error"><CircleX size={14} />{problemCounts.error}</span>
+                        {/if}
+                        {#if problemCounts.warning}
+                            <span class="problems-count problems-warning"><TriangleAlert size={14} />{problemCounts.warning}</span>
+                        {/if}
+                    {:else if problemCounts.hint}
+                        <span class="problems-count problems-hint"><Info size={14} />{problemCounts.hint}</span>
+                    {:else}
+                        <span class="problems-count"><CircleCheck size={14} /></span>
+                    {/if}
+                </button>
                 <button
                     type="button"
                     class="toolbar-icon-btn"
@@ -293,6 +332,38 @@
     .toolbar-icon-btn:disabled {
         opacity: 0.4;
     }
+    .problems-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        height: 2rem;
+        min-width: 2rem;
+        justify-content: center;
+        padding: 0 0.3rem;
+        border-radius: var(--radius-container);
+        color: var(--color-surface-600-400);
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    .problems-btn:hover,
+    .problems-btn[aria-pressed="true"] {
+        background-color: var(--color-surface-200-800);
+    }
+    .problems-count {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.2rem;
+        font-variant-numeric: tabular-nums;
+    }
+    .problems-error {
+        color: var(--color-error-600-400);
+    }
+    .problems-warning {
+        color: var(--color-warning-700-300);
+    }
+    .problems-hint {
+        color: var(--color-primary-600-400);
+    }
     .toolbar-divider {
         width: 1px;
         height: 1.25rem;
@@ -320,6 +391,9 @@
         justify-content: center;
     }
     @media (max-width: 767px) {
+        .save-chip {
+            margin-left: 0.25rem;
+        }
         .save-chip-saved,
         .save-chip-saving,
         .save-chip-unsaved {

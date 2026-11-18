@@ -26,6 +26,9 @@
     import EditorTabs from "#components/EditorTabs.svelte";
     import CodeEditor from "#components/CodeEditor.svelte";
     import ReferencesPanel from "#components/ReferencesPanel.svelte";
+    import ProblemsPanel from "#components/ProblemsPanel.svelte";
+    import { collectProblems, countProblems, type Problem } from "#lib/problems.js";
+    import type { CodeAction } from "squiffy-compiler/language-service";
     import PreviewPanel from "#components/PreviewPanel.svelte";
     import MapPanel, { type TraceStep } from "#components/MapPanel.svelte";
     import { checkSectionName, linkTo, movedNodes, nodeAtLine, renamePositions, sectionKeys, withPosition, type Point, type StoryMapEdge, type StoryMapNode } from "#lib/story-map.js";
@@ -45,6 +48,13 @@
     let outline = $state<ReturnType<typeof OutlinePanel>>();
     // Shift+F12's results, shown under the editor
     let references = $state<{ name: string; locations: Location[] } | null>(null);
+    // Every problem in the story, for the Problems panel and the toolbar's count
+    let problems = $state.raw<Problem[]>([]);
+    let problemCounts = $derived(countProblems(problems));
+    let problemsOpen = $state(false);
+    let problemsPanel = $state<ReturnType<typeof ProblemsPanel>>();
+    // The text of each open file when the problems were found, as their fixes are for that text
+    let problemTexts = new Map<string, string>();
     let assetsOpen = $state(false);
     let aboutOpen = $state(false);
     // Changes whenever an asset is added, changed or deleted, so the preview gets it
@@ -115,7 +125,12 @@
         // before the editor sees them, since Ctrl/Cmd+Enter would otherwise add a line.
         function handleKeydown(e: KeyboardEvent) {
             if (!(e.metaKey || e.ctrlKey)) return;
-            if (e.shiftKey && e.key.toLowerCase() === "o") {
+            if (e.shiftKey && e.key.toLowerCase() === "m") {
+                // Instead of CodeMirror's own panel, which only lists the open file's problems
+                e.preventDefault();
+                e.stopPropagation();
+                void toggleProblems();
+            } else if (e.shiftKey && e.key.toLowerCase() === "o") {
                 e.preventDefault();
                 // At once when the outline's showing, so the next keys go to the search box; on a
                 // phone, once the outline has replaced the editor
@@ -389,6 +404,68 @@
     function handleCursor(path: string, offset: number) {
         const view = views.get(path);
         if (view && path === p?.activePath) cursorLine = view.state.doc.lineAt(offset).number - 1;
+    }
+
+    // ---- Problems ----
+
+    // Find the story's problems again as it changes, once typing pauses
+    let problemsRequest = 0;
+    $effect(() => {
+        void p?.openFiles.map(f => f.text);
+        void filesVersion;
+        void p?.mainFile;
+        if (!client) return;
+        const timer = setTimeout(() => void refreshProblems(), 500);
+        return () => clearTimeout(timer);
+    });
+
+    async function refreshProblems() {
+        const c = client;
+        const current = p;
+        if (!c || !current) return;
+        const request = ++problemsRequest;
+        const texts = new Map(current.openFiles.map(f => [f.path, f.text]));
+        await syncOpenFiles();
+        const found = await c.call("getProblems");
+        if (request !== problemsRequest) return;
+        problemTexts = texts;
+        problems = collectProblems(found, current.mainFile);
+    }
+
+    async function toggleProblems() {
+        if (problemsOpen) {
+            problemsOpen = false;
+            activeView()?.focus();
+            return;
+        }
+        problemsOpen = true;
+        narrowPane = "editor";
+        await tick();
+        problemsPanel?.focus();
+    }
+
+    function goToProblem(problem: Problem) {
+        const d = problem.diagnostic;
+        // Selecting the whole range of a problem that spans sections would scroll away from it
+        const end = d.range.end.line === d.range.start.line ? d.range.end : d.range.start;
+        void goToLocation({ file: d.file, range: { start: d.range.start, end } });
+    }
+
+    // Applies a quick fix, if the files it changes are still as they were when it was made
+    async function applyFix(fix: CodeAction) {
+        const current = p;
+        if (!current) return;
+        const stale = Object.keys(fix.edit).some(file => {
+            const open = current.fileAt(file);
+            return open && open.text !== problemTexts.get(file);
+        });
+        if (stale) {
+            showToast("The story changed since that problem was found. Try again.", "info");
+            void refreshProblems();
+            return;
+        }
+        await applyEdits(fix.edit);
+        void refreshProblems();
     }
 
     // ---- The story map ----
@@ -911,6 +988,9 @@
             outlineOpen={narrowPane === "outline"}
             ontoggleoutline={() => { narrowPane = narrowPane === "outline" ? "editor" : "outline"; }}
             mapOpen={mapOpen && (!isNarrow.current || narrowPane === "map")}
+            {problemCounts}
+            {problemsOpen}
+            ontoggleproblems={() => void toggleProblems()}
             ontogglemap={toggleMap}
             onrun={fromCursor => runPreview(fromCursor)}
             onassets={() => { assetsOpen = true; }}
@@ -977,6 +1057,16 @@
                 {:else}
                     <p class="flex-1 p-6 text-sm text-surface-600-400">Open a file from the list on the left.</p>
                 {/each}
+                {#if problemsOpen}
+                    <ProblemsPanel
+                        bind:this={problemsPanel}
+                        {problems}
+                        counts={problemCounts}
+                        onselect={goToProblem}
+                        onfix={fix => void applyFix(fix)}
+                        onclose={() => { problemsOpen = false; activeView()?.focus(); }}
+                    />
+                {/if}
                 {#if references}
                     <ReferencesPanel
                         name={references.name}

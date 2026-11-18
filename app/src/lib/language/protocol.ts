@@ -1,6 +1,7 @@
 // What the app and the language service worker call on each other (see rpc.ts).
 import type { LanguageService, Location } from "squiffy-compiler/language-service";
 import type { V5ConversionResult } from "squiffy-compiler";
+import type { FileProblems } from "../problems.js";
 
 // The language service's queries, as the worker exposes them
 export type ServiceQueries = Omit<LanguageService, "updateFile" | "fileChanged" | "setMainFile" | "getAnalysis">;
@@ -31,6 +32,9 @@ export interface WorkerApi extends ServiceQueries {
     // with a squiffy.json, the rest of the folder's. Complete only if the story has no errors, as
     // the analysis stops at the first.
     getStoryFiles(): Promise<{ files: string[]; complete: boolean }>;
+    // Every problem in the story, in each file that has any, with the code actions that fix them:
+    // for the Problems panel
+    getProblems(): Promise<FileProblems[]>;
     // Where a section, or a passage in it, is defined: for following the preview
     findSection(section: string, passage?: string): Promise<Location | undefined>;
     // Starts (or restarts) the service for a project
