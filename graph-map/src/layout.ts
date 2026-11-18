@@ -37,6 +37,9 @@ export interface LayeredLayoutOptions<N extends MapNode, E extends MapEdge> {
     // fold into columns side by side, like a newspaper's, so the whole map fits the screen
     // better. 0 never folds.
     aspect?: number;
+    // When the graph's laid out afresh, how many times to sweep up and down the rows reordering
+    // each by where its neighbours are, keeping the order where fewest edges cross (default 0)
+    sweeps?: number;
 }
 
 // A row of the map: the nodes of one rank in one group
@@ -53,6 +56,7 @@ export function layeredLayout<N extends MapNode, E extends MapEdge>(options: Lay
     const rowGap = options.rowGap ?? 100;
     const columnGap = options.columnGap ?? 32;
     const aspect = options.aspect ?? 1.6;
+    const sweeps = options.sweeps ?? 0;
     const parentOf = (node: N) => options.parent?.(node);
     const groupOf = (node: N) => options.group?.(node) ?? 0;
     const satelliteGap = 18;
@@ -318,36 +322,72 @@ export function layeredLayout<N extends MapNode, E extends MapEdge>(options: Lay
                 // ordered by where the nodes linking to it are (the barycentre heuristic), to cut
                 // down crossings: as an offset from their column's centre, so a row at the top of
                 // a column follows the order of the row at the bottom of the column before.
-                const incoming = new Map<string, string[]>();
+                const neighbours = new Map<string, string[]>();
                 for (const edge of graph.edges) {
                     const from = satelliteRoot.get(edge.from) ?? edge.from;
                     const to = satelliteRoot.get(edge.to) ?? edge.to;
                     if (from == to) continue;
-                    let list = incoming.get(to);
-                    if (!list) incoming.set(to, list = []);
-                    list.push(from);
+                    (neighbours.get(to) ?? neighbours.set(to, []).get(to)!).push(from);
+                    (neighbours.get(from) ?? neighbours.set(from, []).get(from)!).push(to);
                 }
-                for (const rows of groupRows.values()) {
-                    for (const row of rows) {
-                        const order = new Map(row.nodes.map((n, i) => [n.id, i]));
-                        const barycentre = (node: N) => {
-                            const xs: number[] = [];
-                            for (const id of incoming.get(node.id) ?? []) {
-                                const p = placed.get(id), from = rowOf.get(id);
-                                if (p && from) xs.push(p.x - centreOf.get(from)!);
+                const rowIndex = new Map<Row<N>, number>();
+                for (const rows of groupRows.values()) rows.forEach((r, i) => rowIndex.set(r, i));
+                // Orders a row by where its nodes' neighbours are in the rows above it (or below,
+                // going up), and places it. Nodes with no neighbours there keep their place.
+                const placeRow = (row: Row<N>, down: boolean) => {
+                    const here = rowIndex.get(row)!;
+                    const centre = centreOf.get(row)!;
+                    const before = new Map(row.nodes.map((n, i) => [n.id, i]));
+                    const barycentre = (node: N) => {
+                        let sum = 0, count = 0;
+                        for (const id of neighbours.get(node.id) ?? []) {
+                            const p = placed.get(id), from = rowOf.get(id);
+                            if (!p || !from || from.group != row.group) continue;
+                            const i = rowIndex.get(from)!;
+                            if (down ? i < here : i > here) {
+                                sum += p.x - centreOf.get(from)!;
+                                count++;
                             }
-                            return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : undefined;
-                        };
-                        const keyed = row.nodes.map(n => ({ n, key: barycentre(n) }));
-                        // Nodes with nothing above them keep their place in the order they're given
-                        keyed.sort((a, b) => (a.key ?? Infinity) - (b.key ?? Infinity) || order.get(a.n.id)! - order.get(b.n.id)!);
-                        let x = centreOf.get(row)! - row.width / 2;
-                        for (const { n } of keyed) {
-                            const w = span(n);
-                            placed.set(n.id, { x: x + w / 2, y: rowY.get(row)! });
-                            x += w + columnGap;
+                        }
+                        return count ? sum / count : undefined;
+                    };
+                    const keyed = row.nodes.map(n => {
+                        const p = placed.get(n.id);
+                        return { n, key: barycentre(n) ?? (p ? p.x - centre : undefined) };
+                    });
+                    keyed.sort((a, b) => (a.key ?? Infinity) - (b.key ?? Infinity) || before.get(a.n.id)! - before.get(b.n.id)!);
+                    row.nodes = keyed.map(k => k.n);
+                    let x = centre - row.width / 2;
+                    for (const n of row.nodes) {
+                        const w = span(n);
+                        placed.set(n.id, { x: x + w / 2, y: rowY.get(row)! });
+                        x += w + columnGap;
+                    }
+                };
+                const allRows = [...groupRows.values()];
+                for (const rows of allRows) for (const row of rows) placeRow(row, true);
+                // Then sweeps up and down the rows, keeping the order with the fewest crossings.
+                // Counting them is slow on big, tangled maps, so it stops once a sweep up and a
+                // sweep down in a row bring no improvement.
+                if (sweeps > 0) {
+                    const ends = graph.edges
+                        .map(e => [satelliteRoot.get(e.from) ?? e.from, satelliteRoot.get(e.to) ?? e.to])
+                        .filter(([a, b]) => a != b);
+                    let best = new Map(placed), bestCount = countCrossings(ends, placed);
+                    let stale = 0;
+                    for (let s = 0; s < sweeps && bestCount > 0 && stale < 2; s++) {
+                        const down = s % 2 == 1;
+                        for (const rows of allRows) for (const row of down ? rows : [...rows].reverse()) placeRow(row, down);
+                        const count = countCrossings(ends, placed);
+                        if (count < bestCount) {
+                            best = new Map(placed);
+                            bestCount = count;
+                            stale = 0;
+                        } else {
+                            stale++;
                         }
                     }
+                    for (const [k, v] of best) placed.set(k, v);
                 }
             } else {
                 // Add new nodes next to something they're linked to, in their own column if
@@ -474,4 +514,29 @@ export function layeredLayout<N extends MapNode, E extends MapEdge>(options: Lay
             ];
         },
     };
+}
+
+// How many pairs of straight lines between nodes cross, e.g. to compare orderings of rows
+export function countCrossings(ends: string[][], at: ReadonlyMap<string, Point>): number {
+    const segs: number[][] = [];
+    for (const [a, b] of ends) {
+        const p = at.get(a), q = at.get(b);
+        if (p && q) segs.push([Math.min(p.x, q.x), Math.max(p.x, q.x), Math.min(p.y, q.y), Math.max(p.y, q.y), p.x, p.y, q.x, q.y]);
+    }
+    // Sorted by top, so only lines that overlap vertically are compared
+    segs.sort((s, t) => s[2] - t[2]);
+    let count = 0;
+    for (let i = 0; i < segs.length; i++) {
+        const s = segs[i];
+        for (let j = i + 1; j < segs.length && segs[j][2] < s[3]; j++) {
+            const t = segs[j];
+            if (t[0] > s[1] || t[1] < s[0]) continue;
+            const [, , , , x1, y1, x2, y2] = s, [, , , , x3, y3, x4, y4] = t;
+            const d = (x2 - x1) * (y4 - y3) - (y2 - y1) * (x4 - x3);
+            if (d == 0) continue;
+            const u = ((x3 - x1) * (y4 - y3) - (y3 - y1) * (x4 - x3)) / d, v = ((x3 - x1) * (y2 - y1) - (y3 - y1) * (x2 - x1)) / d;
+            if (u > 0.001 && u < 0.999 && v > 0.001 && v < 0.999) count++;
+        }
+    }
+    return count;
 }
