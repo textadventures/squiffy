@@ -9,6 +9,6 @@ npm run dev
 
 - `vite.config.ts` adds the plugin.
 - `src/main.ts` imports the story with `import { story, title } from "./story/game.squiffy"` and runs it with `squiffy-runtime`. While `npm run dev` is running, edits to any `.squiffy` file update the story in place.
-- `src/story/game.squiffy` pulls in the other files in `src/story/rooms` with `@import`.
+- `src/story/squiffy.json` makes the folder one story, with `game.squiffy` as its main file, so the files in `src/story/rooms` are part of it too. Adding or removing a `.squiffy` file there while `npm run dev` is running rebuilds the story.
 
 `npm run build` writes a static site to `dist`.

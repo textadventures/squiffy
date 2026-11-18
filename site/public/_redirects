@@ -56,6 +56,11 @@
 /scratchpad              https://app.squiffystory.com/                              301
 /scratchpad/*            https://app.squiffystory.com/                              301
 
+# The old list of examples. Its short examples are now in the docs and the Cookbook.
+/examples                /featured-examples/                                        301
+/examples/               /featured-examples/                                        301
+/examples/index.html     /featured-examples/                                        301
+
 # Pages of these docs that have moved.
 /whats-new-7             /whats-new/                                                301
 /whats-new-7/            /whats-new/                                                301

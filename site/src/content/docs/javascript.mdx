@@ -32,11 +32,11 @@ Your JavaScript can use these functions:
 | `squiffy.story.seen("name")` | Returns `true` if the player has seen a section or passage |
 | `squiffy.story.visits("name")` | Returns the number of times the player has visited a section or passage, or 0 |
 | `squiffy.ui.write("text")` | Write some text, which can include Markdown and `{{...}}` |
-| `squiffy.ui.transition(fn)` | Run a transition effect, such as fading the screen to black. `fn` returns a Promise that resolves when the effect has finished, and links can't be clicked until then. See the [transitions example](https://github.com/textadventures/squiffy/tree/main/examples/transitions) |
+| `squiffy.ui.transition(fn)` | Run a transition effect, such as fading the screen to black. `fn` returns a Promise that resolves when the effect has finished, and links can't be clicked until then. See [Transitions](#transitions) |
 | `squiffy.ui.scrollToEnd()` | Scroll to the end of the story |
 | `squiffy.element` | The HTML element that contains the story |
 | `squiffy.registerHelper(name, fn)` | Add a helper. See [Creating custom helpers](#creating-custom-helpers) |
-| `squiffy.registerAnimation(name, fn)` | Add an animation for `{{#animate}}`. See the [animate example](https://github.com/textadventures/squiffy/tree/main/examples/animate) |
+| `squiffy.registerAnimation(name, fn)` | Add an animation for `{{#animate}}`. See [Custom animations](#custom-animations) |
 
 `get` and `set` are also available on their own, so `get("score")` is the same as `squiffy.get("score")`.
 
@@ -127,11 +127,87 @@ Inside a helper you can use `squiffy.get` and `squiffy.set` to read and change a
 [[Visit the tutor again]](tutor)
 ```
 
-See the [text processor example](https://github.com/textadventures/squiffy/tree/main/examples/textprocessor) for both of these helpers.
-
 ## Custom animations
 
-`squiffy.registerAnimation` adds an effect for [`{{#animate}}`](/dynamic-text/#animation), registered in a `@ui` block in the same way. Squiffy includes [Anime.js](https://animejs.com/) for this. See the [animate example](https://github.com/textadventures/squiffy/tree/main/examples/animate).
+`squiffy.registerAnimation` adds an effect for [`{{#animate}}`](/dynamic-text/#animation), registered in a `@ui` block in the same way. Squiffy includes [Anime.js](https://animejs.com/) for this, as `squiffy.import.animejs`.
+
+The function you give it is called with:
+
+- `el`: the HTML element with the text to animate
+- `params`: the named arguments from `{{#animate}}`, such as `interval=500`
+- `onComplete`: a function to call when the animation has finished
+- `loop`: `true` if the `{{#animate}}` has `loop=true`
+
+This animation makes each letter spin and drop into place:
+
+```squiffy
+@ui
+    squiffy.registerAnimation("spin", (el, params, onComplete, loop) => {
+        const { animate, stagger, text } = squiffy.import.animejs;
+        const { chars } = text.split(el, { words: false, chars: true });
+
+        animate(chars, {
+            y: [
+                { to: "-2.75rem", ease: "outExpo", duration: 600 },
+                { to: 0, ease: "outBounce", duration: 800, delay: 100 }
+            ],
+            rotate: { from: "-1turn", delay: 0 },
+            delay: stagger(params.interval || 50),
+            ease: "inOutCirc",
+            loopDelay: 1000,
+            loop: loop,
+            onComplete: onComplete
+        });
+    });
+---
+
+{{#animate "spin"}}Welcome to the story!{{/animate}}
+```
+
+## Transitions
+
+`squiffy.ui.transition` runs an effect, such as fading the screen to black, and stops the player clicking links until it has finished. Give it a function that starts the effect and returns a Promise, which resolves when the effect is done.
+
+This section fades the screen to black, goes to another section while it's dark, and then fades back in:
+
+```squiffy
+You are standing in a room. You can see a [hammer].
+
+[hammer]:
+It's nice and weighty. Perhaps you want to [[hit yourself in the face with it]](hit)?
+
+[[hit]]:
+    squiffy.ui.transition(() => new Promise(resolve => {
+        const blackout = document.createElement("div");
+        Object.assign(blackout.style, {
+            position: "fixed", inset: "0", background: "black",
+            opacity: "0", transition: "opacity 3s ease-in"
+        });
+        squiffy.element.appendChild(blackout);
+
+        // Fade to black
+        requestAnimationFrame(() => blackout.style.opacity = "1");
+
+        setTimeout(() => {
+            squiffy.story.go("wake up");
+
+            // Fade back in, then tidy up
+            blackout.style.opacity = "0";
+            blackout.addEventListener("transitionend", () => {
+                blackout.remove();
+                resolve();
+            }, { once: true });
+        }, 4000);
+    }));
+
+Bang.
+
+[[wake up]]:
+@clear
+Slowly your eyes open.
+
+That was a rather stupid thing to do.
+```
 
 ## Embedding a story in your own page
 

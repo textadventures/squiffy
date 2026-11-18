@@ -64,32 +64,43 @@ test("Blank game should compile", async () => {
     expect(result.output.story.sections._default.text).toBe("");
 });
 
+// Story files to compile, relative to the folder they're in. The fixtures each show a feature,
+// with Squiffy 6's rules for setters (no squiffy.json). The examples are the complete stories on
+// the docs site, which have a squiffy.json, so they use Squiffy 7's.
+const fixturesDir = "test/fixtures";
+const examplesDir = "../examples";
+
 const examples = [
-    "animate/animate.squiffy",
-    "attributes/attributes.squiffy",
-    "clearscreen/clearscreen.squiffy",
-    "continue/continue.squiffy",
-    "gameshow/gameshow.squiffy",
-    "helloworld/helloworld.squiffy",
-    "import/test.squiffy",
-    "input/input.squiffy",
-    "last/last.squiffy",
-    "link-attributes/link-attributes.squiffy",
-    "live/live.squiffy",
-    "master/master.squiffy",
-    "replace/replace.squiffy",
-    "rotate/rotate.squiffy",
-    "sectiontrack/sectiontrack.squiffy",
-    "start/start.squiffy",
-    "test/example.squiffy",
-    "textprocessor/textprocessor.squiffy",
-    "transitions/transitions.squiffy",
-    "turncount/turncount.squiffy",
+    ...[
+        "animate/animate.squiffy",
+        "attributes/attributes.squiffy",
+        "clearscreen/clearscreen.squiffy",
+        "continue/continue.squiffy",
+        "helloworld/helloworld.squiffy",
+        "import/test.squiffy",
+        "input/input.squiffy",
+        "last/last.squiffy",
+        "link-attributes/link-attributes.squiffy",
+        "live/live.squiffy",
+        "master/master.squiffy",
+        "replace/replace.squiffy",
+        "rotate/rotate.squiffy",
+        "sectiontrack/sectiontrack.squiffy",
+        "start/start.squiffy",
+        "test/example.squiffy",
+        "textprocessor/textprocessor.squiffy",
+        "transitions/transitions.squiffy",
+        "turncount/turncount.squiffy",
+    ].map(file => ({ dir: fixturesDir, file, expressions: false })),
+    ...[
+        "coffeeshop/coffeeshop.squiffy",
+        "gameshow/gameshow.squiffy",
+    ].map(file => ({ dir: examplesDir, file, expressions: true })),
 ];
 
-for (const example of examples) {
+for (const { dir, file: example, expressions } of examples) {
     test(example, async () => {
-        const script = await fs.readFile(`../examples/${example}`, "utf8");
+        const script = await fs.readFile(`${dir}/${example}`, "utf8");
         const filename = path.basename(example);
         const warnings: string[] = [];
 
@@ -100,7 +111,8 @@ for (const example of examples) {
                 console.warn(message);
                 warnings.push(message);
             },
-            externalFiles: externalFiles(`../examples/${example}`)
+            externalFiles: externalFiles(`${dir}/${example}`),
+            expressions,
         });
 
         assertSuccess(result);
@@ -116,7 +128,7 @@ const warningExamples = [
 
 for (const example of warningExamples) {
     test(example, async () => {
-        const script = await fs.readFile(`../examples/${example}`, "utf8");
+        const script = await fs.readFile(`${fixturesDir}/${example}`, "utf8");
         const filename = path.basename(example);
 
         const warnings: string[] = [];

@@ -201,6 +201,95 @@ story.js = [
 ];"
 `;
 
+exports[`coffeeshop/coffeeshop.squiffy 1`] = `
+"export const story = {};
+story.id = "00000000-0000-0000-0000-000000000000";
+story.expressions = true;
+story.start = "intro";
+story.sections = {
+    "intro": {
+        "text": "The bell above the door jingles as you step inside The Daily Grind for your first day of work.\\n\\nIt's a small independent coffee shop—mismatched furniture, local art on the walls, the smell of fresh espresso hanging in the air. The kind of place where everyone seems to know everyone.\\n\\nBehind the counter, your new boss Carla gives you a wave. \\"You must be the new hire! Welcome aboard. What's your name?\\"\\n\\n<input type=\\"text\\" data-attribute=\\"player_name\\" placeholder=\\"Enter your name...\\" required minlength=\\"2\\" maxlength=\\"30\\">\\n\\n{{section \\"Begin your first shift\\"}}\\n"
+    },
+    "Begin your first shift": {
+        "clear": true,
+        "text": "# Day One — Morning\\n\\nCarla shows you the basics: the espresso machine, the register, where the oat milk is hiding. Within an hour, she's retreated to the back office, leaving you alone behind the counter.\\n\\n\\"You'll be fine,\\" she calls over her shoulder. \\"The regulars are friendly. Mostly.\\"\\n\\nThe morning light streams through the front windows. Two customers are already here.\\n\\nIn the corner booth, a woman in her late twenties hunches over a laptop, occasionally sighing dramatically. An older man sits by the window, staring at his empty cup like it holds the secrets of the universe.\\n\\nWho do you approach first?\\n\\n{{section \\"The woman with the laptop\\"}}\\n\\n{{section \\"The older man by the window\\"}}\\n\\n{{section \\"Wait for someone to come to you\\"}}\\n",
+        "attributes": [
+            "maya = 0",
+            "ellis = 0",
+            "sam = 0"
+        ]
+    },
+    "The woman with the laptop": {
+        "text": "You approach the corner booth. The woman looks up, startled, then breaks into a sheepish grin.\\n\\n\\"Sorry, I didn't even notice you come over. I'm Maya.\\" She gestures at her laptop screen, which appears to be mostly blank. \\"Writer. Allegedly.\\"\\n\\n\\"I'm {{player_name}}. Can I get you anything?\\"\\n\\n\\"Oat milk latte, extra shot. And maybe the ability to finish a single paragraph.\\" She laughs, but there's an edge to it. \\"Sorry. First day, right? I promise I'm not always this dramatic.\\"\\n\\n\\"Only mostly dramatic?\\" you ask.\\n\\nShe grins. \\"Exactly. You're going to fit in fine here.\\"\\n\\n{{section \\"morning continues\\" text=\\"Continue morning\\"}}\\n",
+        "attributes": [
+            "maya+=1"
+        ]
+    },
+    "The older man by the window": {
+        "text": "You approach the window table. The man looks up—early seventies, neatly dressed, with the kind of face that suggests he's forgotten how to smile but remembers that he used to.\\n\\n\\"Morning. I'm {{player_name}}, I just started—\\"\\n\\n\\"Ellis.\\" He cuts you off, not unkindly. \\"Coffee. Black. No room.\\"\\n\\nYou nod and turn to go, but he speaks again, quieter.\\n\\n\\"The last one—the girl who worked mornings—she used to say hello every day. Every single day.\\" He pauses. \\"It was nice.\\"\\n\\nYou're not sure what to say to that.\\n\\n{{section \\"morning continues\\" text=\\"Continue morning\\"}}\\n",
+        "attributes": [
+            "ellis+=1"
+        ]
+    },
+    "Wait for someone to come to you": {
+        "text": "You busy yourself wiping down the already-clean counter. After a few minutes, the older man by the window raises his empty cup, catching your eye.\\n\\nYou head over. He's early seventies, neatly dressed.\\n\\n\\"Coffee. Black. No room.\\" He pauses, then adds, almost grudgingly, \\"Please.\\"\\n\\n\\"Coming right up. I'm {{player_name}}, by the way. First day.\\"\\n\\n\\"Ellis.\\" He nods once, then turns back to the window.\\n\\n{{section \\"morning continues\\" text=\\"Continue morning\\"}}\\n"
+    },
+    "morning continues": {
+        "text": "The morning settles into a rhythm. You make drinks, you wipe tables, you learn that the espresso machine makes a concerning noise that Carla insists is \\"normal.\\"\\n\\n{{#if maya > 0}}Maya catches your eye as she's leaving, laptop tucked under her arm. \\"See you tomorrow, {{player_name}}. Maybe I'll have actually written something by then.\\" She doesn't sound convinced.{{/if}}\\n\\n{{#if ellis > 0}}Ellis leaves exact change on the table, plus a single dollar tip. He nods at you on his way out—the smallest possible acknowledgment. It feels like a victory.{{/if}}\\n\\nBy afternoon, the shop is quiet. Carla sends you home early. \\"Rest up. Evening shifts are different.\\"\\n\\n{{section \\"_continue1\\" text=\\"That evening...\\"}}"
+    },
+    "_continue1": {
+        "clear": true,
+        "text": "# Day One — Evening\\n\\nThe Daily Grind transforms at night. The overhead lights dim, fairy lights come on, and the coffee crowd gives way to something else.\\n\\nYou spot a new face: early twenties, headphones around their neck, dark circles under their eyes. They're sketching something in a worn notebook, barely looking at the page.\\n\\n{{section \\"Bring them a menu\\"}}\\n\\n{{section \\"Wait for them to come up\\"}}\\n"
+    },
+    "Bring them a menu": {
+        "text": "You grab a menu and head over. They look up, startled—then pull out an earbud.\\n\\n\\"Oh. Hey. Sorry, I'm—\\" They glance around like they're not quite sure how they got here. \\"Can I just get whatever has the most caffeine? Like, medically inadvisable amounts.\\"\\n\\n\\"Long day?\\"\\n\\n\\"Long year.\\" They almost smile. \\"I'm Sam.\\"\\n\\n\\"{{player_name}}. First day.\\"\\n\\n\\"Welcome to the chaos.\\" Sam gestures vaguely at the empty shop. \\"As you can see, it's very chaotic here.\\"\\n\\nYou laugh. Their sketch catches your eye—it's the coffee shop itself, rendered in confident lines.\\n\\n\\"That's really good.\\"\\n\\nSam immediately flips the notebook closed. \\"It's nothing. Just... keeps my hands busy.\\"\\n\\n{{section \\"End of day one\\"}}\\n",
+        "attributes": [
+            "sam+=1"
+        ]
+    },
+    "Wait for them to come up": {
+        "text": "Eventually they shuffle to the counter, headphones still half-on.\\n\\n\\"Most caffeinated thing you have. Please.\\"\\n\\n\\"Coming up.\\" You start making a red-eye. \\"I'm {{player_name}}. First day.\\"\\n\\n\\"Sam.\\" They glance around the shop. \\"You'll like it here. It's quiet. Good for... thinking. Or not thinking.\\"\\n\\nThey pay and retreat to their table, pulling out a worn sketchbook. You catch a glimpse of the drawing—the coffee shop itself, rendered in confident lines.\\n\\n{{section \\"End of day one\\"}}\\n"
+    },
+    "End of day one": {
+        "text": "The evening passes slowly. Sam stays until closing, nursing that single drink, headphones on, filling pages with sketches they won't let you see.\\n\\nAs you're locking up, Carla pokes her head out from the back. \\"Good first day?\\"\\n\\n\\"Yeah. The regulars are...\\"\\n\\n\\"Interesting?\\"\\n\\n\\"I was going to say nice.\\"\\n\\nCarla smiles. \\"Give it time. They're both.\\"\\n\\n{{section \\"_continue2\\" text=\\"Day Two\\"}}"
+    },
+    "_continue2": {
+        "clear": true,
+        "text": "# Day Two — Morning\\n\\nYou arrive to find the shop already occupied.\\n\\nEllis is in his usual spot by the window. {{#if (seen \\"The older man by the window\\")}}He nods at you when you come in—practically a standing ovation by his standards.{{else}}He doesn't look up.{{/if}}\\n\\nMaya bursts in a few minutes later, laptop bag swinging, looking either excited or panicked—it's hard to tell.\\n\\n{{#if maya > 0}}\\"{{player_name}}!\\" She makes a beeline for you. \\"Okay, so, I actually wrote something last night. Like, real words. In an order that makes sense. I think you might be good luck.\\"{{else}}\\"The usual,\\" she says, already heading for her corner booth. \\"Sorry, I'm in the zone. Maybe. Hopefully.\\"{{/if}}\\n\\n{{passage \\"Talk to Maya\\"}}\\n\\n{{passage \\"Talk to Ellis\\"}}\\n",
+        "passageCount": 2,
+        "passages": {
+            "@last": {
+                "text": "The morning rush comes and goes. For a moment, the shop is quiet, sunlight streaming through the windows.\\n\\n{{section \\"A quiet moment\\"}}\\n"
+            },
+            "Talk to Maya": {
+                "text": "You bring Maya her oat milk latte. She's staring at her screen with intense focus.\\n\\n\\"How's the writing?\\"\\n\\n{{#if (seen \\"The woman with the laptop\\")}}{{inc \\"maya\\"}}She looks up, and her expression softens. \\"Honestly? Terrifying. But yesterday, when you asked about it... I don't know. It made me feel like someone cared. Even if it was just small talk.\\"\\n\\nShe laughs. \\"That sounds pathetic, doesn't it?\\"\\n\\n\\"It sounds human.\\"\\n\\n\\"Same thing, sometimes.\\" She smiles—a real one. \\"Thanks, {{player_name}}. For asking.\\"\\n{{else}}She looks up, distracted. \\"Hmm? Oh, fine. It's fine. Everything's fine.\\"\\n\\nShe immediately returns to the screen. You get the sense she's not really in the mood to talk.{{/if}}\\n"
+            },
+            "Talk to Ellis": {
+                "text": "You approach Ellis with the coffee pot. \\"Refill?\\"\\n\\n\\"Please.\\" He watches you pour, then speaks, almost reluctantly.\\n\\n{{#if (seen \\"The older man by the window\\")}}{{inc \\"ellis\\"}}\\n\\"My wife and I used to come here every morning. Forty-three years.\\" He stares at the coffee. \\"She'd have the hazelnut thing. Too sweet. I always told her it was too sweet.\\"\\n\\nHe's quiet for a long moment.\\n\\n\\"I'd give anything to buy her one more.\\"\\n\\nYou don't say anything. Sometimes there's nothing to say. But you stand there, and that seems to be enough.\\n\\n\\"Thank you,\\" Ellis says finally. \\"For listening.\\"\\n{{else}}\\n\\"Good coffee,\\" he says. That's all.\\n\\nYou sense there's more beneath the surface, but he's not ready to share it—not yet.{{/if}}\\n"
+            }
+        }
+    },
+    "A quiet moment": {
+        "text": "You're wiping down tables when the door opens. Sam shuffles in, looking exhausted, still wearing yesterday's clothes.\\n\\n{{#if sam > 0}}\\"{{player_name}}.\\" They manage a tired smile. \\"Please tell me you have coffee. And maybe a will to live. I'll take either.\\"{{else}}\\"Coffee. Strongest you've got.\\" They collapse into a chair.{{/if}}\\n\\n{{section \\"Check on Sam\\"}}\\n\\n{{section \\"Give them space\\"}}\\n"
+    },
+    "Check on Sam": {
+        "text": "You bring over their usual red-eye and slide into the seat across from them for a moment.\\n\\n\\"You okay?\\"\\n\\nSam blinks, like the question doesn't compute. {{#if (seen \\"Bring them a menu\\")}}{{inc \\"sam\\"}}\\"You asked me that yesterday too.\\"\\n\\n\\"You looked like you needed it yesterday too.\\"\\n\\nSomething in their expression shifts. They reach into their bag and pull out the sketchbook, flipping to a page.\\n\\nIt's a drawing of the coffee shop. But now there's a figure behind the counter—you, rendered in careful detail.\\n\\n\\"I don't usually show people,\\" Sam says quietly. \\"But you actually seem like you see people. You know?\\"\\n{{else}}They shrug. \\"Just tired. It's nothing.\\"\\n\\nBut they don't put their headphones back on, and you take that as a good sign.{{/if}}\\n\\n{{section \\"Closing time\\"}}\\n"
+    },
+    "Give them space": {
+        "text": "You leave the coffee and step away. Some people need space more than conversation.\\n\\nSam catches your eye as you walk away and nods once—a small acknowledgment. They understand.\\n\\n{{section \\"Closing time\\"}}\\n"
+    },
+    "Closing time": {
+        "clear": true,
+        "text": "# Day Two — Closing\\n\\nThe afternoon fades. The last customers trickle out. It's just you and the empty tables and the smell of coffee grounds.\\n\\nTwo days. That's all it's been.\\n\\nBut somehow, it feels like more.\\n\\n{{#if maya > 1}}You think about Maya, finding her words again. The way she lit up when someone actually asked.{{/if}}\\n\\n{{#if ellis > 1}}You think about Ellis, carrying his grief to the same table every morning, finally letting a little of it go.{{/if}}\\n\\n{{#if sam > 1}}You think about Sam, exhausted and guarded, choosing to share something they never show anyone.{{/if}}\\n\\nThe bell above the door jingles. Carla's back from her errands.\\n\\n\\"How was day two?\\"\\n\\n{{section \\"_continue3\\" text=\\"Reflect\\"}}"
+    },
+    "_continue3": {
+        "text": "{{#if maya > 1 and ellis > 1 and sam > 1}}\\n\\"I think I'm going to like it here,\\" you say.\\n\\nCarla smiles. \\"They like you too. I can tell. The regulars don't warm up to just anyone.\\"\\n\\nShe hands you an apron—your own, with your name embroidered on it.\\n\\n\\"Welcome to The Daily Grind, {{player_name}}. You're one of us now.\\"\\n\\n**THE END — The New Regular**\\n{{else}}\\n{{#if maya > 1 or ellis > 1 or sam > 1}}\\n\\"It was good. I think I'm getting the hang of it.\\"\\n\\nCarla nods. \\"You've got potential. Some of the regulars are starting to open up to you—that's not easy to earn.\\"\\n\\nShe pats you on the shoulder.\\n\\n\\"Same time tomorrow?\\"\\n\\n\\"Same time tomorrow.\\"\\n\\n**THE END — First Steps**\\n{{else}}\\n\\"It was... quiet.\\"\\n\\nCarla studies you for a moment. \\"The regulars here, they've got their walls up. Most of us do. But this place has a way of bringing them down—if you give it time.\\"\\n\\nShe locks the register and flips off the lights.\\n\\n\\"See you tomorrow?\\"\\n\\nYou nod. There's still more to learn about this place—and the people who call it home.\\n\\n**THE END — Room to Grow**\\n{{/if}}\\n{{/if}}\\n"
+    }
+};
+story.js = [
+];"
+`;
+
 exports[`continue/continue.squiffy 1`] = `
 "export const story = {};
 story.id = "00000000-0000-0000-0000-000000000000";
@@ -233,6 +322,7 @@ story.js = [
 exports[`gameshow/gameshow.squiffy 1`] = `
 "export const story = {};
 story.id = "00000000-0000-0000-0000-000000000000";
+story.expressions = true;
 story.start = "intro";
 story.sections = {
     "": {

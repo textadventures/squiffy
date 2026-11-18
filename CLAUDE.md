@@ -104,8 +104,8 @@ There's no release branch, so a docs fix for the current release that can't wait
 
 Test the CLI during development:
 ```bash
-cd examples/test
-npx @textadventures/squiffy-cli example.squiffy -s
+cd examples/coffeeshop
+npx @textadventures/squiffy-cli -s
 ```
 
 CLI options:
@@ -154,6 +154,7 @@ CLI options:
 - **graph-map**: Private workspace (`@textadventures/graph-map`) with the editor's story map component (#380): a Svelte map of a directed graph with a live force-directed layout (Barnes–Hut repulsion, springs, rows by rank), pan, zoom, drag-to-link and keyboard access. No Squiffy imports, like `project-fs`, so Quest Viva can use it too. The TypeScript core builds to `dist/`; `GraphMap.svelte` is shipped as source. See `graph-map/README.md`.
 - **types**: Type definitions for `.squiffy` imports, used by the Vite plugin
 - **vite-plugin**: Vite plugin that compiles `.squiffy` imports, so a story can be built into a web app. `examples/vite-app` is a private workspace that uses it.
+- **examples**: Not a package. The complete stories on the docs site's Examples page (`coffeeshop`, `gameshow`), which `site/scripts/build-examples.ts` builds as standalone games (every folder in `examples/` with a `squiffy.json`), plus `vite-app`. Short examples of single features belong in the docs as editable samples, or in the Cookbook (`site/src/cookbook/`). The compiler's snapshot tests compile both these stories and the feature stories in `compiler/test/fixtures/`, which have no `squiffy.json`, so they cover Squiffy 6's setter rules. The runtime tests use `compiler/test/fixtures/test/example.squiffy`.
 
 ### Key Concepts
 
