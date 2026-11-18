@@ -1,0 +1,120 @@
+---
+title: Converting a Twine story
+description: Converting a Twine story, written in Harlowe or SugarCube, to Squiffy
+---
+
+import {Aside} from "@astrojs/starlight/components";
+
+Squiffy can convert a [Twine](https://twinery.org/) story into a Squiffy story. It reads stories written in the two most popular story formats, **Harlowe** (Twine's default) and **SugarCube**, and converts their passages, links and macros to Squiffy's sections, links and helpers.
+
+If you're new to Squiffy, see [Coming from Twine](/coming-from-twine/) for how it compares to Twine.
+
+## Converting a story
+
+You can convert a story from either of the files Twine gives you:
+
+- **The published HTML file**, from **Build > Publish to File** in Twine, or an archive from **Library > Archive**. If you only have a game you've played online, this is the file to save.
+- **A Twee file** (`.twee` or `.tw`), from **Build > Export as Twee** in Twine 2.6 or later, or the file you build with [Tweego](https://www.motoslave.net/tweego/).
+
+Then either:
+
+- In the [editor](/editor/), choose **Open file** on the home page and pick the Twine file. The editor says what it is and asks before converting it. On the web, the converted story is kept in your browser. In the [desktop app](/desktop-app/), you choose a folder to put it in.
+- With the [command-line tool](/cli/#converting-from-twine), run:
+
+  ```bash
+  npx @textadventures/squiffy-cli mygame.html --convert-twine
+  ```
+
+  This puts the converted story in a new folder next to the file, called `mygame`. Use `--out` to choose another folder.
+
+## What you get
+
+The converted story is a folder with:
+
+- `story.squiffy`, the story itself. Each Twine passage becomes a section with the same name.
+- `squiffy.json`, the [project file](/multiple-files/). It also keeps where the passages were on Twine's story map, so the editor's [story map](/story-map/) is laid out the way you arranged it in Twine, stretched sideways a little to fit the map's wider boxes. If you never arranged the passages in Twine, or the Twee file doesn't say where they go, the map lays the story out itself. **Lay out again**, above the map, swaps Twine's arrangement for the map's own.
+- `story.css`, the story's stylesheet, if it has one, which `story.squiffy` imports.
+- `story.js`, the story's JavaScript, if it has some. It isn't part of the story yet: see [JavaScript](#javascript) below.
+- `twine-import.txt`, which lists everything that couldn't be converted exactly, passage by passage.
+
+Twine shows one passage at a time, so the story starts with a [master section](/basic-concepts/#master-sections-and-passages) that clears the screen before each section. Delete its `@clear` if you'd rather the story scrolled, as Squiffy stories usually do.
+
+Anything that couldn't be converted at all is kept in the story as a comment, so nothing's lost:
+
+```squiffy
+{{!-- Twine: (alert: "Watch out!") --}}
+```
+
+Search for `Twine:` to find them all. The editor's [story map](/story-map/) is a good way to get to know the converted story, and to spot links that go nowhere.
+
+<Aside>
+Play the story through after converting it. Twine and Squiffy work differently in places, so some things are converted to the nearest thing Squiffy has, rather than exactly: these are listed in `twine-import.txt` too.
+</Aside>
+
+## How Harlowe converts
+
+| Harlowe | Squiffy |
+|---|---|
+| `[[Go in->Cave]]`, `[[Cave<-Go in]]`, `[[Cave]]` | `[[Go in]](Cave)`, `[[Cave]]` |
+| `(set: $gold to 10)` at the start of a passage | `@set gold = 10` |
+| `(set: $gold to it + 5)` later on | `{{inc "gold" 5}}` |
+| `(set: $bag to it + (a: "key"))` | `{{append "bag" "key"}}` |
+| `$name`, `(print: $gold * 2)` | `{{name}}`, `{{= gold * 2}}` |
+| `(if: $gold > 5)[...](else-if: ...)[...](else:)[...]` | `{{#if gold > 5}}...{{else if ...}}...{{else}}...{{/if}}` |
+| `$a is 1 or 2`, `$bag contains "key"`, `visits` | `a = 1 or a = 2`, `(contains "bag" "key")`, `(visits "This passage")` |
+| `(display: "Map")` | `{{embed "Map"}}` |
+| `(go-to: "End")`, `(after: 2s)[(go-to: "End")]` | `{{goto "End"}}`, `{{goto "End" after=2000}}` |
+| `(link: "Buy")[(set: $gold to it - 5)(go-to: "Shop")]` | `[[Buy]](Shop, gold -= 5)` |
+| `(link: "Open")[It's empty.]`, `(link-reveal:)` | A [passage](/basic-concepts/#passages) link that [replaces](/dynamic-text/#replace) the link with the text |
+| Named hooks, `(replace: ?door)`, `(show: ?note)` | [`{{#label}}` and `{{#replace}}`](/dynamic-text/#replace) |
+| `(click: ?door)[...]`, `(click: "lamp")[...]` | A passage link on the hook or text |
+| `(click: ?page)[...]` | A **Continue** link |
+| `(either: "a", "b")`, `(random: 1, 6)` | `{{random (array "a" "b")}}`, `{{random (array 1 2 3 4 5 6)}}` |
+| `(cycling-link: bind $size, "S", "L")` | `{{rotate (array "S" "L") set="size"}}` |
+| `(input-box: bind $name)`, `(dropdown:)` | `<input data-attribute="name">`, `<select>` (see [User input](/player-input/)) |
+| `(set: $hero to (dm: "hp", 10))`, `$hero's hp` | `@set hero_hp = 10`, `{{hero_hp}}`: each value is an attribute of its own |
+| `(storylet:)` and `(link-storylet:)` | A link to each storylet whose condition is true |
+| `''bold''`, `//italic//`, `(text-colour: red)[...]` | Markdown and HTML |
+| Passages tagged `header`, `footer` and `startup` | The master section, an `{{embed}}` at the end of each section, and the start section |
+
+## How SugarCube converts
+
+| SugarCube | Squiffy |
+|---|---|
+| `[[Go in\|Cave]]`, `[[Go in->Cave]]`, `[[Cave]]` | `[[Go in]](Cave)`, `[[Cave]]` |
+| `[[Buy\|Shop][$gold -= 5]]` | `[[Buy]](Shop, gold -= 5)` |
+| `<<set $gold to 10>>` at the start of a passage | `@set gold = 10` |
+| `<<set $gold += 5>>`, `<<run $bag.push("key")>>` later on | `{{inc "gold" 5}}`, `{{append "bag" "key"}}` |
+| `$name`, `<<print $gold * 2>>` | `{{name}}`, `{{= gold * 2}}` |
+| `<<if $gold gt 5>>...<<elseif ...>>...<<else>>...<</if>>`, `<<switch>>` | `{{#if gold > 5}}...{{else if ...}}...{{else}}...{{/if}}` |
+| `visited("Cave")`, `turns()`, `$bag.includes("key")` | `(visits "Cave")`, `turns`, `(contains "bag" "key")` |
+| `<<include "Map">>` | `{{embed "Map"}}` |
+| `<<goto "End">>`, `<<timed 2s>><<goto "End">><</timed>>` | `{{goto "End"}}`, `{{goto "End" after=2000}}` |
+| `<<link "Buy" "Shop">><<set $gold -= 5>><</link>>` | `[[Buy]](Shop, gold -= 5)` |
+| `<<linkreplace "Open">>It's empty.<</linkreplace>>` | A passage link that replaces the link with the text |
+| `<span id="box">`, `<<replace "#box">>` | `{{#label "box"}}`, `{{#replace "box"}}` |
+| `either("a", "b")`, `random(1, 6)` | `(random (array "a" "b"))`, `(random (array 1 2 3 4 5 6))` |
+| `<<cycle "$size">>`, `<<textbox "$name">>`, `<<listbox>>` | `{{rotate ... set="size"}}`, `<input data-attribute="name">`, `<select>` |
+| `<<set $hero to { hp: 10 }>>`, `$hero.hp` | `@set hero_hp = 10`, `{{hero_hp}}`: each property is an attribute of its own |
+| Widgets: `<<say "Ann">>` | A section for each widget, which `{{embed}}`s it, with its arguments in `args_0`, `args_1` and so on |
+| `''bold''`, `//italic//`, `@@color:red;...@@` | Markdown and HTML |
+| `StoryInit`, `PassageHeader`, `PassageFooter` | The start section, the master section, an `{{embed}}` at the end of each section |
+
+## What doesn't convert
+
+These are left as comments, and listed in `twine-import.txt`:
+
+- **JavaScript.** Squiffy can't run code written for Harlowe or SugarCube, such as SugarCube's `<<script>>`, `setup` and `State`, or Harlowe's `(macro:)`.
+- **Things Squiffy doesn't have**: sound (`<<audio>>`, `(track:)`), loops (`<<for>>`, `(for:)`), save slots, the sidebar (`StoryCaption`, `StoryMenu`), and `<<back>>` and `<<return>>` (Squiffy has its own Back button).
+- **Datamaps, arrays and objects used as a whole**, rather than a value at a time, such as copying one object to another, or looking something up by a name that's in a variable.
+- **Harlowe's more unusual hooks and changers**, such as `(live:)` with no `(go-to:)` in it, `(enchant:)` on anything but how text looks, and `(append:)` on a hook in another passage.
+
+Changers and text styles that only change how something looks, such as `(link-style:)`, `(box:)` and transitions, are left out, and the text they changed is kept.
+
+### JavaScript
+
+A Twine story's JavaScript is written for its story format, so it won't work in Squiffy as it is. It's put in `story.js` so you have it, but the story doesn't use it. To use some of it, change it to use Squiffy's [JavaScript functions](/javascript/), and add `@ui story.js` at the top of `story.squiffy`.
+
+### Styles
+
+The story's stylesheet is in `story.css`. Rules for Twine's own elements, such as Harlowe's `tw-story` and `tw-link` or SugarCube's `#story` and `.passage`, won't match anything in Squiffy, so you may need to change them. See [Customising styles](/styling/) for Squiffy's.

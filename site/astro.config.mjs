@@ -71,6 +71,7 @@ export default defineConfig({
                     label: "Coming from…",
                     items: [
                         { label: "Twine", slug: "coming-from-twine" },
+                        { label: "Converting from Twine", slug: "converting-from-twine" },
                         { label: "Squiffy 6", slug: "coming-from-squiffy-6" },
                         { label: "Squiffy 5", slug: "coming-from-squiffy-5" },
                     ],
