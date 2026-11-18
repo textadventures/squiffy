@@ -39,7 +39,7 @@ export default defineConfig([
         },
     },
     includeIgnoreFile(gitignorePath, "Imported .gitignore patterns"),
-    globalIgnores(["**/.astro/**", "**/.svelte-kit/**", "app/build/**", "examples/**"]),
+    globalIgnores(["**/.astro/**", "**/.svelte-kit/**", "app/build/**", "examples/**", "compiler/test/fixtures/**"]),
     eslint.configs.recommended,
     tseslint.configs.recommended,
     {

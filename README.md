@@ -74,7 +74,7 @@ npm install  # run again to register local packages
 | `types`       | `@textadventures/squiffy-types`       | Type definitions for the Vite plugin                                                                    |
 | `vite-plugin` | `@textadventures/vite-plugin-squiffy` | Vite plugin for importing `.squiffy` files into a web app                                               |
 
-There is also an `examples` folder containing sample Squiffy scripts, and `examples/vite-app`, an example web app that uses the Vite plugin.
+The `examples` folder has the complete stories on the docs site's [Examples](https://squiffystory.com/featured-examples/) page, and `examples/vite-app`, an example web app that uses the Vite plugin.
 
 ### Testing
 

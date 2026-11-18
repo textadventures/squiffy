@@ -147,7 +147,7 @@ Checked.`;
 });
 
 test("Click a section link", async () => {
-    const script = await fs.readFile("../examples/test/example.squiffy", "utf-8");
+    const script = await fs.readFile("../compiler/test/fixtures/test/example.squiffy", "utf-8");
     const { squiffyApi, element } = await initScript(script);
     expect(element.innerHTML).toMatchSnapshot();
 
@@ -181,7 +181,7 @@ test("Click a section link", async () => {
 });
 
 test("Click a section link and go back", async () => {
-    const script = await fs.readFile("../examples/test/example.squiffy", "utf-8");
+    const script = await fs.readFile("../compiler/test/fixtures/test/example.squiffy", "utf-8");
     const { squiffyApi, element } = await initScript(script);
 
     const linkToPassage = findLink(element, "passage", "a link to a passage");
@@ -245,7 +245,7 @@ test("Going back is saved, so a saved game doesn't bring back what was undone", 
 });
 
 test("Click a passage link", async () => {
-    const script = await fs.readFile("../examples/test/example.squiffy", "utf-8");
+    const script = await fs.readFile("../compiler/test/fixtures/test/example.squiffy", "utf-8");
     const { squiffyApi, element } = await initScript(script);
     expect(element.innerHTML).toMatchSnapshot();
 
@@ -280,7 +280,7 @@ test("Click a passage link", async () => {
 });
 
 test("Click a passage link and go back", async () => {
-    const script = await fs.readFile("../examples/test/example.squiffy", "utf-8");
+    const script = await fs.readFile("../compiler/test/fixtures/test/example.squiffy", "utf-8");
     const { squiffyApi, element } = await initScript(script);
 
     const linkToPassage = findLink(element, "passage", "a link to a passage");

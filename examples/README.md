@@ -1,77 +1,24 @@
-# Squiffy Examples
+# Squiffy examples
 
-This directory contains example Squiffy stories demonstrating various features and capabilities.
+- **coffeeshop/**: *Coffee Shop Confessions*, a story about your first days working at a coffee shop. Text input, attributes, conditional text and several endings.
+- **gameshow/**: *The Wheel of Dubious Fortune*, a chaotic game show. Animations, live text, random events and scoring.
+- **vite-app/**: a web app that imports a story with [the Vite plugin](../vite-plugin). See its README.
 
-## Playing the Examples
+You can play the two stories, and change them, on the [Examples page](https://squiffystory.com/featured-examples/). For short examples of particular things, see the [Cookbook](https://squiffystory.com/cookbook/), and the editable samples throughout the docs.
 
-### Online (Recommended)
+## Running them locally
 
-The easiest way to play these examples is to visit the [Examples page on squiffystory.com](https://squiffystory.com/examples/).
-
-Each example is available in two formats:
-- **Interactive editor**: Edit the code and see live updates
-- **Standalone version**: Play the full game in a clean interface ([Play links](https://squiffystory.com/examples/))
-
-### Local Development
-
-To run examples locally, use the Squiffy CLI:
+From the project root, after `npm install` and `npm run build`:
 
 ```bash
-# Install the CLI (from the project root)
-npm run build
-
-# Run an example
 cd examples/coffeeshop
-npx @textadventures/squiffy-cli coffeeshop.squiffy -s
+npx @textadventures/squiffy-cli -s
 ```
 
-This will compile the example and start a local web server at http://localhost:8282
+This builds the story in the folder's `squiffy.json` and serves it at http://localhost:8282.
 
-## Featured Examples
+## Adding an example
 
-- **coffeeshop/** - A narrative story about working at "The Daily Grind" coffee shop
-  - Demonstrates: text input, variables, conditional text, relationship tracking, multiple endings
+A folder here with a `squiffy.json` is built by the docs site (`site/scripts/build-examples.ts`) into `/examples/<folder>/` as a standalone game. To show it on the Examples page, add it to `site/src/examples.ts` and `site/src/content/docs/featured-examples.mdx`, and add it to the list in `compiler/src/compiler.test.ts`.
 
-- **gameshow/** - "The Wheel of Dubious Fortune" interactive game show
-  - Demonstrates: animations, live updates, randomization, complex state tracking, scoring
-
-- **helloworld/** - A minimal Squiffy story to get started
-
-## Building Examples
-
-The examples are automatically packaged during the site build process. If you're working on the site:
-
-```bash
-cd site
-npm run build:examples  # Package all examples
-npm run build           # Full site build (includes examples)
-```
-
-Packaged examples are output to `site/public/examples/` as standalone HTML/JS/CSS files.
-
-### Configuration
-
-The `examples.json` file controls which examples are built and published:
-
-```json
-{
-  "examples": [
-    {
-      "path": "coffeeshop/coffeeshop.squiffy",
-      "description": "Full story: working at The Daily Grind coffee shop",
-      "featured": true
-    }
-  ]
-}
-```
-
-**Adding a new example:**
-1. Create your `.squiffy` file in a subdirectory (e.g., `myexample/myexample.squiffy`)
-2. Add an entry to `examples.json` with the path relative to the `examples/` directory
-3. Run `npm run build:examples` from the `site/` directory to build it
-
-**Why this approach?**
-- Excludes test/internal examples (like `warnings/`)
-- Handles multi-file examples correctly (like `import/test.squiffy`)
-- Allows adding metadata like descriptions and featured flags
-- Gives explicit control over what's published to the site
+Short examples of a single feature belong in the docs instead, as an editable sample.
