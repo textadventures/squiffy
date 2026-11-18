@@ -83,6 +83,8 @@ describe("preview", () => {
         await vi.waitFor(() => expect(messages.some(m => m.type == "navigated")).toBe(true));
         expect(messages).toEqual([
             { type: "attributeSet", name: "turns", value: 1 },
+            // Where the player was before (#56), which isn't internal either
+            { type: "attributeSet", name: "previous", value: "start" },
             { type: "attributeSet", name: "looked", value: true },
             { type: "canGoBackChanged", canGoBack: true },
             { type: "navigated", section: "start", passage: "look" },

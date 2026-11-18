@@ -294,6 +294,13 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         const oldCanGoBack = canGoBack();
         currentSection = story.sections[sectionName];
         if (!currentSection) return;
+        const sectionBefore = get("_section");
+        if (sectionBefore !== null) {
+            // Where the player was before this (#56): the section, or the passage in it shown last
+            set("previous", get("_passage") ?? sectionBefore);
+            set("previous_section", sectionBefore);
+        }
+        if (get("_passage") !== null) set("_passage", null);
         set("_section", sectionName);
         // The story-wide turn count starts at 0 (#377), in a new story or one saved before it existed.
         // It isn't a change the player made, so it isn't undone.
@@ -397,6 +404,9 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         if (!passage) {
             throw `No passage named ${passageName} in the current section or master section`;
         }
+        // The section or passage shown before this one (#56)
+        set("previous", get("_passage") ?? get("_section"));
+        set("_passage", passageName);
         state.setSeen(passageName);
 
         const passages: Passage[] = [];

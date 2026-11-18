@@ -400,6 +400,40 @@ Squiffy sets `turns` itself, so don't set it in your story: the editor underline
 
 This is different from [turn counting within a section](/basic-concepts/#running-a-passage-after-some-clicks), which counts passage clicks in the current section only, and starts again in each new section.
 
+### Where the player came from
+
+Squiffy keeps track of where the player was before they got to where they are now, in two attributes:
+
+- `previous_section` is the section the player was in before this one.
+- `previous` is the section or passage the player saw just before this one. In a section, that's the passage they clicked last in the section before, if they clicked one, or the section itself if they didn't.
+
+Use them to write the way in to a section differently depending on where the player came from. Try going to the cave from the river, then start again and go from the forest:
+
+<Sample script="[[start]]:
+You can go to the [[river]] or the [[forest]].
+
+[[river]]:
+The water is cold. You can [look around], or follow the river to the [[cave]].
+
+[look around]:
+There's nothing here but rocks.
+
+[[forest]]:
+The trees are dense. A path leads to a [[cave]].
+
+[[cave]]:
+{{#if previous_section = &quot;river&quot;}}
+You wade out of the river into the mouth of a cave.
+{{else}}
+You step out of the trees into the mouth of a cave.
+{{/if}}
+
+You were last in the {{previous_section}}, and the last thing you saw was &quot;{{previous}}&quot;."></Sample>
+
+At the start of the story, both are empty. A section reached with [`{{goto}}`](/basic-concepts/#go-to-another-section) has the section the `{{goto}}` was in as its `previous_section`, and going back with the Back button puts both back to what they were.
+
+Squiffy sets `previous` and `previous_section` itself, so don't set them in your story: the editor underlines them if you do.
+
 ### The `{{at}}` helper
 
 The `{{at}}` helper checks if you're currently at a specific section. It can take a single section name or an array of section names.

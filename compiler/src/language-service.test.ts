@@ -447,6 +447,22 @@ describe("code actions", () => {
         expect(diagnostics[0].message).toBe("Squiffy sets turns itself: it's the number of links clicked in the story so far. Use a different name for your own attribute.");
     });
 
+    test("warning for setting previous and previous_section, which Squiffy sets itself", async () => {
+        const text = [
+            "[[a]]:",
+            "@set previous = \"a\"",
+            "[[Go]](b, previous_section = \"a\")",
+            "{{#if previous = \"a\"}}Back{{/if}} {{previous_section}}",
+            "[[b]]:",
+            "B",
+        ].join("\n");
+        const ls = createLanguageService({ files: memoryFiles({ "s.squiffy": text }), mainFile: "s.squiffy" });
+        const diagnostics = (await ls.getDiagnostics("s.squiffy")).filter(d => d.code == "squiffy/built-in-attribute");
+        expect(diagnostics.map(d => [d.range.start.line, slice(text, d.range)])).toEqual([
+            [1, "previous"], [2, "previous_section"],
+        ]);
+    });
+
     test("convert Squiffy 5 syntax", async () => {
         const text = "[[a]]:\nHello {name}, {if x:yes}.";
         const ls = createLanguageService({ files: memoryFiles({ "s.squiffy": text }), mainFile: "s.squiffy" });
