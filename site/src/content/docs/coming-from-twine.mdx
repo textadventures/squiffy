@@ -84,7 +84,7 @@ Passages are good for looking around a room, asking a character questions, or an
 
 A Twine story usually shows one passage at a time. A Squiffy story is more like a transcript: each new section is added below the last, so the player can scroll back and read the story so far.
 
-When the player moves to a new section, the links in the old ones stop working. Their choices are final.
+When the player moves to a new section, the links in the old ones stop working. To choose differently, the player can go back: see [Going back and saving](#going-back-and-saving).
 
 If you'd rather show one section at a time, clear the screen before each one, with a [master section](/basic-concepts/#master-sections-and-passages), which runs before every section:
 
@@ -93,9 +93,9 @@ If you'd rather show one section at a time, clear the screen before each one, wi
 @clear
 ```
 
-### There's no Back button for players
+### Going back and saving
 
-Twine's Harlowe and SugarCube let the player undo their choices. A published Squiffy story has a **Restart** button, but no Back button. The editor has **Back**, so you can try different choices while you're testing.
+As in Harlowe and SugarCube, players can undo their choices: a published Squiffy story has a **Back** button, which goes back a section or passage at a time, next to **Restart**. If you'd rather the player's choices were final, you can turn it off: see [The Back button](/multiple-files/#the-back-button).
 
 The player's progress is saved automatically in their browser, so they can close the page and carry on where they left off when they come back. There's one save for each story, rather than save slots.
 
@@ -212,7 +212,7 @@ See [Array management helpers](/helpers-reference/#array-management-helpers).
 
 Squiffy is deliberately simpler than Twine's story formats, so some things aren't there:
 
-- **Undo and save slots.** Players can't go back, and there's one save for each story. See [There's no Back button for players](#theres-no-back-button-for-players).
+- **Save slots.** There's one save for each story. See [Going back and saving](#going-back-and-saving).
 - **Loops**, like SugarCube's `<<for>>` and Harlowe's `(for:)`.
 - **Data structures.** An attribute holds a single value, or an [array](/helpers-reference/#array-management-helpers). There's nothing like Harlowe's datamaps or SugarCube's objects, so use an attribute for each value, such as `hero_hp` and `hero_name`.
 - **Temporary variables**, like SugarCube's `_name`. Every attribute lasts for the whole story.
