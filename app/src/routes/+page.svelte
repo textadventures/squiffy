@@ -12,6 +12,7 @@
     import { openInEditor } from "#lib/desktop-shell.js";
     import { desktopApi } from "#lib/desktop.js";
     import { DOCS_URL } from "#lib/links.js";
+    import { TWINE_ACCEPT } from "#lib/twine-import.js";
     import type { StoredProject } from "@textadventures/project-fs";
     import { clearLegacyAutoSave, getLegacyAutoSave, type LegacyAutoSave } from "#lib/legacy.js";
     import { confirmDialog } from "#lib/confirm.js";
@@ -115,7 +116,12 @@
         const input = e.currentTarget as HTMLInputElement;
         const file = input.files?.[0];
         input.value = "";
-        if (file) void run(async () => editDraft(await importFile(file)));
+        if (file) {
+            void run(async () => {
+                const id = await importFile(file);
+                if (id) await editDraft(id);
+            });
+        }
     }
 
     async function handleDelete(draft: StoredProject<DraftMeta>) {
@@ -186,10 +192,10 @@
                 <FileUp size={22} class="text-primary-500" />
                 <span class="font-medium">Open file</span>
                 <span class="text-xs text-surface-600-400">
-                    {isDesktop ? "A .squiffy file, or a project .zip to unpack into a folder" : "Copy a .squiffy file, or a project .zip, into a new draft"}
+                    {isDesktop ? "A .squiffy file, a project .zip to unpack into a folder, or a Twine story to convert" : "Copy a .squiffy file or a project .zip into a new draft, or convert a Twine story"}
                 </span>
             </button>
-            <input bind:this={fileInput} type="file" accept=".squiffy,.zip" class="hidden" onchange={handleFileChosen} />
+            <input bind:this={fileInput} type="file" accept=".squiffy,.zip,{TWINE_ACCEPT}" class="hidden" onchange={handleFileChosen} />
         </div>
         {#if !isDesktop}
             <p class="text-xs text-surface-600-400">

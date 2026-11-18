@@ -5,6 +5,10 @@ import type { Diagnostic } from "./syntax.js";
 export { findV5Syntax, convertV5Syntax } from "./v5.js";
 export type { V5SyntaxMatch, V5ConversionProblem, V5ConversionResult } from "./v5.js";
 export { convertSetters, convertSetter } from "./setters.js";
+export { convertTwine, convertTwineStory, formatTwineProblems } from "./twine/convert.js";
+export type { TwineConversionResult, TwineConversionProblem, TwineConversionOptions } from "./twine/convert.js";
+export { parseTwine, isTwineSource, TwineParseError } from "./twine/story.js";
+export type { TwineStory, TwinePassage } from "./twine/story.js";
 export type { SetterConversion, SetterConversionProblem, SetterConversionResult } from "./setters.js";
 
 // The compiler works in three stages, which can also be used separately:

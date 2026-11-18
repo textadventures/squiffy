@@ -11,8 +11,12 @@ export function ReplaceLabel() : SquiffyPlugin {
                 return new Handlebars.SafeString(`<span class="squiffy-label-${name}">${options.fn(this)}</span>`);
             });
             squiffy.registerHelper("replace", function(this: any, name: string, options) {
-                const result = options.fn(this);
-                const element = squiffy.outputElement.querySelector<HTMLElement>(`.squiffy-label-${name}`);
+                // A block that's only another helper, such as {{#label}}, gives that helper's SafeString
+                const result = String(options.fn(this));
+                // The latest label with the name: when a section is visited again, or the screen's been
+                // cleared, earlier ones can still be in the output (in the clear stack, hidden)
+                const labels = squiffy.outputElement.querySelectorAll<HTMLElement>(`.squiffy-label-${name}`);
+                const element = labels[labels.length - 1];
                 if (element) {
                     const isBlock = result.includes("\n\n");
                     const html = isBlock

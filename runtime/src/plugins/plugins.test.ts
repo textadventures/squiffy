@@ -220,6 +220,48 @@ Your score is {{#label "score"}}0{{/label}}.
     expect(labelSpans[0].classList.contains("fade-in")).toBe(false);
 });
 
+test("Replace plugin: replaces the latest label, in a section visited again after the screen is cleared", async () => {
+    const script = `
+[[]]:
+@clear
+
+[[room]]:
+The box is {{#label "box"}}closed{{/label}}. [Open it](open) or [[go out]](outside).
+
+[open]:
+{{#replace "box"}}open{{/replace}}
+
+[[outside]]:
+You're outside. [[Go back in]](room)
+`;
+
+    const { squiffyApi, element } = await initScript(script);
+    await squiffyApi.clickLink(element.querySelector<HTMLElement>("a.squiffy-link[data-section='outside']")!);
+    await squiffyApi.clickLink(element.querySelector<HTMLElement>("a.squiffy-link[data-section='room']")!);
+
+    expect(element.querySelectorAll(".squiffy-label-box").length).toBe(2);
+    const links = element.querySelectorAll<HTMLElement>("a.squiffy-link[data-passage='open']");
+    await squiffyApi.clickLink(links[links.length - 1]);
+    const labels = element.querySelectorAll(".squiffy-label-box");
+    expect(labels[0].textContent).toBe("closed");
+    expect(labels[1].textContent).toBe("open");
+});
+
+test("Replace plugin: replace with only a label in it", async () => {
+    const script = `
+The box is {{#label "box"}}closed{{/label}}. [Open it](open)
+
+[open]:
+{{#replace "box"}}{{#label "lid"}}open{{/label}}{{/replace}}
+`;
+
+    const { squiffyApi, element } = await initScript(script);
+    await squiffyApi.clickLink(findPassageLink(element, "open")!);
+
+    expect(element.querySelector(".squiffy-label-box")?.innerHTML).toBe("<span class=\"squiffy-label-lid\">open</span>");
+    expect(element.querySelector(".squiffy-error")).toBeNull();
+});
+
 // ===== RotateSequencePlugin Tests =====
 
 test("Sequence plugin: click through sequence", async () => {

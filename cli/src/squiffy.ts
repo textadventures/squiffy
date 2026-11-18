@@ -6,6 +6,7 @@ import { serve } from "./server.js";
 import { createPackageFiles, writeScriptFile } from "./file-packager.js";
 import { convertV5File } from "./convert-v5.js";
 import { convertV6Story } from "./convert-v6.js";
+import { convertTwineFile } from "./convert-twine.js";
 import { findStory, StoryNotFoundError } from "squiffy-compiler/node";
 
 import pkg from "../package.json" with { type: "json" };
@@ -27,6 +28,10 @@ const argv = yargs(hideBin(process.argv))
     .boolean("convert-v5")
     .describe("convert-v6", "Convert a Squiffy 6 story's @set and link setters to Squiffy 7's rules and add a squiffy.json, keeping a backup of each file changed")
     .boolean("convert-v6")
+    .describe("convert-twine", "Convert a Twine story (a .twee file, or Twine's published or archive .html) to Squiffy, in a new folder next to it")
+    .boolean("convert-twine")
+    .describe("out", "With --convert-twine, the folder to put the Squiffy story in")
+    .string("out")
     .version(version)
     .parseSync();
 
@@ -67,6 +72,15 @@ else if (argv.convertV6) {
         process.exitCode = 1;
     }
     else if (!await convertV6Story(input)) {
+        process.exitCode = 1;
+    }
+}
+else if (argv.convertTwine) {
+    if (argv._[0] === undefined) {
+        console.error("Give the Twine file to convert: a .twee file, or Twine's published or archive .html.");
+        process.exitCode = 1;
+    }
+    else if (!convertTwineFile(input, argv.out)) {
         process.exitCode = 1;
     }
 }

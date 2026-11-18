@@ -36,6 +36,7 @@ npm test
 | Run | Ctrl/Cmd+Enter from the start; Ctrl/Cmd+Shift+Enter from the section the cursor is in |
 | Add | A section or passage (from the selection, if there is one), or a snippet: the 6.x editor's built-in ones and the story's own `[snippet:...]` blocks |
 | Squiffy 5 | Opening a file that uses the Squiffy 5 text processor offers to convert all of it |
+| Twine | Open file converts a Twine story (Twee, or published or archive HTML) into a new draft or folder, with `src/lib/twine-import.ts` and the compiler's `convertTwine` |
 
 Parts copied from Quest Viva's `src/AppShell` are noted in their comments. Fixes to the shared parts (`app.css`, `theme-store.ts`, `CodeEditor.svelte`, `codemirror-theme.ts`, `DropdownMenu.svelte`) may need porting between the two.
 
