@@ -10,6 +10,10 @@
         pinned?: ReadonlyMap<string, Point>;
         // The selected node's id
         selected?: string | null;
+        // Edges longer than this (between the centres of their ends) are drawn faintly, so that
+        // links across the map don't hide the links between neighbours, unless they're hovered
+        // or one of their ends is selected. Infinity draws them all the same. Default 400.
+        longEdge?: number;
         // What the map is, for screen readers, e.g. "Story map"
         label: string;
         // Read out with the label: how to use the map
@@ -58,7 +62,7 @@
     const NONE: ReadonlyMap<string, Point> = new Map();
 
     let {
-        graph, layout, pinned = NONE, selected = $bindable(null), label, instructions, node: drawNode, canConnect,
+        graph, layout, pinned = NONE, selected = $bindable(null), longEdge = 400, label, instructions, node: drawNode, canConnect,
         onactivate, onedgeactivate, onmove, onconnect, oncreate, onrename,
     }: GraphMapProps<N, E> = $props();
 
@@ -134,6 +138,9 @@
         if (!path) return;
         for (const el of els.paths) el.setAttribute("d", path.d);
         els.arrow.setAttribute("d", path.arrow);
+        // An attribute rather than a class, which Svelte would overwrite when the edge's class changes
+        const a = model.position(e.from), b = model.position(e.to);
+        els.group.toggleAttribute("data-long", !!a && !!b && Math.hypot(b.x - a.x, b.y - a.y) > longEdge);
     }
 
     function paint() {
@@ -710,6 +717,14 @@
     }
     .gm-edge {
         cursor: pointer;
+    }
+    /* data-long is set as the edges are drawn, which Svelte can't see */
+    .gm-edge:global([data-long]) {
+        opacity: 0.3;
+    }
+    .gm-edge:global([data-long]):hover,
+    .gm-edge-selected:global([data-long]) {
+        opacity: 1;
     }
     .gm-edge-hit {
         fill: none;

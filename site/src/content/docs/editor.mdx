@@ -61,7 +61,7 @@ The ⋯ menu has **Find and replace**, and **Collapse all** and **Expand all**, 
 
 ## The story map
 
-The map button in the toolbar shows your story as a map: each section is a box, its passages hang underneath it, and links are arrows. The map reads from the top, where the story starts, down towards its endings. The script is still your story: the map is drawn from it, updates as you type, and anything you do on the map changes the script.
+The map button in the toolbar shows your story as a map: each section is a box, its passages hang underneath it, and links are arrows. The map reads from the top, where the story starts, down towards its endings. A long story folds into columns side by side, like a newspaper's, so that the whole story fits on the screen: each column carries on from the bottom of the one before. The script is still your story: the map is drawn from it, updates as you type, and anything you do on the map changes the script.
 
 ![The story map, between the script and the preview, showing the way the player went through the story in green](../../assets/editor-story-map.png)
 
@@ -76,7 +76,7 @@ The map button in the toolbar shows your story as a map: each section is a box, 
 
 Links to sections or passages that don't exist end in a red box with the missing name. Sections the player can't reach are faded, with a dashed outline. Dead ends, sections with no way out that aren't marked as an [ending](/basic-concepts/#endings), have an orange outline and a **!**. The start has a ▶, and endings a double outline.
 
-Different kinds of link look different: links to passages are lighter, [embeds](/basic-concepts/#embed-text) are dotted, [`{{goto}}`](/basic-concepts/#go-to-another-section) and `squiffy.story.go` in JavaScript are a different colour, and links that only appear inside `{{#if}}` or `{{#unless}}` are dashed. Passages that run on their own, such as [`@last`](/basic-concepts/#turn-counting), are tied to their section with a fine dotted line. The **?** button above the map shows the key.
+Different kinds of link look different: links to passages are lighter, [embeds](/basic-concepts/#embed-text) are dotted, [`{{goto}}`](/basic-concepts/#go-to-another-section) and `squiffy.story.go` in JavaScript are a different colour, and links that only appear inside `{{#if}}` or `{{#unless}}` are dashed. Passages that run on their own, such as [`@last`](/basic-concepts/#turn-counting), are tied to their section with a fine dotted line. Long links, such as those to a section much further on or back to the start, are faint, so that they don't hide the links between sections close together: hover over one, or select a section, to see its links clearly. The **?** button above the map shows the key.
 
 ### Editing from the map
 

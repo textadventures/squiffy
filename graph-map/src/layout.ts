@@ -32,23 +32,48 @@ export interface LayeredLayoutOptions<N extends MapNode, E extends MapEdge> {
     rowGap?: number;
     // The space between nodes in a row, as they're first placed
     columnGap?: number;
+    // The shape the map should roughly have, as its width over its height (default 1.6, a
+    // screen's). When there are so many rows that the map would be much taller than that, they
+    // fold into columns side by side, like a newspaper's, so the whole map fits the screen
+    // better. 0 never folds.
+    aspect?: number;
+}
+
+// A row of the map: the nodes of one rank in one group
+interface Row<N> {
+    group: number;
+    rank: number;
+    nodes: N[];
+    // Its width as first placed, and the height of what hangs under it
+    width: number;
+    below: number;
 }
 
 export function layeredLayout<N extends MapNode, E extends MapEdge>(options: LayeredLayoutOptions<N, E>): Layout<N, E> {
     const rowGap = options.rowGap ?? 100;
     const columnGap = options.columnGap ?? 32;
+    const aspect = options.aspect ?? 1.6;
     const parentOf = (node: N) => options.parent?.(node);
     const groupOf = (node: N) => options.group?.(node) ?? 0;
     const satelliteGap = 18;
+    // The space between columns of folded rows, and between groups
+    const foldGap = columnGap * 5;
 
     // Satellites per line under their parent: more go on further lines
     const perLine = 3;
     const satelliteSpacing = columnGap / 2;
 
+    // Which column each row is in, by group and rank. It's worked out when the whole graph is laid
+    // out afresh, and kept as the graph changes, so that adding to it doesn't move rows from one
+    // column to another: a new row goes in the column of the row above it.
+    const folds = new Map<string, number>();
+    const rowKey = (group: number, rank: number) => `${group}:${rank}`;
+
     // How the graph's laid out, apart from where things are: which satellites belong to which
-    // node and where they sit under it, and how far down each row is. A row is as tall as the
-    // satellites hanging under its nodes need.
-    function arrange(graph: MapGraph<N, E>) {
+    // node and where they sit under it, which row each node is in, and where each row is. A row
+    // is as tall as the satellites hanging under its nodes need. `refold` works out the columns
+    // afresh.
+    function arrange(graph: MapGraph<N, E>, refold = false) {
         const byId = new Map(graph.nodes.map(n => [n.id, n]));
         const satellitesOf = new Map<string, N[]>();
         const main: N[] = [];
@@ -61,6 +86,10 @@ export function layeredLayout<N extends MapNode, E extends MapEdge>(options: Lay
             } else {
                 main.push(node);
             }
+        }
+        const satelliteRoot = new Map<string, string>();
+        for (const [parentId, satellites] of satellitesOf) {
+            for (const s of satellites) satelliteRoot.set(s.id, parentId);
         }
         // Each satellite's offset from its parent's centre, and the size of the block they make
         const offset = new Map<string, Point>();
@@ -81,48 +110,248 @@ export function layeredLayout<N extends MapNode, E extends MapEdge>(options: Lay
             }
             block.set(parentId, { width, height: satelliteGap + Math.ceil(satellites.length / perLine) * lineHeight });
         }
-        // Rows: each one's top is below the one before, and whatever hangs under it
-        const below = new Map<number, number>();
-        for (const node of main) {
-            const rank = options.rank(node);
-            if (rank === undefined) continue;
-            below.set(rank, Math.max(below.get(rank) ?? 0, block.get(node.id)?.height ?? 0));
+        // A node's width includes the satellites hanging under it
+        const span = (node: N) => Math.max(node.width, block.get(node.id)?.width ?? 0);
+
+        // Rows, by group. Nodes without a rank go in a row of their own at the bottom of their
+        // group, though nothing holds them there.
+        const groupRows = new Map<number, Row<N>[]>();
+        const rowOf = new Map<string, Row<N>>();
+        {
+            const ranked = new Map<number, Map<number, N[]>>();
+            const unranked = new Map<number, N[]>();
+            for (const node of main) {
+                const g = groupOf(node);
+                const rank = options.rank(node);
+                if (rank === undefined) {
+                    (unranked.get(g) ?? unranked.set(g, []).get(g)!).push(node);
+                    continue;
+                }
+                const rows = ranked.get(g) ?? ranked.set(g, new Map()).get(g)!;
+                (rows.get(rank) ?? rows.set(rank, []).get(rank)!).push(node);
+            }
+            for (const g of [...new Set([...ranked.keys(), ...unranked.keys()])].sort((a, b) => a - b)) {
+                const byRank = ranked.get(g) ?? new Map<number, N[]>();
+                const ranks = [...byRank.keys()].sort((a, b) => a - b);
+                const lists = ranks.map(rank => ({ rank, nodes: byRank.get(rank)! }));
+                if (unranked.has(g)) lists.push({ rank: ranks.length ? ranks[ranks.length - 1] + 1 : 0, nodes: unranked.get(g)! });
+                const rows = lists.map(({ rank, nodes }) => ({
+                    group: g,
+                    rank,
+                    nodes,
+                    width: nodes.reduce((a, n) => a + span(n), 0) + columnGap * (nodes.length - 1),
+                    below: Math.max(0, ...nodes.map(n => block.get(n.id)?.height ?? 0)),
+                }));
+                groupRows.set(g, rows);
+                for (const row of rows) for (const n of row.nodes) rowOf.set(n.id, row);
+            }
         }
-        const ranks = [...below.keys()].sort((a, b) => a - b);
-        const rowYs = new Map<number, number>();
-        let y = 0;
-        ranks.forEach((rank, i) => {
-            if (i > 0) y += (rank - ranks[i - 1]) * rowGap + below.get(ranks[i - 1])!;
-            rowYs.set(rank, y);
+
+        // The columns, and where each row is in its column
+        const fresh = [...groupRows].filter(([g, rows]) => refold || !rows.some(r => folds.has(rowKey(g, r.rank))));
+        if (fresh.length) {
+            // Folded to the height of the columns already there, if there are any
+            let height: number | undefined;
+            if (fresh.length < groupRows.size) {
+                const heights = new Map<string, number>();
+                for (const [g, rows] of groupRows) {
+                    for (const row of rows) {
+                        const c = folds.get(rowKey(g, row.rank));
+                        if (c === undefined) continue;
+                        const key = rowKey(g, c);
+                        heights.set(key, (heights.get(key) ?? 0) + rowGap + row.below);
+                    }
+                }
+                height = Math.max(...heights.values());
+            }
+            const columns = fold(fresh.map(([, rows]) => rows), graph.edges, satelliteRoot, rowOf, height);
+            fresh.forEach(([g, rows], i) => {
+                for (const key of [...folds.keys()]) if (key.startsWith(`${g}:`)) folds.delete(key);
+                rows.forEach((row, j) => folds.set(rowKey(g, row.rank), columns[i][j]));
+            });
+        }
+        const columnOf = new Map<Row<N>, number>();
+        const rowY = new Map<Row<N>, number>();
+        const centreOf = new Map<Row<N>, number>();
+        let left = 0;
+        for (const [g, rows] of groupRows) {
+            // A new row goes in the column of the row above it
+            let column = 0;
+            for (const row of rows) {
+                const key = rowKey(g, row.rank);
+                column = folds.get(key) ?? column;
+                folds.set(key, column);
+            }
+            const columns = new Map<number, Row<N>[]>();
+            for (const row of rows) {
+                const c = folds.get(rowKey(g, row.rank))!;
+                columnOf.set(row, c);
+                (columns.get(c) ?? columns.set(c, []).get(c)!).push(row);
+            }
+            for (const c of [...columns.keys()].sort((a, b) => a - b)) {
+                const column = columns.get(c)!;
+                let y = 0;
+                column.forEach((row, i) => {
+                    if (i > 0) y += (row.rank - column[i - 1].rank) * rowGap + column[i - 1].below;
+                    rowY.set(row, y);
+                });
+                const width = Math.max(...column.map(r => r.width));
+                for (const row of column) centreOf.set(row, left + width / 2);
+                left += width + foldGap;
+            }
+        }
+        // Columns, numbered across every group
+        const columnKey = (row: Row<N>) => rowKey(row.group, columnOf.get(row)!);
+        return { byId, satellitesOf, satelliteRoot, main, offset, block, span, groupRows, rowOf, rowY, centreOf, columnKey };
+    }
+
+    // Which column each row goes in, for each group, folding them into columns side by side, as
+    // many as gives the map the shape closest to `aspect`. Each column is a run of rows, about as
+    // tall as the others, and it's cut where fewest edges cross from one column to the next. The
+    // tallest group decides how tall the columns are, and the others fold to fit, unless
+    // `height` says how tall they are already.
+    function fold(groups: Row<N>[][], edges: E[], satelliteRoot: Map<string, string>, rowOf: Map<string, Row<N>>, height?: number): number[][] {
+        const prepared = groups.map(rows => {
+            const n = rows.length;
+            const heights = rows.map(r => rowGap + r.below);
+            // How many edges cross between row i and row i + 1
+            const index = new Map(rows.map((r, i) => [r, i]));
+            const diff = new Array<number>(n + 1).fill(0);
+            for (const edge of edges) {
+                const a = rowOf.get(satelliteRoot.get(edge.from) ?? edge.from), b = rowOf.get(satelliteRoot.get(edge.to) ?? edge.to);
+                if (!a || !b || a === b) continue;
+                const i = index.get(a), j = index.get(b);
+                if (i === undefined || j === undefined) continue;
+                diff[Math.min(i, j)]++;
+                diff[Math.max(i, j)]--;
+            }
+            const crossing: number[] = [];
+            let open = 0;
+            for (let i = 0; i < n; i++) crossing.push(open += diff[i]);
+            return { rows, n, heights, crossing, total: heights.reduce((a, b) => a + b, 0) };
         });
-        const last = ranks.length ? ranks[ranks.length - 1] : 0;
-        const rowY = (rank: number) => rowYs.get(rank) ?? (rowYs.get(last) ?? 0) + (rank - last) * rowGap + (below.get(last) ?? 0);
-        return { byId, satellitesOf, main, offset, block, rowY };
+        type Group = (typeof prepared)[number];
+
+        // Cuts a group's rows into k columns, each about as tall as what's left over the columns left
+        const cut = ({ n, heights, crossing }: Group, k: number) => {
+            const columns: number[] = [];
+            let start = 0;
+            for (let c = 0; c < k && start < n; c++) {
+                if (c == k - 1) {
+                    for (let i = start; i < n; i++) columns.push(c);
+                    break;
+                }
+                let remaining = 0;
+                for (let i = start; i < n; i++) remaining += heights[i];
+                const target = remaining / (k - c);
+                // The best place to end this column, near the target height
+                let best = -1, bestCost = Infinity, h = 0;
+                for (let i = start; i < n - (k - c - 1); i++) {
+                    h += heights[i];
+                    if (h < target * 0.75) continue;
+                    if (h > target * 1.25 && best >= 0) break;
+                    const cost = crossing[i] + 4 * Math.abs(h - target) / target;
+                    if (cost < bestCost) {
+                        best = i;
+                        bestCost = cost;
+                    }
+                }
+                if (best < 0) best = Math.min(start, n - 1);
+                for (let i = start; i <= best; i++) columns.push(c);
+                start = best + 1;
+            }
+            return columns;
+        };
+        const measure = (group: Group, columns: number[]) => {
+            const widths = new Map<number, number>(), heights = new Map<number, number>();
+            columns.forEach((c, i) => {
+                widths.set(c, Math.max(widths.get(c) ?? 0, group.rows[i].width));
+                heights.set(c, (heights.get(c) ?? 0) + group.heights[i]);
+            });
+            return { width: [...widths.values()].reduce((a, b) => a + b, 0) + foldGap * (widths.size - 1), height: Math.max(0, ...heights.values()) };
+        };
+        // The fewest columns that a group fits in, at a height
+        const fit = (group: Group, height: number) => {
+            for (let k = Math.max(1, Math.floor(group.total / height)); k < group.n; k++) {
+                const columns = cut(group, k);
+                if (measure(group, columns).height <= height * 1.1) return columns;
+            }
+            return group.rows.map((_, i) => i);
+        };
+        const single = prepared.map(g => g.rows.map(() => 0));
+        if (!(aspect > 0)) return single;
+
+        // Every group, folded to a height, and the map's shape
+        const foldAll = (height: number, first?: { group: Group; columns: number[] }) => {
+            const all = prepared.map(g => g === first?.group ? first.columns : fit(g, height));
+            let width = 0, tallest = 0;
+            all.forEach((columns, i) => {
+                const m = measure(prepared[i], columns);
+                width += m.width + (i > 0 ? foldGap : 0);
+                tallest = Math.max(tallest, m.height);
+            });
+            return { all, score: Math.abs(Math.log(width / tallest / aspect)), shape: width / tallest };
+        };
+        if (height !== undefined) return foldAll(height).all;
+        const tallest = prepared.reduce((a, b) => b.total > a.total ? b : a, prepared[0]);
+        let best = single, bestScore = Infinity;
+        for (let k = 1; k <= tallest.n; k++) {
+            const columns = cut(tallest, k);
+            const { all, score, shape } = foldAll(measure(tallest, columns).height, { group: tallest, columns });
+            if (score < bestScore) {
+                best = all;
+                bestScore = score;
+            }
+            if (shape > aspect) break;
+        }
+        return best;
     }
 
     return {
         place(graph, known) {
             const placed = new Map<string, Point>();
-            const { byId, satellitesOf, main, offset, block, rowY } = arrange(graph);
+            const { byId, satellitesOf, satelliteRoot, offset, span, groupRows, rowOf, rowY, centreOf, columnKey } = arrange(graph, known.size == 0);
             const position = (id: string) => known.get(id) ?? placed.get(id);
 
-            const fresh = main.filter(n => !known.has(n.id));
             if (known.size == 0) {
-                // Everything's new: lay out each group's rows, side by side
-                const groups = new Map<number, N[]>();
-                for (const node of fresh) {
-                    const g = groupOf(node);
-                    let list = groups.get(g);
-                    if (!list) groups.set(g, list = []);
-                    list.push(node);
+                // Everything's new: lay out each group's rows, in their columns. Each row is
+                // ordered by where the nodes linking to it are (the barycentre heuristic), to cut
+                // down crossings: as an offset from their column's centre, so a row at the top of
+                // a column follows the order of the row at the bottom of the column before.
+                const incoming = new Map<string, string[]>();
+                for (const edge of graph.edges) {
+                    const from = satelliteRoot.get(edge.from) ?? edge.from;
+                    const to = satelliteRoot.get(edge.to) ?? edge.to;
+                    if (from == to) continue;
+                    let list = incoming.get(to);
+                    if (!list) incoming.set(to, list = []);
+                    list.push(from);
                 }
-                let left = 0;
-                for (const g of [...groups.keys()].sort((a, b) => a - b)) {
-                    const width = placeRows(groups.get(g)!, graph.edges, left);
-                    left += width + columnGap * 4;
+                for (const rows of groupRows.values()) {
+                    for (const row of rows) {
+                        const order = new Map(row.nodes.map((n, i) => [n.id, i]));
+                        const barycentre = (node: N) => {
+                            const xs: number[] = [];
+                            for (const id of incoming.get(node.id) ?? []) {
+                                const p = placed.get(id), from = rowOf.get(id);
+                                if (p && from) xs.push(p.x - centreOf.get(from)!);
+                            }
+                            return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : undefined;
+                        };
+                        const keyed = row.nodes.map(n => ({ n, key: barycentre(n) }));
+                        // Nodes with nothing above them keep their place in the order they're given
+                        keyed.sort((a, b) => (a.key ?? Infinity) - (b.key ?? Infinity) || order.get(a.n.id)! - order.get(b.n.id)!);
+                        let x = centreOf.get(row)! - row.width / 2;
+                        for (const { n } of keyed) {
+                            const w = span(n);
+                            placed.set(n.id, { x: x + w / 2, y: rowY.get(row)! });
+                            x += w + columnGap;
+                        }
+                    }
                 }
             } else {
-                // Add new nodes next to something they're linked to, or at the end of their row
+                // Add new nodes next to something they're linked to, in their own column if
+                // there is one, or at the end of their row
                 const neighbours = new Map<string, string[]>();
                 const link = (a: string, b: string) => {
                     let list = neighbours.get(a);
@@ -135,10 +364,16 @@ export function layeredLayout<N extends MapNode, E extends MapEdge>(options: Lay
                 }
                 let rightmost = -Infinity;
                 for (const p of known.values()) rightmost = Math.max(rightmost, p.x);
-                for (const node of fresh) {
-                    const rank = options.rank(node);
-                    const y = rank === undefined ? undefined : rowY(rank);
-                    const anchorId = (neighbours.get(node.id) ?? []).find(id => position(id) && byId.has(id));
+                for (const node of graph.nodes) {
+                    if (known.has(node.id) || satelliteRoot.has(node.id)) continue;
+                    const row = rowOf.get(node.id)!;
+                    const y = options.rank(node) !== undefined ? rowY.get(row) : undefined;
+                    const linked = (neighbours.get(node.id) ?? []).filter(id => position(id) && byId.has(id));
+                    const sameColumn = (id: string) => {
+                        const other = rowOf.get(satelliteRoot.get(id) ?? id);
+                        return !!other && columnKey(other) == columnKey(row);
+                    };
+                    const anchorId = linked.find(sameColumn) ?? linked[0];
                     if (anchorId) {
                         const anchor = position(anchorId)!;
                         const anchorNode = byId.get(anchorId)!;
@@ -163,68 +398,6 @@ export function layeredLayout<N extends MapNode, E extends MapEdge>(options: Lay
                 }
             }
             return placed;
-
-            // Rows from the top, each ordered by where the nodes linking to it are (the
-            // barycentre heuristic), to cut down crossings. Returns the widest row's width.
-            function placeRows(nodes: N[], edges: E[], left: number): number {
-                const rows = new Map<number, N[]>();
-                const unranked: N[] = [];
-                for (const node of nodes) {
-                    const rank = options.rank(node);
-                    if (rank === undefined) {
-                        unranked.push(node);
-                        continue;
-                    }
-                    let row = rows.get(rank);
-                    if (!row) rows.set(rank, row = []);
-                    row.push(node);
-                }
-                const ranks = [...rows.keys()].sort((a, b) => a - b);
-                // Nodes without a rank go in a row of their own at the bottom
-                if (unranked.length) {
-                    const rank = ranks.length ? ranks[ranks.length - 1] + 1 : 0;
-                    rows.set(rank, unranked);
-                    ranks.push(rank);
-                }
-
-                const satelliteRoot = new Map<string, string>();
-                for (const [parentId, satellites] of satellitesOf) {
-                    for (const s of satellites) satelliteRoot.set(s.id, parentId);
-                }
-                const incoming = new Map<string, string[]>();
-                for (const edge of edges) {
-                    const from = satelliteRoot.get(edge.from) ?? edge.from;
-                    const to = satelliteRoot.get(edge.to) ?? edge.to;
-                    if (from == to) continue;
-                    let list = incoming.get(to);
-                    if (!list) incoming.set(to, list = []);
-                    list.push(from);
-                }
-
-                // A row's width includes the satellites hanging under its nodes
-                const span = (node: N) => Math.max(node.width, block.get(node.id)?.width ?? 0);
-                const rowWidth = (row: N[]) => row.reduce((a, n) => a + span(n), 0) + columnGap * (row.length - 1);
-                const widest = Math.max(...[...rows.values()].map(rowWidth));
-                const centre = left + widest / 2;
-                for (const rank of ranks) {
-                    const row = rows.get(rank)!;
-                    const order = new Map(row.map((n, i) => [n.id, i]));
-                    const barycentre = (node: N) => {
-                        const xs = (incoming.get(node.id) ?? []).map(id => placed.get(id)?.x).filter(x => x !== undefined);
-                        return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : undefined;
-                    };
-                    const keyed = row.map(n => ({ n, key: barycentre(n) }));
-                    // Nodes with nothing above them keep their place in the order they're given
-                    keyed.sort((a, b) => (a.key ?? Infinity) - (b.key ?? Infinity) || order.get(a.n.id)! - order.get(b.n.id)!);
-                    let x = centre - rowWidth(row) / 2;
-                    for (const { n } of keyed) {
-                        const w = span(n);
-                        placed.set(n.id, { x: x + w / 2, y: rowY(rank) });
-                        x += w + columnGap;
-                    }
-                }
-                return widest;
-            }
         },
 
         attached(graph) {
@@ -232,7 +405,7 @@ export function layeredLayout<N extends MapNode, E extends MapEdge>(options: Lay
         },
 
         forces(graph, nodes) {
-            const { byId, offset, rowY } = arrange(graph);
+            const { byId, offset, rowOf, rowY, satelliteRoot, columnKey } = arrange(graph);
             const sim = (id: string) => nodes.get(id);
             const parentSim = new Map<SimNode, SimNode>();
             const satelliteOffset = new Map<SimNode, Point>();
@@ -245,11 +418,14 @@ export function layeredLayout<N extends MapNode, E extends MapEdge>(options: Lay
                 if (o && p) {
                     parentSim.set(s, p);
                     satelliteOffset.set(s, o);
-                } else {
-                    const rank = options.rank(node);
-                    if (rank !== undefined) rankY.set(s, rowY(rank));
+                } else if (options.rank(node) !== undefined) {
+                    rankY.set(s, rowY.get(rowOf.get(node.id)!)!);
                 }
             }
+            const column = (id: string) => {
+                const row = rowOf.get(satelliteRoot.get(id) ?? id);
+                return row && columnKey(row);
+            };
 
             const links: LinkSpring[] = [];
             const degree = new Map<string, number>();
@@ -265,10 +441,13 @@ export function layeredLayout<N extends MapNode, E extends MapEdge>(options: Lay
                 if (parentSim.get(target) === source || parentSim.get(source) === target) continue;
                 const from = byId.get(edge.from)!, to = byId.get(edge.to)!;
                 const span = Math.abs((options.rank(to) ?? 0) - (options.rank(from) ?? 0));
+                // Folded columns stay apart: an edge from one to another hardly pulls
+                const across = column(edge.from) != column(edge.to);
                 const strength = (options.edgeStrength?.(edge) ?? 0.5)
                     / Math.min(degree.get(edge.from)!, degree.get(edge.to)!)
                     / (1 + Math.max(0, span - 1))
-                    * (satellite ? 0.2 : 1);
+                    * (satellite ? 0.2 : 1)
+                    * (across ? 0.02 : 1);
                 links.push({ source, target, distance: rowGap * Math.max(1, Math.min(span, 3)), strength });
             }
             for (const [satellite, parent] of parentSim) {
