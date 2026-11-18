@@ -32,7 +32,7 @@ Then either:
 The converted story is a folder with:
 
 - `story.squiffy`, the story itself. Each Twine passage becomes a section with the same name.
-- `squiffy.json`, the [project file](/basic-concepts/#stories-in-several-files).
+- `squiffy.json`, the [project file](/basic-concepts/#stories-in-several-files). It also keeps where the passages were on Twine's story map, so the editor's [story map](/editor/#the-story-map) is laid out the way you arranged it in Twine, stretched sideways a little to fit the map's wider boxes. If you never arranged the passages in Twine, or the Twee file doesn't say where they go, the map lays the story out itself. **Lay out again**, above the map, swaps Twine's arrangement for the map's own.
 - `story.css`, the story's stylesheet, if it has one, which `story.squiffy` imports.
 - `story.js`, the story's JavaScript, if it has some. It isn't part of the story yet: see [JavaScript](#javascript) below.
 - `twine-import.txt`, which lists everything that couldn't be converted exactly, passage by passage.

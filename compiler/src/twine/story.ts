@@ -6,6 +6,10 @@ export interface TwinePassage {
     name: string;
     tags: string[];
     text: string;
+    // Where the passage's box is on Twine's story map: its top left corner, and its size (100 by
+    // 100 unless the author made it bigger). Twee 1 and 2 don't have them.
+    position?: [number, number];
+    size?: [number, number];
 }
 
 export type TwineFormat = "harlowe" | "sugarcube" | "other";
@@ -68,6 +72,21 @@ function attributes(tag: string): Record<string, string> {
     return result;
 }
 
+// "x,y" or "width,height", as Twine writes them
+function pair(value: unknown): [number, number] | undefined {
+    if (typeof value != "string") return undefined;
+    const parts = value.split(",").map(n => Number(n.trim()));
+    return parts.length == 2 && parts.every(n => Number.isFinite(n)) ? [parts[0], parts[1]] : undefined;
+}
+
+// The passage's place on Twine's map, if it has one
+function place(position: unknown, size: unknown): { position?: [number, number], size?: [number, number] } {
+    const p = pair(position);
+    if (!p) return {};
+    const s = pair(size);
+    return s && s[0] > 0 && s[1] > 0 ? { position: p, size: s } : { position: p };
+}
+
 function splitTags(tags: string | undefined): string[] {
     return (tags ?? "").split(/\s+/).filter(t => t.length > 0);
 }
@@ -108,7 +127,7 @@ function parseTwine2Html(html: string): TwineStory {
     const passages: TwinePassage[] = [];
     for (const match of data.matchAll(/<tw-passagedata\b([^>]*)>([\s\S]*?)<\/tw-passagedata>/gi)) {
         const a = attributes(match[1]);
-        const passage = { name: a.name ?? "", tags: splitTags(a.tags), text: decodeEntities(match[2]) };
+        const passage: TwinePassage = { name: a.name ?? "", tags: splitTags(a.tags), text: decodeEntities(match[2]), ...place(a.position, a.size) };
         if (a.pid !== undefined && a.pid == story.startnode) start = passage.name;
         passages.push(passage);
     }
@@ -134,7 +153,7 @@ function parseTwine1Html(html: string): TwineStory {
         const a = attributes(match[1]);
         // Twine 1 escapes newlines and backslashes in passage text
         const text = decodeEntities(match[2]).replace(/\\(.)/g, (_m, c: string) => c == "n" ? "\n" : c == "t" ? "\t" : c == "s" ? " " : c);
-        passages.push({ name: a.tiddler ?? "", tags: splitTags(a.tags), text });
+        passages.push({ name: a.tiddler ?? "", tags: splitTags(a.tags), text, ...place(a["twine-position"], undefined) });
     }
     return fromTwee1Passages(passages);
 }
@@ -186,13 +205,14 @@ function fromTwee1Passages(all: TwinePassage[]): TwineStory {
 function parseTwee(text: string): TwineStory {
     const lines = text.replace(/\r\n?/g, "\n").split("\n");
     const passages: TwinePassage[] = [];
-    let current: { name: string, tags: string[], lines: string[] } | null = null;
+    let current: (ReturnType<typeof parseTweeHeader> & { lines: string[] }) | null = null;
 
     const finish = () => {
         if (!current) return;
         // Twee separates passages with blank lines, which aren't part of the passage
         while (current.lines.length && current.lines[current.lines.length - 1].trim() == "") current.lines.pop();
-        passages.push({ name: current.name, tags: current.tags, text: current.lines.join("\n") });
+        const { lines, ...header } = current;
+        passages.push({ ...header, text: lines.join("\n") });
     };
 
     for (const line of lines) {
@@ -209,7 +229,8 @@ function parseTwee(text: string): TwineStory {
     return fromTwee1Passages(passages);
 }
 
-function parseTweeHeader(header: string): { name: string, tags: string[] } {
+// Twee 3 puts the passage's place on the map in its metadata, e.g. {"position":"600,400","size":"100,200"}
+function parseTweeHeader(header: string): Omit<TwinePassage, "text"> {
     let name = "";
     let i = 0;
     const s = header.trimStart();
@@ -229,5 +250,16 @@ function parseTweeHeader(header: string): { name: string, tags: string[] } {
     const rest = s.substring(i);
     const tagMatch = /^\[((?:\\.|[^\]])*)\]/.exec(rest);
     if (tagMatch) tags = splitTags(tagMatch[1].replace(/\\(.)/g, "$1"));
-    return { name: name.trim(), tags };
+    const metadata = rest.substring(tagMatch?.[0].length ?? 0).trim();
+    let placed = {};
+    if (metadata.startsWith("{")) {
+        try {
+            const data = JSON.parse(metadata);
+            placed = place(data?.position, data?.size);
+        }
+        catch {
+            // Metadata that isn't JSON is left out
+        }
+    }
+    return { name: name.trim(), tags, ...placed };
 }

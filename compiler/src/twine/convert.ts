@@ -11,6 +11,7 @@ import { convertSugarCubePassage, convertSugarCubeWidgets, sugarCubeWidgets } fr
 import { parseTwine } from "./story.js";
 import type { TwinePassage, TwineStory } from "./story.js";
 import { formatProjectFile } from "../project.js";
+import type { MapPositions } from "../project.js";
 
 export interface TwineConversionProblem {
     // The Twine passage the problem is in, if it's in one
@@ -506,7 +507,8 @@ export function convertTwineStory(twine: TwineStory, options: TwineConversionOpt
     ].filter(s => s.length).join("\n\n") + "\n";
 
     files[`${name}.squiffy`] = script;
-    files["squiffy.json"] = formatProjectFile({ main: `${name}.squiffy` });
+    const map = mapPositions(sectionPassages, story);
+    files["squiffy.json"] = formatProjectFile({ main: `${name}.squiffy`, ...(map ? { map } : {}) });
 
     return {
         title: twine.title,
@@ -516,6 +518,40 @@ export function convertTwineStory(twine: TwineStory, options: TwineConversionOpt
         passages: sectionPassages.length,
         problems: [...problems, ...story.noteProblems(), ...story.problems],
     };
+}
+
+// Where the sections go on the editor's story map, so it looks like the story's map in Twine.
+// Twine's boxes are 100 by 100, on a grid of 25, and usually 125 apart; the map's are short and
+// wide, up to 190 across, so the map is stretched sideways to keep them from overlapping (which
+// leaves only a handful overlapping in real games). Undefined if the story's passages have no
+// places on the map, or have never been arranged.
+const MAP_STRETCH = 1.6;
+
+function mapPositions(passages: TwinePassage[], story: StoryContext): MapPositions | undefined {
+    const placed = passages.filter(p => p.position);
+    if (!placed.length || unarranged(story.twine.passages)) return undefined;
+    const centres = placed.map(p => {
+        const [w, h] = p.size ?? [100, 100];
+        return { name: story.sectionFor(p.name)!, x: p.position![0] + w / 2, y: p.position![1] + h / 2 };
+    });
+    const left = Math.min(...centres.map(c => c.x));
+    const top = Math.min(...centres.map(c => c.y));
+    const sections: MapPositions["sections"] = {};
+    for (const c of centres) sections[c.name] = [Math.round((c.x - left) * MAP_STRETCH), Math.round(c.y - top)];
+    return { sections, passages: {} };
+}
+
+// Whether the passages are where Twine or Tweego put them when the story was made from Twee
+// without positions: in rows of ten, 125 apart. A map like that says nothing about the story, and
+// the editor's own layout is better. It still counts if the author's moved one or two.
+function unarranged(passages: TwinePassage[]): boolean {
+    const positions = passages.flatMap(p => p.position ? [p.position] : []);
+    if (positions.length < 10) return false;
+    const left = Math.min(...positions.map(p => p[0]));
+    const top = Math.min(...positions.map(p => p[1]));
+    const onGrid = positions.filter(([x, y]) => (x - left) % 125 == 0 && (y - top) % 125 == 0 && x - left < 1250);
+    const columns = new Set(onGrid.map(([x]) => x));
+    return columns.size == 10 && onGrid.length >= positions.length * 0.9;
 }
 
 // The text of a section or passage: its directives, then its text

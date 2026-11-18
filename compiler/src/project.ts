@@ -211,14 +211,15 @@ export function getStoryFiles(project: ProjectFile, paths: Iterable<string>, ski
 }
 
 // The text of a new project file
-export function formatProjectFile(project: { main: string; exclude?: string[] }): string {
+export function formatProjectFile(project: { main: string; exclude?: string[]; map?: MapPositions }): string {
     const json: Record<string, unknown> = {
         $schema: PROJECT_SCHEMA_URL,
         version: PROJECT_FILE_VERSION,
         main: project.main,
     };
     if (project.exclude?.length) json.exclude = project.exclude;
-    return JSON.stringify(json, null, 2) + "\n";
+    const text = JSON.stringify(json, null, 2) + "\n";
+    return project.map ? updateProjectFile(text, { map: project.map })! : text;
 }
 
 // Changes a project file's text, keeping any other properties it has. Returns undefined if the

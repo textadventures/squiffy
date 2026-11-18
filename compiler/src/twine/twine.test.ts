@@ -34,7 +34,7 @@ The Cave
 :: StoryData
 { "ifid": "1234", "format": "SugarCube", "format-version": "2.37.3", "start": "Begin" }
 
-:: Begin [start-tag other] {"position":"100,100"}
+:: Begin [start-tag other] {"position":"100,100","size":"200,100"}
 Hello.
 
 :: A \\[bracketed\\] name
@@ -51,7 +51,7 @@ setup.x = 1;
         expect(story.formatVersion).toBe("2.37.3");
         expect(story.start).toBe("Begin");
         expect(story.passages).toEqual([
-            { name: "Begin", tags: ["start-tag", "other"], text: "Hello." },
+            { name: "Begin", tags: ["start-tag", "other"], text: "Hello.", position: [100, 100], size: [200, 100] },
             { name: "A [bracketed] name", tags: [], text: ":: Not a passage" },
         ]);
         expect(story.stylesheet).toBe("body { color: red; }");
@@ -62,7 +62,7 @@ setup.x = 1;
         const story = parseTwine(`<html><body><tw-storydata name="Café &amp; Bar" startnode="2" format="Harlowe" format-version="3.3.9">
 <style role="stylesheet" id="twine-user-stylesheet" type="text/twine-css">tw-story { color: red; }</style>
 <script role="script" id="twine-user-script" type="text/twine-javascript">window.x = 1 &lt; 2;</script>
-<tw-passagedata pid="1" name="Other" tags="" position="0,0">Some &quot;text&quot;</tw-passagedata>
+<tw-passagedata pid="1" name="Other" tags="" position="300.5,25" size="100,100">Some &quot;text&quot;</tw-passagedata>
 <tw-passagedata pid="2" name="First" tags="header" position="0,0">(set: $x to 1)
 [[Other]]</tw-passagedata>
 </tw-storydata></body></html>`);
@@ -70,8 +70,8 @@ setup.x = 1;
         expect(story.format).toBe("harlowe");
         expect(story.start).toBe("First");
         expect(story.passages).toEqual([
-            { name: "Other", tags: [], text: "Some \"text\"" },
-            { name: "First", tags: ["header"], text: "(set: $x to 1)\n[[Other]]" },
+            { name: "Other", tags: [], text: "Some \"text\"", position: [300.5, 25], size: [100, 100] },
+            { name: "First", tags: ["header"], text: "(set: $x to 1)\n[[Other]]", position: [0, 0] },
         ]);
         expect(story.stylesheet).toBe("tw-story { color: red; }");
         expect(story.script).toBe("window.x = 1 < 2;");
@@ -81,12 +81,13 @@ setup.x = 1;
         const story = parseTwine(`<html><body><div id="storeArea" data-size="3">
 <div tiddler="StoryTitle" tags="">Old story</div>
 <div tiddler="Start" tags="">Line one\\nLine two [[Next]]</div>
-<div tiddler="Next" tags="">The end.</div>
+<div tiddler="Next" tags="" twine-position="410,10">The end.</div>
 </div></body></html>`);
         expect(story.title).toBe("Old story");
         expect(story.format).toBe("sugarcube");
         expect(story.start).toBe("Start");
         expect(story.passages.map(p => p.text)).toEqual(["Line one\nLine two [[Next]]", "The end."]);
+        expect(story.passages.map(p => p.position)).toEqual([undefined, [410, 10]]);
     });
 
     test("something that isn't a Twine story", () => {
@@ -100,6 +101,29 @@ describe("the converted story", () => {
         expect(script.startsWith("@title Test story\n@start Start\n\n[[]]:\n@clear\n\n[[Intro]]:\nNot the start.")).toBe(true);
         expect(JSON.parse(result.files["squiffy.json"])).toMatchObject({ main: "story.squiffy" });
         expect(result.passages).toBe(2);
+    });
+
+    test("keeps where the passages are on Twine's map", () => {
+        const result = convertTwine(twee("Harlowe", `:: Start {"position":"100,200"}
+[[Room, 1]]
+
+:: Room, 1 {"position":"350,325","size":"200,100"}
+One
+
+:: Elsewhere
+Not on the map`));
+        // Box centres, from the top left one, stretched sideways
+        expect(JSON.parse(result.files["squiffy.json"]).map).toEqual({ sections: { "Start": [0, 0], "Room 1": [480, 125] } });
+        expect(result.files["squiffy.json"]).toContain("\"Room 1\": [480, 125]");
+    });
+
+    test("leaves out a Twine map that was never arranged", () => {
+        // Twine and Tweego put passages without positions in rows of ten
+        const passages = Array.from({ length: 25 }, (_, i) =>
+            `:: P${i} {"position":"${100 + (i % 10) * 125},${100 + Math.floor(i / 10) * 125}"}\nText`);
+        passages[3] = ":: P3 {\"position\":\"2000,2000\"}\nMoved";
+        const result = convertTwine(twee("Harlowe", passages.join("\n\n")));
+        expect(JSON.parse(result.files["squiffy.json"]).map).toBeUndefined();
     });
 
     test("tidies passage names that would break Squiffy links", () => {
