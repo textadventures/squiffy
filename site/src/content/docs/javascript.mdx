@@ -1,0 +1,138 @@
+---
+title: JavaScript
+description: Running JavaScript in a story, reading and setting attributes from it, and writing your own helpers
+---
+
+import Sample from "@components/Sample.astro";
+
+You can write a whole story without any JavaScript. When you need more, you can run JavaScript in any section or passage, and add your own [helpers](/helpers-reference/) and animations.
+
+## JavaScript in a section or passage
+
+Any section or passage can run some JavaScript when it is displayed. Indent it with four spaces or a tab, before the text.
+
+<Sample script="Clicking this [link] will show an alert.
+
+[link]:
+&#32;&#32;&#32;&#32;alert (&quot;Hello!&quot;);
+
+Text for the passage."></Sample>
+
+Only indented lines at the start of a section or passage are JavaScript. An indented line after some text is text.
+
+## Functions you can use
+
+Your JavaScript can use these functions:
+
+| Function | Description |
+|----------|-------------|
+| `squiffy.get("name")` | Get the value of an [attribute](/attributes/) |
+| `squiffy.set("name", value)` | Set the value of an attribute |
+| `squiffy.story.go("section")` | Go to a section |
+| `squiffy.story.seen("name")` | Returns `true` if the player has seen a section or passage |
+| `squiffy.story.visits("name")` | Returns the number of times the player has visited a section or passage, or 0 |
+| `squiffy.ui.write("text")` | Write some text, which can include Markdown and `{{...}}` |
+| `squiffy.ui.transition(fn)` | Run a transition effect, such as fading the screen to black. `fn` returns a Promise that resolves when the effect has finished, and links can't be clicked until then. See the [transitions example](https://github.com/textadventures/squiffy/tree/main/examples/transitions) |
+| `squiffy.ui.scrollToEnd()` | Scroll to the end of the story |
+| `squiffy.element` | The HTML element that contains the story |
+| `squiffy.registerHelper(name, fn)` | Add a helper. See [Creating custom helpers](#creating-custom-helpers) |
+| `squiffy.registerAnimation(name, fn)` | Add an animation for `{{#animate}}`. See the [animate example](https://github.com/textadventures/squiffy/tree/main/examples/animate) |
+
+`get` and `set` are also available on their own, so `get("score")` is the same as `squiffy.get("score")`.
+
+## Reading and setting attributes
+
+`squiffy.get` and `squiffy.set` read and change the same attributes as `@set` and `{{score}}`:
+
+```javascript
+    squiffy.set("score", 100);
+    squiffy.set("has_key", true);
+    var score = squiffy.get("score");
+```
+
+<Sample script="@set health = 100
+
+Health: {{health}}
+
+[Use JavaScript to modify health]
+
+[Use JavaScript to modify health]:
+&#32;&#32;&#32;&#32;squiffy.set(&quot;health&quot;, squiffy.get(&quot;health&quot;) - 15);
+&#32;&#32;&#32;&#32;squiffy.ui.write(&quot;Health reduced by JavaScript! New health: &quot; + squiffy.get(&quot;health&quot;));
+"></Sample>
+
+## Running code when the story starts
+
+JavaScript in a `@ui` block runs once when the story starts, before any text is displayed. The block goes at the top of your story, and ends with `---`. There's an example in [Creating custom helpers](#creating-custom-helpers), below.
+
+You can also put the JavaScript in a separate file with `@ui filename.js`.
+
+To add a script file to the page instead, as a `<script>` tag, use `@import my_script.js`. See [Importing files](/multiple-files/#importing-files).
+
+## Creating custom helpers
+
+You can add your own helpers by calling `squiffy.registerHelper` in a `@ui` block:
+
+```squiffy
+@ui
+    squiffy.registerHelper("shout", (text) => text.toUpperCase() + "!");
+---
+
+Welcome to the story. {{shout "hello"}}
+```
+
+This displays "Welcome to the story. HELLO!".
+
+`registerHelper` takes the helper's name and a function. Arguments written after the helper name are passed to the function in order. Named `key=value` arguments are passed in `options.hash` (`options` is always the last argument).
+
+### Returning HTML
+
+Text returned from a helper is escaped, so any `<` or `>` characters are displayed as-is rather than treated as HTML. To return HTML, wrap it in `squiffy.SafeString`. For example, this helper embeds a YouTube video:
+
+```squiffy
+@ui
+    squiffy.registerHelper("youtube", (id, options) => {
+        const width = options.hash.width || 560;
+        const height = options.hash.height || 315;
+        return new squiffy.SafeString(
+            `<iframe width="${width}" height="${height}" src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}" ` +
+            `title="YouTube video" frameborder="0" allowfullscreen></iframe>`);
+    });
+---
+
+Here's a video:
+
+{{youtube "dQw4w9WgXcQ" width=480 height=270}}
+```
+
+Only use `SafeString` for HTML you've built yourself. If part of the HTML comes from a player's input, escape it first.
+
+### Using attributes in a helper
+
+Inside a helper you can use `squiffy.get` and `squiffy.set` to read and change attributes, just as you can in a section's JavaScript. For example, this helper shows different text each time it's displayed, and then keeps showing the last one. It uses an attribute to count how many times it has been shown:
+
+```squiffy
+@ui
+    squiffy.registerHelper("visit", (attribute, ...args) => {
+        const items = args.slice(0, -1); // the last argument is "options"
+        const count = squiffy.get(attribute) || 0;
+        squiffy.set(attribute, count + 1);
+        return items[Math.min(count, items.length - 1)];
+    });
+---
+
+[[tutor]]:
+{{visit "tutorvisits" "“And you are?…”" "“Ahh, here you are…”" "“You again!”"}}
+
+[[Visit the tutor again]](tutor)
+```
+
+See the [text processor example](https://github.com/textadventures/squiffy/tree/main/examples/textprocessor) for both of these helpers.
+
+## Custom animations
+
+`squiffy.registerAnimation` adds an effect for [`{{#animate}}`](/dynamic-text/#animation), registered in a `@ui` block in the same way. Squiffy includes [Anime.js](https://animejs.com/) for this. See the [animate example](https://github.com/textadventures/squiffy/tree/main/examples/animate).
+
+## Embedding a story in your own page
+
+To control a story from JavaScript on your own web page, rather than from inside the story, see [Embedding Squiffy in a custom page](/embedding/).

@@ -1,0 +1,54 @@
+---
+title: Coming from Squiffy 5
+description: Opening a Squiffy 5 story in Squiffy 7, and converting its text processor syntax
+---
+
+Squiffy 6 was a complete rewrite of Squiffy 5, and Squiffy 7 builds on it. Stories that only use sections, passages, links and simple attributes should work without changes. The main difference is the text processor, for things like `{if ...}`, which Squiffy can convert for you.
+
+## What's changed
+
+- **The text processor.** Squiffy 5 had its own syntax for dynamic text. Squiffy now uses [Handlebars](https://handlebarsjs.com/), with `{{...}}`: see [Dynamic text](/dynamic-text/) and the [Helpers reference](/helpers-reference/).
+- **No account needed.** The old web editor needed a textadventures.co.uk account, and kept your stories on the server. The [editor](/editor/) at [app.squiffystory.com](https://app.squiffystory.com/) keeps them in your browser, or in a folder on your computer, and there's a [desktop app](/desktop-app/) too.
+- **Setting attributes.** Text in `@set` and in links now goes in quotes: `@set weapon = "sword"`. This changed in Squiffy 7, and is converted too: see [Coming from Squiffy 6](/coming-from-squiffy-6/#setting-attributes).
+
+For everything that's new since Squiffy 5, such as [animation](/dynamic-text/#animation), [live text](/dynamic-text/#live), [player input](/player-input/), the [story map](/story-map/) and single-file publishing, see [What's new in Squiffy 7](/whats-new/) and the rest of these docs.
+
+## Converting a story
+
+- **Editor:** open your `.squiffy` file with **Open file**, or open the folder it's in. If the story uses Squiffy 5 syntax, the editor offers to convert it. Review the changes afterwards, and use Undo if you want to go back. Anything that can't be converted automatically is marked as a problem.
+- **Command line:** run with `--convert-v5` to convert the file, keeping a backup of the original, then with `--convert-v6` for Squiffy 7's rules for setting attributes. See [Converting from Squiffy 5](/cli/#converting-from-squiffy-5).
+
+Anything that can't be converted reliably, such as an `{else:...}` that doesn't directly follow an `{if ...:...}`, is left as it is and listed with its line number. Squiffy also shows a warning when it builds a story that still contains Squiffy 5 syntax.
+
+Then play the story through, in the editor or with the command-line tool's `--serve`, to check that everything works.
+
+## Squiffy 5 syntax and what replaces it
+
+| Squiffy 5 | Squiffy 7 |
+|-----------|-----------|
+| `{attribute}` | `{{attribute}}` |
+| `{if class=warrior:You are a warrior.}` | `{{#if class = "warrior"}}You are a warrior.{{/if}}` |
+| `{if score>100:High score!}` | `{{#if score > 100}}High score!{{/if}}` |
+| `{if condition:text}{else:other text}` | `{{#if condition}}text{{else}}other text{{/if}}` |
+| `{@b+=1}` | `{{inc "b"}}` |
+| `{@b=5}` | `{{set "b" 5}}` |
+| `{if seen intro:...}` | `{{#if (seen "intro")}}...{{/if}}` |
+| `{passage name}` (embedding) | `{{embed "passage name"}}` |
+| `{rotate size:small:large}` | `{{rotate (array "small" "large") set="size"}}` |
+| `{label:1=text}` | `{{#label "1"}}text{{/label}}` |
+
+## The command-line tool
+
+The npm package has a new name. Run it with `npx`:
+
+```bash
+# Squiffy 5
+squiffy mygame.squiffy
+
+# Now
+npx @textadventures/squiffy-cli mygame.squiffy
+```
+
+The options are much the same, and there are some new ones, such as `--inline` for a single HTML file. See [Using Squiffy from the command line](/cli/).
+
+If you run into a problem converting a story, please [report it on GitHub](https://github.com/textadventures/squiffy/issues).

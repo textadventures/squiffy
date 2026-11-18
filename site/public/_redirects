@@ -8,7 +8,7 @@
 #
 # The Spanish pages (*_es) go to the same place as their English twins, since
 # the new docs are English only. Old pages whose name is still a page here
-# (/attributes, /cli, and /index, which Pages serves as the home page) need no
+# (/attributes, /cli, /javascript, and /index, which Pages serves as the home page) need no
 # rule - a rule would shadow the real page.
 #
 # Cloudflare Pages silently ignores everything past the first 100 rules in this
@@ -30,10 +30,9 @@
 /customise_es            /styling/                                                  301
 /embed                   /basic-concepts/#embed-text                                301
 /embed_es                /basic-concepts/#embed-text                                301
-/import                  /basic-concepts/#importing-files                           301
-/import_es               /basic-concepts/#importing-files                           301
-/javascript              /basic-concepts/#javascript                                301
-/javascript_es           /basic-concepts/#javascript                                301
+/import                  /multiple-files/#importing-files                           301
+/import_es               /multiple-files/#importing-files                           301
+/javascript_es           /javascript/                                               301
 /master                  /basic-concepts/#master-sections-and-passages              301
 /master_es               /basic-concepts/#master-sections-and-passages              301
 /replace                 /dynamic-text/#replace                                     301
@@ -50,9 +49,13 @@
 /start_es                /basic-concepts/#set-the-start-section                     301
 /title                   /basic-concepts/#set-the-title                             301
 /title_es                /basic-concepts/#set-the-title                             301
-/turncount               /basic-concepts/#turn-counting                             301
-/turncount_es            /basic-concepts/#turn-counting                             301
+/turncount               /basic-concepts/#running-a-passage-after-some-clicks         301
+/turncount_es            /basic-concepts/#running-a-passage-after-some-clicks         301
 
 # The old in-browser ScratchPad is now the editor.
 /scratchpad              https://app.squiffystory.com/                              301
 /scratchpad/*            https://app.squiffystory.com/                              301
+
+# Pages of these docs that have moved.
+/whats-new-7             /whats-new/                                                301
+/whats-new-7/            /whats-new/                                                301

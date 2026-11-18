@@ -42,6 +42,44 @@ export default defineConfig({
                 { icon: "github", label: "GitHub", href: "https://github.com/textadventures/squiffy" },
                 { icon: "discord", label: "Discord", href: "https://textadventures.co.uk/community/discord" }
             ],
+            sidebar: [
+                {
+                    label: "Start here",
+                    items: ["getting-started", "whats-new", "featured-examples"],
+                },
+                {
+                    label: "Writing stories",
+                    items: [
+                        "basic-concepts",
+                        "attributes",
+                        "dynamic-text",
+                        "player-input",
+                        "images-and-files",
+                        "multiple-files",
+                        "javascript",
+                    ],
+                },
+                {
+                    label: "The editor",
+                    items: ["editor", "story-map", "snippets", "desktop-app"],
+                },
+                {
+                    label: "Publishing",
+                    items: ["publishing", "styling", "cli", "embedding"],
+                },
+                {
+                    label: "Coming from…",
+                    items: [
+                        { label: "Twine", slug: "coming-from-twine" },
+                        { label: "Squiffy 6", slug: "coming-from-squiffy-6" },
+                        { label: "Squiffy 5", slug: "coming-from-squiffy-5" },
+                    ],
+                },
+                {
+                    label: "Reference",
+                    items: ["helpers-reference"],
+                },
+            ],
             editLink: {
                 baseUrl: "https://github.com/textadventures/squiffy/edit/main/site/",
             },

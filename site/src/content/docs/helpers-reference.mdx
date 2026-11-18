@@ -1,7 +1,5 @@
 ---
 title: Helpers reference
-sidebar:
-    order: 10
 ---
 
 import {Aside} from "@astrojs/starlight/components";
@@ -21,7 +19,7 @@ Squiffy processes all text through Handlebars, which means you can use:
 `{{#if}}`, `{{#unless}}` and `{{else if}}` accept conditions written with familiar operators:
 
 ```squiffy
-{{#if gender = "male"}}You are male.{{/if}}
+{{#if class = "warrior"}}You are a warrior.{{/if}}
 {{#if score > 100 and has_key}}You win!{{else}}Keep trying.{{/if}}
 {{#unless (seen "intro") or count >= 3}}Welcome!{{/unless}}
 ```
@@ -45,7 +43,7 @@ Squiffy processes all text through Handlebars, which means you can use:
 
 Values can be attribute names, numbers, quoted strings, `true`/`false`, or helper calls in parentheses such as `(seen "intro")` or `(length "inventory")`. For attribute names containing spaces, use square brackets: `{{#if [player name] = "Bob"}}`.
 
-Calculations are worked out first (`*`, `/` and `%` before `+` and `-`), then comparisons, then `not`, then `and`, then `or`. So `gold >= price * 2 + 1` means `gold >= ((price * 2) + 1)`, `not gender = "male"` means `not (gender = "male")`, and `a or b and c` means `a or (b and c)`. Use parentheses to group things differently, e.g. `(a or b) and c`. A `-` in front of a value makes it negative, e.g. `-score`.
+Calculations are worked out first (`*`, `/` and `%` before `+` and `-`), then comparisons, then `not`, then `and`, then `or`. So `gold >= price * 2 + 1` means `gold >= ((price * 2) + 1)`, `not class = "warrior"` means `not (class = "warrior")`, and `a or b and c` means `a or (b and c)`. Use parentheses to group things differently, e.g. `(a or b) and c`. A `-` in front of a value makes it negative, e.g. `-score`.
 
 Put spaces around `-` and `/` when they're operators. Without them they're part of a name: `my-score` is an attribute called "my-score", and `player/score` is a Handlebars path, but `my - score` subtracts.
 
@@ -258,9 +256,9 @@ You're playing: {{current}}
 
 {{!-- Check if more rounds remain --}}
 {{#if (length "rounds") > 0}}
-    [[Play next round]]
+[[Play next round]]
 {{else}}
-    [[Final round]]
+[[Final round]]
 {{/if}}
 ```
 
@@ -274,10 +272,10 @@ You picked up the sword.
 
 [use key]:
 {{#if (contains "inventory" "key")}}
-    {{remove "inventory" "key"}}
-    You used the key.
+{{remove "inventory" "key"}}
+You used the key.
 {{else}}
-    You don't have a key.
+You don't have a key.
 {{/if}}
 ```
 
@@ -287,9 +285,9 @@ You picked up the sword.
 
 [next task]:
 {{#if (length "tasks") > 0}}
-    Now doing: {{pop "tasks"}}
+Now doing: {{pop "tasks"}}
 {{else}}
-    All tasks complete!
+All tasks complete!
 {{/if}}
 ```
 
@@ -381,101 +379,10 @@ In addition to Squiffy's custom helpers, you have access to standard Handlebars 
 | `{{#unless}}...{{/unless}}` | Inverted conditional | `{{#unless game_over}}Keep playing{{/unless}}` |
 | `{{#each}}...{{/each}}` | Iterate over arrays (advanced usage) | Not commonly used in Squiffy |
 
-## Helper vs Directive
+## Helpers and directives
 
-Squiffy has two ways to modify attributes:
-
-### Directives (with `@`)
-
-Execute when a section or passage **loads**, before any rendering:
-
-```squiffy
-@set score = 100
-@inc counter
-@dec health
-@unset flag
-```
-
-- **Always execute**, regardless of any `{{#if}}` conditions in the text
-- Run once when the section/passage loads
-- Cannot be used inside conditionals
-
-### Helpers (with `{{}}`)
-
-Execute during **rendering**, at the point where they appear in the text:
-
-```squiffy
-{{set "score" 100}}
-{{inc "counter"}}
-{{dec "health"}}
-{{unset "flag"}}
-```
-
-- **Respect `{{#if}}` conditions** - only execute if the condition is true
-- Run at render time, when that part of the text is processed
-- Can be used inside conditionals and helpers
-
-**When to use each:**
-
-- Use **directives** for unconditional changes when a section/passage loads
-- Use **helpers** for conditional changes that depend on `{{#if}}` or other conditions
+`{{set}}`, `{{inc}}`, `{{dec}}` and `{{unset}}` run at the point in the text where they appear, so they respect `{{#if}}`. The `@set`, `@inc`, `@dec` and `@unset` directives always run when a section or passage is shown. See [Conditional attribute changes](/attributes/#conditional-attribute-changes).
 
 ## Creating custom helpers
 
-You can add your own helpers by calling `squiffy.registerHelper` from JavaScript in a `@ui` block. A `@ui` block goes at the top of your story, and the JavaScript in it runs once when the story starts, before any text is displayed. End the block with `---`:
-
-```squiffy
-@ui
-    squiffy.registerHelper("shout", (text) => text.toUpperCase() + "!");
----
-
-Welcome to the story. {{shout "hello"}}
-```
-
-This displays "Welcome to the story. HELLO!".
-
-`registerHelper` takes the helper's name and a function. Arguments written after the helper name are passed to the function in order. Named `key=value` arguments are passed in `options.hash` (`options` is always the last argument).
-
-### Returning HTML
-
-Text returned from a helper is escaped, so any `<` or `>` characters are displayed as-is rather than treated as HTML. To return HTML, wrap it in `squiffy.SafeString`. For example, this helper embeds a YouTube video:
-
-```squiffy
-@ui
-    squiffy.registerHelper("youtube", (id, options) => {
-        const width = options.hash.width || 560;
-        const height = options.hash.height || 315;
-        return new squiffy.SafeString(
-            `<iframe width="${width}" height="${height}" src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}" ` +
-            `title="YouTube video" frameborder="0" allowfullscreen></iframe>`);
-    });
----
-
-Here's a video:
-
-{{youtube "dQw4w9WgXcQ" width=480 height=270}}
-```
-
-Only use `SafeString` for HTML you've built yourself. If part of the HTML comes from a player's input, escape it first.
-
-### Using attributes in a helper
-
-Inside a helper you can use `squiffy.get` and `squiffy.set` to read and change attributes, just as you can in a section's JavaScript. For example, this helper shows different text each time it's displayed, and then keeps showing the last one. It uses an attribute to count how many times it has been shown:
-
-```squiffy
-@ui
-    squiffy.registerHelper("visit", (attribute, ...args) => {
-        const items = args.slice(0, -1); // the last argument is "options"
-        const count = squiffy.get(attribute) || 0;
-        squiffy.set(attribute, count + 1);
-        return items[Math.min(count, items.length - 1)];
-    });
----
-
-[[tutor]]:
-{{visit "tutorvisits" "“And you are?…”" "“Ahh, here you are…”" "“You again!”"}}
-
-[[Visit the tutor again]](tutor)
-```
-
-You can also put the JavaScript in a separate file with `@ui filename.js`. See the [text processor example](https://github.com/textadventures/squiffy/tree/main/examples/textprocessor) for both of these helpers, and the [animate example](https://github.com/textadventures/squiffy/tree/main/examples/animate) for custom animations, which are registered the same way using `squiffy.registerAnimation`.
+You can add your own helpers with JavaScript. See [Creating custom helpers](/javascript/#creating-custom-helpers).

@@ -1,8 +1,6 @@
 ---
 title: Customising styles
 description: How to change the colours, fonts and layout of an exported Squiffy story
-sidebar:
-    order: 15
 ---
 
 import {Aside} from "@astrojs/starlight/components";
@@ -11,10 +9,9 @@ A Squiffy story is an ordinary web page, so you change how it looks with CSS. Th
 
 ## Where to put your styles
 
-There are three ways to add your own CSS, depending on how you build your story:
+There are two ways to add your own CSS:
 
-- **Command-line tool or Vite plugin:** put your rules in a CSS file next to your story and [import](/basic-concepts/#importing-files) it with `@import my_style.css`. The exported `index.html` links to it *after* Squiffy's own styles, so your rules take precedence, and your changes survive every rebuild.
-- **Web editor:** imports aren't supported in the editor, so export your story with **Export HTML and JavaScript** and edit the `style.css` in the ZIP file. If you change your story and export it again, you'll need to copy your changes over to the new `style.css`. (With the single-file export, the same rules are in a `<style>` block at the top of the HTML file.)
+- **In your story:** put your rules in a CSS file in your story's folder, and [import](/multiple-files/#importing-files) it with `@import my_style.css`. In the editor, add the file with the **+** button in the files list. The published `index.html` links to it *after* Squiffy's own styles, so your rules take precedence, and your changes are kept every time you publish. The editor's preview uses it too.
 - **Your own page:** if you [embed Squiffy in a custom page](/embedding/), you control the HTML and CSS completely.
 
 <Aside>
@@ -81,7 +78,7 @@ If you've [kept your story in one mode](#light-and-dark-mode), you can give just
 | `--squiffy-text` | The story text | `#1f2328` | `#e4e4e7` |
 | `--squiffy-link` | Links, [continue](/dynamic-text/#animation) links and the keyboard focus outline | `#1d5fd6` | `#7aa7ff` |
 | `--squiffy-link-hover` | Links under the mouse pointer | `#0f3f99` | `#b0cbff` |
-| `--squiffy-muted` | The Restart button, and links waiting for [valid input](/basic-concepts/#input-validation) | `#6b6f76` | `#9a9ca3` |
+| `--squiffy-muted` | The Restart button, and links waiting for [valid input](/player-input/#input-validation) | `#6b6f76` | `#9a9ca3` |
 | `--squiffy-border` | The lines between sections | `#e2e2e6` | `#34343a` |
 | `--squiffy-error` | Inputs that fail validation | `#c62828` | `#ff7b72` |
 | `--squiffy-success` | Inputs that pass validation | `#2e7d32` | `#6cc070` |
@@ -193,7 +190,7 @@ The exported `style.css` combines two sets of rules: the page layout, and the st
 | `a.squiffy-link` | Links | `color: var(--squiffy-link)`, underlined, with a short fade when the colour changes, and an outline when focused with the keyboard |
 | `a.squiffy-link[data-handler="rotate"]`, `a.squiffy-link[data-handler="sequence"]` | [Rotate and sequence](/dynamic-text/#rotate) links | Dotted underline, since they change in place rather than moving the story on |
 | `a.squiffy-link.disabled` | Links that can no longer be clicked | Same colour as the surrounding text, no underline |
-| `a.squiffy-link.validation-disabled` | Links disabled until the player fills in the [inputs](/basic-concepts/#input-validation) correctly | `color: var(--squiffy-muted)`, no underline |
+| `a.squiffy-link.validation-disabled` | Links disabled until the player fills in the [inputs](/player-input/#input-validation) correctly | `color: var(--squiffy-muted)`, no underline |
 | `button.squiffy-header-button` | The Restart button | `color: var(--squiffy-muted)`, no border or background, underlined when the mouse pointer is over it |
 | `.squiffy-output-section` | Each section's output | A `1px solid var(--squiffy-border)` line underneath, and a `1em` gap, except for the latest one |
 | `.squiffy-output-passage` | Each passage's output | As above |

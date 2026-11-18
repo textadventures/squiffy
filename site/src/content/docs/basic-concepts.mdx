@@ -1,7 +1,5 @@
 ---
 title: Basic concepts
-sidebar:
-    order: 3
 ---
 
 import Sample from "@components/Sample.astro";
@@ -217,34 +215,7 @@ If the player goes back, they go back past sections and passages that moved on w
 A `{{goto}}` in the [master section](#master-sections-and-passages) runs in every section, including the one it goes to. Use [`at`](/helpers-reference/#navigation-helpers) to leave that one out: `{{#if health <= 0 and not (at "death")}}{{goto "death"}}{{/if}}`.
 </Aside>
 
-## JavaScript
-
-Any section or passage can call some JavaScript when it is displayed. Simply indent with four spaces or a tab, before the text.
-
-<Sample script="Clicking this [link] will show an alert.
-
-[link]:
-&#32;&#32;&#32;&#32;alert (&quot;Hello!&quot;);
-
-Text for the passage."></Sample>
-
-Your JavaScript can use these functions:
-
-| Function | Description |
-|----------|-------------|
-| `squiffy.get("name")` | Get the value of an [attribute](/attributes/#using-attributes-in-javascript) |
-| `squiffy.set("name", value)` | Set the value of an attribute |
-| `squiffy.story.go("section")` | Go to a section |
-| `squiffy.story.seen("name")` | Returns `true` if the player has seen a section or passage |
-| `squiffy.story.visits("name")` | Returns the number of times the player has visited a section or passage, or 0 |
-| `squiffy.ui.write("text")` | Write some text, which can include Markdown and `{{...}}` |
-| `squiffy.ui.transition(fn)` | Run a transition effect, such as fading the screen to black. `fn` returns a Promise that resolves when the effect has finished, and links can't be clicked until then. See the [transitions example](https://github.com/textadventures/squiffy/tree/main/examples/transitions) |
-| `squiffy.ui.scrollToEnd()` | Scroll to the end of the story |
-| `squiffy.element` | The HTML element that contains the story |
-
-`get` and `set` are also available on their own, so `get("score")` is the same as `squiffy.get("score")`.
-
-## Turn counting
+## Running a passage after some clicks
 
 You can trigger a passage after the player has made a certain number of clicks within a section. For example, you can display some extra text, to indicate the passage of time. Or, the passage might run some JavaScript to automatically move the player to another section.
 
@@ -312,34 +283,6 @@ The current carries you away. THE END.
 
 An `@end` in one of a section's passages marks the whole section as an ending. `@end` doesn't change what the player sees.
 
-## Attributes
-
-Attributes are variables that store information about your story's state, such as scores, inventory, player choices, and any other data that changes during gameplay.
-
-You can set an attribute using the `@set` directive:
-
-```squiffy
-@set score = 100
-@set player_name = "Alice"
-```
-
-Text goes in quotes, but numbers don't. Without quotes, a word is another attribute, so `@set best = score` copies the value of `score`.
-
-And read it using double curly braces:
-
-```squiffy
-Your score is {{score}}.
-Hello, {{player_name}}!
-```
-
-You can also set attributes directly from links:
-
-```squiffy
-Are you [[male]](start, gender="male") or [[female]](start, gender="female")?
-```
-
-For a complete guide to attributes, including comparisons, conditionals, incrementing/decrementing values, and advanced features, see the [Attributes](/attributes/) documentation.
-
 ## Embed text
 
 You can embed text from another section, or from a passage in the current section, using `{{embed "section or passage name"}}`.
@@ -347,13 +290,13 @@ You can embed text from another section, or from a passage in the current sectio
 <Sample script="[[section1]]:
 Here is some text from the next section: {{embed &quot;section2&quot;}}
 
-    Here is some text from a passage in this section: {{embed &quot;passage&quot;}}
+Here is some text from a passage in this section: {{embed &quot;passage&quot;}}
 
-    [passage]:
-    Text from passage.
+[passage]:
+Text from passage.
 
-    [[section2]]:
-    Text from next section."></Sample>
+[[section2]]:
+Text from next section."></Sample>
 
 ## Track which sections and passages have been seen
 
@@ -391,166 +334,6 @@ e.g. to clear the screen before every section, and to count how many sections th
 @inc sections_visited
 ```
 
-## Stories in several files
+## Next steps
 
-A story can be split across several `.squiffy` files. To make a folder of files one story, add a project file called `squiffy.json` to the folder, naming the story's main file:
-
-```json
-{
-  "$schema": "https://squiffystory.com/schema/squiffy.json",
-  "version": 1,
-  "main": "story.squiffy"
-}
-```
-
-Every `.squiffy` file in the folder and its subfolders is then part of the story. You don't need to `@import` them.
-
-A `squiffy.json` also means the story uses Squiffy 7's rules for [setting attributes](/attributes/#setting-attributes), where text goes in quotes: `@set weapon = "sword"`. A story without one keeps the Squiffy 6 rules. See [Coming from Squiffy 6](/whats-new-7/#coming-from-squiffy-6).
-
-- The main file comes first, then the other files in order of their paths. That order decides how `+++` sections are numbered and, if two sections have the same name, which one wins (you'll get a warning).
-- The story starts in the main file, at its first section or its [`@start`](#set-the-start-section) section, and the main file's `@title` is the story's title. `@title` and `@start` in other files are ignored, with a warning.
-- A section in one file can link to a section in any other.
-- Paths to images and other files, and in `@import`, are relative to the main file's folder, whichever file they're in. So you can move a file into a subfolder without changing it.
-- `version` is the version of the project file format, which is 1. A version of Squiffy that doesn't know the version refuses to build the story, saying you need a newer Squiffy.
-
-The `$schema` line is optional. It lets text editors such as VS Code check the file and suggest what can go in it.
-
-### Leaving files out
-
-To keep a `.squiffy` file in the folder without it being part of the story, list it under `exclude`:
-
-```json
-{
-  "version": 1,
-  "main": "story.squiffy",
-  "exclude": ["notes.squiffy", "drafts/**"]
-}
-```
-
-Paths are relative to the folder `squiffy.json` is in. `*` and `?` match within a file or folder name, and `**` across folders. Naming a folder leaves out everything in it, so `drafts` and `drafts/**` are the same. Files in `node_modules`, and in folders whose names start with a dot, are always left out.
-
-The editor also saves where you've put sections and passages on its [story map](/editor/#the-story-map) in `squiffy.json`, under `map`. Only the editor uses it.
-
-### Building a story with a project file
-
-With the [command-line tool](/cli/#stories-in-several-files), run it in the folder without a file name, or give it the folder or the main file. Give it any other `.squiffy` file, and it builds just that file, so several separate stories can still share a folder.
-
-With the [Vite plugin](/embedding/#using-vite), import the main file.
-
-### Importing files
-
-Without a `squiffy.json`, a story is its main file and whatever that imports:
-
-```squiffy
-@import other_file.squiffy
-```
-
-This syntax also accepts wildcards, so you can include all .squiffy files in a directory:
-
-```squiffy
-@import *.squiffy
-```
-
-In a story with a `squiffy.json`, an `@import` of a `.squiffy` file that's already part of the story isn't needed, and the editor offers to remove it. An `@import` in the main file still adds the file at that point in the story.
-
-JavaScript and CSS files always need an `@import`, with or without a `squiffy.json`:
-
-```squiffy
-@import my_script.js
-@import my_style.css
-```
-
-## User Input
-
-You can capture text input from players using HTML input elements. The value will be stored in an attribute that you can reference later in your story.
-
-<Sample script="What is your name?
-
-&lt;input type=&quot;text&quot; data-attribute=&quot;player_name&quot; placeholder=&quot;Enter your name...&quot;&gt;
-
-[[Begin the adventure]]
-
-[[Begin the adventure]]:
-Welcome, {{player_name}}! Your adventure begins now."></Sample>
-
-The `data-attribute` specifies which attribute will store the input value. You can then reference it using `{{player_name}}` or `{{get "player_name"}}`.
-
-### Input Validation
-
-Squiffy supports HTML5 input validation attributes. When validation attributes are present, section and passage links will be automatically disabled until all inputs pass validation.
-
-Supported validation attributes include:
-- `required` - field must be filled
-- `minlength` / `maxlength` - text length constraints
-- `min` / `max` - numeric constraints
-- `pattern` - regular expression validation
-- `type` - format validation (email, url, number, etc.)
-
-<Sample script="Please tell us about yourself:
-
-Name: &lt;input type=&quot;text&quot; data-attribute=&quot;name&quot; required minlength=&quot;2&quot; placeholder=&quot;At least 2 characters&quot;&gt;
-
-Age: &lt;input type=&quot;number&quot; data-attribute=&quot;age&quot; required min=&quot;1&quot; max=&quot;120&quot;&gt;
-
-Email: &lt;input type=&quot;email&quot; data-attribute=&quot;email&quot; required&gt;
-
-[[Submit]]
-
-[[Submit]]:
-Thank you, {{name}}! We've recorded your information.
-
-Age: {{age}}
-
-Email: {{email}}"></Sample>
-
-In this example, the [[Submit]] link will be disabled (grayed out and unclickable) until:
-- The name is at least 2 characters long
-- The age is a number between 1 and 120
-- The email is in a valid email format
-
-Invalid inputs are highlighted with a red border, while valid inputs show a green border. As the player types, the validation updates in real-time, and links automatically become clickable once all inputs are valid.
-
-You can use other HTML input types as well:
-
-<Sample script="Choose your preferences:
-
-Difficulty: &lt;select data-attribute=&quot;difficulty&quot; required&gt;
-    &lt;option value=&quot;&quot;&gt;-- Select --&lt;/option&gt;
-    &lt;option value=&quot;easy&quot;&gt;Easy&lt;/option&gt;
-    &lt;option value=&quot;normal&quot;&gt;Normal&lt;/option&gt;
-    &lt;option value=&quot;hard&quot;&gt;Hard&lt;/option&gt;
-&lt;/select&gt;
-
-Comments: &lt;textarea data-attribute=&quot;comments&quot; rows=&quot;3&quot; maxlength=&quot;200&quot;&gt;&lt;/textarea&gt;
-
-[[Start game]]
-
-[[Start game]]:
-Starting game on {{difficulty}} difficulty.
-
-{{#if comments}}Your comment: {{comments}}{{/if}}"></Sample>
-
-## Images and other files
-
-*Images and other files work with the [command-line tool](/cli/#images-and-other-files), but not yet in the web editor.*
-
-Put the image next to your `.squiffy` file (or in a folder below it) and use Markdown image syntax:
-
-```squiffy
-![A sleeping cat](cat.png)
-```
-
-You can also use HTML, for example for sound and video:
-
-```squiffy
-<img src="images/map.png" alt="Map of the island">
-<audio src="sounds/rain.mp3" controls></audio>
-```
-
-Images are scaled down to fit the page width (see [Customising styles](/styling/#page-layout)).
-
-## Custom HTML and CSS
-
-To add your own styles when using the command-line tool, put them in a CSS file and [import](#importing-files) it with `@import my_style.css`. The exported `index.html` links to it after Squiffy's own stylesheet, so your rules take precedence. See [Customising styles](/styling/) for the rules you're most likely to want to change.
-
-For complete control over the HTML page, you can [embed Squiffy in a custom page](/embedding/).
+To remember what the player has done, and show different text depending on it, see [Attributes](/attributes/). For the other things a story can do, see the rest of **Writing stories** in the sidebar.

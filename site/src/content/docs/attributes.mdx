@@ -1,7 +1,5 @@
 ---
 title: Attributes
-sidebar:
-    order: 4
 ---
 
 import Sample from "@components/Sample.astro";
@@ -32,7 +30,7 @@ Text goes in quotes, and numbers and `true` or `false` don't. The value can also
 The value works just like a condition in `{{#if}}`: a word on its own is an attribute, so `@set weapon = sword` would set `weapon` to the value of an attribute called `sword`, not to the text "sword".
 
 <Aside>
-Stories made with Squiffy 6 used different rules: text didn't need quotes, and another attribute was written as `@score`. See [Coming from Squiffy 6](/whats-new-7/#coming-from-squiffy-6) for how a story is converted.
+Stories made with Squiffy 6 used different rules: text didn't need quotes, and another attribute was written as `@score`. See [Coming from Squiffy 6](/coming-from-squiffy-6/) for how a story is converted.
 </Aside>
 
 For boolean (true/false) values, to set as true:
@@ -218,7 +216,7 @@ You sell it for twice the price of a sword. You now have {{gold}} gold."></Sampl
 You can display the value of an attribute using `{{name}}` (if the attribute name is all one word), or `{{get "attribute name"}}` for multi-word attributes or when the attribute name comes from an expression.
 
 ```squiffy
-You chose {{gender}}.
+You chose the {{weapon}}.
 Your full name is {{get "player name"}}.
 ```
 
@@ -251,10 +249,10 @@ You are now in the {{room}}.
 
 In this example, `{{get room}}` looks up the value of `room` (e.g., "kitchen"), then uses that as the name of another attribute to retrieve (getting the description stored in the `kitchen` attribute).
 
-You can also read a value using JavaScript:
+You can also read a value using [JavaScript](/javascript/#reading-and-setting-attributes):
 
 ```javascript
-    var gender = squiffy.get("gender");
+    var weapon = squiffy.get("weapon");
 ```
 
 ## Comparing attributes
@@ -344,9 +342,9 @@ You open the cupboard.
 [cupboard]:
 The cupboard is
 {{#if (seen &quot;open&quot;)}}
-    open, and there are empty bottles inside.
+open, and there are empty bottles inside.
 {{else}}
-    closed.
+closed.
 {{/if}}"></Sample>
 
 You can also use JavaScript:
@@ -400,7 +398,7 @@ Following a [`{{goto}}`](/basic-concepts/#go-to-another-section) isn't a turn, a
 
 Squiffy sets `turns` itself, so don't set it in your story: the editor underlines it if you do.
 
-This is different from [turn counting within a section](/basic-concepts/#turn-counting), which counts passage clicks in the current section only, and starts again in each new section.
+This is different from [turn counting within a section](/basic-concepts/#running-a-passage-after-some-clicks), which counts passage clicks in the current section only, and starts again in each new section.
 
 ### The `{{at}}` helper
 
@@ -504,38 +502,6 @@ A nice balanced meal!
 {{else}}
 A light meal today.
 {{/if}}"></Sample>
-
-## Using attributes in JavaScript
-
-You can interact with attributes using JavaScript in any section or passage:
-
-### Setting values
-
-```javascript
-    squiffy.set("attribute_name", value);
-    squiffy.set("score", 100);
-    squiffy.set("has_key", true);
-```
-
-### Getting values
-
-```javascript
-    var score = squiffy.get("score");
-    var hasKey = squiffy.get("has_key");
-```
-
-### Example with JavaScript
-
-<Sample script="@set health = 100
-
-Health: {{health}}
-
-[Use JavaScript to modify health]
-
-[Use JavaScript to modify health]:
-&#32;&#32;&#32;&#32;squiffy.set(&quot;health&quot;, squiffy.get(&quot;health&quot;) - 15);
-&#32;&#32;&#32;&#32;squiffy.ui.write(&quot;Health reduced by JavaScript! New health: &quot; + squiffy.get(&quot;health&quot;));
-"></Sample>
 
 ## Advanced: Arrays and complex data
 

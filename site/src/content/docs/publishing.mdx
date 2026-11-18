@@ -1,0 +1,35 @@
+---
+title: Publishing your story
+description: Turning your story into a web page, and sharing it
+---
+
+Squiffy creates HTML, CSS and JavaScript files, which you can upload anywhere that hosts web pages, such as [textadventures.co.uk](https://textadventures.co.uk/), [itch.io](https://itch.io/) or your own website. Players don't need to download or install anything. You don't need to share your `.squiffy` files: everything the game needs is in the HTML and JavaScript.
+
+## Publishing from the editor
+
+The editor's **File** menu has these options, under **Publish**:
+
+- **HTML and JavaScript (.zip)** - Creates a ZIP file containing `index.html`, `style.css`, `story.js` and `squiffy.runtime.global.js`, along with your story's images and other files. Upload these files to any web server.
+
+- **HTML (one file)** - Creates a single self-contained HTML file with all the CSS, JavaScript and images embedded. This is ideal for easy sharing, uploading to platforms that only accept one file, or offline distribution.
+
+- **JavaScript only** - Creates just the `story.js` file, useful if you want to [embed your story in your own page](/embedding/).
+
+**File > Download project (.zip)** is different: it downloads your story's own files, for a backup or for editing elsewhere.
+
+## Publishing from the command line
+
+The [command-line tool](/cli/) writes the same files, and `--inline` and `--zip` make a single HTML file or a zip. See [Output formats](/cli/#output-formats).
+
+## Where to put it
+
+- **[textadventures.co.uk](https://textadventures.co.uk/)** lists games made with any system. See the [catalogue of Squiffy games](https://textadventures.co.uk/games/platform/squiffy) for what other people have made.
+- **[itch.io](https://itch.io/)** can host HTML games: upload the **HTML and JavaScript (.zip)** and mark it to be played in the browser.
+- **Your own website**: upload the files from the zip, or the single HTML file.
+
+## What players get
+
+- **Their progress is saved** in their browser, so they can close the page and carry on where they left off when they come back. If you publish a changed version of your story at the same address, a returning player picks up from their saved game, so use **Restart** to see your changes.
+- **A Restart button**, and a button to switch between light and dark (see [Light and dark mode](/styling/#light-and-dark-mode)).
+
+To change how your story looks, see [Customising styles](/styling/).

@@ -1,0 +1,37 @@
+---
+title: Coming from Squiffy 6
+description: Opening a Squiffy 6 story in Squiffy 7, and what's changed
+---
+
+Squiffy 6 stories still work in Squiffy 7, and the editor and the command-line tool can convert them to Squiffy 7's rules for you. This page covers what's different. For everything that's new, see [What's new in Squiffy 7](/whats-new/).
+
+If you had unsaved work in the Squiffy 6 editor, the home page offers to open it.
+
+The Squiffy 6 editor opened and saved a single `.squiffy` file. To edit a story's file where it is, open the folder it's in. Otherwise, use **Open file** to copy it into your browser.
+
+## Setting attributes
+
+In Squiffy 6, text in `@set` and link assignments didn't need quotes, and another attribute was written with an `@`. A story with a [`squiffy.json`](/multiple-files/), which every story made in the Squiffy 7 editor has, uses the new rules:
+
+| Squiffy 6 | Squiffy 7 |
+|-----------|-----------|
+| `@set weapon = sword` | `@set weapon = "sword"` |
+| `@set best = @score` | `@set best = score` |
+| `[[Go]](next, name = Bob, gold += @price)` | `[[Go]](next, name = "Bob", gold += price)` |
+
+Numbers, `true` and `false`, `@set has_key`, `@set not has_key`, `:=`, `@inc` and `@dec` are the same in both.
+
+A story without a `squiffy.json` keeps the Squiffy 6 rules, so it works unchanged. When a story gets a `squiffy.json`, its assignments are converted:
+
+- **Editor:** opening a Squiffy 6 file in the browser converts it, and so does adding a `squiffy.json` to a folder (when you add a second file, or use the story map). Open files are changed in the editor, so you can use Undo.
+- **CLI:** run with `--convert-v6`, which converts the story and adds a `squiffy.json`. See [Converting from Squiffy 6](/cli/#converting-from-squiffy-6).
+
+Anything that can't be converted exactly, such as text with both kinds of quote in it, is left as it is and listed so you can change it by hand. In a story with a `squiffy.json`, the editor underlines assignments that still look like Squiffy 6, with a quick fix: an attribute written as `@score`, and text without quotes, such as `@set greeting = Hello there`, or `@set weapon = sword` when there's no attribute called `sword`.
+
+## The `turns` attribute
+
+Squiffy 7 counts the links the player clicks in an attribute called [`turns`](/attributes/#counting-turns). If your story keeps its own count called `turns`, for example with `@inc turns` in a master section, Squiffy now adds to it as well, so your count will go up twice as fast. You can take your own counting out and use Squiffy's, or rename your attribute. The editor underlines anywhere a story sets `turns`.
+
+## Starting the story
+
+In Squiffy 6, an `@import` above the main file's first section made the story begin in the imported file. Squiffy 7 begins in the main file. If your story relied on the old behaviour, choose the start section with [`@start`](/basic-concepts/#set-the-start-section).
