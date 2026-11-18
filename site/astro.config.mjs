@@ -78,7 +78,7 @@ export default defineConfig({
                 },
                 {
                     label: "Reference",
-                    items: ["helpers-reference"],
+                    items: ["syntax", "helpers-reference"],
                 },
             ],
             editLink: {
