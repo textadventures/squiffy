@@ -5,7 +5,7 @@
 
 import type { Location } from "./language-service.js";
 import type {
-    Diagnostic, EmbedNode, LinkNode, PassageNode, Position, Range, SectionNode, SquiffyFile,
+    Diagnostic, EmbedNode, GotoNode, LinkNode, PassageNode, Position, Range, SectionNode, SquiffyFile,
 } from "./syntax.js";
 
 export interface StoryGraph {
@@ -58,7 +58,7 @@ export type GraphEdgeKind =
     // {{embed}}: the target's content is shown here, so its links are too, but it isn't
     // navigation, so it doesn't make the target reachable
     | "embed"
-    // {{goto}}, reserved for when it's added (#375)
+    // {{goto}} (#375)
     | "goto"
     // squiffy.story.go("name") in JavaScript, with a literal section name
     | "script";
@@ -93,6 +93,7 @@ export interface GraphUsage {
     sectionNode: SectionNode;
     link?: LinkNode;
     embed?: EmbedNode;
+    goto?: GotoNode;
 }
 
 export type GraphTarget =
@@ -207,6 +208,8 @@ export function buildStoryGraph(source: GraphSource): StoryGraph {
                 }
                 else if (statement.type == "text") {
                     if (/\{\{~?\s*section\s/.test(statement.text)) unknown.add(from);
+                    // {{goto}} with an expression, e.g. {{goto (random (array "a" "b"))}}
+                    if (/\{\{~?\s*goto\s+[^\s"'}]/.test(statement.text)) unknown.add(from);
                     // {{live "x" section="name"}} and passage="name" show that section's or
                     // passage's text, and so its links, as {{embed}} does
                     for (const match of statement.text.matchAll(/\{\{~?\s*live\s[^}]*?\b(section|passage)\s*=\s*(["'])([^"']*)\2[^}]*\}\}/g)) {
@@ -278,11 +281,15 @@ export function buildStoryGraph(source: GraphSource): StoryGraph {
         if (from === undefined) continue;
         const target = source.resolve(usage);
         const to = target && (target.kind == "section" ? sectionId(target.name) : passageId(target.section, target.name));
-        const range = usage.link?.range ?? usage.embed!.range;
+        const range = (usage.link ?? usage.embed ?? usage.goto)!.range;
         const conditional = isConditional(usage.container, range.start);
         const location = { file: usage.file, range };
         if (usage.embed) {
             edges.push({ from, ...(to ? { to } : { target: usage.embed.name }), kind: "embed", conditional, location });
+            continue;
+        }
+        if (usage.goto) {
+            edges.push({ from, ...(to ? { to } : { target: usage.goto.name }), kind: "goto", conditional, location });
             continue;
         }
         const link = usage.link!;

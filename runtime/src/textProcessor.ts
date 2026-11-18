@@ -48,6 +48,27 @@ export class TextProcessor {
             return value;
         };
 
+        // {{goto "section"}} and {{goto "section" after=3000}} (#375): the runtime goes there once
+        // the section or passage being shown has been written. Only the first one counts.
+        this.handlebars.registerHelper("goto", (...args: any[]) => {
+            const options = args.pop();
+            const section = args.length ? unwrapValue(args[0]) : undefined;
+            if (typeof section != "string" || !section || !(section in this.getStory().sections)) {
+                return new Handlebars.SafeString(errorHtml("Error in {{goto}}:",
+                    section === undefined ? "expected a section name, e.g. {{goto \"cave\"}}" : `there is no section called "${section}"`));
+            }
+            let after = 0;
+            if (options.hash.after !== undefined) {
+                after = Number(unwrapValue(options.hash.after));
+                if (!Number.isFinite(after) || after < 0) {
+                    return new Handlebars.SafeString(errorHtml("Error in {{goto}}:",
+                        `after= should be a number of milliseconds, e.g. after=3000, not "${options.hash.after}"`));
+                }
+            }
+            this.goto ??= { section, after };
+            return "";
+        });
+
         // State modification helpers (side effects, no output)
         // These execute at render time, so they respect {{#if}} conditions
         this.handlebars.registerHelper("set", (attribute: string, value: any) => {
@@ -252,6 +273,10 @@ export class TextProcessor {
         template(this.state.getStore());
         return this.evaluated;
     }
+
+    // Where a {{goto}} asked to go. The runtime clears it before showing a section or passage, and
+    // follows it afterwards.
+    goto: { section: string; after: number } | null = null;
 
     private expressionCache = new Map<string, HandlebarsTemplateDelegate>();
     // Where the __value helper puts the value of the expression being evaluated

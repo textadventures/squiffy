@@ -124,6 +124,42 @@ describe("story graph", () => {
         expect(nodeOf(graph, "section:shared").embedded).toBe(true);
     });
 
+    test("{{goto}} is navigation, and an expression in it is an unknown exit", async () => {
+        const graph = await one([
+            "[[a]]:", "{{#if dead}}{{goto \"death\"}}{{/if}}", "[look]", "",
+            "[look]:", "{{goto 'b'}}", "",
+            "[[b]]:", "{{goto \"nowhere\" after=1000}}", "",
+            "[[c]]:", "{{goto (random (array \"a\" \"b\"))}}", "",
+            "[[death]]:", "@end",
+        ].join("\n"));
+        expect(edgeSummary(graph.edges)).toEqual([
+            "section:a -> section:death (goto, conditional)",
+            "section:a -> passage:a/look (passage-link)",
+            "passage:a/look -> section:b (goto)",
+            "section:b -> ? (goto)",
+        ]);
+        expect(graph.edges[3].target).toBe("nowhere");
+        expect(reachable(graph)).toEqual(["section:a", "passage:a/look", "section:b", "section:death"]);
+        expect(graph.nodes.filter(n => n.unknownExits).map(n => n.id)).toEqual(["section:c"]);
+        expect(deadEnds(graph)).toEqual([]);
+    });
+
+    test("{{goto}} names can be followed, found, renamed and completed", async () => {
+        const main = "[[a]]:\n{{goto \"b\"}}\n\n[[b]]:\n@end\n{{goto \"";
+        const ls = service({ "story.squiffy": main });
+        const position = { line: 1, character: 9 };
+        expect(await ls.getDefinition("story.squiffy", position)).toEqual({
+            file: "story.squiffy", range: { start: { line: 3, character: 2 }, end: { line: 3, character: 3 } },
+        });
+        expect(await ls.getReferences("story.squiffy", position, false)).toEqual([
+            { file: "story.squiffy", range: { start: { line: 1, character: 0 }, end: { line: 1, character: 10 } } },
+        ]);
+        const rename = await ls.getRenameEdits("story.squiffy", position, "end");
+        expect(rename && "edit" in rename && apply(main, rename.edit!["story.squiffy"])).toBe("[[a]]:\n{{goto \"end\"}}\n\n[[end]]:\n@end\n{{goto \"");
+        const items = await ls.getCompletions("story.squiffy", { line: 5, character: 8 });
+        expect(items.map(i => i.label)).toEqual(["a", "b"]);
+    });
+
     test("links inside {{#if}} are conditional, and can be followed", async () => {
         const graph = await one("[[a]]:\n{{#if key}}\nOpen the [[door]].\n{{else}}\nIt's locked. [[Back]](a)\n{{/if}}\n[[Wait]](a)\n\n[[door]]:\n@end");
         expect(edgeSummary(graph.edges)).toEqual([

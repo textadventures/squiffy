@@ -8,7 +8,7 @@
 
 import { analyse, Analysis, ExternalFiles, ParseCache } from "./analyse.js";
 import type {
-    Diagnostic, EmbedNode, LinkNode, PassageNode, Position, Range, SectionNode, SnippetNode, SquiffyFile,
+    Diagnostic, EmbedNode, GotoNode, LinkNode, PassageNode, Position, Range, SectionNode, SnippetNode, SquiffyFile,
 } from "./syntax.js";
 import { getStoryFiles, globToRegExp, parseProjectFile, PROJECT_FILENAME, ProjectFile } from "./project.js";
 import { convertV5Syntax, findV5Syntax } from "./v5.js";
@@ -147,7 +147,7 @@ type SymbolRef =
 const sameSymbol = (a: SymbolRef, b: SymbolRef) =>
     a.kind == b.kind && a.name == b.name && (a.kind == "section" || a.section == (b as typeof a).section);
 
-// A link or embed, with where it is
+// A link, embed or goto, with where it is
 interface Usage {
     file: string;
     container: SectionNode | PassageNode;
@@ -155,7 +155,10 @@ interface Usage {
     sectionNode: SectionNode;
     link?: LinkNode;
     embed?: EmbedNode;
+    goto?: GotoNode;
 }
+
+const usageRange = (usage: Usage) => (usage.link ?? usage.embed ?? usage.goto)!.range;
 
 // The analysis, indexed for lookups
 interface Index {
@@ -410,6 +413,9 @@ export function createLanguageService(options: LanguageServiceOptions): Language
                     for (const embed of container.embeds) {
                         index.usages.push({ file: path, container, sectionNode: node, embed });
                     }
+                    for (const goto of container.gotos) {
+                        index.usages.push({ file: path, container, sectionNode: node, goto });
+                    }
                     for (const statement of container.body) {
                         if (statement.type == "attribute") {
                             const name = attributeName(statement.value);
@@ -483,6 +489,10 @@ export function createLanguageService(options: LanguageServiceOptions): Language
             if (index.sections.has(name)) return { kind: "section", name };
             return undefined;
         }
+        if (usage.goto) {
+            const name = usage.goto.name;
+            return name && index.sections.has(name) ? { kind: "section", name } : undefined;
+        }
         const link = usage.link!;
         if (link.linkType == "section") {
             if (link.form == "next") {
@@ -513,11 +523,11 @@ export function createLanguageService(options: LanguageServiceOptions): Language
         return { file: section.file, range: passage.nameRange };
     }
 
-    // What's at a position: a link, an embed, or the name in a section or passage header.
+    // What's at a position: a link, an embed, a goto, or the name in a section or passage header.
     async function symbolAt(index: Index, path: string, position: Position): Promise<{ symbol: SymbolRef; range: Range; usage?: Usage } | undefined> {
         for (const usage of index.usages) {
             if (usage.file != path) continue;
-            const range = usage.link?.range ?? usage.embed!.range;
+            const range = usageRange(usage);
             if (!contains(range, position)) continue;
             const symbol = resolveUsage(index, usage);
             return symbol ? { symbol, range, usage } : undefined;
@@ -547,6 +557,7 @@ export function createLanguageService(options: LanguageServiceOptions): Language
     // exactly, e.g. a target that spans lines.
     function nameRangeInLink(index: Index, usage: Usage, name: string): Range | undefined {
         if (usage.embed) return usage.embed.nameRange;
+        if (usage.goto) return usage.goto.nameRange;
         const link = usage.link!;
         if (link.form == "next") return undefined;
         const range = link.targetRange;
@@ -567,7 +578,7 @@ export function createLanguageService(options: LanguageServiceOptions): Language
         for (const usage of index.usages) {
             const target = resolveUsage(index, usage);
             if (target && sameSymbol(target, symbol)) {
-                result.push({ file: usage.file, range: usage.link?.range ?? usage.embed!.range });
+                result.push({ file: usage.file, range: usageRange(usage) });
             }
         }
         return result;
@@ -747,6 +758,9 @@ export function createLanguageService(options: LanguageServiceOptions): Language
             let match;
             if ((match = /\{\{~?\s*embed\s+["']([^"']*)$/.exec(prefix))) {
                 return [...passageItems(match[1]), ...sectionItems(match[1])];
+            }
+            if ((match = /\{\{~?\s*goto\s+["']([^"']*)$/.exec(prefix))) {
+                return sectionItems(match[1]);
             }
             if ((match = /\[\[[^\]]*\]\]\(([^),]*)$/.exec(prefix))) {
                 return sectionItems(match[1]);

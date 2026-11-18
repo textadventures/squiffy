@@ -3118,3 +3118,293 @@ test("Custom helpers can be registered in @ui", async () => {
     expect(section?.querySelector("b")?.textContent).toBe("world");
     expect(section?.querySelector("i")).toBeNull();
 });
+
+// {{goto}} (#375)
+
+test("{{goto}} goes to another section after showing this one", async () => {
+    const script = `
+[[start]]:
+@set health = 1
+Start. [[fight]]
+
+[[fight]]:
+@set health = 0
+You fight.
+{{#if health <= 0}}{{goto "death"}}{{else}}You win. [[win]]{{/if}}
+
+[[death]]:
+You died.
+
+[[win]]:
+Won.
+`;
+    const { squiffyApi, element } = await initScript(script, true);
+    await squiffyApi.clickLink(findLink(element, "section", "fight"));
+
+    expect(squiffyApi.get("_section")).toBe("death");
+    expect(visibleText(element)).toBe("Start. fight You fight. You died.");
+    expect(element.innerHTML).not.toContain("You win.");
+});
+
+test("{{goto}} isn't followed when its {{#if}} is false", async () => {
+    const script = `
+[[start]]:
+@set health = 5
+{{#if health <= 0}}{{goto "death"}}{{/if}}Alive.
+
+[[death]]:
+You died.
+`;
+    const { squiffyApi, element } = await initScript(script, true);
+    expect(squiffyApi.get("_section")).toBe("start");
+    expect(visibleText(element)).toBe("Alive.");
+});
+
+test("{{goto}} in the start section", async () => {
+    const { squiffyApi, element } = await initScript(`Intro.{{goto "next"}}
+
+[[next]]:
+Next.`);
+    expect(squiffyApi.get("_section")).toBe("next");
+    expect(visibleText(element)).toBe("Intro. Next.");
+});
+
+test("{{goto}} with an expression, e.g. to go somewhere at random", async () => {
+    const script = `
+{{goto (random (array "a" "b"))}}
+
+[[a]]:
+A.
+
+[[b]]:
+B.
+`;
+    const { squiffyApi } = await initScript(script);
+    expect(["a", "b"]).toContain(squiffyApi.get("_section"));
+});
+
+test("{{goto}} in a passage", async () => {
+    const script = `
+[[start]]:
+Start. [open]
+
+[open]:
+@set opened
+The door opens.{{goto "outside"}}
+
+[[outside]]:
+Outside.
+`;
+    const { squiffyApi, element } = await initScript(script);
+    await squiffyApi.clickLink(findLink(element, "passage", "open"));
+    expect(squiffyApi.get("_section")).toBe("outside");
+    expect(visibleText(element)).toContain("The door opens. Outside.");
+    expect(squiffyApi.get("opened")).toBe(true);
+});
+
+test("Only the first {{goto}} counts", async () => {
+    const script = `
+{{goto "a"}}{{goto "b"}}
+
+[[a]]:
+A.
+
+[[b]]:
+B.
+`;
+    const { squiffyApi } = await initScript(script);
+    expect(squiffyApi.get("_section")).toBe("a");
+});
+
+test("{{goto}} to a section that doesn't exist shows an error", async () => {
+    const { squiffyApi, element } = await initScript(`@set where = nowhere
+Start.{{goto where}}`);
+    expect(squiffyApi.get("_section")).toBe("_default");
+    expect(element.querySelector(".squiffy-error")?.textContent).toContain("there is no section called \"nowhere\"");
+});
+
+test("A {{goto}} loop is stopped and reported", async () => {
+    const errors = vi.spyOn(console, "error").mockImplementation(() => {});
+    const script = `
+[[a]]:
+A.{{goto "b"}}
+
+[[b]]:
+B.{{goto "a"}}
+`;
+    const { element } = await initScript(script);
+    expect(element.querySelector(".squiffy-error")?.textContent).toContain("Is there a loop?");
+    expect(errors).toHaveBeenCalled();
+    errors.mockRestore();
+});
+
+test("Going back skips sections and passages that went somewhere else with {{goto}}", async () => {
+    const script = `
+[[start]]:
+@set x = 1
+Start. [[jump]] [open]
+
+[open]:
+@set x = 3
+Open.{{goto "end"}}
+
+[[jump]]:
+@set x = 2
+Jump.{{goto "end"}}
+
+[[end]]:
+End.
+`;
+    const { squiffyApi, element } = await initScript(script);
+    let canGoBack: boolean | undefined;
+    squiffyApi.on("canGoBackChanged", e => canGoBack = e.canGoBack);
+
+    await squiffyApi.clickLink(findLink(element, "section", "jump"));
+    expect(squiffyApi.get("_section")).toBe("end");
+    expect(canGoBack).toBe(true);
+
+    squiffyApi.goBack();
+    expect(squiffyApi.get("_section")).toBe("start");
+    expect(squiffyApi.get("x")).toBe(1);
+    expect(visibleText(element)).toBe("Start. jump open");
+    expect(canGoBack).toBe(false);
+
+    await squiffyApi.clickLink(findLink(element, "passage", "open"));
+    expect(squiffyApi.get("_section")).toBe("end");
+    squiffyApi.goBack();
+    expect(squiffyApi.get("_section")).toBe("start");
+    expect(squiffyApi.get("x")).toBe(1);
+    expect(findLink(element, "passage", "open", true)).toBeDefined();
+});
+
+test("Can't go back if the only earlier section went somewhere else with {{goto}}", async () => {
+    const { squiffyApi } = await initScript(`Intro.{{goto "next"}}
+
+[[next]]:
+Next.`);
+    let canGoBack = true;
+    squiffyApi.on("canGoBackChanged", e => canGoBack = e.canGoBack);
+    squiffyApi.goBack();
+    expect(squiffyApi.get("_section")).toBe("next");
+    expect(canGoBack).toBe(true); // unchanged: no event
+});
+
+test("{{goto ... after=}} waits", async () => {
+    vi.useFakeTimers();
+    try {
+        const script = `
+[[start]]:
+The lights go out.{{goto "darkness" after=3000}}
+
+[[darkness]]:
+Darkness.
+`;
+        const { squiffyApi, element } = await initScript(script);
+        expect(squiffyApi.get("_section")).toBe("start");
+        await vi.advanceTimersByTimeAsync(2999);
+        expect(squiffyApi.get("_section")).toBe("start");
+        await vi.advanceTimersByTimeAsync(1);
+        expect(squiffyApi.get("_section")).toBe("darkness");
+        expect(visibleText(element)).toBe("The lights go out. Darkness.");
+    }
+    finally {
+        vi.useRealTimers();
+    }
+});
+
+test("Following a link cancels a {{goto ... after=}}", async () => {
+    vi.useFakeTimers();
+    try {
+        const script = `
+[[start]]:
+Quick! [[run]]{{goto "caught" after=3000}}
+
+[[run]]:
+You got away.
+
+[[caught]]:
+Caught.
+`;
+        const { squiffyApi, element } = await initScript(script);
+        await squiffyApi.clickLink(findLink(element, "section", "run"));
+        await vi.advanceTimersByTimeAsync(5000);
+        expect(squiffyApi.get("_section")).toBe("run");
+    }
+    finally {
+        vi.useRealTimers();
+    }
+});
+
+test("Going back cancels a {{goto ... after=}}", async () => {
+    vi.useFakeTimers();
+    try {
+        const script = `
+[[start]]:
+Start. [[wait]]
+
+[[wait]]:
+Waiting.{{goto "later" after=3000}}
+
+[[later]]:
+Later.
+`;
+        const { squiffyApi, element } = await initScript(script);
+        await squiffyApi.clickLink(findLink(element, "section", "wait"));
+        squiffyApi.goBack();
+        expect(squiffyApi.get("_section")).toBe("start");
+        await vi.advanceTimersByTimeAsync(5000);
+        expect(squiffyApi.get("_section")).toBe("start");
+    }
+    finally {
+        vi.useRealTimers();
+    }
+});
+
+test("Loading a story saved during a {{goto ... after=}} carries on waiting", async () => {
+    vi.useFakeTimers();
+    try {
+        const script = `
+[[start]]:
+Waiting.{{goto "later" after=3000}}
+
+[[later]]:
+Later.
+`;
+        const element = document.getElementById("squiffy")!;
+        const { story } = await compile(script);
+        const first = await init({ element, story });
+        await first.begin();
+        expect(first.get("_section")).toBe("start");
+
+        element.innerHTML = "";
+        const second = await init({ element, story });
+        await second.begin();
+        expect(second.get("_section")).toBe("start");
+        await vi.advanceTimersByTimeAsync(3000);
+        expect(second.get("_section")).toBe("later");
+    }
+    finally {
+        vi.useRealTimers();
+    }
+});
+
+test("{{goto}} in the master section, leaving out the section it goes to", async () => {
+    const script = `
+[[]]:
+{{#if health <= 0 and not (at "death")}}{{goto "death"}}{{/if}}
+
+[[start]]:
+@set health = 1
+Start. [[Fight]](fight, health -= 1)
+
+[[fight]]:
+Ouch.
+
+[[death]]:
+You died.
+`;
+    const { squiffyApi, element } = await initScript(script, true);
+    await squiffyApi.clickLink(findLink(element, "section", "Fight"));
+    expect(squiffyApi.get("_section")).toBe("death");
+    expect(element.querySelector(".squiffy-error")).toBeNull();
+});

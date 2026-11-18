@@ -189,6 +189,7 @@ See [Attributes](/attributes/#tracking-sections-and-passages) for examples.
 |--------|------------|-------------|---------|
 | `{{seen}}` | `"name"` | Check if section/passage has been visited | `{{#if (seen "intro")}}Welcome back{{/if}}` |
 | `{{at}}` | `"name"` or `(array ...)` | Check if currently at a specific section | `{{#if (at "ending")}}Game over{{/if}}` |
+| `{{goto}}` | `"name" [after=milliseconds]` | Go to a section once this one has been shown, or after a delay. See [Go to another section](/basic-concepts/#go-to-another-section) | `{{#if health <= 0}}{{goto "death"}}{{/if}}` |
 
 ## Link helpers
 

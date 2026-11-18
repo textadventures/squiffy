@@ -139,6 +139,9 @@ export interface TextEmbed {
     nameEnd: number;
 }
 
+// {{goto "name"}} with a literal name: the same as an embed
+export type TextGoto = TextEmbed;
+
 export interface NoNextSection {
     // The legacy warning shows the link as [[text>]] or [[text]](>)
     display: string;
@@ -152,6 +155,7 @@ export interface TransformResult {
     // passage links, unnamed section links, then unnamed passage links. Next links come first.
     links: TextLink[];
     embeds: TextEmbed[];
+    gotos: TextGoto[];
     noNextSection: NoNextSection[];
 }
 
@@ -325,24 +329,29 @@ export function transformText(text: string, getNextSectionName: () => string | n
 
     input.replace(/(\d+)/g, ([, i]) => mustaches[Number(i)]);
 
-    // embedRegex matches {{embed "name"}} or {{embed 'name'}} with a literal name.
-    const embedRegex = /\{\{~?\s*embed\s+(["'])(.*?)\1/g;
-    let match;
-    while ((match = embedRegex.exec(input.value))) {
-        const start = match.index;
-        const end = start + match[0].length;
-        const nameEnd = end - 1;
-        const nameStart = nameEnd - match[2].length;
-        embeds.push({
-            name: match[2],
-            start: input.mapStart(start),
-            end: input.mapEnd(end),
-            nameStart: input.mapStart(nameStart),
-            nameEnd: input.mapEnd(nameEnd),
-        });
-    }
+    // Matches {{embed "name"}} or {{goto 'name'}} with a literal name.
+    const findNamed = (helper: string) => {
+        const result: TextEmbed[] = [];
+        const regex = new RegExp(`\\{\\{~?\\s*${helper}\\s+(["'])(.*?)\\1`, "g");
+        let match;
+        while ((match = regex.exec(input.value))) {
+            const start = match.index;
+            const end = start + match[0].length;
+            const nameEnd = end - 1;
+            const nameStart = nameEnd - match[2].length;
+            result.push({
+                name: match[2],
+                start: input.mapStart(start),
+                end: input.mapEnd(end),
+                nameStart: input.mapStart(nameStart),
+                nameEnd: input.mapEnd(nameEnd),
+            });
+        }
+        return result;
+    };
+    embeds.push(...findNamed("embed"));
 
-    return { output: input.value, links, embeds, noNextSection };
+    return { output: input.value, links, embeds, gotos: findNamed("goto"), noNextSection };
 }
 
 export interface SourceLine {

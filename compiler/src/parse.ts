@@ -1,5 +1,5 @@
 import type {
-    EmbedNode, LinkNode, PassageNode, Range, SectionNode, SnippetNode, SquiffyFile, StatementNode, TextNode,
+    EmbedNode, GotoNode, LinkNode, PassageNode, Range, SectionNode, SnippetNode, SquiffyFile, StatementNode, TextNode,
 } from "./syntax.js";
 import { positionMapper, transformText } from "./text.js";
 
@@ -135,6 +135,7 @@ export function parse(text: string, filename?: string): SquiffyFile {
                 body: [],
                 links: [],
                 embeds: [],
+                gotos: [],
             };
             section.passages.push(passage);
             textStarted = false;
@@ -241,10 +242,10 @@ export function parse(text: string, filename?: string): SquiffyFile {
 }
 
 function newSection(kind: SectionNode["kind"], range: Range): SectionNode {
-    return { type: "section", kind, range, body: [], passages: [], links: [], embeds: [] };
+    return { type: "section", kind, range, body: [], passages: [], links: [], embeds: [], gotos: [] };
 }
 
-// Fills in the links and embeds in a section's or passage's text.
+// Fills in the links, embeds and gotos in a section's or passage's text.
 function findLinks(node: SectionNode | PassageNode, lines: string[]) {
     const textNodes = node.body.filter((n): n is TextNode => n.type == "text");
     if (!textNodes.length) return;
@@ -273,5 +274,11 @@ function findLinks(node: SectionNode | PassageNode, lines: string[]) {
         name: embed.name,
         range: toRange(embed.start, embed.end),
         nameRange: toRange(embed.nameStart, embed.nameEnd),
+    }));
+    node.gotos = result.gotos.map((goto): GotoNode => ({
+        type: "goto",
+        name: goto.name,
+        range: toRange(goto.start, goto.end),
+        nameRange: toRange(goto.nameStart, goto.nameEnd),
     }));
 }

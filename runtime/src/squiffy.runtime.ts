@@ -30,6 +30,12 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     const emitter = new Emitter<SquiffyEventMap>();
     const transitions: (() => Promise<void>)[] = [];
     let runningTransitions = false;
+    // A {{goto ... after=}} waiting to happen (#375)
+    let gotoTimer: ReturnType<typeof setTimeout> | undefined;
+    // {{goto}}s followed one after another without the player doing anything, so a loop can't hang
+    // the browser
+    let gotoHops = 0;
+    const MAX_GOTO_HOPS = 100;
 
     async function handleLink(link: HTMLElement): Promise<boolean> {
         if (runningTransitions) return false;
@@ -45,6 +51,10 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
 
         const passage = link.getAttribute("data-passage");
         const section = link.getAttribute("data-section");
+
+        if (passage !== null || section !== null) {
+            gotoHops = 0;
+        }
 
         if (passage !== null) {
             disableLink(link);
@@ -113,7 +123,55 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         }
         if (!load()) {
             await go(story.start);
+            return;
         }
+        // Saved while waiting for a {{goto}}, so carry on waiting
+        const element = currentPassageElement ?? currentSectionElement;
+        const section = element?.getAttribute("data-goto");
+        if (section && section in story.sections) {
+            await followGoto({ section, after: Number(element.getAttribute("data-goto-after") || 0) });
+        }
+    }
+
+    function cancelGoto() {
+        clearTimeout(gotoTimer);
+        gotoTimer = undefined;
+        textProcessor.goto = null;
+    }
+
+    // Takes the {{goto}} from the text just shown, if there was one, and marks the section or
+    // passage element with it, so that going back skips it, and loading resumes it.
+    function takeGoto(element: HTMLElement) {
+        const pending = textProcessor.goto;
+        textProcessor.goto = null;
+        if (pending) {
+            element.setAttribute("data-goto", pending.section);
+            if (pending.after) element.setAttribute("data-goto-after", String(pending.after));
+        }
+        return pending;
+    }
+
+    async function followGoto(pending: { section: string; after: number } | null) {
+        if (!pending) return;
+        if (pending.after > 0) {
+            gotoTimer = setTimeout(() => {
+                gotoTimer = undefined;
+                gotoHops = 0;
+                void go(pending.section);
+            }, pending.after);
+            return;
+        }
+        if (++gotoHops > MAX_GOTO_HOPS) {
+            gotoHops = 0;
+            const element = currentPassageElement ?? currentSectionElement;
+            element.removeAttribute("data-goto");
+            const message = `stopped after ${MAX_GOTO_HOPS} in a row without the player clicking anything, going to "${pending.section}". Is there a loop?`;
+            console.error("Squiffy error in {{goto}}:", message);
+            element.insertAdjacentHTML("beforeend", errorHtml("Error in {{goto}}:", message));
+            save();
+            return;
+        }
+        await go(pending.section);
     }
     
     async function processLink(link: HTMLElement) {
@@ -230,6 +288,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     }
 
     async function go(sectionName: string) {
+        cancelGoto();
         const oldCanGoBack = canGoBack();
         currentSection = story.sections[sectionName];
         if (!currentSection) return;
@@ -261,6 +320,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         setupInputValidation(currentSectionElement);
 
         set("_turncount", 0);
+        const pending = takeGoto(currentSectionElement);
         writeUndoLog();
         save();
 
@@ -269,6 +329,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             emitter.emit("canGoBackChanged", { canGoBack: newCanGoBack });
         }
         emitter.emit("navigated", { section: sectionName });
+        await followGoto(pending);
     }
 
     function runJs(index: number, extra: any = null) {
@@ -322,6 +383,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     }
     
     async function showPassage(passageName: string) {
+        cancelGoto();
         const oldCanGoBack = canGoBack();
         let passage = currentSection.passages && currentSection.passages[passageName];
         const masterSection = story.sections[""];
@@ -383,6 +445,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         // Setup validation for any inputs added by passages
         setupInputValidation(currentSectionElement);
 
+        const pending = takeGoto(currentPassageElement!);
         writeUndoLog();
         save();
         const newCanGoBack = canGoBack();
@@ -390,6 +453,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             emitter.emit("canGoBackChanged", { canGoBack: newCanGoBack });
         }
         emitter.emit("navigated", { section: get("_section"), passage: passageName });
+        await followGoto(pending);
     }
     
     async function processAttributes(attributes: string[]) {
@@ -399,6 +463,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     }
     
     function restart() {
+        cancelGoto();
         state.reset();
         // TODO: This feels like the wrong way of triggering location.reload()
         // - should be a separate setting to the scroll setting.
@@ -686,7 +751,11 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     }
 
     function canGoBack() {
-        return getHistoryCount() > 1;
+        // Sections and passages that went somewhere else with {{goto}} are skipped by goBack(), so
+        // they don't count, unless it's the current one, still waiting for its after= delay
+        const current = currentPassageElement ?? currentSectionElement;
+        const redirected = [...outputElement.querySelectorAll("[data-goto]")].filter(el => el !== current).length;
+        return getHistoryCount() - redirected > 1;
     }
 
     function goBack() {
@@ -696,6 +765,21 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             return;
         }
 
+        cancelGoto();
+        // Undo back to the section or passage the player clicked through to, not one that went
+        // somewhere else with {{goto}}
+        do {
+            undoLast();
+        } while ((currentPassageElement ?? currentSectionElement).hasAttribute("data-goto") && getHistoryCount() > 1);
+
+        if (!canGoBack()) {
+            emitter.emit("canGoBackChanged", { canGoBack: false });
+        }
+        const passage = currentPassageElement?.getAttribute("data-passage");
+        emitter.emit("navigated", passage ? { section: get("_section"), passage } : { section: get("_section") });
+    }
+
+    function undoLast() {
         const clearStack = getClearStack();
 
         if (currentPassageElement) {
@@ -755,12 +839,6 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             setCurrentPassageElement();
             enableInputs(currentSectionElement);
         }
-
-        if (!canGoBack()) {
-            emitter.emit("canGoBackChanged", { canGoBack: false });
-        }
-        const passage = currentPassageElement?.getAttribute("data-passage");
-        emitter.emit("navigated", passage ? { section: get("_section"), passage } : { section: get("_section") });
     }
 
     // We create a separate div inside the passed-in element. This allows us to clear the text output, but

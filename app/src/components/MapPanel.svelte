@@ -214,7 +214,7 @@
             <svg width="36" height="10" aria-hidden="true"><line x1="0" y1="5" x2="36" y2="5" class="gm-edge-line edge-section-link" /></svg><span>Link to a section</span>
             <svg width="36" height="10" aria-hidden="true"><line x1="0" y1="5" x2="36" y2="5" class="gm-edge-line edge-passage-link" /></svg><span>Link to a passage</span>
             <svg width="36" height="10" aria-hidden="true"><line x1="0" y1="5" x2="36" y2="5" class="gm-edge-line edge-embed" /></svg><span>Embed</span>
-            <svg width="36" height="10" aria-hidden="true"><line x1="0" y1="5" x2="36" y2="5" class="gm-edge-line edge-script" /></svg><span>squiffy.story.go in JavaScript</span>
+            <svg width="36" height="10" aria-hidden="true"><line x1="0" y1="5" x2="36" y2="5" class="gm-edge-line edge-script" /></svg><span>{"{{goto}}"}, or squiffy.story.go in JavaScript</span>
             <svg width="36" height="10" aria-hidden="true"><line x1="0" y1="5" x2="36" y2="5" class="gm-edge-line edge-auto" /></svg><span>A passage that runs on its own, such as @last</span>
             <svg width="36" height="10" aria-hidden="true"><line x1="0" y1="5" x2="36" y2="5" class="gm-edge-line edge-section-link conditional" /></svg><span>Inside {"{{#if}}"} or {"{{#unless}}"}</span>
             <svg width="36" height="10" aria-hidden="true"><line x1="0" y1="5" x2="36" y2="5" class="gm-edge-line edge-section-link broken" /></svg><span>Broken link, to something that doesn't exist</span>
