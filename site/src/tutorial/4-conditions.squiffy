@@ -1,0 +1,43 @@
+@title The Island
+
+You wake up in a small boat, drifting on a calm sea. In the distance you can see an island, with a thin column of smoke rising from the trees.
+
+Do you [[row towards the island]] or [[stay where you are]]?
+
+[[row towards the island]]:
+You row until your arms ache, and the boat scrapes onto a sandy beach.
+
+There are [footprints] in the sand, and an [old hut] at the top of the beach. A [[path]] leads into the trees.
+
+[footprints]:
+They're fresh, and they lead up towards the trees. Someone else is here.
+
+[old hut]:
+The door hangs off its hinges. Inside, there's a rusty [lantern] on the table.
+
+[lantern]:
+@set has_lantern
+You take the lantern. It still has some oil in it.
+
+[[path]]:
+The path climbs through the trees, and ends at the mouth of a cave. The smoke is coming from inside.
+
+{{#if has_lantern}}The lantern swings in your hand as you walk.{{/if}}
+
+[[Go into the cave]](cave)
+
+[[cave]]:
+{{#if has_lantern}}
+You light the lantern. An old woman is sitting by a small fire, and she looks up as you come in. "At last," she says. "Will you [[take me home]]?"
+{{else}}
+It's pitch dark. You feel your way forward, and something snuffles in the darkness. You [[run back to the boat]].
+{{/if}}
+
+[[take me home]]:
+You row back across the sea together, and she tells you stories all the way.
+
+[[run back to the boat]]:
+You row away from the island as fast as you can. You never do find out who lit that fire.
+
+[[stay where you are]]:
+You drift for hours. The island grows smaller, and then it's gone.

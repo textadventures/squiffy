@@ -1,0 +1,124 @@
+---
+title: "Tutorial: your first story"
+description: Write a short interactive story, step by step, from the first link to publishing it
+sidebar:
+    label: "Tutorial: your first story"
+---
+
+import { Aside } from "@astrojs/starlight/components";
+import Sample from "@components/Sample.astro";
+import step1 from "../../tutorial/1-sections.squiffy?raw";
+import step2 from "../../tutorial/2-passages.squiffy?raw";
+import step3 from "../../tutorial/3-attributes.squiffy?raw";
+import step4 from "../../tutorial/4-conditions.squiffy?raw";
+import step5 from "../../tutorial/5-endings.squiffy?raw";
+
+In this tutorial, you'll write a short story about a castaway who finds a mysterious island. Along the way, you'll use everything you need for most Squiffy stories: sections and passages, remembering what the player has done, choices that depend on it, and endings. Then you'll publish it, ready to share.
+
+It takes about half an hour. You don't need to know any programming.
+
+## Start a new story
+
+Open the editor at [app.squiffystory.com](https://app.squiffystory.com/), or the [desktop app](/desktop-app/), and choose **New story**.
+
+The new story has some text in it already, to get you started. Select all of it (Ctrl+A, or Cmd+A on Mac) and delete it: you're going to write your own.
+
+You'll see three columns: the files and outline of your story on the left, the script you write in the middle, and the story itself on the right, which updates as you type. If you can't see the story, press **Run** (Ctrl+Enter, or Cmd+Enter on Mac).
+
+<Aside type="tip">
+Every step of this tutorial has the story so far, which you can play on the right and edit on the left. You can copy it into the editor, but you'll learn more by typing in the changes yourself.
+</Aside>
+
+## Write the opening
+
+A Squiffy story is made of **sections**. Each one is some text, and the player moves from one section to the next by clicking a link.
+
+Type this into the editor:
+
+<Sample script={step1}></Sample>
+
+Here's what's happening:
+
+- `@title` sets the story's title, which appears in the browser tab.
+- The text at the top, before any section name, is where the story starts.
+- `[[row towards the island]]` is a link to a section called "row towards the island". Double square brackets mean "go to a section".
+- `[[row towards the island]]:`, on a line of its own and with a colon at the end, starts that section. Everything after it, up to the next section, is the section's text.
+
+Play it, and choose a link. Once you have, the other link stops working. That's how sections work: each choice moves the story on, and the player can't go back and choose again. (While you're testing, the editor's **Back** button lets you.)
+
+## Let the player look around
+
+Not everything the player does needs to move the story on. On the beach, they should be able to look at things in any order before they choose where to go next. That's what **passages** are for.
+
+Add some passages to the beach, and a path for the player to follow:
+
+<Sample script={step2}></Sample>
+
+- `[footprints]`, in single square brackets, is a link to a passage. `[footprints]:` starts the passage, in the same way as a section.
+- A passage's text appears under the section it belongs to, and the section's other links still work. So the player can look at the footprints and the hut, in either order, before following the path.
+- Passages belong to the section above them, so put each one after its section and before the next section.
+
+As soon as the player follows the path, any passages they didn't look at stop working, just as the other section links do.
+
+Try **Outline**, on the left of the editor: it lists your sections and passages, so you can jump to any of them. The map button in the toolbar shows them as a [story map](/story-map/).
+
+## Remember what the player has done
+
+The hut has a lantern in it. Let the player pick it up, and let the story remember that they did, with an **attribute**:
+
+<Sample script={step3}></Sample>
+
+- `[lantern]` is a passage link inside another passage. Passages can link to more passages.
+- `@set has_lantern`, on a line of its own, sets an attribute called `has_lantern` when the passage is shown. An attribute is something the story remembers, such as whether the player has the lantern, their name, or their score. You can call it anything you like, as long as it's one word (use `_` instead of spaces).
+- `{{#if has_lantern}}...{{/if}}` only shows the text inside it if `has_lantern` is set. So whether the player sees the lantern on the path depends on whether they picked it up.
+
+Play it twice: once taking the lantern, and once without.
+
+Below the story in the editor, **Attributes** shows the values your story has set, which is useful for checking that things are working.
+
+## Make choices matter
+
+Now give the player somewhere to use the lantern. Add a cave, where what happens depends on whether they have it:
+
+<Sample script={step4}></Sample>
+
+- `[[Go into the cave]](cave)` shows the text "Go into the cave", and goes to the section called "cave". Use this when you want the link text to be different from the section's name.
+- `{{else}}` shows different text when the condition isn't true. With the lantern, the player finds someone in the cave. Without it, they run away.
+- Each of these has its own link, so the player's choice on the beach decides which way the story goes.
+
+Look at the sections for the endings in the editor. Each one is underlined: the editor warns that the player has no way out. That's because nothing tells it these are endings, rather than sections you haven't finished yet.
+
+## Add endings
+
+To tell Squiffy that a section is an ending, put `@end` on a line of its own at the start of it:
+
+<Sample script={step5}></Sample>
+
+`@end` doesn't change what the player sees, but the warnings go away, and the story map marks the endings with a double outline. Open the map now to see the whole story: three endings, with the start at the top. When you play the story, the parts you've visited are outlined in green, so you can see which paths you haven't tested yet.
+
+The finished story has three endings, an object to find, and a choice that depends on it. That's a complete Squiffy story.
+
+## Publish it
+
+When you're happy with your story, it's time to share it. In the editor, open the **File** menu, and under **Publish**:
+
+- **HTML (one file)** downloads your whole story as a single web page. Open it in a browser to play it, or send it to a friend.
+- **HTML and JavaScript (.zip)** downloads the files to upload to a website, such as [textadventures.co.uk](https://textadventures.co.uk/) or [itch.io](https://itch.io/).
+
+See [Publishing your story](/publishing/) for where to put it.
+
+<Aside type="caution">
+A story you start with **New story** in the web editor is kept in your browser, which can clear it. Use **File > Download project (.zip)** now and then to keep a copy, or use the [desktop app](/desktop-app/), which saves to a folder on your computer.
+</Aside>
+
+## Where next
+
+Here are some ideas for taking your story further, and where to find out how:
+
+- **Add more to the island.** Let the player find more things, and count them with [`@inc`](/attributes/#using-directives). Show different text the second time they visit somewhere, with [`{{visits}}`](/attributes/#the-visits-helper).
+- **Ask the player's name**, and use it in the story: see [Player input](/player-input/).
+- **Add some atmosphere** with [random text](/dynamic-text/#random), text that types itself out, or fades in: see [Animation](/dynamic-text/#animation).
+- **Change how it looks**, with your own fonts and colours: see [Customising styles](/styling/).
+- **Play some complete stories**, and see how they work, in [Examples](/featured-examples/).
+
+For everything else about writing stories, start with [Basic concepts](/basic-concepts/).
