@@ -5,7 +5,7 @@
 // {{set}}, (link:) and friends become links to generated passages and sections, and Harlowe's
 // markup becomes Markdown and HTML.
 
-import { display, isBoolean, print, randomInteger, skipBalanced, skipString, Tokens, Unconvertible, unescapeString } from "./expression.js";
+import { display, isBoolean, member, print, randomInteger, targetName, skipBalanced, skipString, Tokens, Unconvertible, unescapeString } from "./expression.js";
 import type { BinaryOp, Expr } from "./expression.js";
 import { dynamicSectionLink, escapeText, isUrl, urlLink, passageLink, sectionLink, setter } from "./convert.js";
 import type { ConvertedPassage, PassageContext } from "./convert.js";
@@ -454,10 +454,21 @@ export class HarloweExpressions {
             case "passage":
                 throw new Unconvertible("(passage:)");
             case "dm":
-            case "datamap":
+            case "datamap": {
+                // An object (#442)
+                const items = values();
+                if (items.length % 2) throw new Unconvertible("a datamap with a name that has no value");
+                const entries: [string, Expr][] = [];
+                for (let n = 0; n < items.length; n += 2) {
+                    const key = items[n];
+                    if (key.k != "str" && key.k != "num") throw new Unconvertible("a datamap with names that aren't fixed");
+                    entries.push([String(key.v), items[n + 1]]);
+                }
+                return { k: "object", entries };
+            }
             case "ds":
             case "dataset":
-                throw new Unconvertible("Harlowe datamaps and datasets");
+                throw new Unconvertible("Harlowe datasets");
             case "cond":
                 throw new Unconvertible("(cond:), which Squiffy has no equivalent for in an expression");
             default:
@@ -606,17 +617,17 @@ class ExpressionParser {
             const property = this.tokens.next();
             if (property.text == "length") {
                 if (e.k == "var") e = { k: "call", fn: "length", args: [{ k: "str", v: e.name }] };
-                else if (e.k == "array") e = { k: "call", fn: "length", args: [e] };
+                else if (e.k == "array" || e.k == "member") e = { k: "call", fn: "length", args: [e] };
                 else if (e.k == "call" && e.fn == "__history") e = { k: "var", name: "turns" };
                 else throw new Unconvertible("the length of something other than a variable or an array");
             }
-            else if (property.text == "ordinal" && (e.k == "var" || e.k == "array")) {
+            else if (property.text == "ordinal" && (e.k == "var" || e.k == "array" || e.k == "member")) {
                 // $list's 1st
-                e = { k: "call", fn: "lookup", args: [e, { k: "num", v: (property.value as number) - 1 }] };
+                e = member(e, { k: "num", v: (property.value as number) - 1 });
             }
-            else if (e.k == "var" && (property.type == "word" || property.type == "str") && /^[A-Za-z_]\w*$/.test(String(property.value ?? property.text))) {
-                // A datamap's value is its own attribute: $player's hp is player_hp
-                e = { k: "var", name: `${e.name}_${property.value ?? property.text}` };
+            else if ((e.k == "var" || e.k == "member") && (property.type == "word" || property.type == "str")) {
+                // A value in a datamap: $player's hp is player.hp (#442)
+                e = member(e, { k: "str", v: String(property.value ?? property.text) });
             }
             else {
                 throw new Unconvertible(`properties of variables ('s ${property.text})`);
@@ -1586,21 +1597,7 @@ class Writer {
 
     // ---- (set:) ----
 
-    // An assignment, with a datamap flattened into one for each of its values
     private assignments(source: string, put: boolean): Assignment[] {
-        const datamap = /^\s*([$_])([A-Za-z]\w*)\s+to\s+\((?:dm|datamap):([\s\S]*)\)\s*$/i.exec(source);
-        if (datamap && !put) {
-            const name = this.expr.attribute(datamap[2], datamap[1] == "_");
-            const values = splitArgs(datamap[3]);
-            if (values.length % 2) throw new Unconvertible("a datamap with a name that has no value");
-            const result: Assignment[] = [];
-            for (let n = 0; n < values.length; n += 2) {
-                const key = this.expr.parse(values[n]);
-                if (key.k != "str" || !/^[A-Za-z_]\w*$/.test(key.v)) throw new Unconvertible("a datamap with names that aren't words");
-                result.push({ kind: "set", name: `${name}_${key.v}`, value: this.expr.parse(values[n + 1]) });
-            }
-            return result;
-        }
         return [this.assignment(source, put)];
     }
 
@@ -1620,10 +1617,11 @@ class Writer {
         else [targetSource, valueSource] = tokens;
         const target = /^([$_])([A-Za-z]\w*)((?:'s\s+(?:[A-Za-z_]\w*|"[A-Za-z_]\w*"))*)$/.exec(targetSource.trim());
         if (!target) throw new Unconvertible("setting something other than a variable");
-        // $player's hp is player_hp
+        // $player's hp is player.hp (#442)
         const properties = [...target[3].matchAll(/'s\s+"?([A-Za-z_]\w*)"?/g)].map(m => m[1]);
-        const name = [this.expr.attribute(target[2], target[1] == "_"), ...properties].join("_");
-        const variable: Expr = { k: "var", name };
+        const variable = properties.reduce<Expr>((e, property) => member(e, { k: "str", v: property }),
+            { k: "var", name: this.expr.attribute(target[2], target[1] == "_") });
+        const name = targetName(variable)!;
         const value = this.expr.parse(valueSource, variable);
 
         // $x to it + 1, and $x to $x - 2
@@ -1755,6 +1753,8 @@ function splitOutsideStrings(s: string, keyword: RegExp): [string, string] | nul
     let depth = 0;
     for (let i = 0; i < s.length; i++) {
         const c = s[i];
+        // Harlowe's possessive: $player's hp
+        if (c == "'" && s[i + 1] == "s" && /\s/.test(s[i + 2] ?? "") && /[\w)"]/.test(s[i - 1] ?? "")) continue;
         if (c == "\"" || c == "'") {
             const end = skipString(s, i);
             if (end == -1) return null;

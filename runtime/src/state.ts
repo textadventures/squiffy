@@ -1,4 +1,5 @@
 import { Emitter, SquiffyEventMap } from "./events.js";
+import { parsePath, valueAt, withValueAt } from "./paths.js";
 
 export class State {
     persist: boolean;
@@ -28,16 +29,31 @@ export class State {
     // don't change the story
     readOnly = false;
 
+    // The name can be a path to a value inside an object or list, such as hero.hp (#442): see
+    // paths.ts
     set(attribute: string, value: any) {
+        this.setAt(parsePath(attribute), value);
+    }
+
+    // Sets the value at a path: the attribute, then the names inside it. The whole attribute is
+    // set again, so going back, saves and the "set" event see the attribute that changed.
+    setAt(segments: string[], value: any) {
         if (this.readOnly) return;
-        this.setInternal(attribute, value, true);
+        const [attribute, ...inside] = segments;
+        if (!inside.length) {
+            this.setInternal(attribute, value, true);
+            return;
+        }
+        if (typeof value === "undefined") value = true;
+        const root = this.has(attribute) ? this.store[attribute] : null;
+        this.setInternal(attribute, withValueAt(root, inside, attribute, value), true);
     }
 
     setInternal(attribute: string, value: any, raiseEvents: boolean) {
         if (typeof value === "undefined") value = true;
 
         if (raiseEvents && this.onSetInternal) {
-            this.onSetInternal(attribute, this.get(attribute), structuredClone(value));
+            this.onSetInternal(attribute, this.getAt([attribute]), structuredClone(value));
         }
 
         this.store[attribute] = structuredClone(value);
@@ -58,12 +74,16 @@ export class State {
         return Object.prototype.hasOwnProperty.call(this.store, attribute);
     }
 
+    // The name can be a path, as for set()
     get(attribute: string): any {
-        if (this.has(attribute)) {
-            return structuredClone(this.store[attribute]);
-        }
+        return this.getAt(parsePath(attribute));
+    }
 
-        return null;
+    getAt(segments: string[]): any {
+        const [attribute, ...inside] = segments;
+        if (!this.has(attribute)) return null;
+        const value = inside.length ? valueAt(this.store[attribute], inside) : this.store[attribute];
+        return structuredClone(value);
     }
 
     getStore() {
@@ -74,7 +94,7 @@ export class State {
             // A name that isn't an attribute is null, unless it's one every object has, like
             // valueOf, which Handlebars can use
             get: (target, prop) => typeof prop == "string" && (this.has(prop) || !(prop in target))
-                ? this.get(prop)
+                ? this.getAt([prop])
                 : Reflect.get(target, prop),
             has: (_, prop) => this.has(String(prop)),
             ownKeys: () => Object.keys(this.store),
@@ -84,7 +104,7 @@ export class State {
                     return {
                         enumerable: true,
                         configurable: true,
-                        value: this.get(key)
+                        value: this.getAt([key])
                     };
                 }
                 return undefined;

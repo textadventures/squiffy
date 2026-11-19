@@ -17,6 +17,11 @@ export type Expr =
     // A Squiffy helper, e.g. (seen "cave")
     | { k: "call", fn: string, args: Expr[] }
     | { k: "array", items: Expr[] }
+    // An object, { name: value } (#442)
+    | { k: "object", entries: [string, Expr][] }
+    // A value inside an object or list whose name or position is worked out as the story runs,
+    // e.g. inventory[i]. One that's a fixed word is part of a var's name instead: hero.hp.
+    | { k: "member", e: Expr, key: Expr }
     // A loop's item ({{this}}) or position ({{@index}}), in an {{#each}} up levels out from the
     // innermost one. array is the attribute a loop by position goes through, so $list[_i] can be
     // its item.
@@ -72,10 +77,43 @@ export function quote(text: string, options: PrintOptions = {}): string {
 
 const reservedWords = new Set(["and", "or", "not", "true", "false", "null", "undefined"]);
 
-// An attribute name in an expression: the name, or [name] if it isn't one word
+const word = /^[A-Za-z_]\w*$/;
+
+// Whether an attribute name is a path to a value inside an object, written with dots, such as
+// hero.hp (#442). The converters only make names of one word, so a dot can only be a path.
+function isPath(name: string): boolean {
+    const parts = name.split(".");
+    return parts.length > 1 && parts.every(part => word.test(part)) && !reservedWords.has(parts[0]);
+}
+
+// An attribute name in an expression: the name, or [name] if it isn't one word. A path to a
+// value inside an object, hero.hp or inventory[i].name, is written as it is.
 export function attributeRef(name: string): string {
-    if (/^[A-Za-z_]\w*$/.test(name) && !reservedWords.has(name)) return name;
+    if ((word.test(name) && !reservedWords.has(name)) || isPath(name) || isDynamicTarget(name)) return name;
     return `[${name}]`;
+}
+
+// Whether a statement's target is a value inside an object found as the story runs, such as
+// inventory[i].name, which only a setter can set: {{set}} and the like take a fixed name
+export function isDynamicTarget(name: string): boolean {
+    return /^[A-Za-z_]\w*[.[]/.test(name) && name.includes("[");
+}
+
+// A value inside an object or list: hero.hp for a fixed word inside an attribute, otherwise
+// inventory[i] (#442)
+export function member(e: Expr, key: Expr): Expr {
+    if (e.k == "var" && key.k == "str" && word.test(key.v) && (word.test(e.name) || isPath(e.name)) && !reservedWords.has(e.name)) {
+        return { k: "var", name: `${e.name}.${key.v}` };
+    }
+    return { k: "member", e, key };
+}
+
+// The text of a setter's target, e.g. hero.hp or inventory[i].name, or null if it isn't
+// something that can be set
+export function targetName(e: Expr): string | null {
+    if (e.k == "var") return e.name;
+    if (e.k == "member" && targetName(e.e) !== null) return print(e);
+    return null;
 }
 
 export function print(e: Expr, options: PrintOptions = {}): string {
@@ -91,6 +129,18 @@ export function print(e: Expr, options: PrintOptions = {}): string {
             if (e.up) throw new Unconvertible("a link in a loop that sets a variable to an outer loop's item");
             return `'{{${loopRef(e)}}}'`;
         case "array": return `(array${e.items.map(i => " " + printArgument(i, options)).join("")})`;
+        // Always a space before "}", so nested objects never have the "}}" that would end a tag
+        case "object":
+            if (!e.entries.length) return "{ }";
+            return `{ ${e.entries.map(([key, value]) => `${word.test(key) ? key : quote(key, options)}: ${print(value, options)}`).join(", ")} }`;
+        case "member": {
+            if (e.e.k == "loop" && options.inLink) throw new Unconvertible("a link in a loop that sets a variable to a value inside the loop's item");
+            const base = printArgument(e.e, options);
+            if (e.key.k == "str" && word.test(e.key.v) && (e.e.k == "member" || (e.e.k == "loop" && e.e.kind == "item"))) {
+                return `${base}.${e.key.v}`;
+            }
+            return `${base}[${print(e.key, options)}]`;
+        }
         case "call": return `(${e.fn}${e.args.map(a => " " + printArgument(a, options)).join("")})`;
         case "neg": {
             const inner = print(e.e, options);
@@ -145,7 +195,7 @@ export function display(e: Expr): string {
     if (e.k == "str") return e.v.replace(/\[/g, "&#91;").replace(/\]/g, "&#93;").replace(/\{\{/g, "&#123;{").replace(/\}\}/g, "}&#125;");
     if (e.k == "num" || e.k == "bool") return String(e.v);
     if (e.k == "var") {
-        return /^[A-Za-z_]\w*$/.test(e.name) && !reservedWords.has(e.name) ? `{{${e.name}}}` : `{{get ${quote(e.name)}}}`;
+        return (word.test(e.name) && !reservedWords.has(e.name)) || isPath(e.name) ? `{{${e.name}}}` : `{{get ${quote(e.name)}}}`;
     }
     if (e.k == "loop") return `{{${loopRef(e)}}}`;
     if (e.k == "call") return `{{${print(e).slice(1, -1)}}}`;

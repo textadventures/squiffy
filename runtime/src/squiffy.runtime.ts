@@ -3,6 +3,7 @@ import { TextProcessor, errorHtml } from "./textProcessor.js";
 import { toNumber } from "./numbers.js";
 import { Emitter, SquiffyEventMap } from "./events.js";
 import { State } from "./state.js";
+import { checkSegment, readTarget, Target } from "./paths.js";
 import { updateStory } from "./updater.js";
 import { PluginManager } from "./pluginManager.js";
 import { Plugins } from "./plugins/index.js";
@@ -259,43 +260,63 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     }
 
     // +=, -=, *= and /=, which only work on numbers (#374)
-    function operate(lhs: string, op: string, amountValue: unknown) {
+    function operate(lhs: string | string[], op: string, amountValue: unknown) {
         const what = op + "=";
         const amount = toNumber(what, amountValue);
-        let value = toNumber(what, get(lhs));
+        const path = typeof lhs == "string" ? [lhs] : lhs;
+        let value = toNumber(what, state.getAt(path));
         if (op == "+") value += amount;
         if (op == "-") value -= amount;
         if (op == "*") value *= amount;
         if (op == "/") value /= amount;
-        set(lhs, value);
+        state.setAt(path, value);
+    }
+
+    // The path a setter's target names, with any [index] in it worked out, e.g. ["inventory", "2",
+    // "name"] for inventory[i].name when i is 2 (#442)
+    function targetPath(target: Target): string[] {
+        return [target.attribute, ...target.segments.map(segment => {
+            if ("name" in segment) return segment.name;
+            const index = textProcessor.evaluate(segment.index);
+            if (typeof index != "string" && typeof index != "number") {
+                throw new Error(`[${segment.index.trim()}] should be a number or text, to say which value to set`);
+            }
+            const name = String(index);
+            checkSegment(name);
+            return name;
+        })];
     }
 
     // A story with a squiffy.json (#373): the right-hand side is an expression, with the same rules
-    // as {{#if}}, e.g. weapon = "sword", gold = gold + price * 2, rich = gold > 100.
+    // as {{#if}}, e.g. weapon = "sword", gold = gold + price * 2, rich = gold > 100. The left-hand
+    // side can be a value inside an object, e.g. hero.hp = 10 or inventory[i].name = "lamp" (#442).
     function setWithExpression(expr: string) {
-        const textMatch = /^(\w+)\s*:=(.*)$/.exec(expr);
-        if (textMatch) {
+        const target = readTarget(expr);
+        const textMatch = target && /^\s*:=(.*)$/.exec(target.rest);
+        if (target && textMatch) {
             // Text with {{...}} processed, as before
-            set(textMatch[1], ui.processText(textMatch[2], true));
+            state.setAt(targetPath(target), ui.processText(textMatch[1], true));
             return;
         }
-        const match = /^(\w+)\s*([+\-*/]?)=(?!=)(.*)$/.exec(expr);
-        if (match) {
-            const [, lhs, op, rhs] = match;
+        const match = target && /^\s*([+\-*/]?)=(?!=)(.*)$/.exec(target.rest);
+        if (target && match) {
+            const [, op, rhs] = match;
+            const path = targetPath(target);
             const value = textProcessor.evaluate(rhs);
             if (op) {
-                operate(lhs, op, value);
+                operate(path, op, value);
             }
             else {
-                set(lhs, value);
+                state.setAt(path, value);
             }
             return;
         }
-        const flagMatch = /^(not\s+)?(\w+)$/.exec(expr.trim());
-        if (!flagMatch) {
+        const not = /^\s*not\s+/.exec(expr);
+        const flag = readTarget(not ? expr.substring(not[0].length) : expr);
+        if (!flag || flag.rest.trim()) {
             throw new Error("expected an attribute name, e.g. gold = 10, gold += 5, has_key or not has_key");
         }
-        set(flagMatch[2], !flagMatch[1]);
+        state.setAt(targetPath(flag), !not);
     }
 
     // A story without a squiffy.json, as in Squiffy 6: the right-hand side is a number, true,

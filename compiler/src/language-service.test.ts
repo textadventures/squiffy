@@ -319,6 +319,13 @@ describe("completion", () => {
         expect(items.map(i => i.label)).toEqual(["gold", "score", "seen"]);
     });
 
+    test("attribute names with values inside objects (#442)", async () => {
+        const files = memoryFiles({ "s.squiffy": "[[a]]:\n@set hero = { hp: 10, name: \"Ann\" }\n@set hero.stats.str += 1\n[[b]](a, bag = { gold: 1, gems: 2 }, bag.full)\n@set " });
+        const ls = createLanguageService({ files, mainFile: "s.squiffy" });
+        const items = await ls.getCompletions("s.squiffy", { line: 4, character: 5 });
+        expect(items.map(i => i.label)).toEqual(["bag", "bag.full", "hero", "hero.stats", "hero.stats.str"]);
+    });
+
     test("nothing in a section, passage or snippet header, which names something new", async () => {
         const files = memoryFiles({ "s.squiffy": "[[a]]:\nSee [p1].\n[my pass]:\n[[new sect]]:\n[snippet:greet]:\nHi" });
         const ls = createLanguageService({ files, mainFile: "s.squiffy" });
@@ -427,6 +434,21 @@ describe("code actions", () => {
         expect(await fix(2)).toEqual(["Change to \"happy\"", "[[Go]](b, mood = \"happy\", item = shield, title = The End)"]);
         // Inside set="...", single quotes save escaping
         expect(await fix(4)).toEqual(["Change to 'red'", "{{section \"b\" text=\"B\" set=\"colour = 'red'\"}}"]);
+    });
+
+    test("text without quotes inside an object (#442)", async () => {
+        const text = [
+            "[[a]]:",
+            "@set hero.name = Ann",
+            "@set hero = { name: \"Bea\", hp: 10 }",
+            "@set list = [1, 2]",
+            "[[Go]](a, bag = { gold: 1, gems: 2 }, bag.colour = red)",
+        ].join("\n");
+        const files = { "squiffy.json": "{ \"version\": 1, \"main\": \"s.squiffy\" }", "s.squiffy": text };
+        const ls = createLanguageService({ files: memoryFiles(files), mainFile: "s.squiffy" });
+        const diagnostics = (await ls.getDiagnostics("s.squiffy")).filter(d => d.code == "squiffy/unquoted-text");
+        expect(diagnostics.map(d => slice(text, d.range))).toEqual(["Ann", "red"]);
+        expect(diagnostics[0].message).toBe("Ann isn't set anywhere in the story, so this sets hero.name to nothing. For the text \"Ann\", use quotes.");
     });
 
     test("no warning for text without quotes without a squiffy.json, where it's how setters set text", async () => {

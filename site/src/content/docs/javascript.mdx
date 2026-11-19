@@ -69,6 +69,8 @@ Your JavaScript can use these functions:
     var score = squiffy.get("score");
 ```
 
+They also take a value inside an [object](/attributes/#objects), or an array, with dots: `squiffy.get("hero.hp")`, or `squiffy.set("party.0.name", "Ann")` for the first item's `name`.
+
 <Sample script="@set health = 100
 
 Health: {{health}}

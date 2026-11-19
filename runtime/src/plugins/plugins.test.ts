@@ -35,8 +35,9 @@ class ResizeObserverMock {
 }
 global.ResizeObserver = ResizeObserverMock as any;
 
-const compile = async (script: string) => {
+const compile = async (script: string, expressions = false) => {
     const compileResult = await squiffyCompile({
+        expressions,
         script: script,
     });
 
@@ -55,14 +56,14 @@ const compile = async (script: string) => {
     };
 };
 
-const initScript = async (script: string) => {
+const initScript = async (script: string, expressions = false) => {
     const element = document.getElementById("squiffy");
 
     if (!element) {
         throw new Error("Element not found");
     }
 
-    const compileResult = await compile(script);
+    const compileResult = await compile(script, expressions);
 
     const squiffyApi = await init({
         element: element,
@@ -386,6 +387,35 @@ Score: {{live "score"}}.
         expect(liveSpan?.textContent).toBe("10");
         expect(liveSpan?.classList.contains("fade-in")).toBe(false);
     });
+});
+
+test("Live plugin: a value inside an object updates when the object changes (#442)", async () => {
+    const script = `
+@set hero = { hp: 10 }
+
+HP: {{live "hero.hp"}}
+
+[Hurt], [Heal]
+
+[Hurt]:
+@set hero.hp -= 6
+
+[Heal]:
+@set hero = { hp: 7 }
+`;
+
+    const { squiffyApi, element } = await initScript(script, true);
+    const liveSpan = () => element.querySelector(".squiffy-live");
+    expect(liveSpan()?.textContent).toBe("10");
+
+    await squiffyApi.clickLink(findPassageLink(element, "Hurt")!);
+    await vi.waitFor(() => {
+        expect(liveSpan()?.textContent).toBe("4");
+        expect(liveSpan()?.classList.contains("fade-in")).toBe(false);
+    });
+
+    await squiffyApi.clickLink(findPassageLink(element, "Heal")!);
+    await vi.waitFor(() => expect(liveSpan()?.textContent).toBe("7"));
 });
 
 test("Live plugin: embed section content", async () => {

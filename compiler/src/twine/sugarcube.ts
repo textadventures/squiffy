@@ -5,7 +5,7 @@
 // <<if>> becomes {{#if}}, <<set>> becomes @set or {{set}}, links with setters become links with
 // setters, and <<link>> and friends become links to generated passages and sections.
 
-import { display, print, randomInteger, skipString, Tokens, Unconvertible, unescapeString } from "./expression.js";
+import { display, isDynamicTarget, member as memberOf, print, randomInteger, skipString, targetName, Tokens, Unconvertible, unescapeString } from "./expression.js";
 import type { BinaryOp, Expr } from "./expression.js";
 import { dynamicSectionLink, escapeText, isUrl, urlLink, passageLink, sectionLink, setter } from "./convert.js";
 import type { ConvertedPassage, PassageContext } from "./convert.js";
@@ -407,27 +407,10 @@ class ExpressionParser {
         return e;
     }
 
-    // Objects are flattened, so $player to { hp: 10 } sets player_hp
     statement(): Statement[] {
         const target = this.postfixValue();
         if (target.v == "expr" && target.e.k == "loop") throw new Unconvertible("changing a loop's variable inside the loop");
-        const t = this.tokens.peek();
-        if (target.v == "expr" && target.e.k == "var" && t?.text == "=") {
-            const start = this.tokens.pos;
-            this.tokens.next();
-            const value = this.postfixOrObject();
-            if (value.v == "object") return this.flatten(target.e.name, value);
-            this.tokens.pos = start;
-        }
-        return [this.singleStatement(target, t)];
-    }
-
-    private flatten(name: string, object: Extract<Value, { v: "object" }>): Statement[] {
-        return object.entries.flatMap(([key, value]): Statement[] => {
-            const attribute = `${name}_${key}`;
-            if (value.v == "object") return this.flatten(attribute, value);
-            return [{ kind: "set", name: attribute, value: this.toExpr(value) }];
-        });
+        return [this.singleStatement(target, this.tokens.peek())];
     }
 
     // An object literal, or an ordinary expression
@@ -437,8 +420,9 @@ class ExpressionParser {
     }
 
     private singleStatement(target: Value, t: Token | undefined): Statement {
-        if (target.v == "expr" && target.e.k == "var") {
-            const name = target.e.name;
+        // An attribute, or a value inside one, such as hero.hp or inventory[i].name (#442)
+        const name = target.v == "expr" ? targetName(target.e) : null;
+        if (name !== null) {
             if (t?.text == "++" || t?.text == "--") {
                 this.tokens.next();
                 return { kind: t.text == "++" ? "inc" : "dec", name, value: { k: "num", v: 1 } };
@@ -454,7 +438,7 @@ class ExpressionParser {
                     case "*=": case "/=": return { kind: "set", name, value, op: t.text };
                 }
                 // $x to $x + 1
-                if (value.k == "bin" && (value.op == "+" || value.op == "-") && value.l.k == "var" && value.l.name == name) {
+                if (value.k == "bin" && (value.op == "+" || value.op == "-") && targetName(value.l) == name) {
                     if (value.r.k == "array") return this.arrayChange(value.op == "+" ? "append" : "remove", name, value.r);
                     if (value.r.k == "num" || value.op == "-") return { kind: value.op == "+" ? "inc" : "dec", name, value: value.r };
                 }
@@ -575,7 +559,7 @@ class ExpressionParser {
 
     private toExpr(v: Value): Expr {
         if (v.v == "expr") return v.e;
-        if (v.v == "object") throw new Unconvertible("a JavaScript object, other than one set to a variable");
+        if (v.v == "object") return { k: "object", entries: v.entries.map(([key, value]) => [key, this.toExpr(value)]) };
         if (v.v == "member") {
             if (v.property == "length") return { k: "call", fn: "length", args: [this.collection(v.object)] };
             throw new Unconvertible(`properties of variables (.${v.property})`);
@@ -586,7 +570,8 @@ class ExpressionParser {
     // The first argument of contains and length: the attribute's name, or an array
     private collection(v: Value): Expr {
         if (v.v == "expr" && v.e.k == "var") return { k: "str", v: v.e.name };
-        if (v.v == "expr" && v.e.k == "array") return v.e;
+        // A list inside an object, e.g. $hero.items
+        if (v.v == "expr" && (v.e.k == "array" || v.e.k == "member" || (v.e.k == "loop" && v.e.kind == "item"))) return v.e;
         throw new Unconvertible("an array method on something other than a variable");
     }
 
@@ -596,9 +581,9 @@ class ExpressionParser {
             if (this.tokens.accept(".")) {
                 const property = this.tokens.next();
                 if (property.type != "ident") throw new Unconvertible("an expression Squiffy can't read");
-                // An object's property, which is its own attribute: $player.hp is player_hp
-                if (value.v == "expr" && value.e.k == "var" && !this.tokens.is("(") && property.text != "length") {
-                    value = { v: "expr", e: { k: "var", name: `${value.e.name}_${property.text}` } };
+                // A value inside an object: $player.hp is player.hp (#442)
+                if (value.v == "expr" && value.e.k != "array" && value.e.k != "call" && !this.tokens.is("(") && property.text != "length") {
+                    value = { v: "expr", e: memberOf(value.e, { k: "str", v: property.text }) };
                     continue;
                 }
                 value = this.member(value, property.text);
@@ -616,15 +601,12 @@ class ExpressionParser {
                     value = { v: "expr", e: { k: "var", name: `args_${index.v}` } };
                     continue;
                 }
-                if (value.v == "expr" && value.e.k == "var" && index.k == "str" && /^[A-Za-z_]\w*$/.test(index.v)) {
-                    value = { v: "expr", e: { k: "var", name: `${value.e.name}_${index.v}` } };
+                // A value inside an object or list, e.g. $inventory[_i] or $player["hp"] (#442)
+                if (value.v == "expr") {
+                    value = { v: "expr", e: memberOf(value.e, index) };
                     continue;
                 }
-                if (value.v == "expr" && (value.e.k == "var" || value.e.k == "array") && index.k == "num") {
-                    value = { v: "expr", e: { k: "call", fn: "lookup", args: [value.e, index] } };
-                    continue;
-                }
-                throw new Unconvertible("array indexes and object properties ([...])");
+                throw new Unconvertible("array indexes and object properties ([...]) of something other than a value");
             }
             else if (this.tokens.is("(")) {
                 this.tokens.next();
@@ -1489,7 +1471,7 @@ class Writer {
                     case "inc":
                     case "dec": {
                         const amount = s.value.k == "num" && Number.isInteger(s.value.v) && s.value.v >= 0 ? s.value.v : null;
-                        state.directives.push(amount === null
+                        state.directives.push(amount === null || isDynamicTarget(s.name)
                             ? `@set ${setter(s.name, s.kind == "inc" ? "+=" : "-=", s.value, false)}`
                             : `@${s.kind} ${s.name}${amount == 1 ? "" : " " + amount}`);
                         continue;
@@ -1500,6 +1482,7 @@ class Writer {
                 }
             }
             state.leading = false;
+            if (isDynamicTarget(s.name)) throw new Unconvertible("setting a value inside an object or list, by a variable's value, after the start of the passage");
             const name = print({ k: "str", v: s.name });
             switch (s.kind) {
                 case "set":

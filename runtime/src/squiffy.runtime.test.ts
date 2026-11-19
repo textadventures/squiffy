@@ -1,4 +1,4 @@
-import { expect, test, beforeEach, afterEach, beforeAll, vi } from "vitest";
+import { expect, test, describe, beforeEach, afterEach, beforeAll, vi } from "vitest";
 import fs from "fs/promises";
 import globalJsdom from "global-jsdom";
 import { init } from "./squiffy.runtime.js";
@@ -2147,6 +2147,163 @@ test("helpers can be used in setter expressions", async () => {
     const { squiffyApi } = await initScript(script, true);
     expect(squiffyApi.get("visited")).toBe(true);
     expect(squiffyApi.get("here")).toBe(true);
+});
+
+describe("objects (#442)", () => {
+    test("@set can set an object, and values inside it", async () => {
+        const script = `
+[[start]]:
+@set hero = { hp: 10, name: "Ann", "max hp": 12 }
+@set hero.hp += 5
+@set hero.level = 1
+@set hero.poisoned
+@set not hero.blessed
+@set hero.title := {{hero.name}} the Brave
+@set bag.gold = 3
+HP: {{hero.hp}}. {{#if hero.hp > 12}}Healthy.{{/if}} {{= hero.hp * 2}}
+`;
+        const { squiffyApi, element } = await initScript(script, true);
+        expect(squiffyApi.get("hero")).toEqual({ hp: 15, name: "Ann", "max hp": 12, level: 1, poisoned: true, blessed: false, title: "Ann the Brave" });
+        expect(squiffyApi.get("bag")).toEqual({ gold: 3 });
+        expect(element.textContent).toContain("HP: 15. Healthy. 30");
+    });
+
+    test("lists of objects, with an index from another attribute", async () => {
+        const script = `
+[[start]]:
+@set inventory = [{ name: "lamp", weight: 2 }, { name: "rope", weight: 1 }]
+@set i = 1
+@set inventory[i].weight = 5
+@set inventory[0].lit = true
+@set chosen = inventory[i]
+@set first = inventory[0].name
+{{#each inventory}}{{this.name}} ({{weight}}) {{/each}}
+{{#if inventory[i].weight > 4}}Heavy {{= inventory[i].name}}.{{/if}}
+`;
+        const { squiffyApi, element } = await initScript(script, true);
+        expect(squiffyApi.get("inventory")).toEqual([{ name: "lamp", weight: 2, lit: true }, { name: "rope", weight: 5 }]);
+        expect(squiffyApi.get("chosen")).toEqual({ name: "rope", weight: 5 });
+        expect(squiffyApi.get("first")).toBe("lamp");
+        expect(element.textContent).toContain("lamp (2) rope (5)");
+        expect(element.textContent).toContain("Heavy rope.");
+    });
+
+    test("copying an object copies it, rather than sharing it", async () => {
+        const script = `
+[[start]]:
+@set hero = { hp: 10 }
+@set saved = hero
+@set hero.hp = 1
+`;
+        const { squiffyApi } = await initScript(script, true);
+        expect(squiffyApi.get("saved")).toEqual({ hp: 10 });
+        expect(squiffyApi.get("hero.hp")).toBe(1);
+    });
+
+    test("link setters can set values inside objects", async () => {
+        const script = `
+[[start]]:
+@set hero = { hp: 10, name: "Ann" }
+[[Heal]](inn, hero.hp += 5, hero.mood = { happy: true, reason: "rest, at last" })
+
+[[inn]]:
+HP {{hero.hp}}.
+`;
+        const { squiffyApi, element } = await initScript(script, true);
+        await squiffyApi.clickLink(findLink(element, "section", "Heal"));
+        expect(squiffyApi.get("hero")).toEqual({ hp: 15, name: "Ann", mood: { happy: true, reason: "rest, at last" } });
+        expect(element.textContent).toContain("HP 15.");
+    });
+
+    test("a link's setters can use square brackets, which aren't passage links", async () => {
+        const script = `
+[[start]]:
+@set party = [{ name: "Ann", hp: 10 }, { name: "Bo", hp: 4 }]
+@set leader = 0
+[[Make Bo the leader]](next, leader = 1, party[1].hp += 2, list = ["a", "b"])
+
+[[next]]:
+{{= party[leader].name}} has {{= party[leader].hp}} HP.
+`;
+        const { squiffyApi, element } = await initScript(script, true);
+        await squiffyApi.clickLink(findLink(element, "section", "Make Bo the leader"));
+        expect(element.textContent).toContain("Bo has 6 HP.");
+        expect(squiffyApi.get("list")).toEqual(["a", "b"]);
+    });
+
+    test("going back undoes a change inside an object", async () => {
+        const script = `
+[[start]]:
+@set hero = { hp: 10 }
+[[next]]
+
+[[next]]:
+@set hero.hp = 3
+`;
+        const { squiffyApi, element } = await initScript(script, true);
+        await squiffyApi.clickLink(findLink(element, "section", "next"));
+        expect(squiffyApi.get("hero.hp")).toBe(3);
+        squiffyApi.goBack();
+        expect(squiffyApi.get("hero")).toEqual({ hp: 10 });
+    });
+
+    test("saves keep objects", async () => {
+        const script = `
+[[start]]:
+@set hero = { hp: 10, items: ["lamp"] }
+`;
+        const { squiffyApi } = await initScript(script, true);
+        const save = squiffyApi.getSave();
+        squiffyApi.set("hero.hp", 1);
+        await squiffyApi.loadSave(save);
+        expect(squiffyApi.get("hero")).toEqual({ hp: 10, items: ["lamp"] });
+    });
+
+    test("squiffy.get and set, and {{set}}, {{inc}} and {{append}}, take paths", async () => {
+        const script = `
+[[start]]:
+{{set "hero" { hp: 10 }}}{{set "hero.name" "Ann"}}{{inc "hero.hp" 2}}{{append "hero.items" "lamp"}}
+`;
+        const { squiffyApi } = await initScript(script, true);
+        expect(squiffyApi.get("hero")).toEqual({ hp: 12, name: "Ann", items: ["lamp"] });
+        squiffyApi.set("hero.items.0", "rope");
+        squiffyApi.set("hero[\"max hp\"]", 20);
+        expect(squiffyApi.get("hero.items[0]")).toBe("rope");
+        expect(squiffyApi.get("hero.max hp")).toBe(20);
+        expect(squiffyApi.get("hero.missing.deeper")).toBeNull();
+        expect(squiffyApi.get("nothing.here")).toBeNull();
+    });
+
+    test("setting inside something that isn't an object is an error", async () => {
+        const script = `
+[[start]]:
+@set gold = 5
+@set gold.amount = 1
+
+[[next]]
+`;
+        const { squiffyApi, element } = await initScript(script, true);
+        await squiffyApi.clickLink(findLink(element, "section", "next"));
+        expect(squiffyApi.get("gold")).toBe(5);
+        expect(element.querySelector(".squiffy-error")?.textContent).toContain("gold isn't an object, so it has no amount");
+    });
+
+    test("an object can't reach the prototype", async () => {
+        const script = `
+[[start]]:
+@set hero = {}
+@set hero.__proto__.polluted = true
+@set key = "constructor"
+@set hero[key] = 1
+
+[[next]]
+`;
+        const { squiffyApi, element } = await initScript(script, true);
+        await squiffyApi.clickLink(findLink(element, "section", "next"));
+        expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+        expect(squiffyApi.get("hero")).toEqual({});
+        expect(element.querySelectorAll(".squiffy-error").length).toBe(2);
+    });
 });
 
 test("link setters take expressions, and can have commas in quotes", async () => {

@@ -546,11 +546,19 @@ You can use the `{{array}}` helper to create arrays for use with other helpers l
 {{at (array "section1" "section2" "section3")}}
 ```
 
-If an attribute holds an array, you can display one of its elements by index using Handlebars' `.[n]` syntax. Indexes start at 0, so this shows the second element:
+In an expression, such as in `@set`, you can also write an array in square brackets:
 
 ```squiffy
-The second fruit is {{fruits.[1]}}.
+@set fruits = ["apple", "pear", "plum"]
 ```
+
+If an attribute holds an array, you can get one of its elements by its position in square brackets. Positions start at 0, so this shows the second element:
+
+```squiffy
+The second fruit is {{= fruits[1]}}.
+```
+
+The position can be another attribute, or a calculation, such as `fruits[choice]` or `fruits[choice + 1]`. Handlebars' own `{{fruits.[1]}}` works too.
 
 See [Dynamic text](/dynamic-text/) for more information on using arrays with dynamic content helpers.
 
@@ -578,3 +586,38 @@ You buy the {{item}}. [[Back to the stall]](stall)"></Sample>
 - The `{{else}}` part is shown when the array is empty.
 - `{{@index}}` is the item's position, starting at 0, and `@first` and `@last` are true for the first and last items. For example, `{{#each stock}}{{#unless @first}}, {{/unless}}{{this}}{{/each}}` puts a comma between the items.
 - In a link's assignments, put `{{this}}` in quotes, as in `item = "{{this}}"`. The assignments run when the player clicks the link, after the loop has finished, so `item = this` wouldn't work.
+
+### Objects
+
+An attribute can hold an object: a set of values, each with a name. Write one in curly brackets, with a name and a value for each of its values, and get a value inside it with a dot:
+
+<Sample script="@set hero = { name: &quot;Ann&quot;, hp: 10, gold: 5 }
+{{hero.name}} has {{hero.hp}} HP.
+
+[[Rest at the inn]](inn, hero.hp += 5, hero.gold -= 2)
+
+[[inn]]:
+{{hero.name}} wakes up with {{hero.hp}} HP and {{hero.gold}} gold.
+{{#if hero.hp > 12}}She feels great.{{/if}}"></Sample>
+
+- Set a value inside an object just as you would an attribute: `@set hero.hp = 10`, `@set hero.hp += 5`, `@set hero.poisoned`, and the same in a link. If the object isn't there yet, it's made, so `@set hero.hp = 10` works on its own.
+- An object can hold other objects and arrays, as in `@set hero = { stats: { str: 3 }, items: ["lamp"] }`, with `hero.stats.str` for a value inside the one inside.
+- A name that isn't a single word goes in quotes, both in the object and in square brackets when you use it: `{ "max hp": 12 }` and `hero["max hp"]`. Square brackets also take the name from another attribute, as in `hero[stat]`.
+- `@set best = hero` copies the object, so changing `best` afterwards doesn't change `hero`.
+- `{{set}}`, `{{inc}}`, `{{dec}}`, `{{unset}}`, `{{append}}` and the other helpers that change an attribute, and [`{{live}}`](/dynamic-text/#live), take a value inside an object too, as in `{{inc "hero.hp" 5}}` or `{{live "hero.hp"}}`. So does [`squiffy.get` and `squiffy.set`](/javascript/#reading-and-setting-attributes) in JavaScript.
+- Going back and saved games keep objects, like any other attribute.
+
+An array can hold objects, and `{{#each}}` goes through them, with each object's values as `{{this.name}}`, or just `{{name}}`. Square brackets pick one out, and the position can come from another attribute:
+
+<Sample script="@set party = [{ name: &quot;Ann&quot;, hp: 10 }, { name: &quot;Bo&quot;, hp: 4 }]
+@set leader = 0
+{{#each party}}
+- {{this.name}}: {{hp}} HP {{#if @index = leader}}(leader){{/if}}
+{{/each}}
+
+{{= party[leader].name}} leads the party. [[Make Bo the leader]](next, leader = 1, party[1].hp += 2)
+
+[[next]]:
+{{= party[leader].name}} leads the party now, with {{= party[leader].hp}} HP."></Sample>
+
+To show a value from a position in an array, use `{{= }}`, as in `{{= party[leader].name}}`. A path with only names and dots, like `{{hero.hp}}`, doesn't need it.

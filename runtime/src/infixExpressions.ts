@@ -14,8 +14,18 @@
 //
 // "-" and "/" can appear inside Handlebars names and paths (my-score, ../score), so they're only
 // operators at the start of a token: a - b and a -b subtract, but a-b is the attribute "a-b".
+//
+// Objects and lists (#442):
+//   { hp: 10, name: "Ann" }   ->  (__object "hp" 10 "name" "Ann")
+//   [1, 2, 3]                 ->  (array 1 2 3)
+//   inventory[i].name         ->  (lookup (lookup inventory i) "name")
+// hero.hp needs no rewriting: it's a Handlebars path. A "[" at the start of a value is a list if
+// it's empty, or has a comma in it, or starts with a literal value; otherwise it's a Handlebars
+// name that isn't a plain word, such as [my attribute], as before. A list of one attribute is
+// written (array name).
 
-type TokenType = "op" | "(" | ")" | "value" | "ident";
+// "index" is a "[" straight after a value, and "[" one that starts a list
+type TokenType = "op" | "(" | ")" | "value" | "ident" | "index" | "[" | "]" | "{" | "}" | ":" | ",";
 
 interface Token {
     type: TokenType;
@@ -25,6 +35,8 @@ interface Token {
 type Node =
     | { kind: "raw", text: string }
     | { kind: "call", name: string, args: Node[] };
+
+const punctuation = new Set(["{", "}", ":", ",", "]"]);
 
 const comparisonHelpers: Record<string, string> = {
     "=": "eq",
@@ -51,11 +63,20 @@ const literals = ["true", "false", "null", "undefined"];
 // Characters that end an identifier/path. "[" starts a Handlebars literal segment,
 // e.g. [my attribute], which may contain any of these.
 // "-" and "/" aren't here: see above.
-const identTerminators = new Set([..." \t\r\n!\"'()<>=&|{}~+*%"]);
+const identTerminators = new Set([..." \t\r\n!\"'()<>=&|{}~+*%:,]"]);
 
 const numberPattern = /^-?\d+(\.\d+)?$/;
 
 class ExpressionError extends Error {}
+
+// Whether the "[" at `open`, at the start of a value, starts a list rather than a Handlebars name
+// like [my attribute]: it's empty, or it has a comma in it, or it starts with a literal value
+function startsList(expr: string, open: number): boolean {
+    const after = expr.substring(open + 1).trimStart();
+    if (/^[\]"'{[(\d-]/.test(after)) return true;
+    const close = expr.indexOf("]", open);
+    return close !== -1 && expr.substring(open, close).includes(",");
+}
 
 function tokenize(expr: string): Token[] {
     const tokens: Token[] = [];
@@ -66,8 +87,8 @@ function tokenize(expr: string): Token[] {
             i++;
             continue;
         }
-        if (c === "(" || c === ")") {
-            tokens.push({ type: c, text: c });
+        if (c === "(" || c === ")" || punctuation.has(c)) {
+            tokens.push({ type: c as TokenType, text: c });
             i++;
             continue;
         }
@@ -84,6 +105,17 @@ function tokenize(expr: string): Token[] {
             i = j + 1;
             continue;
         }
+        // A "[" straight after a value is an index, as in inventory[0] or inventory[i][j]
+        if (c === "[" && /[\w\])]/.test(expr[i - 1] ?? "")) {
+            tokens.push({ type: "index", text: c });
+            i++;
+            continue;
+        }
+        if (c === "[" && startsList(expr, i)) {
+            tokens.push({ type: "[", text: c });
+            i++;
+            continue;
+        }
         // A "-" before a digit starts a negative number, as before (the parser treats
         // a -1 as a - 1 where it needs an operator)
         const op = symbolicOps.find(o => expr.startsWith(o, i) && !(o === "-" && /\d/.test(expr[i + 1] ?? "")));
@@ -94,6 +126,11 @@ function tokenize(expr: string): Token[] {
         }
         let j = i;
         while (j < expr.length && !identTerminators.has(expr[j])) {
+            // A "[" straight after a name is an index, as in inventory[0]. After "." or "/", or at
+            // the start, it's a Handlebars name, as in inventory.[0] or [my attribute].
+            if (expr[j] === "[" && j > i && expr[j - 1] !== "." && expr[j - 1] !== "/") {
+                break;
+            }
             if (expr[j] === "[") {
                 const close = expr.indexOf("]", j);
                 if (close === -1) {
@@ -138,7 +175,7 @@ class Parser {
     }
 
     private startsPrimary(token: Token | undefined) {
-        return token?.type === "ident" || token?.type === "value" || token?.type === "(";
+        return token?.type === "ident" || token?.type === "value" || token?.type === "(" || token?.type === "[" || token?.type === "{";
     }
 
     private describe(token: Token | undefined) {
@@ -281,8 +318,87 @@ class Parser {
         return this.parsePrimary();
     }
 
+    // A value, then any [index] or .name after it, e.g. inventory[i].name
     private parsePrimary(): Node {
+        let node = this.parseAtom();
+        for (;;) {
+            const token = this.peek();
+            if (token?.type === "index") {
+                this.next();
+                const index = this.parseOr();
+                this.expect("]");
+                this.usedInfix = true;
+                node = { kind: "call", name: "lookup", args: [node, index] };
+            }
+            else if (token?.type === "ident" && token.text.startsWith(".") && this.tokens[this.pos - 1]?.type === "]") {
+                // .name after an index: a name, or Handlebars' .[name]
+                this.next();
+                for (const part of token.text.substring(1).split(".")) {
+                    const name = /^\[(.*)\]$/.exec(part)?.[1] ?? part;
+                    if (!name) throw new ExpressionError(`unexpected '${token.text}'`);
+                    node = { kind: "call", name: "lookup", args: [node, { kind: "raw", text: JSON.stringify(name) }] };
+                }
+            }
+            else {
+                return node;
+            }
+        }
+    }
+
+    private expect(type: TokenType) {
+        if (this.peek()?.type !== type) {
+            throw new ExpressionError(`expected '${type}' but found ${this.describe(this.peek())}`);
+        }
+        this.next();
+    }
+
+    // { name: value, ... } (#442)
+    private parseObject(): Node {
+        const args: Node[] = [];
+        while (this.peek()?.type !== "}") {
+            const key = this.next();
+            if (!key) throw new ExpressionError("expected '}' but found end of expression");
+            if ((key.type === "ident" || key.type === "value") && /^\w+$/.test(key.text)) {
+                args.push({ kind: "raw", text: `"${key.text}"` });
+            } else if (key.type === "value" && /^["']/.test(key.text)) {
+                args.push({ kind: "raw", text: key.text });
+            } else {
+                throw new ExpressionError(`expected a name in the object, e.g. { hp: 10 }, but found '${key.text}'`);
+            }
+            this.expect(":");
+            args.push(this.parseOr());
+            if (this.peek()?.type !== ",") break;
+            this.next();
+        }
+        this.expect("}");
+        this.usedInfix = true;
+        return { kind: "call", name: "__object", args };
+    }
+
+    // [value, ...] (#442)
+    private parseList(): Node {
+        const args: Node[] = [];
+        while (this.peek()?.type !== "]") {
+            if (!this.peek()) throw new ExpressionError("expected ']' but found end of expression");
+            args.push(this.parseOr());
+            if (this.peek()?.type !== ",") break;
+            this.next();
+        }
+        this.expect("]");
+        this.usedInfix = true;
+        return { kind: "call", name: "array", args };
+    }
+
+    private parseAtom(): Node {
         const token = this.peek();
+        if (token?.type === "{") {
+            this.next();
+            return this.parseObject();
+        }
+        if (token?.type === "[") {
+            this.next();
+            return this.parseList();
+        }
         if (token?.type === "ident" || token?.type === "value") {
             this.next();
             return { kind: "raw", text: token.text };
@@ -354,7 +470,7 @@ function rewrite(text: string, mode: Mode, label: string): Node[] | null {
         if (!strict || !(e instanceof ExpressionError)) return null;
         error = e;
     }
-    const hasOperators = tokens.some(t => t.type === "op");
+    const hasOperators = tokens.some(t => t.type === "op" || t.type === "index" || t.type === "[" || t.type === "{");
     const parser = new Parser(tokens);
     let nodes: Node[] = [];
     if (!error) {
@@ -408,7 +524,8 @@ export function rewriteValueExpression(expression: string): string {
 }
 
 // Splits a list of link setters on the commas between them, but not on commas inside quotes or
-// parentheses: greeting = "Hi, there", gold -= price is two setters.
+// brackets: greeting = "Hi, there", gold -= price is two setters, and so is
+// hero = { hp: 10, name: "Ann" }, gold = 0.
 export function splitSetters(setters: string): string[] {
     const result: string[] = [];
     let depth = 0;
@@ -421,8 +538,8 @@ export function splitSetters(setters: string): string[] {
             else if (c === quote) quote = null;
         }
         else if (c === "\"" || c === "'") quote = c;
-        else if (c === "(") depth++;
-        else if (c === ")") depth = Math.max(0, depth - 1);
+        else if (c === "(" || c === "[" || c === "{") depth++;
+        else if (c === ")" || c === "]" || c === "}") depth = Math.max(0, depth - 1);
         else if (c === "," && depth === 0) {
             result.push(setters.slice(start, i));
             start = i + 1;
@@ -434,10 +551,11 @@ export function splitSetters(setters: string): string[] {
 
 const tagStart = /(\\*)\{\{(~?\s*)(?:(#if|#unless|else\s+if|else\s+unless)(?=[\s(!])|(set|inc|dec)(?=\s)|(=))/g;
 
-// Finds the end of a mustache tag starting at `from`, skipping over quoted strings.
-// Returns the index of the closing "}}" (or "~}}"), or -1.
+// Finds the end of a mustache tag starting at `from`, skipping over quoted strings and objects,
+// such as {{set "hero" { hp: 10 }}}. Returns the index of the closing "}}" (or "~}}"), or -1.
 function findTagEnd(text: string, from: number): number {
     let quote: string | null = null;
+    let braces = 0;
     for (let i = from; i < text.length; i++) {
         const c = text[i];
         if (quote) {
@@ -445,6 +563,10 @@ function findTagEnd(text: string, from: number): number {
             else if (c === quote) quote = null;
         } else if (c === "\"" || c === "'") {
             quote = c;
+        } else if (c === "{") {
+            braces++;
+        } else if (c === "}" && braces > 0) {
+            braces--;
         } else if (text.startsWith("~}}", i)) {
             return i;
         } else if (text.startsWith("}}", i)) {

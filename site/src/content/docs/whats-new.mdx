@@ -32,6 +32,7 @@ Squiffy 7 brings a new editor. The language adds the [`@end`](/basic-concepts/#e
 - **Passages you can click again.** Add [`@repeat`](/basic-concepts/#passages-you-can-click-again) to a passage, and its links stay clickable, for a clue the player might want to read again, or a character who says something different each time.
 - **Turning off passage links.** [`{{deactivate "name"}}`](/basic-concepts/#turning-off-passage-links) turns off the links to a passage, so one choice can rule out another, and a passage with `@repeat` can turn itself off when it's done.
 - **Loops with links.** Inside [`{{#each}}`](/attributes/#going-through-an-array), you can use the story's attributes, and a link can use the item, so you can make a link for each thing in an array: `{{#each inventory}}[[Drop the {{this}}]](drop, item = "{{this}}"){{/each}}`. A link's text can show attributes anywhere, as in `[[Pay {{price}} gold]](shop)`.
+- **Objects.** An attribute can hold an [object](/attributes/#objects), a set of named values, such as `@set hero = { hp: 10, name: "Ann" }`, with `{{hero.hp}}`, `@set hero.hp += 5` and `{{#if hero.hp > 5}}` for the values inside it. Arrays can hold objects, and you can write arrays in square brackets and pick out an item with another attribute: `{{= party[leader].name}}`.
 - **JavaScript after the text.** [`squiffy.ui.afterWrite`](/javascript/#running-javascript-after-the-text) runs some JavaScript once a section or passage's text is on the page, with its `{{...}}` worked out.
 
 ## Published stories

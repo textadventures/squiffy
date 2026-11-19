@@ -2,6 +2,7 @@ import { PluginHost, SquiffyPlugin } from "../types.plugins.js";
 import Handlebars from "handlebars";
 import { fadeReplace } from "../utils.js";
 import { SquiffyEventMap } from "../events.js";
+import { parsePath } from "../paths.js";
 
 export function LivePlugin(): SquiffyPlugin {
     let squiffy: PluginHost;
@@ -29,8 +30,11 @@ export function LivePlugin(): SquiffyPlugin {
 
             const onSet = async (e: SquiffyEventMap["set"]) => {
                 const promises: Promise<void>[] = [];
-                const selector = `.squiffy-live[data-attribute="${CSS.escape(e.attribute)}"]`;
-                for (const el of squiffy.outputElement.querySelectorAll<HTMLElement>(selector)) {
+                // The "set" event names the attribute that changed, so {{live "hero.hp"}} is
+                // updated when hero is set (#442)
+                const elements = [...squiffy.outputElement.querySelectorAll<HTMLElement>(".squiffy-live[data-attribute]")]
+                    .filter(el => parsePath(el.dataset.attribute!)[0] === e.attribute);
+                for (const el of elements) {
                     const oldContent = el.innerHTML;
                     let newContent = "";
                     if (el.dataset.section) {
@@ -44,7 +48,7 @@ export function LivePlugin(): SquiffyPlugin {
                             newContent = squiffy.processText(passageText, true);
                         }
                     } else {
-                        newContent = e.value;
+                        newContent = el.dataset.attribute == e.attribute ? e.value : squiffy.get(el.dataset.attribute!);
                     }
                     if (oldContent !== newContent) {
                         promises.push(fadeReplace(el, newContent));

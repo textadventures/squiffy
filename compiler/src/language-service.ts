@@ -12,7 +12,7 @@ import type {
 } from "./syntax.js";
 import { getStoryFiles, globToRegExp, parseProjectFile, PROJECT_FILENAME, ProjectFile, storyFileList } from "./project.js";
 import { convertV5Syntax, findV5Syntax } from "./v5.js";
-import { findUnquotedText } from "./setters.js";
+import { findUnquotedText, splitWithOffsets } from "./setters.js";
 import { buildStoryGraph, StoryGraph, storyGraphDiagnostics } from "./story-graph.js";
 
 export type { Diagnostic, Position, Range } from "./syntax.js";
@@ -218,8 +218,9 @@ function resolveName(target: string, has: (name: string) => boolean): string | u
 // The name a broken link was trying to reach
 const intendedName = (target: string) => target.trim().split(",")[0].trim();
 
+// The attribute a setter sets, e.g. gold in gold += 1, or hero.hp in hero.hp = 10 (#442)
 function attributeName(expression: string) {
-    return expression.replace(/^\s*not\s+/, "").split(/[-+]?=/)[0].trim();
+    return /^\s*(?:not\s+)?(\w+(?:\.\w+)*)/.exec(expression)?.[1] ?? "";
 }
 
 function resolvePath(baseDir: string, relative: string): string | null {
@@ -399,6 +400,14 @@ export function createLanguageService(options: LanguageServiceOptions): Language
             if (section.node) index.nodeNames.set(section.node, section.name);
         }
 
+        // An attribute, and for a value inside an object, the object too: hero.hp adds hero
+        const addAttribute = (name: string) => {
+            const parts = name.split(".");
+            for (let i = 1; i <= parts.length; i++) {
+                if (parts[i - 1]) index.attributes.add(parts.slice(0, i).join("."));
+            }
+        };
+
         for (const [path, file] of index.files) {
             for (const node of [file.preamble, ...file.sections]) {
                 if (node.type == "snippet") {
@@ -408,10 +417,10 @@ export function createLanguageService(options: LanguageServiceOptions): Language
                 for (const container of [node, ...node.passages]) {
                     for (const link of container.links) {
                         index.usages.push({ file: path, container, sectionNode: node, link });
-                        const setters = link.target.split(",").slice(1);
+                        const comma = link.target.indexOf(",");
+                        const setters = comma == -1 ? [] : splitWithOffsets(link.target.substring(comma + 1)).map(part => part.text);
                         for (const setter of setters) {
-                            const name = attributeName(setter);
-                            if (name) index.attributes.add(name);
+                            addAttribute(attributeName(setter));
                         }
                     }
                     for (const embed of container.embeds) {
@@ -425,8 +434,7 @@ export function createLanguageService(options: LanguageServiceOptions): Language
                     }
                     for (const statement of container.body) {
                         if (statement.type == "attribute") {
-                            const name = attributeName(statement.value);
-                            if (name) index.attributes.add(name);
+                            addAttribute(attributeName(statement.value));
                         }
                         else if (statement.type == "js") {
                             for (const match of statement.code.matchAll(/\bset\(\s*["']([^"']+)["']/g)) {
