@@ -48,8 +48,13 @@ export class State {
         this.onSet(attribute, value);
     }
 
+    // Only the store's own properties are attributes, not ones it inherits, such as valueOf
+    private has(attribute: string) {
+        return Object.prototype.hasOwnProperty.call(this.store, attribute);
+    }
+
     get(attribute: string): any {
-        if (attribute in this.store) {
+        if (this.has(attribute)) {
             return structuredClone(this.store[attribute]);
         }
 
@@ -61,12 +66,16 @@ export class State {
         // This allows {{attribute}} in templates to reflect changes made
         // by helpers like {{inc}} during the same render pass.
         return new Proxy({} as Record<string, any>, {
-            get: (_, prop) => this.get(String(prop)),
-            has: (_, prop) => String(prop) in this.store,
+            // A name that isn't an attribute is null, unless it's one every object has, like
+            // valueOf, which Handlebars can use
+            get: (target, prop) => typeof prop == "string" && (this.has(prop) || !(prop in target))
+                ? this.get(prop)
+                : Reflect.get(target, prop),
+            has: (_, prop) => this.has(String(prop)),
             ownKeys: () => Object.keys(this.store),
             getOwnPropertyDescriptor: (_, prop) => {
                 const key = String(prop);
-                if (key in this.store) {
+                if (this.has(key)) {
                     return {
                         enumerable: true,
                         configurable: true,

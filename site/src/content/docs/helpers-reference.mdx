@@ -378,7 +378,7 @@ In addition to Squiffy's custom helpers, you have access to standard Handlebars 
 | `{{#if}}...{{else}}...{{/if}}` | Conditional with fallback | `{{#if alive}}Living{{else}}Dead{{/if}}` |
 | `{{#if}}...{{else if}}...{{/if}}` | Multiple conditions | `{{#if score > 100}}High{{else if score > 50}}Medium{{else}}Low{{/if}}` |
 | `{{#unless}}...{{/unless}}` | Inverted conditional | `{{#unless game_over}}Keep playing{{/unless}}` |
-| `{{#each}}...{{/each}}` | Iterate over arrays (advanced usage) | Not commonly used in Squiffy |
+| `{{#each}}...{{/each}}` | Repeat for each item in an array, as `{{this}}`. See [Going through an array](/attributes/#going-through-an-array) | `{{#each inventory}}[[Drop the {{this}}]](drop, item = "{{this}}"){{/each}}` |
 
 ## Helpers and directives
 

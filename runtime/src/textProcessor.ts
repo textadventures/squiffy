@@ -261,9 +261,24 @@ export class TextProcessor {
 
         const escapeAttr = (s: unknown) => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;");
 
-        const addAdditionalParameters = (options: any) => {
+        // A link's text and setters can have {{...}} in them, such as [[Drop the {{this}}]](drop,
+        // item = "{{this}}") inside an {{#each}}. They're filled in where the link is, so they see
+        // the loop's item. Setters aren't HTML, so their values aren't escaped.
+        const linkTemplates = new Map<string, HandlebarsTemplateDelegate>();
+        const fillIn = (text: unknown, context: unknown, options: any, escape: boolean) => {
+            if (typeof text != "string" || !text.includes("{{")) return text;
+            const key = (escape ? "h:" : "t:") + text;
+            let template = linkTemplates.get(key);
+            if (!template) {
+                template = this.handlebars.compile(rewriteInfixExpressions(text), { compat: true, noEscape: !escape });
+                linkTemplates.set(key, template);
+            }
+            return template(context, { data: options.data });
+        };
+
+        const addAdditionalParameters = (context: unknown, options: any) => {
             let result = "";
-            const setters = options.hash.set as string || "";
+            const setters = fillIn(options.hash.set as string || "", context, options, false) as string;
             if (setters) {
                 // With expressions, a setter can have commas inside quotes, e.g. greeting = "Hi, there"
                 const list = this.getStory().expressions ? splitSetters(setters) : setters.split(",").map(s => s.trim());
@@ -272,14 +287,15 @@ export class TextProcessor {
             return result;
         };
 
-        this.handlebars.registerHelper("section", (section: string, options) => {
-            const text = options.hash.text as string || section;
-            return new Handlebars.SafeString(`<a class="squiffy-link link-section" data-section="${escapeAttr(section)}"${addAdditionalParameters(options)} role="link" tabindex="0">${text}</a>`);
+        // Handlebars passes the context a helper is used in (inside an {{#each}}, the item) as this
+        this.handlebars.registerHelper("section", function (this: unknown, section: string, options) {
+            const text = fillIn(options.hash.text as string || section, this, options, true);
+            return new Handlebars.SafeString(`<a class="squiffy-link link-section" data-section="${escapeAttr(section)}"${addAdditionalParameters(this, options)} role="link" tabindex="0">${text}</a>`);
         });
 
-        this.handlebars.registerHelper("passage", (passage: string, options) => {
-            const text = options.hash.text as string || passage;
-            return new Handlebars.SafeString(`<a class="squiffy-link link-passage" data-passage="${escapeAttr(passage)}"${addAdditionalParameters(options)} role="link" tabindex="0">${text}</a>`);
+        this.handlebars.registerHelper("passage", function (this: unknown, passage: string, options) {
+            const text = fillIn(options.hash.text as string || passage, this, options, true);
+            return new Handlebars.SafeString(`<a class="squiffy-link link-passage" data-passage="${escapeAttr(passage)}"${addAdditionalParameters(this, options)} role="link" tabindex="0">${text}</a>`);
         });
     }
 
@@ -309,7 +325,8 @@ export class TextProcessor {
 
     process(text: string, inline: boolean) {
         try {
-            const template = this.handlebars.compile(rewriteInfixExpressions(text));
+            // compat: inside an {{#each}}, a name that isn't one of the item's looks for an attribute
+            const template = this.handlebars.compile(rewriteInfixExpressions(text), { compat: true });
             text = template(this.state.getStore());
 
             if (inline) {

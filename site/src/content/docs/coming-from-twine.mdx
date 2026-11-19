@@ -97,7 +97,7 @@ If you'd rather show one section at a time, clear the screen before each one, wi
 
 As in Harlowe and SugarCube, players can undo their choices: a published Squiffy story has a **Back** button, which goes back a section or passage at a time, next to **Restart**. If you'd rather the player's choices were final, you can turn it off: see [The Back button](/multiple-files/#the-back-button).
 
-The player's progress is saved automatically in their browser, so they can close the page and carry on where they left off when they come back. There's one save for each story, rather than save slots.
+The player's progress is saved automatically in their browser, so they can close the page and carry on where they left off when they come back. They can also keep as many saved games as they like, with the **Save** button: see [Saved games](/multiple-files/#saved-games).
 
 ### Setting attributes
 
@@ -196,8 +196,9 @@ See [Dynamic text](/dynamic-text/) and [Player input](/player-input/).
 | Make an array | `(set: $bag to (a: "key"))` | `<<set $bag to ["key"]>>` | `{{set "bag" (array "key")}}` |
 | Add to it | `(set: $bag to it + (a: "map"))` | `<<run $bag.push("map")>>` | `{{append "bag" "map"}}` |
 | Check what's in it | `$bag contains "key"` | `$bag.includes("key")` | `(contains "bag" "key")` |
+| Do something for each item | `(for: each _item, ...$bag)[_item]` | `<<for _item range $bag>>_item<</for>>` | `{{#each bag}}{{this}}{{/each}}` |
 
-See [Array management helpers](/helpers-reference/#array-management-helpers).
+See [Array management helpers](/helpers-reference/#array-management-helpers) and [Going through an array](/attributes/#going-through-an-array).
 
 ### Special passages
 
@@ -213,8 +214,6 @@ See [Array management helpers](/helpers-reference/#array-management-helpers).
 
 Squiffy is deliberately simpler than Twine's story formats, so some things aren't there:
 
-- **Save slots.** There's one save for each story. See [Going back and saving](#going-back-and-saving).
-- **Loops**, like SugarCube's `<<for>>` and Harlowe's `(for:)`.
 - **Data structures.** An attribute holds a single value, or an [array](/helpers-reference/#array-management-helpers). There's nothing like Harlowe's datamaps or SugarCube's objects, so use an attribute for each value, such as `hero_hp` and `hero_name`.
 - **Temporary variables**, like SugarCube's `_name`. Every attribute lasts for the whole story.
 - **Sound macros**, like `<<audio>>`. Use HTML's `<audio>` instead: see [Images, sound and other files](/images-and-files/).

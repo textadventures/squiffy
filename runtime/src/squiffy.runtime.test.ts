@@ -3169,6 +3169,94 @@ Length is {{length (array "x" "y")}}.
     expect(element.textContent).toContain("Length is 2.");
 });
 
+// {{#each}} loops
+
+test("{{#each}} lists an array, with @index, @first and {{else}}", async () => {
+    const script = `
+[[start]]:
+@set gold = 3
+{{set "inventory" (array "sword" "key" "lamp")}}
+{{set "empty" (array)}}
+A: {{#each inventory}}{{#unless @first}}, {{/unless}}{{@index}} {{this}}{{/each}}.
+B: {{#each empty}}{{this}}{{else}}nothing{{/each}}.
+`;
+
+    const { element } = await initScript(script);
+    expect(element.textContent).toContain("A: 0 sword, 1 key, 2 lamp.");
+    expect(element.textContent).toContain("B: nothing.");
+});
+
+test("Attributes can be read inside {{#each}}", async () => {
+    const script = `
+[[start]]:
+@set gold = 3
+{{set "inventory" (array "sword" "key")}}
+A: {{#each inventory}}{{this}} {{gold}}; {{/each}}
+B: {{#each inventory}}{{../gold}}{{/each}}
+C: {{#each inventory}}{{#if gold > 2 and this = "key"}}yes{{/if}}{{/each}}
+D: {{#each inventory}}{{inc "gold"}}{{/each}}{{gold}}
+`;
+
+    const { element } = await initScript(script, true);
+    expect(element.textContent).toContain("A: sword 3; key 3;");
+    expect(element.textContent).toContain("B: 33");
+    expect(element.textContent).toContain("C: yes");
+    expect(element.textContent).toContain("D: 5");
+});
+
+test("Links inside {{#each}} can use the item in their text and setters", async () => {
+    const script = `
+[[start]]:
+@set gold = 3
+{{set "inventory" (array "sword" "key")}}
+{{#each inventory}}
+- [[Drop the {{this}}]](drop, item = "{{this}}", gold += 1)
+- [Look at the {{this}}](look, looking = "{{this}}")
+{{/each}}
+
+[look]:
+You look at the {{looking}}.
+
+[[drop]]:
+You dropped the {{item}}, and have {{gold}} gold.
+`;
+
+    const { squiffyApi, element } = await initScript(script, true);
+    expect(findLink(element, "section", "Drop the sword")).toBeDefined();
+
+    await squiffyApi.clickLink(findLink(element, "passage", "Look at the sword"));
+    expect(element.textContent).toContain("You look at the sword.");
+
+    await squiffyApi.clickLink(findLink(element, "section", "Drop the key"));
+    expect(squiffyApi.get("item")).toBe("key");
+    expect(element.textContent).toContain("You dropped the key, and have 4 gold.");
+});
+
+test("A link's text can show an attribute", async () => {
+    const script = `
+[[start]]:
+@set gold = 3
+[[Spend {{gold}} gold]](shop)
+
+[[shop]]:
+Spent.
+`;
+
+    const { element } = await initScript(script, true);
+    expect(findLink(element, "section", "Spend 3 gold")).toBeDefined();
+});
+
+test("Names every object has, like valueOf, aren't attributes", async () => {
+    const script = `
+[[start]]:
+{{#if constructor}}yes{{else}}no{{/if}}
+`;
+
+    const { squiffyApi, element } = await initScript(script);
+    expect(element.textContent).toContain("no");
+    expect(squiffyApi.get("valueOf")).toBeNull();
+});
+
 test("Array helpers work together for game round tracking", async () => {
     const script = `
 [[start]]:
