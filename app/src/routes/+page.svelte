@@ -13,6 +13,7 @@
     import { desktopApi } from "#lib/desktop.js";
     import { DOCS_URL } from "#lib/links.js";
     import { TWINE_ACCEPT } from "#lib/twine-import.js";
+    import { QUEST_ACCEPT } from "#lib/quest-import.js";
     import type { StoredProject } from "@textadventures/project-fs";
     import { clearLegacyAutoSave, getLegacyAutoSave, type LegacyAutoSave } from "#lib/legacy.js";
     import { confirmDialog } from "#lib/confirm.js";
@@ -192,10 +193,10 @@
                 <FileUp size={22} class="text-primary-500" />
                 <span class="font-medium">Open file</span>
                 <span class="text-xs text-surface-600-400">
-                    {isDesktop ? "A .squiffy file, a project .zip to unpack into a folder, or a Twine story to convert" : "Copy a .squiffy file or a project .zip into this browser, or convert a Twine story"}
+                    {isDesktop ? "A .squiffy file, a project .zip to unpack into a folder, or a Twine story or Quest gamebook to convert" : "Copy a .squiffy file or a project .zip into this browser, or convert a Twine story or Quest gamebook"}
                 </span>
             </button>
-            <input bind:this={fileInput} type="file" accept=".squiffy,.zip,{TWINE_ACCEPT}" class="hidden" onchange={handleFileChosen} />
+            <input bind:this={fileInput} type="file" accept=".squiffy,.zip,{TWINE_ACCEPT},{QUEST_ACCEPT}" class="hidden" onchange={handleFileChosen} />
         </div>
         {#if !isDesktop}
             <p class="text-xs text-surface-600-400">

@@ -7,6 +7,7 @@ import { createPackageFiles, writeScriptFile } from "./file-packager.js";
 import { convertV5File } from "./convert-v5.js";
 import { convertV6Story } from "./convert-v6.js";
 import { convertTwineFile } from "./convert-twine.js";
+import { convertQuestFile } from "./convert-quest.js";
 import { findStory, StoryNotFoundError, type StoryOnDisk } from "squiffy-compiler/node";
 import { BUILD_FOLDER } from "squiffy-compiler";
 
@@ -31,7 +32,9 @@ const argv = yargs(hideBin(process.argv))
     .boolean("convert-v6")
     .describe("convert-twine", "Convert a Twine story (a .twee file, or Twine's published or archive .html) to Squiffy, in a new folder next to it")
     .boolean("convert-twine")
-    .describe("out", "With --convert-twine, the folder to put the Squiffy story in")
+    .describe("convert-quest", "Convert a Quest gamebook (a .quest or .aslx file) to Squiffy, in a new folder next to it")
+    .boolean("convert-quest")
+    .describe("out", "With --convert-twine or --convert-quest, the folder to put the Squiffy story in")
     .string("out")
     .version(version)
     .parseSync();
@@ -88,6 +91,15 @@ else if (argv.convertTwine) {
         process.exitCode = 1;
     }
     else if (!convertTwineFile(input, argv.out)) {
+        process.exitCode = 1;
+    }
+}
+else if (argv.convertQuest) {
+    if (argv._[0] === undefined) {
+        console.error("Give the Quest gamebook to convert: a .quest or .aslx file.");
+        process.exitCode = 1;
+    }
+    else if (!convertQuestFile(input, argv.out)) {
         process.exitCode = 1;
     }
 }

@@ -183,7 +183,8 @@ function findCommands(text: string, section: string | null, names: Names): Comma
     let i = 0;
     while (i < text.length) {
         if (text.startsWith("{{", i)) {
-            const closeToken = text.startsWith("{{{", i) ? "}}}" : "}}";
+            // A comment ends at --}}, and can have }} in it before that
+            const closeToken = text.startsWith("{{!--", i) ? "--}}" : text.startsWith("{{{", i) ? "}}}" : "}}";
             const close = text.indexOf(closeToken, i + 2);
             i = close == -1 ? i + 2 : close + closeToken.length;
             continue;

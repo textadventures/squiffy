@@ -165,6 +165,16 @@ npx @textadventures/squiffy-cli mygame.html --convert-twine
 
 This creates a folder next to the file, with the same name (`mygame` here), with the Squiffy story in it, and `twine-import.txt`, which lists anything that couldn't be converted exactly. To put it somewhere else, add `--out` and a folder that's empty or doesn't exist yet. See [Converting a Twine story](/converting-from-twine/) for what's converted, and how.
 
+### Converting from Quest
+
+Use `--convert-quest` to convert a gamebook made in [Quest](https://textadventures.co.uk/quest)'s gamebook mode to Squiffy. Give it the `.quest` file, or the `.aslx` file Quest saves:
+
+```bash
+npx @textadventures/squiffy-cli mygame.quest --convert-quest
+```
+
+This creates a folder next to the file, with the same name (`mygame` here), with the Squiffy story in it, the images and sounds the gamebook uses, and `quest-import.txt`, which lists anything that couldn't be converted exactly. To put it somewhere else, add `--out` and a folder that's empty or doesn't exist yet. See [Converting a Quest gamebook](/converting-from-quest/) for what's converted, and how.
+
 ### Converting from Squiffy 6
 
 In a story with a `squiffy.json`, text in `@set` and link assignments goes in quotes, and attributes are written without an `@` (see [Coming from Squiffy 6](/coming-from-squiffy-6/)). A Squiffy 6 story has no `squiffy.json`, so it keeps the old rules. When the CLI builds one whose assignments would need changing, it says so. Use `--convert-v6`, giving it the story's main file, to convert it and add a `squiffy.json`:

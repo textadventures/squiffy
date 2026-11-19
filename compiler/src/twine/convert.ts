@@ -71,7 +71,7 @@ export interface ConvertedPassage {
 
 // The Squiffy names that would be read as a helper, rather than an attribute, in {{name}} and
 // expressions, and the ones Squiffy sets itself
-const reservedAttributes = new Set([
+export const reservedAttributes = new Set([
     "get", "set", "unset", "inc", "dec", "seen", "visits", "at", "goto", "embed", "array", "random", "contains",
     "length", "append", "prepend", "pop", "remove", "section", "passage", "label", "replace", "rotate", "sequence",
     "live", "animate", "eq", "ne", "gt", "gte", "lt", "lte", "and", "or", "not", "add", "sub", "mul", "div", "mod",

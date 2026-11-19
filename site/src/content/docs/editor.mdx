@@ -11,7 +11,7 @@ The home page lets you start a new story, open a folder, or open a file.
 
 - **New story** creates a story kept in your browser.
 - **Open folder** opens a story's folder on your computer. This needs **Chrome** or **Edge**, which support the File System Access API. Folders you've opened are listed under **Recent folders**, so you can open them again with a click. Your browser may ask for permission again.
-- **Open file** copies a `.squiffy` file, or a project `.zip`, into your browser. It can also open a Twine story, and convert it: see [Opening Twine stories](#opening-twine-stories).
+- **Open file** copies a `.squiffy` file, or a project `.zip`, into your browser. It can also open a Twine story or a Quest gamebook, and convert it: see [Opening Twine stories](#opening-twine-stories) and [Opening Quest gamebooks](#opening-quest-gamebooks).
 
 Stories kept in your browser are listed on the home page, under **In this browser**.
 
@@ -91,6 +91,10 @@ If you open a story that uses the Squiffy 5 text processor syntax, such as `{if 
 ## Opening Twine stories
 
 **Open file** can also open a [Twine](https://twinery.org/) story, written in Harlowe or SugarCube: its published or archive HTML file, or a Twee file. The editor asks before converting it to Squiffy. The converted story has a file called `twine-import.txt`, which lists anything that couldn't be converted exactly. See [Converting a Twine story](/converting-from-twine/).
+
+## Opening Quest gamebooks
+
+**Open file** can also open a gamebook made in [Quest](https://textadventures.co.uk/quest)'s gamebook mode: a `.quest` file, with the images and sounds it uses, or the `.aslx` file Quest saves. The editor asks before converting it to Squiffy. The converted story has a file called `quest-import.txt`, which lists anything that couldn't be converted exactly. See [Converting a Quest gamebook](/converting-from-quest/).
 
 ## Settings
 

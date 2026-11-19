@@ -27,6 +27,7 @@ import { findRecentFolder, forgetFolder as forgetBrowserFolder, hasPermission, l
 import { desktopApi } from "./desktop.js";
 import { needsBackup } from "./backup.js";
 import { convertTwineFile, TWINE_FILE_PATTERN, twineImportMessage } from "./twine-import.js";
+import { convertQuestFile, QUEST_FILE_PATTERN, questImportMessage } from "./quest-import.js";
 
 export const SQUIFFY_FILES: FileTypeFilter[] = [
     { description: "Squiffy stories", extensions: [".squiffy"], mimeType: "text/plain" },
@@ -537,9 +538,19 @@ export async function browserStoryFromText(fileName: string | undefined, text: s
     return createBrowserStory(name, text);
 }
 
-// Imports a .squiffy file, a project zip (from Download project), or a Twine story (converted,
-// if the author says to), into a new story in the browser. Returns its id, or null if they cancel.
+// Imports a .squiffy file, a project zip (from Download project), or a Twine story or Quest
+// gamebook (converted, if the author says to), into a new story in the browser. Returns its id,
+// or null if they cancel.
 export async function importFile(file: File): Promise<string | null> {
+    if (QUEST_FILE_PATTERN.test(file.name)) {
+        const converted = await convertQuestFile(file.name, new Uint8Array(await file.arrayBuffer()));
+        if (!converted) return null;
+        const id = crypto.randomUUID();
+        const fs = await browserStories.create(id, { title: converted.title, mainFile: converted.mainFile, lastOpened: Date.now() });
+        for (const [path, content] of converted.files) await fs.write(path, content);
+        showToast(questImportMessage(converted), "info", 12000);
+        return id;
+    }
     if (TWINE_FILE_PATTERN.test(file.name)) {
         const converted = await convertTwineFile(file.name, await file.text());
         if (!converted) return null;
@@ -641,6 +652,7 @@ function desktopOrThrow() {
 
 const ZIP_FILES: FileTypeFilter[] = [{ description: "Project zip files", extensions: [".zip"], mimeType: "application/zip" }];
 const TWINE_FILES: FileTypeFilter[] = [{ description: "Twine stories", extensions: [".twee", ".tw", ".html", ".htm"], mimeType: "text/html" }];
+const QUEST_FILES: FileTypeFilter[] = [{ description: "Quest gamebooks", extensions: [".quest", ".aslx"], mimeType: "application/octet-stream" }];
 
 // Open folder
 export async function pickDesktopFolder(): Promise<PickedFolder | null> {
@@ -655,11 +667,11 @@ export async function pickDesktopFolder(): Promise<PickedFolder | null> {
 }
 
 // Open file: a .squiffy file opens its folder, a project zip (from Download project) is
-// unpacked into a folder the author chooses, and a Twine story is converted into one
+// unpacked into a folder the author chooses, and a Twine story or Quest gamebook is converted into one
 export async function pickDesktopFile(): Promise<PickedFolder | null> {
     // On macOS, a dialog with several filters only allows the first one's files until the
     // author picks another from its Format menu, so the first filter takes them all
-    const filters = [...SQUIFFY_FILES, ...ZIP_FILES, ...TWINE_FILES];
+    const filters = [...SQUIFFY_FILES, ...ZIP_FILES, ...TWINE_FILES, ...QUEST_FILES];
     const all: FileTypeFilter = { description: "All supported files", extensions: filters.flatMap(f => f.extensions) };
     const picked = await desktopOrThrow().opener.openFile({ title: "Open a story file", filters: [all, ...filters] });
     if (!picked) return null;
@@ -668,6 +680,15 @@ export async function pickDesktopFile(): Promise<PickedFolder | null> {
         const data = await fs.read(mainFile);
         await fs.release();
         return unpackZip(mainFile, data);
+    }
+    if (QUEST_FILE_PATTERN.test(mainFile)) {
+        const data = await fs.read(mainFile);
+        await fs.release();
+        const converted = await convertQuestFile(mainFile, data);
+        if (!converted) return null;
+        const folder = await writeIntoNewFolder(`the Squiffy version of ${mainFile}`, converted.files, converted.mainFile);
+        if (folder) showToast(questImportMessage(converted), "info", 12000);
+        return folder;
     }
     if (TWINE_FILE_PATTERN.test(mainFile)) {
         const text = new TextDecoder().decode(await fs.read(mainFile));

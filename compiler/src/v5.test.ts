@@ -49,6 +49,7 @@ Value is {x}.`;
         ["inline CSS", "<style>.x{color:red}</style><div style=\"a\">{</div>"],
         ["JSON", "{\"a\": 1}"],
         ["code spans", "Write `{x}` or ``{if x:y}``"],
+        ["comments with }} in them", "{{!-- msg (\"{{a}} {if x:y}\") --}}"],
     ])("doesn't detect %s", (_, script) => {
         expect(findV5Syntax(script)).toEqual([]);
     });
