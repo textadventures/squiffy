@@ -147,7 +147,9 @@ export function registerProjectFsHandlers(options: ProjectFsMainOptions): Projec
 
     async function pickDirectory(sender: SenderLike, raw: unknown, create: boolean) {
         const o: PickFolderOptions = pickOptions(raw);
-        const properties = create ? ["openDirectory", "createDirectory", "promptToCreate"] : ["openDirectory"];
+        // Not promptToCreate: on Windows it makes the folder picker reject a new folder name as "not
+        // valid". Windows' folder picker has a New folder button anyway; createDirectory is its macOS twin.
+        const properties = create ? ["openDirectory", "createDirectory"] : ["openDirectory"];
         const result = await dialogOrThrow().showOpenDialog({ ...o, properties });
         if (result.canceled || result.filePaths.length === 0) return null;
         return approve(sender, result.filePaths[0]);
