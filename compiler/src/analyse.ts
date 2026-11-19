@@ -132,6 +132,9 @@ export class Section extends TextContainer {
 }
 
 export class Passage extends TextContainer {
+    // @repeat: its links stay clickable (#104)
+    repeat = false;
+
     constructor(public name: string, public line: number, public node: PassageNode) {
         super();
     }
@@ -311,6 +314,15 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
                     }
                     else {
                         passage.clear = true;
+                    }
+                    return true;
+                case "repeat":
+                    if (!passage) {
+                        report("warning", "squiffy/repeat-not-in-passage", filename, lineRange(node),
+                            "@repeat only works in a passage, so this was ignored.", lineCount);
+                    }
+                    else {
+                        passage.repeat = true;
                     }
                     return true;
                 case "end":

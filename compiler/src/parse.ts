@@ -170,6 +170,9 @@ export function parse(text: string, filename?: string): SquiffyFile {
             if (!passage) haveSection = true;
             add({ type: "clear", range });
         }
+        else if (stripLine == "@repeat") {
+            add({ type: "repeat", range });
+        }
         else if (stripLine == "@end") {
             if (!passage) haveSection = true;
             add({ type: "end", range });

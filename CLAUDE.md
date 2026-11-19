@@ -159,7 +159,7 @@ CLI options:
 ### Key Concepts
 
 - **Sections**: Major story divisions. When you navigate to a new section, all previous links become unclickable, ensuring forward-only progression from that point.
-- **Passages**: Sub-divisions within a section. Unlike sections, passage links remain clickable after being used - you can click passage links in any order within the same section, creating a more exploratory experience.
+- **Passages**: Sub-divisions within a section. The player can click a section's passage links in any order, until they leave the section. Each passage link can be clicked once, unless the passage has `@repeat` (#104).
 - **Story Data**: The compiler outputs a JSON structure with sections/passages and JavaScript arrays
 - **Plugins**: Runtime extends functionality via plugin system (animate, live updates, random, etc.)
 - **State**: Runtime manages story state (variables, history) via `State` class

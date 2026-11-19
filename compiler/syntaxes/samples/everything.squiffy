@@ -54,6 +54,10 @@ No key.
     squiffy.set("door_opened", true);
 The door opens.
 
+[knock]:
+@repeat
+Nobody answers.
+
 [[kitchen]]:
 @end
 It's a kitchen.
