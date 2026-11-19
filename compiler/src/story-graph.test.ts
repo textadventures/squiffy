@@ -144,6 +144,17 @@ describe("story graph", () => {
         expect(deadEnds(graph)).toEqual([]);
     });
 
+    test("{{deactivate}} isn't a link, so it doesn't reach a passage (#13)", async () => {
+        const graph = await one([
+            "[[a]]:", "See [b].", "",
+            "[b]:", "{{deactivate \"c\"}}", "",
+            "[c]:", "Nothing links here.", "",
+            "[[d]]:", "@end",
+        ].join("\n"));
+        expect(edgeSummary(graph.edges)).toEqual(["section:a -> passage:a/b (passage-link)"]);
+        expect(reachable(graph)).toEqual(["section:a", "passage:a/b"]);
+    });
+
     test("{{goto}} names can be followed, found, renamed and completed", async () => {
         const main = "[[a]]:\n{{goto \"b\"}}\n\n[[b]]:\n@end\n{{goto \"";
         const ls = service({ "story.squiffy": main });

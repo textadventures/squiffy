@@ -28,6 +28,7 @@ Squiffy 7 brings a new editor. The language adds the [`@end`](/basic-concepts/#e
 - **Where the player came from.** The [`previous_section` and `previous` attributes](/attributes/#where-the-player-came-from) say which section, and which section or passage, the player saw before this one, so a section can begin differently depending on how they got there: `{{#if previous_section = "river"}}`.
 - **Endings.** Mark the sections where your story ends with [`@end`](/basic-concepts/#endings), and the editor won't report them as dead ends.
 - **Passages you can click again.** Add [`@repeat`](/basic-concepts/#passages-you-can-click-again) to a passage, and its links stay clickable, for a clue the player might want to read again, or a character who says something different each time.
+- **Turning off passage links.** [`{{deactivate "name"}}`](/basic-concepts/#turning-off-passage-links) turns off the links to a passage, so one choice can rule out another, and a passage with `@repeat` can turn itself off when it's done.
 
 ## Published stories
 

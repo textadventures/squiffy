@@ -236,6 +236,15 @@ describe("rename", () => {
         expect(renamed).toContain("[jottings]:");
     });
 
+    test("a passage, including {{deactivate}}", async () => {
+        const text = "[[a]]:\nSee [b].\n\n[b]:\n@repeat\n{{#if done}}{{deactivate \"b\"}}{{/if}}";
+        const files = memoryFiles({ "s.squiffy": text });
+        const ls = createLanguageService({ files, mainFile: "s.squiffy" });
+        const result = await ls.getRenameEdits("s.squiffy", positionOf(text, "[b]:", 1), "c");
+        if (!result || "error" in result) throw new Error("Expected edits");
+        expect(apply(text, result.edit["s.squiffy"])).toBe("[[a]]:\nSee [c].\n\n[c]:\n@repeat\n{{#if done}}{{deactivate \"c\"}}{{/if}}");
+    });
+
     test("an unnamed link changes its text, which is its target", async () => {
         const { ls } = project();
         const result = await ls.getRenameEdits("story.squiffy", positionOf(main, "[[outside]]:", 3), "garden");
@@ -294,6 +303,13 @@ describe("completion", () => {
         const ls = createLanguageService({ files, mainFile: "s.squiffy" });
         const items = await ls.getCompletions("s.squiffy", { line: 1, character: 13 });
         expect(items.map(i => i.label)).toEqual(["p1", "a"]);
+    });
+
+    test("passage names for deactivate", async () => {
+        const files = memoryFiles({ "s.squiffy": "[[a]]:\n{{deactivate \"\n[p1]:\n[@last]:" });
+        const ls = createLanguageService({ files, mainFile: "s.squiffy" });
+        const items = await ls.getCompletions("s.squiffy", { line: 1, character: 14 });
+        expect(items.map(i => i.label)).toEqual(["p1"]);
     });
 
     test("attribute names", async () => {

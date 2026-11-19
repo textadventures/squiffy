@@ -5,7 +5,7 @@
 
 import type { Location } from "./language-service.js";
 import type {
-    Diagnostic, EmbedNode, GotoNode, LinkNode, PassageNode, Position, Range, SectionNode, SquiffyFile,
+    DeactivateNode, Diagnostic, EmbedNode, GotoNode, LinkNode, PassageNode, Position, Range, SectionNode, SquiffyFile,
 } from "./syntax.js";
 
 export interface StoryGraph {
@@ -94,6 +94,8 @@ export interface GraphUsage {
     link?: LinkNode;
     embed?: EmbedNode;
     goto?: GotoNode;
+    // {{deactivate}} names a passage, but isn't a way to get there, so it has no edge
+    deactivate?: DeactivateNode;
 }
 
 export type GraphTarget =
@@ -276,6 +278,7 @@ export function buildStoryGraph(source: GraphSource): StoryGraph {
     };
 
     for (const usage of source.usages) {
+        if (usage.deactivate) continue;
         const from = containerIds.get(usage.container);
         // Not part of the story, or replaced by a later section or passage of the same name
         if (from === undefined) continue;

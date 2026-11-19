@@ -158,6 +158,35 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         clearTimeout(gotoTimer);
         gotoTimer = undefined;
         textProcessor.goto = null;
+        textProcessor.deactivate.clear();
+    }
+
+    // Disables the links to the passages that a {{deactivate}} in the text just shown asked for
+    // (#13). The element that did it, and each link it disabled, get the same number, so that going
+    // back can enable just those links again. A link already disabled by a click is left alone.
+    function takeDeactivate(element: HTMLElement) {
+        const names = textProcessor.deactivate;
+        if (names.size == 0) return;
+        const id = String((get("_deactivations") || 0) + 1);
+        set("_deactivations", Number(id));
+        element.setAttribute("data-deactivates", id);
+        for (const link of currentSectionElement.querySelectorAll("a.squiffy-link[data-passage]")) {
+            if (names.has(link.getAttribute("data-passage")!) && !link.classList.contains("disabled")) {
+                disableLink(link);
+                link.setAttribute("data-deactivated-by", id);
+            }
+        }
+        names.clear();
+    }
+
+    // Going back: enables the links that the element's {{deactivate}} disabled
+    function undoDeactivate(element: HTMLElement) {
+        const id = element.getAttribute("data-deactivates");
+        if (!id) return;
+        for (const link of currentSectionElement.querySelectorAll(`a.squiffy-link[data-deactivated-by="${id}"]`)) {
+            enableLink(link);
+            link.removeAttribute("data-deactivated-by");
+        }
     }
 
     // Takes the {{goto}} from the text just shown, if there was one, and marks the section or
@@ -351,6 +380,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         setupInputValidation(currentSectionElement);
 
         set("_turncount", 0);
+        takeDeactivate(currentSectionElement);
         const pending = takeGoto(currentSectionElement);
         writeUndoLog();
         save();
@@ -481,6 +511,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         // Setup validation for any inputs added by passages
         setupInputValidation(currentSectionElement);
 
+        takeDeactivate(currentPassageElement!);
         const pending = takeGoto(currentPassageElement!);
         writeUndoLog();
         save();
@@ -920,6 +951,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         if (currentPassageElement) {
             const currentPassage = currentPassageElement.getAttribute("data-passage");
             doUndo(currentPassageElement.getAttribute("data-undo"));
+            undoDeactivate(currentPassageElement);
             currentPassageElement.remove();
 
             // If there's nothing left in the outputElement except for an empty section element that
