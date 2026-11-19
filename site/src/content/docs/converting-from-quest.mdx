@@ -31,7 +31,7 @@ Then either:
 
 The converted story is a folder with:
 
-- `story.squiffy`, the story itself. Each page becomes a section with the same name, and a page with no links is marked as one of the story's [endings](/basic-concepts/#endings).
+- `story.squiffy`, the story itself. Each page becomes a section with the same name, and a page with no links, and no script that goes to another page, is marked as one of the story's [endings](/basic-concepts/#endings).
 - `squiffy.json`, the [project file](/multiple-files/).
 - `story.css`, if you chose the gamebook's colours, fonts or page width in Quest. They're set with Squiffy's [style variables](/styling/), and the story stays in light mode, as it did in Quest. Without one, the story follows Squiffy's own styles, in light and dark mode.
 - The images and sounds the gamebook uses.
@@ -73,11 +73,46 @@ Play the story through after converting it. The editor's [story map](/story-map/
 
 Quest's flags and counters become [attributes](/attributes/) with the same names. An attribute of the player or of a page, such as `player.strength`, becomes `player_strength`. A name Squiffy uses itself, such as `seen` or `turns`, gets an underscore: `seen_`.
 
+## How scripts convert
+
+A page's script runs before its text is shown, so it becomes text at the start of the page's section. Squiffy's helpers, such as `{{set}}` and `{{#if}}`, run in order as the text is shown, so the page's text and links see what the script did. The game's script that runs on every page goes in the [master section](/basic-concepts/#master-sections-and-passages), `[[]]`, which runs with every section.
+
+| Quest | Squiffy |
+|---|---|
+| `msg ("You have " + game.gold + " gold.")` | `You have {{gold}} gold.` |
+| `SetFlagOn ("lamp")`, `SetFlagOff ("lamp")` | `{{set "lamp" true}}`, `{{set "lamp" false}}` |
+| `SetCounter ("gold", 10)`, `IncreaseCounter ("gold")`, `DecreaseCounter ("gold")`, `ChangeCounter ("gold", 5)` | `{{set "gold" 10}}`, `{{inc "gold"}}`, `{{dec "gold"}}`, `{{inc "gold" 5}}` |
+| `game.name = "Bob"`, `player.strength = player.strength + 1` | `{{set "name" "Bob"}}`, `{{set "player_strength" player_strength + 1}}` |
+| `if (GetBoolean(game, "lamp")) { } else if (...) { } else { }` | `{{#if lamp}}...{{else if ...}}...{{else}}...{{/if}}` |
+| `GetInt(game, "gold") >= 10`, `HasSeenPage(Page2)`, `player.parent = Page2` | `gold >= 10`, `(seen "Page2")`, `(at "Page2")` |
+| `RandomChance(25)` | `(random (array 1 2 3 4)) <= 1`, true a quarter of the time |
+| `switch (...) { case (...) { } }` | `{{#if}}` and `{{else if}}` |
+| `firsttime { } otherwise { }` | At the start of a page's script, `{{#if (visits "Page1") = 1}}`. Anywhere else, an attribute that remembers whether it's run |
+| `MovePlayer (Page2)` | `{{goto "Page2"}}` |
+| `AddPageLink (Page1, Page2, "Go on")`, `RemovePageLink (Page1, Page2)` | An attribute for the link, which Page1 checks before showing it: see below |
+| `GetInput () { game.name = result }` | A text box, and a **Continue** link to a section that runs the rest, `{{set "name" input}}`, and shows the page's links again |
+| `ClearScreen`, before the script shows anything | `@clear` |
+| `picture ("map.png")`, `play sound ("rain.mp3", false, false)` | `<img>`, `<audio>` |
+| `PrintCentered`, `TextFX_Typewriter`, `DisplayHttpLink`, `ShowYouTube` | Centred text, `{{#animate "typewriter"}}`, a web link, a YouTube player |
+| `SetBackgroundColour`, `SetForegroundColour`, `SetFontName`, `SetWebFontName`, `SetFontSize` | A `<style>` that sets Squiffy's [style variables](/styling/) from then on |
+
+A link that a script adds or removes is shown with `{{#if}}`, and the scripts set its attribute, named after its pages, such as `link_Page1_Page2`. If the link starts on the page, the story sets the attribute when it starts. If scripts give a link different texts, its attribute says which one to show, counting from 1:
+
+```squiffy
+{{#if link_Page1_Page2}}
+[[Go on]](Page2)
+{{/if}}
+```
+
+`MovePlayer` goes to the other page once the page is shown. In Quest, the rest of a page with text wasn't shown, but here its text and links are shown first. `quest-import.txt` lists the pages where this happens.
+
 ## What isn't converted yet
 
-- **Scripts.** A page's script, and the game's script that runs on every page, are kept as comments. Converting the commands Quest's gamebook editor gives you, such as setting flags and counters, and adding and removing links, is planned.
+- **Script commands beyond the gamebook editor's own**, such as lists, loops, `ShowMenu`, `wait`, your own functions, and Quest's JavaScript (`JS.`...), are kept as comments. So is a `ClearScreen` after the script has shown something, as Squiffy can only clear the screen before showing a section.
+- **Stopping a sound** with `stop sound`.
 - **Expressions in text**: `{either ...}`, `{eval:...}` and `{=...}`.
 - **Commands for Quest's text adventures**, such as `{object:...}` and `{exit:...}`, and `{select:...}` and `{rndalt:...}`.
 - **Links and other commands in `{random:...}`.** Its choices can be text, formatting and images.
 - **When sounds stop.** A page's sound plays to the end. In Quest, it stopped when the player went to another page.
+- **`TextFX_Unscramble`**, which is typed out instead.
 - **JavaScript** written for Quest.
