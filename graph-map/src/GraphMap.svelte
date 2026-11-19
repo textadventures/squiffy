@@ -54,8 +54,8 @@
     // and can draw nodes its own way with the `node` snippet.
     import { onMount, untrack } from "svelte";
     import {
-        arrowhead, boundsOf, edgeShape, fitTransform, identity, MapModel, nearestInDirection, revealTransform,
-        toMap, zoomAt, type Transform,
+        arrowhead, arrowPoints, boundsOf, distanceToEdge, edgeBounds, edgeGeometry, edgeShape, fitTransform, identity, MapModel,
+        nearestInDirection, revealTransform, toMap, zoomAt, type EdgeGeometry, type Rect, type Transform,
     } from "@textadventures/graph-map";
 
 
@@ -91,7 +91,23 @@
         });
     });
 
-    onMount(() => () => cancelAnimationFrame(raf));
+    onMount(() => {
+        // Edges' styles can change with the page's theme, e.g. a class or color-scheme on <html>
+        const restyle = () => {
+            edgeStyles.clear();
+            scheduleDraw();
+        };
+        const observer = new MutationObserver(restyle);
+        observer.observe(document.documentElement, { attributes: true });
+        const media = matchMedia("(prefers-color-scheme: dark)");
+        media.addEventListener("change", restyle);
+        return () => {
+            observer.disconnect();
+            media.removeEventListener("change", restyle);
+            cancelAnimationFrame(raf);
+            cancelAnimationFrame(drawRaf);
+        };
+    });
 
     // Runs the simulation while it's moving
     function wake() {
@@ -99,24 +115,43 @@
         raf = requestAnimationFrame(loop);
     }
 
+    // How long the last drawing took, and when it finished
+    let drawMs = 0;
+    let drewAt = 0;
+    // The nodes have moved since they were drawn
+    let stale = false;
+
     function loop() {
         raf = 0;
-        const moved = model.step(fast ? 12 : 4, fast ? Infinity : 1);
-        if (model.settled) fast = false;
-        if (moved) {
-            paint();
-            if (autoFit) fit(false);
+        // A big map takes a while to draw, so each frame either moves the nodes or draws them,
+        // and drawing gets at most half the time. That keeps each piece of work short, so the
+        // page stays responsive while the map lays itself out.
+        const slow = drawMs > 8;
+        if (slow && stale && performance.now() - drewAt >= drawMs) {
+            draw();
+        } else {
+            const moved = model.step(fast ? 12 : 4, fast ? Infinity : 1);
+            if (model.settled) fast = false;
+            if (moved) {
+                stale = true;
+                if (!slow) draw();
+            }
         }
-        if (!model.settled) raf = requestAnimationFrame(loop);
+        if (!model.settled || stale) raf = requestAnimationFrame(loop);
+    }
+
+    function draw() {
+        // Fitted first, so the edges are drawn once, where they'll be seen
+        if (autoFit) fit(false);
+        paint();
     }
 
     // ---- The view ----
 
-    // Positions are written straight to the nodes' and edges' elements on each frame, rather than
-    // through Svelte, which would check every node and edge in the template each time: too slow
-    // for a story with hundreds of sections while it's moving.
+    // Nodes' positions are written straight to their elements on each frame, rather than through
+    // Svelte, which would check every node in the template each time: too slow for a story with
+    // hundreds of sections while it's moving.
     const nodeEls = new Map<string, SVGGElement>();
-    const edgeEls = new Map<string, { group: SVGGElement; paths: SVGPathElement[]; arrow: SVGPathElement }>();
 
     const box = (id: string) => {
         const p = model.position(id), n = nodesById.get(id);
@@ -130,22 +165,213 @@
         el.style.transform = `translate(${Math.round((p.x - n.width / 2) * 10) / 10}px,${Math.round((p.y - n.height / 2) * 10) / 10}px)`;
     }
 
-    function paintEdge(e: E) {
-        const els = edgeEls.get(e.id);
-        if (!els) return;
-        const path = edgePath(e);
-        els.group.style.display = path ? "" : "none";
-        if (!path) return;
-        for (const el of els.paths) el.setAttribute("d", path.d);
-        els.arrow.setAttribute("d", path.arrow);
-        // An attribute rather than a class, which Svelte would overwrite when the edge's class changes
-        const a = model.position(e.from), b = model.position(e.to);
-        els.group.toggleAttribute("data-long", !!a && !!b && Math.hypot(b.x - a.x, b.y - a.y) > longEdge);
+    function paint() {
+        const started = performance.now();
+        for (const n of graph.nodes) paintNode(n.id);
+        drawEdges();
+        stale = false;
+        drewAt = performance.now();
+        drawMs = drewAt - started;
     }
 
-    function paint() {
-        for (const n of graph.nodes) paintNode(n.id);
-        for (const e of graph.edges) paintEdge(e);
+    // ---- Edges ----
+
+    // Edges are drawn on a canvas under the nodes. An SVG element for each was far too slow to
+    // redraw once a story had a few thousand links: every frame the layout moves, and every pan
+    // and zoom. They're still styled with CSS, by their class: see edgeStyle.
+    let canvas = $state<HTMLCanvasElement>();
+    // Holds the elements edgeStyle looks styles up on
+    let probes = $state<SVGGElement>();
+    let hovered = $state<string | null>(null);
+    const hoveredEdge = $derived(hovered === null ? undefined : graph.edges.find(e => e.id == hovered));
+
+    interface DrawnEdge {
+        edge: E;
+        geometry: EdgeGeometry;
+        bounds: Rect;
+    }
+    // Every edge as last drawn (on screen or not), to find the one under the pointer
+    let drawn: DrawnEdge[] = [];
+    // What the edges were last drawn with, so they're only drawn again when it changes
+    let drawnWith: { transform: Transform; width: number; height: number; selected: string | null; hovered: string | null } | null = null;
+    let drawRaf = 0;
+    let needsDraw = false;
+
+    interface EdgeStyle {
+        stroke: string | null;
+        width: number;
+        dash: number[];
+        cap: CanvasLineCap;
+        strokeAlpha: number;
+        fill: string | null;
+        fillAlpha: number;
+    }
+    // By class and state. Cleared when the page's theme might have changed.
+    const edgeStyles = new Map<string, EdgeStyle>();
+    const SVG = "http://www.w3.org/2000/svg";
+
+    // How an edge looks: what CSS gives an SVG edge with its class and state (a <g class="gm-edge">
+    // with a .gm-edge-line and a .gm-edge-arrow, as the host's styles expect). Each combination
+    // is looked up once, on a hidden element.
+    function edgeStyle(cls: string, isSelected: boolean, isHovered: boolean, long: boolean): EdgeStyle {
+        const key = `${+isSelected}${+isHovered}${+long} ${cls}`;
+        let style = edgeStyles.get(key);
+        if (style) return style;
+        const g = document.createElementNS(SVG, "g");
+        g.setAttribute("class", `gm-edge ${cls}${isSelected ? " gm-edge-selected" : ""}${isHovered ? " gm-edge-hover" : ""}`);
+        if (long) g.setAttribute("data-long", "");
+        const line = document.createElementNS(SVG, "path");
+        line.setAttribute("class", "gm-edge-line");
+        const arrow = document.createElementNS(SVG, "path");
+        arrow.setAttribute("class", "gm-edge-arrow");
+        g.append(line, arrow);
+        probes!.append(g);
+        const gs = getComputedStyle(g), ls = getComputedStyle(line), as = getComputedStyle(arrow);
+        const paintOf = (value: string) => !value || value == "none" || value.startsWith("url(") ? null : value;
+        const opacity = num(gs.opacity, 1);
+        const dash = ls.strokeDasharray == "none" ? [] : ls.strokeDasharray.split(/[\s,]+/).map(parseFloat).filter(n => n >= 0);
+        style = {
+            stroke: paintOf(ls.stroke),
+            width: num(ls.strokeWidth, 1),
+            // All zeros is a solid line, as in SVG
+            dash: dash.some(n => n > 0) ? dash : [],
+            cap: (["butt", "round", "square"].includes(ls.strokeLinecap) ? ls.strokeLinecap : "butt") as CanvasLineCap,
+            strokeAlpha: opacity * num(ls.opacity, 1) * num(ls.strokeOpacity, 1),
+            fill: paintOf(as.fill),
+            fillAlpha: opacity * num(as.opacity, 1) * num(as.fillOpacity, 1),
+        };
+        g.remove();
+        edgeStyles.set(key, style);
+        return style;
+    }
+
+    function num(value: string, fallback: number) {
+        const n = parseFloat(value);
+        return Number.isFinite(n) ? n : fallback;
+    }
+
+    // Draws the edges at the next frame, unless the layout does first
+    function scheduleDraw() {
+        needsDraw = true;
+        if (drawRaf || typeof requestAnimationFrame == "undefined") return;
+        drawRaf = requestAnimationFrame(() => {
+            drawRaf = 0;
+            if (needsDraw) drawEdges();
+        });
+    }
+
+    function drawEdges() {
+        needsDraw = false;
+        const ctx = canvas?.getContext("2d");
+        if (!canvas || !ctx || !probes) return;
+        const ratio = window.devicePixelRatio || 1;
+        const w = Math.round(width * ratio), h = Math.round(height * ratio);
+        if (canvas.width != w) canvas.width = w;
+        if (canvas.height != h) canvas.height = h;
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, w, h);
+        const t = transform;
+        drawnWith = { transform: t, width, height, selected, hovered };
+        ctx.setTransform(ratio * t.k, 0, 0, ratio * t.k, ratio * t.x, ratio * t.y);
+
+        // What's in view, on the map, with room for arrowheads
+        const margin = 10;
+        const x0 = -t.x / t.k - margin, y0 = -t.y / t.k - margin;
+        const x1 = (width - t.x) / t.k + margin, y1 = (height - t.y) / t.k + margin;
+        // Edges that look the same are drawn together, which is much quicker than one at a time.
+        // The selected node's edges go on top, and the hovered edge above them.
+        const layers = [new Map<EdgeStyle, DrawnEdge[]>(), new Map<EdgeStyle, DrawnEdge[]>(), new Map<EdgeStyle, DrawnEdge[]>()];
+        const next: DrawnEdge[] = [];
+        for (const edge of graph.edges) {
+            const a = box(edge.from), b = box(edge.to);
+            if (!a || !b) continue;
+            const geometry = edgeGeometry(a, b, bends.get(edge.id) ?? 0, 3);
+            if (!geometry) continue;
+            const item = { edge, geometry, bounds: edgeBounds(geometry) };
+            next.push(item);
+            const r = item.bounds;
+            if (r.x > x1 || r.y > y1 || r.x + r.width < x0 || r.y + r.height < y0) continue;
+            const isSelected = selected !== null && (edge.from == selected || edge.to == selected);
+            const isHovered = edge.id == hovered;
+            const style = edgeStyle(edge.class ?? "", isSelected, isHovered, Math.hypot(b.x - a.x, b.y - a.y) > longEdge);
+            const layer = layers[isHovered ? 2 : isSelected ? 1 : 0];
+            let list = layer.get(style);
+            if (!list) layer.set(style, list = []);
+            list.push(item);
+        }
+        drawn = next;
+
+        for (const layer of layers) {
+            for (const [style, items] of layer) {
+                if (style.stroke && style.strokeAlpha > 0) {
+                    ctx.globalAlpha = style.strokeAlpha;
+                    ctx.strokeStyle = style.stroke;
+                    ctx.lineWidth = style.width;
+                    ctx.lineCap = style.cap;
+                    ctx.setLineDash(style.dash);
+                    inBatches(items, g => {
+                        ctx.moveTo(g.start.x, g.start.y);
+                        if (g.control) ctx.quadraticCurveTo(g.control.x, g.control.y, g.end.x, g.end.y);
+                        else ctx.lineTo(g.end.x, g.end.y);
+                    }, () => ctx.stroke());
+                }
+                if (style.fill && style.fillAlpha > 0) {
+                    ctx.globalAlpha = style.fillAlpha;
+                    ctx.fillStyle = style.fill;
+                    // fill() closes each triangle. closePath() would too, but it slows down badly as
+                    // a path gets longer.
+                    inBatches(items, g => {
+                        const [tip, a, b] = arrowPoints(g.tip, g.angle);
+                        ctx.moveTo(tip.x, tip.y);
+                        ctx.lineTo(a.x, a.y);
+                        ctx.lineTo(b.x, b.y);
+                    }, () => ctx.fill());
+                }
+            }
+        }
+        ctx.globalAlpha = 1;
+
+        // Adds edges to the path a batch at a time, drawing each batch: a canvas path with too
+        // many parts in it gets slower to build
+        function inBatches(items: DrawnEdge[], add: (g: EdgeGeometry) => void, draw: () => void) {
+            for (let i = 0; i < items.length; i += 1000) {
+                ctx!.beginPath();
+                for (const item of items.slice(i, i + 1000)) add(item.geometry);
+                draw();
+            }
+        }
+    }
+
+    // Panning, zooming, resizing, selecting and hovering draw the edges again, if the layout
+    // hasn't already drawn them as they are
+    $effect(() => {
+        const now = { transform, width, height, selected, hovered };
+        untrack(() => {
+            const was = drawnWith;
+            if (!was || now.transform !== was.transform || now.width != was.width || now.height != was.height
+                || now.selected != was.selected || now.hovered != was.hovered) scheduleDraw();
+        });
+    });
+
+    // The edge under a point on the map, if any: the nearest one within a few pixels
+    function edgeAt(p: Point): E | undefined {
+        const tolerance = Math.max(5, 3 / transform.k);
+        let best: E | undefined;
+        let bestDistance = tolerance;
+        for (const { edge, geometry, bounds: r } of drawn) {
+            if (p.x < r.x - tolerance || p.x > r.x + r.width + tolerance || p.y < r.y - tolerance || p.y > r.y + r.height + tolerance) continue;
+            const d = distanceToEdge(geometry, p);
+            if (d <= bestDistance) {
+                bestDistance = d;
+                best = edge;
+            }
+        }
+        return best;
+    }
+
+    function updateHover(e: PointerEvent) {
+        const overNode = (e.target as Element).closest("[data-node], [data-handle]");
+        hovered = overNode ? null : edgeAt(toMap(transform, local(e)))?.id ?? null;
     }
 
     // Registers a node's element, to move it
@@ -162,28 +388,6 @@
             },
             destroy() {
                 if (nodeEls.get(current) === el) nodeEls.delete(current);
-            },
-        };
-    }
-
-    function placeEdge(el: SVGGElement, edge: E) {
-        let current = edge;
-        const register = () => edgeEls.set(current.id, {
-            group: el,
-            paths: [...el.querySelectorAll<SVGPathElement>(".gm-edge-hit, .gm-edge-line")],
-            arrow: el.querySelector<SVGPathElement>(".gm-edge-arrow")!,
-        });
-        register();
-        paintEdge(current);
-        return {
-            update(next: E) {
-                if (edgeEls.get(current.id)?.group === el) edgeEls.delete(current.id);
-                current = next;
-                register();
-                paintEdge(current);
-            },
-            destroy() {
-                if (edgeEls.get(current.id)?.group === el) edgeEls.delete(current.id);
             },
         };
     }
@@ -210,13 +414,6 @@
         }
         return result;
     });
-
-    function edgePath(e: E) {
-        const a = box(e.from), b = box(e.to);
-        if (!a || !b) return undefined;
-        const shape = edgeShape(a, b, bends.get(e.id) ?? 0, 3);
-        return shape && { d: shape.d, arrow: arrowhead(shape.tip, shape.angle) };
-    }
 
     // Shows the whole graph
     export function fit(byViewer = true) {
@@ -351,7 +548,10 @@
     }
 
     function handlePointerMove(e: PointerEvent) {
-        if (!pointers.has(e.pointerId)) return;
+        if (!pointers.has(e.pointerId)) {
+            if (!pointers.size && e.pointerType == "mouse") updateHover(e);
+            return;
+        }
         const p = local(e);
         pointers.set(e.pointerId, p);
         const g = gesture;
@@ -441,8 +641,7 @@
             const overSelf = nodeAt(g.at)?.id == g.from;
             if (from && !overSelf && (to || (canConnect?.(from, null) ?? true))) onconnect?.(from, to, g.at);
         } else if (g.kind == "pan" && !g.moved) {
-            const edgeEl = (e.target as Element).closest("[data-edge]");
-            const edge = edgeEl && graph.edges.find(x => x.id == edgeEl.getAttribute("data-edge"));
+            const edge = edgeAt(toMap(transform, local(e)));
             if (edge) onedgeactivate?.(edge);
             else {
                 selected = null;
@@ -483,8 +682,9 @@
             onactivate?.(n, "open");
             return;
         }
-        if ((e.target as Element).closest("[data-edge]")) return;
-        oncreate?.(toMap(transform, local(e)));
+        const at = toMap(transform, local(e));
+        if (edgeAt(at)) return;
+        oncreate?.(at);
     }
 
     // Scroll pans; pinch (which browsers send as Ctrl+scroll) or Ctrl/Cmd+scroll zooms
@@ -577,6 +777,7 @@
     class="graph-map"
     class:graph-map-connecting={gesture?.kind == "connect" || gesture?.kind == "lasso"}
     class:graph-map-panning={gesture?.kind == "pan" && gesture.moved}
+    class:graph-map-over-edge={hovered !== null && !gesture}
     role="application"
     aria-roledescription="map"
     aria-label={label}
@@ -588,19 +789,15 @@
     onpointercancel={handlePointerUp}
     ondblclick={handleDoubleClick}
     onkeydown={handleKeydown}
+    onpointerleave={() => { hovered = null; }}
 >
+    <canvas bind:this={canvas} class="gm-canvas" style:width="{width}px" style:height="{height}px" aria-hidden="true"></canvas>
     <svg {width} {height} aria-hidden="true">
+        <!-- The hovered edge's tooltip -->
+        <title>{hoveredEdge?.title ?? ""}</title>
+        <!-- Where edgeStyle looks up edges' styles -->
+        <g class="gm-edges" bind:this={probes} style:display="none"></g>
         <g transform="translate({transform.x},{transform.y}) scale({transform.k})">
-            <g class="gm-edges">
-                {#each graph.edges as edge (edge.id)}
-                    <g class="gm-edge {edge.class ?? ""}" class:gm-edge-selected={edge.from == selected || edge.to == selected} data-edge={edge.id} use:placeEdge={edge}>
-                        <title>{edge.title ?? ""}</title>
-                        <path class="gm-edge-hit" />
-                        <path class="gm-edge-line" />
-                        <path class="gm-edge-arrow" />
-                    </g>
-                {/each}
-            </g>
             <g class="gm-nodes">
                 {#each graph.nodes as n (n.id)}
                     {@const state = { selected: n.id == selected, target: gesture?.kind == "connect" && gesture.target == n.id, dragging: gesture?.kind == "node" && gesture.dragging && gesture.id == n.id }}
@@ -687,7 +884,18 @@
     .graph-map-connecting {
         cursor: crosshair;
     }
+    .graph-map-over-edge {
+        cursor: pointer;
+    }
+    /* The edges, under the nodes */
+    .gm-canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        pointer-events: none;
+    }
     svg {
+        position: relative;
         display: block;
         font-family: var(--gm-font);
     }
@@ -715,21 +923,15 @@
         stroke-width: 2.5;
         stroke-dasharray: 4 2;
     }
-    .gm-edge {
-        cursor: pointer;
-    }
-    /* data-long is set as the edges are drawn, which Svelte can't see */
-    .gm-edge:global([data-long]) {
+    /* Edges are drawn on the canvas, with these styles (and the host's) as edgeStyle finds them
+       on hidden elements: <g class="gm-edge"> with gm-edge-selected or gm-edge-hover, and
+       data-long when the edge is long, around a .gm-edge-line and a .gm-edge-arrow. */
+    :global(.gm-edge[data-long]) {
         opacity: 0.3;
     }
-    .gm-edge:global([data-long]):hover,
-    .gm-edge-selected:global([data-long]) {
+    :global(.gm-edge-hover[data-long]),
+    :global(.gm-edge-selected[data-long]) {
         opacity: 1;
-    }
-    .gm-edge-hit {
-        fill: none;
-        stroke: transparent;
-        stroke-width: 10;
     }
     :global(.gm-edge-line) {
         fill: none;
@@ -740,13 +942,15 @@
         fill: var(--gm-edge);
         stroke: none;
     }
-    .gm-edge:hover :global(.gm-edge-line),
-    .gm-edge-selected :global(.gm-edge-line) {
+    /* At least as specific as these were on SVG elements (.gm-edge.svelte-hash:hover), so they
+       still win over the host's styles for kinds of edge */
+    .graph-map :global(.gm-edge.gm-edge-hover .gm-edge-line),
+    .graph-map :global(.gm-edge.gm-edge-selected .gm-edge-line) {
         stroke: var(--gm-accent);
         stroke-width: 2;
     }
-    .gm-edge:hover :global(.gm-edge-arrow),
-    .gm-edge-selected :global(.gm-edge-arrow) {
+    .graph-map :global(.gm-edge.gm-edge-hover .gm-edge-arrow),
+    .graph-map :global(.gm-edge.gm-edge-selected .gm-edge-arrow) {
         fill: var(--gm-accent);
     }
     .gm-connecting :global(.gm-edge-line) {

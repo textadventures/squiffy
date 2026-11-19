@@ -85,7 +85,8 @@ export class Simulation {
         while (!this.settled && ticks < maxTicks) {
             this.tick();
             ticks++;
-            if ((ticks & 3) == 0 && performance.now() - start > budgetMs) break;
+            // Checked every tick: on a big graph, a tick alone can take most of a frame
+            if (performance.now() - start > budgetMs) break;
         }
         return this.settled;
     }

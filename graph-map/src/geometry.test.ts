@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { boundsOf, edgeShape, exitPoint, nearestInDirection } from "./geometry.js";
+import { arrowhead, arrowPoints, boundsOf, distanceToEdge, edgeBounds, edgeGeometry, edgeShape, exitPoint, nearestInDirection } from "./geometry.js";
 import { fitTransform, revealTransform, toMap, toScreen, zoomAt } from "./viewport.js";
 
 const box = (x: number, y: number, width = 100, height = 40) => ({ x, y, width, height });
@@ -31,6 +31,44 @@ describe("geometry", () => {
 
     test("no edge between overlapping boxes", () => {
         expect(edgeShape(box(0, 0), box(10, 0), 0)).toBeUndefined();
+    });
+
+    test("an edge's geometry is what its path draws", () => {
+        const straight = edgeGeometry(box(0, 0), box(0, 200), 0, 0)!;
+        expect(straight).toMatchObject({ start: { x: 0, y: 20 }, end: { x: 0, y: 180 } });
+        expect(straight.control).toBeUndefined();
+        const bent = edgeGeometry(box(0, 0), box(0, 200), 20, 0)!;
+        expect(bent.control).toEqual({ x: 40, y: 100 });
+        expect(edgeShape(box(0, 0), box(0, 200), 20, 0)!.d).toContain("Q40,100 ");
+    });
+
+    test("arrowheads", () => {
+        const [tip, a, b] = arrowPoints({ x: 0, y: 0 }, 0, 10);
+        expect(tip).toEqual({ x: 0, y: 0 });
+        // Pointing right, so the back corners are to the left, either side of the line
+        expect(a.x).toBeLessThan(-8);
+        expect(b.x).toBeCloseTo(a.x);
+        expect(a.y).toBeCloseTo(-b.y);
+        expect(arrowhead({ x: 0, y: 0 }, 0, 10)).toBe("M0,0L-9,4.3L-9,-4.3Z");
+    });
+
+    test("how far a point is from an edge", () => {
+        const straight = edgeGeometry(box(0, 0), box(0, 200), 0, 0)!;
+        expect(distanceToEdge(straight, { x: 5, y: 100 })).toBeCloseTo(5);
+        // Past the end: the distance to the end
+        expect(distanceToEdge(straight, { x: 0, y: 190 })).toBeCloseTo(10);
+        const bent = edgeGeometry(box(0, 0), box(0, 200), 20, 0)!;
+        // The curve's middle is out to the side, not on the straight line between the boxes
+        expect(distanceToEdge(bent, bent.middle)).toBeLessThan(0.5);
+        expect(distanceToEdge(bent, { x: 0, y: 100 })).toBeGreaterThan(15);
+    });
+
+    test("an edge's bounds take in its curve", () => {
+        const bent = edgeGeometry(box(0, 0), box(0, 200), 20, 0)!;
+        const b = edgeBounds(bent);
+        expect(b.x).toBeLessThanOrEqual(bent.start.x);
+        expect(b.x + b.width).toBe(40);
+        expect(b.y).toBe(bent.start.y);
     });
 
     test("bounds", () => {
