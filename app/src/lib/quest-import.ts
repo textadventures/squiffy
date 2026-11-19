@@ -1,5 +1,6 @@
 // Importing a Quest 5 or Quest Viva gamebook: Open file converts a .aslx file, or a .quest file (a zip with the
-// game and the images and sounds it uses), into a new Squiffy story, asking first.
+// game and the images and sounds it uses), or any zip with a .aslx file in it, e.g. a game downloaded from
+// Quest Viva, into a new Squiffy story, asking first.
 
 import { unzipSync } from "fflate";
 import { convertQuestGamebook, formatQuestProblems, QuestParseError } from "squiffy-compiler";
@@ -25,9 +26,15 @@ function safePath(name: string): boolean {
     return !name.startsWith("/") && !parts.some(p => p == ".." || p == "") && !parts[0].includes(":");
 }
 
-// The game's source, and the files that came with it
+// A .quest file, or a zip with the game in it
+function isArchive(fileName: string): boolean {
+    return /\.(quest|zip)$/i.test(fileName);
+}
+
+// The game's source, and the files that came with it: those in the game's folder, by their
+// path from there
 function readGame(fileName: string, data: Uint8Array): { source: string, files: Map<string, Uint8Array> } {
-    if (!fileName.toLowerCase().endsWith(".quest")) {
+    if (!isArchive(fileName)) {
         return { source: new TextDecoder().decode(data), files: new Map() };
     }
     let entries: Record<string, Uint8Array>;
@@ -37,24 +44,35 @@ function readGame(fileName: string, data: Uint8Array): { source: string, files: 
     catch (e) {
         throw new Error(`${fileName} isn't a Quest game: it isn't a zip file.`, { cause: e });
     }
-    const names = Object.keys(entries).filter(n => !n.endsWith("/"));
-    const main = names.find(n => n.toLowerCase() == "game.aslx") ?? names.find(n => n.toLowerCase().endsWith(".aslx"));
+    // Folders, and the resource forks a Mac adds to a zip it makes
+    const names = Object.keys(entries).filter(n => !n.endsWith("/") && !n.startsWith("__MACOSX/"));
+    const main = findQuestGame(names);
     if (!main) throw new Error(`${fileName} isn't a Quest game: there's no game.aslx in it.`);
+    const folder = main.slice(0, main.lastIndexOf("/") + 1);
     const files = new Map<string, Uint8Array>();
     for (const name of names) {
-        if (name != main && !name.toLowerCase().endsWith(".aslx") && safePath(name)) files.set(name, entries[name]);
+        const path = name.slice(folder.length);
+        if (name.startsWith(folder) && !name.toLowerCase().endsWith(".aslx") && safePath(path)) files.set(path, entries[name]);
     }
     return { source: new TextDecoder().decode(entries[main]), files };
+}
+
+// The game in a zip's files: the top-most game.aslx, else the top-most .aslx file
+export function findQuestGame(paths: Iterable<string>): string | undefined {
+    const games = [...paths]
+        .filter(p => p.toLowerCase().endsWith(".aslx"))
+        .sort((a, b) => a.split("/").length - b.split("/").length || a.localeCompare(b));
+    return games.find(p => /(^|\/)game\.aslx$/i.test(p)) ?? games[0];
 }
 
 // Converts a Quest gamebook, once the author says to. Null if they cancel. Throws if the file
 // isn't a Quest gamebook.
 export async function convertQuestFile(fileName: string, data: Uint8Array): Promise<ConvertedQuest | null> {
     const game = readGame(fileName, data);
-    const fromQuestFile = fileName.toLowerCase().endsWith(".quest");
+    const fromQuestFile = isArchive(fileName);
     let result;
     try {
-        // Only a .quest file says which files came with the game
+        // Only a .quest file or zip says which files came with the game
         result = convertQuestGamebook(game.source, fromQuestFile ? { files: [...game.files.keys()] } : {});
     }
     catch (e) {

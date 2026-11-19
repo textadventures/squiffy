@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { strToU8, strFromU8, zipSync } from "fflate";
-import { fileName, guessMainFile, readProjectZip, zipMainFile } from "./export.js";
+import { fileName, guessMainFile, readProjectZip, zipMainFile, zipTwineFile } from "./export.js";
 import { relativePath, storyPath } from "./paths.js";
 
 describe("project zips", () => {
@@ -60,5 +60,16 @@ describe("names and paths", () => {
         expect(storyPath({ mainFile: "story.squiffy" }, "images/bat.png")).toBe("images/bat.png");
         expect(storyPath({ mainFile: "game/story.squiffy" }, "game/bat.png")).toBe("bat.png");
         expect(relativePath("game", "shared/style.css")).toBe("../shared/style.css");
+    });
+});
+
+describe("a zip's Twine story", () => {
+    const files = (paths: string[]) => new Map(paths.map(p => [p, new Uint8Array()]));
+
+    test("is its only .twee file, else its only HTML file", () => {
+        expect(zipTwineFile(files(["story.twee", "index.html"]))).toBe("story.twee");
+        expect(zipTwineFile(files(["game/index.html", "game/cave.png"]))).toBe("game/index.html");
+        expect(zipTwineFile(files(["a.html", "b.html"]))).toBeUndefined();
+        expect(zipTwineFile(files(["a.twee", "b.twee", "c.html"]))).toBeUndefined();
     });
 });
