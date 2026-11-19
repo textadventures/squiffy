@@ -107,6 +107,8 @@ export interface Section {
 export interface Passage {
     text?: string;
     clear?: boolean;
+    // @repeat: its links stay clickable, and clicking one doesn't count towards @1, @2... and @last (#104)
+    repeat?: boolean;
     attributes?: string[];
     jsIndex?: number;
 }

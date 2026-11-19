@@ -441,6 +441,18 @@ exports[`TextMate grammar > every construct in the sample 1`] = `
 
 
 
+"[" markup.heading.passage.squiffy punctuation.definition.heading.begin.squiffy
+"knock" markup.heading.passage.squiffy entity.name.function.passage.squiffy
+"]" markup.heading.passage.squiffy punctuation.definition.heading.end.squiffy
+":" markup.heading.passage.squiffy punctuation.separator.key-value.squiffy
+
+"@" punctuation.definition.directive.squiffy keyword.control.directive.squiffy
+"repeat" keyword.control.directive.squiffy
+
+"Nobody answers." 
+
+
+
 "[[" markup.heading.section.squiffy punctuation.definition.heading.begin.squiffy
 "kitchen" markup.heading.section.squiffy entity.name.section.squiffy
 "]]" markup.heading.section.squiffy punctuation.definition.heading.end.squiffy

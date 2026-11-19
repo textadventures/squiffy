@@ -337,6 +337,56 @@ Last turn.
     expectSingleBlock("c", ["You chose c.", "Last turn."]);
 });
 
+test("A passage with @repeat can be clicked again, and doesn't count towards @1 or @last", async () => {
+    // https://github.com/textadventures/squiffy/issues/104
+    const script = `
+[[start]]:
+Talk to the [guard], or look at the [a] or the [b].
+
+[guard]:
+@repeat
+@inc talks
+Talk {{talks}}.
+
+[a]:
+You look at a.
+
+[b]:
+You look at b.
+
+[@1]:
+Turn one.
+
+[@last]:
+Last turn.
+`;
+    const { squiffyApi, element } = await initScript(script);
+    const passageTexts = () => Array.from(element.querySelectorAll(".squiffy-output-passage"))
+        .map(p => p.textContent!.trim());
+
+    const guard = findLink(element, "passage", "guard");
+    expect(await squiffyApi.clickLink(guard)).toBe(true);
+    expect(await squiffyApi.clickLink(guard)).toBe(true);
+    expect(guard.classList).not.toContain("disabled");
+    expect(squiffyApi.get("talks")).toBe(2);
+    // Neither click was a turn in the section, so @1 hasn't run
+    expect(passageTexts()).toEqual(["Talk 1.", "Talk 2."]);
+
+    await squiffyApi.clickLink(findLink(element, "passage", "a"));
+    expect(passageTexts().at(-1)).toBe("You look at a.Turn one.");
+
+    // @1 doesn't run again after another click on the guard
+    await squiffyApi.clickLink(guard);
+    expect(passageTexts().at(-1)).toBe("Talk 3.");
+
+    // @last doesn't wait for the guard, and doesn't run again for it
+    await squiffyApi.clickLink(findLink(element, "passage", "b"));
+    expect(passageTexts().at(-1)).toBe("You look at b.Last turn.");
+    await squiffyApi.clickLink(guard);
+    expect(passageTexts().at(-1)).toBe("Talk 4.");
+    expect(squiffyApi.get("turns")).toBe(6);
+});
+
 test("Going back to a section re-enables its inputs", async () => {
     // https://github.com/textadventures/squiffy/issues/123
     const script = `

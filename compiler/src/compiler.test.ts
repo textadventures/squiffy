@@ -735,3 +735,38 @@ test("A story's squiffy.json id is in its output, for checking saved games again
     expect(without.output.story.projectId).toBeUndefined();
     expect(await without.getJs()).not.toContain("projectId");
 });
+
+test("@repeat marks a passage, which doesn't count towards @last (#104)", async () => {
+    const warnings: string[] = [];
+    const result = await compile({
+        scriptBaseFilename: "story.squiffy",
+        script: `[[a]]:
+@repeat
+Look at the [guard], the [door] or the [window].
+
+[guard]:
+@repeat
+Go away.
+
+[door]:
+It's locked.
+
+[window]:
+It's dark outside.
+
+[@last]:
+That's everything.
+`,
+        onWarning: (message) => warnings.push(message),
+    });
+
+    assertSuccess(result);
+    const section = result.output.story.sections["a"];
+    expect(section.passages!["guard"].repeat).toBe(true);
+    expect(section.passages!["door"].repeat).toBeUndefined();
+    expect(section.passageCount).toBe(2);
+    expect(warnings).toEqual([
+        "WARNING: story.squiffy line 2: @repeat only works in a passage, so this was ignored.",
+    ]);
+    expect(result.diagnostics.map(d => d.code)).toEqual(["squiffy/repeat-not-in-passage"]);
+});

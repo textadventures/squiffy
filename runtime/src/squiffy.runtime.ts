@@ -63,8 +63,11 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         }
 
         if (passage !== null) {
-            disableLink(link);
-            set("_turncount", get("_turncount") + 1);
+            // A passage with @repeat can be clicked again, and doesn't count towards @1, @2... and @last
+            if (!isRepeatPassage(passage)) {
+                disableLink(link);
+                set("_turncount", get("_turncount") + 1);
+            }
             await processLink(link);
             if (passage) {
                 currentBlockOutputElement = null;
@@ -108,6 +111,14 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         }
     }
     
+    function isRepeatPassage(passageName: string) {
+        if (!passageName) return false;
+        const sectionPassages = currentSection?.passages;
+        if (sectionPassages && passageName in sectionPassages) return !!sectionPassages[passageName].repeat;
+        const masterPassages = story.sections[""]?.passages;
+        return !!(masterPassages && passageName in masterPassages && masterPassages[passageName].repeat);
+    }
+
     function disableLink(link: Element) {
         link.classList.add("disabled");
         link.setAttribute("tabindex", "-1");
@@ -438,7 +449,8 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         runFns.push(() => run(passage, `[[${get("_section")}]][${passageName}]`));
 
         const turnPassageName = "@" + get("_turncount");
-        if (currentSection.passages) {
+        // A passage with @repeat doesn't count as a turn, so @1, @2... and @last ran already if they're due
+        if (currentSection.passages && !passage.repeat) {
             if (turnPassageName in currentSection.passages) {
                 const turnPassage = currentSection.passages[turnPassageName];
                 passages.push(turnPassage);

@@ -32,6 +32,8 @@ interface OutputSection {
 interface OutputPassage {
     text?: string;
     clear?: boolean;
+    // Its links aren't disabled when clicked (#104)
+    repeat?: boolean;
     attributes?: string[];
     jsIndex?: number;
 }
@@ -112,7 +114,8 @@ export function emit(analysis: Analysis, settings: EmitSettings = {}): CompileSu
         if ("@last" in section.passages) {
             let passageCount = 0;
             for (const passageName of Object.keys(section.passages)) {
-                if (passageName.length > 0 && passageName?.substring(0, 1) !== "@") {
+                // A passage with @repeat doesn't count, as clicking it doesn't use it up
+                if (passageName.length > 0 && passageName?.substring(0, 1) !== "@" && !section.passages[passageName].repeat) {
                     passageCount++;
                 }
             }
@@ -130,6 +133,9 @@ export function emit(analysis: Analysis, settings: EmitSettings = {}): CompileSu
 
             if (passage.clear) {
                 outputPassage.clear = true;
+            }
+            if (passage.repeat) {
+                outputPassage.repeat = true;
             }
 
             outputPassage.text = passage.output;

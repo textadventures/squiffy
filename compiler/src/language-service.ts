@@ -189,6 +189,7 @@ const DIRECTIVES: [string, string][] = [
     ["inc", "Adds to an attribute"],
     ["dec", "Subtracts from an attribute"],
     ["clear", "Clears the screen"],
+    ["repeat", "Lets the player click this passage's links again"],
     ["end", "Marks this section as an ending"],
     ["ui", "JavaScript for the story's user interface"],
 ];

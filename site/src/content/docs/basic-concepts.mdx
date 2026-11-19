@@ -80,6 +80,19 @@ To use different link text, put the name of the passage in brackets afterwards.
 This is [how to use custom link text](passage1).
 ```
 
+### Passages you can click again
+
+To let the player click a passage's links as often as they like, put `@repeat` on a line on its own in the passage. Each click shows the passage again. This suits things the player might want to look at more than once, such as a clue, or a character who says something different each time you talk to them:
+
+<Sample script="A [guard] blocks the door.
+
+[guard]:
+@repeat
+@inc guard_talks
+{{#if guard_talks = 1}}&quot;Move along.&quot;{{else if guard_talks = 2}}&quot;I said, move along.&quot;{{else}}&quot;Fine. The password is *swordfish*.&quot;{{/if}}"></Sample>
+
+Clicks on a passage with `@repeat` don't count towards [`@1`, `@2`... and `@last`](#running-a-passage-after-some-clicks), and `@last` doesn't wait for it to be clicked.
+
 ## Continue links
 
 When you want a simple link that moves to the next part of your story, use `+++` followed by the link text. This creates both the link and a new section in one step.

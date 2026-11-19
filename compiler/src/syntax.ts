@@ -33,6 +33,7 @@ export type DiagnosticCode =
     | "squiffy/duplicate-section"
     | "squiffy/duplicate-passage"
     | "squiffy/not-in-main-file"
+    | "squiffy/repeat-not-in-passage"
     | "squiffy/redundant-import"
     | "squiffy/project-file"
     | "squiffy/unreachable-section"
@@ -184,6 +185,12 @@ export interface ClearNode {
     range: Range;
 }
 
+// @repeat: the passage's links stay clickable, so the player can see it again (#104)
+export interface RepeatNode {
+    type: "repeat";
+    range: Range;
+}
+
 // @end: the section is one of the story's endings, so having no way out isn't a mistake.
 // The runtime ignores it.
 export interface EndNode {
@@ -229,6 +236,7 @@ export type StatementNode =
     | UiBlockStartNode
     | UiFileNode
     | ClearNode
+    | RepeatNode
     | EndNode
     | AttributeNode
     | JsNode
