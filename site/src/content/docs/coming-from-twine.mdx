@@ -212,15 +212,26 @@ See [Array management helpers](/helpers-reference/#array-management-helpers) and
 
 ## What Twine has that Squiffy doesn't
 
-Squiffy is deliberately simpler than Twine's story formats, so some things aren't there:
+Some things in Harlowe and SugarCube aren't in Squiffy yet. Each one is planned, and its GitHub issue says how it might work, so you can follow it or add your thoughts:
 
-- **Data structures.** An attribute holds a single value, or an [array](/helpers-reference/#array-management-helpers). There's nothing like Harlowe's datamaps or SugarCube's objects, so use an attribute for each value, such as `hero_hp` and `hero_name`.
-- **Temporary variables**, like SugarCube's `_name`. Every attribute lasts for the whole story.
-- **Sound macros**, like `<<audio>>`. Use HTML's `<audio>` instead: see [Images, sound and other files](/images-and-files/).
-- **A sidebar or menus**, like SugarCube's `StoryCaption` and `StoryMenu`.
-- **Styling changers**, like `(text-colour:)` and `(box:)`. Use HTML and [CSS](/styling/).
+- **Objects**, like Harlowe's datamaps and SugarCube's objects ([#442](https://github.com/textadventures/squiffy/issues/442)). For now, use an attribute for each value, such as `hero_hp` and `hero_name`.
+- **A status panel that's always on screen**, like SugarCube's `StoryCaption` ([#443](https://github.com/textadventures/squiffy/issues/443)). [`{{live}}`](/dynamic-text/#live) shows an attribute that updates as it changes, but it scrolls away with its section. Links to an inventory or help screen from the top of the page, like SugarCube's `StoryMenu`, are [#14](https://github.com/textadventures/squiffy/issues/14).
+- **Sound and music** that keep playing from one section to the next, like `<<audio>>` and `(track:)` ([#444](https://github.com/textadventures/squiffy/issues/444)). For a sound in one section, use HTML's `<audio>`: see [Images, sound and other files](/images-and-files/).
+- **A link back to where the player came from**, like `<<return>>` ([#445](https://github.com/textadventures/squiffy/issues/445)). Squiffy's Back button undoes moves, which is different. For now, use `{{section previous_section text="Return"}}`: see [Where the player came from](/attributes/#where-the-player-came-from).
+- **Helpers for text and numbers**, like `(uppercase:)` and `(round:)`, and a value that depends on a condition, like `(cond:)` ([#446](https://github.com/textadventures/squiffy/issues/446)). **More for arrays**, like `(joined:)`, `(sorted:)` and `(range:)` ([#447](https://github.com/textadventures/squiffy/issues/447)).
+- **Links in a loop that each do something different** ([#448](https://github.com/textadventures/squiffy/issues/448)). A section link in [`{{#each}}`](/attributes/#going-through-an-array) can set an attribute to the item, but clicking one passage link turns off every link to that passage, including the other items'.
+- **Changing the page's look for a scene**, with passage tags or `<<addclass>>` ([#449](https://github.com/textadventures/squiffy/issues/449)).
+- **Widgets**, written in your story rather than JavaScript, with their own parameters ([#450](https://github.com/textadventures/squiffy/issues/450)). [`{{embed}}`](/helpers-reference/#content-helpers) includes another section, without parameters.
+- **Timers** that repeat, or wait for a time worked out as the story runs, like `<<repeat>>`, `(live:)` and `<<timed>>` ([#451](https://github.com/textadventures/squiffy/issues/451)). Squiffy can [move on after a fixed delay](/dynamic-text/#moving-on-after-a-delay).
+- **Links in the text that restart the story or open the saved games**, and player settings, like SugarCube's `UI` and `Setting` ([#452](https://github.com/textadventures/squiffy/issues/452)). They're on the buttons above the story.
+- **More text effects**, like Harlowe's `"shudder"` and `"blur"`, and a short way to style some text, like SugarCube's `@@.class;...@@` ([#453](https://github.com/textadventures/squiffy/issues/453)). Use HTML and [CSS](/styling/), and [`{{#animate}}`](/dynamic-text/#animation).
+- **A text box that moves on when Enter is pressed** ([#454](https://github.com/textadventures/squiffy/issues/454)).
 
-If you need more, you can do almost anything with [JavaScript](/javascript/), including writing your own helpers.
+### Left out on purpose
+
+- **Temporary variables**, like SugarCube's `_name`. In Twine, they're mostly for loop counters and values worked out along the way. In Squiffy, `{{this}}` and `{{@index}}` give you a loop's item and position, and since every attribute is saved and undone by the Back button, a value can't be left behind out of step with the story.
+- **Loops that aren't over an array**, like `<<for _i lt 10>>`, and `<<break>>` and `<<continue>>`. A section's text is worked out each time it's shown, and a loop that never ended would freeze the page. Go through an array with [`{{#each}}`](/attributes/#going-through-an-array), and use `{{#if}}` inside it to skip items.
+- **Harlowe's and SugarCube's JavaScript**, such as `State`, `setup` and `(macro:)`. It's written for those formats' engines. Squiffy has [its own JavaScript functions](/javascript/), which can do almost anything, including adding your own helpers.
 
 ## Next steps
 
