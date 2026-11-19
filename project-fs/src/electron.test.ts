@@ -98,7 +98,7 @@ describe("Electron main-process handlers", () => {
         const fs = await electronOpener(env.bridge).pickNewRoot({ title: "Save As" });
         await fs!.write("story.squiffy", "copied");
         expect(await readFile(join(target, "story.squiffy"), "utf8")).toBe("copied");
-        expect(env.dialog.calls[0]).toMatchObject({ title: "Save As", properties: ["openDirectory", "createDirectory", "promptToCreate"] });
+        expect(env.dialog.calls[0]).toMatchObject({ title: "Save As", properties: ["openDirectory", "createDirectory"] });
     });
 
     test("without a dialog, pickers report NOT_SUPPORTED", async () => {
