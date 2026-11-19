@@ -34,7 +34,7 @@ export interface OpenedRoot {
 }
 
 /** Native menu commands the editor carries out */
-export type MenuAction = "new-story" | "open-folder" | "open-file" | "save" | "close-story" | "settings";
+export type MenuAction = "new-story" | "open-folder" | "open-file" | "save" | "close-story" | "settings" | "undo" | "redo";
 
 export interface SquiffyDesktopApi {
     platform: "mac" | "windows" | "linux";

@@ -316,6 +316,7 @@ async function refreshMenu() {
 
 function sendAction(action: MenuAction) {
     if (!mainWindow) {
+        if (action === "undo" || action === "redo") return;
         createWindow("/");
         return;
     }
