@@ -25,6 +25,7 @@ import { checklistDialog, chooseDialog, confirmDialog } from "./confirm.js";
 import { showToast } from "./toast.js";
 import { findRecentFolder, forgetFolder as forgetBrowserFolder, hasPermission, listRecentFolders as listBrowserFolders, rememberFolder, updateRecentFolder } from "./recent.js";
 import { desktopApi } from "./desktop.js";
+import { newStoryDialog, newStoryText } from "./new-story.js";
 import { needsBackup } from "./backup.js";
 import { convertTwineFile, TWINE_FILE_PATTERN, twineImportMessage } from "./twine-import.js";
 import { convertQuestFile, QUEST_FILE_PATTERN, questImportMessage } from "./quest-import.js";
@@ -730,29 +731,16 @@ async function writeIntoNewFolder(
     return { fs, mainFile };
 }
 
-// New story: a folder the author chooses (or makes, in the dialog), with a story file and a
-// squiffy.json. If the folder has a story already, it offers to open that instead.
+// New story: the author names it, and it's made in a new folder of that name (newStoryDialog),
+// with a story file and a squiffy.json
 export async function pickDesktopNewStory(): Promise<PickedFolder | null> {
-    const fs = await desktopOrThrow().opener.pickNewRoot({
-        title: "Choose a folder for the new story",
-        message: "Choose or create a folder for the new story",
-        buttonLabel: "Create story",
-    });
-    if (!fs) return null;
-    let mainFile: string | null;
-    if ((await findFiles(fs, SQUIFFY_FILES)).length > 0) {
-        const open = await confirmDialog(`${fs.name} already has a story in it. Open it?`, { confirmLabel: "Open it" });
-        mainFile = open ? await chooseMainFile(fs) : null;
-    } else {
-        await fs.write(DEFAULT_MAIN_FILE, NEW_STORY);
-        if (!(await fs.exists(PROJECT_FILENAME))) await fs.write(PROJECT_FILENAME, formatProjectFile({ main: DEFAULT_MAIN_FILE }));
-        mainFile = DEFAULT_MAIN_FILE;
-    }
-    if (!mainFile) {
-        await fs.release();
-        return null;
-    }
-    return { fs, mainFile };
+    const { projectFs } = desktopOrThrow();
+    const created = await newStoryDialog();
+    if (!created) return null;
+    const fs = new ElectronFileSystem(projectFs, created.root);
+    await fs.write(DEFAULT_MAIN_FILE, newStoryText(NEW_STORY, created.title));
+    await fs.write(PROJECT_FILENAME, formatProjectFile({ main: DEFAULT_MAIN_FILE }));
+    return { fs, mainFile: DEFAULT_MAIN_FILE };
 }
 
 // A folder from the recent folders list. Null if it's not there or has gone.

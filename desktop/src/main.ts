@@ -3,9 +3,10 @@ import * as nodePath from "node:path";
 import { fileURLToPath } from "node:url";
 import { app, BrowserWindow, dialog, ipcMain, shell, type IpcMainEvent, type IpcMainInvokeEvent, type OpenDialogOptions, type WebContents } from "electron";
 import { registerProjectFsHandlers } from "@textadventures/project-fs/electron-main";
-import { CHANNEL_PREFIX, type MenuAction, type OpenedRecentFolder } from "./api.js";
+import { CHANNEL_PREFIX, type MenuAction, type NewStoryResult, type OpenedRecentFolder } from "./api.js";
 import { APP_ORIGIN, handleAppScheme, registerAppScheme } from "./app-protocol.js";
 import { buildMenu } from "./menu.js";
+import { NewStoryLocation } from "./new-story.js";
 import { RecentFolders, toInfo } from "./recent.js";
 import { loadWindowState, trackWindowState } from "./window-state.js";
 
@@ -40,6 +41,10 @@ let readyToClose = false;
 let closeTimer: ReturnType<typeof setTimeout> | undefined;
 let quitting = false;
 const recent = new RecentFolders(nodePath.join(app.getPath("userData"), "recent-folders.json"));
+const newStoryLocation = new NewStoryLocation(
+    nodePath.join(app.getPath("userData"), "new-story.json"),
+    nodePath.join(app.getPath("documents"), "Squiffy"),
+);
 
 // A file the OS asked the app to open before it was ready (macOS sends open-file early)
 let pendingOpen: string | null = null;
@@ -258,6 +263,28 @@ function registerDesktopHandlers(projectFs: ProjectFsMain) {
         if (typeof id !== "string") return;
         await recent.forget(id);
         await recentChanged();
+    });
+
+    handle("new-story:location", () => newStoryLocation.start());
+    handle("new-story:choose-location", async () => {
+        const current = await newStoryLocation.current();
+        const options: OpenDialogOptions = {
+            title: "Choose where to make new stories",
+            message: "Choose where to make new stories",
+            buttonLabel: "Choose",
+            // It may not exist yet, if it's the default and no story's been made there
+            defaultPath: await fsp.stat(current).then(() => current, () => nodePath.dirname(current)),
+            properties: ["openDirectory", "createDirectory"],
+        };
+        const result = mainWindow ? await dialog.showOpenDialog(mainWindow, options) : await dialog.showOpenDialog(options);
+        if (result.canceled || result.filePaths.length === 0) return null;
+        newStoryLocation.pick(result.filePaths[0]);
+        return result.filePaths[0];
+    });
+    handle("new-story:create", async (sender, name): Promise<NewStoryResult> => {
+        const result = await newStoryLocation.createFolder(name);
+        if (!result.ok) return result;
+        return { ok: true, root: await projectFs.approveRoot(sender, result.path) };
     });
 
     ipcMain.on(CHANNEL_PREFIX + "close-ready", (event) => {

@@ -19,6 +19,16 @@ export interface OpenedRecentFolder {
     mainFile: string;
 }
 
+export interface OpenedRoot {
+    rootId: string;
+    name: string;
+    displayPath: string;
+}
+
+export type NewStoryResult =
+    | { ok: true; root: OpenedRoot }
+    | { ok: false; reason: "exists" | "invalid-name" };
+
 export type MenuAction = "new-story" | "open-folder" | "open-file" | "save" | "close-story" | "settings";
 
 export interface SquiffyDesktopApi {
@@ -30,6 +40,11 @@ export interface SquiffyDesktopApi {
         update(id: string, mainFile: string): Promise<void>;
         forget(id: string): Promise<void>;
         onChanged(listener: () => void): () => void;
+    };
+    newStory: {
+        location(): Promise<string>;
+        chooseLocation(): Promise<string | null>;
+        create(folderName: string): Promise<NewStoryResult>;
     };
     menu: {
         onAction(listener: (action: MenuAction) => void): () => void;

@@ -21,6 +21,18 @@ export interface OpenedRecentFolder {
     mainFile: string;
 }
 
+/** What New story's Create did: a new, empty folder, approved for the window, or why not */
+export type NewStoryResult =
+    | { ok: true; root: OpenedRoot }
+    | { ok: false; reason: "exists" | "invalid-name" };
+
+/** A project-fs root, as approveRoot returns it */
+export interface OpenedRoot {
+    rootId: string;
+    name: string;
+    displayPath: string;
+}
+
 /** Native menu commands the editor carries out */
 export type MenuAction = "new-story" | "open-folder" | "open-file" | "save" | "close-story" | "settings";
 
@@ -35,6 +47,15 @@ export interface SquiffyDesktopApi {
         update(id: string, mainFile: string): Promise<void>;
         forget(id: string): Promise<void>;
         onChanged(listener: () => void): () => void;
+    };
+    /** New story makes a folder named after the story, in a location the main process keeps */
+    newStory: {
+        /** Where it'll go: the last location a story was made in, or Documents/Squiffy. For display. */
+        location(): Promise<string>;
+        /** The author picks another location. Null if cancelled. */
+        chooseLocation(): Promise<string | null>;
+        /** Makes the folder, which has to be new, from a name made by the editor's folderNameFor() */
+        create(folderName: string): Promise<NewStoryResult>;
     };
     menu: {
         onAction(listener: (action: MenuAction) => void): () => void;
