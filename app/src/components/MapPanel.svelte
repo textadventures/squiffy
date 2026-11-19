@@ -70,8 +70,10 @@
         onrun, onrelayout, ontogglemaximized, onclose,
     }: Props = $props();
 
-    // Above this, the map is slow to draw, so it asks first (only a few generated stories are this big)
-    const LARGE = 3000;
+    // Above this, the map is slow to lay out, so it asks first. Of about 12,000 stories on
+    // textadventures.co.uk, only two generated test stories are this big. A story of 4,000
+    // sections and passages with 50,000 links settles in about 12 seconds, at 30 frames a second.
+    const LARGE = 6000;
 
     let map = $state<ReturnType<typeof GraphMap<StoryMapNode, StoryMapEdge>>>();
     let selected = $state<string | null>(null);
@@ -87,17 +89,24 @@
     const traced = $derived.by(() => {
         const visited = new Set<string>();
         const taken = new Set<string>();
-        if (!base) return { visited, taken };
+        if (!base || !trace.length) return { visited, taken };
         const idOf = (step: TraceStep) => step.passage === undefined ? `section:${step.section}` : `passage:${step.section}/${step.passage}`;
+        // Edges by where they go, with the section they come from
+        const sectionOf = new Map(base.nodes.map(n => [n.id, n.section]));
+        const into = new Map<string, { id: string; fromSection: string | undefined }[]>();
+        for (const edge of base.edges) {
+            let list = into.get(edge.to);
+            if (!list) into.set(edge.to, list = []);
+            list.push({ id: edge.id, fromSection: sectionOf.get(edge.from) });
+        }
         for (let i = 0; i < trace.length; i++) {
             const id = idOf(trace[i]);
             visited.add(id);
             if (trace[i].passage !== undefined) visited.add(`section:${trace[i].section}`);
             if (i == 0) continue;
             const before = trace[i - 1].section;
-            for (const edge of base.edges) {
-                const from = base.nodes.find(n => n.id == edge.from);
-                if (edge.to == id && from?.section == before) taken.add(edge.id);
+            for (const edge of into.get(id) ?? []) {
+                if (edge.fromSection == before) taken.add(edge.id);
             }
         }
         return { visited, taken };

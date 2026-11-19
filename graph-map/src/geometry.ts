@@ -23,9 +23,11 @@ export function exitPoint(box: Box, toward: Point, gap = 0): Point {
     return { x: box.x + dx * t, y: box.y + dy * t };
 }
 
-export interface EdgeShape {
-    // An SVG path
-    d: string;
+// Where an edge goes: a straight line from `start` to `end`, or a quadratic curve through `control`
+export interface EdgeGeometry {
+    start: Point;
+    end: Point;
+    control?: Point;
     // The arrowhead's tip, and the direction it points (radians)
     tip: Point;
     angle: number;
@@ -33,10 +35,15 @@ export interface EdgeShape {
     middle: Point;
 }
 
-// The path of an edge from one box to another, bending to the left (looking from `from` to `to`)
+export interface EdgeShape extends EdgeGeometry {
+    // An SVG path
+    d: string;
+}
+
+// Where an edge from one box to another goes, bending to the left (looking from `from` to `to`)
 // by `bend` pixels at its middle, e.g. so edges both ways between two nodes don't overlap.
 // Undefined if the boxes overlap, as there's nothing to draw.
-export function edgeShape(from: Box, to: Box, bend = 0, gap = 2): EdgeShape | undefined {
+export function edgeGeometry(from: Box, to: Box, bend = 0, gap = 2): EdgeGeometry | undefined {
     const dx = to.x - from.x, dy = to.y - from.y;
     const length = Math.hypot(dx, dy);
     if (length == 0) return undefined;
@@ -48,17 +55,19 @@ export function edgeShape(from: Box, to: Box, bend = 0, gap = 2): EdgeShape | un
     const start = exitPoint(from, bend ? control : to, gap);
     const end = exitPoint(to, bend ? control : from, gap);
     if ((start.x == from.x && start.y == from.y) || (end.x == to.x && end.y == to.y)) return undefined;
-    const r = (n: number) => Math.round(n * 10) / 10;
     if (!bend) {
         return {
-            d: `M${r(start.x)},${r(start.y)}L${r(end.x)},${r(end.y)}`,
+            start,
+            end,
             tip: end,
             angle: Math.atan2(end.y - start.y, end.x - start.x),
             middle: { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 },
         };
     }
     return {
-        d: `M${r(start.x)},${r(start.y)}Q${r(control.x)},${r(control.y)} ${r(end.x)},${r(end.y)}`,
+        start,
+        end,
+        control,
         tip: end,
         angle: Math.atan2(end.y - control.y, end.x - control.x),
         middle: {
@@ -68,14 +77,68 @@ export function edgeShape(from: Box, to: Box, bend = 0, gap = 2): EdgeShape | un
     };
 }
 
-// A filled arrowhead with its tip at a point, pointing in a direction
-export function arrowhead(tip: Point, angle: number, size = 7): string {
+// The same, with an SVG path
+export function edgeShape(from: Box, to: Box, bend = 0, gap = 2): EdgeShape | undefined {
+    const g = edgeGeometry(from, to, bend, gap);
+    if (!g) return undefined;
+    const r = (n: number) => Math.round(n * 10) / 10;
+    const d = g.control
+        ? `M${r(g.start.x)},${r(g.start.y)}Q${r(g.control.x)},${r(g.control.y)} ${r(g.end.x)},${r(g.end.y)}`
+        : `M${r(g.start.x)},${r(g.start.y)}L${r(g.end.x)},${r(g.end.y)}`;
+    return { ...g, d };
+}
+
+// The corners of a filled arrowhead with its tip at a point, pointing in a direction: the tip,
+// then the two back corners
+export function arrowPoints(tip: Point, angle: number, size = 7): [Point, Point, Point] {
     const back = angle + Math.PI;
     const spread = 0.45;
-    const a = { x: tip.x + Math.cos(back - spread) * size, y: tip.y + Math.sin(back - spread) * size };
-    const b = { x: tip.x + Math.cos(back + spread) * size, y: tip.y + Math.sin(back + spread) * size };
+    return [
+        tip,
+        { x: tip.x + Math.cos(back - spread) * size, y: tip.y + Math.sin(back - spread) * size },
+        { x: tip.x + Math.cos(back + spread) * size, y: tip.y + Math.sin(back + spread) * size },
+    ];
+}
+
+// The same, as an SVG path
+export function arrowhead(tip: Point, angle: number, size = 7): string {
+    const [, a, b] = arrowPoints(tip, angle, size);
     const r = (n: number) => Math.round(n * 10) / 10;
     return `M${r(tip.x)},${r(tip.y)}L${r(a.x)},${r(a.y)}L${r(b.x)},${r(b.y)}Z`;
+}
+
+// The rectangle an edge's line stays within (a quadratic curve stays within its control points)
+export function edgeBounds(g: EdgeGeometry): Rect {
+    // Without arrays: this runs for every edge, every frame
+    const c = g.control ?? g.start;
+    const x = Math.min(g.start.x, g.end.x, c.x), y = Math.min(g.start.y, g.end.y, c.y);
+    return { x, y, width: Math.max(g.start.x, g.end.x, c.x) - x, height: Math.max(g.start.y, g.end.y, c.y) - y };
+}
+
+// How far a point is from an edge's line
+export function distanceToEdge(g: EdgeGeometry, p: Point): number {
+    if (!g.control) return distanceToSegment(p, g.start, g.end);
+    // Near enough, as a chain of short lines along the curve
+    const steps = 16;
+    let best = Infinity;
+    let previous = g.start;
+    for (let i = 1; i <= steps; i++) {
+        const t = i / steps, u = 1 - t;
+        const next = {
+            x: u * u * g.start.x + 2 * u * t * g.control.x + t * t * g.end.x,
+            y: u * u * g.start.y + 2 * u * t * g.control.y + t * t * g.end.y,
+        };
+        best = Math.min(best, distanceToSegment(p, previous, next));
+        previous = next;
+    }
+    return best;
+}
+
+function distanceToSegment(p: Point, a: Point, b: Point): number {
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const l2 = dx * dx + dy * dy;
+    const t = l2 == 0 ? 0 : Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / l2));
+    return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
 }
 
 // The smallest rectangle around every box
