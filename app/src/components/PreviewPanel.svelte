@@ -187,7 +187,9 @@
                 return;
             }
             compileErrors = null;
-            host.update(result.js);
+            // With the story's stylesheets, so a CSS change shows without a restart. Its scripts
+            // can't be swapped into a running story, so those only change on Run or Restart.
+            host.update(result.js, result.css);
         });
         return updateQueue;
     }

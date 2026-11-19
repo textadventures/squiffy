@@ -145,6 +145,35 @@ describe("preview", () => {
         expect(element.textContent).toContain("Welcome.");
     });
 
+    test("hot updates replace the story's stylesheets, keeping its state", async () => {
+        const { preview, element, messages } = setUp();
+        const js = await compileJs(script);
+        const styles = () => [...document.head.querySelectorAll("style")].map(s => s.textContent);
+        const fixed = () => messages.filter(m => m.type == "themeFixed");
+        await preview.receive({ type: "load", story: { js, css: ["body { color: red; }", "p { margin: 0; }"] } });
+        element.querySelector<HTMLElement>("a[data-section='cellar']")!.click();
+        await vi.waitFor(() => expect(element.textContent).toContain("It's dark"));
+
+        messages.length = 0;
+        await preview.receive({ type: "update", js, css: ["body { color: blue; }"] });
+        // After the preview's own (empty) theme style
+        expect(styles()).toEqual(["", "body { color: blue; }"]);
+        expect(element.textContent).toContain("It's dark");
+        expect(fixed()).toEqual([{ type: "themeFixed", fixed: false }]);
+
+        // A stylesheet that sets color-scheme
+        messages.length = 0;
+        await preview.receive({ type: "update", js, css: [":root { color-scheme: light; }"] });
+        expect(fixed()).toEqual([{ type: "themeFixed", fixed: true }]);
+
+        // The same stylesheets again, or none given, change nothing
+        messages.length = 0;
+        await preview.receive({ type: "update", js, css: [":root { color-scheme: light; }"] });
+        await preview.receive({ type: "update", js });
+        expect(styles()).toEqual(["", ":root { color-scheme: light; }"]);
+        expect(fixed()).toEqual([]);
+    });
+
     test("adds the story's stylesheets, replacing the previous story's", async () => {
         const { preview } = setUp();
         const js = await compileJs(script);
