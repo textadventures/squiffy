@@ -35,6 +35,7 @@
     import MapPanel, { type TraceStep } from "#components/MapPanel.svelte";
     import { checkSectionName, linkTo, movedNodes, nodeAtLine, renamePositions, sectionKeys, withPosition, type Point, type StoryMapEdge, type StoryMapNode } from "#lib/story-map.js";
     import AssetManagerModal from "#components/AssetManagerModal.svelte";
+    import FontsModal from "#components/FontsModal.svelte";
     import AboutModal from "#components/AboutModal.svelte";
     import { addSectionOrPassage, insertSnippet, runCommand, userSnippets } from "#lib/editor-commands.js";
     import type { ExportKind } from "#lib/language/protocol.js";
@@ -60,6 +61,7 @@
     // The text of each open file when the problems were found, as their fixes are for that text
     let problemTexts = new Map<string, string>();
     let assetsOpen = $state(false);
+    let fontsOpen = $state(false);
     let aboutOpen = $state(false);
     // Changes whenever an asset is added, changed or deleted, so the preview gets it
     let assetsVersion = $state(0);
@@ -373,9 +375,11 @@
         await preview?.run(startAt);
     }
 
-    // Edits hot-update the running story, once typing pauses
+    // Edits hot-update the running story, once typing pauses, as do changes to files that aren't
+    // open, such as a font's stylesheet from the Fonts dialog
     $effect(() => {
         void p?.openFiles.map(f => f.text);
+        void filesVersion;
         if (!previewOpen) return;
         const timer = setTimeout(() => void preview?.update(), 600);
         return () => clearTimeout(timer);
@@ -883,6 +887,21 @@
         showToast(`Added "${line}" to ${p.mainFile}.`, "info");
     }
 
+    // Takes "@import path" out of the main file, if it's there
+    async function removeImport(path: string) {
+        if (!p) return;
+        const view = views.get(p.mainFile);
+        const text = view ? view.state.doc.toString() : await p.fs.readText(p.mainFile);
+        const match = new RegExp(`^@import[ \\t]+${path.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}[ \\t]*(\\r?\\n|$)`, "m").exec(text);
+        if (!match) return;
+        if (view) {
+            view.dispatch({ changes: { from: match.index, to: match.index + match[0].length } });
+        } else {
+            await p.fs.write(p.mainFile, text.slice(0, match.index) + text.slice(match.index + match[0].length));
+            p.onFileChanged?.(p.mainFile);
+        }
+    }
+
     async function handleRename(path: string) {
         if (!p) return;
         const name = await promptDialog(`Rename ${path} to:`, path, "Rename");
@@ -1012,6 +1031,7 @@
             ontogglemap={toggleMap}
             onrun={fromCursor => runPreview(fromCursor)}
             onassets={() => { assetsOpen = true; }}
+            onfonts={() => { fontsOpen = true; }}
             ondownloadproject={handleDownloadProject}
             onexport={handleExport}
             oncommand={command => { const v = activeView(); if (v) runCommand(v, command); }}
@@ -1163,6 +1183,16 @@
 
     {#if assetsOpen}
         <AssetManagerModal project={p} oninsert={insertAsset} oncancel={() => { assetsOpen = false; }} />
+    {/if}
+
+    {#if fontsOpen}
+        <!-- Without a squiffy.json, a font's stylesheet is only part of the story if the main file @imports it -->
+        <FontsModal
+            project={p}
+            onadded={css => { if (p && !p.projectFile && needsImport(css)) void addImport(storyPath(p, css)); }}
+            onremoving={css => { if (p && !p.projectFile) void removeImport(storyPath(p, css)); }}
+            oncancel={() => { fontsOpen = false; }}
+        />
     {/if}
 {/if}
 

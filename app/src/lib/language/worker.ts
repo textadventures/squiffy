@@ -1,7 +1,7 @@
 // The language service, in a Web Worker so analysing a large story never blocks typing. It reads
 // project files by calling back to the app (HostApi), and the app sends it the text of the file
 // being edited with updateFile() as it changes.
-import { convertV5Syntax, emit, findV5Syntax, formatDiagnostic } from "squiffy-compiler";
+import { convertV5Syntax, emit, findV5Syntax, formatDiagnostic, resolveCssUrl, rewriteCssUrls } from "squiffy-compiler";
 import { createLanguageService, type LanguageService } from "squiffy-compiler/language-service";
 import { dirname, resolvePath } from "@textadventures/project-fs";
 import { connect, type Handlers, type Port } from "../rpc.js";
@@ -28,14 +28,16 @@ async function exportStory(kind: ExportKind, assets: Record<string, Uint8Array>)
 
 // The story's own stylesheets and scripts (@import of .css and .js files), which are named
 // relative to the main file. One that can't be read is left out, as the compiler does.
-async function readAll(names: string[]): Promise<string[]> {
+async function readAll(names: string[], stylesheets = false): Promise<string[]> {
     // squiffy.json's main file, if the project has one
     const main = (await current().getProjectInfo()).mainFile;
     const texts = await Promise.all(names.map(async name => {
         const path = resolvePath(dirname(main), name);
         if (path === null) return undefined;
         try {
-            return await host.call("readText", path);
+            const text = await host.call("readText", path);
+            // The preview finds a stylesheet's fonts and images by their path from the story's folder
+            return stylesheets ? rewriteCssUrls(text, url => resolveCssUrl(name, url) ?? undefined) : text;
         } catch {
             return undefined;
         }
@@ -58,7 +60,7 @@ async function compile(): Promise<CompiledStory> {
     const { projectFile } = await current().getProjectInfo();
     const result = emit(analysis, { panels: projectFile?.panels });
     const info = result.getUiInfo();
-    const [css, scripts] = await Promise.all([readAll(info.externalStylesheets), readAll(info.externalScripts)]);
+    const [css, scripts] = await Promise.all([readAll(info.externalStylesheets, true), readAll(info.externalScripts)]);
     return { success: true, js: await result.getJs(true), css, scripts };
 }
 

@@ -14,6 +14,9 @@ export interface PreviewStory {
     // starts "export const story".
     js: string;
     // The contents of the story's own stylesheets and scripts (from @import of .css and .js files).
+    // A stylesheet's url()s that are paths, such as its fonts' files, are paths from the story's
+    // folder, like the assets', so a host should change any that are from the stylesheet's own
+    // folder. The preview swaps them for the assets' URLs.
     css?: string[];
     scripts?: string[];
 }

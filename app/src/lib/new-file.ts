@@ -37,7 +37,7 @@ const cssText = `/* Your story's styles. These take precedence over Squiffy's ow
     --squiffy-link-hover: light-dark(#0f3f99, #b0cbff);
     --squiffy-border: light-dark(#e2e2e6, #34343a);
 
-    --squiffy-font-family: Charter, "Bitstream Charter", "Sitka Text", Cambria, Georgia, serif;
+    --squiffy-font-family: Charter, "Bitstream Charter", Georgia, serif;
     --squiffy-font-size: 1.125rem;
     --squiffy-line-height: 1.6;
     --squiffy-max-width: 42rem;

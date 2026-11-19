@@ -4,8 +4,8 @@
 {
     /* The width of the story text */
     --squiffy-max-width: 42rem;
-    /* The story's font. Charter, Sitka Text, Cambria or Georgia, whichever the reader has */
-    --squiffy-font-family: Charter, "Bitstream Charter", "Sitka Text", Cambria, Georgia, serif;
+    /* The story's font. Charter, or Georgia if the reader doesn't have it */
+    --squiffy-font-family: Charter, "Bitstream Charter", Georgia, serif;
     /* The size of the story text. The header's buttons are smaller, and don't change with it */
     --squiffy-font-size: 1.125rem;
     /* The space between lines of text */

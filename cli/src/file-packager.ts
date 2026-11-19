@@ -3,7 +3,7 @@ import * as path from "path";
 import { compile, convertSetters, findV5Syntax, formatDiagnostic } from "squiffy-compiler";
 import type { StoryOnDisk } from "squiffy-compiler/node";
 import { externalFiles } from "./external-files.js";
-import { findAssets, findImportedFiles, getStoryText } from "./assets.js";
+import { findAssets, findImportedFiles, findStylesheetAssets, getStoryText } from "./assets.js";
 import { createPackage, PackageOptions } from "@textadventures/squiffy-packager";
 
 // A story given as a filename is just that file and its @imports, as with no squiffy.json
@@ -82,6 +82,7 @@ export const createPackageFiles = async (input: string | StoryOnDisk, outputPath
     const importedText = Object.values(imported).map(bytes => new TextDecoder().decode(bytes)).join("\n");
     const assets = options.assets ?? {
         ...findAssets(inputFilename, getStoryText(result) + "\n" + importedText),
+        ...findStylesheetAssets(inputFilename, result, imported),
         ...imported,
     };
     const assetPaths = Object.keys(assets);

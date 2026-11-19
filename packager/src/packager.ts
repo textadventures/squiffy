@@ -1,5 +1,5 @@
 import { strToU8, zipSync } from "fflate";
-import { CompileSuccess, PAGE_STRINGS, type PageStrings } from "squiffy-compiler";
+import { CompileSuccess, PAGE_STRINGS, resolveCssUrl, rewriteCssUrls, type PageStrings } from "squiffy-compiler";
 
 import squiffyRuntime from "squiffy-runtime/dist/squiffy.runtime.global.js?raw";
 import runtimeCss from "squiffy-runtime/dist/squiffy.runtime.css?raw";
@@ -148,11 +148,20 @@ export const createPackage = async (input: CompileSuccess, createZipOrOptions: b
             ? `<script src="${script}"></script>`
             : "<script>\n" + text.replace(/<\/(script)/gi, "<\\/$1") + "\n    </script>";
     }).join("\n");
+    // An included stylesheet's url()s, such as its fonts, become data: URIs, as there are no
+    // files beside the page for them to refer to
+    const fontsInCss = new Set<string>();
     const stylesheetData = uiInfo.externalStylesheets.map(sheet => {
-        const text = inlineText(sheet);
-        return text === undefined
-            ? `<link rel="stylesheet" href="${sheet}"/>`
-            : "<style>\n" + text.replace(/<\/(style)/gi, "<\\/$1") + "\n    </style>";
+        let text = inlineText(sheet);
+        if (text === undefined) return `<link rel="stylesheet" href="${sheet}"/>`;
+        text = rewriteCssUrls(text, url => {
+            const path = resolveCssUrl(normaliseAssetPath(sheet), url);
+            const bytes = path === null ? undefined : assets[path];
+            if (path === null || !bytes) return undefined;
+            if (getMimeType(path).startsWith("font/")) fontsInCss.add(path);
+            return `data:${getMimeType(path)};base64,${toBase64(bytes)}`;
+        });
+        return "<style>\n" + text.replace(/<\/(style)/gi, "<\\/$1") + "\n    </style>";
     }).join("\n");
     let assetOptions = "";
 
@@ -169,9 +178,11 @@ export const createPackage = async (input: CompileSuccess, createZipOrOptions: b
         runtimeContent = "<script>\n" + squiffyRuntime + "\n    </script>";
         storyContent = "<script>\n" + storyJs + "\n    </script>";
 
-        if (Object.keys(assets).some(path => !inlined.has(path))) {
+        // Fonts a stylesheet has embedded are only for it: the story itself doesn't show them
+        const forStory = (path: string) => !inlined.has(path) && !fontsInCss.has(path);
+        if (Object.keys(assets).some(forStory)) {
             // A single-file export can't refer to separate asset files, so embed them as data: URIs.
-            const dataUris = Object.fromEntries(Object.entries(assets).filter(([path]) => !inlined.has(path)).map(([path, bytes]) =>
+            const dataUris = Object.fromEntries(Object.entries(assets).filter(([path]) => forStory(path)).map(([path, bytes]) =>
                 [path, `data:${getMimeType(path)};base64,${toBase64(bytes)}`]));
             storyContent += "\n    <script>\nvar squiffyAssetUrls = " + scriptSafeJson(dataUris) + ";\n    </script>";
             assetOptions = "resolveAssetUrl: function (path) { return squiffyAssetUrls[path.replace(/^(\\.\\/)+/, \"\")] || path; },";

@@ -28,6 +28,10 @@ const mimeType = (path: string) => mimeTypes[path.substring(path.lastIndexOf("."
 
 const normalisePath = (path: string) => path.replace(/^(\.\/)+/, "");
 
+// The url()s in a story's stylesheet that are paths, rather than web addresses, data: URIs and the like
+const CSS_URL = /url\(\s*(?:"((?:[^"\\\n]|\\.)*)"|'((?:[^'\\\n]|\\.)*)'|([^)"'\s]*))\s*\)/gi;
+const isRelativeUrl = (url: string) => url != "" && !/^(?:[a-z][a-z\d+.-]*:|\/|#)/i.test(url);
+
 async function importFromBlob(js: string): Promise<{ story: Story }> {
     const url = URL.createObjectURL(new Blob([js], { type: "text/javascript" }));
     try {
@@ -60,6 +64,8 @@ export function createPreview(options: PreviewOptions) {
     const objectUrls: string[] = [];
     // The story's own stylesheets and scripts
     let styles: HTMLStyleElement[] = [];
+    // Their text as the host sent it, before withAssetUrls
+    let styleTexts: string[] = [];
     let scripts: HTMLScriptElement[] = [];
     // Sets the theme. It's added before any of the story's own stylesheets, so they can override it.
     const themeStyle = document.createElement("style");
@@ -102,27 +108,39 @@ export function createPreview(options: PreviewOptions) {
             objectUrls.push(url);
             assetUrls.set(normalisePath(path), url);
         }
+        // The stylesheets' url()s, such as their fonts, may now be different files
+        styles.forEach((style, i) => { style.textContent = withAssetUrls(styleTexts[i]); });
     }
+
+    // A stylesheet with its url()s, which are paths from the story's folder, swapped for the
+    // assets' URLs. One that isn't an asset is left as it is.
+    const withAssetUrls = (css: string) => css.replace(CSS_URL, (match, double?: string, single?: string, bare?: string) => {
+        const url = (double ?? single ?? bare ?? "").trim();
+        const resolved = isRelativeUrl(url) ? assetUrls.get(normalisePath(url)) : undefined;
+        return resolved ? `url("${resolved}")` : match;
+    });
 
     // Replaces the story's stylesheets, where the old ones were, so they stay before its scripts
     // (which may add styles of their own). Returns false if they haven't changed.
     function setStyles(css: string[]): boolean {
-        if (css.length == styles.length && css.every((text, i) => styles[i].textContent == text)) return false;
+        if (css.length == styleTexts.length && css.every((text, i) => styleTexts[i] == text)) return false;
         const before = styles[0] ?? scripts[0] ?? null;
         const added = css.map(text => {
             const style = document.createElement("style");
-            style.textContent = text;
+            style.textContent = withAssetUrls(text);
             document.head.insertBefore(style, before);
             return style;
         });
         for (const style of styles) style.remove();
         styles = added;
+        styleTexts = [...css];
         return true;
     }
 
     async function addStoryFiles(story: PreviewStory) {
         for (const element of [...styles, ...scripts]) element.remove();
         styles = [];
+        styleTexts = [];
         scripts = [];
         setStyles(story.css ?? []);
         for (const js of story.scripts ?? []) {

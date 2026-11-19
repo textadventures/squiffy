@@ -51,12 +51,55 @@ Set these variables to change the story's font and the width of the page:
 
 | Variable | What it sets | Default |
 | --- | --- | --- |
-| `--squiffy-font-family` | The font of the story and the header | Charter, Sitka Text, Cambria or Georgia, whichever the reader has |
+| `--squiffy-font-family` | The font of the story and the header | Charter, or Georgia if the reader doesn't have it |
 | `--squiffy-font-size` | The size of the story text. The header's buttons stay the same size | `1.125rem` |
 | `--squiffy-line-height` | The space between lines of text | `1.6` |
 | `--squiffy-max-width` | The width of the story text | `42rem` |
 
 Sizes are in `rem`, so they scale with the text size the reader has chosen in their browser (`1rem` is usually 16 pixels).
+
+### Fonts
+
+Squiffy's own font is Charter, which Macs, iPhones and iPads have, or Georgia everywhere else. To use another font, add it to your story, so readers who don't have it still see it.
+
+In the editor, the **Fonts** button in the toolbar (the **T**) lists the fonts in your story and lets you choose the one for the story's text. To add a font, choose one of the suggestions, or search over 2,000 fonts from [Fontsource](https://fontsource.org), which has every Google font and other open source fonts. Choose which alphabets you need (Latin and Latin Extended, enough for English and most European languages, to start with), and **Add to story**.
+
+The editor downloads the font into your story's `fonts` folder: `fonts/literata/`, for example, with the font's files, its licence (`LICENSE.txt`, which has to stay with the font), and a stylesheet, `literata.css`. From then on the font is an ordinary part of your story. The preview and publishing work offline, and the published story loads the font from its own files, not from Google. Adding a font is the only part that needs the internet.
+
+The stylesheet has an `@font-face` rule for each of the font's files, and if the font is the story's font, a rule that sets `--squiffy-font-family`:
+
+```css
+:root {
+    --squiffy-font-family: "Literata", Georgia, serif;
+}
+```
+
+To use a font for only part of your story, add it without ticking **Use it for the story's text**, and give its name to `font-family` in your own CSS:
+
+```css
+.letter {
+    font-family: "Special Elite", "Courier New", monospace;
+}
+```
+
+To remove a font, use its **Remove** button, which deletes its folder.
+
+#### Your own font files
+
+Without the editor, or for a font that isn't on Fontsource, put the font's files in your story's folder, and an `@font-face` rule for each in your stylesheet. A stylesheet's `url()`s are from the stylesheet's own folder, as on any web page:
+
+```css
+@font-face {
+    font-family: "My Font";
+    src: url("fonts/my-font.woff2") format("woff2");
+}
+
+:root {
+    --squiffy-font-family: "My Font", Georgia, serif;
+}
+```
+
+Files that a stylesheet refers to with `url()` are included when you publish your story, and a one-file HTML story has them inside it.
 
 ### Colours
 
