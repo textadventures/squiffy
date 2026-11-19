@@ -1,4 +1,4 @@
-// Importing a Quest gamebook: Open file converts a .aslx file, or a .quest file (a zip with the
+// Importing a Quest 5 or Quest Viva gamebook: Open file converts a .aslx file, or a .quest file (a zip with the
 // game and the images and sounds it uses), into a new Squiffy story, asking first.
 
 import { unzipSync } from "fflate";

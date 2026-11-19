@@ -65,7 +65,7 @@ function readGame(inputFilename: string): Game | undefined {
     return { source, files };
 }
 
-// Converts a Quest gamebook (a .aslx file, or a .quest file) into a new folder with a Squiffy
+// Converts a Quest 5 or Quest Viva gamebook (a .aslx file, or a .quest file) into a new folder with a Squiffy
 // story in it: the story file, a squiffy.json, a stylesheet if the game has its own colours or
 // fonts, the images and sounds it uses, and quest-import.txt, which lists what couldn't be
 // converted exactly. The folder is next to the Quest file, with the same name, unless another is

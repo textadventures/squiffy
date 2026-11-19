@@ -32,7 +32,7 @@ const argv = yargs(hideBin(process.argv))
     .boolean("convert-v6")
     .describe("convert-twine", "Convert a Twine story (a .twee file, or Twine's published or archive .html) to Squiffy, in a new folder next to it")
     .boolean("convert-twine")
-    .describe("convert-quest", "Convert a Quest gamebook (a .quest or .aslx file) to Squiffy, in a new folder next to it")
+    .describe("convert-quest", "Convert a Quest 5 or Quest Viva gamebook (a .quest or .aslx file) to Squiffy, in a new folder next to it")
     .boolean("convert-quest")
     .describe("out", "With --convert-twine or --convert-quest, the folder to put the Squiffy story in")
     .string("out")
@@ -96,7 +96,7 @@ else if (argv.convertTwine) {
 }
 else if (argv.convertQuest) {
     if (argv._[0] === undefined) {
-        console.error("Give the Quest gamebook to convert: a .quest or .aslx file.");
+        console.error("Give the Quest 5 or Quest Viva gamebook to convert: a .quest or .aslx file.");
         process.exitCode = 1;
     }
     else if (!convertQuestFile(input, argv.out)) {

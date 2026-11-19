@@ -1,4 +1,4 @@
-// Converts a Quest gamebook into a Squiffy story: each page becomes a section, and its options
+// Converts a Quest gamebook, from Quest 5 or Quest Viva, into a Squiffy story: each page becomes a section, and its options
 // become links. Like the Twine converter, this is a pure function with no I/O: the CLI and the
 // editor read the game (from a .aslx file, or the game.aslx in a .quest file) and write the files
 // it returns. Anything that can't be converted is kept as a comment in the story and listed as a
@@ -282,16 +282,23 @@ function convertGame(game: QuestGame, options: QuestConversionOptions): QuestCon
     files[`${name}.squiffy`] = script;
     files["squiffy.json"] = formatProjectFile({ main: `${name}.squiffy`, exclude });
 
-    const version = /^(\d)(\d)\d$/.exec(game.aslVersion);
     return {
         title,
-        format: `Quest ${version ? `${version[1]}.${version[2]}` : ""} gamebook`.replace(/\s+/g, " "),
+        format: `${productName(game.aslVersion)} gamebook`,
         files,
         main: `${name}.squiffy`,
         pages: storyPages.length,
         assets: [...assets],
         problems,
     };
+}
+
+// The version of Quest a game was saved by, from its ASL version: Quest 5 (e.g. "550" is 5.5), or
+// from version 6, Quest Viva
+function productName(aslVersion: string): string {
+    const version = /^(\d)(\d)\d$/.exec(aslVersion);
+    if (!version) return "Quest";
+    return `${Number(version[1]) >= 6 ? "Quest Viva" : "Quest"} ${version[1]}.${version[2]}`;
 }
 
 function escapeAttribute(s: string): string {

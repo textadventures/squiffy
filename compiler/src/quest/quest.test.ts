@@ -78,6 +78,21 @@ describe("reading Quest games", () => {
         expect(game.pages[0].attributes.get("options")).toEqual({ type: "stringdictionary", value: [["Inner", "Go in"]] });
     });
 
+    test("the version of Quest it was saved by", () => {
+        const format = (version: string) => convertQuestGamebook(gamebook(page("Start", "Hi")).replace("version=\"550\"", `version="${version}"`)).format;
+        expect(format("540")).toBe("Quest 5.4 gamebook");
+        expect(format("610")).toBe("Quest Viva 6.1 gamebook");
+    });
+
+    test("a Quest Viva gamebook, which includes the library rather than having it in the file", async () => {
+        const { script } = await convert(`<asl version="610">
+  <include ref="GamebookCore.aslx"/>
+  <game name="Viva"><showtitle type="boolean">false</showtitle></game>
+  <object name="Page1"><description>Hello.</description><object name="player"><inherit name="defaultplayer" /></object></object>
+</asl>`);
+        expect(section(script, "Page1")).toBe("@end\nHello.");
+    });
+
     test("a text adventure isn't converted", () => {
         const adventure = "<asl version=\"550\"><include ref=\"English.aslx\" /><include ref=\"Core.aslx\" /><game name=\"Cave\"></game><object name=\"room\"><inherit name=\"editor_room\" /></object></asl>";
         expect(() => convertQuestGamebook(adventure)).toThrow(QuestParseError);
