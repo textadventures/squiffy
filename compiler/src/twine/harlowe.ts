@@ -393,6 +393,11 @@ export class HarloweExpressions {
         return this.ctx.story.attribute(name, temp);
     }
 
+    // A Harlowe variable's value: its attribute, or inside a (for:), the loop's item
+    variable(name: string, temp: boolean): Expr {
+        return this.ctx.story.variable(name, temp);
+    }
+
     parse(source: string, it?: Expr): Expr {
         const tokens = new Tokens(tokenize(source));
         const e = new ExpressionParser(this, tokens, it).expression();
@@ -421,6 +426,16 @@ export class HarloweExpressions {
             case "a":
             case "array":
                 return { k: "array", items: values() };
+            case "range": {
+                // The whole numbers from one to the other
+                const [from, to] = values();
+                if (from?.k != "num" || to?.k != "num") throw new Unconvertible("(range:) with numbers that aren't fixed");
+                const step = to.v >= from.v ? 1 : -1;
+                if (Math.abs(to.v - from.v) > 100) throw new Unconvertible("(range:) of more than 100 numbers");
+                const items: Expr[] = [];
+                for (let n = Math.round(from.v); n != Math.round(to.v) + step; n += step) items.push({ k: "num", v: n });
+                return { k: "array", items };
+            }
             case "visited": {
                 if (args.length == 0) return { k: "bin", op: ">", l: this.visits(), r: { k: "num", v: 0 } };
                 const target = this.parse(args[0]);
@@ -615,8 +630,8 @@ class ExpressionParser {
         switch (t.type) {
             case "str": return { k: "str", v: t.value as string };
             case "num": return { k: "num", v: t.value as number };
-            case "var": return { k: "var", name: this.h.attribute(t.value as string, false) };
-            case "temp": return { k: "var", name: this.h.attribute(t.value as string, true) };
+            case "var": return this.h.variable(t.value as string, false);
+            case "temp": return this.h.variable(t.value as string, true);
             case "hook": throw new Unconvertible("a hook name in an expression");
             case "(": {
                 const e = this.expression();
@@ -809,7 +824,7 @@ class Writer {
                 return this.ctx.unconvertible(node.text, node.reason);
             case "var":
                 state.leading = false;
-                return display({ k: "var", name: this.expr.attribute(node.name, node.temp) });
+                return display(this.expr.variable(node.name, node.temp));
             case "link":
                 state.leading = false;
                 return this.link(node);
@@ -1018,7 +1033,7 @@ class Writer {
             if (!(e instanceof Unconvertible)) throw e;
             state.leading = false;
             const reason = `This couldn't be converted: ${e.message}.`;
-            if (m.hook && !["link", "linkreveal", "linkrepeat", "linkrerun", "click", "replace", "append", "prepend", "show"].includes(m.name)) {
+            if (m.hook && !["link", "linkreveal", "linkrepeat", "linkrerun", "click", "replace", "append", "prepend", "show", "for", "loop"].includes(m.name)) {
                 // Keep the hook's text, since most changers only change how it looks
                 return this.ctx.unconvertible(m.raw, reason) + this.hookContent(m.hook, state);
             }
@@ -1289,6 +1304,21 @@ class Writer {
                 }
                 throw new Unconvertible(`(${name}:) on ${hookName ? "a hook that isn't in this passage" : "text rather than a named hook"}`);
             }
+            case "for":
+            case "loop": {
+                state.leading = false;
+                if (!m.hook) throw new Unconvertible(`(${name}:) without a hook`);
+                // each _item, or _item where ... (which only shows the items it's true for)
+                const lambda = /^\s*(each\s+)?_([A-Za-z_]\w*)(?:\s+where\s+([\s\S]+))?$/i.exec(args[0] ?? "");
+                if (!lambda || (!lambda[1] && !lambda[3])) throw new Unconvertible(`(${name}:) with something other than "each _item" or "_item where ..."`);
+                const collection = this.forCollection(args.slice(1), name);
+                const hook = m.hook;
+                return this.ctx.story.inLoop(new Map([["_" + lambda[2], "item"]]), undefined, () => {
+                    const body = this.hookContent(hook, state);
+                    const shown = lambda[3] ? `{{#if ${print(this.expr.parse(lambda[3]))}}}${body}{{/if}}` : body;
+                    return `{{#each ${print(collection)}}}${shown}{{/each}}`;
+                });
+            }
             case "linkstorylet": {
                 state.leading = false;
                 // Every storylet whose condition is true, the first time (link-storylet:) is in a passage
@@ -1322,6 +1352,24 @@ class Writer {
             default:
                 throw new Unconvertible(`the (${m.raw.substring(1, m.raw.indexOf(":"))}:) macro, which Squiffy has no equivalent for`);
         }
+    }
+
+    // What a (for:) goes through: an array spread out (...$list), or values, as {{#each}} takes
+    private forCollection(values: string[], name: string): Expr {
+        const spread = (v: string) => /^\s*\.\.\./.test(v) ? this.expr.parse(v.replace(/^\s*\.\.\./, "")) : null;
+        if (values.length == 1) {
+            const e = spread(values[0]);
+            if (e && (e.k == "var" || e.k == "array" || (e.k == "loop" && e.kind == "item"))) return e;
+        }
+        const items: Expr[] = [];
+        for (const v of values) {
+            const e = spread(v);
+            if (!e) items.push(this.expr.parse(v));
+            else if (e.k == "array") items.push(...e.items);
+            else throw new Unconvertible(`(${name}:) with an array and other values`);
+        }
+        if (!items.length) throw new Unconvertible(`(${name}:) with nothing to go through`);
+        return { k: "array", items };
     }
 
     private sectionName(passage: string, raw: string): string {

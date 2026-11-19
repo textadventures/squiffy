@@ -192,9 +192,42 @@ export class StoryContext {
         return name;
     }
 
+    // The loops being converted to {{#each}}, innermost last, with the Twine variables (with their
+    // $ or _) that stand for each one's item and position
+    private readonly loops: { vars: Map<string, "item" | "index">, array?: string }[] = [];
+
+    get looping(): boolean {
+        return this.loops.length > 0;
+    }
+
+    inLoop<T>(vars: Map<string, "item" | "index">, array: string | undefined, convert: () => T): T {
+        this.loops.push({ vars, array });
+        try {
+            return convert();
+        }
+        finally {
+            this.loops.pop();
+        }
+    }
+
+    private loopVariable(name: string, temporary: boolean): Expr | undefined {
+        const key = (temporary ? "_" : "$") + name;
+        for (let i = this.loops.length - 1; i >= 0; i--) {
+            const kind = this.loops[i].vars.get(key);
+            if (kind) return { k: "loop", kind, up: this.loops.length - 1 - i, array: this.loops[i].array };
+        }
+        return undefined;
+    }
+
+    // A Twine variable's value: its attribute, or inside a loop, the loop's item or position
+    variable(name: string, temporary: boolean): Expr {
+        return this.loopVariable(name, temporary) ?? { k: "var", name: this.attribute(name, temporary) };
+    }
+
     // The Squiffy attribute for a Twine variable, given without its $ or _: a temporary (_)
     // variable keeps its name unless a story variable ($) has the same name
     attribute(name: string, temporary: boolean): string {
+        if (this.loopVariable(name, temporary)) throw new Unconvertible("changing a loop's variable inside the loop");
         let result = name;
         if (temporary && this.permanentVars.has(name)) result = "temp_" + name;
         if (reservedAttributes.has(result)) result += "_";
@@ -260,6 +293,8 @@ export function urlLink(text: string, url: string): string {
 
 // A link to a section whose name is worked out as the story runs
 export function dynamicSectionLink(text: string, target: Expr, setters: string[] = []): string {
+    // quote() would break the {{this}} of a loop's item
+    if (setters.some(s => s.includes("{{"))) throw new Unconvertible("a link in a loop, to a passage worked out as the story runs, that sets a variable to the loop's item");
     const set = setters.length ? ` set=${quote(setters.join(", "))}` : "";
     return `{{section ${print(target)} text=${quote(text)}${set}}}`;
 }
@@ -271,7 +306,7 @@ export function passageLink(text: string, target: string): string {
 
 // A Squiffy setter, as in @set or a link, for name = value
 export function setter(name: string, op: "=" | "+=" | "-=" | "*=" | "/=", value: Expr, inLink: boolean): string {
-    return `${attributeRef(name)} ${op} ${print(value, { preferSingle: inLink })}`;
+    return `${attributeRef(name)} ${op} ${print(value, { preferSingle: inLink, inLink })}`;
 }
 
 // A comment in the story, for Twine code that couldn't be converted. Handlebars comments can't
@@ -399,16 +434,30 @@ export function convertTwineStory(twine: TwineStory, options: TwineConversionOpt
                 return reserved.name;
             },
             reservePassage(hint) {
+                const looping = story.looping;
                 const base = sanitisePassageName(hint) || "more";
                 let name = base;
                 for (let n = 2; extraPassages.some(p => p.startsWith(`[${name}]:\n`)) || name == section; n++) name = `${base} ${n}`;
                 const index = extraPassages.length;
                 extraPassages.push(`[${name}]:\n`);
-                return { name, fill: content => extraPassages[index] = `[${name}]:\n${block(content)}` };
+                return {
+                    name,
+                    fill: content => {
+                        // Left out, rather than empty, if it can't be converted
+                        extraPassages[index] = "";
+                        extraPassages[index] = `[${name}]:\n${generated(content)}`;
+                        if (looping) {
+                            story.addProblem({
+                                passage: passage.name, text: oneLine(hint),
+                                reason: "This link is in a loop, and every item's link goes to the same passage, so once one has been clicked, they all have.",
+                            });
+                        }
+                    },
+                };
             },
             addSection(hint, content) {
                 const name = story.uniqueSectionName(hint);
-                story.extraSections.push(`[[${name}]]:\n${block(content)}`);
+                story.extraSections.push(`[[${name}]]:\n${generated(content)}`);
                 return name;
             },
             newLabel: hint => story.newLabel(hint),
@@ -459,7 +508,7 @@ export function convertTwineStory(twine: TwineStory, options: TwineConversionOpt
         if (!footers.includes(p) && footerEmbeds.length) {
             body = (body + "\n" + footerEmbeds.join("\n")).trim();
         }
-        sections.push([`[[${section}]]:\n${block({ directives, body })}`.trimEnd(), ...extraPassages].join("\n\n"));
+        sections.push([`[[${section}]]:\n${block({ directives, body })}`.trimEnd(), ...extraPassages.filter(p => p)].join("\n\n"));
     }
 
     for (const p of widgets) {
@@ -474,7 +523,7 @@ export function convertTwineStory(twine: TwineStory, options: TwineConversionOpt
             continue;
         }
         for (const w of converted) {
-            sections.push([`[[${w.section}]]:\n${block(w.converted)}`, ...extraPassages].join("\n\n"));
+            sections.push([`[[${w.section}]]:\n${block(w.converted)}`, ...extraPassages.filter(p => p)].join("\n\n"));
             extraPassages.length = 0;
         }
     }
@@ -562,6 +611,37 @@ function unarranged(passages: TwinePassage[]): boolean {
 function block(content: ConvertedPassage | string): string {
     const c = typeof content == "string" ? { directives: [], body: content } : content;
     return [...c.directives, finishText(c.body)].filter(l => l.length).join("\n");
+}
+
+// A passage or section made for a link, e.g. one in a loop, which can't use the loop's item or
+// position: it's shown on its own, after the loop has finished
+function generated(content: ConvertedPassage | string): string {
+    const c = typeof content == "string" ? { directives: [], body: content } : content;
+    // Directives are expressions, rather than text with {{...}} in it
+    if (c.directives.some(d => usesOuterLoop(`{{${d}}}`)) || usesOuterLoop(c.body)) {
+        throw new Unconvertible("a link in a loop that does more than set variables to the loop's item");
+    }
+    return block(c);
+}
+
+// Whether Squiffy text uses the item or position of a loop it isn't in
+export function usesOuterLoop(text: string): boolean {
+    let depth = 0;
+    // Comments keep the Twine code, which can have "this" in it
+    for (const tag of text.replace(/\{\{!--[\s\S]*?--\}\}/g, "").matchAll(/\{\{([\s\S]*?)\}\}/g)) {
+        // Text in quotes isn't a reference
+        const inner = tag[1].replace(/"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'/g, "\"\"");
+        if (inner.startsWith("/each")) {
+            depth--;
+            continue;
+        }
+        for (const ref of inner.matchAll(/(?<![\w$@.])((?:\.\.\/)*)this\b|@((?:\.\.\/)*)index\b/g)) {
+            const up = (ref[1] ?? ref[2] ?? "").length / 3;
+            if (up >= depth) return true;
+        }
+        if (inner.startsWith("#each")) depth++;
+    }
+    return false;
 }
 
 // A name for a generated passage, from a link's text, which can have markup in it

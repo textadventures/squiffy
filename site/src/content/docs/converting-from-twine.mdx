@@ -72,6 +72,7 @@ Play the story through after converting it. Twine and Squiffy work differently i
 | `(either: "a", "b")`, `(random: 1, 6)` | `{{random (array "a" "b")}}`, `{{random (array 1 2 3 4 5 6)}}` |
 | `(cycling-link: bind $size, "S", "L")` | `{{rotate (array "S" "L") set="size"}}` |
 | `(input-box: bind $name)`, `(dropdown:)` | `<input data-attribute="name">`, `<select>` (see [User input](/player-input/)) |
+| `(for: each _item, ...$bag)[_item]`, `(for: _n where _n > 2, ...$list)[...]` | [`{{#each bag}}{{this}}{{/each}}`](/attributes/#going-through-an-array), with `{{#if this > 2}}` for `where` |
 | `(set: $hero to (dm: "hp", 10))`, `$hero's hp` | `@set hero_hp = 10`, `{{hero_hp}}`: each value is an attribute of its own |
 | `(storylet:)` and `(link-storylet:)` | A link to each storylet whose condition is true |
 | `''bold''`, `//italic//`, `(text-colour: red)[...]` | Markdown and HTML |
@@ -95,6 +96,7 @@ Play the story through after converting it. Twine and Squiffy work differently i
 | `<span id="box">`, `<<replace "#box">>` | `{{#label "box"}}`, `{{#replace "box"}}` |
 | `either("a", "b")`, `random(1, 6)` | `(random (array "a" "b"))`, `(random (array 1 2 3 4 5 6))` |
 | `<<cycle "$size">>`, `<<textbox "$name">>`, `<<listbox>>` | `{{rotate ... set="size"}}`, `<input data-attribute="name">`, `<select>` |
+| `<<for _i, _item range $bag>>`, `<<for _i to 0; _i lt $bag.length; _i++>>` | [`{{#each bag}}`](/attributes/#going-through-an-array), with `_item` and `$bag[_i]` as `{{this}}`, and `_i` as `{{@index}}` |
 | `<<set $hero to { hp: 10 }>>`, `$hero.hp` | `@set hero_hp = 10`, `{{hero_hp}}`: each property is an attribute of its own |
 | Widgets: `<<say "Ann">>` | A section for each widget, which `{{embed}}`s it, with its arguments in `args_0`, `args_1` and so on |
 | `''bold''`, `//italic//`, `@@color:red;...@@` | Markdown and HTML |
@@ -106,7 +108,7 @@ These are left as comments, and listed in `twine-import.txt`:
 
 - **JavaScript.** Squiffy can't run code written for Harlowe or SugarCube, such as SugarCube's `<<script>>`, `setup` and `State`, or Harlowe's `(macro:)`.
 - **Things Squiffy doesn't have**: sound (`<<audio>>`, `(track:)`), the sidebar (`StoryCaption`, `StoryMenu`), and `<<back>>` and `<<return>>` (Squiffy has its own Back button). Saving and loading from the story's text, such as Harlowe's `(save-game:)`, isn't converted either: players use Squiffy's **Save** button instead.
-- **Loops** (`<<for>>`, `(for:)`). Rewrite them with [`{{#each}}`](/attributes/#going-through-an-array).
+- **Loops that don't go through an array**, such as `<<for _i lt 4>>`, and `<<break>>` and `<<continue>>`. Rewrite them with [`{{#each}}`](/attributes/#going-through-an-array). In a loop that's converted, the items can't be objects, so `_item.name` isn't converted. A link in a loop can set attributes to the item, but if it does more than that, it can't use the item, because what it does is in a passage or section of its own.
 - **Datamaps, arrays and objects used as a whole**, rather than a value at a time, such as copying one object to another, or looking something up by a name that's in a variable.
 - **Harlowe's more unusual hooks and changers**, such as `(live:)` with no `(go-to:)` in it, `(enchant:)` on anything but how text looks, and `(append:)` on a hook in another passage.
 
