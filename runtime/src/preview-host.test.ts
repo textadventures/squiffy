@@ -31,10 +31,12 @@ describe("preview host", () => {
         ]);
 
         host.update("x");
+        host.update("y", ["body { color: red; }"]);
         host.restart();
         host.back();
         expect(sent.slice(2)).toEqual([
             { channel: PREVIEW_CHANNEL, type: "update", js: "x" },
+            { channel: PREVIEW_CHANNEL, type: "update", js: "y", css: ["body { color: red; }"] },
             { channel: PREVIEW_CHANNEL, type: "restart" },
             { channel: PREVIEW_CHANNEL, type: "back" },
         ]);

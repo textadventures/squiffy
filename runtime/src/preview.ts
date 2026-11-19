@@ -51,7 +51,9 @@ export function createPreview(options: PreviewOptions) {
     let loadCount = 0;
     const assetUrls = new Map<string, string>();
     const objectUrls: string[] = [];
-    const injected: Element[] = [];
+    // The story's own stylesheets and scripts
+    let styles: HTMLStyleElement[] = [];
+    let scripts: HTMLScriptElement[] = [];
     // Sets the theme. It's added before any of the story's own stylesheets, so they can override it.
     const themeStyle = document.createElement("style");
     document.head.appendChild(themeStyle);
@@ -95,14 +97,27 @@ export function createPreview(options: PreviewOptions) {
         }
     }
 
-    async function addStoryFiles(story: PreviewStory) {
-        for (const element of injected.splice(0)) element.remove();
-        for (const css of story.css ?? []) {
+    // Replaces the story's stylesheets, where the old ones were, so they stay before its scripts
+    // (which may add styles of their own). Returns false if they haven't changed.
+    function setStyles(css: string[]): boolean {
+        if (css.length == styles.length && css.every((text, i) => styles[i].textContent == text)) return false;
+        const before = styles[0] ?? scripts[0] ?? null;
+        const added = css.map(text => {
             const style = document.createElement("style");
-            style.textContent = css;
-            document.head.appendChild(style);
-            injected.push(style);
-        }
+            style.textContent = text;
+            document.head.insertBefore(style, before);
+            return style;
+        });
+        for (const style of styles) style.remove();
+        styles = added;
+        return true;
+    }
+
+    async function addStoryFiles(story: PreviewStory) {
+        for (const element of [...styles, ...scripts]) element.remove();
+        styles = [];
+        scripts = [];
+        setStyles(story.css ?? []);
         for (const js of story.scripts ?? []) {
             const script = document.createElement("script");
             const url = URL.createObjectURL(new Blob([js], { type: "text/javascript" }));
@@ -112,7 +127,7 @@ export function createPreview(options: PreviewOptions) {
                 document.head.appendChild(script);
             });
             URL.revokeObjectURL(url);
-            injected.push(script);
+            scripts.push(script);
         }
     }
 
@@ -158,7 +173,10 @@ export function createPreview(options: PreviewOptions) {
                     await load(message);
                     break;
                 case "update":
-                    if (api) api.update((await loadModule(message.js)).story);
+                    if (!api) break;
+                    // A stylesheet can change whether the story sets its own color-scheme
+                    if (message.css && setStyles(message.css)) send({ type: "themeFixed", fixed: themeIsFixed() });
+                    api.update((await loadModule(message.js)).story);
                     break;
                 case "restart":
                     api?.restart();

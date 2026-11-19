@@ -33,8 +33,9 @@ export type PreviewTheme = "light" | "dark" | "system";
 export type HostMessage =
     // Starts a story, replacing any that's running. Send assets first.
     | { type: "load"; story: PreviewStory; startAt?: StartAt }
-    // Hot-updates the running story, keeping its state
-    | { type: "update"; js: string }
+    // Hot-updates the running story, keeping its state. css, if given, replaces the story's own
+    // stylesheets. Its scripts can't be replaced in a running story: that needs a load.
+    | { type: "update"; js: string; css?: string[] }
     | { type: "restart" }
     | { type: "back" }
     // Replaces the assets the story can use

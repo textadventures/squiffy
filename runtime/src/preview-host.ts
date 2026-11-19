@@ -41,8 +41,9 @@ export interface PreviewHost {
     readonly ready: Promise<void>;
     // Starts a story, replacing any that's running
     load(story: PreviewStory, options?: { startAt?: StartAt }): void;
-    // Hot-updates the running story, keeping its state
-    update(js: string): void;
+    // Hot-updates the running story, keeping its state. css, if given, replaces the story's own
+    // stylesheets; its scripts only change with load().
+    update(js: string, css?: string[]): void;
     restart(): void;
     back(): void;
     // Sets the assets the story can use. Send these before load().
@@ -126,7 +127,7 @@ export function createPreviewHost(channel: PreviewChannel, handlers: PreviewHand
     return {
         ready,
         load: (story, options = {}) => send({ type: "load", story, ...(options.startAt ? { startAt: options.startAt } : {}) }),
-        update: js => send({ type: "update", js }),
+        update: (js, css) => send({ type: "update", js, ...(css ? { css } : {}) }),
         restart: () => send({ type: "restart" }),
         back: () => send({ type: "back" }),
         setAssets: assets => send({ type: "assets", assets }),
