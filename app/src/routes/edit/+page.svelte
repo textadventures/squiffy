@@ -12,6 +12,7 @@
     import { base } from "#lib/base-path.js";
     import { project, openBrowserStory, openRecentFolder, downloadFile, storyPath, offerProjectFile, setterConversionMessage, type ProjectOffer } from "#lib/project.svelte.js";
     import { isAsset, isSquiffyFile, isTextFile } from "#lib/file-types.js";
+    import { NEW_FILE_KINDS, needsImport, newFileText, type NewFileKind } from "#lib/new-file.js";
     import { createLanguageClient, type LanguageClient } from "#lib/language/client.js";
     import { applyEditsToString, applyTextEdits, languageFeatures, recheckProblems, toOffset, toPosition } from "#lib/language/codemirror.js";
     import { squiffyLanguage } from "@textadventures/squiffy-codemirror";
@@ -329,9 +330,13 @@
         await Promise.all(current.openFiles.filter(f => isSquiffyFile(f.path)).map(f => c.call("updateFile", f.path, f.text)));
     }
 
-    // Compiles the story as it is in the editor now, for the preview
+    // Compiles the story as it is in the editor now, for the preview. The language service reads
+    // anything but a .squiffy file (a stylesheet, a script, squiffy.json) from the project, so
+    // those are saved first, or the preview would show them as they were at the last autosave.
     async function compileStory() {
-        if (!client) return { success: false as const, errors: ["The story isn't open."] };
+        const current = p;
+        if (!client || !current) return { success: false as const, errors: ["The story isn't open."] };
+        await Promise.all(current.openFiles.filter(f => f.dirty && !isSquiffyFile(f.path)).map(f => f.save()));
         await syncOpenFiles();
         return client.call("compile");
     }
@@ -824,9 +829,10 @@
 
     // A new .squiffy file is part of the story straight away. With a squiffy.json, that's
     // automatic. Without one, the editor offers to add one, or else @imports it from the main file.
-    async function handleNewFile() {
+    // A stylesheet or script always needs an @import, so the editor adds one (#198).
+    async function handleNewFile(kind: NewFileKind) {
         if (!p) return;
-        const name = await promptDialog("New file name:", "chapter.squiffy", "Create");
+        const name = await promptDialog(`New ${NEW_FILE_KINDS[kind].noun} name:`, NEW_FILE_KINDS[kind].name, "Create");
         if (!name) return;
         const path = joinPath(dirname(p.mainFile), name.trim());
         if (!validPath(path)) return;
@@ -838,8 +844,8 @@
                 offer = await offerProjectFile(p, { main: p.mainFile, adding: path });
                 if (offer === "cancelled") return;
             }
-            await p.createFile(path, squiffy ? `[[${basename(path).replace(/\.squiffy$/i, "")}]]:\n\n` : "");
-            if (offer === "declined") await addImport(storyPath(p, path));
+            await p.createFile(path, newFileText(path));
+            if (offer === "declined" || needsImport(path)) await addImport(storyPath(p, path));
             if (isTextFile(path)) await p.open(path);
         } catch (err) {
             showToast(errorText(err));

@@ -4,6 +4,12 @@
 {
     /* The width of the story text */
     --squiffy-max-width: 42rem;
+    /* The story's font. Charter, Sitka Text, Cambria or Georgia, whichever the reader has */
+    --squiffy-font-family: Charter, "Bitstream Charter", "Sitka Text", Cambria, Georgia, serif;
+    /* The size of the story text. The header's buttons are smaller, and don't change with it */
+    --squiffy-font-size: 1.125rem;
+    /* The space between lines of text */
+    --squiffy-line-height: 1.6;
 }
 
 /* Follow the reader's light or dark system setting, or what they chose with the theme button.
@@ -39,8 +45,8 @@ div#squiffy-container
     margin-left: auto;
     margin-right: auto;
     padding: 0 1.25rem 3rem;
-    font-family: Charter, "Bitstream Charter", "Sitka Text", Cambria, Georgia, serif;
-    line-height: 1.6;
+    font-family: var(--squiffy-font-family);
+    line-height: var(--squiffy-line-height);
 }
 
 /* The bar above the story containing the Back, Restart and light/dark buttons. It stays at the
@@ -87,7 +93,7 @@ button#squiffy-theme[data-next="light"] .squiffy-icon-dark
 /* The story text */
 div#squiffy
 {
-    font-size: 1.125rem;
+    font-size: var(--squiffy-font-size);
 }
 
 div#squiffy :is(h1, h2, h3, h4, h5, h6)

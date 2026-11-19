@@ -7,6 +7,7 @@
     import type { OpenProject } from "#lib/project.svelte.js";
     import { PROJECT_FILENAME } from "squiffy-compiler";
     import { isTextFile } from "#lib/file-types.js";
+    import { NEW_FILE_KINDS, type NewFileKind } from "#lib/new-file.js";
     import DropdownMenu from "#components/DropdownMenu.svelte";
     import type { DropdownMenuItem } from "#components/DropdownMenu.svelte";
     import FileText from "@lucide/svelte/icons/file-text";
@@ -18,7 +19,8 @@
 
     interface Props {
         project: OpenProject;
-        onnewfile: () => void;
+        // The + menu: a story file, a stylesheet or a script
+        onnewfile: (kind: NewFileKind) => void;
         onrename: (path: string) => void;
         ondelete: (path: string) => void;
         ondownload: (path: string) => void;
@@ -50,6 +52,9 @@
         return out;
     });
 
+    const newFileItems: DropdownMenuItem[] = (Object.keys(NEW_FILE_KINDS) as NewFileKind[])
+        .map(kind => ({ label: NEW_FILE_KINDS[kind].label, action: () => onnewfile(kind) }));
+
     function menuItems(path: string): DropdownMenuItem[] {
         const items: DropdownMenuItem[] = [
             { label: "Rename", action: () => onrename(path) },
@@ -71,7 +76,11 @@
 <section aria-label="Files" class="flex flex-col min-h-0">
     <div class="flex items-center pl-3 pr-1 pt-2 pb-1">
         <h2 class="flex-1 text-[11px] font-semibold text-surface-600-400 uppercase tracking-wide">Files</h2>
-        <button type="button" class="btn-icon btn-icon-sm" title="New file" aria-label="New file" onclick={onnewfile}><Plus size={14} /></button>
+        <DropdownMenu items={newFileItems}>
+            {#snippet trigger(toggle, open)}
+                <button type="button" class="btn-icon btn-icon-sm" title="New file" aria-label="New file" aria-haspopup="menu" aria-expanded={open} onclick={toggle}><Plus size={14} /></button>
+            {/snippet}
+        </DropdownMenu>
     </div>
     <ul class="overflow-y-auto pb-2 text-sm">
         {#each rows as row (row.kind + row.path)}
