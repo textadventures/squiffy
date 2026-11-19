@@ -126,7 +126,13 @@ function createWindow(route: string) {
     mainWindow = win;
     readyToClose = false;
 
-    win.once("ready-to-show", () => win.show());
+    // Shown once it's drawn, so it doesn't flash white. But on Linux with Wayland a hidden window
+    // may never draw, so ready-to-show never comes: show it when the page has loaded, at the latest.
+    const show = () => {
+        if (!win.isDestroyed() && !win.isVisible()) win.show();
+    };
+    win.once("ready-to-show", show);
+    win.webContents.once("did-finish-load", show);
     void win.loadURL(appOrigin + route);
 
     // Give the editor a chance to save before the window goes. It answers with close-ready; if it
@@ -154,6 +160,7 @@ function focusWindow() {
         return;
     }
     if (mainWindow.isMinimized()) mainWindow.restore();
+    if (!mainWindow.isVisible()) mainWindow.show();
     mainWindow.focus();
 }
 
