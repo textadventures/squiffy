@@ -28,7 +28,7 @@ import { desktopApi } from "./desktop.js";
 import { newStoryDialog, newStoryText } from "./new-story.js";
 import { needsBackup } from "./backup.js";
 import { convertTwineFile, TWINE_FILE_PATTERN, twineImportMessage } from "./twine-import.js";
-import { convertQuestFile, QUEST_FILE_PATTERN, questImportMessage } from "./quest-import.js";
+import { convertQuestFile, findQuestGame, QUEST_FILE_PATTERN, questImportMessage } from "./quest-import.js";
 
 export const SQUIFFY_FILES: FileTypeFilter[] = [
     { description: "Squiffy stories", extensions: [".squiffy"], mimeType: "text/plain" },
@@ -540,7 +540,7 @@ export async function browserStoryFromText(fileName: string | undefined, text: s
 }
 
 // Imports a .squiffy file, a project zip (from Download project), or a Twine story or Quest
-// gamebook (converted, if the author says to), into a new story in the browser. Returns its id,
+// gamebook, on its own or in a zip (converted, if the author says to), into a new story in the browser. Returns its id,
 // or null if they cancel.
 export async function importFile(file: File): Promise<string | null> {
     if (QUEST_FILE_PATTERN.test(file.name)) {
@@ -562,13 +562,12 @@ export async function importFile(file: File): Promise<string | null> {
         return id;
     }
     if (file.name.toLowerCase().endsWith(".zip")) {
-        const { readProjectZip, zipMainFile } = await import("./export.js");
-        const files = readProjectZip(new Uint8Array(await file.arrayBuffer()));
-        const mainFile = zipMainFile(files);
-        if (!mainFile) throw new Error(`There's no .squiffy file in ${file.name}.`);
+        const story = await readZip(file.name, new Uint8Array(await file.arrayBuffer()));
+        if (!story) return null;
         const id = crypto.randomUUID();
-        const fs = await browserStories.create(id, { title: "", mainFile, lastOpened: Date.now() });
-        for (const [path, data] of files) await fs.write(path, data);
+        const fs = await browserStories.create(id, { title: story.title, mainFile: story.mainFile, lastOpened: Date.now() });
+        for (const [path, data] of story.files) await fs.write(path, data);
+        if (story.message) showToast(story.message, "info", 12000);
         return id;
     }
     const text = await file.text();
@@ -704,11 +703,35 @@ export async function pickDesktopFile(): Promise<PickedFolder | null> {
 }
 
 async function unpackZip(zipName: string, data: Uint8Array): Promise<PickedFolder | null> {
-    const { readProjectZip, zipMainFile } = await import("./export.js");
+    const story = await readZip(zipName, data);
+    if (!story) return null;
+    const folder = story.message
+        ? await writeIntoNewFolder(`the Squiffy version of ${zipName}`, story.files, story.mainFile)
+        : await writeIntoNewFolder(zipName, story.files, story.mainFile, { title: `Choose a folder to unpack ${zipName} into`, buttonLabel: "Unpack here" });
+    if (folder && story.message) showToast(story.message, "info", 12000);
+    return folder;
+}
+
+// The story in a zip: a Squiffy project (from Download project), or a Quest gamebook or Twine
+// story, converted if the author says to (with a message to show once it's saved). Null if they
+// cancel.
+async function readZip(zipName: string, data: Uint8Array): Promise<{
+    files: Map<string, Uint8Array | string>, mainFile: string, title: string, message?: string,
+} | null> {
+    const { readProjectZip, zipMainFile, zipTwineFile } = await import("./export.js");
     const files = readProjectZip(data);
     const mainFile = zipMainFile(files);
-    if (!mainFile) throw new Error(`There's no .squiffy file in ${zipName}.`);
-    return writeIntoNewFolder(zipName, files, mainFile, { title: `Choose a folder to unpack ${zipName} into`, buttonLabel: "Unpack here" });
+    if (mainFile) return { files, mainFile, title: "" };
+    if (findQuestGame(files.keys())) {
+        const converted = await convertQuestFile(zipName, data);
+        return converted && { ...converted, message: questImportMessage(converted) };
+    }
+    const twineFile = zipTwineFile(files);
+    if (twineFile) {
+        const converted = await convertTwineFile(zipName, new TextDecoder().decode(files.get(twineFile)));
+        return converted && { ...converted, message: twineImportMessage(converted) };
+    }
+    throw new Error(`There's no Squiffy story, Quest gamebook or Twine story in ${zipName}.`);
 }
 
 // Writes files into a folder the author chooses, asking before replacing any that are there

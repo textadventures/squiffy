@@ -83,6 +83,16 @@ export function zipMainFile(files: Map<string, Uint8Array>): string | undefined 
     return guessMainFile(files.keys());
 }
 
+// The Twine story in a zip with no .squiffy file in it: its only .twee or .tw file, else its only
+// HTML file, as in a published game (an HTML file that isn't a Twine story fails to convert)
+export function zipTwineFile(files: Map<string, Uint8Array>): string | undefined {
+    const paths = [...files.keys()];
+    const twee = paths.filter(p => /\.(twee|tw)$/i.test(p));
+    if (twee.length) return twee.length == 1 ? twee[0] : undefined;
+    const html = paths.filter(p => /\.html?$/i.test(p));
+    return html.length == 1 ? html[0] : undefined;
+}
+
 // The main file of a project read from a zip: the top-most .squiffy file, then the first by name
 export function guessMainFile(paths: Iterable<string>): string | undefined {
     return [...paths]
