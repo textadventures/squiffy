@@ -1,5 +1,34 @@
 # Changelog
 
+## [7.0.0-beta.6](https://github.com/textadventures/squiffy/compare/v7.0.0-beta.5...v7.0.0-beta.6) (2026-11-19)
+
+
+### Features
+
+* a light/dark button in the editor's preview ([#433](https://github.com/textadventures/squiffy/issues/433)) ([5510653](https://github.com/textadventures/squiffy/commit/5510653e3e3e681195c1c781048c8b8c9bc05f2f))
+* a squiffy.json includes the folder's stylesheets and scripts ([#435](https://github.com/textadventures/squiffy/issues/435)) ([df56e37](https://github.com/textadventures/squiffy/commit/df56e3780cb89f06df9eeadbbbfd87b6cef55d27))
+* convert Quest gamebooks to Squiffy ([#457](https://github.com/textadventures/squiffy/issues/457)) ([5ce53c3](https://github.com/textadventures/squiffy/commit/5ce53c30173afc25a037424e70fceb6fd6b56bec))
+* easier story styles: a Stylesheet option, a starter file, and font variables ([#198](https://github.com/textadventures/squiffy/issues/198)) ([#432](https://github.com/textadventures/squiffy/issues/432)) ([d602b98](https://github.com/textadventures/squiffy/commit/d602b989f9589fcba56c6ccd3583392e5a9b13cd))
+* icon header buttons, with translatable tooltips in squiffy.json ([#423](https://github.com/textadventures/squiffy/issues/423)) ([8ab46ac](https://github.com/textadventures/squiffy/commit/8ab46ac8382b136cb826d7371739fb1298924ba8))
+* loops with links and attributes inside {{#each}} ([#437](https://github.com/textadventures/squiffy/issues/437)) ([327fb5b](https://github.com/textadventures/squiffy/commit/327fb5bba2e1e0ff4ae4e838b6ca86ad1bdac0d0))
+* panels, passages always to hand beside the story or in a dialog ([#459](https://github.com/textadventures/squiffy/issues/459)) ([d5c1383](https://github.com/textadventures/squiffy/commit/d5c1383c1f7e4cfd24d6d5207e2398e747d21f58))
+* passages you can click again, with [@repeat](https://github.com/repeat) ([#104](https://github.com/textadventures/squiffy/issues/104)) ([#428](https://github.com/textadventures/squiffy/issues/428)) ([8768337](https://github.com/textadventures/squiffy/commit/87683378f7a4052b72170331492a481ee3b571e3))
+* previous and previous_section attributes ([#421](https://github.com/textadventures/squiffy/issues/421)) ([29e7d1b](https://github.com/textadventures/squiffy/commit/29e7d1b64a04a6eb015e1feda37551dc49eab070))
+* run JavaScript after the text with squiffy.ui.afterWrite ([#106](https://github.com/textadventures/squiffy/issues/106)) ([#430](https://github.com/textadventures/squiffy/issues/430)) ([adf7059](https://github.com/textadventures/squiffy/commit/adf7059200913de484c90c69f98470573f3e8b73))
+* saved games, with a Saved games dialog and save files ([#427](https://github.com/textadventures/squiffy/issues/427)) ([40738ab](https://github.com/textadventures/squiffy/commit/40738ab09f006ce0caedfe69ac2f8df70eedf308))
+* the editor's preview shows CSS changes as you type ([#434](https://github.com/textadventures/squiffy/issues/434)) ([63800ca](https://github.com/textadventures/squiffy/commit/63800caeefe46ff6bf748201897fa6116503b3be))
+* the Quest gamebook importer converts page scripts ([#458](https://github.com/textadventures/squiffy/issues/458)) ([b01c6ed](https://github.com/textadventures/squiffy/commit/b01c6edb7111655c7e4a6ac60c1e1a0086b163fe))
+* the Twine importer converts for loops to {{#each}} ([#441](https://github.com/textadventures/squiffy/issues/441)) ([5344ee5](https://github.com/textadventures/squiffy/commit/5344ee55b2ef338e4918bffaa7dbd91a26952ef4))
+* turn off passage links with {{deactivate}} ([#13](https://github.com/textadventures/squiffy/issues/13)) ([#429](https://github.com/textadventures/squiffy/issues/429)) ([0b1d85e](https://github.com/textadventures/squiffy/commit/0b1d85efb01298ca735dc79d3dd9d7c94a6ad2ae))
+
+
+### Bug Fixes
+
+* New story works in the Windows desktop app ([#439](https://github.com/textadventures/squiffy/issues/439)) ([7c2da5e](https://github.com/textadventures/squiffy/commit/7c2da5e9eb75be7e9e2327cb833828f5a3be144a))
+* no separator line for a passage that outputs no text ([#424](https://github.com/textadventures/squiffy/issues/424)) ([3cfeb88](https://github.com/textadventures/squiffy/commit/3cfeb8854f6639cab97de1f3319c19de2c8e1270))
+* the desktop app's window appears on Linux with Wayland ([#440](https://github.com/textadventures/squiffy/issues/440)) ([ed965c1](https://github.com/textadventures/squiffy/commit/ed965c1a29852d942bebee4384ac7d1bb82d2e2c))
+* the story map stays responsive on big stories ([#436](https://github.com/textadventures/squiffy/issues/436)) ([123ad47](https://github.com/textadventures/squiffy/commit/123ad470115ee397be4bf941002d5c1418ed7f33))
+
 ## [7.0.0-beta.5](https://github.com/textadventures/squiffy/compare/v7.0.0-beta.4...v7.0.0-beta.5) (2026-11-18)
 
 
