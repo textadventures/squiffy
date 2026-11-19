@@ -105,7 +105,8 @@ Play the story through after converting it. Twine and Squiffy work differently i
 These are left as comments, and listed in `twine-import.txt`:
 
 - **JavaScript.** Squiffy can't run code written for Harlowe or SugarCube, such as SugarCube's `<<script>>`, `setup` and `State`, or Harlowe's `(macro:)`.
-- **Things Squiffy doesn't have**: sound (`<<audio>>`, `(track:)`), loops (`<<for>>`, `(for:)`), save slots, the sidebar (`StoryCaption`, `StoryMenu`), and `<<back>>` and `<<return>>` (Squiffy has its own Back button).
+- **Things Squiffy doesn't have**: sound (`<<audio>>`, `(track:)`), the sidebar (`StoryCaption`, `StoryMenu`), and `<<back>>` and `<<return>>` (Squiffy has its own Back button). Saving and loading from the story's text, such as Harlowe's `(save-game:)`, isn't converted either: players use Squiffy's **Save** button instead.
+- **Loops** (`<<for>>`, `(for:)`). Rewrite them with [`{{#each}}`](/attributes/#going-through-an-array).
 - **Datamaps, arrays and objects used as a whole**, rather than a value at a time, such as copying one object to another, or looking something up by a name that's in a variable.
 - **Harlowe's more unusual hooks and changers**, such as `(live:)` with no `(go-to:)` in it, `(enchant:)` on anything but how text looks, and `(append:)` on a hook in another passage.
 
