@@ -1,13 +1,13 @@
 import * as fs from "fs";
 import path from "path";
-import { analyse, convertSetters, findV5Syntax, formatProjectFile, PROJECT_FILENAME } from "squiffy-compiler";
-import { listSquiffyFiles } from "squiffy-compiler/node";
+import { analyse, BUILD_FOLDER, convertSetters, findV5Syntax, formatProjectFile, getStoryFiles, PROJECT_FILENAME } from "squiffy-compiler";
+import { listStoryFiles } from "squiffy-compiler/node";
 import { externalFiles } from "./external-files.js";
 
 // Converts a Squiffy 6 story to Squiffy 7's rules for setters (#373): text in @set and link
 // setters is quoted, and @name becomes name, in the main file and every .squiffy file it
 // @imports. Then adds a squiffy.json, which is what turns the new rules on, leaving out any other
-// .squiffy files in the folder so the story is made of the same files as before. Each changed
+// .squiffy, .css and .js files in the folder so the story is made of the same files as before. Each changed
 // file is kept with a .bak extension. Returns false if the story couldn't be converted.
 export const convertV6Story = async (inputFilename: string): Promise<boolean> => {
     const mainFile = path.resolve(inputFilename);
@@ -68,12 +68,17 @@ export const convertV6Story = async (inputFilename: string): Promise<boolean> =>
         console.log("No setters needed converting.");
     }
 
-    // squiffy.json makes every .squiffy file in the folder part of the story, so leave out the
-    // ones that weren't
-    const inStory = new Set(storyFiles);
-    const exclude = (await listSquiffyFiles(root)).filter(file => !inStory.has(path.resolve(root, file)));
-    fs.writeFileSync(path.join(root, PROJECT_FILENAME), formatProjectFile({ main: path.basename(mainFile), exclude }));
+    // squiffy.json makes every .squiffy, .css and .js file in the folder part of the story, so
+    // leave out the ones that weren't. That's usually an old build's story.js and style.css, but
+    // those are left out anyway, so they aren't listed.
+    const main = path.basename(mainFile);
+    const inStory = new Set([...storyFiles, ...analysis.stylesheets, ...analysis.scripts]);
+    const notInStory = getStoryFiles({ version: 1, main, exclude: [] }, await listStoryFiles(root));
+    const exclude = [...notInStory.included, ...notInStory.stylesheets, ...notInStory.scripts]
+        .filter(file => !inStory.has(path.resolve(root, file)));
+    fs.writeFileSync(path.join(root, PROJECT_FILENAME), formatProjectFile({ main, exclude }));
     console.log(`Added ${PROJECT_FILENAME}, so the story now uses Squiffy 7's rules for setters.`
-        + (exclude.length ? ` It leaves out the other .squiffy files in the folder: ${exclude.join(", ")}.` : ""));
+        + (exclude.length ? ` It leaves out the folder's other files: ${exclude.join(", ")}.` : "")
+        + ` The story is now built into the ${BUILD_FOLDER} folder.`);
     return true;
 };

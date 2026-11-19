@@ -113,8 +113,8 @@ Changers and text styles that only change how something looks, such as `(link-st
 
 ### JavaScript
 
-A Twine story's JavaScript is written for its story format, so it won't work in Squiffy as it is. It's put in `story.js` so you have it, but the story doesn't use it. To use some of it, change it to use Squiffy's [JavaScript functions](/javascript/), and add `@ui story.js` at the top of `story.squiffy`.
+A Twine story's JavaScript is written for its story format, so it won't work in Squiffy as it is. It's put in `story.js` so you have it, but `squiffy.json` leaves it out of the story. To use some of it, change it to use Squiffy's [JavaScript functions](/javascript/), then remove `story.js` from `exclude` in `squiffy.json` (in the editor, choose **Include in story** from its menu in the files list).
 
 ### Styles
 
-The story's stylesheet is in `story.css`. Rules for Twine's own elements, such as Harlowe's `tw-story` and `tw-link` or SugarCube's `#story` and `.passage`, won't match anything in Squiffy, so you may need to change them. See [Customising styles](/styling/) for Squiffy's.
+The story's stylesheet is in `story.css`, which is part of the story. Rules for Twine's own elements, such as Harlowe's `tw-story` and `tw-link` or SugarCube's `#story` and `.passage`, won't match anything in Squiffy, so you may need to change them. See [Customising styles](/styling/) for Squiffy's.

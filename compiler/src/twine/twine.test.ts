@@ -154,8 +154,10 @@ Not on the map`));
         const result = convertTwine(":: StoryData\n{\"format\": \"Harlowe\"}\n\n:: Start\nHi\n\n:: Style [stylesheet]\nbody {}\n\n:: Script [script]\nwindow.x = 1;");
         expect(result.files["story.css"]).toBe("body {}\n");
         expect(result.files["story.js"]).toBe("window.x = 1;\n");
-        expect(result.files["story.squiffy"]).toContain("@import story.css\n");
+        // squiffy.json makes the stylesheet part of the story, but leaves out the JavaScript
+        expect(result.files["story.squiffy"]).not.toContain("story.css");
         expect(result.files["story.squiffy"]).not.toContain("story.js");
+        expect(JSON.parse(result.files["squiffy.json"]).exclude).toEqual(["story.js"]);
         expect(result.problems.map(p => p.text)).toEqual(["story.css", "story.js"]);
     });
 

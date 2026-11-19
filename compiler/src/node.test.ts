@@ -92,6 +92,20 @@ describe("findStory", () => {
         await write({ "squiffy.json": project, "story.squiffy": "", "out/a.squiffy": "" });
         expect((await findStory(dir, { skip: ["out"] })).storyFiles).toEqual([]);
     });
+
+    test("stylesheets and scripts come after the .squiffy files, leaving out the build folder and an old build", async () => {
+        await write({
+            "squiffy.json": project, "story.squiffy": "", "b.squiffy": "", "z.css": "", "a.js": "",
+            "build/index.html": "", "build/story.js": "", "index.html": "", "story.js": "", "style.css": "",
+        });
+        expect((await findStory(dir)).storyFiles).toEqual([path.join(dir, "b.squiffy"), path.join(dir, "z.css"), path.join(dir, "a.js")]);
+    });
+
+    test("skips absolute paths inside the project, and ignores those outside it", async () => {
+        await write({ "squiffy.json": project, "story.squiffy": "", "dist/a.js": "", "vite.config.js": "", "b.js": "" });
+        const skip = [path.join(dir, "dist"), path.join(dir, "vite.config.js"), path.dirname(dir)];
+        expect((await findStory(dir, { skip })).storyFiles).toEqual([path.join(dir, "b.js")]);
+    });
 });
 
 test("listSquiffyFiles doesn't look in node_modules or dot-folders", async () => {

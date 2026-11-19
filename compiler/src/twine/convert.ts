@@ -484,18 +484,21 @@ export function convertTwineStory(twine: TwineStory, options: TwineConversionOpt
     if (twine.title) header.push(`@title ${twine.title.replace(/\s+/g, " ").trim()}`);
     if (startSection !== undefined) header.push(`@start ${startSection}`);
     if (twine.stylesheet) {
+        // squiffy.json makes it part of the story
         files[`${name}.css`] = twine.stylesheet + "\n";
-        header.push(`@import ${name}.css`);
         problems.push({
             text: `${name}.css`,
             reason: `The story's stylesheet is in ${name}.css. Its rules for ${harlowe ? "Harlowe's elements (tw-story, tw-passage, tw-link and so on)" : "SugarCube's elements (#story, .passage, #ui-bar and so on)"} won't apply to Squiffy's, so check how it looks.`,
         });
     }
+    // The story's JavaScript is left out of it, as it was written for another story format
+    const exclude: string[] = [];
     if (twine.script) {
         files[`${name}.js`] = twine.script + "\n";
+        exclude.push(`${name}.js`);
         problems.push({
             text: `${name}.js`,
-            reason: `The story's JavaScript is in ${name}.js, but it isn't part of the story yet, since it was written for ${twine.formatName || "Twine"}. To use it, change it to work with Squiffy, then add @ui ${name}.js at the top of ${name}.squiffy.`,
+            reason: `The story's JavaScript is in ${name}.js, but it isn't part of the story yet, since it was written for ${twine.formatName || "Twine"}. To use it, change it to work with Squiffy, then remove "${name}.js" from "exclude" in squiffy.json (in the editor, choose Include in story from its menu in the files list).`,
         });
     }
 
@@ -509,7 +512,7 @@ export function convertTwineStory(twine: TwineStory, options: TwineConversionOpt
 
     files[`${name}.squiffy`] = script;
     const map = mapPositions(sectionPassages, story);
-    files["squiffy.json"] = formatProjectFile({ main: `${name}.squiffy`, ...(map ? { map } : {}) });
+    files["squiffy.json"] = formatProjectFile({ main: `${name}.squiffy`, exclude, ...(map ? { map } : {}) });
 
     return {
         title: twine.title,

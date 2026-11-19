@@ -255,4 +255,29 @@ describe("external-files", () => {
         expect(storyContent).toContain("From another file.");
         expect(storyContent).not.toContain("Not in the story.");
     });
+
+    test("a folder's stylesheets and scripts are part of it, and a build elsewhere gets copies of them and their assets", async () => {
+        await fs.writeFile(path.join(TEST_DIR, "squiffy.json"), "{ \"version\": 1, \"main\": \"story.squiffy\" }");
+        await fs.writeFile(path.join(TEST_DIR, "story.squiffy"), "[[start]]:\n<img src=\"cat.png\">\n");
+        await fs.writeFile(path.join(TEST_DIR, "my.css"), "@font-face { src: url(fonts/f.woff2); }");
+        await fs.writeFile(path.join(TEST_DIR, "my.js"), "window.x = 1;");
+        await fs.writeFile(path.join(TEST_DIR, "cat.png"), "png");
+        await fs.mkdir(path.join(TEST_DIR, "fonts"), { recursive: true });
+        await fs.writeFile(path.join(TEST_DIR, "fonts", "f.woff2"), "font");
+
+        const build = path.join(TEST_DIR, "build");
+        expect(await createPackageFiles(await findStory(TEST_DIR), build)).toBe(true);
+
+        const html = await fs.readFile(path.join(build, "index.html"), "utf8");
+        expect(html).toContain("<link rel=\"stylesheet\" href=\"my.css\"/>");
+        expect(html).toContain("<script src=\"my.js\"></script>");
+        for (const file of ["my.css", "my.js", "cat.png", "fonts/f.woff2", "story.js", "style.css"]) {
+            await expect(fs.access(path.join(build, file))).resolves.toBeUndefined();
+        }
+
+        // Building again doesn't pick up the build, or an old one next to the main file
+        await fs.writeFile(path.join(TEST_DIR, "index.html"), "");
+        await fs.writeFile(path.join(TEST_DIR, "story.js"), "");
+        expect((await findStory(TEST_DIR)).storyFiles).toEqual([path.join(TEST_DIR, "my.css"), path.join(TEST_DIR, "my.js")]);
+    });
 });

@@ -243,9 +243,16 @@ class OpenProject {
     // Creates squiffy.json, making the folder one story. A story with a squiffy.json uses
     // Squiffy 7's rules for @set and link setters (#373), so the setters in the story's .squiffy
     // files are converted first, through their editors if they're open, so it can be undone.
-    async createProjectFile(main: string, exclude: string[] = []): Promise<SetterConversion> {
+    //
+    // A squiffy.json also makes every .css and .js file part of the story, so pass the ones that
+    // are part of it now (the ones it @imports), as `pageFiles`, and the others are excluded.
+    async createProjectFile(main: string, exclude: string[] = [], pageFiles: string[] = []): Promise<SetterConversion> {
         const paths = this.files.map(f => f.path);
-        const story = getStoryFiles({ version: 1, main, exclude }, paths.includes(main) ? paths : [...paths, main]);
+        const all = paths.includes(main) ? paths : [...paths, main];
+        const inPage = new Set(pageFiles);
+        const unused = getStoryFiles({ version: 1, main, exclude }, all);
+        exclude = [...exclude, ...[...unused.stylesheets, ...unused.scripts].filter(path => !inPage.has(path))];
+        const story = getStoryFiles({ version: 1, main, exclude }, all);
         const conversion: SetterConversion = { converted: 0, problems: [] };
         for (const path of [main, ...story.included]) {
             const open = this.fileAt(path);
@@ -272,7 +279,7 @@ class OpenProject {
         return this.updateProject({ map });
     }
 
-    // Leaves a .squiffy file out of the story, or puts it back, by editing squiffy.json's
+    // Leaves a .squiffy, .css or .js file out of the story, or puts it back, by editing squiffy.json's
     // "exclude". Returns why it couldn't, if it couldn't.
     async setExcluded(path: string, excluded: boolean): Promise<string | null> {
         const project = this.projectFile;
@@ -798,8 +805,9 @@ export type ProjectOffer = "created" | "declined" | "cancelled";
 // file (`adding`) or makes another file the main one (`main`). If the folder already has other
 // .squiffy files, the author is asked first and can leave some out, so files that belong to some
 // other story are never pulled in without asking. Otherwise the file is created, with a note.
-export async function offerProjectFile(p: OpenProject, options: { main: string; adding?: string }): Promise<ProjectOffer> {
-    const { main, adding } = options;
+// `pageFiles` are the .css and .js files that are part of the story now: see createProjectFile.
+export async function offerProjectFile(p: OpenProject, options: { main: string; adding?: string; pageFiles: string[] }): Promise<ProjectOffer> {
+    const { main, adding, pageFiles } = options;
     const squiffyFiles = p.files.map(f => f.path).filter(path => path.toLowerCase().endsWith(".squiffy"));
     const others = getStoryFiles({ version: 1, main, exclude: [] }, adding ? [...squiffyFiles, adding] : squiffyFiles)
         .included.filter(path => path !== adding);
@@ -826,8 +834,8 @@ export async function offerProjectFile(p: OpenProject, options: { main: string; 
         exclude = others.filter((_, i) => !result.checked[fixed.length + i]);
     }
 
-    const conversion = await p.createProjectFile(main, exclude);
+    const conversion = await p.createProjectFile(main, exclude, pageFiles);
     const converted = setterConversionMessage(conversion);
-    showToast(`Added ${PROJECT_FILENAME}, which makes this folder one story: every .squiffy file in it is part of the story, starting from the main file (★). Use a file's ⋯ menu to leave it out.${converted ? ` ${converted}` : ""}`, "info", 12000);
+    showToast(`Added ${PROJECT_FILENAME}, which makes this folder one story: every .squiffy, .css and .js file in it is part of the story, starting from the main file (★). Use a file's ⋯ menu to leave it out.${converted ? ` ${converted}` : ""}`, "info", 12000);
     return "created";
 }

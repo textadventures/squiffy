@@ -11,8 +11,8 @@ export const NEW_FILE_KINDS = {
 
 export type NewFileKind = keyof typeof NEW_FILE_KINDS;
 
-// A stylesheet or script is only part of the story once the main file @imports it, even with a
-// squiffy.json, so the editor adds the @import when it makes one
+// Without a squiffy.json, a stylesheet or script is only part of the story once the main file
+// @imports it, so the editor adds the @import when it makes one
 export function needsImport(path: string): boolean {
     const ext = extname(path).toLowerCase();
     return ext === ".css" || ext === ".js";

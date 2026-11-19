@@ -10,7 +10,7 @@ import { analyse, Analysis, ExternalFiles, ParseCache } from "./analyse.js";
 import type {
     DeactivateNode, Diagnostic, EmbedNode, GotoNode, LinkNode, PassageNode, Position, Range, SectionNode, SnippetNode, SquiffyFile,
 } from "./syntax.js";
-import { getStoryFiles, globToRegExp, parseProjectFile, PROJECT_FILENAME, ProjectFile } from "./project.js";
+import { getStoryFiles, globToRegExp, parseProjectFile, PROJECT_FILENAME, ProjectFile, storyFileList } from "./project.js";
 import { convertV5Syntax, findV5Syntax } from "./v5.js";
 import { findUnquotedText } from "./setters.js";
 import { buildStoryGraph, StoryGraph, storyGraphDiagnostics } from "./story-graph.js";
@@ -35,15 +35,17 @@ export interface LanguageServiceOptions {
 // How the project's files make up the story
 export interface ProjectInfo {
     // The squiffy.json at the root of the project, if there is one and it's valid. Its presence
-    // turns on folder mode, where every .squiffy file not excluded is part of the story.
+    // turns on folder mode, where every .squiffy, .css and .js file not excluded is part of the
+    // story.
     projectFile?: ProjectFile;
     // Why squiffy.json couldn't be used, if it couldn't
     error?: string;
     // The main file: squiffy.json's "main", or else the one the service was given
     mainFile: string;
-    // In folder mode, the story's other .squiffy files, in the order they're added to the story
+    // In folder mode, the story's other files, in the order they're added to the story: its
+    // .squiffy files, then its .css and .js files
     storyFiles: string[];
-    // In folder mode, the .squiffy files squiffy.json excludes
+    // In folder mode, the .squiffy, .css and .js files squiffy.json excludes
     excludedFiles: string[];
 }
 
@@ -333,7 +335,7 @@ export function createLanguageService(options: LanguageServiceOptions): Language
         if (!parsed.success) return { ...fallback, error: parsed.error };
         const project = parsed.project;
         const story = getStoryFiles(project, paths);
-        return { projectFile: project, mainFile: project.main, storyFiles: story.included, excludedFiles: story.excluded };
+        return { projectFile: project, mainFile: project.main, storyFiles: storyFileList(story), excludedFiles: story.excluded };
     }
 
     async function buildIndex(): Promise<Index> {

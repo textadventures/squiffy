@@ -87,6 +87,7 @@ const handlers: WorkerApi = {
         const analysis = await current().getAnalysis();
         return {
             files: analysis.files.map(f => f.filename).filter((f): f is string => f !== undefined),
+            pageFiles: [...analysis.stylesheets, ...analysis.scripts],
             complete: analysis.success,
         };
     },

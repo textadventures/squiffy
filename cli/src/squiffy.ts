@@ -7,7 +7,8 @@ import { createPackageFiles, writeScriptFile } from "./file-packager.js";
 import { convertV5File } from "./convert-v5.js";
 import { convertV6Story } from "./convert-v6.js";
 import { convertTwineFile } from "./convert-twine.js";
-import { findStory, StoryNotFoundError } from "squiffy-compiler/node";
+import { findStory, StoryNotFoundError, type StoryOnDisk } from "squiffy-compiler/node";
+import { BUILD_FOLDER } from "squiffy-compiler";
 
 import pkg from "../package.json" with { type: "json" };
 import path from "path";
@@ -45,6 +46,12 @@ const options = {
 };
 
 const input = argv._[0] === undefined ? "." : String(argv._[0]);
+
+// Where the published files go. A project with a squiffy.json is built into its build folder, so
+// they're kept apart from the story's own files, which they'd otherwise become part of. A story
+// without one is built next to its main file, as in Squiffy 6.
+const outputPathFor = (story: StoryOnDisk) =>
+    story.projectFile ? path.join(path.dirname(story.projectFile), BUILD_FOLDER) : path.dirname(story.mainFile);
 
 const findStoryOrExit = async () => {
     try {
@@ -87,11 +94,11 @@ else if (argv.convertTwine) {
 else if (options.scriptOnly) {
     const story = await findStoryOrExit();
     const outputFilename = typeof options.scriptOnly === "string" ? options.scriptOnly : "story.js";
-    await writeScriptFile(story, path.dirname(story.mainFile), outputFilename);
+    await writeScriptFile(story, outputPathFor(story), outputFilename);
 }
 else {
     const story = await findStoryOrExit();
-    const outputPath = path.dirname(story.mainFile);
+    const outputPath = outputPathFor(story);
     const result = await createPackageFiles(story, outputPath, {
         createZip: !!options.zip,
         inlineHtml: !!options.inline,

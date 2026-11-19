@@ -88,7 +88,7 @@ const squiffyApi = await init({
 await squiffyApi.begin();
 ```
 
-If the story's folder has a [`squiffy.json` project file](/multiple-files/), import its main file to get the whole story.
+If the story's folder has a [`squiffy.json` project file](/multiple-files/), import its main file to get the whole story, with its stylesheets and scripts, which Vite bundles. Keep the story in a folder of its own, such as `src/story`, since every `.css` and `.js` file in the folder is part of it. The plugin leaves out Vite's output and `public` folders and its config file.
 
 While Vite's dev server is running, it recompiles the story whenever you save a `.squiffy` file that's part of it. With a few more lines, you can update the running story without losing the player's progress. See the [plugin's README](https://github.com/textadventures/squiffy/tree/main/vite-plugin) for that, and for TypeScript setup. There's a complete example in [`examples/vite-app`](https://github.com/textadventures/squiffy/tree/main/examples/vite-app).
 
