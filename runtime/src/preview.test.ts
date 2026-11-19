@@ -70,6 +70,7 @@ describe("preview", () => {
 
         expect(element.textContent).toContain("Welcome.");
         expect(messages).toEqual([
+            { type: "themeFixed", fixed: false },
             { type: "canGoBackChanged", canGoBack: false },
             // The story-wide turn count (#377), which isn't internal, so it's reported
             { type: "attributeSet", name: "turns", value: 0 },
@@ -163,6 +164,22 @@ describe("preview", () => {
 
         await preview.receive({ type: "theme", theme: "system" });
         expect(styles()[0]).toBe("");
+    });
+
+    test("says whether the story's stylesheets set its color-scheme", async () => {
+        const { preview, messages } = setUp();
+        const js = await compileJs(script);
+        const fixed = () => messages.filter(m => m.type == "themeFixed");
+
+        await preview.receive({ type: "theme", theme: "dark" });
+        await preview.receive({ type: "load", story: { js, css: ["body { color: red; }"] } });
+        expect(fixed()).toEqual([{ type: "themeFixed", fixed: false }]);
+
+        messages.length = 0;
+        await preview.receive({ type: "load", story: { js, css: [":root { color-scheme: light; }"] } });
+        expect(fixed()).toEqual([{ type: "themeFixed", fixed: true }]);
+        // Finding out doesn't change the theme the host set
+        expect(document.head.querySelector("style")!.textContent).toBe(":root { color-scheme: dark; }");
     });
 
     test("reports errors", async () => {

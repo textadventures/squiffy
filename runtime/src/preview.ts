@@ -66,6 +66,19 @@ export function createPreview(options: PreviewOptions) {
         }
     };
 
+    // Whether the story's stylesheets set color-scheme themselves: if they do, the story looks the
+    // same whichever theme the preview is set to
+    function themeIsFixed(): boolean {
+        const theme = themeStyle.textContent;
+        const schemeFor = (scheme: string) => {
+            themeStyle.textContent = `:root { color-scheme: ${scheme}; }`;
+            return getComputedStyle(document.documentElement).getPropertyValue("color-scheme");
+        };
+        const fixed = schemeFor("light") == schemeFor("dark");
+        themeStyle.textContent = theme;
+        return fixed;
+    }
+
     const resolveAssetUrl = (path: string) => assetUrls.get(normalisePath(path)) ?? path;
 
     function setAssets(assets: PreviewAssets) {
@@ -110,6 +123,7 @@ export function createPreview(options: PreviewOptions) {
         await addStoryFiles(message.story);
         const { story } = await loadModule(message.story.js);
         if (thisLoad != loadCount) return;
+        send({ type: "themeFixed", fixed: themeIsFixed() });
 
         const container = document.createElement("div");
         container.className = "squiffy-preview-story";

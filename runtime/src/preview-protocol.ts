@@ -48,6 +48,9 @@ export type PreviewMessage =
     | { type: "ready" }
     // A story from a load message has started
     | { type: "loaded" }
+    // Whether the story's own CSS sets its color-scheme, e.g. ":root { color-scheme: light; }",
+    // so the theme message makes no difference. Sent each time a story is loaded, before "loaded".
+    | { type: "themeFixed"; fixed: boolean }
     // An attribute was set. Internal attributes, whose names start with "_", aren't sent.
     | { type: "attributeSet"; name: string; value: unknown }
     | { type: "canGoBackChanged"; canGoBack: boolean }

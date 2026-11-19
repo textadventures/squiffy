@@ -7,12 +7,15 @@
     import { onMount } from "svelte";
     import type { PreviewHost, StartAt } from "squiffy-runtime/preview-host";
     import type { CompiledStory } from "#lib/language/protocol.js";
+    import { get } from "svelte/store";
     import { theme } from "#lib/theme-store.js";
     import RotateCcw from "@lucide/svelte/icons/rotate-ccw";
     import ArrowLeft from "@lucide/svelte/icons/arrow-left";
     import X from "@lucide/svelte/icons/x";
     import TriangleAlert from "@lucide/svelte/icons/triangle-alert";
     import ChevronRight from "@lucide/svelte/icons/chevron-right";
+    import Sun from "@lucide/svelte/icons/sun";
+    import Moon from "@lucide/svelte/icons/moon";
 
     interface Props {
         // Compiles the story as it is in the editor now
@@ -50,12 +53,36 @@
     let lastPlace = "";
     let pendingRun: { startAt?: StartAt } | null = null;
     let pageStarted = false;
+    // The preview follows the editor's theme, but its own button can show it in the other mode, to
+    // check a story's styles in both. That lasts until the editor's theme setting changes.
+    // Whether the editor is dark now, from the class its theme puts on <html>
+    let editorDark = $state(false);
+    let themeOverride = $state<"light" | "dark" | null>(null);
+    let previewDark = $derived(themeOverride ? themeOverride === "dark" : editorDark);
+    // The story's CSS sets its own color-scheme, so the button would make no difference
+    let themeFixed = $state(false);
+
+    let themeTitle = $derived(themeFixed ? "This story's CSS sets its own colour scheme"
+        : previewDark ? "Show the preview in light mode" : "Show the preview in dark mode");
+
+    function toggleTheme() {
+        if (themeFixed) return;
+        const next = previewDark ? "light" : "dark";
+        // Back to the editor's mode is back to following the editor
+        themeOverride = next === (editorDark ? "dark" : "light") ? null : next;
+        host?.setTheme(themeOverride ?? get(theme));
+    }
+
     // Updates are compiled one at a time, so an older compile can't land after a newer one
     let updateQueue: Promise<void> = Promise.resolve();
 
     onMount(() => {
         let disposed = false;
         let disposeTheme: (() => void) | undefined;
+        const root = document.documentElement;
+        editorDark = root.classList.contains("dark");
+        const themeObserver = new MutationObserver(() => { editorDark = root.classList.contains("dark"); });
+        themeObserver.observe(root, { attributes: true, attributeFilter: ["class"] });
         void (async () => {
             const [{ previewHtml }, { createPreviewHost, iframeChannel, setUpPreviewFrame }] = await Promise.all([
                 import("squiffy-runtime/preview-html"),
@@ -89,12 +116,19 @@
                     onVisited?.(section, passage);
                     if (following) onNavigated?.(section, passage);
                 },
+                onThemeFixed: fixed => {
+                    themeFixed = fixed;
+                },
                 onRuntimeError: message => {
                     runtimeError = message;
                 },
             });
-            // The story follows the editor's Light, Dark or Match system setting
-            disposeTheme = theme.subscribe(value => host?.setTheme(value));
+            // The story follows the editor's Light, Dark or Match system setting, and changing that
+            // setting undoes the preview's own light/dark button
+            disposeTheme = theme.subscribe(value => {
+                themeOverride = null;
+                host?.setTheme(value);
+            });
             if (pendingRun) {
                 const { startAt: at } = pendingRun;
                 pendingRun = null;
@@ -104,6 +138,7 @@
         return () => {
             disposed = true;
             disposeTheme?.();
+            themeObserver.disconnect();
             host?.dispose();
             host = null;
         };
@@ -167,6 +202,17 @@
         <h2 class="text-[11px] font-semibold text-surface-600-400 uppercase tracking-wide flex-1 pl-1">Preview</h2>
         <button type="button" class="btn-icon btn-icon-sm" title="Back" aria-label="Back" disabled={!canGoBack} onclick={() => host?.back()}><ArrowLeft size={14} /></button>
         <button type="button" class="btn-icon btn-icon-sm" title="Restart" aria-label="Restart" onclick={() => run(startAt)}><RotateCcw size={14} /></button>
+        <!-- aria-disabled rather than disabled, so the tooltip still says why -->
+        <button
+            type="button"
+            class="btn-icon btn-icon-sm"
+            class:opacity-50={themeFixed}
+            class:cursor-default={themeFixed}
+            title={themeTitle}
+            aria-label={themeTitle}
+            aria-disabled={themeFixed}
+            onclick={toggleTheme}
+        >{#if previewDark}<Sun size={14} />{:else}<Moon size={14} />{/if}</button>
         <button type="button" class="btn-icon btn-icon-sm" title="Close preview" aria-label="Close preview" onclick={onclose}><X size={14} /></button>
     </header>
     {#if compileErrors}
