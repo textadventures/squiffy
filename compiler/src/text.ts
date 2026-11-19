@@ -142,6 +142,10 @@ export interface TextEmbed {
 // {{goto "name"}} with a literal name: the same as an embed
 export type TextGoto = TextEmbed;
 
+// {{deactivate "name"}} with a literal name (#13). Only the first name is found, which is enough
+// for the warning and for renaming in the usual case.
+export type TextDeactivate = TextEmbed;
+
 export interface NoNextSection {
     // The legacy warning shows the link as [[text>]] or [[text]](>)
     display: string;
@@ -156,6 +160,7 @@ export interface TransformResult {
     links: TextLink[];
     embeds: TextEmbed[];
     gotos: TextGoto[];
+    deactivates: TextDeactivate[];
     noNextSection: NoNextSection[];
 }
 
@@ -351,7 +356,7 @@ export function transformText(text: string, getNextSectionName: () => string | n
     };
     embeds.push(...findNamed("embed"));
 
-    return { output: input.value, links, embeds, gotos: findNamed("goto"), noNextSection };
+    return { output: input.value, links, embeds, gotos: findNamed("goto"), deactivates: findNamed("deactivate"), noNextSection };
 }
 
 export interface SourceLine {

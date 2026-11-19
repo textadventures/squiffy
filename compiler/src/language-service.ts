@@ -8,7 +8,7 @@
 
 import { analyse, Analysis, ExternalFiles, ParseCache } from "./analyse.js";
 import type {
-    Diagnostic, EmbedNode, GotoNode, LinkNode, PassageNode, Position, Range, SectionNode, SnippetNode, SquiffyFile,
+    DeactivateNode, Diagnostic, EmbedNode, GotoNode, LinkNode, PassageNode, Position, Range, SectionNode, SnippetNode, SquiffyFile,
 } from "./syntax.js";
 import { getStoryFiles, globToRegExp, parseProjectFile, PROJECT_FILENAME, ProjectFile } from "./project.js";
 import { convertV5Syntax, findV5Syntax } from "./v5.js";
@@ -147,7 +147,7 @@ type SymbolRef =
 const sameSymbol = (a: SymbolRef, b: SymbolRef) =>
     a.kind == b.kind && a.name == b.name && (a.kind == "section" || a.section == (b as typeof a).section);
 
-// A link, embed or goto, with where it is
+// A link, embed, goto or deactivate, with where it is
 interface Usage {
     file: string;
     container: SectionNode | PassageNode;
@@ -156,9 +156,10 @@ interface Usage {
     link?: LinkNode;
     embed?: EmbedNode;
     goto?: GotoNode;
+    deactivate?: DeactivateNode;
 }
 
-const usageRange = (usage: Usage) => (usage.link ?? usage.embed ?? usage.goto)!.range;
+const usageRange = (usage: Usage) => (usage.link ?? usage.embed ?? usage.goto ?? usage.deactivate)!.range;
 
 // The analysis, indexed for lookups
 interface Index {
@@ -417,6 +418,9 @@ export function createLanguageService(options: LanguageServiceOptions): Language
                     for (const goto of container.gotos) {
                         index.usages.push({ file: path, container, sectionNode: node, goto });
                     }
+                    for (const deactivate of container.deactivates) {
+                        index.usages.push({ file: path, container, sectionNode: node, deactivate });
+                    }
                     for (const statement of container.body) {
                         if (statement.type == "attribute") {
                             const name = attributeName(statement.value);
@@ -494,6 +498,11 @@ export function createLanguageService(options: LanguageServiceOptions): Language
             const name = usage.goto.name;
             return name && index.sections.has(name) ? { kind: "section", name } : undefined;
         }
+        if (usage.deactivate) {
+            const name = usage.deactivate.name;
+            const passages = passagesOf(index, usage.sectionNode);
+            return sectionName !== undefined && passages?.has(name) ? { kind: "passage", section: sectionName, name } : undefined;
+        }
         const link = usage.link!;
         if (link.linkType == "section") {
             if (link.form == "next") {
@@ -559,6 +568,7 @@ export function createLanguageService(options: LanguageServiceOptions): Language
     function nameRangeInLink(index: Index, usage: Usage, name: string): Range | undefined {
         if (usage.embed) return usage.embed.nameRange;
         if (usage.goto) return usage.goto.nameRange;
+        if (usage.deactivate) return usage.deactivate.nameRange;
         const link = usage.link!;
         if (link.form == "next") return undefined;
         const range = link.targetRange;
@@ -766,6 +776,9 @@ export function createLanguageService(options: LanguageServiceOptions): Language
             }
             if ((match = /\{\{~?\s*goto\s+["']([^"']*)$/.exec(prefix))) {
                 return sectionItems(match[1]);
+            }
+            if ((match = /\{\{~?\s*deactivate\s+["']([^"']*)$/.exec(prefix))) {
+                return passageItems(match[1]);
             }
             if ((match = /\[\[[^\]]*\]\]\(([^),]*)$/.exec(prefix))) {
                 return sectionItems(match[1]);

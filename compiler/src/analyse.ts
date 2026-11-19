@@ -551,6 +551,15 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
                     `${where} there is a {{goto "${goto.name}"}}, but no section with that name exists${passage}`);
             }
         }
+
+        // {{deactivate}} disables links to a passage in this section, or in the master section
+        const masterPassages = story.sections[""]?.passages ?? {};
+        for (const deactivate of result.deactivates) {
+            if (!(deactivate.name in section.passages) && !(deactivate.name in masterPassages)) {
+                warn("squiffy/unknown-deactivate", deactivate.start, deactivate.end,
+                    `${where} there is a {{deactivate "${deactivate.name}"}}, but no passage with that name exists in this section`);
+            }
+        }
     }
 
     // With recover, processFile carries on after errors, so check for them too

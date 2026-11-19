@@ -387,6 +387,82 @@ Last turn.
     expect(squiffyApi.get("turns")).toBe(6);
 });
 
+test("{{deactivate}} with no name stops a passage with @repeat, and going back undoes it", async () => {
+    // https://github.com/textadventures/squiffy/issues/13
+    const script = `
+[[start]]:
+Talk to the [guard]. Or [[leave]].
+
+[guard]:
+@repeat
+@inc talks
+{{#if talks < 2}}Move along.{{else}}The password is swordfish.{{deactivate}}{{/if}}
+
+[[leave]]:
+Bye.
+`;
+    const { squiffyApi, element } = await initScript(script);
+    const guard = findLink(element, "passage", "guard");
+
+    await squiffyApi.clickLink(guard);
+    expect(guard.classList).not.toContain("disabled");
+    await squiffyApi.clickLink(guard);
+    expect(element.textContent).toContain("The password is swordfish.");
+    expect(guard.classList).toContain("disabled");
+    expect(await squiffyApi.clickLink(guard)).toBe(false);
+
+    squiffyApi.goBack();
+    expect(guard.classList).not.toContain("disabled");
+    expect(guard.hasAttribute("data-deactivated-by")).toBe(false);
+    expect(await squiffyApi.clickLink(guard)).toBe(true);
+    expect(guard.classList).toContain("disabled");
+});
+
+test("{{deactivate}} disables links to other passages, and going back only enables the ones it disabled", async () => {
+    // https://github.com/textadventures/squiffy/issues/13
+    const script = `
+[[start]]:
+You can see [a], [b], [c] and [d].
+
+[a]:
+{{deactivate "b" "c"}}A rules out B and C.
+
+[b]:
+B.
+
+[c]:
+C.
+
+[d]:
+D.
+`;
+    const { squiffyApi, element } = await initScript(script);
+    const link = (name: string) => findLink(element, "passage", name);
+
+    // C is clicked first, so it's disabled already
+    await squiffyApi.clickLink(link("c"));
+    await squiffyApi.clickLink(link("a"));
+    expect(["a", "b", "c", "d"].map(n => link(n).classList.contains("disabled"))).toEqual([true, true, true, false]);
+
+    squiffyApi.goBack();
+    // A was undone, so B is back, but C stays clicked
+    expect(["a", "b", "c", "d"].map(n => link(n).classList.contains("disabled"))).toEqual([false, false, true, false]);
+});
+
+test("{{deactivate}} shows an error for a passage that isn't in the section, or with no name in a section", async () => {
+    const script = `
+[[start]]:
+{{deactivate}}See [a].
+
+[a]:
+{{deactivate "nowhere"}}A.
+`;
+    const { squiffyApi, element } = await initScript(script);
+    expect(element.textContent).toContain("{{deactivate}} with no passage name only works in a passage");
+    await squiffyApi.clickLink(findLink(element, "passage", "a"));
+    expect(element.textContent).toContain('there is no passage called "nowhere" in this section');
+});
+
 test("Going back to a section re-enables its inputs", async () => {
     // https://github.com/textadventures/squiffy/issues/123
     const script = `

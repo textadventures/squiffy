@@ -70,6 +70,27 @@ export class TextProcessor {
             return "";
         });
 
+        // {{deactivate "name"}} (#13): the runtime disables the links to that passage on the screen
+        // once the section or passage being shown has been written. With no name, it's the passage
+        // being shown, e.g. one with @repeat that the player is done with (#104).
+        this.handlebars.registerHelper("deactivate", (...args: any[]) => {
+            args.pop();
+            const names = args.length ? args.map(unwrapValue) : [this.state.get("_passage")];
+            for (const name of names) {
+                if (typeof name != "string" || !name) {
+                    return new Handlebars.SafeString(errorHtml("Error in {{deactivate}}:",
+                        args.length ? "expected a passage name, e.g. {{deactivate \"door\"}}" : "{{deactivate}} with no passage name only works in a passage"));
+                }
+                const sectionPassages = this.getCurrentSection()?.passages;
+                const masterPassages = this.getStory().sections[""]?.passages;
+                if (!(sectionPassages && name in sectionPassages) && !(masterPassages && name in masterPassages)) {
+                    return new Handlebars.SafeString(errorHtml("Error in {{deactivate}}:", `there is no passage called "${name}" in this section`));
+                }
+                this.deactivate.add(name);
+            }
+            return "";
+        });
+
         // State modification helpers (side effects, no output)
         // These execute at render time, so they respect {{#if}} conditions
         this.handlebars.registerHelper("set", (attribute: string, value: any) => {
@@ -278,6 +299,9 @@ export class TextProcessor {
     // Where a {{goto}} asked to go. The runtime clears it before showing a section or passage, and
     // follows it afterwards.
     goto: { section: string; after: number } | null = null;
+    // The passages whose links a {{deactivate}} asked to disable. Like goto, the runtime clears it
+    // before showing a section or passage, and acts on it afterwards.
+    deactivate = new Set<string>();
 
     private expressionCache = new Map<string, HandlebarsTemplateDelegate>();
     // Where the __value helper puts the value of the expression being evaluated

@@ -131,6 +131,14 @@ describe("analyse", () => {
         ]);
     });
 
+    test("{{deactivate}} of a passage that isn't in the section (#13)", async () => {
+        const script = "[[start]]:\nSee [a] or [b].\n\n[a]:\n{{deactivate \"b\"}} {{deactivate \"nowhere\"}} {{deactivate}}\n\n[b]:\nB.\n\n[[]]:\n\n[m]:\n{{deactivate 'm'}}";
+        const analysis = await analyse({ script, scriptBaseFilename: "story.squiffy" });
+        expect(analysis.diagnostics.map(d => [d.code, slice(script, d.range), d.message])).toEqual([
+            ["squiffy/unknown-deactivate", "{{deactivate \"nowhere\"", "In section 'start', passage 'a' there is a {{deactivate \"nowhere\"}}, but no passage with that name exists in this section"],
+        ]);
+    });
+
     test("link diagnostics point at the link", async () => {
         const script = "[[start]]:\nSome text.\nGo [[nowhere]] or [[nope]](missing, x=1).\n\n[p]:\nTry [q] and {{embed \"zzz\"}}.";
         const analysis = await analyse({ script, scriptBaseFilename: "story.squiffy" });

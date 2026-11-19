@@ -89,9 +89,27 @@ To let the player click a passage's links as often as they like, put `@repeat` o
 [guard]:
 @repeat
 @inc guard_talks
-{{#if guard_talks = 1}}&quot;Move along.&quot;{{else if guard_talks = 2}}&quot;I said, move along.&quot;{{else}}&quot;Fine. The password is *swordfish*.&quot;{{/if}}"></Sample>
+{{#if guard_talks = 1}}&quot;Move along.&quot;{{else if guard_talks = 2}}&quot;I said, move along.&quot;{{else}}&quot;Fine. The password is *swordfish*.&quot;{{deactivate}}{{/if}}"></Sample>
+
+Once the guard has given up the password, there's nothing more to say, so `{{deactivate}}` turns off the links to the guard: see [Turning off passage links](#turning-off-passage-links).
 
 Clicks on a passage with `@repeat` don't count towards [`@1`, `@2`... and `@last`](#running-a-passage-after-some-clicks), and `@last` doesn't wait for it to be clicked.
+
+### Turning off passage links
+
+`{{deactivate "name"}}` turns off the links to a passage in this section, as if the player had already clicked them. Use it when one choice rules out another. Here, opening the box means the player can't smash it any more:
+
+<Sample script="There's a locked box. You could [open it with the key], or [smash it].
+
+[open it with the key]:
+{{deactivate &quot;smash it&quot;}}The lid opens neatly.
+
+[smash it]:
+{{deactivate &quot;open it with the key&quot;}}Splinters everywhere. Whatever was inside is broken."></Sample>
+
+You can name more than one passage, as in `{{deactivate "b" "c"}}`. In a passage, `{{deactivate}}` on its own turns off the links to that passage. As it's a helper, it can go inside `{{#if}}`, so that it only happens sometimes.
+
+It turns off the links that are on the screen when the passage is shown: a link to the passage that appears later is a new link, which the player can click. Going back with the Back button turns the links on again.
 
 ## Continue links
 

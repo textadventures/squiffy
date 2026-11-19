@@ -28,6 +28,7 @@ export type DiagnosticCode =
     | "squiffy/no-next-section"
     | "squiffy/unknown-embed"
     | "squiffy/unknown-goto"
+    | "squiffy/unknown-deactivate"
     | "squiffy/unknown-section-link"
     | "squiffy/unknown-passage-link"
     | "squiffy/duplicate-section"
@@ -88,6 +89,7 @@ export interface SectionNode {
     links: LinkNode[];
     embeds: EmbedNode[];
     gotos: GotoNode[];
+    deactivates: DeactivateNode[];
 }
 
 export interface PassageNode {
@@ -100,6 +102,7 @@ export interface PassageNode {
     links: LinkNode[];
     embeds: EmbedNode[];
     gotos: GotoNode[];
+    deactivates: DeactivateNode[];
 }
 
 // [snippet: name]: blocks run until the next section header. Their content isn't compiled.
@@ -263,6 +266,14 @@ export interface LinkNode {
 // {{embed "name"}} with a literal name
 export interface EmbedNode {
     type: "embed";
+    name: string;
+    range: Range;
+    nameRange: Range;
+}
+
+// {{deactivate "name"}} with a literal name (#13)
+export interface DeactivateNode {
+    type: "deactivate";
     name: string;
     range: Range;
     nameRange: Range;
