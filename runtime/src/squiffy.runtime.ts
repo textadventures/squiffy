@@ -393,7 +393,10 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         await followGoto(pending);
     }
 
-    function runJs(index: number, extra: any = null) {
+    let inAfterWrite = false;
+
+    // afterWrite: where squiffy.ui.afterWrite queues its functions, for a section or passage's JS (#106)
+    function runJs(index: number, extra: any = null, afterWrite?: (() => void)[]) {
         const squiffy = {
             get: get,
             set: set,
@@ -401,9 +404,21 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
                 transition: addTransition,
                 write: ui.write,
                 scrollToEnd: ui.scrollToEnd,
+                afterWrite: (fn: () => void) => {
+                    if (!afterWrite) {
+                        throw new Error("squiffy.ui.afterWrite can only be used in a section or passage's JavaScript");
+                    }
+                    afterWrite.push(fn);
+                },
             },
             story: {
-                go: go,
+                // In an afterWrite function, the section's text is already on the page, so going
+                // somewhere else waits until it has finished, like {{goto}} (#106)
+                go: (sectionName: string) => {
+                    if (!inAfterWrite) return go(sectionName);
+                    textProcessor.goto ??= { section: sectionName, after: 0 };
+                    return Promise.resolve();
+                },
                 seen: (sectionOrPassage: string) => state.getSeen(sectionOrPassage),
                 visits: (sectionOrPassage: string) => state.getVisits(sectionOrPassage),
             },
@@ -418,9 +433,10 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         if (section.attributes) {
             await processAttributes(section.attributes);
         }
+        const afterWrite: (() => void)[] = [];
         if (section.jsIndex !== undefined) {
             const sectionBefore = get("_section");
-            runJs(section.jsIndex);
+            runJs(section.jsIndex, null, afterWrite);
             if (get("_section") !== sectionBefore) {
                 // JS called squiffy.story.go() and navigated away; the destination
                 // section will handle rendering its own content.
@@ -429,6 +445,15 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         }
 
         ui.write(section.text || "", source);
+
+        // Functions from squiffy.ui.afterWrite run once the text and its {{...}} are on the page (#106)
+        inAfterWrite = true;
+        try {
+            for (const fn of afterWrite) fn();
+        }
+        finally {
+            inAfterWrite = false;
+        }
 
         await runTransitions();
     }

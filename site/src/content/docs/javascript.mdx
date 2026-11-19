@@ -20,6 +20,24 @@ Text for the passage."></Sample>
 
 Only indented lines at the start of a section or passage are JavaScript. An indented line after some text is text.
 
+## Running JavaScript after the text
+
+The JavaScript runs before the text is shown. To run some once the text is on the page, with its `{{...}}` worked out, give a function to `squiffy.ui.afterWrite`:
+
+<Sample script="@set gold = 20
+
+You have {{gold}} gold. [Count it]
+
+[Count it]:
+&#32;&#32;&#32;&#32;squiffy.ui.afterWrite(() =&gt; {
+&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;const text = document.getElementById(&quot;gold-again&quot;).textContent;
+&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;alert(&quot;The page says: &quot; + text);
+&#32;&#32;&#32;&#32;});
+
+You count &lt;span id=&quot;gold-again&quot;&gt;{{gold}}&lt;/span&gt; gold."></Sample>
+
+You can call it more than once, and the functions run in that order. Calling `squiffy.story.go` from one of them works like [`{{goto}}`](/basic-concepts/#go-to-another-section): the rest of the section or passage is shown first, and then the story moves on.
+
 ## Functions you can use
 
 Your JavaScript can use these functions:
@@ -33,6 +51,7 @@ Your JavaScript can use these functions:
 | `squiffy.story.visits("name")` | Returns the number of times the player has visited a section or passage, or 0 |
 | `squiffy.ui.write("text")` | Write some text, which can include Markdown and `{{...}}` |
 | `squiffy.ui.transition(fn)` | Run a transition effect, such as fading the screen to black. `fn` returns a Promise that resolves when the effect has finished, and links can't be clicked until then. See [Transitions](#transitions) |
+| `squiffy.ui.afterWrite(fn)` | Run `fn` once the section or passage's text is on the page. See [Running JavaScript after the text](#running-javascript-after-the-text) |
 | `squiffy.ui.scrollToEnd()` | Scroll to the end of the story |
 | `squiffy.element` | The HTML element that contains the story |
 | `squiffy.registerHelper(name, fn)` | Add a helper. See [Creating custom helpers](#creating-custom-helpers) |
