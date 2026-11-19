@@ -3,9 +3,9 @@
 //   { "version": 1, "main": "story.squiffy", "exclude": ["drafts/**"] }
 //
 // Without it, a story is its main file plus whatever that @imports. With it, the story is every
-// .squiffy file in the folder and its subfolders, except those `exclude` matches: the main file
-// first, then the rest in path order. These are the rules the CLI, the Vite plugin, the language
-// service and the editor all share. They're pure functions, so each can supply its own file list.
+// .squiffy, .css and .js file in the folder and its subfolders, except those `exclude` matches:
+// the main file first, then the rest in path order. These are the rules the CLI, the Vite plugin,
+// the language service and the editor all share. They're pure functions, so each can supply its own file list.
 
 export const PROJECT_FILENAME = "squiffy.json";
 
@@ -23,9 +23,9 @@ export interface ProjectFile {
     id?: string;
     // The story's main file, relative to the project file's folder, with "/" separators.
     main: string;
-    // Glob patterns for .squiffy files that aren't part of the story, relative to the project
-    // file's folder. "*" and "?" match within a folder name, "**" across folders, and a pattern
-    // that matches a folder excludes everything in it.
+    // Glob patterns for .squiffy, .css and .js files that aren't part of the story, relative to
+    // the project file's folder. "*" and "?" match within a folder name, "**" across folders, and
+    // a pattern that matches a folder excludes everything in it.
     exclude: string[];
     // Where the author has put sections and passages on the editor's story map, if anywhere
     map?: MapPositions;
@@ -261,40 +261,79 @@ export function isExcluded(path: string, exclude: string[]): boolean {
     });
 }
 
-// Folders whose .squiffy files are never part of a story, whatever `exclude` says:
-// node_modules, and folders whose names start with "." (.git, .vscode and the like).
+// Folders whose files are never part of a story, whatever `exclude` says: node_modules, and
+// folders whose names start with "." (.git, .vscode and the like).
 export function isAlwaysSkipped(path: string): boolean {
     const folders = path.split("/").slice(0, -1);
     return folders.some(folder => folder == "node_modules" || folder.startsWith("."));
 }
+
+// The folder, next to squiffy.json, that the CLI builds a project's published files into. Its
+// files are never part of the story.
+export const BUILD_FOLDER = "build";
+
+// The files that Squiffy 6, and Squiffy 7 without a squiffy.json, write next to the main file
+// when publishing a story, with its index.html. With an index.html beside them, they're taken to
+// be an old build, and aren't part of the story unless it @imports them.
+const OLD_BUILD_FILES = ["story.js", "style.css", "squiffy.runtime.js", "squiffy.runtime.global.js"];
+
+// The kinds of file that are part of a story
+export const isSquiffyPath = (path: string) => path.endsWith(".squiffy");
+export const isStylesheetPath = (path: string) => path.endsWith(".css");
+export const isScriptPath = (path: string) => path.endsWith(".js");
+export const isStoryFilePath = (path: string) => isSquiffyPath(path) || isStylesheetPath(path) || isScriptPath(path);
 
 export interface StoryFiles {
     // The main file, as in the project file
     main: string;
     // The story's other .squiffy files, sorted by path
     included: string[];
-    // .squiffy files that `exclude` leaves out, sorted by path. Files in always-skipped folders
-    // aren't listed.
+    // The story's .css files, sorted by path
+    stylesheets: string[];
+    // The story's .js files, sorted by path
+    scripts: string[];
+    // .squiffy, .css and .js files that `exclude` leaves out, sorted by path. Files in
+    // always-skipped folders, the build folder and an old build aren't listed.
     excluded: string[];
 }
 
 // Sorts paths by code point, so the order is the same everywhere, whatever the locale.
 export const comparePaths = (a: string, b: string) => a < b ? -1 : a > b ? 1 : 0;
 
-// Which of a project's files make up the story. `paths` are relative to the project file's folder,
-// with "/" separators, as from a recursive listing of the folder; anything that isn't a .squiffy
-// file is ignored. Pass `skip` to leave out more folders, such as a build's output folder.
+// Which of a project's files make up the story: its .squiffy files, stylesheets and scripts.
+// `paths` are relative to the project file's folder, with "/" separators, as from a recursive
+// listing of the folder; files of other kinds are ignored. Pass `skip` to leave out more files
+// or folders, such as a build's output folder.
 export function getStoryFiles(project: ProjectFile, paths: Iterable<string>, skip: string[] = []): StoryFiles {
     const included: string[] = [];
+    const stylesheets: string[] = [];
+    const scripts: string[] = [];
     const excluded: string[] = [];
-    const skipped = skip.map(folder => normalisePath(folder)).filter(folder => folder !== null);
-    for (const path of new Set(paths)) {
-        if (!path.endsWith(".squiffy") || path == project.main || isAlwaysSkipped(path)) continue;
-        if (skipped.some(folder => path.startsWith(folder + "/"))) continue;
-        (isExcluded(path, project.exclude) ? excluded : included).push(path);
+    const all = new Set(paths);
+    const skipped = [BUILD_FOLDER, ...skip].map(folder => normalisePath(folder)).filter(folder => folder !== null);
+    const mainSlash = project.main.lastIndexOf("/");
+    const mainFolder = mainSlash < 0 ? "" : project.main.substring(0, mainSlash + 1);
+    const oldBuild = all.has(mainFolder + "index.html") ? new Set(OLD_BUILD_FILES.map(file => mainFolder + file)) : new Set();
+    for (const path of all) {
+        if (!isStoryFilePath(path) || path == project.main || isAlwaysSkipped(path) || oldBuild.has(path)) continue;
+        if (skipped.some(folder => path == folder || path.startsWith(folder + "/"))) continue;
+        if (isExcluded(path, project.exclude)) excluded.push(path);
+        else if (isSquiffyPath(path)) included.push(path);
+        else if (isStylesheetPath(path)) stylesheets.push(path);
+        else scripts.push(path);
     }
-    return { main: project.main, included: included.sort(comparePaths), excluded: excluded.sort(comparePaths) };
+    return {
+        main: project.main,
+        included: included.sort(comparePaths),
+        stylesheets: stylesheets.sort(comparePaths),
+        scripts: scripts.sort(comparePaths),
+        excluded: excluded.sort(comparePaths),
+    };
 }
+
+// The story's files after the main file, in the order the compiler takes them (see
+// AnalyseSettings.storyFiles): its .squiffy files, then its stylesheets, then its scripts.
+export const storyFileList = (story: StoryFiles) => [...story.included, ...story.stylesheets, ...story.scripts];
 
 // The text of a new project file. It's given a new random id, unless one is passed in.
 export function formatProjectFile(project: { main: string; exclude?: string[]; map?: MapPositions; id?: string }): string {

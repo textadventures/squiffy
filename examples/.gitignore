@@ -1,3 +1,5 @@
+# CLI output: a story with a squiffy.json is built into build/, and older ones next to it
+build/
 index.html
 squiffy.runtime.js
 squiffy.runtime.global.js

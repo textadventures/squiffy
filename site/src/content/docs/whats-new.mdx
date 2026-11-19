@@ -7,7 +7,7 @@ Squiffy 7 brings a new editor. The language adds the [`@end`](/basic-concepts/#e
 
 ## The new editor
 
-- **Stories in several files.** A story can be split across `.squiffy` files, each in its own tab. New stories have a [`squiffy.json` project file](/multiple-files/), so every `.squiffy` file in the folder is part of the story, with no `@import`s needed. The command-line tool and the Vite plugin read it too.
+- **Stories in several files.** A story can be split across `.squiffy` files, each in its own tab. New stories have a [`squiffy.json` project file](/multiple-files/), so every `.squiffy` file in the folder is part of the story, and every stylesheet and script, with no `@import`s needed. The command-line tool and the Vite plugin read it too. The command-line tool builds a story with a `squiffy.json` into a `build` folder, away from its own files.
 - **[Images and other files](/images-and-files/).** Add images, sounds and fonts to your story, and they're included when you publish it.
 - **An editor that understands your story.** Problems such as links to missing sections, sections the player can't reach, and dead ends are underlined as you type, often with a quick fix. Links suggest your section and passage names as you type them. You can go from a link to its section, find every link to a section, and rename a section or passage everywhere at once.
 - **A [story map](/story-map/)** shows your sections, passages and links as a map you can move around, drawn from your script as you type. Problems show on it too, as does the way you went through the story when you test it. You can add links and sections, and rename them, from the map.

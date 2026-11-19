@@ -58,7 +58,9 @@ If your story is split across several `.squiffy` files with a [`squiffy.json` pr
 npx @textadventures/squiffy-cli
 ```
 
-Giving it the folder, or the main file named in `squiffy.json`, does the same. The files are written to the main file's folder.
+Giving it the folder, or the main file named in `squiffy.json`, does the same. Every `.css` and `.js` file in the folder is part of the story too.
+
+The files are written to a `build` folder next to `squiffy.json`, so they're kept apart from your story's own files. Squiffy copies the story's stylesheets and scripts there too, with its images and other files, so the `build` folder is the whole published story. `--zip` and `--scriptonly` write there as well, and `--serve` serves it. Files left in the `build` folder from an earlier build aren't removed, so delete the folder first if you want a clean copy.
 
 Give it any other `.squiffy` file in the folder, and it builds just that file and whatever it `@import`s, as if there were no `squiffy.json`. Squiffy says when it does this. So a folder can still hold several separate stories.
 
@@ -116,11 +118,11 @@ npx @textadventures/squiffy-cli mygame.squiffy --inline --zip
 
 Images, sounds and other files that your story [refers to](/images-and-files/) are included automatically, as long as they're in the same folder as the `.squiffy` file or a folder below it:
 
-- With the standard output, they're already in the right place, next to `index.html`.
+- With the standard output, they're already in the right place, next to `index.html`. For a story with a `squiffy.json`, they're copied into the `build` folder.
 - With `--zip`, they're added to `output.zip` at the same paths.
 - With `--inline`, they're embedded in `index.html` as data URIs, so the single file still works on its own. This makes the file about a third bigger than the files themselves, so large sound or video files are better shared with `--zip`.
 
-Squiffy looks for file names in your story text and JavaScript with these extensions: `apng`, `avif`, `bmp`, `gif`, `ico`, `jpeg`, `jpg`, `png`, `svg`, `webp`, `aac`, `flac`, `m4a`, `mp3`, `oga`, `ogg`, `opus`, `wav`, `weba`, `m4v`, `mp4`, `ogv`, `webm`, `vtt`, `otf`, `ttf`, `woff`, `woff2` and `pdf`. File names with spaces aren't found, so either avoid spaces or write them as `%20` (e.g. `my%20cat.png`).
+Squiffy looks for file names in your story text, JavaScript and stylesheets with these extensions: `apng`, `avif`, `bmp`, `gif`, `ico`, `jpeg`, `jpg`, `png`, `svg`, `webp`, `aac`, `flac`, `m4a`, `mp3`, `oga`, `ogg`, `opus`, `wav`, `weba`, `m4v`, `mp4`, `ogv`, `webm`, `vtt`, `otf`, `ttf`, `woff`, `woff2` and `pdf`. File names with spaces aren't found, so either avoid spaces or write them as `%20` (e.g. `my%20cat.png`).
 
 ## Options
 
@@ -171,7 +173,7 @@ In a story with a `squiffy.json`, text in `@set` and link assignments goes in qu
 npx @textadventures/squiffy-cli mygame.squiffy --convert-v6
 ```
 
-This converts the main file and every `.squiffy` file it `@import`s, keeping each original as a `.bak` file. The new `squiffy.json` leaves out any other `.squiffy` files in the folder, so the story is made of the same files as before. Anything that can't be converted exactly is left as it is, and listed with its line number so you can update it by hand. If the story still has Squiffy 5 syntax, run `--convert-v5` first.
+This converts the main file and every `.squiffy` file it `@import`s, keeping each original as a `.bak` file. The new `squiffy.json` leaves out any other `.squiffy`, `.css` and `.js` files in the folder, so the story is made of the same files as before. From then on, the story is built into a `build` folder, so you can delete the `index.html`, `style.css`, `story.js` and `squiffy.runtime.global.js` that earlier builds left next to it. Anything that can't be converted exactly is left as it is, and listed with its line number so you can update it by hand. If the story still has Squiffy 5 syntax, run `--convert-v5` first.
 
 ### Converting from Squiffy 5
 

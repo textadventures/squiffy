@@ -86,7 +86,7 @@ JavaScript in a `@ui` block runs once when the story starts, before any text is 
 
 You can also put the JavaScript in a separate file with `@ui filename.js`.
 
-To add a script file to the page instead, as a `<script>` tag, use `@import my_script.js`. See [Importing files](/multiple-files/#importing-files).
+To add a script file to the page instead, as a `<script>` tag, put it in your story's folder. In a story with a `squiffy.json`, every `.js` file in the folder is added this way, except one you read with `@ui`: see [Stylesheets and scripts](/multiple-files/#stylesheets-and-scripts). Without one, use `@import my_script.js`. See [Importing files](/multiple-files/#importing-files).
 
 ## Creating custom helpers
 

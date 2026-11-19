@@ -30,8 +30,8 @@ export interface WorkerApi extends ServiceQueries {
     convertV5Syntax(text: string): V5ConversionResult;
     // The .squiffy files that make up the story as it is now: the main file, what it @imports and,
     // with a squiffy.json, the rest of the folder's. Complete only if the story has no errors, as
-    // the analysis stops at the first.
-    getStoryFiles(): Promise<{ files: string[]; complete: boolean }>;
+    // the analysis stops at the first. pageFiles are the .css and .js files that are part of it.
+    getStoryFiles(): Promise<{ files: string[]; pageFiles: string[]; complete: boolean }>;
     // Every problem in the story, in each file that has any, with the code actions that fix them:
     // for the Problems panel
     getProblems(): Promise<FileProblems[]>;

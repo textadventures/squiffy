@@ -3,7 +3,7 @@ import fs from "fs/promises";
 import { glob } from "glob";
 import { compile } from "squiffy-compiler";
 import { findStory, StoryNotFoundError } from "squiffy-compiler/node";
-import type { Plugin, ViteDevServer } from "vite";
+import type { Plugin, ResolvedConfig, ViteDevServer } from "vite";
 
 export interface SquiffyPluginOptions {
     /** Log each .squiffy file as it is compiled (defaults to false). */
@@ -43,13 +43,16 @@ const externalFiles = (inputFilename: string, readFiles: string[]) => {
 export default function squiffyPlugin(options: SquiffyPluginOptions = {}): Plugin {
     const { verbose = false } = options;
     // Each loaded project's main file (the module id), by the folder its squiffy.json is in. A
-    // .squiffy file added to or removed from that folder changes the story, but Vite only watches
-    // files the story has already read, so the dev server is told to rebuild it.
+    // .squiffy, .css or .js file added to or removed from that folder changes the story, but Vite
+    // only watches files the story has already read, so the dev server is told to rebuild it.
     const projectFolders = new Map<string, string>();
     let server: ViteDevServer | undefined;
+    // squiffy.json makes every .css and .js file in its folder part of the story, so if it's in
+    // the app's own folder, Vite's output, its public folder and its config are left out
+    let skip: string[] = [];
 
     const onFileAddedOrRemoved = (file: string) => {
-        if (!server || !file.endsWith(".squiffy")) return;
+        if (!server || !/\.(squiffy|css|js)$/.test(file)) return;
         for (const [id, folder] of projectFolders) {
             if (!path.relative(folder, file).startsWith("..")) {
                 const module = server.moduleGraph.getModuleById(id);
@@ -61,6 +64,14 @@ export default function squiffyPlugin(options: SquiffyPluginOptions = {}): Plugi
     return {
         name: "vite-plugin-squiffy",
         enforce: "pre",
+
+        configResolved(config: ResolvedConfig) {
+            skip = [
+                path.resolve(config.root, config.build.outDir),
+                ...(config.publicDir ? [config.publicDir] : []),
+                ...(config.configFile ? [config.configFile] : []),
+            ];
+        },
 
         configureServer(devServer) {
             server = devServer;
@@ -80,7 +91,7 @@ export default function squiffyPlugin(options: SquiffyPluginOptions = {}): Plugi
             // its squiffy.json, and importing any other file builds just that file.
             let story;
             try {
-                story = await findStory(filename);
+                story = await findStory(filename, { skip });
             }
             catch (e) {
                 if (e instanceof StoryNotFoundError) this.error(e.message);

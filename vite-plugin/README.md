@@ -37,9 +37,9 @@ A `.squiffy` import exports:
 - `story` (also the default export): the compiled story, to pass to `init()`
 - `title`: the story's `@title`
 
-If the story's folder has a [`squiffy.json` project file](https://squiffystory.com/multiple-files/), importing its main file builds the whole story, with every `.squiffy` file in the folder, as the command-line tool does. Importing any other `.squiffy` file builds just that file. In dev mode, adding or removing a `.squiffy` file in the folder rebuilds the story.
+If the story's folder has a [`squiffy.json` project file](https://squiffystory.com/multiple-files/), importing its main file builds the whole story, with every `.squiffy`, `.css` and `.js` file in the folder, as the command-line tool does. So keep the story in a folder of its own, away from your app's code. The plugin leaves out Vite's output folder, its `public` folder and its config file. Importing any other `.squiffy` file builds just that file. In dev mode, adding or removing a `.squiffy`, `.css` or `.js` file in the folder rebuilds the story.
 
-Files pulled in with `@import` are handled too. Other `.squiffy` files are compiled into the story, and Vite watches them for changes. `.js` and `.css` files are bundled by Vite, so `.js` files are loaded as ES modules. If the story fails to compile, the build fails, and in dev mode the errors appear in Vite's error overlay.
+Files pulled in with `@import` are handled too. Other `.squiffy` files are compiled into the story, and Vite watches them for changes. `.js` and `.css` files, whether `@import`ed or part of the story's `squiffy.json` folder, are bundled by Vite, so `.js` files are loaded as ES modules. If the story fails to compile, the build fails, and in dev mode the errors appear in Vite's error overlay.
 
 ## Updating the story without reloading
 

@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://squiffystory.com/schema/squiffy.json",
   "title": "Squiffy project file",
-  "description": "Makes a folder of .squiffy files one story. See https://squiffystory.com/multiple-files/",
+  "description": "Makes a folder of .squiffy, .css and .js files one story. See https://squiffystory.com/multiple-files/",
   "type": "object",
   "required": ["version", "main"],
   "properties": {
@@ -27,12 +27,12 @@
       "examples": ["story.squiffy"]
     },
     "exclude": {
-      "description": "Patterns for .squiffy files that aren't part of the story, relative to this file's folder. * and ? match within a folder name, ** across folders, and a pattern that matches a folder leaves out everything in it.",
+      "description": "Patterns for .squiffy, .css and .js files that aren't part of the story, relative to this file's folder. * and ? match within a folder name, ** across folders, and a pattern that matches a folder leaves out everything in it.",
       "type": "array",
       "items": {
         "type": "string"
       },
-      "examples": [["drafts/**", "notes.squiffy"]]
+      "examples": [["drafts/**", "notes.squiffy", "lib/demo.js"]]
     },
     "backButton": {
       "description": "Whether the published story has a Back button, which takes the player back a section or passage at a time. Set it to false to leave it out.",

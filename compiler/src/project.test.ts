@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, test, vi } from "vitest";
 
 import { compile } from "./compiler.js";
 import {
-    formatProjectFile, getStoryFiles, isExcluded, parseProjectFile, ProjectFile, updateProjectFile,
+    formatProjectFile, getStoryFiles, isExcluded, parseProjectFile, ProjectFile, storyFileList, updateProjectFile,
 } from "./project.js";
 
 beforeAll(() => {
@@ -86,16 +86,41 @@ describe("story map positions", () => {
 });
 
 describe("getStoryFiles", () => {
-    test("every other .squiffy file, sorted by path, skipping node_modules and dot-folders", () => {
+    test("every other .squiffy, .css and .js file, sorted by path, skipping node_modules and dot-folders", () => {
         const paths = [
-            "story.squiffy", "b.squiffy", "a/z.squiffy", "B.squiffy", "notes.txt", "script.js",
-            "node_modules/x/y.squiffy", ".git/a.squiffy", "sub/.hidden/c.squiffy", ".dot.squiffy",
+            "story.squiffy", "b.squiffy", "a/z.squiffy", "B.squiffy", "notes.txt", "script.js", "lib/a.js", "style.css",
+            "node_modules/x/y.squiffy", "node_modules/x/y.js", ".git/a.squiffy", "sub/.hidden/c.squiffy", ".dot.squiffy",
         ];
         expect(getStoryFiles(project("story.squiffy"), paths)).toEqual({
             main: "story.squiffy",
             included: [".dot.squiffy", "B.squiffy", "a/z.squiffy", "b.squiffy"],
+            stylesheets: ["style.css"],
+            scripts: ["lib/a.js", "script.js"],
             excluded: [],
         });
+    });
+
+    test("exclude leaves out stylesheets and scripts too", () => {
+        const result = getStoryFiles(project("story.squiffy", ["lib", "x.css"]), ["story.squiffy", "lib/a.js", "lib/b.css", "x.css", "y.css"]);
+        expect(result.stylesheets).toEqual(["y.css"]);
+        expect(result.scripts).toEqual([]);
+        expect(result.excluded).toEqual(["lib/a.js", "lib/b.css", "x.css"]);
+    });
+
+    test("the build folder is never part of the story", () => {
+        const result = getStoryFiles(project("story.squiffy"), ["story.squiffy", "build/story.js", "build/style.css", "build/a.squiffy", "src/build/b.js"]);
+        expect(storyFileList(result)).toEqual(["src/build/b.js"]);
+        expect(result.excluded).toEqual([]);
+    });
+
+    test("an old build next to the main file is left out, if there's an index.html with it", () => {
+        const old = ["story.js", "style.css", "squiffy.runtime.js", "squiffy.runtime.global.js"];
+        expect(storyFileList(getStoryFiles(project("story.squiffy"), ["story.squiffy", "index.html", ...old, "mine.css"])))
+            .toEqual(["mine.css"]);
+        // Next to the main file, wherever that is
+        expect(storyFileList(getStoryFiles(project("src/story.squiffy"), ["src/story.squiffy", "src/index.html", ...old.map(f => "src/" + f), "story.js"])))
+            .toEqual(["story.js"]);
+        expect(storyFileList(getStoryFiles(project("story.squiffy"), ["story.squiffy", "style.css"]))).toEqual(["style.css"]);
     });
 
     test("exclude patterns, matching a file or a folder it's in", () => {
@@ -105,8 +130,9 @@ describe("getStoryFiles", () => {
         expect(result.excluded).toEqual(["_scratch.squiffy", "drafts/a.squiffy", "drafts/old/b.squiffy", "old/c.squiffy"]);
     });
 
-    test("extra folders to skip", () => {
+    test("extra folders and files to skip", () => {
         expect(getStoryFiles(project("s.squiffy"), ["s.squiffy", "out/a.squiffy", "b.squiffy"], ["out"]).included).toEqual(["b.squiffy"]);
+        expect(getStoryFiles(project("s.squiffy"), ["s.squiffy", "vite.config.js", "a.js"], ["vite.config.js"]).scripts).toEqual(["a.js"]);
     });
 
     test("isExcluded with ** in the middle", () => {
@@ -178,7 +204,7 @@ const compileFolder = async (files: Record<string, string>, main = "story.squiff
         scriptBaseFilename: main,
         script: files[main],
         externalFiles: folder(files, main),
-        storyFiles: story.included,
+        storyFiles: storyFileList(story),
         onWarning: warning => warnings.push(warning),
     });
 };
@@ -216,21 +242,58 @@ describe("folder mode", () => {
         expect(warnings).toEqual([]);
     });
 
-    test("no hint for an @import of an excluded file, or one that also brings in a script", async () => {
+    test("no hint for an @import of an excluded file, or one that also brings in an excluded script", async () => {
         const files = {
             "story.squiffy": "@import drafts/x.squiffy\n@import *.*\n[[s]]:\n",
             "drafts/x.squiffy": "[[x]]:\n",
             "a.squiffy": "[[a]]:\n",
             "a.js": "",
         };
-        const story = getStoryFiles(project("story.squiffy", ["drafts/**"]), Object.keys(files));
+        const story = getStoryFiles(project("story.squiffy", ["drafts/**", "a.js"]), Object.keys(files));
         const result = await compile({
             scriptBaseFilename: "story.squiffy", script: files["story.squiffy"],
-            externalFiles: folder(files, "story.squiffy"), storyFiles: story.included,
+            externalFiles: folder(files, "story.squiffy"), storyFiles: storyFileList(story),
         });
         if (!result.success) throw new Error(result.errors.join("\n"));
         expect(result.diagnostics).toEqual([]);
         expect(Object.keys(result.output.story.sections)).toEqual(["x", "a", "s"]);
+    });
+
+    test("stylesheets and scripts are added without @imports, after any that are @imported", async () => {
+        const result = await compileFolder({
+            "story.squiffy": "@import lib/z.js\n[[s]]:\n",
+            "a.css": "", "b.css": "", "lib/z.js": "", "a.js": "", "notes.txt": "",
+        });
+        if (!result.success) throw new Error(result.errors.join("\n"));
+        expect(result.getUiInfo().externalStylesheets).toEqual(["a.css", "b.css"]);
+        expect(result.getUiInfo().externalScripts).toEqual(["lib/z.js", "a.js"]);
+        expect(result.diagnostics.map(d => [d.code, d.range.start.line])).toEqual([["squiffy/redundant-import", 0]]);
+    });
+
+    test("a script read by @ui isn't added to the page as well", async () => {
+        const result = await compileFolder({
+            "story.squiffy": "@ui lib/helpers.js\n[[s]]:\n",
+            "lib/helpers.js": "window.helped = true;",
+            "other.js": "",
+        });
+        if (!result.success) throw new Error(result.errors.join("\n"));
+        expect(result.getUiInfo().externalScripts).toEqual(["other.js"]);
+        expect(await result.getJs()).toContain("window.helped = true;");
+    });
+
+    test("an excluded stylesheet is only added if it's @imported", async () => {
+        const files = { "story.squiffy": "[[s]]:\n", "a.css": "", "b.css": "" };
+        const story = getStoryFiles(project("story.squiffy", ["*.css"]), Object.keys(files));
+        const compileWith = (script: string) => compile({
+            scriptBaseFilename: "story.squiffy", script,
+            externalFiles: folder(files, "story.squiffy"), storyFiles: storyFileList(story),
+        });
+        const without = await compileWith(files["story.squiffy"]);
+        const withImport = await compileWith("@import b.css\n[[s]]:\n");
+        if (!without.success || !withImport.success) throw new Error("failed");
+        expect(without.getUiInfo().externalStylesheets).toEqual([]);
+        expect(withImport.getUiInfo().externalStylesheets).toEqual(["b.css"]);
+        expect(withImport.diagnostics).toEqual([]);
     });
 
     test("@title and @start outside the main file are ignored, with a warning", async () => {

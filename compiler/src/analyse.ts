@@ -3,7 +3,7 @@ import type {
     Diagnostic, DiagnosticCode, DiagnosticSeverity, PassageNode, Range, SectionNode, SquiffyFile, StatementNode,
 } from "./syntax.js";
 import { positionMapper, SourceLine, transformText } from "./text.js";
-import { PROJECT_FILENAME } from "./project.js";
+import { isScriptPath, isSquiffyPath, isStylesheetPath, PROJECT_FILENAME } from "./project.js";
 import { findV5Syntax } from "./v5.js";
 import { attributesSetIn, BUILT_IN_ATTRIBUTES, findAtAttributes, findBuiltInAttributeSets, findUnquotedText } from "./setters.js";
 
@@ -23,10 +23,12 @@ export interface AnalyseSettings {
     // language service can still report warnings and find sections. The analysis still has
     // success: false, and can't be emitted.
     recover?: boolean;
-    // In folder mode (a project with a squiffy.json), the story's other .squiffy files, in order:
-    // see getStoryFiles. They're named as getMatchingFilenames would name them, and are processed
-    // after the main file, skipping any it has already @imported. Pass undefined for a story
-    // that's just the main file and its @imports.
+    // In folder mode (a project with a squiffy.json), the story's other files, in order: its
+    // .squiffy files, then its .css and .js files (see getStoryFiles and storyFileList). They're
+    // named as getMatchingFilenames would name them. The .squiffy files are processed after the
+    // main file, and the stylesheets and scripts are added to the page after any that are
+    // @imported, in each case skipping any the story has already @imported. Pass undefined for a
+    // story that's just the main file and its @imports.
     storyFiles?: string[];
     // Whether @set and link setters take expressions, with the same rules as {{#if}} (#373).
     // True for a story with a squiffy.json.
@@ -78,6 +80,10 @@ export interface Analysis {
     start: string;
     // See AnalyseSettings.expressions
     expressions: boolean;
+    // The story's .css and .js files, @imported or in folder mode part of the story, named as
+    // getMatchingFilenames names them
+    stylesheets: string[];
+    scripts: string[];
 }
 
 // ---- Story model, which emit() turns into output ----
@@ -180,6 +186,21 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
     // The .squiffy files processed so far, so a story file the main file has already @imported
     // isn't processed again
     const processed = new Set<string | undefined>();
+    // Files read by @ui, which in folder mode aren't added to the page as scripts too
+    const uiFiles = new Set<string>();
+    // The .css and .js files added to the page so far, named as getMatchingFilenames names them
+    const stylesheetFiles: string[] = [];
+    const scriptFiles: string[] = [];
+    // Adds a stylesheet or script to the page. An @import adds it every time, as in Squiffy 6, but
+    // folder mode only adds one that isn't there already.
+    const addPageFile = (filename: string, externalFiles: ExternalFiles, imported: boolean) => {
+        const [names, local] = isStylesheetPath(filename)
+            ? [stylesheetFiles, story.stylesheets]
+            : [scriptFiles, story.scripts];
+        if (names.includes(filename) && !imported) return;
+        if (!names.includes(filename)) names.push(filename);
+        local.push(externalFiles.getLocalFilename(filename));
+    };
 
     async function processFile(text: string, filename: string | undefined, isFirst: boolean): Promise<boolean> {
         const file = cache.parse(text, filename);
@@ -300,6 +321,12 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
                     return true;
                 case "ui-file":
                     if (settings.externalFiles) {
+                        // In folder mode, the file isn't also added to the page as a script, so it
+                        // doesn't run twice. Its name is looked up before it's read, as reading it
+                        // can leave it out of getMatchingFilenames.
+                        if (storyFiles) {
+                            for (const match of await settings.externalFiles.getMatchingFilenames(node.path)) uiFiles.add(match);
+                        }
                         story.uiJs.push(await settings.externalFiles.getContent(node.path));
                     }
                     else {
@@ -353,24 +380,19 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
                         return true;
                     }
                     const matches = await settings.externalFiles.getMatchingFilenames(node.pattern);
-                    const squiffyMatches = matches.filter(m => m.endsWith(".squiffy"));
-                    if (storyFiles && squiffyMatches.length && squiffyMatches.length == matches.length
-                        && squiffyMatches.every(m => storyFiles.has(m))) {
+                    if (storyFiles && matches.length && matches.every(m => storyFiles.has(m))) {
                         report("hint", "squiffy/redundant-import", filename, lineRange(node),
-                            `${squiffyMatches.length == 1 ? "This file is" : "These files are"} already part of the story, as ${PROJECT_FILENAME} includes every .squiffy file in the folder, so this @import isn't needed.`,
+                            `${matches.length == 1 ? "This file is" : "These files are"} already part of the story, as ${PROJECT_FILENAME} includes every .squiffy, .css and .js file in the folder, so this @import isn't needed.`,
                             lineCount);
                     }
                     for (const importFilename of matches) {
-                        if (importFilename.endsWith(".squiffy")) {
+                        if (isSquiffyPath(importFilename)) {
                             const content = await settings.externalFiles.getContent(importFilename);
                             const success = await processFile(content, importFilename, false);
                             if (!success && !settings.recover) return false;
                         }
-                        else if (importFilename.endsWith(".js")) {
-                            story.scripts.push(settings.externalFiles.getLocalFilename(importFilename));
-                        }
-                        else if (importFilename.endsWith(".css")) {
-                            story.stylesheets.push(settings.externalFiles.getLocalFilename(importFilename));
+                        else if (isStylesheetPath(importFilename) || isScriptPath(importFilename)) {
+                            addPageFile(importFilename, settings.externalFiles, true);
                         }
                     }
                     return true;
@@ -575,6 +597,10 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
                 "The story's other files were ignored, as other files can't be loaded here", 1);
             break;
         }
+        if (!isSquiffyPath(storyFile)) {
+            if (!uiFiles.has(storyFile)) addPageFile(storyFile, settings.externalFiles, false);
+            continue;
+        }
         const content = await settings.externalFiles.getContent(storyFile);
         success = await processFile(content, storyFile, false) && success;
     }
@@ -622,6 +648,8 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
         })),
         start: story.start,
         expressions: settings.expressions ?? false,
+        stylesheets: stylesheetFiles,
+        scripts: scriptFiles,
     };
     analysisInternals.set(analysis, { story, legacyErrors, legacyWarnings });
     return analysis;

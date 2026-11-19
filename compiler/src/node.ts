@@ -6,13 +6,17 @@
 
 import fs from "fs/promises";
 import path from "path";
-import { getStoryFiles, isAlwaysSkipped, parseProjectFile, PROJECT_FILENAME, type PageStrings } from "./project.js";
+import {
+    getStoryFiles, isAlwaysSkipped, isSquiffyPath, isStoryFilePath, parseProjectFile, PROJECT_FILENAME, storyFileList,
+    type PageStrings,
+} from "./project.js";
 
 export interface StoryOnDisk {
     // The story's main file, as an absolute path
     mainFile: string;
-    // In folder mode, the story's other .squiffy files, as absolute paths, in order. Undefined
-    // for a story that's just the main file and its @imports.
+    // In folder mode, the story's other files, as absolute paths, in order: its .squiffy files,
+    // then its .css and .js files (see AnalyseSettings.storyFiles). Undefined for a story that's
+    // just the main file and its @imports.
     storyFiles?: string[];
     // The squiffy.json that was used, as an absolute path
     projectFile?: string;
@@ -35,7 +39,8 @@ export interface StoryOnDisk {
 export class StoryNotFoundError extends Error {}
 
 export interface FindStoryOptions {
-    // Folders to leave out of the story, relative to the project file's folder
+    // Files and folders to leave out of the story, relative to the project file's folder or
+    // absolute. Its build folder is always left out.
     skip?: string[];
 }
 
@@ -69,7 +74,13 @@ async function findProjectFile(folder: string): Promise<string | undefined> {
 
 // Every .squiffy file in a folder and its subfolders, relative to it with "/" separators, without
 // looking inside the folders that are never part of a story.
-export async function listSquiffyFiles(folder: string): Promise<string[]> {
+export const listSquiffyFiles = (folder: string) => listFiles(folder, isSquiffyPath);
+
+// Every .squiffy, .css and .js file in a folder and its subfolders, as listSquiffyFiles, and any
+// index.html, which getStoryFiles needs to see to leave out an old build
+export const listStoryFiles = (folder: string) => listFiles(folder, name => isStoryFilePath(name) || name == "index.html");
+
+async function listFiles(folder: string, include: (name: string) => boolean): Promise<string[]> {
     const result: string[] = [];
     const walk = async (relative: string) => {
         const entries = await fs.readdir(path.join(folder, relative), { withFileTypes: true });
@@ -78,7 +89,7 @@ export async function listSquiffyFiles(folder: string): Promise<string[]> {
             if (entry.isDirectory()) {
                 if (!isAlwaysSkipped(`${child}/x`)) await walk(child);
             }
-            else if (entry.name.endsWith(".squiffy")) {
+            else if (include(entry.name)) {
                 result.push(child);
             }
         }
@@ -102,9 +113,12 @@ async function folderStory(projectFile: string, options: FindStoryOptions): Prom
     if (!await exists(mainFile)) {
         throw new StoryNotFoundError(`The main file in ${projectFile}, ${project.main}, doesn't exist.`);
     }
-    const story = getStoryFiles(project, await listSquiffyFiles(root), options.skip);
+    // Absolute paths to skip are made relative to the project, and any outside it are ignored
+    const skip = (options.skip ?? []).map(file => path.isAbsolute(file) ? path.relative(root, file).split(path.sep).join("/") : file)
+        .filter(file => file && !file.startsWith("..") && !path.isAbsolute(file));
+    const story = getStoryFiles(project, await listStoryFiles(root), skip);
     return {
-        mainFile, storyFiles: story.included.map(file => path.resolve(root, file)), projectFile, expressions: true,
+        mainFile, storyFiles: storyFileList(story).map(file => path.resolve(root, file)), projectFile, expressions: true,
         ...(project.backButton !== undefined ? { backButton: project.backButton } : {}),
         ...(project.strings !== undefined ? { strings: project.strings } : {}),
         ...(project.saveButton !== undefined ? { saveButton: project.saveButton } : {}),

@@ -23,7 +23,7 @@ export type { EmitSettings, Output, UiInfo, CompileSuccess } from "./emit.js";
 export { formatDiagnostic } from "./syntax.js";
 export {
     PROJECT_FILENAME, PROJECT_FILE_VERSION, PROJECT_SCHEMA_URL, parseProjectFile, getStoryFiles, isExcluded,
-    isAlwaysSkipped, formatProjectFile, updateProjectFile, PAGE_STRINGS,
+    isAlwaysSkipped, formatProjectFile, updateProjectFile, PAGE_STRINGS, storyFileList, BUILD_FOLDER,
 } from "./project.js";
 export type { MapPositions, PageStringName, PageStrings, ProjectFile, ParsedProjectFile, StoryFiles } from "./project.js";
 export type * from "./syntax.js";
@@ -37,7 +37,7 @@ interface CompilerSettings {
     externalFiles?: ExternalFiles;
     globalJs?: boolean;
     parseCache?: ParseCache;
-    // In folder mode, the story's other .squiffy files: see AnalyseSettings.storyFiles
+    // In folder mode, the story's other files: see AnalyseSettings.storyFiles
     storyFiles?: string[];
     // Whether @set and link setters take expressions: see AnalyseSettings.expressions
     expressions?: boolean;

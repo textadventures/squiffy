@@ -62,11 +62,13 @@
         ];
         if (path.toLowerCase().endsWith(".squiffy") && path !== project.mainFile) {
             items.push({ label: "Make this the main file", action: () => onmakemain(path) });
-            if (project.storyFiles) {
-                items.push(project.isExcluded(path)
-                    ? { label: "Include in story", action: () => onexclude(path, false) }
-                    : { label: "Exclude from story", action: () => onexclude(path, true) });
-            }
+        }
+        // A file in the build folder or an old build isn't listed, as it can't be included
+        const story = project.storyFiles;
+        if (story?.excluded.includes(path)) {
+            items.push({ label: "Include in story", action: () => onexclude(path, false) });
+        } else if (story && [...story.included, ...story.stylesheets, ...story.scripts].includes(path)) {
+            items.push({ label: "Exclude from story", action: () => onexclude(path, true) });
         }
         items.push({ label: "Delete", action: () => ondelete(path), divider: true });
         return items;

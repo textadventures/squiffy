@@ -566,15 +566,23 @@
     // other .squiffy files in the folder that aren't part of the story now are excluded, and the
     // story stays as it was. If the story has an error, which files are part of it isn't certain,
     // so the author is asked instead. Says whether there's a squiffy.json now.
+    // The .css and .js files that are part of the story now, for a new squiffy.json to keep
+    async function currentPageFiles(): Promise<string[]> {
+        const c = client;
+        if (!c) return [];
+        await syncOpenFiles();
+        return (await c.call("getStoryFiles")).pageFiles;
+    }
+
     async function addProjectFileForMap(current: NonNullable<typeof p>): Promise<boolean> {
         const c = client;
         if (!c) return false;
         await syncOpenFiles();
-        const { files, complete } = await c.call("getStoryFiles");
-        if (!complete) return (await offerProjectFile(current, { main: current.mainFile })) === "created";
+        const { files, pageFiles, complete } = await c.call("getStoryFiles");
+        if (!complete) return (await offerProjectFile(current, { main: current.mainFile, pageFiles })) === "created";
         const inStory = new Set(files);
         const exclude = current.files.map(f => f.path).filter(path => isSquiffyFile(path) && path !== current.mainFile && !inStory.has(path));
-        const conversion = await current.createProjectFile(current.mainFile, exclude);
+        const conversion = await current.createProjectFile(current.mainFile, exclude, pageFiles);
         const converted = setterConversionMessage(conversion);
         showToast(`Added ${PROJECT_FILENAME}, to save where you put things on the map.${exclude.length ? ` It leaves out the .squiffy files that aren't part of this story.` : ""}${converted ? ` ${converted}` : ""}`, "info", converted ? 12000 : 8000);
         return true;
@@ -827,9 +835,9 @@
         }
     }
 
-    // A new .squiffy file is part of the story straight away. With a squiffy.json, that's
-    // automatic. Without one, the editor offers to add one, or else @imports it from the main file.
-    // A stylesheet or script always needs an @import, so the editor adds one (#198).
+    // A new file is part of the story straight away. With a squiffy.json, that's automatic.
+    // Without one, for a .squiffy file the editor offers to add one, or else @imports it from the
+    // main file, and it @imports a stylesheet or script (#198).
     async function handleNewFile(kind: NewFileKind) {
         if (!p) return;
         const name = await promptDialog(`New ${NEW_FILE_KINDS[kind].noun} name:`, NEW_FILE_KINDS[kind].name, "Create");
@@ -841,11 +849,11 @@
             if (await p.fs.exists(path)) throw new Error(`There's already a file called ${path}.`);
             let offer: ProjectOffer | null = null;
             if (squiffy && !p.projectFile && p.projectText === null) {
-                offer = await offerProjectFile(p, { main: p.mainFile, adding: path });
+                offer = await offerProjectFile(p, { main: p.mainFile, adding: path, pageFiles: await currentPageFiles() });
                 if (offer === "cancelled") return;
             }
             await p.createFile(path, newFileText(path));
-            if (offer === "declined" || needsImport(path)) await addImport(storyPath(p, path));
+            if (offer === "declined" || (offer === null && !p.projectFile && needsImport(path))) await addImport(storyPath(p, path));
             if (isTextFile(path)) await p.open(path);
         } catch (err) {
             showToast(errorText(err));
@@ -895,7 +903,7 @@
         try {
             if (!p.projectFile && p.projectText === null) {
                 // "created" makes it the main file in the new squiffy.json
-                if ((await offerProjectFile(p, { main: path })) !== "declined") return;
+                if ((await offerProjectFile(p, { main: path, pageFiles: await currentPageFiles() })) !== "declined") return;
             }
             await p.setMainFile(path);
         } catch (err) {

@@ -56,6 +56,7 @@ export const writeScriptFile = async(input: string | StoryOnDisk, outputPath: st
     }
 
     console.log(`Writing ${outputFilename}`);
+    fs.mkdirSync(outputPath, { recursive: true });
     fs.writeFileSync(path.join(outputPath, outputFilename), await result.getJs());
 };
 
@@ -71,12 +72,16 @@ export const createPackageFiles = async (input: string | StoryOnDisk, outputPath
         return false;
     }
 
-    // Asset files (images etc.) referenced by the story, and its own stylesheets and scripts. The other
-    // package files are written to the story's folder, alongside these, so they only need to be passed
-    // on for the zip or for inlining.
+    // Asset files (images etc.) referenced by the story, and its own stylesheets and scripts. When the
+    // other package files are written to the story's folder, alongside these, they only need to be
+    // passed on for the zip or for inlining. When they're written somewhere else, such as a project's
+    // build folder, they're copied there too.
+    // Assets the story's stylesheets and scripts refer to, such as fonts, are included too.
+    const imported = findImportedFiles(inputFilename, result);
+    const importedText = Object.values(imported).map(bytes => new TextDecoder().decode(bytes)).join("\n");
     const assets = options.assets ?? {
-        ...findAssets(inputFilename, getStoryText(result)),
-        ...findImportedFiles(inputFilename, result),
+        ...findAssets(inputFilename, getStoryText(result) + "\n" + importedText),
+        ...imported,
     };
     const assetPaths = Object.keys(assets);
     if (assetPaths.length > 0 && (options.createZip || options.inlineHtml)) {
@@ -85,6 +90,18 @@ export const createPackageFiles = async (input: string | StoryOnDisk, outputPath
 
     const pkg = await createPackage(result, { ...options, assets });
     const files = pkg.files;
+
+    fs.mkdirSync(outputPath, { recursive: true });
+    if (!options.inlineHtml && path.resolve(outputPath) != path.resolve(path.dirname(inputFilename))) {
+        for (const [asset, bytes] of Object.entries(assets)) {
+            // Package files take precedence, as in the zip
+            if (asset in files) continue;
+            console.log(`Copying ${asset}`);
+            const filename = path.join(outputPath, asset);
+            fs.mkdirSync(path.dirname(filename), { recursive: true });
+            fs.writeFileSync(filename, bytes);
+        }
+    }
 
     for (const file of Object.keys(files)) {
         console.log(`Writing ${file}`);

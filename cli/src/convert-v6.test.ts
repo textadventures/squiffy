@@ -48,6 +48,23 @@ describe("convertV6Story", () => {
         });
     });
 
+    test("leaves out stylesheets and scripts that weren't part of the story", async () => {
+        await fs.mkdir(file("lib"));
+        await fs.mkdir(file("tools"));
+        await fs.writeFile(file("story.squiffy"), "@import used.css\n@import lib/*.js\n[[start]]:\nHi");
+        await fs.writeFile(file("used.css"), "");
+        await fs.writeFile(file("unused.css"), "");
+        await fs.writeFile(file("lib/a.js"), "");
+        await fs.writeFile(file("tools/build.js"), "");
+        // An old build, which is left out anyway
+        await fs.writeFile(file("index.html"), "");
+        await fs.writeFile(file("story.js"), "");
+        await fs.writeFile(file("style.css"), "");
+
+        expect(await convertV6Story(file("story.squiffy"))).toBe(true);
+        expect(JSON.parse(await read("squiffy.json")).exclude).toEqual(["unused.css", "tools/build.js"]);
+    });
+
     test("adds a squiffy.json even if nothing needs converting", async () => {
         await fs.writeFile(file("story.squiffy"), "[[start]]:\n@set gold = 10");
         expect(await convertV6Story(file("story.squiffy"))).toBe(true);

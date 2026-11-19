@@ -1,6 +1,6 @@
 ---
 title: Stories in several files
-description: Splitting a story across files with a squiffy.json project file, or with @import
+description: Splitting a story across files, stylesheets and scripts with a squiffy.json project file, or with @import
 ---
 
 
@@ -15,7 +15,7 @@ A story can be split across several `.squiffy` files. To make a folder of files 
 }
 ```
 
-Every `.squiffy` file in the folder and its subfolders is then part of the story. You don't need to `@import` them.
+Every `.squiffy` file in the folder and its subfolders is then part of the story, and so is every `.css` and `.js` file: see [Stylesheets and scripts](#stylesheets-and-scripts). You don't need to `@import` them.
 
 A `squiffy.json` also means the story uses Squiffy 7's rules for [setting attributes](/attributes/#setting-attributes), where text goes in quotes: `@set weapon = "sword"`. A story without one keeps the Squiffy 6 rules. See [Coming from Squiffy 6](/coming-from-squiffy-6/).
 
@@ -27,6 +27,16 @@ A `squiffy.json` also means the story uses Squiffy 7's rules for [setting attrib
 - `id` identifies your story, so a player's [saved game](#saved-games) can only be loaded into the story it came from. The editor and the command-line tool give a new `squiffy.json` a random one. Keep it the same when you publish a new version of your story, and don't copy it into another story.
 
 The `$schema` line is optional. It lets text editors such as VS Code check the file and suggest what can go in it.
+
+## Stylesheets and scripts
+
+With a `squiffy.json`, every `.css` file in the folder and its subfolders is one of the story's [stylesheets](/styling/), and every `.js` file is one of its [scripts](/javascript/). The published page links to each of them, as it does for an `@import`: stylesheets after Squiffy's own styles, so your rules take precedence, and scripts before the story starts.
+
+- They're added in order of their paths. Order rarely matters for stylesheets, but a script that uses another, such as a library, needs to come after it. To choose the order, `@import` the ones that need to come first in the main file: anything `@import`ed comes before the rest, and nothing is added twice.
+- A file you read with [`@ui filename.js`](/javascript/#running-code-when-the-story-starts) isn't added as a script too, so it doesn't run twice.
+- The `build` folder next to `squiffy.json`, where the [command-line tool](/cli/#stories-in-several-files) puts the published story, is never part of it.
+- Earlier versions of Squiffy wrote a published story's files next to its main file. So if there's an `index.html` there, the `story.js`, `style.css`, `squiffy.runtime.js` and `squiffy.runtime.global.js` with it are taken to be an old copy of the published story, and aren't part of the story unless you `@import` them. You can delete them.
+- To keep any other file out of the story, such as a library's demo files, list it under [`exclude`](#leaving-files-out).
 
 ## The Back button
 
@@ -115,25 +125,25 @@ Anything you leave out stays in English. A story without a `squiffy.json` is alw
 
 ## Leaving files out
 
-To keep a `.squiffy` file in the folder without it being part of the story, list it under `exclude`:
+To keep a `.squiffy`, `.css` or `.js` file in the folder without it being part of the story, list it under `exclude`. In the editor, choose **Exclude from story** from the file's menu in the files list.
 
 ```json
 {
   "version": 1,
   "main": "story.squiffy",
-  "exclude": ["notes.squiffy", "drafts/**"]
+  "exclude": ["notes.squiffy", "drafts/**", "lib/demo.js"]
 }
 ```
 
-Paths are relative to the folder `squiffy.json` is in. `*` and `?` match within a file or folder name, and `**` across folders. Naming a folder leaves out everything in it, so `drafts` and `drafts/**` are the same. Files in `node_modules`, and in folders whose names start with a dot, are always left out.
+Paths are relative to the folder `squiffy.json` is in. `*` and `?` match within a file or folder name, and `**` across folders. Naming a folder leaves out everything in it, so `drafts` and `drafts/**` are the same. Files in `node_modules`, in folders whose names start with a dot, and in the `build` folder are always left out, as is [an old copy of the published story](#stylesheets-and-scripts).
 
 The editor also saves where you've put sections and passages on its [story map](/story-map/) in `squiffy.json`, under `map`. Only the editor uses it.
 
 ## Building a story with a project file
 
-With the [command-line tool](/cli/#stories-in-several-files), run it in the folder without a file name, or give it the folder or the main file. Give it any other `.squiffy` file, and it builds just that file, so several separate stories can still share a folder.
+With the [command-line tool](/cli/#stories-in-several-files), run it in the folder without a file name, or give it the folder or the main file. It puts the published story in a `build` folder next to `squiffy.json`. Give it any other `.squiffy` file, and it builds just that file, next to it, so several separate stories can still share a folder.
 
-With the [Vite plugin](/embedding/#using-vite), import the main file.
+With the [Vite plugin](/embedding/#using-vite), import the main file. Keep the story in a folder of its own, away from your app's code, as every `.js` and `.css` file in the folder is part of the story.
 
 ## Importing files
 
@@ -149,11 +159,11 @@ This syntax also accepts wildcards, so you can include all .squiffy files in a d
 @import *.squiffy
 ```
 
-In a story with a `squiffy.json`, an `@import` of a `.squiffy` file that's already part of the story isn't needed, and the editor offers to remove it. An `@import` in the main file still adds the file at that point in the story.
-
-JavaScript and CSS files always need an `@import`, with or without a `squiffy.json`:
+Without a `squiffy.json`, JavaScript and CSS files need an `@import` too:
 
 ```squiffy
 @import my_script.js
 @import my_style.css
 ```
+
+In a story with a `squiffy.json`, an `@import` of a file that's already part of the story isn't needed, and the editor offers to remove it. An `@import` in the main file still adds the file at that point: a `.squiffy` file's sections go there in the story, and a stylesheet or script comes before the ones that aren't `@import`ed. You can also `@import` a file that `exclude` leaves out.

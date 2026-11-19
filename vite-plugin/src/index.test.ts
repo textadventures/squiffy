@@ -132,21 +132,50 @@ describe("vite-plugin-squiffy", () => {
 
     test("importing a project's main file builds every .squiffy file in its squiffy.json, and watches them", async () => {
         await writeFiles({
-            "main.js": "export { story } from \"./game.squiffy\";",
-            "squiffy.json": "{ \"version\": 1, \"main\": \"game.squiffy\", \"exclude\": [\"drafts/**\"] }",
-            "game.squiffy": "[[start]]:\nGo to [[chapter1]].\n",
-            "chapters/one.squiffy": "[[chapter1]]:\nChapter one.\n",
-            "drafts/draft.squiffy": "[[draft]]:\nNot yet.\n",
+            "main.js": "export { story } from \"./story/game.squiffy\";",
+            "story/squiffy.json": "{ \"version\": 1, \"main\": \"game.squiffy\", \"exclude\": [\"drafts/**\"] }",
+            "story/game.squiffy": "[[start]]:\nGo to [[chapter1]].\n",
+            "story/chapters/one.squiffy": "[[chapter1]]:\nChapter one.\n",
+            "story/drafts/draft.squiffy": "[[draft]]:\nNot yet.\n",
         });
 
         const { js } = await buildEntry();
         const result = await importBundle(js);
 
         expect(Object.keys(result.story.sections)).toEqual(["start", "chapter1"]);
-        expect(await getWatchFiles("game.squiffy")).toEqual([
-            path.join(root, "chapters", "one.squiffy"),
-            path.join(root, "squiffy.json"),
+        expect(await getWatchFiles("story/game.squiffy")).toEqual([
+            path.join(root, "story", "chapters", "one.squiffy"),
+            path.join(root, "story", "squiffy.json"),
         ]);
+    });
+
+    test("a project's stylesheets and scripts are bundled without @imports", async () => {
+        await writeFiles({
+            "main.js": "export { story } from \"./story/game.squiffy\";",
+            "story/squiffy.json": "{ \"version\": 1, \"main\": \"game.squiffy\" }",
+            "story/game.squiffy": "[[start]]:\nHello.\n",
+            "story/look.css": ".story-look { color: teal; }",
+            "story/setup.js": "globalThis.storySetupRan = true;",
+        });
+
+        const { js, css } = await buildEntry();
+        expect(css).toContain(".story-look");
+        expect(js).toContain("storySetupRan");
+    });
+
+    test("Vite's output folder isn't part of a project", async () => {
+        await writeFiles({
+            "squiffy.json": "{ \"version\": 1, \"main\": \"game.squiffy\" }",
+            "game.squiffy": "[[start]]:\nHello.\n",
+            "dist/assets/index.js": "globalThis.oldBuild = true;",
+            "app.js": "globalThis.app = true;",
+        });
+        const plugin = squiffyPlugin();
+        (plugin.configResolved as (config: unknown) => void)({ root, build: { outDir: "dist" }, publicDir: "", configFile: undefined });
+        const context = { addWatchFile: () => {}, warn: () => {}, info: () => {}, error: (message: string) => { throw new Error(message); } };
+        const code = await (plugin.load as (this: typeof context, id: string) => Promise<string>).call(context, path.join(root, "game.squiffy"));
+        expect(code).toContain("app.js");
+        expect(code).not.toContain("dist/");
     });
 
     test("importing another file in a project's folder builds just that file", async () => {
