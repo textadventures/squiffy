@@ -200,6 +200,18 @@ See [Dynamic text](/dynamic-text/) and [Player input](/player-input/).
 
 See [Array management helpers](/helpers-reference/#array-management-helpers) and [Going through an array](/attributes/#going-through-an-array).
 
+### Objects
+
+| To... | Harlowe | SugarCube | Squiffy |
+|---|---|---|---|
+| Make an object | `(set: $hero to (dm: "hp", 10, "name", "Ann"))` | `<<set $hero to { hp: 10, name: "Ann" }>>` | `@set hero = { hp: 10, name: "Ann" }` |
+| Show a value in it | `$hero's hp` | `$hero.hp` | `{{hero.hp}}` |
+| Change a value in it | `(set: $hero's hp to it + 5)` | `<<set $hero.hp += 5>>` | `@set hero.hp += 5` |
+| Use a name in a variable | `$hero's ($stat)` | `$hero[$stat]` | `hero[stat]` |
+| An array of objects | `$party's 1st's name` | `$party[0].name` | `{{= party[0].name}}` |
+
+See [Objects](/attributes/#objects).
+
 ### Special passages
 
 | To... | Harlowe | SugarCube | Squiffy |
@@ -215,7 +227,6 @@ See [Array management helpers](/helpers-reference/#array-management-helpers) and
 
 Some things in Harlowe and SugarCube aren't in Squiffy yet. Each one is planned, and its GitHub issue says how it might work, so you can follow it or add your thoughts:
 
-- **Objects**, like Harlowe's datamaps and SugarCube's objects ([#442](https://github.com/textadventures/squiffy/issues/442)). For now, use an attribute for each value, such as `hero_hp` and `hero_name`.
 - **Sound and music** that keep playing from one section to the next, like `<<audio>>` and `(track:)` ([#444](https://github.com/textadventures/squiffy/issues/444)). For a sound in one section, use HTML's `<audio>`: see [Images, sound and other files](/images-and-files/).
 - **A link back to where the player came from**, like `<<return>>` ([#445](https://github.com/textadventures/squiffy/issues/445)). Squiffy's Back button undoes moves, which is different. For now, use `{{section previous_section text="Return"}}`: see [Where the player came from](/attributes/#where-the-player-came-from).
 - **Helpers for text and numbers**, like `(uppercase:)` and `(round:)`, and a value that depends on a condition, like `(cond:)` ([#446](https://github.com/textadventures/squiffy/issues/446)). **More for arrays**, like `(joined:)`, `(sorted:)` and `(range:)` ([#447](https://github.com/textadventures/squiffy/issues/447)).

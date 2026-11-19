@@ -234,6 +234,12 @@ export function transformText(text: string, getNextSectionName: () => string | n
         return `${mustaches.length - 1}`;
     });
     const restore = (s: string) => s.replace(/(\d+)/g, (_match, i) => mustaches[Number(i)]);
+    // A link once it's converted, kept out of the way of the patterns for later kinds of link, which
+    // would otherwise find links in its setters, such as the [1] in [[Go]](next, party[1].hp += 2)
+    const converted = (helper: string) => {
+        mustaches.push(helper);
+        return `${mustaches.length - 1}`;
+    };
 
     // A link's target, inside its (...). With expressions, a setter can have brackets in it, e.g.
     // [[Buy]](shop, gold -= (price - 1) * 2), so the target can contain balanced brackets, up to
@@ -252,7 +258,7 @@ export function transformText(text: string, getNextSectionName: () => string | n
             return `[[${text}]]`; // fallback
         }
         addLink({ linkType: "section", form: "next", text, target: "" }, offset, match.length, offset + 2 + rawText.length, 0);
-        return `{{section "${escapeForHandlebarsString(nextSectionName)}" text="${escapeForHandlebarsString(text)}"}}`;
+        return converted(`{{section "${escapeForHandlebarsString(nextSectionName)}" text="${escapeForHandlebarsString(text)}"}}`);
     });
 
     // namedNextSectionLinkRegex matches [[text]](>) or [[text]](>, setter=value)
@@ -270,7 +276,7 @@ export function transformText(text: string, getNextSectionName: () => string | n
         addLink({ linkType: "section", form: "next", text, target: rest }, offset, match.length, offset + 2 + rawText.length + 4, rawRest.length);
         // rest could be empty or ", setter=value"
         const parsedName = getAdditionalLinkParameters(nextSectionName + rest, expressions);
-        return `{{section "${escapeForHandlebarsString(parsedName.target)}" text="${escapeForHandlebarsString(text)}"${parsedName.additionalParameters}}}`;
+        return converted(`{{section "${escapeForHandlebarsString(parsedName.target)}" text="${escapeForHandlebarsString(text)}"${parsedName.additionalParameters}}}`);
     });
 
     // namedSectionLinkRegex matches:
@@ -287,7 +293,7 @@ export function transformText(text: string, getNextSectionName: () => string | n
         const name = restore(rawName);
         addLink({ linkType: "section", form: "named", text, target: name }, offset, match.length, offset + 2 + rawText.length + 3, rawName.length);
         const parsedName = getAdditionalLinkParameters(name, expressions);
-        return `{{section "${escapeForHandlebarsString(parsedName.target)}" text="${escapeForHandlebarsString(text)}"${parsedName.additionalParameters}}}`;
+        return converted(`{{section "${escapeForHandlebarsString(parsedName.target)}" text="${escapeForHandlebarsString(text)}"${parsedName.additionalParameters}}}`);
     });
 
     // namedPassageLinkRegex matches:
@@ -305,7 +311,7 @@ export function transformText(text: string, getNextSectionName: () => string | n
         const name = restore(rawName);
         addLink({ linkType: "passage", form: "named", text, target: name }, offset, match.length, offset + 1 + rawText.length + 2, rawName.length);
         const parsedName = getAdditionalLinkParameters(name, expressions);
-        return `{{passage "${escapeForHandlebarsString(parsedName.target)}" text="${escapeForHandlebarsString(text)}"${parsedName.additionalParameters}}}`;
+        return converted(`{{passage "${escapeForHandlebarsString(parsedName.target)}" text="${escapeForHandlebarsString(text)}"${parsedName.additionalParameters}}}`);
     });
 
     // unnamedSectionLinkRegex matches:
@@ -317,7 +323,7 @@ export function transformText(text: string, getNextSectionName: () => string | n
     input.replace(unnamedSectionLinkRegex, ([match, rawName], offset) => {
         const name = restore(rawName);
         addLink({ linkType: "section", form: "unnamed", target: name }, offset, match.length, offset + 2, rawName.length);
-        return `{{section "${escapeForHandlebarsString(name)}"}}`;
+        return converted(`{{section "${escapeForHandlebarsString(name)}"}}`);
     });
 
     // unnamedPassageLinkRegex matches:
@@ -331,7 +337,7 @@ export function transformText(text: string, getNextSectionName: () => string | n
     input.replace(unnamedPassageLinkRegex, ([match, rawName, suffix], offset) => {
         const name = restore(rawName);
         addLink({ linkType: "passage", form: "unnamed", target: name }, offset, match.length - suffix.length, offset + 1, rawName.length);
-        return `{{passage "${escapeForHandlebarsString(name)}"}}${suffix}`;
+        return converted(`{{passage "${escapeForHandlebarsString(name)}"}}`) + suffix;
     });
 
     input.replace(/(\d+)/g, ([, i]) => mustaches[Number(i)]);

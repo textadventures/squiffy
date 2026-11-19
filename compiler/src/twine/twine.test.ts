@@ -194,9 +194,24 @@ describe("Harlowe", () => {
             "Hi {{set \"bag\" (array \"key\")}}{{append \"bag\" \"map\"}}{{remove \"bag\" \"key\"}}{{#if (contains \"bag\" \"map\") and (length \"bag\") > 0}}Yes{{/if}}");
     });
 
-    test("datamaps become an attribute for each value", async () => {
-        const { script } = await convert("Harlowe", ":: Start\n(set: $player to (dm: \"hp\", 10, \"name\", \"Ann\"))$player's name has (print: $player's hp) HP.");
-        expect(section(script, "Start")).toBe("@set player_hp = 10\n@set player_name = \"Ann\"\n{{player_name}} has {{player_hp}} HP.");
+    test("datamaps become objects (#442)", async () => {
+        const { script } = await convert("Harlowe", ":: Start\n(set: $player to (dm: \"hp\", 10, \"name\", \"Ann\", \"max hp\", 12))$player's name has (print: $player's hp) HP.");
+        expect(section(script, "Start")).toBe("@set player = { hp: 10, name: \"Ann\", \"max hp\": 12 }\n{{player.name}} has {{player.hp}} HP.");
+    });
+
+    test("values inside datamaps can be set, and read from arrays of them (#442)", async () => {
+        const { script } = await convert("Harlowe", [
+            ":: Start",
+            "(set: $player to (dm: \"stats\", (dm: \"str\", 1)))(set: $player's stats's str to it + 2)(set: $party to (a: $player))(set: $player's \"name\" to \"Ann\")",
+            "(print: $party's 1st's stats's str) (print: $player's \"max hp\")(if: $player's stats's str > 2)[Strong]",
+        ].join("\n"));
+        expect(section(script, "Start")).toBe([
+            "@set player = { stats: { str: 1 } }",
+            "@inc player.stats.str 2",
+            "@set party = (array player)",
+            "@set player.name = \"Ann\"",
+            "{{= party[0].stats.str}} {{= player[\"max hp\"]}}{{#if player.stats.str > 2}}Strong{{/if}}",
+        ].join("\n"));
     });
 
     test("(if:), (else-if:), (else:) and (unless:)", async () => {
@@ -337,10 +352,35 @@ describe("SugarCube", () => {
             "@set gold = 10\n@set name = \"Ann\"\n@inc gold\n@unset old\nHello.\n{{set \"gold\" gold * 2}}{{append \"bag\" \"key\"}}{{remove \"bag\" \"map\"}}");
     });
 
-    test("objects become an attribute for each property", async () => {
+    test("objects stay objects, with paths to the values inside them (#442)", async () => {
         const { script } = await convert("SugarCube", ":: Start\n<<set $player to { hp: 10, stats: { str: 3 } }>>$player.hp <<if $player[\"hp\"] gt 5 and $player.stats.str > 1>>Strong<</if>>");
         expect(section(script, "Start")).toBe(
-            "@set player_hp = 10\n@set player_stats_str = 3\n{{player_hp}} {{#if player_hp > 5 and player_stats_str > 1}}Strong{{/if}}");
+            "@set player = { hp: 10, stats: { str: 3 } }\n{{player.hp}} {{#if player.hp > 5 and player.stats.str > 1}}Strong{{/if}}");
+    });
+
+    test("setting values inside objects, and arrays of objects (#442)", async () => {
+        const { script } = await convert("SugarCube", [
+            ":: Start",
+            "<<set $inv to [{ name: \"lamp\", lit: false }, { name: \"rope\" }]>><<set $player to {}>><<set $player.hp to 10>><<set $player.hp += 2>><<set $player.hp to $player.hp - 1>><<set $inv[0].lit to true>><<set $i to 1>><<set $inv[$i].name to \"cord\">><<set $current to $inv[$i]>>",
+            "<<print $inv[$i].name>> <<if $current.name is \"cord\">>Yes<</if>> <<print $inv.length>> <<print $player.items.length>>",
+        ].join("\n"));
+        expect(section(script, "Start")).toBe([
+            "@set inv = (array { name: \"lamp\", lit: false } { name: \"rope\" })",
+            "@set player = { }",
+            "@set player.hp = 10",
+            "@inc player.hp 2",
+            "@dec player.hp",
+            "@set inv[0].lit = true",
+            "@set i = 1",
+            "@set inv[i].name = \"cord\"",
+            "@set current = inv[i]",
+            "{{= inv[i].name}} {{#if current.name = \"cord\"}}Yes{{/if}} {{length \"inv\"}} {{length \"player.items\"}}",
+        ].join("\n"));
+    });
+
+    test("setting a value inside an object by a variable's value can only be at the start", async () => {
+        const { result } = await convert("SugarCube", ":: Start\nHi <<set $inv[$i].name to \"x\">>");
+        expect(result.problems.map(p => p.reason)).toEqual([expect.stringContaining("by a variable's value")]);
     });
 
     test("<<if>>, <<elseif>>, <<else>> and <<switch>>", async () => {

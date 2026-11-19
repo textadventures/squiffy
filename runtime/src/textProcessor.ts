@@ -4,6 +4,7 @@ import { Section, Story } from "./types.js";
 import { State } from "./state.js";
 import { rewriteInfixExpressions, rewriteValueExpression, splitSetters } from "./infixExpressions.js";
 import { isNumeric, isBlank, toNumber } from "./numbers.js";
+import { checkSegment } from "./paths.js";
 
 export class TextProcessor {
     getStory: () => Story;
@@ -41,9 +42,9 @@ export class TextProcessor {
             return currentSection === section;
         });
 
-        // Unwrap SafeString values from subexpressions, but preserve arrays
+        // Unwrap SafeString values from subexpressions, but keep lists and objects (#442)
         const unwrapValue = (value: any): any => {
-            if (value && typeof value === "object" && typeof value.toString === "function" && !Array.isArray(value)) {
+            if (value && typeof value === "object" && typeof value.toHTML === "function") {
                 return value.toString();
             }
             return value;
@@ -175,7 +176,20 @@ export class TextProcessor {
 
         this.handlebars.registerHelper("array", function (...args) {
             args.pop(); // remove last argument - options
-            return args;
+            return args.map(unwrapValue);
+        });
+
+        // An object literal in an expression, e.g. { hp: 10, name: "Ann" } (#442), which
+        // infixExpressions.ts rewrites to (__object "hp" 10 "name" "Ann")
+        this.handlebars.registerHelper("__object", (...args) => {
+            args.pop();
+            const result: Record<string, unknown> = {};
+            for (let i = 0; i < args.length; i += 2) {
+                const key = String(unwrapValue(args[i]));
+                checkSegment(key);
+                result[key] = unwrapValue(args[i + 1]);
+            }
+            return result;
         });
 
         // Array management helpers

@@ -377,3 +377,55 @@ describe("splitSetters", () => {
         expect(splitSetters(input)).toEqual(expected);
     });
 });
+
+describe("objects and lists (#442)", () => {
+    test.each([
+        ["{ hp: 10, name: \"Ann\" }", "(__object \"hp\" 10 \"name\" \"Ann\")"],
+        ["{ \"max hp\": 12, 'b': 1, }", "(__object \"max hp\" 12 'b' 1)"],
+        ["{}", "(__object )"],
+        ["{ hp: hp + 1, inner: { a: [1] } }", "(__object \"hp\" (add hp 1) \"inner\" (__object \"a\" (array 1)))"],
+        ["[1, 2, 3]", "(array 1 2 3)"],
+        ["[]", "(array )"],
+        ["[\"lamp\"]", "(array \"lamp\")"],
+        ["[a, b]", "(array a b)"],
+        ["[{ name: \"lamp\" }, { name: \"rope\" }]", "(array (__object \"name\" \"lamp\") (__object \"name\" \"rope\"))"],
+        ["inventory[0]", "(lookup inventory 0)"],
+        ["inventory[i].name", "(lookup (lookup inventory i) \"name\")"],
+        ["grid[x][y + 1]", "(lookup (lookup grid x) (add y 1))"],
+        ["hero[\"max hp\"]", "(lookup hero \"max hp\")"],
+        ["inventory[i].stats.hp * 2", "(mul (lookup (lookup (lookup inventory i) \"stats\") \"hp\") 2)"],
+        ["hero.hp", "hero.hp"],
+        ["inventory.[0].name", "inventory.[0].name"],
+        ["[my attribute]", "[my attribute]"],
+        ["[a]", "[a]"],
+    ])("value: %s", (input, expected) => {
+        expect(rewriteValueExpression(input)).toBe(expected);
+    });
+
+    test("conditions", () => {
+        expect(rewriteInfixCondition("inventory[i].hp > 5")).toBe("(gt (lookup (lookup inventory i) \"hp\") 5)");
+        expect(rewriteInfixCondition("hero.hp > 5")).toBe("(gt hero.hp 5)");
+        expect(rewriteInfixCondition("hero[key]")).toBe("(lookup hero key)");
+    });
+
+    test("an object in a tag", () => {
+        expect(rewriteInfixExpressions("{{set \"hero\" { hp: 10, stats: { str: 2 } }}}!"))
+            .toBe("{{set \"hero\" (__object \"hp\" 10 \"stats\" (__object \"str\" 2))}}!");
+        expect(rewriteInfixExpressions("{{= inventory[i].name}}")).toBe("{{lookup (lookup inventory i) \"name\"}}");
+    });
+
+    test.each([
+        ["{ hp 10 }", "expected ':'"],
+        ["{ hp: 10", "expected '}'"],
+        ["[1, 2", "expected ']'"],
+        ["{ (a): 3 }", "expected a name in the object"],
+        ["inventory[0", "expected ']'"],
+    ])("errors: %s", (input, message) => {
+        expect(() => rewriteValueExpression(input)).toThrow(message);
+    });
+
+    test("setters are split outside objects and lists", () => {
+        expect(splitSetters("hero = { hp: 10, name: \"Ann\" }, list = [1, 2], gold = 0"))
+            .toEqual(["hero = { hp: 10, name: \"Ann\" }", "list = [1, 2]", "gold = 0"]);
+    });
+});

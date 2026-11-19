@@ -294,8 +294,9 @@ interface SetterSite {
 }
 
 // Splits a list of setters with the rules of a story that uses expressions (as splitSetters in
-// runtime/src/infixExpressions.ts does): on commas outside quotes and brackets. Keeps offsets.
-function splitWithOffsets(setters: string): { text: string, offset: number }[] {
+// runtime/src/infixExpressions.ts does): on commas outside quotes, brackets and objects. Keeps
+// offsets.
+export function splitWithOffsets(setters: string): { text: string, offset: number }[] {
     const result: { text: string, offset: number }[] = [];
     let depth = 0;
     let quote: string | null = null;
@@ -307,8 +308,8 @@ function splitWithOffsets(setters: string): { text: string, offset: number }[] {
             else if (c === quote) quote = null;
         }
         else if (c === "\"" || c === "'") quote = c;
-        else if (c === "(") depth++;
-        else if (c === ")") depth = Math.max(0, depth - 1);
+        else if (c === "(" || c === "[" || c === "{") depth++;
+        else if (c === ")" || c === "]" || c === "}") depth = Math.max(0, depth - 1);
         else if (i === setters.length || (c === "," && depth === 0)) {
             result.push({ text: setters.slice(start, i), offset: start });
             start = i + 1;
@@ -393,7 +394,8 @@ export function findUnquotedText(file: SquiffyFile, isSet: (name: string) => boo
     const result: UnquotedText[] = [];
     for (const site of setterSites(file)) {
         // Only plain "=": text with +=, -=, *= or /= is an error whatever it's written as
-        const match = /^(\s*)(\w+)(\s*=(?!=)\s*)(.*?)\s*$/.exec(site.text);
+        // The attribute can be a value inside an object, as in hero.name = Ann (#442)
+        const match = /^(\s*)(\w+(?:\.\w+)*)(\s*=(?!=)\s*)(.*?)\s*$/.exec(site.text);
         if (!match) continue;
         const [, leading, attribute, eq, value] = match;
         let kind: UnquotedText["kind"] | null = null;
