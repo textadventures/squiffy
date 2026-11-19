@@ -174,6 +174,26 @@ describe("preview", () => {
         expect(fixed()).toEqual([]);
     });
 
+    test("swaps the url()s in the story's stylesheets for its assets' URLs", async () => {
+        const { preview } = setUp();
+        const js = await compileJs(script);
+        const css = `@font-face { src: url("fonts/a.woff2") format("woff2"), url(missing.woff); }
+body { background: url('./bg.png'), url(https://example.com/x.png); }`;
+        const style = () => [...document.head.querySelectorAll("style")][1].textContent;
+        await preview.receive({ type: "assets", assets: { files: { "fonts/a.woff2": new Uint8Array([1]), "bg.png": new Uint8Array([2]) } } });
+        await preview.receive({ type: "load", story: { js, css: [css] } });
+        expect(style()).toBe(`@font-face { src: url("blob:preview/0") format("woff2"), url(missing.woff); }
+body { background: url("blob:preview/1"), url(https://example.com/x.png); }`);
+
+        // New assets go to the stylesheets that are already there
+        await preview.receive({ type: "assets", assets: { files: { "fonts/a.woff2": new Uint8Array([3]) } } });
+        expect(style()).toContain("src: url(\"blob:preview/2\")");
+        expect(style()).toContain("url('./bg.png')");
+        // The same stylesheet again changes nothing
+        await preview.receive({ type: "update", js, css: [css] });
+        expect(style()).toContain("src: url(\"blob:preview/2\")");
+    });
+
     test("adds the story's stylesheets, replacing the previous story's", async () => {
         const { preview } = setUp();
         const js = await compileJs(script);

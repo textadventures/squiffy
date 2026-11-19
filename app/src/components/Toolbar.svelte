@@ -33,6 +33,7 @@
     import BookOpen from "@lucide/svelte/icons/book-open";
     import Play from "@lucide/svelte/icons/play";
     import ImageIcon from "@lucide/svelte/icons/image";
+    import TypeIcon from "@lucide/svelte/icons/type";
     import StepForward from "@lucide/svelte/icons/step-forward";
     import GithubIcon from "#components/GithubIcon.svelte";
     import Plus from "@lucide/svelte/icons/plus";
@@ -66,6 +67,8 @@
         onrun?: (fromCursor: boolean) => void;
         // Opens the Assets dialog
         onassets?: () => void;
+        // Opens the Fonts dialog
+        onfonts?: () => void;
         // Downloads the whole project as a zip, which Open file can read back
         ondownloadproject?: () => void;
         // Publishes the story: HTML, JavaScript and assets as a zip, one HTML file, or the JavaScript
@@ -83,7 +86,7 @@
         onplaytab?: () => void;
     }
 
-    let { outlineOpen = false, ontoggleoutline, mapOpen = false, ontogglemap, problemCounts = { error: 0, warning: 0, hint: 0 }, problemsOpen = false, ontoggleproblems, onrun, onassets, ondownloadproject, onexport, oncommand, onadd, onsnippet, snippets = [], onabout, onplaytab }: Props = $props();
+    let { outlineOpen = false, ontoggleoutline, mapOpen = false, ontogglemap, problemCounts = { error: 0, warning: 0, hint: 0 }, problemsOpen = false, ontoggleproblems, onrun, onassets, onfonts, ondownloadproject, onexport, oncommand, onadd, onsnippet, snippets = [], onabout, onplaytab }: Props = $props();
 
     const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform);
     const mod = isMac ? "⌘" : "Ctrl+";
@@ -165,6 +168,7 @@
             { ...fileMenuItems[0], divider: true },
             ...fileMenuItems.slice(1),
             { label: "Images and other files", action: () => onassets?.(), icon: ImageIcon, divider: true },
+            { label: "Fonts", action: () => onfonts?.(), icon: TypeIcon },
             ...help,
         ];
     });
@@ -247,6 +251,7 @@
                     ><ListTree size={16} /></button>
                 {:else}
                     <button type="button" class="toolbar-icon-btn" onclick={onassets} title="Images and other files" aria-label="Images and other files"><ImageIcon size={16} /></button>
+                    <button type="button" class="toolbar-icon-btn" onclick={onfonts} title="Fonts" aria-label="Fonts"><TypeIcon size={16} /></button>
                     <div class="toolbar-divider"></div>
                     <button type="button" class="toolbar-icon-btn" onclick={() => oncommand?.("undo")} title="Undo ({mod}Z)" aria-label="Undo"><Undo2 size={16} /></button>
                     <button type="button" class="toolbar-icon-btn" onclick={() => oncommand?.("redo")} title="Redo ({mod}Shift+Z)" aria-label="Redo"><Redo2 size={16} /></button>

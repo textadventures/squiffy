@@ -264,6 +264,10 @@ describe("external-files", () => {
         await fs.writeFile(path.join(TEST_DIR, "cat.png"), "png");
         await fs.mkdir(path.join(TEST_DIR, "fonts"), { recursive: true });
         await fs.writeFile(path.join(TEST_DIR, "fonts", "f.woff2"), "font");
+        // A stylesheet's url()s are from its own folder
+        await fs.mkdir(path.join(TEST_DIR, "fonts", "story"), { recursive: true });
+        await fs.writeFile(path.join(TEST_DIR, "fonts", "story", "story.css"), "@font-face { src: url(\"latin-400-normal.woff2\"); }");
+        await fs.writeFile(path.join(TEST_DIR, "fonts", "story", "latin-400-normal.woff2"), "font");
 
         const build = path.join(TEST_DIR, "build");
         expect(await createPackageFiles(await findStory(TEST_DIR), build)).toBe(true);
@@ -271,13 +275,13 @@ describe("external-files", () => {
         const html = await fs.readFile(path.join(build, "index.html"), "utf8");
         expect(html).toContain("<link rel=\"stylesheet\" href=\"my.css\"/>");
         expect(html).toContain("<script src=\"my.js\"></script>");
-        for (const file of ["my.css", "my.js", "cat.png", "fonts/f.woff2", "story.js", "style.css"]) {
+        for (const file of ["my.css", "my.js", "cat.png", "fonts/f.woff2", "fonts/story/story.css", "fonts/story/latin-400-normal.woff2", "story.js", "style.css"]) {
             await expect(fs.access(path.join(build, file))).resolves.toBeUndefined();
         }
 
         // Building again doesn't pick up the build, or an old one next to the main file
         await fs.writeFile(path.join(TEST_DIR, "index.html"), "");
         await fs.writeFile(path.join(TEST_DIR, "story.js"), "");
-        expect((await findStory(TEST_DIR)).storyFiles).toEqual([path.join(TEST_DIR, "my.css"), path.join(TEST_DIR, "my.js")]);
+        expect((await findStory(TEST_DIR)).storyFiles).toEqual([path.join(TEST_DIR, "fonts", "story", "story.css"), path.join(TEST_DIR, "my.css"), path.join(TEST_DIR, "my.js")]);
     });
 });

@@ -481,3 +481,34 @@ test("Multi-file packages link to the story's own stylesheets and scripts", asyn
     expect(strFromU8(zip["my_style.css"])).toBe(storyCss);
     expect(strFromU8(zip["my_script.js"])).toBe(storyScript);
 });
+
+test("Inline HTML embeds the files an included stylesheet's url()s refer to", async () => {
+    const fontBytes = new Uint8Array([0x77, 0x4f, 0x46, 0x32]);
+    const css = `@font-face { font-family: "Story"; src: url("latin-400-normal.woff2") format("woff2"); }
+body { background: url(../../bg.png); }
+a { background: url(https://example.com/x.png); }`;
+    const result = await compileWithImports("@import fonts/story/story.css\n\nHello", ["fonts/story/story.css"]);
+    const pkg = await createPackage(result, {
+        inlineHtml: true,
+        assets: { "fonts/story/story.css": encode(css), "fonts/story/latin-400-normal.woff2": fontBytes, "bg.png": pngBytes },
+    });
+    const html = pkg.files["index.html"];
+
+    expect(html).toContain('src: url("data:font/woff2;base64,d09GMg==") format("woff2")');
+    expect(html).toContain('background: url("data:image/png;base64,');
+    expect(html).toContain("url(https://example.com/x.png)");
+    // The font is only for the stylesheet, but the image could be in the story too
+    expect(html).not.toContain('"fonts/story/latin-400-normal.woff2":');
+    expect(html).toContain('"bg.png":"data:image/png');
+});
+
+test("A zip links to a stylesheet, whose url()s find the files beside it", async () => {
+    const result = await compileWithImports("@import fonts/story/story.css\n\nHello", ["fonts/story/story.css"]);
+    const pkg = await createPackage(result, {
+        createZip: true,
+        assets: { "fonts/story/story.css": encode("src: url(\"a.woff2\");"), "fonts/story/a.woff2": new Uint8Array([1]) },
+    });
+    expect(pkg.files["index.html"]).toContain('<link rel="stylesheet" href="fonts/story/story.css"/>');
+    const zip = unzipSync(pkg.zip!);
+    expect(Object.keys(zip)).toEqual(expect.arrayContaining(["fonts/story/story.css", "fonts/story/a.woff2"]));
+});

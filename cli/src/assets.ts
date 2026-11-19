@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
-import type { CompileSuccess } from "squiffy-compiler";
+import { findCssUrls, resolveCssUrl, type CompileSuccess } from "squiffy-compiler";
 
 // File types that we look for references to in a story. Anything else (.squiffy, .js, .css, .html etc.)
 // is either part of the story source or something we'd be guessing about.
@@ -68,6 +68,25 @@ export const findImportedFiles = (inputFilename: string, result: CompileSuccess)
     const files: Record<string, Uint8Array> = {};
     for (const reference of [...externalStylesheets, ...externalScripts]) {
         readFileInFolder(basePath, reference, files);
+    }
+    return files;
+};
+
+/**
+ * Finds the files the story's own stylesheets refer to with url(), such as a font's files, by their
+ * path from the stylesheet's folder. `imported` is what findImportedFiles read.
+ */
+export const findStylesheetAssets = (inputFilename: string, result: CompileSuccess, imported: Record<string, Uint8Array>): Record<string, Uint8Array> => {
+    const basePath = path.resolve(path.dirname(inputFilename));
+    const files: Record<string, Uint8Array> = {};
+    for (const sheet of result.getUiInfo().externalStylesheets) {
+        const sheetPath = sheet.replace(/\\/g, "/").replace(/^(\.\/)+/, "");
+        const bytes = imported[sheetPath];
+        if (!bytes) continue;
+        for (const url of findCssUrls(new TextDecoder().decode(bytes))) {
+            const reference = resolveCssUrl(sheetPath, url);
+            if (reference !== null && !(reference in files)) readFileInFolder(basePath, reference, files);
+        }
     }
     return files;
 };
