@@ -11,6 +11,8 @@ import {
 import { settings } from "./settings.svelte.js";
 import { watchForDesktopUpdates } from "./desktop-updates.svelte.js";
 import { showToast } from "./toast.js";
+import { EditorView } from "@codemirror/view";
+import { redo, undo } from "@codemirror/commands";
 
 let busy = false;
 
@@ -37,8 +39,22 @@ export async function openInEditor(pick: () => Promise<PickedFolder | null>, mis
     }
 }
 
+// Edit > Undo/Redo: CodeMirror's own history in an editor, else the browser's (text fields)
+function undoRedo(action: "undo" | "redo") {
+    const focused = document.activeElement;
+    const view = focused instanceof HTMLElement ? EditorView.findFromDOM(focused) : null;
+    if (view) {
+        (action === "undo" ? undo : redo)(view);
+        return;
+    }
+    document.execCommand(action);
+}
+
 async function handleAction(action: MenuAction) {
     switch (action) {
+        case "undo":
+        case "redo":
+            return undoRedo(action);
         case "new-story":
             return openInEditor(pickDesktopNewStory);
         case "open-folder":

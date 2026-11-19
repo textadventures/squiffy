@@ -4,6 +4,8 @@ import type { MenuAction, RecentFolderInfo } from "./api.js";
 // The native menu. File commands go to the editor (menu actions), which does what its own
 // buttons do. Shortcuts the editor handles itself (Ctrl/Cmd+Shift+O, Ctrl/Cmd+Enter) are left
 // off the menu, since a menu accelerator would take the key first.
+// Undo and Redo go to the editor too: the built-in roles run the browser's own undo, which
+// knows nothing of CodeMirror's history (CodeMirror changes the DOM itself), so they did nothing.
 
 export interface MenuOptions {
     recent: RecentFolderInfo[];
@@ -72,7 +74,30 @@ export function buildMenu(options: MenuOptions): void {
                     ] satisfies MenuItemConstructorOptions[]),
             ],
         },
-        { role: "editMenu" },
+        {
+            label: "Edit",
+            submenu: [
+                { label: "Undo", accelerator: "CmdOrCtrl+Z", click: () => onAction("undo") },
+                { label: "Redo", accelerator: isMac ? "Shift+Cmd+Z" : "Ctrl+Y", click: () => onAction("redo") },
+                { type: "separator" },
+                { role: "cut" },
+                { role: "copy" },
+                { role: "paste" },
+                ...(isMac
+                    ? [
+                        { role: "pasteAndMatchStyle" },
+                        { role: "delete" },
+                        { role: "selectAll" },
+                        { type: "separator" },
+                        { label: "Speech", submenu: [{ role: "startSpeaking" }, { role: "stopSpeaking" }] },
+                    ] satisfies MenuItemConstructorOptions[]
+                    : [
+                        { role: "delete" },
+                        { type: "separator" },
+                        { role: "selectAll" },
+                    ] satisfies MenuItemConstructorOptions[]),
+            ],
+        },
         {
             label: "View",
             submenu: [
