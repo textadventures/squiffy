@@ -1,0 +1,83 @@
+---
+title: Converting a Quest gamebook
+description: Converting a gamebook made in Quest 5 or Quest Viva to Squiffy
+---
+
+import {Aside} from "@astrojs/starlight/components";
+
+Squiffy can convert a gamebook made in the gamebook mode of [Quest Viva](https://questviva.com), or of Quest 5 as it was known before, into a Squiffy story. Each page becomes a section, and its links become Squiffy links, so the story plays the same way, and you can carry on writing it in Squiffy's [editor](/editor/), with its [story map](/story-map/).
+
+Only gamebooks can be converted. Quest's text adventures work very differently from Squiffy, and aren't converted.
+
+## Converting a gamebook
+
+You can convert a gamebook from either kind of Quest file:
+
+- **A `.quest` file**, which is what Quest 5 and Quest Viva publish, and what you download from textadventures.co.uk. It has the images and sounds the gamebook uses in it, and they're copied into the converted story.
+- **A `.aslx` file**, which is the file Quest saves as you write. Its images and sounds are in the same folder.
+
+Then either:
+
+- In the [editor](/editor/), choose **Open file** on the home page and pick the Quest file. The editor says what it is and asks before converting it. On the web, the converted story is kept in your browser. In the [desktop app](/desktop-app/), you choose a folder to put it in. On the web, the editor can only read the file you give it, so if you give it a `.aslx` file, add its images and sounds to the story afterwards: `quest-import.txt` lists them.
+- With the [command-line tool](/cli/#converting-from-quest), run:
+
+  ```bash
+  npx @textadventures/squiffy-cli mygame.quest --convert-quest
+  ```
+
+  This puts the converted story in a new folder next to the file, called `mygame`, with the images and sounds the gamebook uses. Use `--out` to choose another folder.
+
+## What you get
+
+The converted story is a folder with:
+
+- `story.squiffy`, the story itself. Each page becomes a section with the same name, and a page with no links is marked as one of the story's [endings](/basic-concepts/#endings).
+- `squiffy.json`, the [project file](/multiple-files/).
+- `story.css`, if you chose the gamebook's colours, fonts or page width in Quest. They're set with Squiffy's [style variables](/styling/), and the story stays in light mode, as it did in Quest. Without one, the story follows Squiffy's own styles, in light and dark mode.
+- The images and sounds the gamebook uses.
+- `quest-import.txt`, which lists everything that couldn't be converted exactly, page by page.
+
+In Quest, the pages a player has read stay on the screen as they go, as they do in Squiffy. If you set your gamebook to clear the screen before each page, the story starts with a [master section](/basic-concepts/#master-sections-and-passages) that does the same.
+
+Anything that couldn't be converted at all is kept in the story as a comment, so nothing's lost:
+
+```squiffy
+{{!-- Quest: {either lamp:The lamp is on.|It's dark.} --}}
+```
+
+Search for `Quest:` to find them all.
+
+<Aside>
+Play the story through after converting it. The editor's [story map](/story-map/) is a good way to get to know the converted story, and to spot links that go nowhere.
+</Aside>
+
+## How it converts
+
+| Quest | Squiffy |
+|---|---|
+| A page | A section with the same name |
+| A page's links | `[[Go left]](Page2)` |
+| A link page, to a web address | A link to that address, which opens in a new tab |
+| A picture, YouTube video or sound | `<img>`, a YouTube player, or `<audio>`, before the page's text |
+| `{page:Page2}`, `{page:Page2:Go left}` | `[[Page2]]`, `[[Go left]](Page2)` |
+| `{if lamp:...}`, `{if not lamp:...}` | `{{#if lamp}}...{{/if}}`, `{{#if not lamp}}...{{/if}}` |
+| `{if gold>5:...}`, `{if mood=happy:...}` | `{{#if gold > 5}}...{{/if}}`, `{{#if mood = "happy"}}...{{/if}}` |
+| `{if Page2.visited:...}` | `{{#if (seen "Page2")}}...{{/if}}` |
+| `{once:...}`, `{notfirst:...}` | `{{#if (visits "Page1") = 1}}...{{/if}}`, `{{#if (visits "Page1") > 1}}...{{/if}}` |
+| `{counter:gold}`, `{game.name}` | `{{= gold + 0}}` (which shows 0 before it's set, as Quest does), `{{name}}` |
+| `{random:red:green:blue}` | `{{random (array "red" "green" "blue")}}` |
+| `{img:map.png}` | `<img src="map.png">` |
+| `{b:...}`, `{i:...}`, `{u:...}`, `{s:...}`, `{colour:red:...}`, `{back:yellow:...}` | Bold, italic and so on, and `<span style="...">` |
+| `{popup:key:An old key.}` | A [passage](/basic-concepts/#passages) link, `[key](key)`, that shows the text |
+| The gamebook's title, subtitle and author | Shown at the start, as in Quest, and the title is the story's `@title` |
+
+Quest's flags and counters become [attributes](/attributes/) with the same names. An attribute of the player or of a page, such as `player.strength`, becomes `player_strength`. A name Squiffy uses itself, such as `seen` or `turns`, gets an underscore: `seen_`.
+
+## What isn't converted yet
+
+- **Scripts.** A page's script, and the game's script that runs on every page, are kept as comments. Converting the commands Quest's gamebook editor gives you, such as setting flags and counters, and adding and removing links, is planned.
+- **Expressions in text**: `{either ...}`, `{eval:...}` and `{=...}`.
+- **Commands for Quest's text adventures**, such as `{object:...}` and `{exit:...}`, and `{select:...}` and `{rndalt:...}`.
+- **Links and other commands in `{random:...}`.** Its choices can be text, formatting and images.
+- **When sounds stop.** A page's sound plays to the end. In Quest, it stopped when the player went to another page.
+- **JavaScript** written for Quest.

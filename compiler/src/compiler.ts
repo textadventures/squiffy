@@ -9,6 +9,9 @@ export { convertTwine, convertTwineStory, formatTwineProblems } from "./twine/co
 export type { TwineConversionResult, TwineConversionProblem, TwineConversionOptions } from "./twine/convert.js";
 export { parseTwine, isTwineSource, TwineParseError } from "./twine/story.js";
 export type { TwineStory, TwinePassage } from "./twine/story.js";
+export { convertQuestGamebook, formatQuestProblems } from "./quest/convert.js";
+export type { QuestConversionResult, QuestConversionProblem, QuestConversionOptions } from "./quest/convert.js";
+export { isQuestSource, QuestParseError } from "./quest/aslx.js";
 export type { SetterConversion, SetterConversionProblem, SetterConversionResult } from "./setters.js";
 
 // The compiler works in three stages, which can also be used separately:

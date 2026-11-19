@@ -231,6 +231,26 @@ This is the second section.
     expect(result.output.story.sections.intro.text).toContain('{{section "_continue1" text="Continue"}}');
 });
 
+test("Links in a comment aren't links, even after a }}", async () => {
+    const result = await compile({
+        scriptBaseFilename: "test.squiffy",
+        script: "[[a]]:\n{{!-- {x}} [[b]] [c] --}} [[d]]\n\n[[d]]:\nD",
+    });
+
+    assertSuccess(result);
+    expect(result.output.story.sections.a.text.trim()).toBe('{{!-- {x}} [[b]] [c] --}} {{section "d"}}');
+});
+
+test("A named link whose text ends with > isn't a next-section link", async () => {
+    const result = await compile({
+        scriptBaseFilename: "test.squiffy",
+        script: "[[a]]:\n[[<i>Go</i>]](c) [[Next>]](c)\n\n[[b]]:\nB\n\n[[c]]:\nC",
+    });
+
+    assertSuccess(result);
+    expect(result.output.story.sections.a.text).toContain('{{section "c" text="<i>Go</i>"}} {{section "c" text="Next>"}}');
+});
+
 test("Named next-section link [[text]](>) should link to section after ---", async () => {
     const script = `
 [[start]]:

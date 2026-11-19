@@ -78,6 +78,7 @@ export default defineConfig({
                                 { label: "Converting a story", slug: "converting-from-twine" },
                             ],
                         },
+                        { label: "Quest gamebooks", slug: "converting-from-quest" },
                         { label: "Squiffy 6", slug: "coming-from-squiffy-6" },
                         { label: "Squiffy 5", slug: "coming-from-squiffy-5" },
                     ],

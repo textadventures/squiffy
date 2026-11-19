@@ -226,9 +226,10 @@ export function transformText(text: string, getNextSectionName: () => string | n
 
     // Handlebars expressions can contain square brackets that aren't links, such as
     // {{someArray.[1]}} or {{someHelper "[x]"}}, so swap each one for a placeholder while
-    // converting links. Text between block helpers like {{#if x}}...{{/if}} is still converted.
+    // converting links. Text between block helpers like {{#if x}}...{{/if}} is still converted. A
+    // comment ends at --}}, and can have }} and links in it before that.
     const mustaches: string[] = [];
-    input.replace(/\{\{\{[\s\S]*?\}\}\}|\{\{[\s\S]*?\}\}/g, ([match]) => {
+    input.replace(/\{\{!--[\s\S]*?--\}\}|\{\{\{[\s\S]*?\}\}\}|\{\{[\s\S]*?\}\}/g, ([match]) => {
         mustaches.push(match);
         return `${mustaches.length - 1}`;
     });
@@ -239,8 +240,9 @@ export function transformText(text: string, getNextSectionName: () => string | n
     // three deep. Without, it ends at the first ")", as in Squiffy 6.
     const target = expressions ? balancedTarget : "(?:.*?)";
 
-    // nextSectionLinkRegex matches [[text>]] - a link to the next section
-    const nextSectionLinkRegex = /\[\[([^\]]*?)>\]\]/g;
+    // nextSectionLinkRegex matches [[text>]] - a link to the next section. Followed by a (target),
+    // it's a named link whose text ends with >, such as [[<i>Go in</i>]](cave).
+    const nextSectionLinkRegex = /\[\[([^\]]*?)>\]\](?!\()/g;
 
     input.replace(nextSectionLinkRegex, ([match, rawText], offset) => {
         const text = restore(rawText);
