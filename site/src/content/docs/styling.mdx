@@ -11,7 +11,7 @@ A Squiffy story is an ordinary web page, so you change how it looks with CSS. Th
 
 There are two ways to add your own CSS:
 
-- **In your story:** put your rules in a CSS file in your story's folder, and [import](/multiple-files/#importing-files) it with `@import my_style.css`. In the editor, add the file with the **+** button in the files list. The published `index.html` links to it *after* Squiffy's own styles, so your rules take precedence, and your changes are kept every time you publish. The editor's preview uses it too.
+- **In your story:** put your rules in a CSS file in your story's folder, and [import](/multiple-files/#importing-files) it with `@import my_style.css`. In the editor, choose **Stylesheet** from the **+** menu in the files list. The editor adds the `@import` for you, and the new file starts with the most common changes and their defaults, ready to uncomment. The published `index.html` links to it *after* Squiffy's own styles, so your rules take precedence, and your changes are kept every time you publish. The editor's preview uses it too.
 - **Your own page:** if you [embed Squiffy in a custom page](/embedding/), you control the HTML and CSS completely.
 
 <Aside>
@@ -38,22 +38,23 @@ In the editor, the preview follows the editor's own theme, which you choose in *
 
 ### Fonts, text size and page width
 
-The whole story sits inside `div#squiffy-container`, and the story text is in `div#squiffy`. Include the `div`, otherwise your rule is less specific than the default and won't take effect:
+Set these variables to change the story's font and the width of the page:
 
 ```css
 :root {
-    --squiffy-max-width: 50rem;                        /* default: 42rem */
-}
-
-div#squiffy-container {
-    font-family: "Helvetica Neue", Arial, sans-serif;  /* default: Charter, …, Georgia, serif */
-    line-height: 1.5;                                  /* default: 1.6 */
-}
-
-div#squiffy {
-    font-size: 1.25rem;                                /* default: 1.125rem */
+    --squiffy-font-family: "Helvetica Neue", Arial, sans-serif;  /* default: Charter, …, Georgia, serif */
+    --squiffy-font-size: 1.25rem;                                /* default: 1.125rem */
+    --squiffy-line-height: 1.5;                                  /* default: 1.6 */
+    --squiffy-max-width: 50rem;                                  /* default: 42rem */
 }
 ```
+
+| Variable | What it sets | Default |
+| --- | --- | --- |
+| `--squiffy-font-family` | The font of the story and the header | Charter, Sitka Text, Cambria or Georgia, whichever the reader has |
+| `--squiffy-font-size` | The size of the story text. The header's buttons stay the same size | `1.125rem` |
+| `--squiffy-line-height` | The space between lines of text | `1.6` |
+| `--squiffy-max-width` | The width of the story text | `42rem` |
 
 Sizes are in `rem`, so they scale with the text size the reader has chosen in their browser (`1rem` is usually 16 pixels).
 
@@ -176,12 +177,12 @@ The exported `style.css` combines two sets of rules: the page layout, and the st
 
 | Selector | What it is | Defaults |
 | --- | --- | --- |
-| `:root` | The whole page | `color-scheme: light dark`, `--squiffy-max-width: 42rem` |
+| `:root` | The whole page | `color-scheme: light dark`, and the [font and width variables](#fonts-text-size-and-page-width) |
 | `body` | The page | `background-color: var(--squiffy-background)`, `color: var(--squiffy-text)`, no margin |
-| `div#squiffy-container` | Wraps the header and the story | `max-width: var(--squiffy-max-width)`, centred, `line-height: 1.6`, a serif font (Charter, Sitka Text, Cambria or Georgia, whichever the reader has) |
+| `div#squiffy-container` | Wraps the header and the story | `max-width: var(--squiffy-max-width)`, centred, `font-family: var(--squiffy-font-family)`, `line-height: var(--squiffy-line-height)` |
 | `div#squiffy-header` | The bar above the story containing the Back, Save, Restart and light/dark buttons | Stays at the top of the window (`position: sticky`), with a short fade underneath. `font-size: 0.875rem`, right-aligned |
 | `button#squiffy-back`, `button#squiffy-saves-button`, `button#restart`, `button#squiffy-theme` | The Back, Save, Restart and light/dark buttons | An arrow, a floppy disk, a circular arrow, and a moon or sun |
-| `div#squiffy` | The story text | `font-size: 1.125rem` |
+| `div#squiffy` | The story text | `font-size: var(--squiffy-font-size)` |
 | `div#squiffy img` | Images in the story | `max-width: 100%`, so they never overflow the page |
 
 ### Story text
