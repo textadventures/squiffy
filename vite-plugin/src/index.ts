@@ -110,6 +110,7 @@ export default function squiffyPlugin(options: SquiffyPluginOptions = {}): Plugi
                 storyFiles: story.storyFiles,
                 expressions: story.expressions,
                 projectId: story.projectId,
+                panels: story.panels,
             });
 
             for (const file of readFiles.slice(1)) {

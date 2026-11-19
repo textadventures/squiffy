@@ -5,6 +5,7 @@ export type SquiffyEventMap = {
     set: { attribute: string, value: any }; // an attribute was set
     canGoBackChanged: { canGoBack: boolean }; // whether the "back" button should be enabled
     navigated: { section: string, passage?: string }; // a section or passage was shown, or Back went to one
+    storyUpdated: Record<string, never>; // update() changed the story, e.g. after an edit in the editor
 };
 
 export type SquiffyEventHandler<E extends keyof SquiffyEventMap> =

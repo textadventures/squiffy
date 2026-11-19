@@ -137,6 +137,34 @@ div#squiffy-header::after {
 }
 ```
 
+### Panels
+
+[Panels](/multiple-files/#panels) beside the story are in `aside.squiffy-panels-side`, with each panel a `section.squiffy-panel`, whose `data-passage` is its passage's name. The page gets wider to make room for them, by `--squiffy-side-width` (`16rem` by default). On a screen narrower than `64rem`, they're buttons in the header instead. The panels' buttons are `button.squiffy-panel-button`, and the dialog they open is `dialog.squiffy-panel-dialog`.
+
+To put side panels on the left of the story:
+
+```css
+@media (min-width: 64rem) {
+    div#squiffy-container.squiffy-has-side {
+        grid-template-columns: var(--squiffy-side-width) minmax(0, 1fr);
+    }
+
+    aside.squiffy-panels-side {
+        grid-row: 2;
+        grid-column: 1;
+        padding-left: 0;
+        padding-right: 1.25rem;
+        border-left: none;
+        border-right: 1px solid var(--squiffy-border);
+    }
+
+    div#squiffy {
+        grid-row: 2;
+        grid-column: 2;
+    }
+}
+```
+
 ### Hiding the light/dark button
 
 To follow the reader's system setting without offering them the button:

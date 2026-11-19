@@ -46,6 +46,10 @@ export interface SquiffyApi {
     // Carries on from a saved game, in place of the game as it is now. A save from a different
     // story (by its squiffy.json "id") isn't loaded.
     loadSave: (save: SavedGame) => Promise<LoadSaveResult>;
+    // A passage in the master section [[]], rendered as HTML with the attributes as they are now,
+    // for a panel beside the story or a dialog (#14, #443). It changes nothing: {{set}} and the
+    // like are ignored, its @set and JavaScript don't run, and its links are disabled.
+    renderPassage: (name: string) => string;
 
     on<E extends keyof SquiffyEventMap>(
         event: E,
@@ -92,7 +96,25 @@ export interface Story {
     // Whether @set and link setters take expressions, with the same rules as {{#if}}: attributes
     // by name, and text in quotes. True for a story with a squiffy.json (#373).
     expressions?: boolean;
+    // squiffy.json's "panels": passages shown beside the story, or in a dialog from a button
+    panels?: Panel[];
     sections: Record<string, Section>;
+}
+
+// The icons a panel's button can have, in place of its label
+export const PANEL_ICONS = ["bag", "person", "map", "help", "info", "list", "book", "star", "heart"] as const;
+export type PanelIcon = typeof PANEL_ICONS[number];
+
+// A passage in the master section that's always on screen, rendered again as the story goes on:
+// beside the story ("side"), or in a dialog that a button in the header opens ("button").
+export interface Panel {
+    passage: string;
+    // The button's text, or its tooltip if it has an icon. A side panel's button only shows on
+    // screens too narrow for the panel.
+    label: string;
+    // "button" if it's left out
+    position?: "side" | "button";
+    icon?: PanelIcon;
 }
 
 export interface Section {

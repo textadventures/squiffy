@@ -46,15 +46,27 @@
                 });
             }
 
+            const pageStrings = /* PAGE_STRINGS */;
+
             // The Save button, which opens the Saved games dialog, unless the story's squiffy.json
             // turns it off
             const savesButton = document.getElementById('squiffy-saves-button');
             if (savesButton) {
                 const savesDialog = squiffyRuntime.createSavesDialog(squiffyApi, {
-                    strings: /* PAGE_STRINGS */,
+                    strings: pageStrings,
                 });
                 savesButton.addEventListener('click', function () {
                     savesDialog.open();
+                });
+            }
+
+            // The story's panels, from its squiffy.json: beside the story, or buttons in the header
+            if (story.panels && story.panels.length) {
+                squiffyRuntime.createPanels(squiffyApi, {
+                    panels: story.panels,
+                    buttons: document.getElementById('squiffy-header'),
+                    side: document.getElementById('squiffy-container'),
+                    strings: pageStrings,
                 });
             }
 

@@ -2,8 +2,9 @@
 // page itself (preview.main.ts) connects this to postMessage; it's separate so it can be tested.
 
 import { init } from "./squiffy.runtime.js";
+import { createPanels, type Panels } from "./panels.js";
 import type { HostMessage, PreviewAssets, PreviewMessage, PreviewStory } from "./preview-protocol.js";
-import type { SquiffyApi, Story } from "./types.js";
+import type { Panel, SquiffyApi, Story } from "./types.js";
 
 export interface PreviewOptions {
     // Where to show the story
@@ -47,6 +48,12 @@ function errorMessage(error: unknown): PreviewMessage {
 export function createPreview(options: PreviewOptions) {
     const loadModule = options.loadModule ?? importFromBlob;
     let api: SquiffyApi | undefined;
+    // The story's panels (squiffy.json's "panels"), shown as on the published page: their buttons
+    // in a bar above the story, and side panels beside it if the preview is wide enough
+    let panels: Panels | undefined;
+    let panelsJson = "";
+    let panelButtons: HTMLElement | undefined;
+    let panelSide: HTMLElement | undefined;
     // Each load gets a new number, so a slow load that's been replaced doesn't start
     let loadCount = 0;
     const assetUrls = new Map<string, string>();
@@ -140,9 +147,17 @@ export function createPreview(options: PreviewOptions) {
         if (thisLoad != loadCount) return;
         send({ type: "themeFixed", fixed: themeIsFixed() });
 
+        panels?.dispose();
+        panels = undefined;
+        panelsJson = "";
+        panelButtons = document.createElement("div");
+        panelButtons.className = "squiffy-preview-header";
+        panelSide = document.createElement("div");
+        panelSide.className = "squiffy-preview-body";
         const container = document.createElement("div");
         container.className = "squiffy-preview-story";
-        options.element.appendChild(container);
+        panelSide.appendChild(container);
+        options.element.append(panelButtons, panelSide);
 
         const newApi = await init({
             element: container,
@@ -161,9 +176,19 @@ export function createPreview(options: PreviewOptions) {
             if (thisLoad == loadCount) send({ type: "navigated", ...e });
         });
         api = newApi;
+        setPanels(story.panels);
         send({ type: "canGoBackChanged", canGoBack: false });
         await newApi.begin(message.startAt);
         if (thisLoad == loadCount) send({ type: "loaded" });
+    }
+
+    // Shows the story's panels, or shows them again if they've changed
+    function setPanels(list: Panel[] | undefined) {
+        const json = JSON.stringify(list ?? []);
+        if (!api || !panelButtons || json == panelsJson) return;
+        panelsJson = json;
+        panels?.dispose();
+        panels = list?.length ? createPanels(api, { panels: list, buttons: panelButtons, side: panelSide }) : undefined;
     }
 
     async function receive(message: HostMessage) {
@@ -176,7 +201,11 @@ export function createPreview(options: PreviewOptions) {
                     if (!api) break;
                     // A stylesheet can change whether the story sets its own color-scheme
                     if (message.css && setStyles(message.css)) send({ type: "themeFixed", fixed: themeIsFixed() });
-                    api.update((await loadModule(message.js)).story);
+                    {
+                        const { story } = await loadModule(message.js);
+                        api.update(story);
+                        setPanels(story.panels);
+                    }
                     break;
                 case "restart":
                     api?.restart();

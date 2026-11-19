@@ -197,7 +197,7 @@ export const createPackage = async (input: CompileSuccess, createZipOrOptions: b
     const strings: Record<string, string> = { ...PAGE_STRINGS, ...options.strings };
     htmlData = htmlData.replace(/\{\{(\w+)\}\}/g, (match, name: string) =>
         Object.prototype.hasOwnProperty.call(strings, name) ? escapeAttribute(strings[name]) : match);
-    // The Saved games dialog's text, which the page's script gives to the runtime
+    // The page's text, which its script gives to the Saved games dialog and the panels
     htmlData = htmlData.replace("/* PAGE_STRINGS */", () => scriptSafeJson(strings));
     htmlData = htmlData.replace("<!-- INFO -->", () => infoComment);
     htmlData = htmlData.replace("<!-- TITLE -->", () => uiInfo.title);

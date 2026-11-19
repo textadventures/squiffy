@@ -37,6 +37,25 @@ export interface ProjectFile {
     // The published page's own text, such as the Restart button's tooltip, for a story in another
     // language. Anything left out is in English.
     strings?: PageStrings;
+    // Passages in the master section that are always to hand: beside the story, or in a dialog
+    // from a button in the header (#14, #443)
+    panels?: Panel[];
+}
+
+// The icons a panel's button can have. The runtime has the same list (PANEL_ICONS).
+export const PANEL_ICONS = ["bag", "person", "map", "help", "info", "list", "book", "star", "heart"] as const;
+export type PanelIcon = typeof PANEL_ICONS[number];
+
+// A panel, from squiffy.json's "panels". The runtime's Panel is the same.
+export interface Panel {
+    // A passage in the master section [[]], rendered again as the story goes on
+    passage: string;
+    // The button's text, or its tooltip if it has an icon
+    label: string;
+    // "side" shows it beside the story (or as a button, on a narrow screen). "button", or
+    // leaving it out, shows it in a dialog from a button in the header.
+    position?: "side" | "button";
+    icon?: PanelIcon;
 }
 
 // The text on the published page around the story, by name. See PAGE_STRINGS for the English.
@@ -153,6 +172,9 @@ export function parseProjectFile(text: string): ParsedProjectFile {
         return fail(`${PROJECT_FILENAME}'s "strings" should be an object of text, such as { "restart": "Recommencer" }.`);
     }
 
+    const panels = parsePanels(data.panels);
+    if (typeof panels == "string") return fail(panels);
+
     const map = parseMapPositions(data.map);
     return {
         success: true,
@@ -163,6 +185,7 @@ export function parseProjectFile(text: string): ParsedProjectFile {
             ...(backButton !== undefined ? { backButton } : {}),
             ...(saveButton !== undefined ? { saveButton } : {}),
             ...(strings !== undefined ? { strings: pickPageStrings(strings as Record<string, string>) } : {}),
+            ...(panels !== undefined ? { panels } : {}),
         },
     };
 }
@@ -171,6 +194,37 @@ export function parseProjectFile(text: string): ParsedProjectFile {
 // with strings this one doesn't have, still builds.
 function pickPageStrings(strings: Record<string, string>): PageStrings {
     return Object.fromEntries(Object.entries(strings).filter(([name]) => Object.prototype.hasOwnProperty.call(PAGE_STRINGS, name)));
+}
+
+// squiffy.json's "panels", or an error to show the author
+function parsePanels(value: unknown): Panel[] | string | undefined {
+    if (value === undefined) return undefined;
+    const example = "{ \"passage\": \"inventory\", \"label\": \"Inventory\" }";
+    if (!Array.isArray(value)) return `${PROJECT_FILENAME}'s "panels" should be a list, such as [${example}].`;
+    const panels: Panel[] = [];
+    for (const [i, item] of value.entries()) {
+        const which = `${PROJECT_FILENAME}'s panel ${i + 1}`;
+        if (!isObject(item)) return `${which} should be an object, such as ${example}.`;
+        if (typeof item.passage != "string" || !item.passage.trim()) {
+            return `${which} needs a "passage": the name of a passage in the master section [[]].`;
+        }
+        if (typeof item.label != "string" || !item.label.trim()) {
+            return `${which} needs a "label", for its button, such as "Inventory".`;
+        }
+        if (item.position !== undefined && item.position !== "side" && item.position !== "button") {
+            return `${which}'s "position" should be "side" or "button".`;
+        }
+        if (item.icon !== undefined && !(PANEL_ICONS as readonly unknown[]).includes(item.icon)) {
+            return `${which}'s "icon" should be one of ${PANEL_ICONS.map(icon => `"${icon}"`).join(", ")}.`;
+        }
+        panels.push({
+            passage: item.passage.trim(),
+            label: item.label.trim(),
+            ...(item.position !== undefined ? { position: item.position } : {}),
+            ...(item.icon !== undefined ? { icon: item.icon as PanelIcon } : {}),
+        });
+    }
+    return panels;
 }
 
 const EXAMPLE_ID = "0b7c6d9e-3f1a-4e2b-9c5d-8a7f6e5d4c3b";
@@ -336,7 +390,7 @@ export function getStoryFiles(project: ProjectFile, paths: Iterable<string>, ski
 export const storyFileList = (story: StoryFiles) => [...story.included, ...story.stylesheets, ...story.scripts];
 
 // The text of a new project file. It's given a new random id, unless one is passed in.
-export function formatProjectFile(project: { main: string; exclude?: string[]; map?: MapPositions; id?: string }): string {
+export function formatProjectFile(project: { main: string; exclude?: string[]; map?: MapPositions; id?: string; panels?: Panel[] }): string {
     const json: Record<string, unknown> = {
         $schema: PROJECT_SCHEMA_URL,
         version: PROJECT_FILE_VERSION,
@@ -344,6 +398,7 @@ export function formatProjectFile(project: { main: string; exclude?: string[]; m
         main: project.main,
     };
     if (project.exclude?.length) json.exclude = project.exclude;
+    if (project.panels?.length) json.panels = project.panels;
     const text = JSON.stringify(json, null, 2) + "\n";
     return project.map ? updateProjectFile(text, { map: project.map })! : text;
 }

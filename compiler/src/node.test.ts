@@ -50,6 +50,11 @@ describe("findStory", () => {
         expect(story.saveButton).toBe(false);
     });
 
+    test("a project's panels come with it", async () => {
+        await write({ "squiffy.json": "{ \"version\": 1, \"main\": \"story.squiffy\", \"panels\": [{ \"passage\": \"bag\", \"label\": \"Bag\" }] }", "story.squiffy": "" });
+        expect((await findStory(dir)).panels).toEqual([{ passage: "bag", label: "Bag" }]);
+    });
+
     test("a project's strings come with it", async () => {
         await write({ "squiffy.json": "{ \"version\": 1, \"main\": \"story.squiffy\", \"strings\": { \"back\": \"Retour\" } }", "story.squiffy": "" });
         expect((await findStory(dir)).strings).toEqual({ back: "Retour" });
