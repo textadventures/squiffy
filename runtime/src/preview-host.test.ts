@@ -61,7 +61,7 @@ describe("preview host", () => {
         const { channel, receive } = fakeChannel();
         const handlers = {
             onReady: vi.fn(), onLoaded: vi.fn(), onAttributeSet: vi.fn(), onCanGoBackChanged: vi.fn(),
-            onNavigated: vi.fn(), onRuntimeError: vi.fn(),
+            onNavigated: vi.fn(), onThemeFixed: vi.fn(), onRuntimeError: vi.fn(),
         };
         const host = createPreviewHost(channel, handlers);
         receive({ type: "navigated", section: "not ours" });
@@ -73,6 +73,7 @@ describe("preview host", () => {
             { type: "attributeSet", name: "score", value: 2 },
             { type: "canGoBackChanged", canGoBack: true },
             { type: "navigated", section: "s", passage: "p" },
+            { type: "themeFixed", fixed: true },
             { type: "runtimeError", message: "oops", stack: "at x" },
         ]) {
             receive({ channel: PREVIEW_CHANNEL, ...message });
@@ -83,6 +84,7 @@ describe("preview host", () => {
         expect(handlers.onCanGoBackChanged).toHaveBeenCalledWith(true);
         expect(handlers.onNavigated).toHaveBeenCalledOnce();
         expect(handlers.onNavigated).toHaveBeenCalledWith("s", "p");
+        expect(handlers.onThemeFixed).toHaveBeenCalledWith(true);
         expect(handlers.onRuntimeError).toHaveBeenCalledWith("oops", "at x");
 
         host.dispose();

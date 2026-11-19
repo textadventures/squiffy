@@ -31,6 +31,8 @@ export interface PreviewHandlers {
     onAttributeSet?(name: string, value: unknown): void;
     onCanGoBackChanged?(canGoBack: boolean): void;
     onNavigated?(section: string, passage?: string): void;
+    // Whether the story's own CSS sets its color-scheme, so setTheme() makes no difference
+    onThemeFixed?(fixed: boolean): void;
     onRuntimeError?(message: string, stack?: string): void;
 }
 
@@ -111,6 +113,9 @@ export function createPreviewHost(channel: PreviewChannel, handlers: PreviewHand
                 break;
             case "navigated":
                 handlers.onNavigated?.(message.section, message.passage);
+                break;
+            case "themeFixed":
+                handlers.onThemeFixed?.(message.fixed);
                 break;
             case "runtimeError":
                 handlers.onRuntimeError?.(message.message, message.stack);
