@@ -345,6 +345,10 @@ export class SugarCubeExpressions {
         return this.ctx.story.attribute(name, temp);
     }
 
+    variable(name: string, temp: boolean): Expr {
+        return this.ctx.story.variable(name, temp);
+    }
+
     parse(source: string): Expr {
         const tokens = new Tokens(tokenize(source));
         const e = new ExpressionParser(this, tokens).expression();
@@ -406,6 +410,7 @@ class ExpressionParser {
     // Objects are flattened, so $player to { hp: 10 } sets player_hp
     statement(): Statement[] {
         const target = this.postfixValue();
+        if (target.v == "expr" && target.e.k == "loop") throw new Unconvertible("changing a loop's variable inside the loop");
         const t = this.tokens.peek();
         if (target.v == "expr" && target.e.k == "var" && t?.text == "=") {
             const start = this.tokens.pos;
@@ -603,6 +608,10 @@ class ExpressionParser {
                 const index = this.expression();
                 this.tokens.expect("]");
                 // A widget's arguments, which a call to it puts in args_0, args_1 and so on
+                if (value.v == "expr" && value.e.k == "var" && index.k == "loop" && index.kind == "index" && index.array == value.e.name) {
+                    value = { v: "expr", e: { k: "loop", kind: "item", up: index.up } };
+                    continue;
+                }
                 if (value.v == "expr" && value.e.k == "var" && value.e.name == "args" && index.k == "num") {
                     value = { v: "expr", e: { k: "var", name: `args_${index.v}` } };
                     continue;
@@ -639,7 +648,7 @@ class ExpressionParser {
             const path = `${object.name}.${property}`;
             if (path == "State.variables" || path == "State.temporary" || path == "SugarCube.State") return { v: "global", name: path };
             if (object.name == "State.variables" || object.name == "variables") return { v: "expr", e: { k: "var", name: this.s.attribute(property, false) } };
-            if (object.name == "State.temporary" || object.name == "temporary") return { v: "expr", e: { k: "var", name: this.s.attribute(property, true) } };
+            if (object.name == "State.temporary" || object.name == "temporary") return { v: "expr", e: this.s.variable(property, true) };
             return { v: "global", name: path };
         }
         return { v: "member", object, property };
@@ -720,8 +729,8 @@ class ExpressionParser {
         switch (t.type) {
             case "str": return { v: "expr", e: { k: "str", v: t.value as string } };
             case "num": return { v: "expr", e: { k: "num", v: t.value as number } };
-            case "var": return { v: "expr", e: { k: "var", name: this.s.attribute(t.value as string, false) } };
-            case "temp": return { v: "expr", e: { k: "var", name: this.s.attribute(t.value as string, true) } };
+            case "var": return { v: "expr", e: this.s.variable(t.value as string, false) };
+            case "temp": return { v: "expr", e: this.s.variable(t.value as string, true) };
             case "ident":
                 switch (t.text) {
                     case "true": return { v: "expr", e: { k: "bool", v: true } };
@@ -1278,8 +1287,13 @@ class Writer {
             }
             case "script":
                 throw new Unconvertible("<<script>>, which runs SugarCube JavaScript");
-            case "for":
-                throw new Unconvertible("<<for>> loops");
+            case "for": {
+                state.leading = false;
+                if (/<<\s*(?:break|continue)\s*>>/.test(m.raw)) throw new Unconvertible("<<break>> and <<continue>>");
+                const loop = this.forLoop(m.args);
+                const body = this.ctx.story.inLoop(loop.vars, loop.array, () => this.body(m, state));
+                return `{{#each ${print(loop.collection)}}}${body}{{/each}}`;
+            }
             case "widget":
                 return "";
             case "back":
@@ -1320,6 +1334,28 @@ class Writer {
         }
     }
 
+    // What a <<for>> goes through, as {{#each}} does, and the variables (with their $ or _) that
+    // stand for its item and position. It can go through an array with range, or by position:
+    // <<for _i to 0; _i lt $list.length; _i++>>. Either way, $list[_i] is the item.
+    private forLoop(args: string): { collection: Expr, vars: Map<string, "item" | "index">, array?: string } {
+        const range = /^\s*([$_][A-Za-z_]\w*)\s*(?:,\s*([$_][A-Za-z_]\w*)\s*)?\brange\b([\s\S]+)$/.exec(args);
+        if (range) {
+            const vars = new Map<string, "item" | "index">(range[2] ? [[range[1], "index"], [range[2], "item"]] : [[range[1], "item"]]);
+            const collection = this.expr.parse(range[3]);
+            if (collection.k != "var" && collection.k != "array" && !(collection.k == "loop" && collection.kind == "item")) {
+                throw new Unconvertible("<<for>> with range over something other than an array");
+            }
+            // With a position as well, $list[_i] is the item too
+            return { collection, vars, array: collection.k == "var" ? collection.name : undefined };
+        }
+        const counted = /^\s*_([A-Za-z_]\w*)\s*(?:to|=)\s*0\s*;\s*_\1\s*(?:lt|<)\s*([$_])([A-Za-z_]\w*)\.length\s*;\s*(?:_\1\s*\+\+|\+\+\s*_\1|_\1\s*\+=\s*1)\s*$/.exec(args);
+        if (counted) {
+            const array = this.expr.attribute(counted[3], counted[2] == "_");
+            return { collection: { k: "var", name: array }, vars: new Map([["_" + counted[1], "index"]]), array };
+        }
+        throw new Unconvertible("<<for>> loops, except ones that go through an array (with range, or from 0 to its length)");
+    }
+
     // The attribute a form macro like <<textbox "$name">> sets
     private receiver(arg: string): string {
         const match = /^["']([$_])([A-Za-z_]\w*)["']$/.exec(arg);
@@ -1333,8 +1369,9 @@ class Writer {
             return { plain: node.text, squiffy: this.inlineText(node.text) };
         }
         const e = this.expr.parse(arg);
-        if (e.k != "str") throw new Unconvertible("a link whose text isn't fixed");
-        return { plain: e.v, squiffy: this.inlineText(e.v) };
+        if (e.k == "str") return { plain: e.v, squiffy: this.inlineText(e.v) };
+        // Text worked out as the story runs, e.g. a loop's item: named after the expression
+        return { plain: arg.replace(/[^\w\s]+/g, " ").trim() || "link", squiffy: display(e) };
     }
 
     private sectionName(passage: string, raw: string): string {

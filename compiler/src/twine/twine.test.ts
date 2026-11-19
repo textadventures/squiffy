@@ -304,6 +304,19 @@ describe("Harlowe", () => {
         expect(section(script, "Start")).toBe("{{#if (visits \"Cellar\") = 0 and lamp}}[[Cellar]]<br>{{/if}}{{#if key}}[[Attic]]<br>{{/if}}");
     });
 
+    test("(for:) and (loop:) become {{#each}}", async () => {
+        const { script } = await convert("Harlowe",
+            ":: Start\n(for: each _item, ...$bag)[_item; ](for: _n where _n > 2, 1, 2, 3, 4)[_n ](loop: each _x, ...(range: 1, 3))[(print: _x * 2)]");
+        expect(section(script, "Start")).toBe(
+            "{{#each bag}}{{this}}; {{/each}}{{#each (array 1 2 3 4)}}{{#if this > 2}}{{this}} {{/if}}{{/each}}{{#each (array 1 2 3)}}{{= this * 2}}{{/each}}");
+    });
+
+    test("a (for:) that can't be converted is left as a comment, without its hook", async () => {
+        const { script, result } = await convert("Harlowe", ":: Start\n(for: it, ...$a)[x]");
+        expect(section(script, "Start")).toBe("{{!-- Twine: (for: it, ...$a)[x] --}}");
+        expect(result.problems.map(p => p.reason)).toEqual(["This couldn't be converted: (for:) with something other than \"each _item\" or \"_item where ...\"."]);
+    });
+
     test("what can't be converted is left as a comment", async () => {
         const { script, result } = await convert("Harlowe", ":: Start\nHi (alert: \"x\") (set: $x to (dm: 1, 2)'s 1st)");
         expect(section(script, "Start")).toBe(
@@ -390,6 +403,43 @@ describe("SugarCube", () => {
     test("tags().includes() is a check for the passages with the tag", async () => {
         const { script } = await convert("SugarCube", ":: Start [title]\nHi\n\n:: PassageHeader\n<<if tags().includes(\"title\")>>Title<</if>>");
         expect(section(script, "")).toBe("@clear\n{{#if (at (array \"Start\"))}}Title{{/if}}");
+    });
+
+    test("<<for>> with range becomes {{#each}}, with the item as this and the position as @index", async () => {
+        const { script } = await convert("SugarCube",
+            ":: Start\n<<for _i, _x range $bag>>_i: _x $bag[_i] <<if _x is \"key\">>[[Use _x|Door][$using to _x; $pos to _i]]<</if>><<set $last to _x>><</for>><<for _a range $rows>><<for _b range _a>>_b<</for>><</for>>\n\n:: Door\nD");
+        expect(section(script, "Start")).toBe(
+            "{{#each bag}}{{@index}}: {{this}} {{this}} {{#if this = \"key\"}}[[Use {{this}}]](Door, using = '{{this}}', pos = '{{@index}}'){{/if}}{{set \"last\" this}}{{/each}}"
+            + "{{#each rows}}{{#each this}}{{this}}{{/each}}{{/each}}");
+    });
+
+    test("<<for>> through an array by position, with $list[_i] as the item", async () => {
+        const { script } = await convert("SugarCube",
+            ":: Start\n<<for _i to 0; _i lt $inv.length; _i++>><<link $inv[_i] \"Door\">><<set $picked = $inv[_i]>><</link>> <</for>>\n\n:: Door\nD");
+        expect(section(script, "Start")).toBe("{{#each inv}}[[{{this}}]](Door, picked = '{{this}}') {{/each}}");
+    });
+
+    test("<<for>> loops that can't be converted", async () => {
+        const { script, result } = await convert("SugarCube",
+            ":: Start\n<<for _x range $bag>><<if _x>><<break>><</if>><</for>> <<for _c < 4>>x<</for>> <<for _x range $bag>><<set _x to 1>><</for>>");
+        expect(section(script, "Start")).toBe(
+            "{{!-- Twine: <<for _x range $bag>><<if _x>><<break>><</if>><</for>> --}} {{!-- Twine: <<for _c < 4>>x<</for>> --}} {{#each bag}}{{!-- Twine: <<set _x to 1>> --}}{{/each}}");
+        expect(result.problems.map(p => p.reason)).toEqual([
+            "This couldn't be converted: <<break>> and <<continue>>.",
+            "This couldn't be converted: <<for>> loops, except ones that go through an array (with range, or from 0 to its length).",
+            "This couldn't be converted: changing a loop's variable inside the loop.",
+        ]);
+    });
+
+    test("a link in a loop that runs more than setters, using the loop's item, can't be converted", async () => {
+        const { script, result } = await convert("SugarCube",
+            ":: Start\n<<for _x range $bag>><<link _x \"Door\">><<set $picked to _x>><<goto \"Door\">><</link>><<link \"Look\">>A _x.<</link>> <<link \"Wave\">>Hi.<</link>><</for>>\n\n:: Door\nD");
+        expect(section(script, "Start")).toBe(
+            "{{#each bag}}[[{{this}}]](Door, picked = '{{this}}'){{!-- Twine: <<link \"Look\">>A _x.<</link>> --}} [Wave](Wave){{/each}}\n\n[Wave]:\nHi.");
+        expect(result.problems.map(p => p.reason)).toEqual([
+            "This couldn't be converted: a link in a loop that does more than set variables to the loop's item.",
+            "This link is in a loop, and every item's link goes to the same passage, so once one has been clicked, they all have.",
+        ]);
     });
 
     test("what can't be converted is left as a comment", async () => {

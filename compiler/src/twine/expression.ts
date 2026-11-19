@@ -16,7 +16,11 @@ export type Expr =
     | { k: "neg", e: Expr }
     // A Squiffy helper, e.g. (seen "cave")
     | { k: "call", fn: string, args: Expr[] }
-    | { k: "array", items: Expr[] };
+    | { k: "array", items: Expr[] }
+    // A loop's item ({{this}}) or position ({{@index}}), in an {{#each}} up levels out from the
+    // innermost one. array is the attribute a loop by position goes through, so $list[_i] can be
+    // its item.
+    | { k: "loop", kind: "item" | "index", up: number, array?: string };
 
 // Thrown when something can't be converted. The message says why, for the list of problems.
 export class Unconvertible extends Error {}
@@ -41,6 +45,15 @@ export interface PrintOptions {
     // Quote text with single quotes where possible, for setters in links, which end up in a
     // set="..." string
     preferSingle?: boolean;
+    // For setters in links, which run when the link is clicked, after its loop has finished: a
+    // loop's item is filled in where the link is, as '{{this}}'
+    inLink?: boolean;
+}
+
+// How a loop's item or position is written in Handlebars, e.g. this, ../this or @index
+function loopRef(e: Expr & { k: "loop" }): string {
+    const up = "../".repeat(e.up);
+    return e.kind == "item" ? up + "this" : "@" + up + "index";
 }
 
 // Text as a quoted string. Handlebars and Squiffy's expression tokenizer both take a backslash
@@ -72,6 +85,11 @@ export function print(e: Expr, options: PrintOptions = {}): string {
         case "bool": return String(e.v);
         case "null": return "null";
         case "var": return attributeRef(e.name);
+        case "loop":
+            if (!options.inLink) return loopRef(e);
+            // A link fills in its setters with only its own loop's item
+            if (e.up) throw new Unconvertible("a link in a loop that sets a variable to an outer loop's item");
+            return `'{{${loopRef(e)}}}'`;
         case "array": return `(array${e.items.map(i => " " + printArgument(i, options)).join("")})`;
         case "call": return `(${e.fn}${e.args.map(a => " " + printArgument(a, options)).join("")})`;
         case "neg": {
@@ -129,6 +147,7 @@ export function display(e: Expr): string {
     if (e.k == "var") {
         return /^[A-Za-z_]\w*$/.test(e.name) && !reservedWords.has(e.name) ? `{{${e.name}}}` : `{{get ${quote(e.name)}}}`;
     }
+    if (e.k == "loop") return `{{${loopRef(e)}}}`;
     if (e.k == "call") return `{{${print(e).slice(1, -1)}}}`;
     return `{{= ${print(e)}}}`;
 }
