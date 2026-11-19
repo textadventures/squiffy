@@ -26,6 +26,7 @@ async function getCompileResult(story: StoryOnDisk) {
         storyFiles: story.storyFiles,
         expressions: story.expressions,
         projectId: story.projectId,
+        panels: story.panels,
         globalJs: true,
     });
     for (const diagnostic of result.diagnostics) {

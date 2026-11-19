@@ -70,9 +70,54 @@ To leave out the Save button, set `saveButton` to `false`:
 }
 ```
 
+## Panels
+
+A panel shows a passage that's always to hand, such as the player's stats, their inventory, a map or some help. It's rendered again each time the story moves on, so it's always up to date. List your panels under `panels`:
+
+```json
+{
+  "version": 1,
+  "main": "story.squiffy",
+  "panels": [
+    { "passage": "status", "label": "Status", "position": "side" },
+    { "passage": "inventory", "label": "Inventory", "icon": "bag" },
+    { "passage": "help", "label": "Help" }
+  ]
+}
+```
+
+Each panel's passage is in the [master section](/basic-concepts/#master-sections-and-passages) `[[]]`:
+
+```squiffy
+[[]]:
+
+[status]:
+**Gold:** {{gold}}
+
+**Health:** {{health}}
+
+[inventory]:
+{{#each inventory}}
+- {{this}}
+{{else}}
+You're carrying nothing.
+{{/each}}
+
+[help]:
+Click a link to choose what happens next.
+```
+
+- `"position": "side"` shows the panel beside the story. On a narrower screen, such as a phone's, it's a button in the header instead, which shows the panel in a dialog.
+- Any other panel is a button in the header, next to the Back and Restart buttons, which shows its passage in a dialog. The dialog follows the story while it's open.
+- `label` is the button's text. To show an icon instead, with the label as its tooltip, give an `icon`: `bag`, `person`, `map`, `help`, `info`, `list`, `book`, `star` or `heart`.
+
+A panel only shows its passage: it doesn't change the story. `{{set}}`, `{{goto}}` and the like are ignored, the passage's `@set` and JavaScript don't run, and its links don't work. Opening a panel isn't a move, so Back doesn't go back to it. A side panel whose text comes out empty is hidden, so `{{#if}}` can hide it until it has something to show.
+
+To change how panels look, see [Panels](/styling/#panels) in Styling.
+
 ## The page's text in another language
 
-A published story's buttons are icons, with a tooltip that says what each one does, which screen readers read out too. Clicking Restart asks the player whether they're sure. This text, and the text of the [Saved games](#saved-games) dialog, is in English unless you give your own under `strings`:
+A published story's buttons are icons, with a tooltip that says what each one does, which screen readers read out too. Clicking Restart asks the player whether they're sure. This text, and the text of the [Saved games](#saved-games) dialog and the [panels'](#panels) Close button, is in English unless you give your own under `strings`:
 
 ```json
 {

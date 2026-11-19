@@ -39,6 +39,19 @@ describe("parseProjectFile", () => {
         });
     });
 
+    test("panels are kept, trimmed", () => {
+        const text = JSON.stringify({ version: 1, main: "a.squiffy", panels: [
+            { passage: " status ", label: "Status", position: "side" },
+            { passage: "inventory", label: "Inventory", icon: "bag" },
+        ] });
+        expect(parseProjectFile(text)).toEqual({
+            success: true, project: { version: 1, main: "a.squiffy", exclude: [], panels: [
+                { passage: "status", label: "Status", position: "side" },
+                { passage: "inventory", label: "Inventory", icon: "bag" },
+            ] },
+        });
+    });
+
     test("exclude is optional, other properties are ignored, and main is normalised", () => {
         expect(parseProjectFile("{ \"$schema\": \"x\", \"version\": 1, \"main\": \"./src\\\\story.squiffy\" }")).toEqual({
             success: true, project: { version: 1, main: "src/story.squiffy", exclude: [] },
@@ -60,6 +73,12 @@ describe("parseProjectFile", () => {
         ["an empty id", "{ \"version\": 1, \"main\": \"a.squiffy\", \"id\": \" \" }", "\"id\" should be text"],
         ["strings not an object", "{ \"version\": 1, \"main\": \"a.squiffy\", \"strings\": [] }", "should be an object of text"],
         ["a string that isn't text", "{ \"version\": 1, \"main\": \"a.squiffy\", \"strings\": { \"back\": 1 } }", "should be an object of text"],
+        ["panels not a list", "{ \"version\": 1, \"main\": \"a.squiffy\", \"panels\": {} }", "\"panels\" should be a list"],
+        ["a panel that isn't an object", "{ \"version\": 1, \"main\": \"a.squiffy\", \"panels\": [\"x\"] }", "panel 1 should be an object"],
+        ["a panel with no passage", "{ \"version\": 1, \"main\": \"a.squiffy\", \"panels\": [{ \"label\": \"x\" }] }", "panel 1 needs a \"passage\""],
+        ["a panel with no label", "{ \"version\": 1, \"main\": \"a.squiffy\", \"panels\": [{ \"passage\": \"x\" }] }", "panel 1 needs a \"label\""],
+        ["a panel in the wrong place", "{ \"version\": 1, \"main\": \"a.squiffy\", \"panels\": [{ \"passage\": \"x\", \"label\": \"x\", \"position\": \"top\" }] }", "should be \"side\" or \"button\""],
+        ["a panel with an unknown icon", "{ \"version\": 1, \"main\": \"a.squiffy\", \"panels\": [{ \"passage\": \"x\", \"label\": \"x\", \"icon\": \"cat\" }] }", "\"icon\" should be one of \"bag\""],
     ])("refuses %s", (_, text, error) => {
         const result = parseProjectFile(text);
         expect(result.success).toBe(false);

@@ -90,6 +90,36 @@ button#squiffy-theme[data-next="light"] .squiffy-icon-dark
     display: none;
 }
 
+/* With a side panel (squiffy.json's "panels"), the page is wider, with the panel to the right of
+   the story. It stays in view as the story scrolls, under the header. On a narrower screen, it's a
+   button in the header instead. */
+@media (min-width: 64rem)
+{
+    div#squiffy-container.squiffy-has-side
+    {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) var(--squiffy-side-width);
+        column-gap: 2.5rem;
+        align-items: start;
+        max-width: calc(var(--squiffy-max-width) + var(--squiffy-side-width) + 2.5rem);
+    }
+
+    div#squiffy-container.squiffy-has-side > div#squiffy-header
+    {
+        grid-column: 1 / -1;
+    }
+
+    div#squiffy-container.squiffy-has-side > aside.squiffy-panels-side
+    {
+        position: sticky;
+        top: 3.5rem;
+        padding-left: 1.25rem;
+        border-left: 1px solid var(--squiffy-border);
+        max-height: calc(100vh - 4.5rem);
+        overflow-y: auto;
+    }
+}
+
 /* The story text */
 div#squiffy
 {

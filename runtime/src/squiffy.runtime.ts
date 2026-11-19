@@ -17,6 +17,10 @@ export type { SquiffyEventHandler, SquiffyEventMap } from "./events.js";
 export { createSavesDialog, formatSaveTime, SAVES_STRINGS, SAVE_FILE_EXTENSION } from "./savesDialog.js";
 export type { SavesDialog, SavesDialogOptions, SavesStringName } from "./savesDialog.js";
 export { indexedDbSaveSlots, memorySaveSlots } from "./saveSlots.js";
+export { createPanels } from "./panels.js";
+export type { Panels, PanelsOptions } from "./panels.js";
+export { PANEL_ICONS } from "./types.js";
+export type { Panel, PanelIcon } from "./types.js";
 export type { SaveSlot, SaveSlots } from "./saveSlots.js";
 
 export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => {
@@ -899,6 +903,33 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
 
         setCurrentSectionElement();
         setCurrentPassageElement();
+        emitter.emit("storyUpdated", {});
+    }
+
+    // A master section passage for a panel or dialog (#14, #443): rendered with the attributes as
+    // they are, changing nothing, with its links disabled
+    function renderPassage(name: string): string {
+        const passage = story.sections[""]?.passages?.[name];
+        if (!passage) {
+            return errorHtml("Error in panel:", `there is no passage called "${name}" in the master section [[]]`);
+        }
+        // Anything the story's own text has asked for, which this mustn't change
+        const goto = textProcessor.goto;
+        const deactivate = [...textProcessor.deactivate];
+        state.readOnly = true;
+        let html: string;
+        try {
+            html = ui.renderHtml(passage.text || "", false);
+        }
+        finally {
+            state.readOnly = false;
+            textProcessor.goto = goto;
+            textProcessor.deactivate = new Set(deactivate);
+        }
+        const template = document.createElement("template");
+        template.innerHTML = html;
+        template.content.querySelectorAll("a.squiffy-link").forEach(disableLink);
+        return template.innerHTML;
     }
 
     function setCurrentSectionElement() {
@@ -1148,6 +1179,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         canGoBack: canGoBack,
         getSave: getSave,
         loadSave: loadSave,
+        renderPassage: renderPassage,
         on: (e, h) => emitter.on(e, h),
         off: (e, h) => emitter.off(e, h),
         once: (e, h) => emitter.once(e, h),

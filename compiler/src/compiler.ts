@@ -1,6 +1,7 @@
 import { analyse, analysisInternals, ExternalFiles, ParseCache } from "./analyse.js";
 import { emit, CompileSuccess } from "./emit.js";
 import type { Diagnostic } from "./syntax.js";
+import type { Panel } from "./project.js";
 
 export { findV5Syntax, convertV5Syntax } from "./v5.js";
 export type { V5SyntaxMatch, V5ConversionProblem, V5ConversionResult } from "./v5.js";
@@ -26,9 +27,9 @@ export type { EmitSettings, Output, UiInfo, CompileSuccess } from "./emit.js";
 export { formatDiagnostic } from "./syntax.js";
 export {
     PROJECT_FILENAME, PROJECT_FILE_VERSION, PROJECT_SCHEMA_URL, parseProjectFile, getStoryFiles, isExcluded,
-    isAlwaysSkipped, formatProjectFile, updateProjectFile, PAGE_STRINGS, storyFileList, BUILD_FOLDER,
+    isAlwaysSkipped, formatProjectFile, updateProjectFile, PAGE_STRINGS, PANEL_ICONS, storyFileList, BUILD_FOLDER,
 } from "./project.js";
-export type { MapPositions, PageStringName, PageStrings, ProjectFile, ParsedProjectFile, StoryFiles } from "./project.js";
+export type { MapPositions, PageStringName, PageStrings, Panel, PanelIcon, ProjectFile, ParsedProjectFile, StoryFiles } from "./project.js";
 export type * from "./syntax.js";
 
 interface CompilerSettings {
@@ -46,6 +47,8 @@ interface CompilerSettings {
     expressions?: boolean;
     // squiffy.json's "id": see EmitSettings.projectId
     projectId?: string;
+    // squiffy.json's "panels": see EmitSettings.panels
+    panels?: Panel[];
 }
 
 export interface CompileError {
@@ -74,5 +77,5 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         };
     }
 
-    return emit(analysis, { globalJs: settings.globalJs, projectId: settings.projectId });
+    return emit(analysis, { globalJs: settings.globalJs, projectId: settings.projectId, panels: settings.panels });
 }

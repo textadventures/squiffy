@@ -44,6 +44,29 @@
       "type": "boolean",
       "default": true
     },
+    "panels": {
+      "description": "Passages in the master section [[]] that are always to hand, such as the player's stats or inventory: beside the story, or in a dialog from a button in the header. They're rendered again as the story goes on.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "passage": { "description": "The name of a passage in the master section [[]].", "type": "string", "minLength": 1 },
+          "label": { "description": "The button's text, or its tooltip if it has an icon.", "type": "string", "minLength": 1 },
+          "position": {
+            "description": "\"side\" shows the panel beside the story (or as a button, on a narrow screen). \"button\" shows it in a dialog from a button in the header.",
+            "enum": ["side", "button"],
+            "default": "button"
+          },
+          "icon": {
+            "description": "An icon for the button, in place of its label.",
+            "enum": ["bag", "person", "map", "help", "info", "list", "book", "star", "heart"]
+          }
+        },
+        "required": ["passage", "label"],
+        "additionalProperties": false
+      },
+      "examples": [[{ "passage": "status", "label": "Status", "position": "side" }, { "passage": "inventory", "label": "Inventory", "icon": "bag" }]]
+    },
     "strings": {
       "description": "The text on the published page around the story, for a story in another language. Anything left out is in English.",
       "type": "object",
@@ -72,7 +95,7 @@
         "delete": { "description": "Deletes a save.", "type": "string", "default": "Delete" },
         "deleteConfirm": { "description": "Asks the player whether they're sure, before deleting. [name] is the save's name.", "type": "string", "default": "Delete \"[name]\"? This can't be undone." },
         "cancel": { "description": "Answers no to a question in the Saved games dialog.", "type": "string", "default": "Cancel" },
-        "close": { "description": "The Saved games dialog's close button.", "type": "string", "default": "Close" },
+        "close": { "description": "The close button of the Saved games dialog and the panels' dialog.", "type": "string", "default": "Close" },
         "wrongStory": { "description": "Shown when a saved game is from a different story.", "type": "string", "default": "This saved game is for a different story." },
         "notASave": { "description": "Shown when a file isn't a saved game.", "type": "string", "default": "This file isn't a saved game." },
         "cantSave": { "description": "Shown when the game couldn't be saved in the browser.", "type": "string", "default": "The game couldn't be saved. Try Save to file instead." }

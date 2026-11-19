@@ -208,6 +208,7 @@ See [Array management helpers](/helpers-reference/#array-management-helpers) and
 | Run something when the story starts | A passage tagged `startup` | `StoryInit` | `@set` lines in the start section, or JavaScript in a [`@ui` block](/javascript/#running-code-when-the-story-starts) |
 | Add JavaScript | Story JavaScript | Story JavaScript | A [`@ui` block](/javascript/#running-code-when-the-story-starts), or indented lines in a section |
 | Add CSS | Story Stylesheet | Story Stylesheet | A `.css` file in the story's folder: see [Customising styles](/styling/) |
+| Show something in the sidebar | `(replace: ?sidebar)` | `StoryCaption`, `StoryMenu` | A [panel](/multiple-files/#panels), beside the story or opened from a button in the header |
 | Write a comment | `<!-- ... -->` | `/* ... */` | `{{!-- ... --}}` |
 
 ## What Twine has that Squiffy doesn't
@@ -215,7 +216,6 @@ See [Array management helpers](/helpers-reference/#array-management-helpers) and
 Some things in Harlowe and SugarCube aren't in Squiffy yet. Each one is planned, and its GitHub issue says how it might work, so you can follow it or add your thoughts:
 
 - **Objects**, like Harlowe's datamaps and SugarCube's objects ([#442](https://github.com/textadventures/squiffy/issues/442)). For now, use an attribute for each value, such as `hero_hp` and `hero_name`.
-- **A status panel that's always on screen**, like SugarCube's `StoryCaption` ([#443](https://github.com/textadventures/squiffy/issues/443)). [`{{live}}`](/dynamic-text/#live) shows an attribute that updates as it changes, but it scrolls away with its section. Links to an inventory or help screen from the top of the page, like SugarCube's `StoryMenu`, are [#14](https://github.com/textadventures/squiffy/issues/14).
 - **Sound and music** that keep playing from one section to the next, like `<<audio>>` and `(track:)` ([#444](https://github.com/textadventures/squiffy/issues/444)). For a sound in one section, use HTML's `<audio>`: see [Images, sound and other files](/images-and-files/).
 - **A link back to where the player came from**, like `<<return>>` ([#445](https://github.com/textadventures/squiffy/issues/445)). Squiffy's Back button undoes moves, which is different. For now, use `{{section previous_section text="Return"}}`: see [Where the player came from](/attributes/#where-the-player-came-from).
 - **Helpers for text and numbers**, like `(uppercase:)` and `(round:)`, and a value that depends on a condition, like `(cond:)` ([#446](https://github.com/textadventures/squiffy/issues/446)). **More for arrays**, like `(joined:)`, `(sorted:)` and `(range:)` ([#447](https://github.com/textadventures/squiffy/issues/447)).

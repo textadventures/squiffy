@@ -8,7 +8,7 @@ import fs from "fs/promises";
 import path from "path";
 import {
     getStoryFiles, isAlwaysSkipped, isSquiffyPath, isStoryFilePath, parseProjectFile, PROJECT_FILENAME, storyFileList,
-    type PageStrings,
+    type PageStrings, type Panel,
 } from "./project.js";
 
 export interface StoryOnDisk {
@@ -33,6 +33,8 @@ export interface StoryOnDisk {
     saveButton?: boolean;
     // squiffy.json's "id", in folder mode
     projectId?: string;
+    // squiffy.json's "panels", in folder mode
+    panels?: Panel[];
 }
 
 // A problem finding the story, with a message to show the author as is
@@ -123,6 +125,7 @@ async function folderStory(projectFile: string, options: FindStoryOptions): Prom
         ...(project.strings !== undefined ? { strings: project.strings } : {}),
         ...(project.saveButton !== undefined ? { saveButton: project.saveButton } : {}),
         ...(project.id !== undefined ? { projectId: project.id } : {}),
+        ...(project.panels !== undefined ? { panels: project.panels } : {}),
     };
 }
 

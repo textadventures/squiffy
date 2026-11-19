@@ -11,7 +11,7 @@ import { convertSugarCubePassage, convertSugarCubeWidgets, sugarCubeWidgets } fr
 import { parseTwine } from "./story.js";
 import type { TwinePassage, TwineStory } from "./story.js";
 import { formatProjectFile } from "../project.js";
-import type { MapPositions } from "../project.js";
+import type { MapPositions, Panel } from "../project.js";
 
 export interface TwineConversionProblem {
     // The Twine passage the problem is in, if it's in one
@@ -316,8 +316,12 @@ export function comment(text: string): string {
     return `{{!-- Twine: ${clean} --}}`;
 }
 
+// SugarCube's passages for its sidebar that become panels beside the story (#443), in the order
+// SugarCube shows them, with the labels of the buttons they have on a narrow screen
+const sugarCubePanels: Record<string, string> = { StoryBanner: "Banner", StoryCaption: "Status" };
+
 // Passages a format treats specially, which aren't part of the story as sections
-// (StoryCaption, StoryBanner and so on are kept, as their text might be included elsewhere)
+// (StorySubtitle, StoryAuthor and so on are kept, as their text might be included elsewhere)
 const sugarCubeSpecial = new Set(["StoryMenu", "StoryInterface", "StoryShare", "StoryTitle", "StoryData", "StorySettings"]);
 
 // The problems as a text file, to keep with the converted story: the ones about the whole story,
@@ -368,6 +372,7 @@ export function convertTwineStory(twine: TwineStory, options: TwineConversionOpt
     const startup: TwinePassage[] = [];
     const widgets: TwinePassage[] = [];
     const skipped: TwinePassage[] = [];
+    const panelPassages: TwinePassage[] = [];
     const storyPassages: TwinePassage[] = [];
     const seenNames = new Set<string>();
     for (const p of twine.passages) {
@@ -389,9 +394,10 @@ export function convertTwineStory(twine: TwineStory, options: TwineConversionOpt
             else if (p.name == "StoryInit") startup.push(p);
             else if (p.tags.includes("widget")) widgets.push(p);
             else if (sugarCubeSpecial.has(p.name)) skipped.push(p);
+            else if (p.name in sugarCubePanels) panelPassages.push(p);
             else {
-                if (["StoryCaption", "StoryBanner", "StorySubtitle", "StoryAuthor", "StoryDisplayTitle"].includes(p.name)) {
-                    problems.push({ passage: p.name, text: p.name, reason: "Squiffy has no sidebar or banner, so this passage is an ordinary section, which nothing links to." });
+                if (["StorySubtitle", "StoryAuthor", "StoryDisplayTitle"].includes(p.name)) {
+                    problems.push({ passage: p.name, text: p.name, reason: "Squiffy has no sidebar, so this passage is an ordinary section, which nothing links to." });
                 }
                 storyPassages.push(p);
             }
@@ -413,7 +419,9 @@ export function convertTwineStory(twine: TwineStory, options: TwineConversionOpt
     for (const p of skipped) {
         problems.push({
             passage: p.name, text: p.name,
-            reason: p.name == "StoryMenu" ? "Squiffy has no sidebar, so this passage has been left out." : "This special passage has been left out.",
+            reason: p.name == "StoryMenu"
+                ? "Squiffy has no sidebar, so this passage has been left out. Its links go to passages, which a panel can't do, but a panel can show a passage in the master section [[]] from a button in the header: see \"panels\" in squiffy.json."
+                : "This special passage has been left out.",
         });
     }
 
@@ -483,6 +491,24 @@ export function convertTwineStory(twine: TwineStory, options: TwineConversionOpt
         const converted = convert(p, "", masterPassages);
         master.directives.push(...converted.directives);
         if (converted.body.trim()) master.body += converted.body.trim() + "\n";
+    }
+
+    // SugarCube's sidebar passages, as panels beside the story, rendered again after each passage
+    sortPanelPassages(panelPassages);
+    const panels: Panel[] = [];
+    for (const p of panelPassages) {
+        const converted = convert(p, "", masterPassages);
+        let passageName = p.name;
+        for (let n = 2; masterPassages.some(text => text.startsWith(`[${passageName}]:\n`)); n++) passageName = `${p.name} ${n}`;
+        const body = converted.body.trim();
+        if (converted.directives.length) {
+            story.addProblem({ passage: p.name, text: converted.directives.join(" "), reason: "A panel only shows its text, so this doesn't run." });
+        }
+        if (/\[\[|\]\(|\{\{(section|passage)\b/.test(body)) {
+            story.addProblem({ passage: p.name, text: p.name, reason: "This is a panel beside the story, where links don't work." });
+        }
+        masterPassages.push(`[${passageName}]:\n${finishText(body)}`.trimEnd());
+        panels.push({ passage: passageName, label: sugarCubePanels[p.name], position: "side" });
     }
 
     // Passages that run once at the start
@@ -561,7 +587,7 @@ export function convertTwineStory(twine: TwineStory, options: TwineConversionOpt
 
     files[`${name}.squiffy`] = script;
     const map = mapPositions(sectionPassages, story);
-    files["squiffy.json"] = formatProjectFile({ main: `${name}.squiffy`, exclude, ...(map ? { map } : {}) });
+    files["squiffy.json"] = formatProjectFile({ main: `${name}.squiffy`, exclude, panels, ...(map ? { map } : {}) });
 
     return {
         title: twine.title,
@@ -571,6 +597,12 @@ export function convertTwineStory(twine: TwineStory, options: TwineConversionOpt
         passages: sectionPassages.length,
         problems: [...problems, ...story.noteProblems(), ...story.problems],
     };
+}
+
+// SugarCube's sidebar passages in the order SugarCube shows them
+function sortPanelPassages(passages: TwinePassage[]) {
+    const order = Object.keys(sugarCubePanels);
+    passages.sort((a, b) => order.indexOf(a.name) - order.indexOf(b.name));
 }
 
 // Where the sections go on the editor's story map, so it looks like the story's map in Twine.

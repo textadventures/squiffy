@@ -24,7 +24,12 @@ export class State {
         return this.persist && window.localStorage && this.storyId;
     }
 
+    // While this is true, set() does nothing: e.g. while a panel is rendered, so its {{set}}s
+    // don't change the story
+    readOnly = false;
+
     set(attribute: string, value: any) {
+        if (this.readOnly) return;
         this.setInternal(attribute, value, true);
     }
 

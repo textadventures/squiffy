@@ -394,6 +394,19 @@ describe("SugarCube", () => {
         expect(script).not.toContain("StoryMenu");
     });
 
+    test("StoryBanner and StoryCaption become panels beside the story (#443)", async () => {
+        const { script, result } = await convert("SugarCube", ":: Start\n<<set $gold to 5>>The start.\n\n:: StoryCaption\nGold: $gold\n[[Start]]\n\n:: StoryBanner\n''Cave''");
+        expect(section(script, "")).toBe("@clear\n\n[StoryBanner]:\n**Cave**\n\n[StoryCaption]:\nGold: {{gold}}<br>\n[[Start]]");
+        expect(script).not.toContain("[[StoryCaption]]:");
+        expect(JSON.parse(result.files["squiffy.json"]).panels).toEqual([
+            { passage: "StoryBanner", label: "Banner", position: "side" },
+            { passage: "StoryCaption", label: "Status", position: "side" },
+        ]);
+        expect(result.problems).toEqual([
+            { passage: "StoryCaption", text: "StoryCaption", reason: "This is a panel beside the story, where links don't work." },
+        ]);
+    });
+
     test("widgets become sections, which calls embed", async () => {
         const { script } = await convert("SugarCube", ":: Start\n<<say \"Ann\" \"Hello\">>\n\n:: Widgets [widget]\n<<widget \"say\">>_args[0] says: _args[1]<</widget>>");
         expect(section(script, "Start")).toBe("{{set \"args_0\" \"Ann\"}}{{set \"args_1\" \"Hello\"}}{{embed \"widget say\"}}");

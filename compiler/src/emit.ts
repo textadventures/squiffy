@@ -1,6 +1,7 @@
 import pkg from "../package.json" with { type: "json" };
 import { Analysis, analysisInternals } from "./analyse.js";
 import type { Diagnostic } from "./syntax.js";
+import type { Panel } from "./project.js";
 
 const version = pkg.version;
 
@@ -17,6 +18,8 @@ interface OutputStory {
     uiJsIndex?: number;
     // Whether @set and link setters take expressions (#373)
     expressions?: boolean;
+    // squiffy.json's "panels"
+    panels?: Panel[];
     sections: Record<string, OutputSection>;
 }
 
@@ -49,6 +52,8 @@ export interface EmitSettings {
     globalJs?: boolean;
     // squiffy.json's "id", if the story has one: see ProjectFile.id
     projectId?: string;
+    // squiffy.json's "panels", if it has any: see ProjectFile.panels
+    panels?: Panel[];
 }
 
 export interface CompileSuccess {
@@ -86,6 +91,10 @@ export function emit(analysis: Analysis, settings: EmitSettings = {}): CompileSu
 
     if (settings.projectId) {
         output.story.projectId = settings.projectId;
+    }
+
+    if (settings.panels?.length) {
+        output.story.panels = settings.panels;
     }
 
     if (story.uiJs.length > 0) {
@@ -171,6 +180,9 @@ export function emit(analysis: Analysis, settings: EmitSettings = {}): CompileSu
         }
         if (output.story.expressions) {
             outputJs.push("story.expressions = true;");
+        }
+        if (output.story.panels) {
+            outputJs.push(`story.panels = ${JSON.stringify(output.story.panels, null, 4)};`);
         }
         outputJs.push(`story.start = ${JSON.stringify(output.story.start, null, 4)};`);
         outputJs.push(`story.sections = ${JSON.stringify(output.story.sections, null, 4)};`);

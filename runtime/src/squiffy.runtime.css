@@ -112,6 +112,7 @@ button.squiffy-header-button
     border-radius: 0.375em;
     padding: 0.375em;
     font: inherit;
+    vertical-align: middle;
     transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out;
 }
 
@@ -516,4 +517,150 @@ dialog.squiffy-saves svg
 .squiffy-saves-link:hover
 {
     text-decoration: underline;
+}
+
+/* Panels (squiffy.json's "panels"): passages always to hand, beside the story or in a dialog */
+:root
+{
+    /* The width of a side panel */
+    --squiffy-side-width: 16rem;
+}
+
+/* A panel's button in the header, when it has a label rather than an icon */
+button.squiffy-panel-text-button
+{
+    padding: 0.375em 0.625em;
+    line-height: 1.25;
+}
+
+/* Space between the panels' buttons and the page's own */
+button.squiffy-panel-button:not(:has(+ button.squiffy-panel-button))
+{
+    margin-right: 0.5em;
+}
+
+/* The side panels. Like the header, they're smaller than the story text. */
+aside.squiffy-panels-side
+{
+    font-size: 0.9375rem;
+    line-height: 1.5;
+}
+
+aside.squiffy-panels-side[hidden],
+aside.squiffy-panels-side > section.squiffy-panel[hidden]
+{
+    display: none;
+}
+
+aside.squiffy-panels-side > section.squiffy-panel + section.squiffy-panel
+{
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--squiffy-border);
+}
+
+.squiffy-panel > :first-child
+{
+    margin-top: 0;
+}
+
+.squiffy-panel > :last-child
+{
+    margin-bottom: 0;
+}
+
+.squiffy-panel img
+{
+    max-width: 100%;
+    height: auto;
+}
+
+/* On a screen too narrow for the story and a side panel, the panel is a button in the header,
+   which shows it in a dialog */
+@media (min-width: 64rem)
+{
+    button.squiffy-panel-side-button
+    {
+        display: none;
+    }
+}
+
+@media (max-width: 63.99rem)
+{
+    aside.squiffy-panels-side
+    {
+        display: none;
+    }
+}
+
+/* The dialog a panel's button opens */
+dialog.squiffy-panel-dialog
+{
+    width: min(28rem, calc(100vw - 2rem));
+    max-height: calc(100vh - 2rem);
+    box-sizing: border-box;
+    padding: 1rem 1.25rem 1.25rem;
+    border: 1px solid var(--squiffy-border);
+    border-radius: 0.75rem;
+    background-color: var(--squiffy-background);
+    color: var(--squiffy-text);
+    font-family: var(--squiffy-font-family, inherit);
+    font-size: var(--squiffy-font-size, 1rem);
+    line-height: var(--squiffy-line-height, 1.5);
+    box-shadow: 0 1rem 3rem rgb(0 0 0 / 0.25);
+}
+
+dialog.squiffy-panel-dialog::backdrop
+{
+    background-color: rgb(0 0 0 / 0.4);
+}
+
+.squiffy-panel-dialog-header
+{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+.squiffy-panel-dialog-header h2
+{
+    margin: 0;
+    font-size: 1.125rem;
+}
+
+button.squiffy-panel-dialog-close
+{
+    display: inline-flex;
+    padding: 0.25em;
+    border: none;
+    border-radius: 0.375em;
+    background: none;
+    color: var(--squiffy-muted);
+    cursor: pointer;
+}
+
+button.squiffy-panel-dialog-close:hover
+{
+    color: var(--squiffy-text);
+    background-color: color-mix(in srgb, currentColor 10%, transparent);
+}
+
+button.squiffy-panel-dialog-close:focus-visible
+{
+    outline: 2px solid var(--squiffy-link);
+    outline-offset: 2px;
+}
+
+button.squiffy-panel-dialog-close svg
+{
+    width: 1.25em;
+    height: 1.25em;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }

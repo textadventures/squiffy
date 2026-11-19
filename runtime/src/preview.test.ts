@@ -3,7 +3,7 @@ import globalJsdom from "global-jsdom";
 import { compile } from "squiffy-compiler";
 import { createPreview } from "./preview.js";
 import type { PreviewMessage } from "./preview-protocol.js";
-import type { Story } from "./types.js";
+import type { Panel, Story } from "./types.js";
 
 beforeAll(() => {
     vi.stubGlobal("crypto", { randomUUID: () => "00000000-0000-0000-0000-000000000000" });
@@ -31,8 +31,8 @@ afterEach(() => {
 });
 
 // The compiled story module, as a host would send it
-const compileJs = async (script: string) => {
-    const result = await compile({ script });
+const compileJs = async (script: string, panels?: Panel[]) => {
+    const result = await compile({ script, panels });
     if (!result.success) throw new Error("Compile failed");
     return result.getJs();
 };
@@ -209,6 +209,23 @@ describe("preview", () => {
         expect(fixed()).toEqual([{ type: "themeFixed", fixed: true }]);
         // Finding out doesn't change the theme the host set
         expect(document.head.querySelector("style")!.textContent).toBe(":root { color-scheme: dark; }");
+    });
+
+    test("shows the story's panels, and shows them again when they change", async () => {
+        const { preview, element } = setUp();
+        const panelScript = "[[]]:\n\n[status]:\nScore: {{score}}\n\n" + script;
+        await preview.receive({ type: "load", story: { js: await compileJs(panelScript, [{ passage: "status", label: "Status", position: "side" }]) } });
+        expect(element.querySelector(".squiffy-preview-header button.squiffy-panel-button")!.textContent).toBe("Status");
+        expect(element.querySelector(".squiffy-preview-body > aside section")!.innerHTML).toBe("<p>Score: 1</p>");
+
+        await preview.receive({ type: "update", js: await compileJs(panelScript, [{ passage: "status", label: "Score" }]) });
+        expect(element.querySelector("aside")).toBeNull();
+        expect([...element.querySelectorAll("button.squiffy-panel-button")].map(b => b.textContent)).toEqual(["Score"]);
+
+        // A new story has no panels left over
+        await preview.receive({ type: "load", story: { js: await compileJs(script) } });
+        expect(element.querySelector("button.squiffy-panel-button")).toBeNull();
+        expect(document.querySelectorAll("dialog.squiffy-panel-dialog")).toHaveLength(0);
     });
 
     test("reports errors", async () => {

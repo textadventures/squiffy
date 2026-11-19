@@ -248,6 +248,36 @@ if (!result.success) {
 }
 ```
 
+### renderPassage(name)
+
+Returns a passage in the master section `[[]]` as HTML, with the attributes as they are now, as the published page's [panels](/multiple-files/#panels) show it. It doesn't change the story: `{{set}}` and the like are ignored, the passage's `@set` and JavaScript don't run, and its links are disabled.
+
+```javascript
+statusElement.innerHTML = squiffyApi.renderPassage('status');
+```
+
+## Panels
+
+The published page's [panels](/multiple-files/#panels) are part of the runtime too. `createPanels()` adds a button for each panel to the start of an element, such as your page's header, and puts side panels in an `<aside class="squiffy-panels-side">` at the end of another, which gets the class `squiffy-has-side`. They're rendered again whenever the story moves on:
+
+```javascript
+squiffyRuntime.createPanels(squiffyApi, {
+    panels: story.panels,  // from squiffy.json
+    buttons: document.getElementById('header'),
+    side: document.getElementById('container'),
+});
+```
+
+| Option | Description |
+|---|---|
+| `panels` | The panels, as in `squiffy.json`. A compiled story has them as `story.panels` |
+| `buttons` | Where the panels' buttons go: at the start of this element |
+| `side` | Where side panels go. Without it, side panels only have their buttons |
+| `strings` | The dialog's text: `close`, as in [`squiffy.json`](/multiple-files/#the-pages-text-in-another-language) |
+| `container` | Where to put the dialog in the page. The end of the body by default |
+
+It returns an object with `refresh()`, which renders the panels again, `open(passage)`, which opens a panel's dialog, and `dispose()`, which takes them all off the page. Their styles are in `squiffy.runtime.css`, apart from the published page's layout, which is in `squiffy.page.css`.
+
 ## The Saved games dialog
 
 The published page's [Saved games](/multiple-files/#saved-games) dialog is part of the runtime, so you can use it too. `createSavesDialog()` adds it to the page, and `open()` shows it:
@@ -310,6 +340,16 @@ Fired when a section or passage is shown, and when going back returns to one. `p
 ```javascript
 squiffyApi.on('navigated', (event) => {
     console.log(`Now in ${event.section}`, event.passage);
+});
+```
+
+### storyUpdated
+
+Fired when `update()` changes the story, for example after an edit in the editor:
+
+```javascript
+squiffyApi.on('storyUpdated', () => {
+    statusElement.innerHTML = squiffyApi.renderPassage('status');
 });
 ```
 

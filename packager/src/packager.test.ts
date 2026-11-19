@@ -45,6 +45,18 @@ test("Exported page has a light/dark button, and applies the saved choice before
     expect(head.indexOf("squiffyTheme")).toBeLessThan(head.indexOf('href="style.css"'));
 });
 
+test("Exported page shows the story's panels, with the page's strings", async () => {
+    const compileResult = await compile({ script: "[[]]:\n\n[status]:\nHello", panels: [{ passage: "status", label: "Status", position: "side" }] });
+    if (!compileResult.success) throw new Error("Compile failed");
+    const pkg = await createPackage(compileResult, { strings: { close: "Fermer" } });
+    expect(pkg.files["story.js"]).toContain("story.panels = [");
+    const html = pkg.files["index.html"];
+    expect(html).toContain("squiffyRuntime.createPanels(squiffyApi, {");
+    // The strings are given once, for both the Saved games dialog and the panels
+    expect(html).not.toContain("/* PAGE_STRINGS */");
+    expect(html.match(/const pageStrings = \{[^\n]*"close":"Fermer"/)).not.toBeNull();
+});
+
 test("Exported page has a Back button, unless it's turned off", async () => {
     const compileResult = await compile({ script: "Hello world!" });
     if (!compileResult.success) throw new Error("Compile failed");
@@ -85,7 +97,7 @@ test("The Saved games dialog gets the page's strings, safely", async () => {
     const html = (await createPackage(compileResult, {
         strings: { save: "Sauvegarder", load: "</script><b>" },
     })).files["index.html"];
-    const json = /strings: (\{.*\}),\n/.exec(html)![1];
+    const json = /const pageStrings = (\{.*\});\n/.exec(html)![1];
     expect(json).not.toContain("</script>");
     const strings = JSON.parse(json);
     expect(strings.save).toBe("Sauvegarder");
