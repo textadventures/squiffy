@@ -3851,3 +3851,68 @@ Next.
     squiffyApi.goBack();
     expect(squiffyApi.get("previous")).toBeNull();
 });
+
+test("squiffy.ui.afterWrite runs once the text and its {{...}} are on the page", async () => {
+    // https://github.com/textadventures/squiffy/issues/106
+    // Note: the 4-space indent on the JS lines is the squiffy JS syntax - don't trim it!
+    const script = `
+[[start]]:
+@set n = 5
+    set("order", "before");
+    squiffy.ui.afterWrite(() => {
+        set("shown", document.getElementById("count").textContent);
+        set("order", get("order") + ",after");
+    });
+    set("order", get("order") + ",js");
+Count: <span id="count">{{n}}</span> [a] [[next]]
+
+[a]:
+    squiffy.ui.afterWrite(() => set("passage_shown", document.getElementById("passage").textContent));
+<span id="passage">{{n}} again</span>
+
+[[next]]:
+Next.
+`;
+    const { squiffyApi, element } = await initScript(script);
+    expect(squiffyApi.get("shown")).toBe("5");
+    expect(squiffyApi.get("order")).toBe("before,js,after");
+
+    await squiffyApi.clickLink(findLink(element, "passage", "a"));
+    expect(squiffyApi.get("passage_shown")).toBe("5 again");
+
+    // What an afterWrite function changes is part of the turn, so going back undoes it
+    squiffyApi.goBack();
+    expect(squiffyApi.get("passage_shown")).toBeNull();
+    expect(squiffyApi.get("shown")).toBe("5");
+});
+
+test("squiffy.story.go() in squiffy.ui.afterWrite goes there once the section has finished", async () => {
+    // https://github.com/textadventures/squiffy/issues/106
+    // Note: the 4-space indent on the JS lines is the squiffy JS syntax - don't trim it!
+    const script = `
+[[start]]:
+@set x = 1
+Start. [[next]]
+
+[[next]]:
+@set x = 2
+    squiffy.ui.afterWrite(() => squiffy.story.go("other"));
+    squiffy.ui.afterWrite(() => set("ran", true));
+Next.
+
+[[other]]:
+@set x = 3
+Other.
+`;
+    const { squiffyApi, element } = await initScript(script);
+    await squiffyApi.clickLink(findLink(element, "section", "next"));
+    expect(squiffyApi.get("_section")).toBe("other");
+    expect(squiffyApi.get("ran")).toBe(true);
+    expect(visibleText(element)).toBe("Start. next Next. Other.");
+
+    // Going back steps back through both sections, as with {{goto}}
+    squiffyApi.goBack();
+    expect(squiffyApi.get("_section")).toBe("start");
+    expect(squiffyApi.get("x")).toBe(1);
+    expect(visibleText(element)).toBe("Start. next");
+});

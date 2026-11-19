@@ -29,6 +29,7 @@ Squiffy 7 brings a new editor. The language adds the [`@end`](/basic-concepts/#e
 - **Endings.** Mark the sections where your story ends with [`@end`](/basic-concepts/#endings), and the editor won't report them as dead ends.
 - **Passages you can click again.** Add [`@repeat`](/basic-concepts/#passages-you-can-click-again) to a passage, and its links stay clickable, for a clue the player might want to read again, or a character who says something different each time.
 - **Turning off passage links.** [`{{deactivate "name"}}`](/basic-concepts/#turning-off-passage-links) turns off the links to a passage, so one choice can rule out another, and a passage with `@repeat` can turn itself off when it's done.
+- **JavaScript after the text.** [`squiffy.ui.afterWrite`](/javascript/#running-javascript-after-the-text) runs some JavaScript once a section or passage's text is on the page, with its `{{...}}` worked out.
 
 ## Published stories
 
