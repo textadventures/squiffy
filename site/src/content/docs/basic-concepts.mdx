@@ -157,6 +157,36 @@ You can use directives like `@clear` or `@set` immediately after the `+++` line:
 The screen clears and this text appears fresh.
 ```
 
+## Formatting links
+
+Links can use Markdown and HTML, like any other text. To format a whole link, put the formatting around it:
+
+<Sample script="Will you go **[[north]]** or _[[south]]_?
+
+[[north]]:
+It's cold up here.
+
+[[south]]:
+It's warm down here."></Sample>
+
+You can also put the formatting inside the link text, when the link names where it goes. That works for section and passage links, and for `+++`:
+
+<Sample script="The door is [**locked**](door). [[_Leave_]](outside)
+
+[door]:
+It won't budge.
+
++++**Continue...**
+
+You're back where you started.
+
+[[outside]]:
+Fresh air at last."></Sample>
+
+<Aside type="caution">
+Don't put formatting inside a link that doesn't name where it goes. Squiffy takes the name from the link text, formatting and all, so `[[**north**]]` is a link to a section called "\*\*north\*\*", not "north". Write `**[[north]]**` or `[[**north**]](north)` instead.
+</Aside>
+
 ## Section dividers and next-section links
 
 Sometimes you need to link to the next section from inside a block helper like `{{#animate}}`. The `+++` syntax won't work there because it would split the section before the closing `{{/animate}}`.
