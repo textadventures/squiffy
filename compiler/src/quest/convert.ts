@@ -6,9 +6,14 @@
 
 import { formatProjectFile } from "../project.js";
 import { finishText, reservedAttributes, sanitiseName, sectionLink, urlLink } from "../twine/convert.js";
-import { quote } from "../twine/expression.js";
+import { attributeRef, print, quote } from "../twine/expression.js";
+import type { Expr } from "../twine/expression.js";
 import { parseQuestGame, QuestParseError } from "./aslx.js";
 import type { QuestGame, QuestObject, QuestValue } from "./aslx.js";
+import { ScriptParser } from "./script.js";
+import type { QStmt } from "./script.js";
+import { convertScript, linkChanges } from "./scripts.js";
+import type { ScriptContext } from "./scripts.js";
 import { convertQuestText, escapeLineStarts } from "./text.js";
 import type { TextContext } from "./text.js";
 
@@ -128,6 +133,72 @@ function convertGame(game: QuestGame, options: QuestConversionOptions): QuestCon
     const startPage = (game.start && sectionNames.has(game.start) ? game.start : undefined) ?? storyPages[0]?.name;
     const title = game.game.name.replace(/\s+/g, " ").trim();
     const showTitle = booleanValue(gameSetting("showtitle")) ?? true;
+    const clearLastPage = booleanValue(gameSetting("clearlastpage")) ?? false;
+
+    // The game's scripts are read first, as they can add links to other pages, which those pages
+    // need to show
+    const objectNames = new Set([...game.pages.map(p => p.name), "game", "player"]);
+    const isPage = (name: string) => pagesByName.has(name);
+    const pageScripts = new Map<string, QStmt[]>();
+    const scriptOnlyPages = new Set<string>();
+    for (const page of storyPages) {
+        const runScript = booleanValue(page.attributes.get("runscript")) || page.inherits.includes("scripttext");
+        const scriptOnly = booleanValue(page.attributes.get("runscriptonly")) || page.inherits.includes("script");
+        if (scriptOnly) scriptOnlyPages.add(page.name);
+        const script = page.attributes.get("script");
+        if ((runScript || scriptOnly) && script?.type == "script" && script.value.trim()) {
+            pageScripts.set(page.name, ScriptParser.parse(script.value, objectNames));
+        }
+    }
+    const roomEnterValue = game.game.attributes.get("roomenter");
+    const roomEnter = roomEnterValue?.type == "script" && roomEnterValue.value.trim() ? ScriptParser.parse(roomEnterValue.value, objectNames) : undefined;
+
+    // The links that scripts add or remove (AddPageLink and RemovePageLink). Each has an
+    // attribute, which is true while it's shown, or the text it's shown with if it can have more
+    // than one, which one. Links on a page to begin with are set when the story starts.
+    interface DynamicLink { attribute: string, texts: string[], initial?: string }
+    const dynamicLinks = new Map<string, DynamicLink>();
+    const addedLinks = new Map<string, string[]>();
+    const usedLinkAttributes = new Set<string>();
+    const initialOptions = (p: QuestObject | undefined): [string, string][] => {
+        const value = p?.attributes.get("options");
+        return value?.type == "stringdictionary" ? value.value : [];
+    };
+    const dynamicLink = (source: string, destination: string): DynamicLink => {
+        const key = `${source}\u0000${destination}`;
+        let link = dynamicLinks.get(key);
+        if (!link) {
+            const base = `link_${sectionNames.get(source) ?? source}_${sectionNames.get(destination) ?? destination}`.replace(/[^\p{L}\p{N}_]+/gu, "_");
+            let name = base;
+            for (let n = 2; usedLinkAttributes.has(name.toLowerCase()); n++) name = `${base}_${n}`;
+            usedLinkAttributes.add(name.toLowerCase());
+            const initial = initialOptions(pagesByName.get(source)).find(([d]) => d == destination)?.[1];
+            link = { attribute: name, texts: initial === undefined ? [] : [initial], initial };
+            dynamicLinks.set(key, link);
+            if (initial === undefined) addedLinks.set(source, [...addedLinks.get(source) ?? [], destination]);
+        }
+        return link;
+    };
+    for (const [page, statements] of [...pageScripts, ["", roomEnter ?? []] as const]) {
+        for (const change of linkChanges(statements, page || undefined, isPage)) {
+            const link = dynamicLink(change.source, change.destination);
+            if (change.text !== undefined && !link.texts.includes(change.text)) link.texts.push(change.text);
+        }
+    }
+    // With more than one text, the attribute is which one, counting from 1
+    const linkValue = (link: DynamicLink, text: string): Expr => link.texts.length > 1 ? { k: "num", v: link.texts.indexOf(text) + 1 } : { k: "bool", v: true };
+
+    let firstTimes = 0;
+    let styled = false;
+    const scriptContext = (ctx: TextContext, page?: string): ScriptContext => ({
+        ...ctx,
+        page,
+        isPage,
+        linkAttribute: (source, destination) => dynamicLink(source, destination).attribute,
+        linkValue: (source, destination, text) => linkValue(dynamicLink(source, destination), text),
+        newFirstTime: () => `firsttime_${++firstTimes}`,
+        noteStyle: () => { styled = true; },
+    });
 
     let hasSound = false;
     const sections: string[] = [];
@@ -159,30 +230,83 @@ function convertGame(game: QuestGame, options: QuestConversionOptions): QuestCon
 
         const lines: string[] = [];
         const directives: string[] = [];
-        if (page.name == startPage && showTitle && title) {
-            const subtitle = stringAttribute(game.game, "subtitle").trim();
-            const author = stringAttribute(game.game, "author").trim();
-            const parts = [`<h1>${convertQuestText(title, ctx, "inline")}</h1>`];
-            if (subtitle) parts.push(`<p>${convertQuestText(subtitle, ctx, "inline")}</p>`);
-            if (author) parts.push(`<p>${convertQuestText(author, ctx, "inline")}</p>`);
+        if (page.name == startPage) {
+            const initial = [...dynamicLinks.values()].filter(l => l.initial !== undefined);
+            const parts: string[] = [];
+            if (showTitle && title) {
+                const subtitle = stringAttribute(game.game, "subtitle").trim();
+                const author = stringAttribute(game.game, "author").trim();
+                const heading = [`<h1>${convertQuestText(title, ctx, "inline")}</h1>`];
+                if (subtitle) heading.push(`<p>${convertQuestText(subtitle, ctx, "inline")}</p>`);
+                if (author) heading.push(`<p>${convertQuestText(author, ctx, "inline")}</p>`);
+                parts.push(`<div class="quest-title" style="text-align: center">${heading.join("")}</div>`);
+            }
             // Quest shows the title once, when the game starts, and many gamebooks go back to
             // their first page to play again
-            lines.push(`{{#if (visits ${quote(section)}) = 1}}`, `<div class="quest-title" style="text-align: center">${parts.join("")}</div>`, "{{/if}}");
+            if (initial.length || parts.length) {
+                lines.push(
+                    `{{#if (visits ${quote(section)}) = 1}}`,
+                    ...initial.map(l => `{{set ${quote(l.attribute)} ${print(linkValue(l, l.initial!))}}}`),
+                    ...parts,
+                    "{{/if}}",
+                );
+            }
         }
 
-        const runScript = booleanValue(page.attributes.get("runscript")) || page.inherits.includes("scripttext");
-        const scriptOnly = booleanValue(page.attributes.get("runscriptonly")) || page.inherits.includes("script");
-        const script = page.attributes.get("script");
-        const hasScript = (runScript || scriptOnly) && script?.type == "script" && script.value.trim() != "";
-        if (hasScript) {
-            addProblem({
-                page: page.name, text: oneLine(script.value),
-                reason: "Scripts can't be converted yet, so this page's script is in a comment.",
-            });
-            lines.push(comment(script.value));
+        const scriptOnly = scriptOnlyPages.has(page.name);
+        const option = (destination: string, text: string): string => {
+            const linkText = convertQuestText(text || destination, ctx, "inline");
+            const to = target(destination);
+            if (!to) {
+                addProblem({ page: page.name, text: oneLine(text || destination), reason: `This option goes to a page called "${destination}", which isn't in the game. Quest shows it as a broken link, so it isn't a link here.` });
+                return `${linkText} (broken link)`;
+            }
+            return "url" in to ? urlLink(linkText, to.url) : sectionLink(linkText, to.section);
+        };
+        const dynamic = (destination: string, link: DynamicLink): string[] => link.texts.flatMap((text, i) => [
+            `{{#if ${link.texts.length > 1 ? `${attributeRef(link.attribute)} = ${i + 1}` : attributeRef(link.attribute)}}}`,
+            option(destination, text),
+            "{{/if}}",
+        ]);
+        // The page's links, made when they're first needed, so problems are listed in the order of
+        // the page. A page that only runs its script shows no links.
+        let optionLines: string[] | undefined;
+        const pageLinks = (): string[] => {
+            if (optionLines) return optionLines;
+            optionLines = [];
+            if (scriptOnly) return optionLines;
+            for (const [destination, text] of initialOptions(page)) {
+                const link = dynamicLinks.get(`${page.name}\u0000${destination}`);
+                optionLines.push(...(link ? dynamic(destination, link) : [option(destination, text)]));
+            }
+            for (const destination of addedLinks.get(page.name) ?? []) {
+                optionLines.push(...dynamic(destination, dynamicLinks.get(`${page.name}\u0000${destination}`)!));
+            }
+            return optionLines;
+        };
+
+        const statements = pageScripts.get(page.name);
+        let moves = false;
+        // Sections for what happens after the player types something (GetInput), which go after
+        // this one
+        const continued: string[] = [];
+        const continueSection = (content: string): string => {
+            let name = `${section} continued`;
+            for (let n = 2; usedNames.has(name.toLowerCase()); n++) name = `${section} continued ${n}`;
+            usedNames.add(name.toLowerCase());
+            const links = pageLinks();
+            const text = [content, ...(links.length ? ["", ...links] : [])].join("\n");
+            const leavesHere = /\[\[|<a href|\{\{goto/.test(text);
+            continued.push(`[[${name}]]:\n${[...(leavesHere ? [] : ["@end"]), finishText(escapeLineStarts(text))].filter(l => l).join("\n")}`);
+            return name;
+        };
+        if (statements) {
+            const script = convertScript(statements, { ...scriptContext(ctx, page.name), continueSection });
+            directives.push(...script.directives);
+            lines.push(...script.lines);
+            moves = script.lines.some(l => l.includes("{{goto"));
         }
 
-        let ending = false;
         if (!scriptOnly) {
             const picture = stringAttribute(page, "picture").trim();
             if (picture) {
@@ -202,30 +326,22 @@ function convertGame(game: QuestGame, options: QuestConversionOptions): QuestCon
 
             lines.push(convertQuestText(stringAttribute(page, "description"), ctx, "block"));
 
-            const optionsValue = page.attributes.get("options");
-            const pageOptions = optionsValue?.type == "stringdictionary" ? optionsValue.value : [];
-            if (pageOptions.length) lines.push("");
-            for (const [destination, text] of pageOptions) {
-                const linkText = convertQuestText(text || destination, ctx, "inline");
-                const to = target(destination);
-                if (!to) {
-                    addProblem({ page: page.name, text: oneLine(text || destination), reason: `This option goes to a page called "${destination}", which isn't in the game. Quest shows it as a broken link, so it isn't a link here.` });
-                    lines.push(`${linkText} (broken link)`);
-                }
-                else if ("url" in to) {
-                    lines.push(urlLink(linkText, to.url));
-                }
-                else {
-                    lines.push(sectionLink(linkText, to.section));
-                }
+            const links = pageLinks();
+            if (links.length) lines.push("", ...links);
+
+            if (moves) {
+                addProblem({
+                    page: page.name, text: page.name,
+                    reason: "This page's script can go to another page. In Quest, the rest of the page wasn't shown then, but here its text and links are shown first.",
+                });
             }
-            // A page with no links, and no script that might add some, is one of the endings
-            ending = !hasScript && !lines.some(l => l.includes("[[") || l.includes("<a href"));
         }
-        if (ending) directives.push("@end");
+        // A page with no links, and no script that goes somewhere, is one of the endings
+        const leaves = (l: string) => l.includes("[[") || l.includes("<a href") || l.includes("{{goto");
+        if (!lines.some(leaves) && !passages.some(leaves)) directives.push("@end");
 
         const body = finishText(escapeLineStarts(lines.join("\n")));
-        sections.push([`[[${section}]]:\n${[...directives, body].filter(l => l).join("\n")}`.trimEnd(), ...passages].join("\n\n"));
+        sections.push([`[[${section}]]:\n${[...directives, body].filter(l => l).join("\n")}`.trimEnd(), ...passages, ...continued].join("\n\n"));
     }
 
     for (const p of game.pages.filter(isLinkPage)) {
@@ -234,13 +350,32 @@ function convertGame(game: QuestGame, options: QuestConversionOptions): QuestCon
         }
     }
 
-    // The master section runs with every section
+    // The master section runs with every section, as the game's roomenter script runs on every page
     const master: string[] = [];
-    if (booleanValue(gameSetting("clearlastpage"))) master.push("@clear");
-    const roomEnter = game.game.attributes.get("roomenter");
-    if (roomEnter?.type == "script" && roomEnter.value.trim()) {
-        addProblem({ text: oneLine(roomEnter.value), reason: "The game's script that runs on every page can't be converted yet, so it's in a comment in the master section, [[]]." });
-        master.push(comment(roomEnter.value));
+    if (clearLastPage) master.push("@clear");
+    if (roomEnter) {
+        const ctx: TextContext = {
+            section: "",
+            target,
+            attribute,
+            unconvertible(text, reason) {
+                addProblem({ text: oneLine(text), reason: `${reason} It's in the script that runs on every page, in the master section, [[]].` });
+                return comment(text);
+            },
+            approximate(text, reason) {
+                addProblem({ text: oneLine(text), reason });
+            },
+            asset(file) {
+                if (file && !/^(https?:)?\/\//i.test(file)) assets.add(file);
+            },
+        };
+        const script = convertScript(roomEnter, scriptContext(ctx));
+        master.push(...script.directives);
+        const body = finishText(escapeLineStarts(script.lines.join("\n")));
+        if (body) master.push(body);
+    }
+    if (styled && clearLastPage) {
+        addProblem({ text: "SetBackgroundColour", reason: "The game clears the screen before each page, so a script's changes to how it looks, such as its colours or font, only last until the next page. To keep one, set it in story.css." });
     }
     for (const [setting, value] of game.game.attributes) {
         if (value.type == "script" && setting != "roomenter" && value.value.trim()) {

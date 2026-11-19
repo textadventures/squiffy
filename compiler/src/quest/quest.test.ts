@@ -187,20 +187,6 @@ describe("converting gamebooks", () => {
         expect(JSON.parse(result.files["squiffy.json"]).exclude).toEqual(["helper.js"]);
     });
 
-    test("scripts are kept in comments", async () => {
-        const { script, result } = await convert(gamebook(
-            page("Start", "Text too.", [["Next", "On"]], "<inherit name=\"scripttext\" /><script type=\"script\">SetFlagOn (\"lamp\")\nmsg (\"{{x}} --}}\")</script>")
-            + page("Next", "Not shown.", [], "<inherit name=\"script\" /><script type=\"script\">MovePlayer (Start)</script>"),
-            "<roomenter type=\"script\">IncreaseCounter (\"turns\")</roomenter>", noTitle,
-        ));
-        expect(section(script, "Start")).toBe("{{!-- Quest: SetFlagOn (\"lamp\") msg (\"{{x}} -- }}\") --}}\nText too.\n\n[[On]](Next)");
-        // A page that only runs its script shows nothing else, and isn't an ending, as the script
-        // may go somewhere
-        expect(section(script, "Next")).toBe("{{!-- Quest: MovePlayer (Start) --}}");
-        expect(section(script, "")).toBe("{{!-- Quest: IncreaseCounter (\"turns\") --}}");
-        expect(result.problems.map(p => p.page)).toEqual(["Start", "Next", undefined]);
-    });
-
     test("clearing the screen between pages", async () => {
         const { script } = await convert(gamebook(page("Start", "Hi"), "<clearlastpage />", noTitle));
         expect(section(script, "")).toBe("@clear");
@@ -305,7 +291,7 @@ describe("the text processor", () => {
 test("the list of problems", () => {
     const result = convertQuestGamebook(gamebook(
         page("Start", "{either x:a}", [["Gone", "Lost"]]),
-        "<roomenter type=\"script\">msg (\"hi\")</roomenter>", noTitle,
+        "<roomenter type=\"script\">JS.alert (\"hi\")</roomenter>", noTitle,
     ));
     expect(formatQuestProblems(result, "test.aslx")).toBe(`Converted test.aslx (Quest 5.5 gamebook) to Squiffy: 1 page.
 
@@ -313,12 +299,288 @@ test("the list of problems", () => {
 Quest code in a comment, {{!-- Quest: ... --}}, so you can search for "Quest:" to find them.
 
 The whole story:
-  msg ("hi")
-    The game's script that runs on every page can't be converted yet, so it's in a comment in the master section, [[]].
+  JS.alert ("hi")
+    This couldn't be converted: Squiffy can't run Quest's JavaScript. It's in the script that runs on every page, in the master section, [[]].
 Start:
   {either x:a}
     This couldn't be converted: Quest expressions in text can't be converted yet.
   Lost
     This option goes to a page called "Gone", which isn't in the game. Quest shows it as a broken link, so it isn't a link here.
 `);
+});
+
+describe("scripts", () => {
+    // A page whose script runs before its text, as a script and text page does
+    function scriptPage(name: string, script: string, description = "", options: [string, string][] = [], type = "scripttext") {
+        return page(name, description, options, `<inherit name="${type}" /><script type="script"><![CDATA[${script}]]></script>`);
+    }
+
+    async function run(pages: string, game = "") {
+        const { script, result } = await convert(gamebook(pages + page("End", "The end."), game, noTitle));
+        return { script, problems: result.problems };
+    }
+
+    test("flags, counters, attributes and text", async () => {
+        const { script, problems } = await run(scriptPage("Start", `
+            SetFlagOn ("lamp")
+            SetFlagOff ("dark")
+            SetCounter ("gold", 10)
+            IncreaseCounter ("gold")
+            DecreaseCounter ("hp")
+            ChangeCounter ("gold", 5)
+            game.name = "Bob"
+            player.strength = player.strength + 1
+            set (game, "mood", "happy")
+            msg ("You have " + game.gold + " gold, {b:" + game.name + "}.")
+            msg ("Line one.<br/>Line two.")`, "Text.", [["End", "On"]]));
+        expect(section(script, "Start")).toBe([
+            "{{set \"lamp\" true}}",
+            "{{set \"dark\" false}}",
+            "{{set \"gold\" 10}}",
+            "{{inc \"gold\"}}",
+            "{{dec \"hp\"}}",
+            "{{inc \"gold\" 5}}",
+            "{{set \"name\" \"Bob\"}}",
+            "{{set \"player_strength\" player_strength + 1}}",
+            "{{set \"mood\" \"happy\"}}",
+            "You have {{gold}} gold, &#123;b:{{name}}&#125;.<br>",
+            "Line one.<br>Line two.<br>",
+            "Text.",
+            "",
+            "[[On]](End)",
+        ].join("\n"));
+        expect(problems).toEqual([]);
+    });
+
+    test("conditions", async () => {
+        const { script } = await run(scriptPage("Start", `
+            if (GetBoolean(game, "lamp") and not game.dark) {
+              msg ("Light.")
+            }
+            else if (GetInt(game, "gold") >= 10 or HasSeenPage(End)) {
+              msg ("Rich.")
+            }
+            else if (RandomChance(35)) {
+              msg ("Lucky.")
+            }
+            else {
+              msg ("Neither.")
+            }
+            switch (game.mood) {
+              case ("happy", "glad") {
+                msg ("Smile.")
+              }
+              default {
+                msg ("Frown.")
+              }
+            }`, "", [["End", "On"]]));
+        expect(section(script, "Start")).toBe([
+            // Each msg is a line of its own, as in Quest
+            "{{#if lamp and not dark}}",
+            "Light.<br>",
+            "{{else if gold >= 10 or (seen \"End\")}}",
+            "Rich.<br>",
+            "{{else if (random (array 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20)) <= 7}}",
+            "Lucky.<br>",
+            "{{else}}",
+            "Neither.<br>",
+            "{{/if}}",
+            "{{#if mood = \"happy\" or mood = \"glad\"}}",
+            "Smile.<br>",
+            "{{else}}",
+            "Frown.",
+            "{{/if}}",
+            "",
+            "[[On]](End)",
+        ].join("\n"));
+    });
+
+    test("firsttime", async () => {
+        const { script } = await run(scriptPage("Start", `
+            firsttime {
+              msg ("Hello.")
+            }
+            otherwise {
+              msg ("Hello again.")
+            }
+            if (game.lamp) {
+              firsttime {
+                msg ("The lamp is on.")
+              }
+            }`, "", [["End", "On"]]));
+        // At the top of a script, the first time is the first visit. Anywhere else, an attribute
+        // remembers it.
+        expect(section(script, "Start")).toBe([
+            "{{#if (visits \"Start\") = 1}}",
+            "Hello.<br>",
+            "{{else}}",
+            "Hello again.<br>",
+            "{{/if}}",
+            "{{#if lamp}}",
+            "{{#unless firsttime_1}}",
+            "{{set \"firsttime_1\" true}}",
+            "The lamp is on.",
+            "{{/unless}}",
+            "{{/if}}",
+            "",
+            "[[On]](End)",
+        ].join("\n"));
+    });
+
+    test("moving to another page", async () => {
+        const { script, problems } = await run(
+            scriptPage("Start", "if (game.lamp) {\n  MovePlayer (Room 551 Weather1)\n}\ngame.next = End", "", [["Room 551 Weather1", "On"]], "script")
+            + page("Room 551 Weather1", "Rain.", [["Hall", "Next"]])
+            + scriptPage("Hall", "MovePlayer (game.next)", "The hall.", [["End", "On"]]),
+        );
+        // A page that only runs its script shows nothing else
+        expect(section(script, "Start")).toBe("{{#if lamp}}\n{{goto \"Room 551 Weather1\"}}\n{{/if}}\n{{set \"next\" \"End\"}}");
+        // A page in an attribute might be this one, which Quest doesn't move to
+        expect(section(script, "Hall")).toBe("{{#unless (at next)}}{{goto next}}{{/unless}}\nThe hall.\n\n[[On]](End)");
+        expect(problems.map(p => p.page)).toEqual(["Hall"]);
+    });
+
+    test("links that scripts add and remove", async () => {
+        const { script } = await run(
+            page("Start", "A fork.", [["Left", "Go left"], ["Right", "Go right"]])
+            + scriptPage("Left", "RemovePageLink (Start, Left)\nAddPageLink (Start, Secret, \"Go through the door\")\nAddPageLink (this, End, \"Leave\")\nAddPageLink (player.parent, End, \"Run\")", "", [["Start", "Back"]])
+            + page("Right", "Nothing here.", [["Start", "Back"]])
+            + page("Secret", "A secret room."),
+        );
+        // Links that start on a page are shown when the story starts
+        expect(section(script, "Start")).toBe([
+            "{{#if (visits \"Start\") = 1}}",
+            "{{set \"link_Start_Left\" true}}",
+            "{{/if}}",
+            "A fork.",
+            "",
+            "{{#if link_Start_Left}}",
+            "[[Go left]](Left)<br>",
+            "{{/if}}",
+            "[[Go right]](Right)<br>",
+            "{{#if link_Start_Secret}}",
+            "[[Go through the door]](Secret)",
+            "{{/if}}",
+        ].join("\n"));
+        // A link that can have more than one text shows the one it was given
+        expect(section(script, "Left")).toBe([
+            "{{set \"link_Start_Left\" false}}",
+            "{{set \"link_Start_Secret\" true}}",
+            "{{set \"link_Left_End\" 1}}",
+            "{{set \"link_Left_End\" 2}}",
+            "",
+            "[[Back]](Start)<br>",
+            "{{#if link_Left_End = 1}}",
+            "[[Leave]](End)<br>",
+            "{{/if}}",
+            "{{#if link_Left_End = 2}}",
+            "[[Run]](End)",
+            "{{/if}}",
+        ].join("\n"));
+    });
+
+    test("asking for input", async () => {
+        const { script } = await run(scriptPage("Start", "msg (\"What's your name?\")\nGetInput () {\n  game.name = result\n  msg (\"Hello, \" + result + \".\")\n}", "", [["End", "On"]]));
+        // Squiffy keeps what's typed once the player goes to another section, so the rest of the
+        // script is in a section of its own, which has the page's links too
+        expect(section(script, "Start")).toBe([
+            "What's your name?<br>",
+            "<input type=\"text\" data-attribute=\"input\"><br>",
+            "[[Continue]](Start continued)",
+            "",
+            "[[On]](End)",
+        ].join("\n"));
+        expect(section(script, "Start continued")).toBe([
+            "{{set \"name\" input}}",
+            "Hello, {{input}}.",
+            "",
+            "[[On]](End)",
+        ].join("\n"));
+    });
+
+    test("pictures, sounds and how the page looks", async () => {
+        const { script } = await run(scriptPage("Start", `
+            ClearScreen
+            picture ("map.png")
+            play sound ("rain.mp3", false, true)
+            PrintCentered ("<b>Chapter 1</b>")
+            TextFX_Typewriter ("It was a dark night.", 50)
+            SetBackgroundColour ("Black")
+            SetWebFontName ("Press Start 2P")
+            DisplayHttpLink ("Our site", "http://example.com", true)`, "", [["End", "On"]]));
+        expect(section(script, "Start")).toBe([
+            "@clear",
+            "<img src=\"map.png\" alt=\"\"><br>",
+            "<audio src=\"rain.mp3\" autoplay loop></audio><br>",
+            "<span style=\"display: block; text-align: center\">**Chapter 1**</span><br>",
+            "{{#animate \"typewriter\" interval=50}}It was a dark night.{{/animate}}<br>",
+            "<style>:root { color-scheme: light; --squiffy-background: Black; }</style><br>",
+            "<style>@import url(\"https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap\");:root { color-scheme: light; --squiffy-font-family: \"Press Start 2P\"; }</style><br>",
+            "<a href=\"https://example.com\" target=\"_blank\">Our site</a>",
+            "",
+            "[[On]](End)",
+        ].join("\n"));
+    });
+
+    test("what can't be converted is kept in comments", async () => {
+        const { script, problems } = await run(scriptPage("Start", `
+            msg ("Before.")
+            ClearScreen
+            JS.eval ("alert(1)")
+            list add (game.items, "key")
+            if (Foo(1)) {
+              msg ("x")
+            }
+            MovePlayer (Nowhere)
+            msg (`, "", [["End", "On"]]));
+        expect(section(script, "Start")).toBe([
+            "Before.",
+            "{{!-- Quest: ClearScreen --}}",
+            "{{!-- Quest: JS.eval (\"alert(1)\") --}}",
+            "{{!-- Quest: list add (game.items, \"key\") --}}",
+            "{{!-- Quest: if (Foo(1)) { msg (\"x\") } --}}",
+            "{{!-- Quest: MovePlayer (Nowhere) --}}",
+            "{{!-- Quest: msg ( --}}",
+            "",
+            "[[On]](End)",
+        ].join("\n"));
+        expect(problems.map(p => p.reason)).toEqual([
+            "This couldn't be converted: Squiffy can only clear the screen before a section is shown.",
+            "This couldn't be converted: Squiffy can't run Quest's JavaScript.",
+            "This couldn't be converted: Squiffy has nothing like list add.",
+            "This couldn't be converted: Squiffy has nothing like Foo.",
+            "This couldn't be converted: there's no page called \"Nowhere\".",
+            "This couldn't be converted: Squiffy couldn't read this Quest script.",
+        ]);
+    });
+
+    test("the script that runs on every page", async () => {
+        const { script } = await run(page("Start", "Hi.", [["End", "On"]]), `<roomenter type="script"><![CDATA[
+            ClearScreen
+            IncreaseCounter ("turns")
+            firsttime {
+              msg ("Welcome.")
+            }
+            if (player.parent = End) {
+              msg ("Nearly done.")
+            }
+            if (game.won) {
+              MovePlayer (End)
+            }]]></roomenter>`);
+        expect(section(script, "")).toBe([
+            "@clear",
+            "{{inc \"turns_\"}}",
+            "{{#unless firsttime_1}}",
+            "{{set \"firsttime_1\" true}}",
+            "Welcome.<br>",
+            "{{/unless}}",
+            "{{#if (at \"End\")}}",
+            "Nearly done.",
+            "{{/if}}",
+            // It runs on End too, so it only goes there from somewhere else
+            "{{#if won}}",
+            "{{#unless (at \"End\")}}{{goto \"End\"}}{{/unless}}",
+            "{{/if}}",
+        ].join("\n"));
+    });
 });
