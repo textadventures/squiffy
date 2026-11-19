@@ -22,6 +22,11 @@ const api: SquiffyDesktopApi = {
         forget: (id) => invoke("recent:forget", id),
         onChanged: (listener) => on("recent-changed", listener),
     },
+    newStory: {
+        location: () => invoke("new-story:location"),
+        chooseLocation: () => invoke("new-story:choose-location"),
+        create: (folderName) => invoke("new-story:create", folderName),
+    },
     menu: {
         onAction: (listener) => on<[MenuAction]>("menu", listener),
         onOpenRecent: (listener) => on<[string]>("open-recent", listener),

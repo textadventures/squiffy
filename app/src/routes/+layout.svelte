@@ -5,6 +5,7 @@
     import { initTheme } from "#lib/theme-store.js";
     import { initSettings } from "#lib/settings.svelte.js";
     import ConfirmDialog from "#components/ConfirmDialog.svelte";
+    import NewStoryDialog from "#components/NewStoryDialog.svelte";
     import Toast from "#components/Toast.svelte";
     import SettingsModal from "#components/SettingsModal.svelte";
     import UpdateBanner from "#components/UpdateBanner.svelte";
@@ -31,5 +32,6 @@
 {@render children()}
 <UpdateBanner />
 <ConfirmDialog />
+<NewStoryDialog />
 <Toast />
 <SettingsModal />

@@ -180,7 +180,7 @@
             <button type="button" class="card start-card preset-outlined-surface-200-800" disabled={busy || !!storageBlocked} onclick={handleNew}>
                 <FilePlus size={22} class="text-primary-500" />
                 <span class="font-medium">New story</span>
-                <span class="text-xs text-surface-600-400">{isDesktop ? "In a folder you choose" : "Kept in this browser"}</span>
+                <span class="text-xs text-surface-600-400">{isDesktop ? "In a new folder" : "Kept in this browser"}</span>
             </button>
             {#if canOpenFolders}
                 <button type="button" class="card start-card preset-outlined-surface-200-800" disabled={busy} onclick={handleOpenFolder}>
