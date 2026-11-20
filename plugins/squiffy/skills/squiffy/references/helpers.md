@@ -140,6 +140,7 @@ See dynamic-text.md for details.
 |---|---|---|
 | `random` | `(array ...) [set="attr"]` | Pick one at random, optionally storing it. Also `(random bag)` |
 | `#animate` | `"typewriter"`/`"toast"`/`"fadeIn"`/`"continue"`, options | Animate the text inside |
+| `#style` | `"class" ...` | Give the text inside classes (span, or div if it has blank lines), for CSS or a built-in effect: `shake`, `shudder`, `rumble`, `sway`, `buoy`, `pulse`, `fade-in-out`, `blink`, `flicker`, `blur`, `blurrier`, `smear`, `mirror`, `upside-down` |
 | `#label` | `"name"` | Mark some text to replace later |
 | `#replace` | `"name"` | Replace a label's text |
 | `rotate` | `(array ...) [set="attr"] [show="next"]` | A link that cycles through options |

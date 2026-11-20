@@ -166,6 +166,25 @@ Each section's output has a `data-section` attribute with the section's name, an
 }
 ```
 
+### Styling some text
+
+To style a word or a few sentences, give them a class with `{{#style}}`, and style the class in your CSS:
+
+```squiffy
+The sign says {{#style "warning"}}KEEP OUT{{/style}}.
+```
+
+```css
+.warning {
+    color: red;
+    font-weight: bold;
+}
+```
+
+The text is put in a `<span class="squiffy-style warning">`, or a `<div>` if it has blank lines in it, so it can be a few paragraphs. It can have more than one class, as in `{{#style "warning big"}}`, and the classes can come from an attribute: `{{#style mood}}`. Markdown and other `{{...}}` work inside it as usual.
+
+Some class names are Squiffy's own [text effects](/dynamic-text/#text-effects), such as `shudder` and `blur`, so give your own classes other names. To change how an effect looks, style `.squiffy-style.shudder`.
+
 ### Changing the look for a scene
 
 To change how the story looks while the player is in a section, such as a dark cave or a dream, give the section some classes with `@class`, and style them in your CSS:

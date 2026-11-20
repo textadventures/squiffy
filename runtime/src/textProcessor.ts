@@ -599,6 +599,21 @@ export class TextProcessor {
             const text = fillIn(options.hash.text as string || processor.strings.settings, this, options, true);
             return new Handlebars.SafeString(`<a class="squiffy-link link-settings" data-handler="settings" role="link" tabindex="0">${text}</a>`);
         });
+
+        // {{#style "warning"}}...{{/style}} (#453) gives the text it wraps one or more classes, for
+        // the story's own CSS or the built-in effects (shudder, blur, ...: .squiffy-style.shudder
+        // in squiffy.runtime.css). Text with blank lines in it is a block, so it gets a div.
+        this.handlebars.registerHelper("style", function (this: unknown, ...args: any[]) {
+            const options = args.pop();
+            const content = typeof options?.fn == "function" ? options.fn(this) as string : "";
+            const classes = args.flatMap(a => String(unwrapValue(a) ?? "").split(/\s+/)).filter(c => c.length > 0);
+            const attr = escapeAttr(["squiffy-style", ...classes].join(" "));
+            if (content.includes("\n\n")) {
+                // The blank lines around the content let Markdown in it be rendered inside the div
+                return new Handlebars.SafeString(`<div class="${attr}">\n\n${content.trim()}\n\n</div>`);
+            }
+            return new Handlebars.SafeString(`<span class="${attr}">${content}</span>`);
+        });
     }
 
     // The default text of {{restart}}, {{saves}} and {{settings}} links, which the runtime sets

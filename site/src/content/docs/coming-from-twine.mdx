@@ -259,6 +259,7 @@ Squiffy fades from one track to the next by itself, and players get a mute butto
 | Show something in the sidebar | `(replace: ?sidebar)` | `StoryCaption`, `StoryMenu` | A [panel](/buttons-panels-settings/#panels), beside the story or opened from a button in the header |
 | Change the look for a scene | Tag the passage, and style `tw-story[tags~="dark"]` | Tag the passage, and style `body[data-tags~="dark"]` | `@class dark`, and style `body:has(.dark)`: see [Changing the look for a scene](/styling/#changing-the-look-for-a-scene) |
 | Add a class to the page | `(enchant: ?page, ...)` | `<<addclass "body" "dark">>`, `<<removeclass>>`, `<<toggleclass>>` | `{{addclass "dark"}}`, `{{removeclass "dark"}}`, `{{toggleclass "dark"}}` |
+| Style some text | `(text-style: "shudder")[...]`, `(css: "...")[...]` | `@@.warning;...@@`, `@@color:red;...@@` | `{{#style "shudder"}}...{{/style}}`, `{{#style "warning"}}...{{/style}}`: see [Text effects](/dynamic-text/#text-effects) and [Styling some text](/styling/#styling-some-text) |
 | Check a passage's tags | `(passage:)'s tags contains "dark"` | `tags().includes("dark")` | `{{#if (hasclass "dark")}}` |
 | Write a comment | `<!-- ... -->` | `/* ... */` | `{{!-- ... --}}` |
 | A link that restarts, or opens the saved games | | `<<link "Play again">><<run UI.restart()>><</link>>`, `UI.saves()` | `{{restart text="Play again"}}`, `{{saves}}`: see [Restarting and saving from the story](/basic-concepts/#restarting-and-saving-from-the-story) |
@@ -269,7 +270,6 @@ Squiffy fades from one track to the next by itself, and players get a mute butto
 
 Some things in Harlowe and SugarCube aren't in Squiffy yet. Each one is planned, and its GitHub issue says how it might work, so you can follow it or add your thoughts:
 
-- **More text effects**, like Harlowe's `"shudder"` and `"blur"`, and a short way to style some text, like SugarCube's `@@.class;...@@` ([#453](https://github.com/textadventures/squiffy/issues/453)). Use HTML and [CSS](/styling/), and [`{{#animate}}`](/dynamic-text/#animation).
 - **A text box that moves on when Enter is pressed** ([#454](https://github.com/textadventures/squiffy/issues/454)).
 
 ### Left out on purpose
