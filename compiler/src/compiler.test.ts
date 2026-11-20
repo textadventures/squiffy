@@ -364,6 +364,21 @@ This is the only section.
     expect(nextSectionWarning).toContain("no following section exists");
 });
 
+test("A warning calls a section without a name of its own by its +++ line, not its internal name", async () => {
+    const warnings: string[] = [];
+    const result = await compile({
+        scriptBaseFilename: "test.squiffy",
+        script: "[[cave]]:\nA cave.\n+++Continue...\nDark. [[Missing]]\n+++Continue...\n[look]\n\n[look]:\nSee [nothing].",
+        onWarning: (message) => warnings.push(message),
+    });
+
+    assertSuccess(result);
+    expect(warnings).toEqual([
+        "WARNING: test.squiffy line 3: In the first \"+++Continue...\" after \"cave\" there is a link to a section called [[Missing]], which doesn't exist",
+        "WARNING: test.squiffy line 8: In the second \"+++Continue...\" after \"cave\", passage 'look' there is a link to a passage called [nothing], which doesn't exist",
+    ]);
+});
+
 test("Warning when [[text]](>) has no following section", async () => {
     const script = `
 [[only]]:

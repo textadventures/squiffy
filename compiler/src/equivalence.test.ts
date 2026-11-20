@@ -94,6 +94,11 @@ async function expectSameResult(settings: Settings) {
     const actual = await run(compile, settings);
     // The old compiler didn't warn about duplicate sections and passages (tested in compiler.test.ts)
     actual.warnings = actual.warnings.filter(w => !/There's already a (section|passage) called/.test(w));
+    // The old compiler called a section without a name of its own by the name it gave it, e.g.
+    // "In section '_continue1'", where the new one says 'In the "+++Continue..." after "cave"'
+    const whichSection = (w: string) => w.replace(/: In .*?(, passage '[^']*')?,? there is/, ": In (section)$1 there is");
+    expected.warnings = expected.warnings.map(whichSection);
+    actual.warnings = actual.warnings.map(whichSection);
 
     if ("threw" in expected) {
         // The old compiler crashed on some content before the first section of an imported

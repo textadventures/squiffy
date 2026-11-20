@@ -376,6 +376,35 @@ describe("diagnostics", () => {
         ]);
     });
 
+    test("a section without a name of its own is called by its +++ or --- line, not its internal name", async () => {
+        const messages = async (main: string) =>
+            (await service({ "story.squiffy": main }).getDiagnostics("story.squiffy")).map(d => d.message);
+        expect(await messages("Hello.\n+++Continue...\nStuck.")).toEqual([
+            "The \"+++Continue...\" has no way out, as it has no links to another section. If it's one of the story's endings, add @end to say so.",
+        ]);
+        expect(await messages("[[a]]:\nGo to [[b]].\n\n[[b]]:\n@end\n\n---\nNothing links here.\n[[a]]")).toEqual([
+            "The \"---\" after \"b\" can't be reached from the start of the story, as nothing the player can reach links to it.",
+        ]);
+        expect(await messages("Hello.")).toEqual([
+            "The text before the first section has no way out, as it has no links to another section. If it's one of the story's endings, add @end to say so.",
+        ]);
+    });
+
+    test("section labels say which named section they come after, and which one if there are several", async () => {
+        const graph = await one("Hi.\n+++Continue...\nA.\n+++Continue...\nB.\n\n[[cave]]:\nC.\n+++Continue...\nD.\n+++Onwards\nE.\n+++Continue...\nF.\n---\nG.");
+        const labels = graph.nodes.filter(n => n.kind == "section" && n.name != "").map(n => n.label);
+        expect(labels).toEqual([
+            "the text before the first section",
+            "the first \"+++Continue...\"",
+            "the second \"+++Continue...\"",
+            "the section \"cave\"",
+            "the first \"+++Continue...\" after \"cave\"",
+            "the \"+++Onwards\" after \"cave\"",
+            "the second \"+++Continue...\" after \"cave\"",
+            "the \"---\" after \"cave\"",
+        ]);
+    });
+
     test("a quick fix marks a dead end as an ending", async () => {
         const main = "[[a]]:\nGo to [[b]].\n\n[[b]]:\nThe end.";
         const ls = service({ "story.squiffy": main });

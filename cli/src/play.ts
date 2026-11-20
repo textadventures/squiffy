@@ -33,6 +33,9 @@ export interface PlayableStory {
     passages: string[];
     // Script files the story adds to its page, which aren't run here
     scripts: string[];
+    // What to call the sections without names of their own, rather than the names the compiler
+    // gives them (_default, _continue1, ...), e.g. 'the "+++Continue..." after "cave"'
+    labels: Map<string, string>;
 }
 
 export type LoadResult = { success: true; playable: PlayableStory } | { success: false; errors: string[] };
@@ -60,6 +63,7 @@ export async function loadPlayableStory(story: StoryOnDisk): Promise<LoadResult>
             sections: sectionNodes.filter(n => !n.embedded).map(n => n.name),
             passages: passageNodes.map(n => `${n.section}/${n.name}`),
             scripts: compiled.getUiInfo().externalScripts,
+            labels: new Map(sectionNodes.filter(n => n.detail && n.label).map(n => [n.name, n.label!])),
         },
     };
 }
@@ -488,6 +492,18 @@ export interface PlayOptions {
     seed?: number;
 }
 
+export type SectionLabels = Record<string, string>;
+
+// The labels for the sections named, for those without names of their own
+function labelsFor(playable: PlayableStory, names: Iterable<string>): { sectionLabels?: SectionLabels } {
+    const labels: SectionLabels = {};
+    for (const name of names) {
+        const label = playable.labels.get(name);
+        if (label) labels[name] = label;
+    }
+    return Object.keys(labels).length ? { sectionLabels: labels } : {};
+}
+
 export interface PlayResult {
     // False if there were any errors, or a link to click couldn't be found
     success: boolean;
@@ -505,6 +521,8 @@ export interface PlayResult {
     notes: string[];
     // The game as it is at the end, to carry on from
     save: SavedGame;
+    // What to call the sections in the result without names of their own, by name
+    sectionLabels?: SectionLabels;
 }
 
 // A story being played, and what's been shown of it so far
@@ -780,16 +798,19 @@ export async function playStory(playable: PlayableStory, options: PlayOptions = 
 
         const section = s.api.get("_section") ?? "";
         const hasErrors = steps.some(step => step.errors.length);
+        const choices = s.choices();
+        const mentioned = [section, ...steps.flatMap(step => step.went.map(w => w.section)), ...choices.flatMap(c => c.section ? [c.section] : [])];
         return {
             success: !stopped && !hasErrors,
             steps,
             section,
             ending: playable.endings.has(section),
-            choices: s.choices(),
+            choices,
             attributes: s.attributes(),
             ...(stopped ? { stopped } : {}),
             notes,
             save: s.api.getSave(),
+            ...labelsFor(playable, mentioned),
         };
     }
     finally {
@@ -834,6 +855,8 @@ export interface RandomResult {
     sections: { total: number; visited: number; notVisited: string[] };
     passages: { total: number; visited: number; notVisited: string[] };
     notes: string[];
+    // What to call the sections in the result without names of their own, by name
+    sectionLabels?: SectionLabels;
 }
 
 export async function playRandom(playable: PlayableStory, options: RandomOptions): Promise<RandomResult> {
@@ -951,10 +974,33 @@ export async function playRandom(playable: PlayableStory, options: RandomOptions
         sections: { total: sections.length, visited: sections.length - notVisitedSections.length, notVisited: notVisitedSections },
         passages: { total: playable.passages.length, visited: playable.passages.length - notVisitedPassages.length, notVisited: notVisitedPassages },
         notes,
+        ...labelsFor(playable, [
+            ...sorted.map(p => p.section), ...Object.keys(endings), ...notVisitedSections,
+            ...notVisitedPassages.map(p => passageParts(p).section),
+        ]),
     };
 }
 
 // ---- Formatting ----
+
+// A section, in a sentence: 'section "cave"', or for a section without a name of its own, what
+// it starts with, e.g. 'the "+++Continue..." after "cave"'
+const describeSection = (section: string, labels?: SectionLabels) => labels?.[section] ?? `section "${section}"`;
+// A section in a list
+const listSection = (section: string, labels?: SectionLabels) => labels?.[section] ?? `"${section}"`;
+
+// A passage as PlayableStory.passages has it, "section/passage". The names the compiler gives
+// sections have no "/" in them.
+function passageParts(passage: string) {
+    const slash = passage.indexOf("/");
+    return { section: passage.slice(0, slash), passage: passage.slice(slash + 1) };
+}
+
+const listPassage = (passage: string, labels?: SectionLabels) => {
+    const parts = passageParts(passage);
+    const label = labels?.[parts.section];
+    return label ? `"${parts.passage}" in ${label}` : `"${passage}"`;
+};
 
 const quote = (text: string) => /^[\w.,/@%+=:-]+$/.test(text) ? text : `'${text.replace(/'/g, "'\\''")}'`;
 
@@ -985,18 +1031,18 @@ export function parseChoicesFile(text: string): string[] {
 }
 
 // What a problem's choices file says about it
-export const problemComments = (problem: RandomProblem) => [
-    `${problem.kind == "error" ? "Error" : problem.kind == "dead-end" ? "Dead end" : "Stuck"} in section "${problem.section}": ${problem.message}`,
+export const problemComments = (problem: RandomProblem, labels?: SectionLabels) => [
+    `${problem.kind == "error" ? "Error" : problem.kind == "dead-end" ? "Dead end" : "Stuck"} in ${describeSection(problem.section, labels)}: ${problem.message}`,
     "The links to click to get there, for --choices",
 ];
 
-const describePlace = (place: { section: string; passage?: string }) =>
-    place.passage !== undefined ? `passage "${place.passage}" in section "${place.section}"` : `section "${place.section}"`;
+const describePlace = (place: { section: string; passage?: string }, labels?: SectionLabels) =>
+    place.passage !== undefined ? `passage "${place.passage}" in ${describeSection(place.section, labels)}` : describeSection(place.section, labels);
 
 // The places a step went, with the same place several times in a row only once
-function describePlaces(places: { section: string; passage?: string }[]) {
+function describePlaces(places: { section: string; passage?: string }[], labels?: SectionLabels) {
     const runs: { place: string; count: number }[] = [];
-    for (const place of places.map(describePlace)) {
+    for (const place of places.map(p => describePlace(p, labels))) {
         const last = runs[runs.length - 1];
         if (last?.place == place) last.count++;
         else runs.push({ place, count: 1 });
@@ -1005,12 +1051,13 @@ function describePlaces(places: { section: string; passage?: string }[]) {
 }
 
 export function formatPlayResult(result: PlayResult, showAttributes: boolean): string {
+    const labels = result.sectionLabels;
     const lines: string[] = [];
     for (const note of result.notes) lines.push(`(${note})`);
     for (const step of result.steps) {
         if (lines.length) lines.push("");
         if (step.choice !== undefined) lines.push(`> ${step.choice}`);
-        if (step.went.length) lines.push(`(${describePlaces(step.went)})`);
+        if (step.went.length) lines.push(`(${describePlaces(step.went, labels)})`);
         if (step.cleared) lines.push("(The screen is cleared.)");
         if (step.text) lines.push("", step.text);
         // Errors are already in the text, where they appeared, unless they came from elsewhere
@@ -1026,17 +1073,17 @@ export function formatPlayResult(result: PlayResult, showAttributes: boolean): s
         lines.push(`Stopped: ${result.stopped}`);
     }
     if (result.choices.length) {
-        lines.push(`Choices (in section "${result.section}"):`);
+        lines.push(`Choices (in ${describeSection(result.section, labels)}):`);
         for (const choice of result.choices) {
-            const where = choice.section ? ` -> section "${choice.section}"` : choice.passage ? ` -> passage "${choice.passage}"` : choice.continue ? " (continue)" : "";
+            const where = choice.section ? ` -> ${describeSection(choice.section, labels)}` : choice.passage ? ` -> passage "${choice.passage}"` : choice.continue ? " (continue)" : "";
             lines.push(`  ${choice.number}. ${choice.text}${where}${choice.needsInput ? " (needs the text boxes filling in: use --input)" : ""}`);
         }
     }
     else if (result.ending) {
-        lines.push(`The end: section "${result.section}" is one of the story's endings.`);
+        lines.push(`The end: ${describeSection(result.section, labels)} is one of the story's endings.`);
     }
     else {
-        lines.push(`No links to click in section "${result.section}", and it isn't marked @end.`);
+        lines.push(`No links to click in ${describeSection(result.section, labels)}, and it isn't marked @end.`);
     }
     if (showAttributes) {
         lines.push("", "Attributes:");
@@ -1047,21 +1094,22 @@ export function formatPlayResult(result: PlayResult, showAttributes: boolean): s
 
 // choicesFiles: the choices file for each problem that has one, by its index in result.problems
 export function formatRandomResult(result: RandomResult, start?: string, choicesFiles: (string | undefined)[] = []): string {
+    const labels = result.sectionLabels;
     const lines: string[] = [];
     for (const note of result.notes) lines.push(`(${note})`);
     lines.push(`Played ${result.runs} time${result.runs == 1 ? "" : "s"}, clicking up to ${result.steps} links at random each time (--seed ${result.seed}).`);
     lines.push("");
     lines.push(`Sections visited: ${result.sections.visited} of ${result.sections.total}`);
     if (result.sections.notVisited.length) {
-        lines.push(`  Never visited: ${result.sections.notVisited.map(s => `"${s}"`).join(", ")}`);
+        lines.push(`  Never visited: ${result.sections.notVisited.map(s => listSection(s, labels)).join(", ")}`);
     }
     lines.push(`Passages visited: ${result.passages.visited} of ${result.passages.total}`);
     if (result.passages.notVisited.length) {
-        lines.push(`  Never visited: ${result.passages.notVisited.map(p => `"${p}"`).join(", ")}`);
+        lines.push(`  Never visited: ${result.passages.notVisited.map(p => listPassage(p, labels)).join(", ")}`);
     }
     const endings = Object.entries(result.endings).sort((a, b) => b[1] - a[1]);
     lines.push(endings.length
-        ? `Endings reached: ${endings.map(([name, count]) => `"${name}" (${count})`).join(", ")}`
+        ? `Endings reached: ${endings.map(([name, count]) => `${listSection(name, labels)} (${count})`).join(", ")}`
         : "Endings reached: none");
     if (result.outOfSteps) {
         lines.push(`Still going after ${result.steps} clicks: ${result.outOfSteps} time${result.outOfSteps == 1 ? "" : "s"}`);
@@ -1075,7 +1123,7 @@ export function formatRandomResult(result: RandomResult, start?: string, choices
     for (const [i, problem] of result.problems.entries()) {
         const label = problem.kind == "error" ? "Error" : problem.kind == "dead-end" ? "Dead end" : "Stuck";
         lines.push("");
-        lines.push(`${label} in section "${problem.section}" (${problem.count} time${problem.count == 1 ? "" : "s"}): ${problem.message}`);
+        lines.push(`${label} in ${describeSection(problem.section, labels)} (${problem.count} time${problem.count == 1 ? "" : "s"}): ${problem.message}`);
         lines.push(`  To get there: ${reproduceOptions(problem, start, choicesFiles[i])}`);
     }
     return lines.join("\n");
