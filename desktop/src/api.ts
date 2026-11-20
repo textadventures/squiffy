@@ -62,6 +62,11 @@ export interface SquiffyDesktopApi {
         /** A folder to open from the recent list: Open Recent, or a file the OS asked the app to open */
         onOpenRecent(listener: (id: string) => void): () => void;
     };
+    /**
+     * Shows a file in the folder that holds it, in Finder, Explorer or the file manager, by its
+     * path in a project-fs root the window holds. An empty path opens the root folder itself.
+     */
+    showInFolder(rootId: string, path: string): Promise<void>;
     /** The window's about to close: the editor saves, then calls the function it's given. */
     onBeforeClose(listener: () => Promise<void>): () => void;
 }

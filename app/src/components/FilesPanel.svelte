@@ -1,12 +1,13 @@
 <script lang="ts">
     // The project's files (#118), as a tree. Text files open in a tab; anything else (images and
     // other assets, #73) is managed from the Assets dialog. Each file's ⋯ menu renames, deletes,
-    // downloads it, or makes a .squiffy file the main one. With a squiffy.json (#361), it also
+    // downloads it, shows it in Finder (in the desktop app), or makes a .squiffy file the main one. With a squiffy.json (#361), it also
     // leaves a .squiffy file out of the story or puts it back, and excluded files are greyed out.
     import { basename, dirname } from "@textadventures/project-fs";
     import type { OpenProject } from "#lib/project.svelte.js";
     import { PROJECT_FILENAME } from "squiffy-compiler";
     import { isTextFile } from "#lib/file-types.js";
+    import { folderReveal } from "#lib/desktop.js";
     import { NEW_FILE_KINDS, type NewFileKind } from "#lib/new-file.js";
     import DropdownMenu from "#components/DropdownMenu.svelte";
     import type { DropdownMenuItem } from "#components/DropdownMenu.svelte";
@@ -55,11 +56,15 @@
     const newFileItems: DropdownMenuItem[] = (Object.keys(NEW_FILE_KINDS) as NewFileKind[])
         .map(kind => ({ label: NEW_FILE_KINDS[kind].label, action: () => onnewfile(kind) }));
 
+    // In the desktop app, shows a file in Finder, Explorer or the file manager
+    const reveal = $derived(folderReveal(project.fs));
+
     function menuItems(path: string): DropdownMenuItem[] {
         const items: DropdownMenuItem[] = [
             { label: "Rename", action: () => onrename(path) },
             { label: "Download", action: () => ondownload(path) },
         ];
+        if (reveal) items.push({ label: reveal.label, action: () => reveal.show(path) });
         if (path.toLowerCase().endsWith(".squiffy") && path !== project.mainFile) {
             items.push({ label: "Make this the main file", action: () => onmakemain(path) });
         }

@@ -287,6 +287,17 @@ function registerDesktopHandlers(projectFs: ProjectFsMain) {
         return { ok: true, root: await projectFs.approveRoot(sender, result.path) };
     });
 
+    handle("show-in-folder", async (sender, rootId, path) => {
+        if (typeof rootId !== "string" || typeof path !== "string") return;
+        const root = projectFs.rootPath(sender, rootId);
+        if (!root) throw new Error("Unknown project root");
+        const target = nodePath.resolve(root, path);
+        const relative = nodePath.relative(root, target);
+        if (relative === ".." || relative.startsWith(".." + nodePath.sep) || nodePath.isAbsolute(relative)) throw new Error("Not in the project");
+        if (relative === "") await shell.openPath(root);
+        else shell.showItemInFolder(target);
+    });
+
     ipcMain.on(CHANNEL_PREFIX + "close-ready", (event) => {
         if (!fromEditor(event) || !mainWindow) return;
         clearTimeout(closeTimer);

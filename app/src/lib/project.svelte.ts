@@ -407,6 +407,16 @@ class OpenProject {
         }
     }
 
+    // Moves a file's tab so it's at index in the tab order (counting before it's moved)
+    moveTab(path: string, index: number) {
+        const from = this.openFiles.findIndex(f => f.path === path);
+        if (from < 0) return;
+        const to = Math.max(0, Math.min(from < index ? index - 1 : index, this.openFiles.length - 1));
+        if (to === from) return;
+        const [file] = this.openFiles.splice(from, 1);
+        this.openFiles.splice(to, 0, file);
+    }
+
     save(): Promise<void> {
         return Promise.all(this.openFiles.map(f => f.save())).then(() => undefined);
     }
