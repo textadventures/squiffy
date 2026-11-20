@@ -835,6 +835,28 @@ Nothing to hear. {{sound}}`;
     expect(js).toContain('"music": null');
 });
 
+test("@class puts classes in the output, for a section or a passage (#449)", async () => {
+    const script = `[[start]]:
+@class night  forest
+@class night
+Hello. [look up]
+
+[look up]:
+@class stars
+Stars.
+
+[[plain]]:
+Nothing.`;
+    const result = await compile({ scriptBaseFilename: "test.squiffy", script });
+
+    assertSuccess(result);
+    const { sections } = result.output.story;
+    expect(sections.start.classes).toEqual(["night", "forest"]);
+    expect(sections.start.passages!["look up"].classes).toEqual(["stars"]);
+    expect(sections.plain).not.toHaveProperty("classes");
+    expect(sections.start.text).not.toContain("@class");
+});
+
 test("@sound stop stops the sounds playing, and isn't a file to load", async () => {
     const script = `[[start]]:
 @sound stop

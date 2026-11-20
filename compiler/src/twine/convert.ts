@@ -79,6 +79,7 @@ export const reservedAttributes = new Set([
     "join", "sort", "shuffle", "slice", "first", "last", "indexof", "count", "range",
     "if", "unless", "each", "with", "lookup", "log", "else", "this", "turns", "previous", "previous_section",
     "true", "false", "null", "undefined", "music", "stopmusic", "sound", "stopsounds",
+    "addclass", "removeclass", "toggleclass", "hasclass",
 ]);
 
 export class StoryContext {
@@ -558,6 +559,9 @@ export function convertTwineStory(twine: TwineStory, options: TwineConversionOpt
         const extraPassages: string[] = [];
         const converted = convert(p, section, extraPassages);
         const directives = [...converted.directives];
+        // Its tags (#449), which Twine puts on the page for the stylesheet
+        const classes = footers.includes(p) ? [] : tagClasses(p.tags);
+        if (classes.length) directives.push(`@class ${classes.join(" ")}`);
         let body = converted.body.trim();
         if (p.name == startPassage && (init.directives.length || init.body)) {
             directives.unshift(...init.directives);
@@ -592,10 +596,14 @@ export function convertTwineStory(twine: TwineStory, options: TwineConversionOpt
     if (startSection !== undefined) header.push(`@start ${startSection}`);
     if (twine.stylesheet) {
         // squiffy.json makes it part of the story
-        files[`${name}.css`] = twine.stylesheet + "\n";
+        const stylesheet = convertTagSelectors(twine.stylesheet);
+        files[`${name}.css`] = stylesheet + "\n";
+        const tagRules = stylesheet != twine.stylesheet
+            ? " Its rules for passage tags now use the classes that @class puts on the story's element."
+            : "";
         problems.push({
             text: `${name}.css`,
-            reason: `The story's stylesheet is in ${name}.css. Its rules for ${harlowe ? "Harlowe's elements (tw-story, tw-passage, tw-link and so on)" : "SugarCube's elements (#story, .passage, #ui-bar and so on)"} won't apply to Squiffy's, so check how it looks.`,
+            reason: `The story's stylesheet is in ${name}.css. Its rules for ${harlowe ? "Harlowe's elements (tw-story, tw-passage, tw-link and so on)" : "SugarCube's elements (#story, .passage, #ui-bar and so on)"} won't apply to Squiffy's, so check how it looks.${tagRules}`,
         });
     }
     // The story's JavaScript is left out of it, as it was written for another story format
@@ -671,6 +679,40 @@ function unarranged(passages: TwinePassage[]): boolean {
     return columns.size == 10 && onGrid.length >= positions.length * 0.9;
 }
 
+// Tags that mean something to Harlowe, SugarCube or Twine itself, rather than ones the story
+// gave its passages
+const SPECIAL_TAGS = new Set(["header", "footer", "startup", "widget", "nobr", "init", "stylesheet", "script"]);
+
+// A passage's tags, which become @class (#449): Harlowe and SugarCube put them on the page
+export function tagClasses(tags: string[]): string[] {
+    return [...new Set(tags.filter(t => !SPECIAL_TAGS.has(t) && !t.startsWith("debug-") && !t.startsWith("Twine.")))];
+}
+
+// A class name in a CSS selector, escaped if it needs to be
+function cssClass(name: string): string {
+    if (/^-?[A-Za-z_][\w-]*$/.test(name)) return "." + name;
+    return "." + [...name].map((c, i) => {
+        if (/[\w-]/.test(c) && !(i == 0 && /\d/.test(c))) return c;
+        if (/\d/.test(c)) return `\\${c.charCodeAt(0).toString(16)} `;
+        return "\\" + c;
+    }).join("");
+}
+
+// Rules for passage tags (#449), e.g. tw-story[tags~="dark"] in Harlowe or
+// body[data-tags~="dark"] in SugarCube, become rules for the classes @class puts on the story's
+// element, as do SugarCube's classes on the body (from tags, or <<addclass "body">>). In Twine,
+// tw-story, html and body are the whole page, so they become body:has(.dark), and the passage
+// becomes the story's element.
+export function convertTagSelectors(css: string): string {
+    return css
+        .replace(/(\b(?:tw-story|html|body)|tw-passage|\.passage|#passages|#story)?((?:\[\s*(?:data-)?tags\s*~=\s*(["']?)[^"'\]\s]+\3\s*\])+)/g,
+            (_, element: string | undefined, attributes: string) => {
+                const classes = [...attributes.matchAll(/~=\s*(["']?)([^"'\]\s]+)\1/g)].map(m => cssClass(m[2])).join("");
+                return element && /^(?:tw-story|html|body)$/.test(element) ? `body:has(${classes})` : classes;
+            })
+        .replace(/(^|[\s,>+~(}])body((?:\.[\w-]+)+)/g, "$1body:has($2)");
+}
+
 // The text of a section or passage: its directives, then its text
 function block(content: ConvertedPassage | string): string {
     const c = typeof content == "string" ? { directives: [], body: content } : content;
@@ -727,9 +769,9 @@ function oneLine(text: string): string {
 }
 
 // Directives the compiler would read at the start of a line
-const directiveLine = /^@(title|import|start|set|unset|inc|dec|ui|clear|end)\b/;
+const directiveLine = /^@(title|import|start|set|unset|inc|dec|ui|clear|end|class)\b/;
 // Lines that only hold helpers that write nothing
-const silentHelper = /\{\{(?:!--[\s\S]*?--|![^}]*|~?\s*(?:#if|#unless|else|\/if|\/unless|set|unset|inc|dec|goto|music|stopmusic|sound|stopsounds|append|prepend|remove|#label|\/label|#replace|\/replace|#animate|\/animate)\b(?:[^{}]|\{\{[^{}]*\}\})*)\}\}/g;
+const silentHelper = /\{\{(?:!--[\s\S]*?--|![^}]*|~?\s*(?:#if|#unless|else|\/if|\/unless|set|unset|inc|dec|goto|music|stopmusic|sound|stopsounds|addclass|removeclass|toggleclass|append|prepend|remove|#label|\/label|#replace|\/replace|#animate|\/animate)\b(?:[^{}]|\{\{[^{}]*\}\})*)\}\}/g;
 
 function isSilent(line: string): boolean {
     return line.replace(silentHelper, "").trim() == "";

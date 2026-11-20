@@ -395,6 +395,8 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         if (get("turns") === null) state.setInternal("turns", 0, false);
         state.setSeen(sectionName);
         const master = story.sections[""];
+        // @class (#449): this section's classes replace the last one's
+        setSectionClasses([...(master?.classes ?? []), ...(currentSection.classes ?? [])]);
         if (master?.clear || currentSection.clear) {
             clearScreen();
         }
@@ -565,6 +567,10 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             }
         }
 
+        // @class in a passage (#449) adds to the section's classes
+        const passageClasses = passages.flatMap(p => p.classes ?? []);
+        if (passageClasses.length) setSectionClasses([...sectionClasses(), ...passageClasses]);
+
         if (passages.some(p => p.clear)) {
             clearScreen();
             createSectionElement();
@@ -606,6 +612,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         cancelGoto();
         state.reset();
         sound.sync();
+        syncClasses();
         // TODO: This feels like the wrong way of triggering location.reload()
         // - should be a separate setting to the scroll setting.
         if (settings.scroll === "element" || settings.scroll === "none") {
@@ -635,6 +642,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
 
         state.load();
         sound.sync();
+        syncClasses();
         const output = get("_output");
         if (!output) {
             runUiJs();
@@ -727,6 +735,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             state.setInternal(attribute, value, false);
         }
         sound.sync();
+        syncClasses();
         undoLog = {};
         scrollPosition = 0;
         scrollToTop = false;
@@ -925,6 +934,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             story = newStory;
             state.reset();
             sound.sync();
+            syncClasses();
             sound.preload(story.audio ?? []);
             outputElement.innerHTML = "";
             go(story.start);
@@ -1045,6 +1055,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         } while ((currentPassageElement ?? currentSectionElement).hasAttribute("data-goto") && getHistoryCount() > 1);
         // The music goes back to what it was, as _music was undone
         sound.sync();
+        syncClasses();
         // The attributes were saved as they were undone, so save the output to match. Otherwise a saved
         // game would come back with the text that was undone.
         save();
@@ -1259,6 +1270,73 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         if (!state.readOnly && !quiet) sound.stopSounds();
         return "";
     });
+
+    // Classes on the story's element (#449): the current section's, from @class, which change with
+    // the section, and ones from {{addclass}}, which stay until they're removed. They're attributes,
+    // so they come back with Back and saved games.
+    const SECTION_CLASSES = "_sectionclasses";
+    const CLASSES = "_classes";
+    // The classes this put on the element, so it leaves any others alone
+    let appliedClasses: string[] = [];
+    const classList = (attribute: string): string[] => {
+        const value = get(attribute);
+        return Array.isArray(value) ? value.filter((c): c is string => typeof c == "string" && c.length > 0) : [];
+    };
+    const sectionClasses = () => classList(SECTION_CLASSES);
+    // Class names from helper arguments, which can each hold several separated by spaces
+    const classNames = (values: unknown[]) => values
+        .filter(v => !isHelperOptions(v))
+        .flatMap(v => String(v ?? "").split(/\s+/))
+        .filter(c => c.length > 0);
+    function setSectionClasses(classes: string[]) {
+        const unique = [...new Set(classes)];
+        const current = sectionClasses();
+        if (unique.length == current.length && unique.every((c, i) => c == current[i])) return;
+        set(SECTION_CLASSES, unique);
+    }
+    function applyClasses(classes: string[]) {
+        for (const c of appliedClasses) {
+            if (!classes.includes(c)) outputElementContainer.classList.remove(c);
+        }
+        for (const c of classes) outputElementContainer.classList.add(c);
+        appliedClasses = classes;
+    }
+    function syncClasses() {
+        applyClasses([...new Set([...sectionClasses(), ...classList(CLASSES)])]);
+    }
+    emitter.on("set", ({ attribute }) => {
+        if (attribute == SECTION_CLASSES || attribute == CLASSES) syncClasses();
+    });
+    textProcessor.handlebars.registerHelper("addclass", (...args: unknown[]) => {
+        if (state.readOnly) return "";
+        const classes = classList(CLASSES);
+        const added = classNames(args).filter(c => !classes.includes(c));
+        if (added.length) set(CLASSES, [...classes, ...added]);
+        return "";
+    });
+    textProcessor.handlebars.registerHelper("removeclass", (...args: unknown[]) => {
+        if (state.readOnly) return "";
+        const removed = classNames(args);
+        const classes = classList(CLASSES);
+        if (classes.some(c => removed.includes(c))) set(CLASSES, classes.filter(c => !removed.includes(c)));
+        return "";
+    });
+    textProcessor.handlebars.registerHelper("toggleclass", (...args: unknown[]) => {
+        if (state.readOnly) return "";
+        let classes = classList(CLASSES);
+        for (const c of new Set(classNames(args))) {
+            classes = classes.includes(c) ? classes.filter(x => x != c) : [...classes, c];
+        }
+        set(CLASSES, classes);
+        return "";
+    });
+    // Whether the story's element has all these classes, from @class or {{addclass}}
+    textProcessor.handlebars.registerHelper("hasclass", (...args: unknown[]) => {
+        const names = classNames(args);
+        const classes = [...sectionClasses(), ...classList(CLASSES)];
+        return names.length > 0 && names.every(c => classes.includes(c));
+    });
+
     const linkHandler = new LinkHandler();
 
     const getSectionText = (sectionName: string) => {
@@ -1309,6 +1387,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         dispose: () => {
             cancelGoto();
             sound.dispose();
+            applyClasses([]);
         },
         on: (e, h) => emitter.on(e, h),
         off: (e, h) => emitter.off(e, h),

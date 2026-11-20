@@ -118,6 +118,8 @@ class TextContainer {
     music?: string | null;
     // @sound: the files to play once, in order, with "stop" for @sound stop
     sounds: string[] = [];
+    // @class (#449): classes on the story's element while the section is the current one
+    classes: string[] = [];
     // The text after links have been converted
     output = "";
 
@@ -407,6 +409,14 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
                     const value = node.value.trim();
                     if (node.directive == "sound") target.sounds.push(value);
                     else target.music = value == "stop" ? null : value;
+                    return true;
+                }
+                case "class": {
+                    const target = passage ?? (section = ensureSectionExists(lineCount));
+                    if (!target) return sectionRequired(node);
+                    for (const name of node.value.split(/\s+/)) {
+                        if (name && !target.classes.includes(name)) target.classes.push(name);
+                    }
                     return true;
                 }
                 case "attribute": {
