@@ -66,7 +66,7 @@ export default defineConfig({
                 },
                 {
                     label: "Command line and AI",
-                    items: ["cli"],
+                    items: ["cli", "writing-with-ai"],
                 },
                 {
                     label: "Publishing",

@@ -1,0 +1,13 @@
+{
+  "name": "squiffy",
+  "displayName": "Squiffy",
+  "description": "Helps Claude write, check and play Squiffy stories (.squiffy files) with the Squiffy command-line tool",
+  "author": {
+    "name": "Squiffy",
+    "url": "https://squiffystory.com"
+  },
+  "homepage": "https://squiffystory.com/writing-with-ai/",
+  "repository": "https://github.com/textadventures/squiffy",
+  "license": "MIT",
+  "keywords": ["squiffy", "interactive-fiction", "gamebook", "choose-your-own-adventure"]
+}
