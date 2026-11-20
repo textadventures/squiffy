@@ -10,10 +10,10 @@ As an alternative to the [web editor](https://app.squiffystory.com), Squiffy is 
 
 To install the Squiffy compiler, first [install Node.js](https://nodejs.org/).
 
-You can then run the CLI directly using `npx`:
+You can then run the CLI directly using `npx`, in your story's folder:
 
 ```bash
-npx @textadventures/squiffy-cli mygame.squiffy
+npx @textadventures/squiffy-cli
 ```
 
 `npx` downloads Squiffy the first time, and runs it. Alternatively, install it globally:
@@ -22,47 +22,49 @@ npx @textadventures/squiffy-cli mygame.squiffy
 npm install @textadventures/squiffy-cli -g
 ```
 
-Then you can run it as `squiffy-packager`, for example `squiffy-packager mygame.squiffy`.
+Then you can run it as `squiffy-packager`.
 
 ## Usage
 
-You can create a Squiffy file in any text editor - Notepad, [VS Code](https://code.visualstudio.com/), [Sublime Text](https://www.sublimetext.com/), TextEdit etc.
+A Squiffy story is a folder with a [`squiffy.json` project file](/multiple-files/) in it, which names the story's main `.squiffy` file. Every story made in the [editor](https://app.squiffystory.com) has one, and so does every story converted by the CLI. To start one by hand, create the folder, write your story in a `.squiffy` file, and add a `squiffy.json` next to it as shown in [Stories in several files](/multiple-files/).
 
-Squiffy files are text files with a `.squiffy` file extension.
+Squiffy files are text files with a `.squiffy` file extension. You can write them in any text editor - Notepad, [VS Code](https://code.visualstudio.com/), [Sublime Text](https://www.sublimetext.com/), TextEdit etc.
 
-To transform a Squiffy file into a working browser-based game, go to its directory in a command prompt and type:
-
-```bash
-npx @textadventures/squiffy-cli mygame.squiffy
-```
-
-Squiffy will write four files to the same folder as the script file:
-- `index.html` - the main HTML page
-- `style.css` - the stylesheet
-- `story.js` - your compiled story
-- `squiffy.runtime.global.js` - the Squiffy runtime
-
-Launch `index.html` to play the game.
-
-This folder of files can now be uploaded anywhere, and it will run entirely locally in the player's web browser (the source `.squiffy` script file does not need to be included).
-
-The browser's local storage will be used to save the state of the game. This means the player can close their browser, and the next time they go back to that page, the game will resume from where they left off.
-
-**Note: Even if you recompile a game, the previous state will still be loaded.** This means that after making a change to your game, you'll need to click the Restart button at the top of the screen to see your changes.
-
-### Stories in several files
-
-If your story is split across several `.squiffy` files with a [`squiffy.json` project file](/multiple-files/), run Squiffy in the story's folder without a file name:
+To turn your story into a working browser-based game, go to its folder in a command prompt and type:
 
 ```bash
 npx @textadventures/squiffy-cli
 ```
 
-Giving it the folder, or the main file named in `squiffy.json`, does the same. Every `.css` and `.js` file in the folder is part of the story too.
+Giving it the folder, or the main file named in `squiffy.json`, does the same. Every `.squiffy`, `.css` and `.js` file in the folder is part of the story.
 
-The files are written to a `build` folder next to `squiffy.json`, so they're kept apart from your story's own files. Squiffy copies the story's stylesheets and scripts there too, with its images and other files, so the `build` folder is the whole published story. `--zip` and `--scriptonly` write there as well, and `--serve` serves it. Files left in the `build` folder from an earlier build aren't removed, so delete the folder first if you want a clean copy.
+Squiffy writes the game to a `build` folder next to `squiffy.json`, so it's kept apart from your story's own files:
+- `index.html` - the main HTML page
+- `style.css` - the stylesheet
+- `story.js` - your compiled story
+- `squiffy.runtime.global.js` - the Squiffy runtime
 
-Give it any other `.squiffy` file in the folder, and it builds just that file and whatever it `@import`s, as if there were no `squiffy.json`. Squiffy says when it does this. So a folder can still hold several separate stories.
+It copies the story's stylesheets and scripts there too, with its images and other files, so the `build` folder is the whole published story. `--zip` and `--scriptonly` write there as well, and `--serve` serves it. Files left in the `build` folder from an earlier build aren't removed, so delete the folder first if you want a clean copy.
+
+Launch `build/index.html` to play the game.
+
+The `build` folder can now be uploaded anywhere, and it will run entirely locally in the player's web browser (your `.squiffy` files don't need to be included).
+
+The browser's local storage will be used to save the state of the game. This means the player can close their browser, and the next time they go back to that page, the game will resume from where they left off.
+
+**Note: Even if you recompile a game, the previous state will still be loaded.** This means that after making a change to your game, you'll need to click the Restart button at the top of the screen to see your changes.
+
+### Stories without a squiffy.json
+
+Give Squiffy a `.squiffy` file that isn't the main file in `squiffy.json`, or one in a folder with no `squiffy.json`, and it builds just that file and whatever it `@import`s:
+
+```bash
+npx @textadventures/squiffy-cli mygame.squiffy
+```
+
+The four files are written next to it, rather than to a `build` folder. Squiffy says when it does this. So a folder can still hold several separate stories.
+
+A story without a `squiffy.json` uses Squiffy 6's rules for [setting attributes](/attributes/#setting-attributes), so Squiffy 6 stories still build unchanged. To bring one up to date, see [Converting from Squiffy 6](#converting-from-squiffy-6).
 
 ### Errors and warnings
 
@@ -156,7 +158,7 @@ Error in section "shop" (4 times): gold is not defined
   To get there: --play --seed 1234 --choose 'Go inside' --choose 'Buy a coffee'
 ```
 
-When it takes more than five links to get to a problem, they're written to a file for `--choices`, in a `random` folder where the story is built (the `build` folder, for a story with a `squiffy.json`):
+When it takes more than five links to get to a problem, they're written to a file for `--choices`, in a `random` folder where the story is built (the `build` folder, or next to the file for a story without a `squiffy.json`):
 
 ```text
 Dead end in section "Ending" (20 times): There are no links to click, and the section isn't marked @end.
@@ -187,7 +189,7 @@ The default output creates four separate files as described above. This is ideal
 Use `--inline` to create a single self-contained HTML file with all CSS, JavaScript, and story content embedded:
 
 ```bash
-npx @textadventures/squiffy-cli mygame.squiffy --inline
+npx @textadventures/squiffy-cli --inline
 ```
 
 This creates just one file: `index.html`. This is ideal for:
@@ -201,20 +203,20 @@ This creates just one file: `index.html`. This is ideal for:
 Use `--zip` to also create a zip archive of the output files, called `output.zip`:
 
 ```bash
-npx @textadventures/squiffy-cli mygame.squiffy --zip
+npx @textadventures/squiffy-cli --zip
 ```
 
 You can combine this with `--inline` to create a zip containing just the single HTML file:
 
 ```bash
-npx @textadventures/squiffy-cli mygame.squiffy --inline --zip
+npx @textadventures/squiffy-cli --inline --zip
 ```
 
 ### Images and other files
 
-Images, sounds and other files that your story [refers to](/images-and-files/) are included automatically, as long as they're in the same folder as the `.squiffy` file or a folder below it:
+Images, sounds and other files that your story [refers to](/images-and-files/) are included automatically, as long as they're in the story's folder or a folder below it:
 
-- With the standard output, they're already in the right place, next to `index.html`. For a story with a `squiffy.json`, they're copied into the `build` folder.
+- With the standard output, they're copied into the `build` folder. For a story without a `squiffy.json`, they're already in the right place, next to `index.html`.
 - With `--zip`, they're added to `output.zip` at the same paths.
 - With `--inline`, they're embedded in `index.html` as data URIs, so the single file still works on its own. This makes the file about a third bigger than the files themselves, so large sound or video files are better shared with `--zip`.
 
@@ -227,13 +229,13 @@ Squiffy looks for file names in your story text, JavaScript and stylesheets with
 Use `--serve` (or `-s`) to start a local HTTP server after compiling. Open the address it prints (e.g. `http://localhost:8282/`) in your browser to test your game:
 
 ```bash
-npx @textadventures/squiffy-cli mygame.squiffy --serve
+npx @textadventures/squiffy-cli --serve
 ```
 
 Optionally specify a port using `--port` (or `-p`):
 
 ```bash
-npx @textadventures/squiffy-cli mygame.squiffy --serve --port 3000
+npx @textadventures/squiffy-cli --serve --port 3000
 ```
 
 The default port is 8282.
@@ -243,13 +245,13 @@ The default port is 8282.
 Use `--scriptonly` to generate *only* the `story.js` file, without overwriting the other files. This is useful when you've customized `index.html` or `style.css` and only want to update the story:
 
 ```bash
-npx @textadventures/squiffy-cli mygame.squiffy --scriptonly
+npx @textadventures/squiffy-cli --scriptonly
 ```
 
 You can optionally specify a custom filename:
 
 ```bash
-npx @textadventures/squiffy-cli mygame.squiffy --scriptonly myscript.js
+npx @textadventures/squiffy-cli --scriptonly myscript.js
 ```
 ### Converting from Twine
 
