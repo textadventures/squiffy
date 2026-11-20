@@ -187,7 +187,7 @@ The classes are on the element that holds the story (`div#squiffy` in a publishe
 
 The page's background and text colour are set on `body`, so to change them, or any other [colour](#colours), use `body:has(.dark)`, as above: the page has the class somewhere in it. A rule for `.dark` on its own styles just the story's element, and `.dark p` its paragraphs. Give your classes names that you don't use for anything else in the story's text, so `:has()` only finds them on the story.
 
-[Player settings](/multiple-files/#styling-with-settings) put classes on the same element, such as `setting-textSize-Large`, so the player can choose how the story looks.
+[Player settings](/buttons-panels-settings/#styling-with-settings) put classes on the same element, such as `setting-textSize-Large`, so the player can choose how the story looks.
 
 To change the classes in the middle of a section, or to keep one from section to section until you take it off, use `{{addclass}}`, `{{removeclass}}` and `{{toggleclass}}`, and check them with `{{#if (hasclass "dark")}}`. See [Class helpers](/helpers-reference/#class-helpers).
 
@@ -207,7 +207,7 @@ div#squiffy-header::after {
 
 ### Panels
 
-[Panels](/multiple-files/#panels) beside the story are in `aside.squiffy-panels-side`, with each panel a `section.squiffy-panel`, whose `data-passage` is its passage's name. The page gets wider to make room for them, by `--squiffy-side-width` (`16rem` by default). On a screen narrower than `64rem`, they're buttons in the header instead. The panels' buttons are `button.squiffy-panel-button`, and the dialog they open is `dialog.squiffy-panel-dialog`.
+[Panels](/buttons-panels-settings/#panels) beside the story are in `aside.squiffy-panels-side`, with each panel a `section.squiffy-panel`, whose `data-passage` is its passage's name. The page gets wider to make room for them, by `--squiffy-side-width` (`16rem` by default). On a screen narrower than `64rem`, they're buttons in the header instead. The panels' buttons are `button.squiffy-panel-button`, and the dialog they open is `dialog.squiffy-panel-dialog`.
 
 To put side panels on the left of the story:
 
@@ -245,11 +245,11 @@ button#squiffy-theme {
 
 ### Hiding the Back button
 
-To leave out the Back button, set `"backButton": false` in your story's [`squiffy.json`](/multiple-files/#the-back-button), rather than hiding it with CSS.
+To leave out the Back button, set `"backButton": false` in your story's [`squiffy.json`](/buttons-panels-settings/#the-back-button), rather than hiding it with CSS.
 
 ### Hiding the Save button
 
-To leave out the Save button, set `"saveButton": false` in your story's [`squiffy.json`](/multiple-files/#saved-games).
+To leave out the Save button, set `"saveButton": false` in your story's [`squiffy.json`](/buttons-panels-settings/#saved-games).
 
 ### Hiding the Restart button
 
@@ -259,7 +259,7 @@ button#restart {
 }
 ```
 
-To translate the buttons' tooltips, and the message that asks the player whether they're sure they want to restart, see [The page's text in another language](/multiple-files/#the-pages-text-in-another-language).
+To translate the buttons' tooltips, and the message that asks the player whether they're sure they want to restart, see [The page's text in another language](/buttons-panels-settings/#the-pages-text-in-another-language).
 
 <Aside type="caution">
 If you build with the command-line tool, rebuilding overwrites `index.html`. Use `--scriptonly` to update only `story.js` once you've changed the other files. See [Using Squiffy from the command line](/cli/).
@@ -293,7 +293,7 @@ The exported `style.css` combines two sets of rules: the page layout, and the st
 | `button.squiffy-header-button` | The Back, Save, Restart and light/dark buttons | `color: var(--squiffy-muted)`, no border or background, with a faint background when the mouse pointer is over it. The icons are `1.25em` across |
 | `.squiffy-output-section` | Each section's output | A `1px solid var(--squiffy-border)` line underneath, and a `1em` gap, except for the latest one |
 | `.squiffy-output-passage` | Each passage's output | As above |
-| `dialog.squiffy-saves` | The [Saved games](/multiple-files/#saved-games) dialog | In the story's colours (the variables above), with the system's own font. Its parts have classes starting `squiffy-saves-` |
+| `dialog.squiffy-saves` | The [Saved games](/buttons-panels-settings/#saved-games) dialog | In the story's colours (the variables above), with the system's own font. Its parts have classes starting `squiffy-saves-` |
 | `input.squiffy-invalid` (and `textarea`, `select`) | An input that fails validation | `border-color: var(--squiffy-error)` |
 | `input:valid` (and `textarea`, `select`) | An input that passes validation | `border-color: var(--squiffy-success)` |
 | `.squiffy-continue` | [Continue](/dynamic-text/#animation) links | `color: var(--squiffy-link)`, underlined, like other links. Its pulse, glow and bounce animations are turned off if the reader has asked their system to reduce motion. |

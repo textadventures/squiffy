@@ -39,6 +39,7 @@ Important notes for writing Squiffy stories:
         "cli",
         "cookbook",
         "multiple-files",
+        "buttons-panels-settings",
         "images-and-files",
         "javascript",
         "tutorial",
