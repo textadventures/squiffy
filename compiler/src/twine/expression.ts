@@ -2,7 +2,8 @@
 // expressions into this tree, which is written out as a Squiffy expression, as {{#if}}, @set and
 // {{set}} take (see runtime/src/infixExpressions.ts).
 
-export type BinaryOp = "or" | "and" | "=" | "!=" | ">" | ">=" | "<" | "<=" | "+" | "-" | "*" | "/" | "%";
+// "contains" is whether a list, text or object has the value in it (#446)
+export type BinaryOp = "or" | "and" | "=" | "!=" | ">" | ">=" | "<" | "<=" | "contains" | "+" | "-" | "*" | "/" | "%";
 
 export type Expr =
     | { k: "num", v: number }
@@ -14,6 +15,8 @@ export type Expr =
     | { k: "bin", op: BinaryOp, l: Expr, r: Expr }
     | { k: "not", e: Expr }
     | { k: "neg", e: Expr }
+    // test ? then : otherwise (#446)
+    | { k: "cond", test: Expr, then: Expr, otherwise: Expr }
     // A Squiffy helper, e.g. (seen "cave")
     | { k: "call", fn: string, args: Expr[] }
     | { k: "array", items: Expr[] }
@@ -32,7 +35,7 @@ export class Unconvertible extends Error {}
 
 const precedence: Record<BinaryOp, number> = {
     "or": 1, "and": 2,
-    "=": 4, "!=": 4, ">": 4, ">=": 4, "<": 4, "<=": 4,
+    "=": 4, "!=": 4, ">": 4, ">=": 4, "<": 4, "<=": 4, "contains": 4,
     "+": 5, "-": 5,
     "*": 6, "/": 6, "%": 6,
 };
@@ -40,6 +43,7 @@ const notPrecedence = 3;
 const atomPrecedence = 8;
 
 function precedenceOf(e: Expr): number {
+    if (e.k == "cond") return 0;
     if (e.k == "bin") return precedence[e.op];
     if (e.k == "not") return notPrecedence;
     if (e.k == "neg") return 7;
@@ -141,7 +145,9 @@ export function print(e: Expr, options: PrintOptions = {}): string {
             }
             return `${base}[${print(e.key, options)}]`;
         }
-        case "call": return `(${e.fn}${e.args.map(a => " " + printArgument(a, options)).join("")})`;
+        case "call":
+            if (e.fn == "__indexof") throw new Unconvertible(".indexOf(), except to check whether something is there");
+            return `(${e.fn}${e.args.map(a => " " + printArgument(a, options)).join("")})`;
         case "neg": {
             const inner = print(e.e, options);
             return precedenceOf(e.e) < atomPrecedence ? `-(${inner})` : `-${inner}`;
@@ -149,6 +155,12 @@ export function print(e: Expr, options: PrintOptions = {}): string {
         case "not": {
             const inner = print(e.e, options);
             return `not ${precedenceOf(e.e) < notPrecedence ? `(${inner})` : inner}`;
+        }
+        case "cond": {
+            // Right-associative, so only a condition in the test or the first value needs brackets
+            const test = print(e.test, options);
+            const then = print(e.then, options);
+            return `${e.test.k == "cond" ? `(${test})` : test} ? ${e.then.k == "cond" ? `(${then})` : then} : ${print(e.otherwise, options)}`;
         }
         case "bin": {
             const p = precedence[e.op];
@@ -178,6 +190,20 @@ export function isBoolean(e: Expr): boolean {
     return false;
 }
 
+// The length of a list or text, which Handlebars gives as its length property: name.length (#446)
+export function lengthOf(e: Expr): Expr {
+    if (e.k == "str") return { k: "num", v: e.v.length };
+    if (e.k == "array") return { k: "num", v: e.items.length };
+    return member(e, { k: "str", v: "length" });
+}
+
+// Harlowe's (cond: test, a, test2, b, otherwise), as a ? b : c
+export function conditional(values: Expr[], what: string): Expr {
+    if (values.length < 3 || values.length % 2 == 0) throw new Unconvertible(`${what} without a condition and two values for each`);
+    const [test, then, ...rest] = values;
+    return { k: "cond", test, then, otherwise: rest.length == 1 ? rest[0] : conditional(rest, what) };
+}
+
 // A random whole number from min to max, as Squiffy's {{random}} picks from an array
 export function randomInteger(min: Expr, max: Expr): Expr {
     if (min.k != "num" || max.k != "num") throw new Unconvertible("a random number with a range that isn't fixed");
@@ -198,8 +224,19 @@ export function display(e: Expr): string {
         return (word.test(e.name) && !reservedWords.has(e.name)) || isPath(e.name) ? `{{${e.name}}}` : `{{get ${quote(e.name)}}}`;
     }
     if (e.k == "loop") return `{{${loopRef(e)}}}`;
-    if (e.k == "call") return `{{${print(e).slice(1, -1)}}}`;
+    // A helper call is written as it is, unless an argument needs an expression, such as
+    // (abs (-hp)), which only {{= }} rewrites
+    if (e.k == "call" && e.args.every(isPlain)) return `{{${print(e).slice(1, -1)}}}`;
     return `{{= ${print(e)}}}`;
+}
+
+// Whether a value is written the same in Handlebars as in an expression
+function isPlain(e: Expr): boolean {
+    if (e.k == "num" || e.k == "str" || e.k == "bool" || e.k == "null" || e.k == "loop") return true;
+    if (e.k == "var") return !isDynamicTarget(e.name);
+    if (e.k == "call") return e.args.every(isPlain);
+    if (e.k == "array") return e.items.every(isPlain);
+    return false;
 }
 
 // A token stream for the expression parsers

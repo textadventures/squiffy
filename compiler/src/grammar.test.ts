@@ -109,6 +109,10 @@ describe("TextMate grammar", () => {
         expect(scopeOf("@set gold -= price", 0, "price")).toContain(attribute);
         expect(scopeOf("@set gold = 10", 0, "10")).toContain("constant.numeric.squiffy");
         expect(scopeOf("@set flag = true", 0, "true")).toContain("constant.language.boolean.squiffy");
+        expect(scopeOf("@set status = hp ? \"ok\" : \"dead\"", 0, "?")).toContain("keyword.operator.ternary.handlebars.squiffy");
+        expect(scopeOf("@set status = hp ? \"ok\" : \"dead\"", 0, ":")).toContain("keyword.operator.ternary.handlebars.squiffy");
+        expect(scopeOf("{{#if bag contains \"key\"}}", 0, "contains")).toContain("keyword.operator.comparison.handlebars.squiffy");
+        expect(scopeOf("{{#if (contains \"bag\" \"key\")}}", 0, "contains")).toContain("support.function.helper.handlebars.squiffy");
     });
 
     test("setter values without a squiffy.json: text and @attribute", () => {
