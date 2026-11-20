@@ -429,3 +429,49 @@ describe("objects and lists (#442)", () => {
             .toEqual(["hero = { hp: 10, name: \"Ann\" }", "list = [1, 2]", "gold = 0"]);
     });
 });
+
+describe("contains and ? : (#446)", () => {
+    test.each([
+        ["bag contains \"key\"", "(__contains bag \"key\")"],
+        ["name contains \"o\" and hp > 0", "(and (__contains name \"o\") (gt hp 0))"],
+        ["not bag contains \"key\"", "(not (__contains bag \"key\"))"],
+        ["[1, 2] contains x + 1", "(__contains (array 1 2) (add x 1))"],
+        ["hp > 0 ? \"alive\" : \"dead\"", "(cond (gt hp 0) \"alive\" \"dead\")"],
+        ["a ? 1 : b ? 2 : 3", "(cond a 1 (cond b 2 3))"],
+        ["a ? b ? 1 : 2 : 3", "(cond a (cond b 1 2) 3)"],
+        ["x or y ? 1 : 2", "(cond (or x y) 1 2)"],
+        ["gold + (rich ? 10 : 1)", "(add gold (cond rich 10 1))"],
+        ["{ status: hp > 0 ? \"ok\" : \"hurt\", hp: hp }", "(__object \"status\" (cond (gt hp 0) \"ok\" \"hurt\") \"hp\" hp)"],
+        ["[a ? 1 : 2, 3]", "(array (cond a 1 2) 3)"],
+        ["list[a ? 0 : 1]", "(lookup list (cond a 0 1))"],
+        ["(round (gold / 3))", "(round (div gold 3))"],
+    ])("value: %s", (input, expected) => {
+        expect(rewriteValueExpression(input)).toBe(expected);
+    });
+
+    test("conditions", () => {
+        expect(rewriteInfixCondition("bag contains \"key\"")).toBe("(__contains bag \"key\")");
+        expect(rewriteInfixCondition("(a ? b : c)")).toBe("(cond a b c)");
+    });
+
+    test("the contains helper is still a helper", () => {
+        expect(rewriteInfixCondition("(contains \"bag\" \"key\")")).toBeNull();
+        expect(rewriteInfixCondition("(contains \"bag\" \"key\") and x")).toBe("(and (contains \"bag\" \"key\") x)");
+        expect(rewriteInfixCondition("contains")).toBeNull();
+    });
+
+    test("in tags", () => {
+        expect(rewriteInfixExpressions("{{= hp > 0 ? \"alive\" : \"dead\"}}")).toBe("{{cond (gt hp 0) \"alive\" \"dead\"}}");
+        expect(rewriteInfixExpressions("{{set \"x\" a ? 1 : 2}}")).toBe("{{set \"x\" (cond a 1 2)}}");
+        expect(rewriteInfixExpressions("{{#if name contains \"x\"}}")).toBe("{{#if (__contains name \"x\")}}");
+    });
+
+    test.each([
+        ["a ?", "expected a value after '?'"],
+        ["a ? 1", "expected ':'"],
+        ["a ? 1 :", "expected a value after ':'"],
+        ["a contains", "expected a value after 'contains'"],
+    ])("errors: %s", (input, message) => {
+        expect(() => rewriteValueExpression(input)).toThrow(message);
+    });
+});

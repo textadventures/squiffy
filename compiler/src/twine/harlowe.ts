@@ -5,7 +5,7 @@
 // {{set}}, (link:) and friends become links to generated passages and sections, and Harlowe's
 // markup becomes Markdown and HTML.
 
-import { display, isBoolean, member, print, randomInteger, targetName, skipBalanced, skipString, Tokens, Unconvertible, unescapeString } from "./expression.js";
+import { conditional, display, isBoolean, lengthOf, member, print, randomInteger, targetName, skipBalanced, skipString, Tokens, Unconvertible, unescapeString } from "./expression.js";
 import type { BinaryOp, Expr } from "./expression.js";
 import { dynamicSectionLink, escapeText, isUrl, urlLink, passageLink, sectionLink, setter } from "./convert.js";
 import type { ConvertedPassage, PassageContext } from "./convert.js";
@@ -416,6 +416,10 @@ export class HarloweExpressions {
     macro(name: string, raw: string, it?: Expr): Expr {
         const args = splitArgs(raw.substring(raw.indexOf(":") + 1, raw.length - 1));
         const values = () => args.map(a => this.parse(a, it));
+        const one = () => {
+            if (args.length != 1) throw new Unconvertible(`(${name}:) with ${args.length ? "more than one value" : "no value"}`);
+            return values();
+        };
         switch (name) {
             case "either":
                 return { k: "call", fn: "random", args: [{ k: "array", items: values() }] };
@@ -470,7 +474,25 @@ export class HarloweExpressions {
             case "dataset":
                 throw new Unconvertible("Harlowe datasets");
             case "cond":
-                throw new Unconvertible("(cond:), which Squiffy has no equivalent for in an expression");
+                return conditional(values(), "(cond:)");
+            // Text and numbers (#446)
+            case "lowercase":
+            case "uppercase":
+            case "upperfirst": {
+                const [text] = one();
+                return { k: "call", fn: name == "lowercase" ? "lower" : name == "uppercase" ? "upper" : "capitalise", args: [text] };
+            }
+            case "round":
+            case "floor":
+            case "ceil":
+            case "abs":
+                return { k: "call", fn: name, args: one() };
+            case "min":
+            case "max": {
+                const items = values();
+                if (!items.length) throw new Unconvertible(`(${name}:) with no values`);
+                return { k: "call", fn: name, args: items };
+            }
             default:
                 throw new Unconvertible(`the (${name}:) macro`);
         }
@@ -573,14 +595,13 @@ class ExpressionParser {
         }
     }
 
+    // A list, text or datamap that contains a value (#446)
     private contains(collection: Expr, value: Expr): Expr {
-        if (collection.k == "var") return { k: "call", fn: "contains", args: [{ k: "str", v: collection.name }, value] };
-        if (collection.k == "array") return { k: "call", fn: "contains", args: [collection, value] };
         if (collection.k == "call" && collection.fn == "__history") {
             if (value.k != "str") throw new Unconvertible("(history:) contains something other than a passage name");
             return { k: "call", fn: "seen", args: [{ k: "str", v: this.h.ctx.story.sectionForUnknown(value.v) }] };
         }
-        throw new Unconvertible("\"contains\" with something other than a variable or an array");
+        return { k: "bin", op: "contains", l: collection, r: value };
     }
 
     private additive(): Expr {
@@ -616,10 +637,8 @@ class ExpressionParser {
             this.tokens.next();
             const property = this.tokens.next();
             if (property.text == "length") {
-                if (e.k == "var") e = { k: "call", fn: "length", args: [{ k: "str", v: e.name }] };
-                else if (e.k == "array" || e.k == "member") e = { k: "call", fn: "length", args: [e] };
-                else if (e.k == "call" && e.fn == "__history") e = { k: "var", name: "turns" };
-                else throw new Unconvertible("the length of something other than a variable or an array");
+                // A list's or text's length (#446)
+                e = e.k == "call" && e.fn == "__history" ? { k: "var", name: "turns" } : lengthOf(e);
             }
             else if (property.text == "ordinal" && (e.k == "var" || e.k == "array" || e.k == "member")) {
                 // $list's 1st

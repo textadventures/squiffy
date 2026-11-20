@@ -5,7 +5,7 @@
 // <<if>> becomes {{#if}}, <<set>> becomes @set or {{set}}, links with setters become links with
 // setters, and <<link>> and friends become links to generated passages and sections.
 
-import { display, isDynamicTarget, member as memberOf, print, randomInteger, skipString, targetName, Tokens, Unconvertible, unescapeString } from "./expression.js";
+import { display, isDynamicTarget, lengthOf, member as memberOf, print, randomInteger, skipString, targetName, Tokens, Unconvertible, unescapeString } from "./expression.js";
 import type { BinaryOp, Expr } from "./expression.js";
 import { dynamicSectionLink, escapeText, isUrl, urlLink, passageLink, sectionLink, setter } from "./convert.js";
 import type { ConvertedPassage, PassageContext } from "./convert.js";
@@ -398,13 +398,27 @@ export type Statement =
     | { kind: "append" | "remove", name: string, value: Expr }
     | { kind: "unset", name: string };
 
+// A comparison, where x.indexOf(y) compared with -1 or 0 to see whether y is there is x contains y
+// (#446). Anything else .indexOf() is for can't be converted: see print().
+function indexOfCheck(left: Expr, op: BinaryOp, right: Expr): Expr {
+    if (left.k != "call" || left.fn != "__indexof") return { k: "bin", op, l: left, r: right };
+    const n = right.k == "num" ? right.v : right.k == "neg" && right.e.k == "num" ? -right.e.v : null;
+    const contains: Expr = { k: "bin", op: "contains", l: left.args[0], r: left.args[1] };
+    if ((n == -1 && (op == "!=" || op == ">")) || (n == 0 && op == ">=")) return contains;
+    if ((n == -1 && (op == "=" || op == "<=")) || (n == 0 && op == "<")) return { k: "not", e: contains };
+    return { k: "bin", op, l: left, r: right };
+}
+
 class ExpressionParser {
     constructor(private readonly s: SugarCubeExpressions, private readonly tokens: Tokens<Token>) {}
 
+    // Including test ? a : b (#446), which is right-associative
     expression(): Expr {
-        const e = this.or();
-        if (this.tokens.is("?")) throw new Unconvertible("the ? : operator");
-        return e;
+        const test = this.or();
+        if (!this.tokens.accept("?")) return test;
+        const then = this.expression();
+        this.tokens.expect(":");
+        return { k: "cond", test, then, otherwise: this.expression() };
     }
 
     statement(): Statement[] {
@@ -482,11 +496,11 @@ class ExpressionParser {
             const t = this.tokens.peek()?.text;
             if (t == "==" || t == "===") {
                 this.tokens.next();
-                left = { k: "bin", op: "=", l: left, r: this.relational() };
+                left = indexOfCheck(left, "=", this.relational());
             }
             else if (t == "!=" || t == "!==") {
                 this.tokens.next();
-                left = { k: "bin", op: "!=", l: left, r: this.relational() };
+                left = indexOfCheck(left, "!=", this.relational());
             }
             else if (t == "=") {
                 throw new Unconvertible("an assignment (=) in a condition");
@@ -503,7 +517,7 @@ class ExpressionParser {
             const t = this.tokens.peek()?.text;
             if (t == ">" || t == "<" || t == ">=" || t == "<=") {
                 this.tokens.next();
-                left = { k: "bin", op: t, l: left, r: this.additive() };
+                left = indexOfCheck(left, t, this.additive());
             }
             else {
                 return left;
@@ -561,7 +575,8 @@ class ExpressionParser {
         if (v.v == "expr") return v.e;
         if (v.v == "object") return { k: "object", entries: v.entries.map(([key, value]) => [key, this.toExpr(value)]) };
         if (v.v == "member") {
-            if (v.property == "length") return { k: "call", fn: "length", args: [this.collection(v.object)] };
+            // A list's or text's length (#446)
+            if (v.property == "length") return lengthOf(this.toExpr(v.object));
             throw new Unconvertible(`properties of variables (.${v.property})`);
         }
         throw new Unconvertible(`"${v.name}"`);
@@ -662,6 +677,17 @@ class ExpressionParser {
                 case "tags":
                     // Only as tags().includes("tag")
                     return { k: "call", fn: "__tags", args: [] };
+                // Numbers (#446)
+                case "Math.round":
+                case "Math.floor":
+                case "Math.ceil":
+                case "Math.abs":
+                    if (args.length != 1) throw new Unconvertible(`${callee.name}() with ${args.length ? "more than one value" : "no value"}`);
+                    return { k: "call", fn: callee.name.substring(5), args };
+                case "Math.min":
+                case "Math.max":
+                    if (!args.length) throw new Unconvertible(`${callee.name}() with no values`);
+                    return { k: "call", fn: callee.name.substring(5), args };
                 case "Number":
                 case "String":
                 case "parseInt":
@@ -685,11 +711,33 @@ class ExpressionParser {
         }
         if (callee.v == "member") {
             const collection = (): Expr => this.collection(callee.object);
+            const value = (): Expr => this.toExpr(callee.object);
+            const noArguments = () => {
+                if (args.length) throw new Unconvertible(`.${callee.property}() with a value`);
+            };
             switch (callee.property) {
+                // A list or text that has a value in it (#446)
                 case "includes":
                 case "contains":
                     if (args.length != 1) throw new Unconvertible(`.${callee.property}() with more than one value`);
-                    return { k: "call", fn: "contains", args: [collection(), args[0]] };
+                    return { k: "bin", op: "contains", l: value(), r: args[0] };
+                // Only to check whether something is there, e.g. .indexOf(x) != -1: see indexOfCheck
+                case "indexOf":
+                    if (args.length != 1) throw new Unconvertible(`.${callee.property}() with more than one value`);
+                    return { k: "call", fn: "__indexof", args: [value(), args[0]] };
+                // Text (#446)
+                case "toLowerCase":
+                case "toLocaleLowerCase":
+                    noArguments();
+                    return { k: "call", fn: "lower", args: [value()] };
+                case "toUpperCase":
+                case "toLocaleUpperCase":
+                    noArguments();
+                    return { k: "call", fn: "upper", args: [value()] };
+                case "toUpperFirst":
+                case "toLocaleUpperFirst":
+                    noArguments();
+                    return { k: "call", fn: "capitalise", args: [value()] };
                 case "random":
                     if (callee.object.v == "expr") return { k: "call", fn: "random", args: [callee.object.e] };
                     break;

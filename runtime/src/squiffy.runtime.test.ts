@@ -4161,3 +4161,76 @@ Other.
     expect(squiffyApi.get("x")).toBe(1);
     expect(visibleText(element)).toBe("Start. next");
 });
+
+// Number, text and conditional helpers (#446)
+test.each([
+    ["{{set \"x\" (round 2.5)}}", 3],
+    ["{{set \"x\" (round -2.5)}}", -2],
+    ["{{set \"x\" (round 1.005 2)}}", 1.01],
+    ["{{set \"x\" (round 1234 -2)}}", 1200],
+    ["{{set \"x\" (round \"2.4\")}}", 2],
+    ["{{set \"x\" (floor 2.7)}}", 2],
+    ["{{set \"x\" (ceil 2.1)}}", 3],
+    ["{{set \"x\" (abs -4)}}", 4],
+    ["{{set \"x\" (min 3 1 2)}}", 1],
+    ["{{set \"x\" (max 3 1 2)}}", 3],
+    ["{{set \"x\" (max (array 4 9 2))}}", 9],
+    ["{{set \"x\" (min 5)}}", 5],
+    ["{{set \"x\" (upper \"Ann\")}}", "ANN"],
+    ["{{set \"x\" (lower \"Ann\")}}", "ann"],
+    ["{{set \"x\" (capitalise \"ann lee\")}}", "Ann lee"],
+    ["{{set \"x\" (capitalize \"ann\")}}", "Ann"],
+    ["{{set \"x\" (upper unsetattr)}}", ""],
+    ["{{set \"x\" (upper 5)}}", "5"],
+    ["{{set \"x\" (cond true \"a\" \"b\")}}", "a"],
+    ["{{set \"x\" (cond 0 \"a\" \"b\")}}", "b"],
+])("helper: %s", async (text, expected) => {
+    const { squiffyApi } = await initScript(`[[start]]:\n${text}`);
+    expect(squiffyApi.get("x")).toBe(expected);
+});
+
+test.each([
+    ["{{= (round \"a\")}}", "\"round\" needs numbers, but was given \"a\""],
+    ["{{= (round 1 2 3)}}", "\"round\" needs one or two values, but was given 3"],
+    ["{{= (floor 1 2)}}", "\"floor\" needs one value, but was given 2"],
+    ["{{= (max)}}", "\"max\" needs at least one value"],
+    ["{{= (upper (array 1))}}", "\"upper\" needs text, but was given a list"],
+    ["{{= (cond true 1)}}", "\"cond\" needs three values, but was given 2"],
+])("helper error: %s", async (text, message) => {
+    const { element } = await initScript(`[[start]]:\n${text}`);
+    expect(element.querySelector(".squiffy-error")?.textContent).toContain(message);
+});
+
+test("contains, ? : and the new helpers in expressions (#446)", async () => {
+    const script = `
+[[start]]:
+@set name = "Robin"
+@set hp = 0
+@set gold = 10
+@set bag = ["lamp", "key"]
+@set hero = { hp: 3 }
+{{set "status" hp > 0 ? "alive" : "dead"}}
+{{set "share" (round (gold / 3) 2)}}
+{{set "shout" (upper name) + "!"}}
+{{#if bag contains "key"}}Key.{{/if}}
+{{#if not bag contains "rope"}}No rope.{{/if}}
+{{#if name contains "ob"}}Ob.{{/if}}
+{{#if hero contains "hp"}}Has hp.{{/if}}
+{{#if unsetattr contains "x"}}Wrong.{{/if}}
+{{#if (contains "bag" "lamp")}}Lamp.{{/if}}
+Letters: {{= name.length}}. Items: {{= bag.length}}. {{= gold > 5 ? "Rich" : "Poor"}}.
+Lower: {{= (lower name)["length"]}}. Abs: {{= (abs (-gold))}}. Max: {{max gold 3}}.
+`;
+    const { squiffyApi, element } = await initScript(script, true);
+    expect(squiffyApi.get("status")).toBe("dead");
+    expect(squiffyApi.get("share")).toBe(3.33);
+    expect(squiffyApi.get("shout")).toBe("ROBIN!");
+    expect(element.textContent).toContain("Key.");
+    expect(element.textContent).toContain("No rope.");
+    expect(element.textContent).toContain("Ob.");
+    expect(element.textContent).toContain("Has hp.");
+    expect(element.textContent).not.toContain("Wrong.");
+    expect(element.textContent).toContain("Lamp.");
+    expect(element.textContent).toContain("Letters: 5. Items: 2. Rich.");
+    expect(element.textContent).toContain("Lower: 5. Abs: 10. Max: 10.");
+});

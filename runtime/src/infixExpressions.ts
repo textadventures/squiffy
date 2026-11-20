@@ -6,8 +6,12 @@
 //                (also {{inc}} and {{dec}})
 //   display:     {{= price * 2}}                  ->  {{mul price 2}}
 //
-// Precedence, from tightest to loosest: unary minus, * / %, + -, comparisons, not/!, and/&&,
-// or/||. So "not" applies to a whole comparison, as it reads in English: not gender = "male"
+// Two operators work on values rather than numbers (#446):
+//   bag contains "key"          ->  (__contains bag "key")   (lists, text and objects)
+//   hp > 0 ? "alive" : "dead"   ->  (cond (gt hp 0) "alive" "dead")
+//
+// Precedence, from tightest to loosest: unary minus, * / %, + -, comparisons (and contains),
+// not/!, and/&&, or/||, and then ? :. So "not" applies to a whole comparison, as it reads in English: not gender = "male"
 // means not (gender = "male").
 // Expressions that don't use any infix operator are passed through unchanged (except {{= }},
 // which isn't valid Handlebars, so it's always rewritten).
@@ -46,6 +50,8 @@ const comparisonHelpers: Record<string, string> = {
     "<": "lt",
     ">=": "gte",
     "<=": "lte",
+    // a contains b (#446): see the __contains helper
+    "contains": "__contains",
 };
 
 const arithmeticHelpers: Record<string, string> = {
@@ -56,14 +62,14 @@ const arithmeticHelpers: Record<string, string> = {
     "%": "mod",
 };
 
-const symbolicOps = ["==", "!=", ">=", "<=", "&&", "||", "=", ">", "<", "!", "+", "*", "%", "-", "/"];
+const symbolicOps = ["==", "!=", ">=", "<=", "&&", "||", "=", ">", "<", "!", "+", "*", "%", "-", "/", "?"];
 const keywordOps = ["and", "or", "not"];
 const literals = ["true", "false", "null", "undefined"];
 
 // Characters that end an identifier/path. "[" starts a Handlebars literal segment,
 // e.g. [my attribute], which may contain any of these.
 // "-" and "/" aren't here: see above.
-const identTerminators = new Set([..." \t\r\n!\"'()<>=&|{}~+*%:,]"]);
+const identTerminators = new Set([..." \t\r\n!\"'()<>=&|{}~+*%:,]?"]);
 
 const numberPattern = /^-?\d+(\.\d+)?$/;
 
@@ -76,6 +82,11 @@ function startsList(expr: string, open: number): boolean {
     if (/^[\]"'{[(\d-]/.test(after)) return true;
     const close = expr.indexOf("]", open);
     return close !== -1 && expr.substring(open, close).includes(",");
+}
+
+// Whether a token can be the end of a value, so that what follows it is an operator
+function endsValue(token: Token | undefined) {
+    return token?.type === "ident" || token?.type === "value" || token?.type === ")" || token?.type === "]" || token?.type === "}";
 }
 
 function tokenize(expr: string): Token[] {
@@ -144,7 +155,9 @@ function tokenize(expr: string): Token[] {
             throw new ExpressionError(`unexpected '${c}'`);
         }
         const word = expr.slice(i, j);
-        if (keywordOps.includes(word)) {
+        if (keywordOps.includes(word) || (word === "contains" && endsValue(tokens[tokens.length - 1]))) {
+            // "contains" is only an operator after a value, so (contains "bag" "key") is still
+            // the helper
             tokens.push({ type: "op", text: word });
         } else if (literals.includes(word) || numberPattern.test(word)) {
             tokens.push({ type: "value", text: word });
@@ -184,7 +197,7 @@ class Parser {
 
     // A value: an expression with nothing after it
     parseExpression(): Node {
-        const result = this.parseOr();
+        const result = this.parseConditional();
         if (this.peek()) {
             throw new ExpressionError(`unexpected ${this.describe(this.peek())}`);
         }
@@ -206,7 +219,7 @@ class Parser {
 
     // Top level: an expression, optionally followed by hash arguments (e.g. includeZero=true)
     parseCondition(): Node[] {
-        const result = [this.parseOr()];
+        const result = [this.parseConditional()];
         while (this.peek()?.type === "ident" && this.isOp(this.peek(1), "=")) {
             result.push(this.parseHashPair());
         }
@@ -220,6 +233,25 @@ class Parser {
         const key = this.next().text;
         this.next(); // "="
         return { kind: "raw", text: `${key}=${emit(this.parsePrimary())}` };
+    }
+
+    // test ? a : b (#446), the loosest of all, and right-associative, so a ? b : c ? d : e
+    // is a ? b : (c ? d : e)
+    private parseConditional(): Node {
+        const test = this.parseOr();
+        if (!this.isOp(this.peek(), "?")) return test;
+        this.next();
+        if (!this.peek()) {
+            throw new ExpressionError("expected a value after '?'");
+        }
+        const ifTrue = this.parseConditional();
+        this.expect(":");
+        if (!this.peek()) {
+            throw new ExpressionError("expected a value after ':'");
+        }
+        const ifFalse = this.parseConditional();
+        this.usedInfix = true;
+        return { kind: "call", name: "cond", args: [test, ifTrue, ifFalse] };
     }
 
     private parseOr(): Node {
@@ -325,7 +357,7 @@ class Parser {
             const token = this.peek();
             if (token?.type === "index") {
                 this.next();
-                const index = this.parseOr();
+                const index = this.parseConditional();
                 this.expect("]");
                 this.usedInfix = true;
                 node = { kind: "call", name: "lookup", args: [node, index] };
@@ -366,7 +398,7 @@ class Parser {
                 throw new ExpressionError(`expected a name in the object, e.g. { hp: 10 }, but found '${key.text}'`);
             }
             this.expect(":");
-            args.push(this.parseOr());
+            args.push(this.parseConditional());
             if (this.peek()?.type !== ",") break;
             this.next();
         }
@@ -380,7 +412,7 @@ class Parser {
         const args: Node[] = [];
         while (this.peek()?.type !== "]") {
             if (!this.peek()) throw new ExpressionError("expected ']' but found end of expression");
-            args.push(this.parseOr());
+            args.push(this.parseConditional());
             if (this.peek()?.type !== ",") break;
             this.next();
         }
@@ -405,7 +437,7 @@ class Parser {
         }
         if (token?.type === "(") {
             this.next();
-            const node = this.isHelperCall() ? this.parseHelperCall() : this.parseOr();
+            const node = this.isHelperCall() ? this.parseHelperCall() : this.parseConditional();
             if (this.peek()?.type !== ")") {
                 throw new ExpressionError(`expected ')' but found ${this.describe(this.peek())}`);
             }
