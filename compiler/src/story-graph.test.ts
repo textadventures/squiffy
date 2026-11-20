@@ -193,6 +193,47 @@ describe("story graph", () => {
         expect(items.map(i => i.label)).toEqual(["a", "b"]);
     });
 
+
+    test("a text box with data-section or data-passage is a link (#454)", async () => {
+        const main = [
+            "[[a]]:", "Name: <input type=\"text\" data-attribute=\"name\" data-passage=\"greet\">", "",
+            "[greet]:", "Hello. <input data-attribute='x' data-section='b' required>", "",
+            "[[b]]:", "<input data-section=c>", "",
+            "[[c]]:", "@end",
+        ].join("\n");
+        const graph = await one(main);
+        expect(edgeSummary(graph.edges)).toEqual([
+            "section:a -> passage:a/greet (passage-link)",
+            "passage:a/greet -> section:b (section-link)",
+            "section:b -> section:c (section-link)",
+        ]);
+        expect(reachable(graph)).toEqual(["section:a", "passage:a/greet", "section:b", "section:c"]);
+        expect(deadEnds(graph)).toEqual([]);
+
+        const ls = service({ "story.squiffy": main });
+        const position = { line: 4, character: 50 };
+        expect(await ls.getDefinition("story.squiffy", position)).toEqual({
+            file: "story.squiffy", range: { start: { line: 6, character: 2 }, end: { line: 6, character: 3 } },
+        });
+        const rename = await ls.getRenameEdits("story.squiffy", position, "room");
+        expect(rename && "edit" in rename && apply(main, rename.edit!["story.squiffy"]))
+            .toBe(main.replace("data-section='b'", "data-section='room'").replace("[[b]]:", "[[room]]:"));
+        const unquoted = await ls.getRenameEdits("story.squiffy", { line: 7, character: 20 }, "d");
+        expect(unquoted && "edit" in unquoted && apply(main, unquoted.edit!["story.squiffy"]))
+            .toBe(main.replace("data-section=c", "data-section=d").replace("[[c]]:", "[[d]]:"));
+    });
+
+    test("a text box going nowhere is a warning, and its target is completed (#454)", async () => {
+        const main = "[[a]]:\n<input data-section=\"nowhere\"> <input data-passage=\"nothing\">\n<input data-passage=\"\n[p]:\nHi.\n\n[[b]]:\n<input data-section=\"";
+        const ls = service({ "story.squiffy": main });
+        const diagnostics = await ls.getDiagnostics("story.squiffy");
+        expect(diagnostics.filter(d => d.code.includes("unknown")).map(d => [d.code, d.message])).toEqual([
+            ["squiffy/unknown-section-link", "In section 'a' there is a text box that goes to a section called \"nowhere\" when Enter is pressed, which doesn't exist"],
+            ["squiffy/unknown-passage-link", "In section 'a' there is a text box that goes to a passage called \"nothing\" when Enter is pressed, which doesn't exist"],
+        ]);
+        expect((await ls.getCompletions("story.squiffy", { line: 2, character: 21 })).map(i => i.label)).toEqual(["p"]);
+        expect((await ls.getCompletions("story.squiffy", { line: 7, character: 21 })).map(i => i.label)).toEqual(["a", "b"]);
+    });
     test("links inside {{#if}} are conditional, and can be followed", async () => {
         const graph = await one("[[a]]:\n{{#if key}}\nOpen the [[door]].\n{{else}}\nIt's locked. [[Back]](a)\n{{/if}}\n[[Wait]](a)\n\n[[door]]:\n@end");
         expect(edgeSummary(graph.edges)).toEqual([

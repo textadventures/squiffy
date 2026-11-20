@@ -392,10 +392,10 @@ function renderText(root: Element, clickable: Set<Element>): string {
         }
         const attribute = element.getAttribute("data-attribute") || element.id;
         if (tag == "INPUT" || tag == "TEXTAREA") {
-            const type = (element.getAttribute("type") ?? "text").toLowerCase();
             const value = (element as HTMLInputElement).value;
-            const kind = tag == "TEXTAREA" ? "text box" : type == "checkbox" ? "checkbox" : type == "radio" ? "radio button" : `${type == "text" ? "text" : type} box`;
-            out.push(`[${kind}${attribute ? ` for ${attribute}` : ""}${value ? `: "${value}"` : ""}]`);
+            // A text box that goes somewhere when Enter is pressed (#454) is one of the choices
+            const enter = clickable.has(element) ? ", Enter to go on" : "";
+            out.push(`[${inputKind(element)}${attribute ? ` for ${attribute}` : ""}${value ? `: "${value}"` : ""}${enter}]`);
             return;
         }
         if (tag == "SELECT") {
@@ -421,8 +421,32 @@ function renderText(root: Element, clickable: Set<Element>): string {
     return tidy(out.join(""));
 }
 
-// A link's text, on one line
-const linkText = (element: Element) => renderText(element, new Set()).replace(/\s+/g, " ");
+// What kind of text box, checkbox or the like an input is
+function inputKind(element: Element): string {
+    if (element.tagName == "TEXTAREA") return "text box";
+    const type = (element.getAttribute("type") ?? "text").toLowerCase();
+    return type == "checkbox" ? "checkbox" : type == "radio" ? "radio button" : `${type == "text" ? "text" : type} box`;
+}
+
+// A link's text, on one line. For a text box that goes somewhere when Enter is pressed (#454),
+// what the player does.
+const linkText = (element: Element) => {
+    if (element.tagName == "INPUT") {
+        const attribute = element.getAttribute("data-attribute") || element.id;
+        return `Press Enter in the ${inputKind(element)}${attribute ? ` for ${attribute}` : ""}`;
+    }
+    return renderText(element, new Set()).replace(/\s+/g, " ");
+};
+
+// Whether a link can't be clicked until the text boxes in its section are filled in properly.
+// A text box that goes somewhere when Enter is pressed (#454) waits for them too.
+function needsInput(link: Element): boolean {
+    if (link.classList.contains("validation-disabled")) return true;
+    if (link.tagName != "INPUT") return false;
+    const section = link.closest(".squiffy-output-section");
+    const inputs = section?.querySelectorAll<HTMLInputElement>("input:not([disabled]), textarea:not([disabled]), select:not([disabled])") ?? [];
+    return [...inputs].some(input => !input.checkValidity());
+}
 
 // One space between words, no spaces at the ends of lines, and at most one blank line in a row
 const tidy = (text: string) => text
@@ -520,14 +544,16 @@ class Session {
         return sections[sections.length - 1] as HTMLElement | undefined;
     }
 
-    // The links the player can click. While there's {{#animate "continue"}} text to click to
-    // see what comes next, that's all the player can click.
+    // The links the player can click, and the text boxes that go somewhere when Enter is
+    // pressed (#454). While there's {{#animate "continue"}} text to click to see what comes next,
+    // that's all the player can click.
     private clickableLinks(): HTMLElement[] {
         const section = this.currentSection();
         if (!section) return [];
         const continues = [...section.querySelectorAll<HTMLElement>(".squiffy-continue")];
         if (continues.length) return continues.slice(0, 1);
-        return [...section.querySelectorAll<HTMLElement>("a.squiffy-link:not(.disabled)")].filter(link => !link.closest("[hidden]"));
+        return [...section.querySelectorAll<HTMLElement>("a.squiffy-link:not(.disabled), input[data-section]:not([disabled]), input[data-passage]:not([disabled])")]
+            .filter(link => !link.closest("[hidden]"));
     }
 
     private waitingForContinue = () => !!this.currentSection()?.querySelector(".squiffy-continue");
@@ -554,7 +580,7 @@ class Session {
                 text: linkText(link),
                 ...(section ? { section } : {}),
                 ...(passage ? { passage } : {}),
-                ...(link.classList.contains("validation-disabled") ? { needsInput: true } : {}),
+                ...(needsInput(link) ? { needsInput: true } : {}),
                 ...(link.classList.contains("squiffy-continue") ? { continue: true } : {}),
             };
         });
@@ -742,7 +768,7 @@ export async function playStory(playable: PlayableStory, options: PlayOptions = 
                     : `There's no link "${choice}" to click, as there are no links to click.`;
                 break;
             }
-            if (link.classList.contains("validation-disabled")) {
+            if (needsInput(link)) {
                 stopped = `The link "${choice}" can't be clicked until the text boxes are filled in properly. Use --input to fill them in.`;
                 break;
             }

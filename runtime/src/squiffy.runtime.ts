@@ -77,6 +77,13 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
 
         if (passage !== null || section !== null) {
             gotoHops = 0;
+            // A text box that goes somewhere when Enter is pressed (#454) keeps what was typed
+            // first, so the section or passage it goes to can use it. Other text boxes are only
+            // kept when the player leaves the section.
+            if (link instanceof window.HTMLInputElement) {
+                const attribute = link.getAttribute("data-attribute") || link.id;
+                if (attribute) set(attribute, link.value);
+            }
             // The story-wide turn count (#377). A {{goto}} isn't a turn, as the player didn't click it.
             set("turns", (get("turns") || 0) + 1);
         }
@@ -140,12 +147,23 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         return !!(masterPassages && passageName in masterPassages && masterPassages[passageName].repeat);
     }
 
+    // A link, or a text box that goes to a passage when Enter is pressed (#454)
     function disableLink(link: Element) {
+        if (link instanceof window.HTMLInputElement) {
+            link.disabled = true;
+            link.classList.add("disabled");
+            return;
+        }
         link.classList.add("disabled");
         link.setAttribute("tabindex", "-1");
     }
 
     function enableLink(link: Element) {
+        if (link instanceof window.HTMLInputElement) {
+            link.disabled = false;
+            link.classList.remove("disabled");
+            return;
+        }
         link.classList.remove("disabled");
         link.removeAttribute("tabindex");
     }
@@ -1145,7 +1163,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             }
 
             if (clicked) {
-                for (const link of currentSectionElement.querySelectorAll(`a.squiffy-link[data-clicked="${clicked}"]`)) {
+                for (const link of currentSectionElement.querySelectorAll(`a.squiffy-link[data-clicked="${clicked}"], input[data-clicked="${clicked}"]`)) {
                     enableLink(link);
                     link.removeAttribute("data-clicked");
                 }
@@ -1227,6 +1245,22 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     outputElement.addEventListener("click", handleClick);
     outputElement.addEventListener("keypress", async function (event) {
         if (event.key !== "Enter") return;
+        const target = event.target;
+        // A text box with data-section or data-passage goes there when Enter is pressed (#454),
+        // like a link, once every text box in the section is filled in properly
+        if (target instanceof window.HTMLInputElement && (target.hasAttribute("data-section") || target.hasAttribute("data-passage"))) {
+            if (event.isComposing) return;
+            event.preventDefault();
+            if (!areInputsValid(currentSectionElement)) {
+                // Shows which ones need filling in
+                for (const input of currentSectionElement.querySelectorAll<HTMLInputElement>("input:not([disabled]), textarea:not([disabled]), select:not([disabled])")) {
+                    input.reportValidity();
+                }
+                return;
+            }
+            await handleLink(target);
+            return;
+        }
         await handleClick(event);
     });
 

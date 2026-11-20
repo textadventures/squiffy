@@ -1373,14 +1373,19 @@ class Writer {
                 state.leading = false;
                 const bound = this.receiver(args[0] ?? "");
                 const defaultValue = args[1] ? this.expr.parse(args[1]) : null;
-                if (args.slice(2).some(a => a != "autofocus")) {
-                    this.ctx.approximate(m.raw, "Squiffy's text boxes don't go to a passage when Enter is pressed.");
+                // <<textbox>> and <<numberbox>> can go to a passage when Enter is pressed (#454)
+                const passageArg = m.name == "textarea" ? undefined : args.slice(2).find(a => a != "autofocus");
+                let goes = "";
+                if (passageArg !== undefined) {
+                    const target = this.expr.passageName(passageArg);
+                    if (!("name" in target)) throw new Unconvertible(`<<${m.name}>> going to a passage whose name isn't fixed`);
+                    goes = ` data-section="${escapeAttribute(this.sectionName(target.name, m.raw))}"`;
                 }
                 const value = defaultValue?.k == "str" || defaultValue?.k == "num" ? String(defaultValue.v) : null;
                 const set = defaultValue ? `{{set "${bound}" ${print(defaultValue)}}}` : "";
                 if (m.name == "textarea") return `${set}<textarea data-attribute="${bound}">${escapeText(escapeHtml(value ?? ""))}</textarea>`;
                 const type = m.name == "numberbox" ? "number" : "text";
-                return `${set}<input type="${type}" data-attribute="${bound}"${value === null ? "" : ` value="${escapeAttribute(value)}"`}>`;
+                return `${set}<input type="${type}" data-attribute="${bound}"${value === null ? "" : ` value="${escapeAttribute(value)}"`}${goes}>`;
             }
             case "checkbox": {
                 state.leading = false;
@@ -1541,11 +1546,15 @@ class Writer {
         throw new Unconvertible("<<for>> loops, except ones that go through an array (with range), or count up or down by 1");
     }
 
-    // The attribute a form macro like <<textbox "$name">> sets
+    // The attribute a form macro like <<textbox "$name">> sets, or the value inside an object,
+    // as in <<textbox "$hero.name">> (#454)
     private receiver(arg: string): string {
-        const match = /^["']([$_])([A-Za-z_]\w*)["']$/.exec(arg);
-        if (!match) throw new Unconvertible("a form control that doesn't set a plain variable");
-        return this.expr.attribute(match[2], match[1] == "_");
+        const match = /^(["'])([$_][\s\S]*)\1$/.exec(arg);
+        const e = match ? this.expr.parse(match[2]) : null;
+        if (e?.k != "var" || isDynamicTarget(e.name)) {
+            throw new Unconvertible("a form control that doesn't set a variable, or a value inside one with a fixed name");
+        }
+        return e.name;
     }
 
     private linkText(arg: string): { plain: string, squiffy: string } {
