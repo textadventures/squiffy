@@ -1,17 +1,27 @@
 <script lang="ts">
-    // From Quest Viva's HomeHeader: the logo and name, with links to the docs, GitHub and Settings.
+    // From Quest Viva's HomeHeader: the logo and name, with links to the docs, GitHub and Settings,
+    // and in the browser, the desktop app's downloads (not on a phone, which it doesn't run on).
     import { base } from "#lib/base-path.js";
     import { settings } from "#lib/settings.svelte.js";
     import { DOCS_URL, GITHUB_URL } from "#lib/links.js";
+    import { desktopApi } from "#lib/desktop.js";
+    import DownloadButton from "#components/DownloadButton.svelte";
     import GithubIcon from "#components/GithubIcon.svelte";
     import SettingsIcon from "@lucide/svelte/icons/settings";
     import BookOpen from "@lucide/svelte/icons/book-open";
+
+    const isDesktop = desktopApi() !== null;
 </script>
 
 <header class="flex items-center gap-3 px-4 pt-4 pb-2 text-surface-900-100">
     <img src="{base}/squiffy.png" alt="" class="h-7" />
     <h1 class="text-xl font-semibold">Squiffy</h1>
     <div class="ml-auto flex items-center gap-1">
+        {#if !isDesktop}
+            <div class="hidden sm:block mr-1">
+                <DownloadButton />
+            </div>
+        {/if}
         <a href={DOCS_URL} target="_blank" rel="noopener noreferrer" class="home-header-link" title="Documentation" aria-label="Documentation">
             <BookOpen size={18} />
         </a>
