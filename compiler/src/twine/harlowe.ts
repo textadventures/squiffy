@@ -9,8 +9,8 @@ import { conditional, delayValue, display, isBoolean, isDynamicTarget, isListCal
 import type { BinaryOp, Expr } from "./expression.js";
 import { audioHelper, leadingAudio, pickSource, STOP_ALL_AUDIO } from "./audio.js";
 import type { AudioAction, StoryAudio } from "./audio.js";
-import { dynamicSectionLink, escapeText, isUrl, urlLink, passageLink, sectionLink, setter } from "./convert.js";
-import type { ConvertedPassage, PassageContext } from "./convert.js";
+import { dynamicSectionLink, escapeText, isUrl, urlLink, passageLink, sectionLink, setter, passageHtmlBlock, readHtmlBlock, topScripts } from "./convert.js";
+import type { ConvertedPassage, HtmlBlock, PassageContext } from "./convert.js";
 
 type Node =
     | { t: "text", s: string }
@@ -23,7 +23,8 @@ type Node =
     // A call to a custom macro, ($name: args)
     | { t: "call", name: string, temp: boolean, args: string, raw: string }
     | { t: "collapse", nodes: Node[] }
-    | { t: "comment", text: string, reason: string };
+    | { t: "comment", text: string, reason: string }
+    | HtmlBlock;
 
 type Macro = Extract<Node, { t: "macro" }>;
 
@@ -82,14 +83,11 @@ class Parser {
                 i = stop;
                 continue;
             }
-            const scriptMatch = /^<(script|style)\b/i.exec(rest);
-            if (scriptMatch) {
-                const closeTag = `</${scriptMatch[1].toLowerCase()}>`;
-                const end = src.toLowerCase().indexOf(closeTag, i);
-                const stop = end == -1 ? src.length : end + closeTag.length;
+            const html = readHtmlBlock(src, i);
+            if (html) {
                 flush();
-                nodes.push({ t: "comment", text: src.substring(i, stop), reason: `A <${scriptMatch[1]}> in a passage isn't run by Squiffy. Move it to the story's JavaScript or CSS file.` });
-                i = stop;
+                nodes.push(html.block);
+                i = html.end;
                 continue;
             }
             if (c == "`") {
@@ -789,6 +787,7 @@ class Writer {
         this.collectHooks(nodes);
         const state: EmitState = { leading: true, directives: [] };
         nodes = this.passageTransition(nodes, state);
+        nodes = topScripts(this.ctx, nodes, state.directives);
         let body = this.nodes(nodes, state);
         body += this.closeAll();
         return { directives: state.directives, body };
@@ -934,6 +933,8 @@ class Writer {
                 return node.s;
             case "comment":
                 return this.ctx.unconvertible(node.text, node.reason);
+            case "html":
+                return passageHtmlBlock(this.ctx, node, false).text;
             case "call":
                 state.leading = false;
                 return this.call(node);

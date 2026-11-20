@@ -66,7 +66,8 @@ export interface PassageContext {
 }
 
 export interface ConvertedPassage {
-    // @set and other directives, which go before the text
+    // @set and other directives, which go before the text. Lines that start with spaces are
+    // JavaScript, which block() puts after the other directives.
     directives: string[];
     // Squiffy text
     body: string;
@@ -95,6 +96,9 @@ export class StoryContext {
     readonly extraSections: string[] = [];
     private readonly permanentVars = new Set<string>();
     readonly passagesByName = new Map<string, TwinePassage>();
+    // <style>s and <script>s from passages, for the story's CSS and JavaScript files (#455)
+    readonly passageStyles: { passage: string, css: string }[] = [];
+    readonly passageScripts: { passage: string, js: string }[] = [];
 
     constructor(readonly twine: TwineStory, passages: TwinePassage[]) {
         for (const p of passages) {
@@ -602,25 +606,36 @@ export function convertTwineStory(twine: TwineStory, options: TwineConversionOpt
     const header: string[] = [];
     if (twine.title) header.push(`@title ${twine.title.replace(/\s+/g, " ").trim()}`);
     if (startSection !== undefined) header.push(`@start ${startSection}`);
-    if (twine.stylesheet) {
-        // squiffy.json makes it part of the story
-        const stylesheet = convertTagSelectors(twine.stylesheet);
-        files[`${name}.css`] = stylesheet + "\n";
-        const tagRules = stylesheet != twine.stylesheet
-            ? " Its rules for passage tags now use the classes that @class puts on the story's element."
-            : "";
-        problems.push({
-            text: `${name}.css`,
-            reason: `The story's stylesheet is in ${name}.css. Its rules for ${harlowe ? "Harlowe's elements (tw-story, tw-passage, tw-link and so on)" : "SugarCube's elements (#story, .passage, #ui-bar and so on)"} won't apply to Squiffy's, so check how it looks.${tagRules}`,
-        });
+    // The stylesheet, with the <style>s from passages (#455). squiffy.json makes it part of the story.
+    const passageStyles = story.passageStyles.filter(s => s.css).map(s => `/* From the passage "${s.passage.replace(/\*\//g, "* /")}" */\n${s.css}`);
+    const stylesheet = [twine.stylesheet, ...passageStyles].filter(s => s).join("\n\n");
+    if (stylesheet) {
+        const tagged = convertTagSelectors(stylesheet);
+        const converted = convertTwineSelectors(tagged);
+        files[`${name}.css`] = converted.css + "\n";
+        const reason = [`The story's stylesheet is in ${name}.css${passageStyles.length ? ", with the <style>s from its passages" : ""}.`];
+        if (converted.translated.length) {
+            reason.push(`Its rules for Twine's ${list(converted.translated)} are now for Squiffy's own page, sections and links.`);
+        }
+        if (converted.untranslated.length) {
+            // SugarCube's sidebar and dialogs can have a dozen, so only the first few are named
+            const shown = converted.untranslated.length > 5 ? [...converted.untranslated.slice(0, 4), `${converted.untranslated.length - 4} more`] : converted.untranslated;
+            reason.push(`Its rules for ${list(shown)} have nothing to match in Squiffy.`);
+        }
+        if (tagged != stylesheet) reason.push("Its rules for passage tags now use the classes that @class puts on the story's element.");
+        reason.push("Check how it looks.");
+        problems.push({ text: `${name}.css`, reason: reason.join(" ") });
     }
     // SugarCube's player settings (#452), from the story's JavaScript
     const settings = !harlowe && twine.script ? sugarCubeSettings(twine.script) : { settings: [], problems: [] };
     problems.push(...settings.problems);
     // The story's JavaScript is left out of it, as it was written for another story format
     const exclude: string[] = [];
-    if (twine.script) {
-        files[`${name}.js`] = twine.script + "\n";
+    // With the <script>s from passages that can't run in Squiffy as they are (#455)
+    const passageScripts = story.passageScripts.map(s => `// From the passage "${s.passage}"\n${s.js}`);
+    const javaScript = [twine.script, ...passageScripts].filter(s => s).join("\n\n");
+    if (javaScript) {
+        files[`${name}.js`] = javaScript + "\n";
         exclude.push(`${name}.js`);
         problems.push({
             text: `${name}.js`,
@@ -724,10 +739,173 @@ export function convertTagSelectors(css: string): string {
         .replace(/(^|[\s,>+~(}])body((?:\.[\w-]+)+)/g, "$1body:has($2)");
 }
 
+// A <script> or <style> in a passage (#455)
+export interface HtmlBlock {
+    t: "html";
+    tag: "script" | "style";
+    raw: string;
+    attributes: string;
+    content: string;
+}
+
+// The <script> or <style> at src[i], and where it ends
+export function readHtmlBlock(src: string, i: number): { block: HtmlBlock, end: number } | undefined {
+    const open = /^<(script|style)\b([^>]*)>/i.exec(src.substring(i));
+    if (!open) return undefined;
+    const tag = open[1].toLowerCase() as "script" | "style";
+    const close = src.toLowerCase().indexOf(`</${tag}>`, i + open[0].length);
+    const end = close == -1 ? src.length : close + tag.length + 3;
+    const content = src.substring(i + open[0].length, close == -1 ? src.length : close);
+    return { block: { t: "html", tag, raw: src.substring(i, end), attributes: open[2], content }, end };
+}
+
+// JavaScript that uses the story format's own objects, such as SugarCube's State and setup, or
+// jQuery, which Squiffy doesn't have
+const formatJavaScript = /\b(?:State|setup|Engine|Story|Config|Macro|Save|UI|UIBar|Dialog|Settings?|SimpleAudio|Wikifier|Template|LoadScreen|Scripting|Harlowe|SugarCube|V|T)\s*\.|\b(?:variables|temporary|visited|visitedTags|passage|previous|tags|turns|jQuery|either|random|randomFloat|lastVisited|memorize|recall|forget)\s*\(|\$\s*\(|\$\.\w/;
+
+// A <style> in a passage goes in the story's stylesheet. A <script> at the start of a passage
+// (top) runs when its section is shown, once its text is on the page, as it would in Twine, and
+// the directive that does that is returned. One that uses the story format's JavaScript, or is
+// inside a macro or hook so it only ran some of the time, goes in the story's JavaScript file,
+// which isn't part of the story.
+export function passageHtmlBlock(ctx: PassageContext, block: HtmlBlock, top: boolean): { text: string, directive?: string } {
+    const story = ctx.story;
+    if (block.tag == "style") {
+        story.passageStyles.push({ passage: ctx.passage.name, css: block.content.trim() });
+        ctx.approximate("<style>", "This is in the story's stylesheet now, so it applies all the time, not only while this passage is shown.");
+        return { text: "" };
+    }
+    if (/\bsrc\s*=/i.test(block.attributes)) {
+        return { text: ctx.unconvertible(block.raw, "A <script> that loads a file isn't run by Squiffy. Add the file to the story's folder instead.") };
+    }
+    const js = block.content.replace(/^\s*\n|\s+$/g, "");
+    if (!js.trim()) return { text: "" };
+    if (!top || formatJavaScript.test(js)) {
+        story.passageScripts.push({ passage: ctx.passage.name, js });
+        ctx.approximate("<script>", top
+            ? "This <script> uses the story format's JavaScript, which Squiffy doesn't have, so it's in the story's JavaScript file, which isn't part of the story."
+            : "This <script> only ran some of the time, so it's in the story's JavaScript file, which isn't part of the story.");
+        return { text: "" };
+    }
+    ctx.approximate("<script>", "This runs when the section is shown, once its text is on the page. Check it still works.");
+    // A blank line would end the JavaScript, so blank lines are left out
+    const lines = dedent(js).split("\n").filter(l => l.trim());
+    return { text: "", directive: ["    squiffy.ui.afterWrite(() => {", ...lines.map(l => "        " + l), "    });"].join("\n") };
+}
+
+// A passage's nodes, with the <script>s that aren't inside a macro or hook taken out and their
+// JavaScript added to its directives
+export function topScripts<N extends { t: string }>(ctx: PassageContext, nodes: (N | HtmlBlock)[], directives: string[]): (N | HtmlBlock | { t: "raw", s: string })[] {
+    return nodes.map(n => {
+        if (n.t != "html" || (n as HtmlBlock).tag != "script") return n;
+        const { text, directive } = passageHtmlBlock(ctx, n as HtmlBlock, true);
+        if (directive) directives.push(directive);
+        return { t: "raw", s: text };
+    });
+}
+
+// Lines with the indent they all have taken off
+function dedent(text: string): string {
+    const lines = text.split("\n");
+    const indent = Math.min(...lines.filter(l => l.trim()).map(l => /^[ \t]*/.exec(l)![0].length));
+    return lines.map(l => l.substring(Math.min(indent, /^[ \t]*/.exec(l)![0].length))).join("\n");
+}
+
+// Twine's elements in a stylesheet, and the Squiffy elements their rules are for now (#455). In
+// Harlowe, tw-story is the whole page and tw-passage the passage; in SugarCube, #story holds
+// #passages, which holds the .passage. A Twine passage is a Squiffy section.
+const twineSelectors: [RegExp, string, string][] = [
+    [/(?<![\w#.-])tw-story(?![\w-])/g, "body", "tw-story"],
+    [/(?<![\w#.-])tw-passage(?![\w-])/g, ".squiffy-output-section", "tw-passage"],
+    [/(?<![\w#.-])tw-link(?![\w-])/g, ".squiffy-link", "tw-link"],
+    [/\.enchantment-link(?![\w-])/g, ".squiffy-link", ".enchantment-link"],
+    [/(?<![\w#.-])tw-sidebar(?![\w-])/g, "#squiffy-header", "tw-sidebar"],
+    [/#story(?![\w-])/g, "#squiffy-container", "#story"],
+    [/#passages(?![\w-])/g, "#squiffy", "#passages"],
+    [/\.passage(?![\w-])/g, ".squiffy-output-section", ".passage"],
+    [/\.(?:link-internal|macro-link)(?![\w-])/g, ".squiffy-link", ".link-internal"],
+];
+
+// Twine's elements that have nothing like them in Squiffy
+const otherTwineSelectors = /(?<![\w#.-])tw-[\w-]+|#(?:ui-[\w-]+|menu[\w-]*|story-[\w-]+)(?![\w-])/g;
+
+// A stylesheet with its rules for Twine's elements changed to be for Squiffy's (#455), and the
+// Twine elements it had rules for, changed or not. Only selectors change, not what's in the rules.
+export function convertTwineSelectors(css: string): { css: string, translated: string[], untranslated: string[] } {
+    const translated = new Set<string>();
+    const untranslated = new Set<string>();
+    const selector = (text: string) => {
+        for (const [pattern, squiffy, twine] of twineSelectors) {
+            text = text.replace(pattern, () => {
+                translated.add(twine);
+                return squiffy;
+            });
+        }
+        for (const m of text.matchAll(otherTwineSelectors)) untranslated.add(m[0]);
+        return text;
+    };
+    let out = "";
+    let prelude = "";
+    // Whether each block that's open is a rule's declarations, or holds rules, like @media
+    const blocks: boolean[] = [];
+    for (let i = 0; i < css.length; i++) {
+        const c = css[i];
+        const inRule = blocks.length > 0 && blocks[blocks.length - 1];
+        let skip = 0;
+        if (c == "/" && css[i + 1] == "*") {
+            const end = css.indexOf("*/", i + 2);
+            skip = (end == -1 ? css.length : end + 2) - i;
+        }
+        else if (c == "\"" || c == "'") {
+            let j = i + 1;
+            while (j < css.length && css[j] != c && css[j] != "\n") j += css[j] == "\\" ? 2 : 1;
+            skip = j + 1 - i;
+        }
+        if (skip) {
+            // A comment or string goes into the prelude, so a selector isn't changed inside one
+            if (inRule) out += css.substring(i, i + skip);
+            else prelude += css.substring(i, i + skip);
+            i += skip - 1;
+            continue;
+        }
+        if (inRule) {
+            if (c == "{") blocks.push(true);
+            else if (c == "}") blocks.pop();
+            out += c;
+            continue;
+        }
+        if (c == "{") {
+            const atRule = prelude.trimStart().startsWith("@");
+            out += (atRule ? prelude : selectorOutsideComments(prelude, selector)) + c;
+            prelude = "";
+            blocks.push(!atRule);
+        }
+        else if (c == "}" || c == ";") {
+            out += prelude + c;
+            prelude = "";
+            if (c == "}") blocks.pop();
+        }
+        else prelude += c;
+    }
+    return { css: out + prelude, translated: [...translated], untranslated: [...untranslated] };
+}
+
+// "a, b and c"
+function list(items: string[]): string {
+    return items.length < 2 ? items.join("") : `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
+}
+
+// A selector changed, leaving its comments and strings as they are
+function selectorOutsideComments(text: string, change: (text: string) => string): string {
+    return text.split(/(\/\*[\s\S]*?(?:\*\/|$)|"(?:[^"\\\n]|\\.)*"?|'(?:[^'\\\n]|\\.)*'?)/).map((part, n) => n % 2 ? part : change(part)).join("");
+}
+
 // The text of a section or passage: its directives, then its text
 function block(content: ConvertedPassage | string): string {
     const c = typeof content == "string" ? { directives: [], body: content } : content;
-    return [...c.directives, finishText(c.body)].filter(l => l.length).join("\n");
+    // JavaScript goes after the directives, before the text
+    const js = (d: string) => /^\s/.test(d);
+    return [...c.directives.filter(d => !js(d)), ...c.directives.filter(js), finishText(c.body)].filter(l => l.length).join("\n");
 }
 
 // A passage or section made for a link. It's shown on its own, after the link's loop has finished,

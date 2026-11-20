@@ -174,11 +174,68 @@ Not on the map`));
         expect(result.files["story.css"]).toBe([
             "body:has(.dark) { background: black; }",
             ".dark p, .forest { color: green; }",
-            "body:has(.\\33 d) .passage { color: red; }",
-            "body:has(.mel) #passages.dark, .my-body.x, tbody.y { color: blue; }",
-            "body:has(.a.b), #story, body { margin: 0; }",
+            "body:has(.\\33 d) .squiffy-output-section { color: red; }",
+            "body:has(.mel) #squiffy.dark, .my-body.x, tbody.y { color: blue; }",
+            "body:has(.a.b), #squiffy-container, body { margin: 0; }",
         ].join("\n") + "\n");
         expect(result.problems.find(p => p.text == "story.css")!.reason).toContain("@class");
+    });
+
+    test("stylesheet rules for Twine's elements are for Squiffy's (#455)", () => {
+        const css = [
+            "/* tw-story and #story */",
+            "tw-story { background: url(\"tw-passage.png\"); }",
+            "@media (max-width: 600px) { tw-passage, tw-link:hover, .enchantment-link { color: red; } }",
+            "#story #passages .passage a.link-internal, .macro-link, .passages, #story-caption, #ui-bar { content: \"#story\"; }",
+            "tw-hook, tw-sidebar { color: blue; }",
+            "@font-face { font-family: x; src: url(x.woff); }",
+        ].join("\n");
+        const result = convertTwine(`:: StoryData\n{"format": "SugarCube"}\n\n:: Start\nHi\n\n:: Style [stylesheet]\n${css}`);
+        expect(result.files["story.css"]).toBe([
+            "/* tw-story and #story */",
+            "body { background: url(\"tw-passage.png\"); }",
+            "@media (max-width: 600px) { .squiffy-output-section, .squiffy-link:hover, .squiffy-link { color: red; } }",
+            "#squiffy-container #squiffy .squiffy-output-section a.squiffy-link, .squiffy-link, .passages, #story-caption, #ui-bar { content: \"#story\"; }",
+            "tw-hook, #squiffy-header { color: blue; }",
+            "@font-face { font-family: x; src: url(x.woff); }",
+        ].join("\n") + "\n");
+        expect(result.problems.find(p => p.text == "story.css")!.reason).toBe(
+            "The story's stylesheet is in story.css. Its rules for Twine's tw-story, tw-passage, tw-link, .enchantment-link, #story, #passages, .passage, .link-internal and tw-sidebar are now for Squiffy's own page, sections and links. Its rules for #story-caption, #ui-bar and tw-hook have nothing to match in Squiffy. Check how it looks.");
+    });
+
+    test("<style>s and <script>s in passages (#455)", async () => {
+        const { script, result } = await convert("SugarCube", [
+            ":: Start",
+            "<style>.passage { color: red; }</style>Hello <span id=\"x\"></span>",
+            "<script>",
+            "  document.getElementById(\"x\").textContent = \"hi\";",
+            "",
+            "  console.log(1);",
+            "</script>",
+            "<script>State.variables.gold = 1;</script><script src=\"lib.js\"></script>",
+            "<<if $a>><script>alert(1);</script><</if>>",
+        ].join("\n"));
+        expect(script).toContain("[[Start]]:\n    squiffy.ui.afterWrite");
+        expect(section(script, "Start")).toBe([
+            "squiffy.ui.afterWrite(() => {",
+            "        document.getElementById(\"x\").textContent = \"hi\";",
+            "        console.log(1);",
+            "    });",
+            "Hello <span id=\"x\"></span>",
+            "",
+            "{{!-- Twine: <script src=\"lib.js\"></script> --}}",
+            "{{#if a}}{{/if}}",
+        ].join("\n"));
+        expect(result.files["story.css"]).toBe("/* From the passage \"Start\" */\n.squiffy-output-section { color: red; }\n");
+        expect(result.files["story.js"]).toBe("// From the passage \"Start\"\nState.variables.gold = 1;\n\n// From the passage \"Start\"\nalert(1);\n");
+        expect(JSON.parse(result.files["squiffy.json"]).exclude).toEqual(["story.js"]);
+        expect(result.problems.filter(p => p.passage == "Start").map(p => p.reason)).toEqual([
+            "This runs when the section is shown, once its text is on the page. Check it still works.",
+            "This <script> uses the story format's JavaScript, which Squiffy doesn't have, so it's in the story's JavaScript file, which isn't part of the story.",
+            "A <script> that loads a file isn't run by Squiffy. Add the file to the story's folder instead.",
+            "This is in the story's stylesheet now, so it applies all the time, not only while this passage is shown.",
+            "This <script> only ran some of the time, so it's in the story's JavaScript file, which isn't part of the story.",
+        ]);
     });
 
     test("the problems, as a text file", () => {
@@ -814,6 +871,14 @@ Setting.addToggle("bad name", { label: "Bad" });`;
             "{{#each (range 1 3)}}{{this}}{{/each}} {{#each (range 0 (n - 1))}}{{this}}{{/each}} {{#each (range 5 1)}}{{this}}{{/each}}<br>",
             "{{#each (slice bag 1)}}{{this}}{{/each}}",
         ].join("\n"));
+        expect(result.problems).toEqual([]);
+    });
+
+    test("<<for>> with range over a number goes from 0 up to it (#455)", async () => {
+        const { script, result } = await convert("SugarCube",
+            ":: Start\n<<for _i range 3>>_i<</for>> <<for _k, _v range $n * 2>>_k=_v<</for>> <<for _i range 0>>x<</for>>");
+        expect(section(script, "Start")).toBe(
+            "{{#each (range 0 2)}}{{this}}{{/each}} {{#each (n * 2 > 0 ? (range 0 (n * 2 - 1)) : (array))}}{{this}}={{this}}{{/each}} {{#each (array)}}x{{/each}}");
         expect(result.problems).toEqual([]);
     });
 
