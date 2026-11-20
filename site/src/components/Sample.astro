@@ -90,6 +90,17 @@ const buttonsClass = "sample-buttons" + (!alwaysShowRestart ? " hidden" : "");
             display: none;
         }
     }
+    @media (scripting: enabled) {
+        .sample .sample-source {
+            display: none;
+        }
+    }
+    .sample .sample-source {
+        margin: 0;
+        padding: 0.5rem;
+        font-size: 13px;
+        white-space: pre-wrap;
+    }
     .sample .copy button {
         display: grid;
         place-items: center;
@@ -144,9 +155,12 @@ const buttonsClass = "sample-buttons" + (!alwaysShowRestart ? " hidden" : "");
     }
 </style>
 
-<squiffy-sample class="sample not-content" data-squiffy-script={script} data-always-show-restart={alwaysShowRestart}>
+<squiffy-sample class="sample not-content" data-always-show-restart={alwaysShowRestart}>
     <Split gap="0.75rem" min="200px">
         <div slot="left" class="editor">
+            <!-- The script, which the editor replaces. Without JavaScript it's shown as it is, and it's
+                 how the sample's code reaches llms.txt (starlight-llms-txt converts this HTML to Markdown). -->
+            <pre class="sample-source"><code class="language-squiffy">{script}</code></pre>
             <div class="copy">
                 <div class="feedback" aria-live="polite"></div>
                 <button type="button" title="Copy to clipboard" aria-label="Copy to clipboard">
@@ -199,6 +213,10 @@ const buttonsClass = "sample-buttons" + (!alwaysShowRestart ? " hidden" : "");
             const editor = this.querySelector('.editor') as HTMLElement;
             if (!editor) return;
 
+            const source = editor.querySelector('.sample-source');
+            const initialScript = source?.textContent ?? '';
+            source?.remove();
+
             const viewer = this.querySelector('.viewer') as HTMLElement;
             if (!viewer) return;
 
@@ -228,7 +246,7 @@ const buttonsClass = "sample-buttons" + (!alwaysShowRestart ? " hidden" : "");
             });
 
             const editorView = new EditorView({
-                doc: this.dataset.squiffyScript,
+                doc: initialScript,
                 extensions: [
                     basicSetup,
                     squiffyLanguage,
