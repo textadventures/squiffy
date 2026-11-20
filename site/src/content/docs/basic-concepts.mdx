@@ -359,6 +359,49 @@ Text from passage.
 [[section2]]:
 Text from next section."></Sample>
 
+### Parameters
+
+An embed can pass values to the text it shows, so one section can be used again and again with different words. Give each one a name: `{{embed "say" who="Ann" line="Hello!"}}`. The embedded text uses them like attributes, as `{{who}}` and `{{line}}`, and in conditions and calculations.
+
+<Sample script="[[start]]:
+@set gold = 10
+{{embed &quot;say&quot; who=&quot;Ann&quot; line=&quot;Hello!&quot;}}
+
+{{embed &quot;say&quot; who=&quot;Bob&quot; line=&quot;Spare some gold?&quot; asks=gold - 7}}
+
+[[say]]:
+**{{who}}:** {{line}}{{#if asks}} (He wants {{asks}} gold.){{/if}}"></Sample>
+
+A parameter's value can be text, a number, an attribute or an expression, like `asks=gold - 7` or `items=["lamp", "key"]`.
+
+Parameters belong to the embed:
+
+- A parameter hides an attribute with the same name while the embedded text is shown, but doesn't change it. After the embed, `{{who}}` is the story's `who` again.
+- Setting a parameter inside the embedded text, with `{{set}}`, `{{inc}}` and so on, changes it for the rest of that embed only. Setting any other attribute changes the story's, as usual.
+- They aren't saved, and an embed inside the embedded text doesn't see them, unless it's given them too.
+- A parameter that isn't given is the story's attribute with that name, if there is one.
+
+### Wrapping text
+
+An embed can also wrap some text, which the embedded text shows wherever it has `{{content}}`. This is useful for a frame, or a way of showing something, used all over the story:
+
+<Sample script="[[start]]:
+@set name = &quot;Ann&quot;
+{{#embed &quot;speech&quot; who=&quot;Guard&quot;}}Halt! Who goes there?{{/embed}}
+
+{{#embed &quot;speech&quot; who=&quot;You&quot;}}It's me, {{name}}.{{/embed}}
+
+[[speech]]:
+**{{who}}:** <q>{{content}}</q>"></Sample>
+
+The wrapped text is part of the section it's written in, so its attributes are that section's: `{{name}}` there is the story's `name`, even if the embed has a parameter called `name`.
+
+### Links in embedded text
+
+Links to sections work anywhere. A link to a passage looks for the passage in the section the player is in when they click it, which isn't the one the text was embedded from. So a section that's embedded in other sections should link to sections, not its own passages. A passage's text is also shown after the embed has finished, so it can't use the embed's parameters, although the link to it can.
+
+The editor doesn't say that a section that's only embedded can't be reached.
+
 ## Track which sections and passages have been seen
 
 You can show different text depending on whether the player has seen a particular section or passage. See [Tracking sections and passages](/attributes/#tracking-sections-and-passages).

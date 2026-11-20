@@ -342,10 +342,11 @@ export function transformText(text: string, getNextSectionName: () => string | n
 
     input.replace(/(\d+)/g, ([, i]) => mustaches[Number(i)]);
 
-    // Matches {{embed "name"}} or {{goto 'name'}} with a literal name.
-    const findNamed = (helper: string) => {
+    // Matches {{embed "name"}} or {{goto 'name'}} with a literal name. An embed can also be a
+    // block, {{#embed "name"}}...{{/embed}}, which wraps text (#450).
+    const findNamed = (helper: string, block = false) => {
         const result: TextEmbed[] = [];
-        const regex = new RegExp(`\\{\\{~?\\s*${helper}\\s+(["'])(.*?)\\1`, "g");
+        const regex = new RegExp(`\\{\\{~?\\s*${block ? "#?" : ""}${helper}\\s+(["'])(.*?)\\1`, "g");
         let match;
         while ((match = regex.exec(input.value))) {
             const start = match.index;
@@ -362,7 +363,7 @@ export function transformText(text: string, getNextSectionName: () => string | n
         }
         return result;
     };
-    embeds.push(...findNamed("embed"));
+    embeds.push(...findNamed("embed", true));
 
     return { output: input.value, links, embeds, gotos: findNamed("goto"), deactivates: findNamed("deactivate"), noNextSection };
 }

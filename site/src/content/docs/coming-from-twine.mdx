@@ -149,6 +149,8 @@ How to write in Squiffy what you'd write in Harlowe or SugarCube.
 | Link to a passage | `[[Go in->Cave]]` | `[[Go in\|Cave]]` | `[[Go in]](Cave)` |
 | Reveal some text in place | `(link-reveal: "Open")[...]` | `<<linkappend "Open">>...<</linkappend>>` | A passage: `[Open]`, and `[Open]:` |
 | Include another passage | `(display: "Map")` | `<<include "Map">>` | `{{embed "Map"}}` |
+| Make your own macro | `(set: $say to (macro: str-type _who, [(output:)[_who says hi.]]))`, `($say: "Ann")` | `<<widget "say">>_args[0] says hi.<</widget>>`, `<<say "Ann">>` | A section, `[[say]]:` with `{{who}} says hi.`, and `{{embed "say" who="Ann"}}`: see [Parameters](/basic-concepts/#parameters) |
+| ...that wraps some text | | `<<widget "say" container>>_contents<</widget>>`, `<<say>>Hi<</say>>` | `{{content}}`, and `{{#embed "say"}}Hi{{/embed}}`: see [Wrapping text](/basic-concepts/#wrapping-text) |
 | Go to a passage without a click | `(go-to: "End")` | `<<goto "End">>` | `{{goto "End"}}` |
 | ...after a delay | `(after: 2s)[(go-to: "End")]` | `<<timed 2s>><<goto "End">><</timed>>` | `{{goto "End" after=2000}}` |
 | Set the start passage | In Twine's story map | In Twine's story map | `@start Cave`, or put it first |
@@ -263,7 +265,6 @@ Squiffy fades from one track to the next by itself, and players get a mute butto
 
 Some things in Harlowe and SugarCube aren't in Squiffy yet. Each one is planned, and its GitHub issue says how it might work, so you can follow it or add your thoughts:
 
-- **Widgets**, written in your story rather than JavaScript, with their own parameters ([#450](https://github.com/textadventures/squiffy/issues/450)). [`{{embed}}`](/helpers-reference/#content-helpers) includes another section, without parameters.
 - **Timers** that repeat, or wait for a time worked out as the story runs, like `<<repeat>>`, `(live:)` and `<<timed>>` ([#451](https://github.com/textadventures/squiffy/issues/451)). Squiffy can [move on after a fixed delay](/dynamic-text/#moving-on-after-a-delay).
 - **Links in the text that restart the story or open the saved games**, and player settings, like SugarCube's `UI` and `Setting` ([#452](https://github.com/textadventures/squiffy/issues/452)). They're on the buttons above the story.
 - **More text effects**, like Harlowe's `"shudder"` and `"blur"`, and a short way to style some text, like SugarCube's `@@.class;...@@` ([#453](https://github.com/textadventures/squiffy/issues/453)). Use HTML and [CSS](/styling/), and [`{{#animate}}`](/dynamic-text/#animation).
@@ -271,10 +272,10 @@ Some things in Harlowe and SugarCube aren't in Squiffy yet. Each one is planned,
 
 ### Left out on purpose
 
-- **Temporary variables**, like SugarCube's `_name`. In Twine, they're mostly for loop counters and values worked out along the way. In Squiffy, `{{this}}` and `{{@index}}` give you a loop's item and position, and since every attribute is saved and undone by the Back button, a value can't be left behind out of step with the story.
+- **Temporary variables**, like SugarCube's `_name`. In Twine, they're mostly for loop counters and values worked out along the way. In Squiffy, `{{this}}` and `{{@index}}` give you a loop's item and position, and since every attribute is saved and undone by the Back button, a value can't be left behind out of step with the story. The one exception is an embed's [parameters](/basic-concepts/#parameters), which, like a widget's `_args`, only last while the embed is shown.
 - **Loops that aren't over an array**, like `<<for _i lt 10>>`, and `<<break>>` and `<<continue>>`. A section's text is worked out each time it's shown, and a loop that never ended would freeze the page. Go through an array with [`{{#each}}`](/attributes/#going-through-an-array), and use `{{#if}}` inside it to skip items.
 - **A link back to where the player came from**, like `<<return>>`. In Twine, it's mostly for screens the player visits and leaves, like an inventory, map or help page. Squiffy's story scrolls, so going back to a section shows it again below the screen the player left, rather than putting them back where they were. Use a [panel](/multiple-files/#panels) instead: it's beside the story or opened from a button in the header, so the player never leaves the story to see it. To link back from one section to the one before, use `{{section previous_section text="Return"}}`: see [Where the player came from](/attributes/#where-the-player-came-from).
-- **Harlowe's and SugarCube's JavaScript**, such as `State`, `setup` and `(macro:)`. It's written for those formats' engines. Squiffy has [its own JavaScript functions](/javascript/), which can do almost anything, including adding your own helpers.
+- **Harlowe's and SugarCube's JavaScript**, such as `State` and `setup`. It's written for those formats' engines. Squiffy has [its own JavaScript functions](/javascript/), which can do almost anything, including adding your own helpers.
 
 ## Next steps
 

@@ -1029,6 +1029,159 @@ Text from a passage.
     expect(output).toBe("Here is some text from a passage: Text from a passage.");
 });
 
+describe("Embed with parameters and wrapped text (#450)", () => {
+    test("Parameters are shown in the embedded text", async () => {
+        const script = `
+[[section1]]:
+{{embed "say" who="Ann" mood="happy"}}
+
+[[say]]:
+{{who}} looks {{mood}}.
+`;
+        const { element } = await initScript(script);
+        expect(getSectionContent(element, "section1")).toBe("Ann looks happy.");
+    });
+
+    test("A parameter's value can be an attribute", async () => {
+        const script = `
+[[section1]]:
+@set name = Bob
+{{embed "say" who=name}}
+
+[[say]]:
+Hello, {{who}}.
+`;
+        const { element } = await initScript(script);
+        expect(getSectionContent(element, "section1")).toBe("Hello, Bob.");
+    });
+
+    test("A parameter's value can be an expression", async () => {
+        const script = `
+[[section1]]:
+@set gold = 10
+{{embed "say" left=gold - 3 items=["a", "b"]}}
+
+[[say]]:
+{{left}} gold, {{join items " and "}}.
+`;
+        const { element } = await initScript(script, true);
+        expect(getSectionContent(element, "section1")).toBe("7 gold, a and b.");
+    });
+
+    test("A parameter hides an attribute with the same name, without changing it", async () => {
+        const script = `
+[[section1]]:
+@set who = Bob
+{{embed "say" who="Ann"}} Then {{who}}.
+
+[[say]]:
+{{who}}, and {{get "who"}}.
+`;
+        const { element, squiffyApi } = await initScript(script);
+        expect(getSectionContent(element, "section1")).toBe("Ann, and Ann. Then Bob.");
+        expect(squiffyApi.get("who")).toBe("Bob");
+    });
+
+    test("Setting a parameter changes it for the rest of the embed only", async () => {
+        const script = `
+[[section1]]:
+@set who = Bob
+{{embed "say" who="Ann"}} Then {{who}}, {{mood}}.
+
+[[say]]:
+{{set "who" "Cat"}}{{set "mood" "happy"}}{{who}}.
+`;
+        const { element, squiffyApi } = await initScript(script);
+        expect(getSectionContent(element, "section1")).toBe("Cat. Then Bob, happy.");
+        expect(squiffyApi.get("who")).toBe("Bob");
+        expect(squiffyApi.get("mood")).toBe("happy");
+    });
+
+    test("A parameter works in a condition", async () => {
+        const script = `
+[[section1]]:
+{{embed "say" who="Ann"}} {{embed "say" who="Bob"}}
+
+[[say]]:
+{{#if who = "Ann"}}Hi Ann.{{else}}Who are you?{{/if}}
+`;
+        const { element } = await initScript(script, true);
+        expect(getSectionContent(element, "section1")).toBe("Hi Ann. Who are you?");
+    });
+
+    test("An embed inside an embed doesn't see the outer one's parameters", async () => {
+        const script = `
+[[section1]]:
+@set who = Bob
+{{embed "outer" who="Ann"}}
+
+[[outer]]:
+{{who}} / {{embed "inner"}}
+
+[[inner]]:
+{{who}}
+`;
+        const { element } = await initScript(script);
+        expect(getSectionContent(element, "section1")).toBe("Ann / Bob");
+    });
+
+    test("Wrapped text is shown by {{content}}, with the caller's attributes", async () => {
+        const script = `
+[[section1]]:
+@set name = Bob
+{{#embed "say" who="Ann" name="not this"}}Hello, {{name}}!{{/embed}}
+
+[[say]]:
+{{who}}: "{{content}}"
+`;
+        const { element } = await initScript(script);
+        expect(getSectionContent(element, "section1")).toBe("Ann: \"Hello, Bob!\"");
+    });
+
+    test("Wrapped text can use the caller's parameters and loop items", async () => {
+        const script = `
+[[section1]]:
+{{embed "outer" who="Ann"}}
+
+[[outer]]:
+{{#each (array "x" "y")}}{{#embed "box"}}{{who}}-{{this}}{{/embed}}{{/each}}
+
+[[box]]:
+({{content}})
+`;
+        const { element } = await initScript(script);
+        expect(getSectionContent(element, "section1")).toBe("(Ann-x)(Ann-y)");
+    });
+
+    test("Setting an attribute in wrapped text sets the caller's", async () => {
+        const script = `
+[[section1]]:
+{{embed "outer" n=1}}
+
+[[outer]]:
+{{#embed "box" n=10}}{{set "n" 2}}{{/embed}}{{n}}
+
+[[box]]:
+{{content}}{{n}}
+`;
+        const { element } = await initScript(script);
+        expect(getSectionContent(element, "section1")).toBe("102");
+    });
+
+    test("{{content}} with nothing wrapped shows a content attribute, if there is one", async () => {
+        const script = `
+[[section1]]:
+@set content = stuff
+{{embed "box"}} {{content}}
+
+[[box]]:
+({{content}})
+`;
+        const { element } = await initScript(script);
+        expect(getSectionContent(element, "section1")).toBe("(stuff) stuff");
+    });
+});
+
 test("Update section with embedded text", async () => {
     const script = `
 [[section1]]:

@@ -780,7 +780,7 @@ export function createLanguageService(options: LanguageServiceOptions): Language
             };
 
             let match;
-            if ((match = /\{\{~?\s*embed\s+["']([^"']*)$/.exec(prefix))) {
+            if ((match = /\{\{~?\s*#?embed\s+["']([^"']*)$/.exec(prefix))) {
                 return [...passageItems(match[1]), ...sectionItems(match[1])];
             }
             // {{seen "name"}}, (visits "name") etc., which take a section or passage (#377)

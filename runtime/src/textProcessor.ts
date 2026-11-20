@@ -4,7 +4,13 @@ import { Section, Story } from "./types.js";
 import { State } from "./state.js";
 import { rewriteInfixExpressions, rewriteValueExpression, splitSetters } from "./infixExpressions.js";
 import { isNumeric, isBlank, toNumber } from "./numbers.js";
-import { checkSegment } from "./paths.js";
+import { checkSegment, parsePath, valueAt, withValueAt } from "./paths.js";
+
+// An embed being shown (#450): its parameters, and the text it wraps, if any
+interface EmbedScope {
+    params: Record<string, unknown>;
+    content?: () => string;
+}
 
 export class TextProcessor {
     getStory: () => Story;
@@ -20,22 +26,58 @@ export class TextProcessor {
         this.getCurrentSection = currentSection;
         this.handlebars = Handlebars.create();
 
-        this.handlebars.registerHelper("embed", (name: string) => {
-            const currentSection = this.getCurrentSection();
-            if (currentSection.passages && name in currentSection.passages) {
-                return new Handlebars.SafeString(this.process(currentSection.passages[name].text || "", true));
+        // {{embed "name"}} shows a section's or passage's text here. It can be given parameters,
+        // {{embed "say" who="Ann"}}, which the embedded text reads as {{who}} and which hide any
+        // attribute with the same name, and it can wrap text, {{#embed "say"}}Hello!{{/embed}},
+        // which the embedded text shows with {{content}} (#450).
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
+        const processor = this;
+        this.handlebars.registerHelper("embed", function (this: unknown, ...args: any[]) {
+            const options = args.pop();
+            const name = unwrapValue(args[0]);
+            const text = processor.embeddedText(name);
+            if (text === undefined) return;
+
+            const params: Record<string, unknown> = Object.create(null);
+            for (const [key, value] of Object.entries(options.hash ?? {})) params[key] = unwrapValue(value);
+
+            // The wrapped text is filled in with the caller's attributes and parameters, not the
+            // embedded text's, so it's shown with the scopes as they are here
+            const callerScopes = processor.scopes;
+            const content = options.fn
+                ? () => {
+                    const inner = processor.scopes;
+                    processor.scopes = callerScopes;
+                    try {
+                        return options.fn(this, { data: options.data });
+                    } finally {
+                        processor.scopes = inner;
+                    }
+                }
+                : undefined;
+
+            processor.scopes = [...callerScopes, { params, content }];
+            try {
+                return new Handlebars.SafeString(processor.process(text, true));
+            } finally {
+                processor.scopes = callerScopes;
             }
-            const story = this.getStory();
-            if (name in story.sections) {
-                return new Handlebars.SafeString(this.process(story.sections[name].text || "", true));
-            }
+        });
+
+        // Inside an embed that wraps text, that text (#450). A story can have an attribute
+        // called content, which {{content}} shows when there's no wrapped text.
+        this.handlebars.registerHelper("content", () => {
+            const scope = this.scopes[this.scopes.length - 1];
+            if (scope?.content) return new Handlebars.SafeString(scope.content());
+            if (this.hasAttribute("content")) return this.getAttribute("content");
+            return "";
         });
 
         this.handlebars.registerHelper("seen", (name: string) => this.state.getSeen(name));
         this.handlebars.registerHelper("visits", (name: string) => this.state.getVisits(name));
-        this.handlebars.registerHelper("get", (attribute: string) => this.state.get(attribute));
+        this.handlebars.registerHelper("get", (attribute: string) => this.getAttribute(attribute));
         this.handlebars.registerHelper("at", (section: string | string[]) => {
-            const currentSection = this.state.get("_section");
+            const currentSection = this.getAttribute("_section");
             if (Array.isArray(section)) {
                 return section.includes(currentSection);
             }
@@ -76,7 +118,7 @@ export class TextProcessor {
         // being shown, e.g. one with @repeat that the player is done with (#104).
         this.handlebars.registerHelper("deactivate", (...args: any[]) => {
             args.pop();
-            const names = args.length ? args.map(unwrapValue) : [this.state.get("_passage")];
+            const names = args.length ? args.map(unwrapValue) : [this.getAttribute("_passage")];
             for (const name of names) {
                 if (typeof name != "string" || !name) {
                     return new Handlebars.SafeString(errorHtml("Error in {{deactivate}}:",
@@ -95,7 +137,7 @@ export class TextProcessor {
         // State modification helpers (side effects, no output)
         // These execute at render time, so they respect {{#if}} conditions
         this.handlebars.registerHelper("set", (attribute: string, value: any) => {
-            this.state.set(attribute, unwrapValue(value));
+            this.setAttribute(attribute, unwrapValue(value));
             return "";
         });
 
@@ -106,7 +148,7 @@ export class TextProcessor {
         });
 
         this.handlebars.registerHelper("unset", (attribute: string) => {
-            this.state.set(attribute, false);
+            this.setAttribute(attribute, false);
             return "";
         });
 
@@ -115,8 +157,8 @@ export class TextProcessor {
         const incDecHelper = (name: string, sign: 1 | -1) => {
             this.handlebars.registerHelper(name, (attribute: string, ...args: any[]) => {
                 const amount = args.length > 1 ? toNumber(name, unwrapValue(args[0])) : 1;
-                const currentValue = toNumber(name, this.state.get(attribute));
-                this.state.set(attribute, currentValue + sign * amount);
+                const currentValue = toNumber(name, this.getAttribute(attribute));
+                this.setAttribute(attribute, currentValue + sign * amount);
                 return "";
             });
         };
@@ -182,7 +224,7 @@ export class TextProcessor {
         const roundingHelper = (name: string, fn: (n: number) => number, places: boolean) => {
             this.handlebars.registerHelper(name, (...args) => {
                 const values = args.slice(0, -1).map(unwrapValue);
-                if (values.length === 0 && this.state.has(name)) return this.state.get(name);
+                if (values.length === 0 && this.hasAttribute(name)) return this.getAttribute(name);
                 if (values.length !== 1 && !(places && values.length === 2)) {
                     throw new Error(`"${name}" needs ${places ? "one or two values" : "one value"}, but was given ${values.length}`);
                 }
@@ -202,7 +244,7 @@ export class TextProcessor {
         const extremeHelper = (name: string, fn: (...values: number[]) => number) => {
             this.handlebars.registerHelper(name, (...args) => {
                 let values = args.slice(0, -1).map(unwrapValue);
-                if (values.length === 0 && this.state.has(name)) return this.state.get(name);
+                if (values.length === 0 && this.hasAttribute(name)) return this.getAttribute(name);
                 if (values.length === 1 && Array.isArray(values[0])) {
                     values = values[0].map(unwrapValue);
                 }
@@ -227,7 +269,7 @@ export class TextProcessor {
         const textHelper = (name: string, fn: (s: string) => string) => {
             this.handlebars.registerHelper(name, (...args) => {
                 const values = args.slice(0, -1).map(unwrapValue);
-                if (values.length === 0 && this.state.has(name)) return this.state.get(name);
+                if (values.length === 0 && this.hasAttribute(name)) return this.getAttribute(name);
                 if (values.length !== 1) {
                     throw new Error(`"${name}" needs one value, but was given ${values.length}`);
                 }
@@ -245,7 +287,7 @@ export class TextProcessor {
         // helper with side effects, such as (pop "list"), runs whichever is chosen.
         this.handlebars.registerHelper("cond", (...args) => {
             const values = args.slice(0, -1).map(unwrapValue);
-            if (values.length === 0 && this.state.has("cond")) return this.state.get("cond");
+            if (values.length === 0 && this.hasAttribute("cond")) return this.getAttribute("cond");
             if (values.length !== 3) {
                 throw new Error(`"cond" needs three values, but was given ${values.length}`);
             }
@@ -289,7 +331,7 @@ export class TextProcessor {
         // Array management helpers
 
         this.handlebars.registerHelper("append", (listVar: string, value: any) => {
-            const currentArray = this.state.get(listVar) || [];
+            const currentArray = this.getAttribute(listVar) || [];
             const arr = Array.isArray(currentArray) ? [...currentArray] : [currentArray];
             const unwrappedValue = unwrapValue(value);
             if (Array.isArray(unwrappedValue)) {
@@ -297,12 +339,12 @@ export class TextProcessor {
             } else {
                 arr.push(unwrappedValue);
             }
-            this.state.set(listVar, arr);
+            this.setAttribute(listVar, arr);
             return "";
         });
 
         this.handlebars.registerHelper("prepend", (listVar: string, value: any) => {
-            const currentArray = this.state.get(listVar) || [];
+            const currentArray = this.getAttribute(listVar) || [];
             const arr = Array.isArray(currentArray) ? [...currentArray] : [currentArray];
             const unwrappedValue = unwrapValue(value);
             if (Array.isArray(unwrappedValue)) {
@@ -310,23 +352,23 @@ export class TextProcessor {
             } else {
                 arr.unshift(unwrappedValue);
             }
-            this.state.set(listVar, arr);
+            this.setAttribute(listVar, arr);
             return "";
         });
 
         this.handlebars.registerHelper("pop", (listVar: string) => {
-            const currentArray = this.state.get(listVar) || [];
+            const currentArray = this.getAttribute(listVar) || [];
             if (!Array.isArray(currentArray) || currentArray.length === 0) {
                 return "";
             }
             const arr = [...currentArray];
             const item = arr.shift();
-            this.state.set(listVar, arr);
+            this.setAttribute(listVar, arr);
             return item;
         });
 
         this.handlebars.registerHelper("remove", (listVar: string, value: any) => {
-            const currentArray = this.state.get(listVar) || [];
+            const currentArray = this.getAttribute(listVar) || [];
             if (!Array.isArray(currentArray)) {
                 return "";
             }
@@ -335,7 +377,7 @@ export class TextProcessor {
             if (index !== -1) {
                 const arr = [...currentArray];
                 arr.splice(index, 1);
-                this.state.set(listVar, arr);
+                this.setAttribute(listVar, arr);
             }
             return "";
         });
@@ -343,7 +385,7 @@ export class TextProcessor {
         this.handlebars.registerHelper("contains", (listOrVar: any, value: any) => {
             let arr: any[];
             if (typeof listOrVar === "string") {
-                const stored = this.state.get(listOrVar);
+                const stored = this.getAttribute(listOrVar);
                 arr = Array.isArray(stored) ? stored : [];
             } else if (Array.isArray(listOrVar)) {
                 arr = listOrVar;
@@ -357,7 +399,7 @@ export class TextProcessor {
         this.handlebars.registerHelper("length", (listOrVar: any) => {
             let arr: any[];
             if (typeof listOrVar === "string") {
-                const stored = this.state.get(listOrVar);
+                const stored = this.getAttribute(listOrVar);
                 arr = Array.isArray(stored) ? stored : [];
             } else if (Array.isArray(listOrVar)) {
                 arr = listOrVar;
@@ -383,7 +425,7 @@ export class TextProcessor {
         const listHelper = (name: string, min: number, max: number, fn: (values: unknown[]) => unknown) => {
             this.handlebars.registerHelper(name, (...args) => {
                 const values = args.slice(0, -1).map(unwrapValue);
-                if (values.length === 0 && this.state.has(name)) return this.state.get(name);
+                if (values.length === 0 && this.hasAttribute(name)) return this.getAttribute(name);
                 if (values.length < min || values.length > max) {
                     const needs = min === max ? `${min} value${min === 1 ? "" : "s"}` : `${min} to ${max} values`;
                     throw new Error(`"${name}" needs ${needs}, but was given ${values.length}`);
@@ -510,7 +552,7 @@ export class TextProcessor {
             this.expressionCache.set(expression, template);
         }
         this.evaluated = undefined;
-        template(this.state.getStore());
+        template(this.context());
         return this.evaluated;
     }
 
@@ -521,6 +563,76 @@ export class TextProcessor {
     // before showing a section or passage, and acts on it afterwards.
     deactivate = new Set<string>();
 
+    // The embeds being shown, innermost last (#450). Each embed's text sees its own parameters
+    // and the story's attributes, but not the parameters of the embed it's inside.
+    private scopes: EmbedScope[] = [];
+
+    // The text {{embed "name"}} shows: a passage in the current section, or a section
+    private embeddedText(name: unknown): string | undefined {
+        if (typeof name != "string") return undefined;
+        const currentSection = this.getCurrentSection();
+        if (currentSection.passages && Object.prototype.hasOwnProperty.call(currentSection.passages, name)) {
+            return currentSection.passages[name].text || "";
+        }
+        const story = this.getStory();
+        if (Object.prototype.hasOwnProperty.call(story.sections, name)) {
+            return story.sections[name].text || "";
+        }
+        return undefined;
+    }
+
+    // The parameters of the embed being shown, if any
+    private get params(): Record<string, unknown> | undefined {
+        return this.scopes[this.scopes.length - 1]?.params;
+    }
+
+    private isParam(attribute: string) {
+        const params = this.params;
+        return !!params && Object.prototype.hasOwnProperty.call(params, parsePath(attribute)[0]);
+    }
+
+    // Attributes, as the text being shown sees them: inside an embed, its parameters come first.
+    // A name can be a path, such as hero.hp, as for State.
+    hasAttribute(attribute: string) {
+        return this.isParam(attribute) || this.state.has(attribute);
+    }
+
+    getAttribute(attribute: string): any {
+        if (this.isParam(attribute)) {
+            const [name, ...inside] = parsePath(attribute);
+            return structuredClone(valueAt(this.params![name], inside));
+        }
+        return this.state.get(attribute);
+    }
+
+    // Setting a parameter changes it for the rest of that embed only. Anything else is the story's.
+    setAttribute(attribute: string, value: any) {
+        if (this.isParam(attribute)) {
+            const [name, ...inside] = parsePath(attribute);
+            if (typeof value === "undefined") value = true;
+            this.params![name] = inside.length ? withValueAt(this.params![name], inside, name, value) : structuredClone(value);
+            return;
+        }
+        this.state.set(attribute, value);
+    }
+
+    // What a template's names are looked up in: the story's attributes, with the parameters of
+    // the embed being shown in front of them
+    private context(): Record<string, any> {
+        const store = this.state.getStore();
+        const params = this.params;
+        if (!params || !Object.keys(params).length) return store;
+        const isParam = (prop: string | symbol) => typeof prop == "string" && Object.prototype.hasOwnProperty.call(params, prop);
+        return new Proxy({} as Record<string, any>, {
+            get: (_, prop) => isParam(prop) ? structuredClone(params[prop as string]) : Reflect.get(store, prop),
+            has: (_, prop) => isParam(prop) || Reflect.has(store, prop),
+            ownKeys: () => [...new Set([...Object.keys(params), ...Reflect.ownKeys(store)])],
+            getOwnPropertyDescriptor: (_, prop) => isParam(prop)
+                ? { enumerable: true, configurable: true, value: structuredClone(params[prop as string]) }
+                : Reflect.getOwnPropertyDescriptor(store, prop),
+        });
+    }
+
     private expressionCache = new Map<string, HandlebarsTemplateDelegate>();
     // Where the __value helper puts the value of the expression being evaluated
     private evaluated: unknown;
@@ -529,7 +641,7 @@ export class TextProcessor {
         try {
             // compat: inside an {{#each}}, a name that isn't one of the item's looks for an attribute
             const template = this.handlebars.compile(rewriteInfixExpressions(text), { compat: true });
-            text = template(this.state.getStore());
+            text = template(this.context());
 
             if (inline) {
                 return marked.parseInline(text, { async: false }).trim();

@@ -207,6 +207,34 @@ describe("Harlowe", () => {
             "@set gold = 10\n@set name = \"Ann\"\n@inc gold 5\nHello.\n{{dec \"gold\" 2}}{{set \"won\" true}}{{set \"x\" 3}}");
     });
 
+    test("custom macros become sections, which calls embed with their parameters (#450)", async () => {
+        const { script, result } = await convert("Harlowe", [
+            ":: Start",
+            "(set: $say to (macro: str-type _who, num-type _times, [",
+            "    (set: _left to _times - 1)",
+            "    (if: _times > 1)[(output:)[_who says it _times times.]]",
+            "    (else:)[(output:)[_who says it once.]]",
+            "]))(set: $gold to 1)",
+            "($say: \"Ann\", $gold + 1) ($say: \"Bob\", 1)",
+        ].join("\n"));
+        expect(section(script, "Start")).toBe(
+            "@set gold = 1\n{{embed \"macro say\" who=\"Ann\" times=gold + 1}} {{embed \"macro say\" who=\"Bob\" times=1}}");
+        expect(section(script, "macro say")).toBe(
+            "{{set \"left\" times - 1}}{{#if times > 1}}{{who}} says it {{times}} times.{{else}}{{who}} says it once.{{/if}}");
+        expect(result.problems).toEqual([]);
+    });
+
+    test("a custom macro that outputs a value (#450)", async () => {
+        const { script } = await convert("Harlowe", ":: Start\n(set: $double to (macro: num-type _n, [(output-data: _n * 2)]))Twice 3 is ($double: 3).");
+        expect(section(script, "macro double")).toBe("{{= n * 2}}");
+        expect(section(script, "Start")).toBe("Twice 3 is {{embed \"macro double\" n=3}}.");
+    });
+
+    test("a custom macro used in an expression, or with any number of values, isn't converted (#450)", async () => {
+        const { result } = await convert("Harlowe", ":: Start\n(set: $all to (macro: ...str-type _names, [(output:)[_names]]))($all: \"a\", \"b\")");
+        expect(result.problems.map(p => p.text)).toEqual(expect.arrayContaining(["($all: \"a\", \"b\")"]));
+    });
+
     test("arrays", async () => {
         const { script } = await convert("Harlowe", ":: Start\nHi (set: $bag to (a: \"key\"))(set: $bag to it + (a: \"map\"))(set: $bag to it - (a: \"key\"))(if: $bag contains \"map\" and $bag's length > 0)[Yes]");
         expect(section(script, "Start")).toBe(
@@ -505,10 +533,22 @@ describe("SugarCube", () => {
         ]);
     });
 
-    test("widgets become sections, which calls embed", async () => {
+    test("widgets become sections, which calls embed with the arguments as a list (#450)", async () => {
         const { script } = await convert("SugarCube", ":: Start\n<<say \"Ann\" \"Hello\">>\n\n:: Widgets [widget]\n<<widget \"say\">>_args[0] says: _args[1]<</widget>>");
-        expect(section(script, "Start")).toBe("{{set \"args_0\" \"Ann\"}}{{set \"args_1\" \"Hello\"}}{{embed \"widget say\"}}");
-        expect(section(script, "widget say")).toBe("{{args_0}} says: {{args_1}}");
+        expect(section(script, "Start")).toBe("{{embed \"widget say\" args=(array \"Ann\" \"Hello\")}}");
+        expect(section(script, "widget say")).toBe("{{= args[0]}} says: {{= args[1]}}");
+    });
+
+    test("a widget's _args stay inside it (#450)", async () => {
+        const { script } = await convert("SugarCube", ":: Start\n<<pause>> <<pause \"2s\">>\n\n:: Widgets [widget]\n<<widget \"pause\">><<if _args.length == 0>><<set _args.push(\"1s\")>><</if>>_args[0]<</widget>>");
+        expect(section(script, "Start")).toBe("{{embed \"widget pause\" args=(array)}} {{embed \"widget pause\" args=(array \"2s\")}}");
+    });
+
+    test("container widgets wrap text, which the widget shows with {{content}} (#450)", async () => {
+        const { script, result } = await convert("SugarCube", ":: Start\n<<set $name to \"Bob\">><<say \"Ann\" $mood>>Hello, $name!<</say>>\n\n:: Widgets [widget]\n<<widget \"say\" container>>_args[0]: <<if _contents>>_contents<</if>><</widget>>");
+        expect(section(script, "Start")).toBe("@set name = \"Bob\"\n{{#embed \"widget say\" args=(array \"Ann\" mood)}}Hello, {{name}}!{{/embed}}");
+        expect(section(script, "widget say")).toBe("{{= args[0]}}: {{#if (content)}}{{content}}{{/if}}");
+        expect(result.problems).toEqual([]);
     });
 
     test("tags().includes() is a check for the passages with the tag", async () => {

@@ -140,7 +140,7 @@ describe("analyse", () => {
     });
 
     test("link diagnostics point at the link", async () => {
-        const script = "[[start]]:\nSome text.\nGo [[nowhere]] or [[nope]](missing, x=1).\n\n[p]:\nTry [q] and {{embed \"zzz\"}}.";
+        const script = "[[start]]:\nSome text.\nGo [[nowhere]] or [[nope]](missing, x=1).\n\n[p]:\nTry [q] and {{embed \"zzz\"}} {{#embed \"yyy\" a=1}}x{{/embed}}.";
         const analysis = await analyse({ script, scriptBaseFilename: "story.squiffy" });
 
         expect(analysis.success).toBe(true);
@@ -149,6 +149,7 @@ describe("analyse", () => {
             ["squiffy/unknown-section-link", "[[nowhere]]"],
             ["squiffy/unknown-passage-link", "[q]"],
             ["squiffy/unknown-embed", "{{embed \"zzz\""],
+            ["squiffy/unknown-embed", "{{#embed \"yyy\""],
         ]);
         expect(analysis.diagnostics[0]).toEqual({
             file: "story.squiffy",

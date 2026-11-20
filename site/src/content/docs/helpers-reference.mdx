@@ -262,10 +262,12 @@ Example:
 
 | Helper | Parameters | Description | Example |
 |--------|------------|-------------|---------|
-| `{{embed}}` | `"name"` | Embed text from another section or passage | `{{embed "description"}}` |
+| `{{embed}}` | `"name"`, then any parameters | Embed text from another section or passage, with parameters it can show like attributes | `{{embed "description"}}`, `{{embed "say" who="Ann"}}` |
+| `{{#embed}}` | As `{{embed}}` | Embed text, wrapping some text that it shows with `{{content}}` | `{{#embed "box"}}Hello!{{/embed}}` |
+| `{{content}}` | | In embedded text, the text the embed wraps | `<div class="box">{{content}}</div>` |
 | `{{array}}` | `item1 item2 ...` | Create an array for use with other helpers | `{{array "red" "green" "blue"}}` |
 
-See [Embed text](/basic-concepts/#embed-text) for an embed example.
+See [Embed text](/basic-concepts/#embed-text) for embed examples, with [parameters](/basic-concepts/#parameters) and [wrapped text](/basic-concepts/#wrapping-text).
 
 ## Sound helpers
 

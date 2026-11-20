@@ -6,7 +6,7 @@
 
 import { attributeRef, print, quote, Unconvertible } from "./expression.js";
 import type { Expr } from "./expression.js";
-import { convertHarlowePassage, harloweAudioPassages } from "./harlowe.js";
+import { convertHarlowePassage, harloweAudioPassages, harloweMacros } from "./harlowe.js";
 import { convertSugarCubePassage, convertSugarCubeWidgets, sugarCubeWidgets } from "./sugarcube.js";
 import { parseTwine } from "./story.js";
 import type { TwinePassage, TwineStory } from "./story.js";
@@ -58,6 +58,8 @@ export interface PassageContext {
     reservePassage(nameHint: string): { name: string, fill: (content: ConvertedPassage | string) => void };
     // Adds a section to the story, returning its name
     addSection(nameHint: string, content: ConvertedPassage | string): string;
+    // Adds a section whose name has already been made with story.uniqueSectionName
+    fillSection(name: string, content: ConvertedPassage | string): void;
     // A name for a {{#label}}, unique in the story
     newLabel(hint: string): string;
 }
@@ -79,7 +81,7 @@ export const reservedAttributes = new Set([
     "join", "sort", "shuffle", "slice", "first", "last", "indexof", "count", "range",
     "if", "unless", "each", "with", "lookup", "log", "else", "this", "turns", "previous", "previous_section",
     "true", "false", "null", "undefined", "music", "stopmusic", "sound", "stopsounds",
-    "addclass", "removeclass", "toggleclass", "hasclass",
+    "addclass", "removeclass", "toggleclass", "hasclass", "content",
 ]);
 
 export class StoryContext {
@@ -456,6 +458,8 @@ export function convertTwineStory(twine: TwineStory, options: TwineConversionOpt
     // Widgets become sections, which calls to them embed. They're named before anything's
     // converted, so calls know where they go.
     sugarCubeWidgets(story);
+    // Harlowe's custom macros (#450) too
+    if (harlowe) harloweMacros(story);
     for (const p of skipped) {
         problems.push({
             passage: p.name, text: p.name,
@@ -498,8 +502,11 @@ export function convertTwineStory(twine: TwineStory, options: TwineConversionOpt
             },
             addSection(hint, content) {
                 const name = story.uniqueSectionName(hint);
-                story.extraSections.push(`[[${name}]]:\n${generated(content)}`);
+                this.fillSection(name, content);
                 return name;
+            },
+            fillSection(name, content) {
+                story.extraSections.push(`[[${name}]]:\n${generated(content)}`);
             },
             newLabel: hint => story.newLabel(hint),
     });

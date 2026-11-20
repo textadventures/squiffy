@@ -66,6 +66,7 @@ Play the story through after converting it. Twine and Squiffy work differently i
 | `(round:)`, `(floor:)`, `(ceil:)`, `(abs:)`, `(min:)`, `(max:)` | `(round ...)`, `(floor ...)` and so on |
 | `(cond: $hp > 0, "alive", "dead")` | `hp > 0 ? "alive" : "dead"` |
 | `(display: "Map")` | `{{embed "Map"}}` |
+| A custom macro: `(set: $say to (macro: str-type _who, [...]))`, `($say: "Ann")` | A section for the macro, `[[macro say]]:`, and `{{embed "macro say" who="Ann"}}`. Its parameters become the embed's [parameters](/basic-concepts/#parameters), and what it outputs with `(output:)` or `(output-data:)` is its text. A macro that takes any number of values (`...`), one kept in a temporary variable, and a call to a macro inside an expression, aren't converted |
 | `(go-to: "End")`, `(after: 2s)[(go-to: "End")]` | `{{goto "End"}}`, `{{goto "End" after=2000}}` |
 | `(link: "Buy")[(set: $gold to it - 5)(go-to: "Shop")]` | `[[Buy]](Shop, gold -= 5)` |
 | `(link: "Open")[It's empty.]`, `(link-reveal:)` | A [passage](/basic-concepts/#passages) link that [replaces](/dynamic-text/#replace) the link with the text |
@@ -112,7 +113,8 @@ Play the story through after converting it. Twine and Squiffy work differently i
 | `<<for _i to 1; _i lte $n; _i++>>`, counting up or down by 1 | `{{#each (range 1 n)}}`, with `_i` as `{{this}}` |
 | `$bag.join()`, `.sort()`, `.shuffle()`, `.slice()`, `.indexOf()`, `.count()`, `.first()`, `.last()` | `(join bag ",")`, `(sort bag)`, `(shuffle bag)`, `(slice bag ...)`, `(indexof bag ...)`, `(count bag ...)`, `(first bag)`, `(last bag)`. Squiffy's `sort` and `shuffle` don't change the array, so `<<run $bag.sort()>>` on its own isn't converted |
 | `<<set $hero to { hp: 10 }>>`, `$hero.hp`, `$inv[_i].name` | `@set hero = { hp: 10 }`, `{{hero.hp}}`, `{{= inv[i].name}}`: see [Objects](/attributes/#objects) |
-| Widgets: `<<say "Ann">>` | A section for each widget, which `{{embed}}`s it, with its arguments in `args_0`, `args_1` and so on |
+| Widgets: `<<say "Ann">>` | A section for each widget, and `{{embed "widget say" args=(array "Ann")}}`, with the arguments as a [parameter](/basic-concepts/#parameters), so `_args[0]` is `args[0]` |
+| Container widgets: `<<say "Ann">>Hello!<</say>>`, and `_contents` | `{{#embed "widget say" args=(array "Ann")}}Hello!{{/embed}}`, and [`{{content}}`](/basic-concepts/#wrapping-text) |
 | `''bold''`, `//italic//`, `@@color:red;...@@` | Markdown and HTML |
 | A passage's tags, and stylesheet rules for them, like `body[data-tags~="dark"]` or `body.dark` | `@class dark`, and `body:has(.dark)`: see [Styles](#styles) |
 | `<<addclass "body" "dark">>`, `<<removeclass "body" "dark">>`, `<<toggleclass "body" "dark">>` | `{{addclass "dark"}}`, `{{removeclass "dark"}}`, `{{toggleclass "dark"}}`. On anything but the page (`body`, `html`, `#story` or `#passages`), they aren't converted |
@@ -135,7 +137,7 @@ Squiffy fades from one piece of music to the next by itself, and it can't pause 
 
 These are left as comments, and listed in `twine-import.txt`:
 
-- **JavaScript.** Squiffy can't run code written for Harlowe or SugarCube, such as SugarCube's `<<script>>`, `setup` and `State`, or Harlowe's `(macro:)`.
+- **JavaScript.** Squiffy can't run code written for Harlowe or SugarCube, such as SugarCube's `<<script>>`, `setup` and `State`.
 - **SugarCube's `StoryMenu`.** Its links go to other passages, which Squiffy's [panels](/multiple-files/#panels) don't do. A panel can show a passage from a button in the header instead.
 - **Playlists, audio groups and changing all the sound at once**, such as SugarCube's `<<playlist>>` and `<<masteraudio>>`, or the Harlowe Audio Library's `(playlist:)` and `(masteraudio:)`. Pausing, muting and starting a track part of the way through aren't converted either. See [Sound](#sound) for what is.
 - **Things Squiffy doesn't have yet**, listed in [What Twine has that Squiffy doesn't](/coming-from-twine/#what-twine-has-that-squiffy-doesnt).
