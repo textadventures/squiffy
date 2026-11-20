@@ -156,7 +156,7 @@ You sit up in bed. It was only a dream."></Sample>
 | Transition | How the text appears |
 |---|---|
 | `fade` | Fades in. `dissolve` is the same |
-| `slide-up`, `slide-down`, `slide-left`, `slide-right` | Fades in as it moves up, down, left or right into place |
+| `slide-up`, `slide-down`, `slide-left`, `slide-right` | Fades in as it moves up, down, left or right into place. With [`@leave`](#when-the-screen-is-cleared), it fades out moving the same way |
 | `zoom` | Fades in as it grows to its full size |
 | `blur` | Comes into focus |
 | `pulse` | Fades in and swells a little |
@@ -216,6 +216,36 @@ A time after the name, such as `2s` or `400ms`, says how long it takes. Without 
 A passage appears the way its section does, unless it has a `@transition` of its own. `@transition` in the [master section](/basic-concepts/#master-sections-and-passages) is for every section and passage, and `@transition none` turns it off for one of them.
 
 Transitions only play when the text first appears: not when the player goes back, or loads a saved game. If the player has asked their system for less motion, every transition is a plain fade.
+
+### When the screen is cleared
+
+When a section or passage [clears the screen](/basic-concepts/#clear-the-screen), `@leave` says how the old text goes first. It takes the same transitions as `@transition`, played backwards, so `@leave fade` fades the old text out, and `@leave zoom` shrinks it away. A slide moves the way it's named, so `@leave slide-up` slides the old text up and away:
+
+<Sample alwaysShowRestart={true} script="The lights flicker. [[Run]](corridor)
+
+[[corridor]]:
+@clear
+@leave slide-up 1s
+@transition fade 1s
+You're in a long corridor, and the room behind you has gone. [[Keep running]](outside)
+
+[[outside]]:
+@clear
+@leave blur 2s
+You burst out into the daylight."></Sample>
+
+With `@leave` and `@transition` both sliding the same way, each new screen follows the last one across, as if the story were moving on:
+
+```squiffy
+[[]]:
+@clear
+@leave slide-left
+@transition slide-left
+```
+
+Here, each section's text slides off to the left, and the next one slides in from the right. The slides only move a little way, as they fade. To make them go all the way across, see [Transitions](/styling/#transitions) in Customising styles.
+
+The player can't click anything until the old text has gone, so keep it short. As with `@transition`, a passage uses its section's `@leave` unless it has its own, `@leave` in the master section is for every section and passage that clears the screen, and `@leave none` turns it off. When the player goes back, the old text comes back as it was.
 
 To change how a transition looks, or add your own, see [Transitions](/styling/#transitions) in Customising styles.
 

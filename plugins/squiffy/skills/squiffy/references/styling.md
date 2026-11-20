@@ -47,7 +47,7 @@ body:has(.dark) {
 
 ## Transitions
 
-While a `@transition` (dynamic-text.md) plays, the element has classes `squiffy-transition` and the name, and `--squiffy-transition-time`, so CSS can add one: `.squiffy-transition.swirl { animation-name: swirl; }` with `@keyframes swirl { from { opacity: 0; transform: rotate(-10deg); } }`.
+While a `@transition` (dynamic-text.md) plays, the element has classes `squiffy-transition` and the name, and `--squiffy-transition-time`, so CSS can add one: `.squiffy-transition.swirl { animation-name: swirl; }` with `@keyframes swirl { from { opacity: 0; transform: rotate(-10deg); } }`. `@leave` plays the same animation reversed, with `squiffy-leave` too; for a different one (e.g. one that moves across), style `.squiffy-transition.squiffy-leave.train { animation-name: train-out; animation-direction: normal; }` with `@keyframes train-out { to { transform: translateX(-100vw); } }`. Built-in slides already leave the way they're named. `--squiffy-slide-distance` (default 2em up/down, 3em sideways) sets how far slides move; `100%` goes all the way across.
 
 ## Styling some text
 

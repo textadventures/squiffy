@@ -1,6 +1,6 @@
 ---
 title: Customising styles
-description: How to change the colours, fonts and layout of an exported Squiffy story
+description: How to change the colours, fonts and layout of your story, and how it looks from scene to scene
 ---
 
 import {Aside} from "@astrojs/starlight/components";
@@ -225,6 +225,39 @@ While a [transition](/dynamic-text/#transitions) plays, the section or passage h
 ```
 
 and then `@transition swirl 1s` in your story.
+
+The slides move by `--squiffy-slide-distance`, which is `2em` up and down, and `3em` to the sides. To slide all the way across, set it to `100%`:
+
+```css
+:root {
+    --squiffy-slide-distance: 100%;
+}
+```
+
+[`@leave`](/dynamic-text/#when-the-screen-is-cleared) plays the same animations backwards, with the `squiffy-leave` class as well, so `@leave swirl` makes the text spin away. That suits most transitions, but not one that moves across the screen: played backwards, a transition that comes in from the right goes back out to the right. To give `@leave` an animation of its own, style `.squiffy-transition.squiffy-leave` and your class, and play it forwards, from how the text looks to how it goes:
+
+```css
+/* Arriving, in from the right */
+.squiffy-transition.train {
+    animation-name: train-in;
+}
+
+@keyframes train-in {
+    from { transform: translateX(100vw); }
+}
+
+/* Leaving, out to the left */
+.squiffy-transition.squiffy-leave.train {
+    animation-name: train-out;
+    animation-direction: normal;
+}
+
+@keyframes train-out {
+    to { transform: translateX(-100vw); }
+}
+```
+
+Squiffy's own slides work like this already, so `@leave slide-left` goes off to the left.
 
 ### The header
 

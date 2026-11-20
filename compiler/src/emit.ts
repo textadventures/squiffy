@@ -40,6 +40,9 @@ interface OutputSection {
     // @transition (#489): how it appears, or "none", and how long that takes in milliseconds
     transition?: string;
     transitionTime?: number;
+    // @leave: how the old text goes when this clears the screen, or "none", and how long that takes
+    leave?: string;
+    leaveTime?: number;
     attributes?: string[];
     jsIndex?: number;
     passages?: Record<string, OutputPassage>;
@@ -58,6 +61,9 @@ interface OutputPassage {
     // @transition (#489): how it appears, or "none", and how long that takes in milliseconds
     transition?: string;
     transitionTime?: number;
+    // @leave: how the old text goes when this clears the screen, or "none", and how long that takes
+    leave?: string;
+    leaveTime?: number;
     // Its links aren't disabled when clicked (#104)
     repeat?: boolean;
     attributes?: string[];
@@ -102,9 +108,11 @@ function addSounds(output: OutputSection | OutputPassage, from: { music?: string
     for (const match of from.output.matchAll(SOUND_HELPER)) audio.add(match[2]);
 }
 
-function addTransition(output: OutputSection | OutputPassage, from: { transition?: string; transitionTime?: number }) {
+function addTransition(output: OutputSection | OutputPassage, from: { transition?: string; transitionTime?: number; leave?: string; leaveTime?: number }) {
     if (from.transition !== undefined) output.transition = from.transition;
     if (from.transitionTime !== undefined) output.transitionTime = from.transitionTime;
+    if (from.leave !== undefined) output.leave = from.leave;
+    if (from.leaveTime !== undefined) output.leaveTime = from.leaveTime;
 }
 
 // Produces the story data and JavaScript for an analysis that succeeded.

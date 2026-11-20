@@ -145,3 +145,158 @@ test("A saved game doesn't play the transitions again when it's loaded", async (
     expect(sectionElement(second.element, "cave")).not.toBeNull();
     expect(second.element.querySelector(".squiffy-transition")).toBeNull();
 });
+
+// @leave: how the old text goes when the screen is cleared
+
+// So the leave transitions have an animation, which jsdom doesn't play: it's ended by hand
+const animateLeaving = () => {
+    const style = document.createElement("style");
+    style.textContent = ".squiffy-leave { animation-name: leaving; animation-duration: 1s; }";
+    document.head.appendChild(style);
+};
+
+const clickWithoutWaiting = async (element: HTMLElement, text: string) => {
+    const link = [...element.querySelectorAll<HTMLElement>("a.squiffy-link")]
+        .find(l => l.textContent == text && !l.classList.contains("disabled"));
+    if (!link) throw new Error(`No link "${text}"`);
+    link.click();
+    await vi.advanceTimersByTimeAsync(0);
+};
+
+const leaving = (el: HTMLElement) => el.classList.contains("squiffy-leave")
+    ? { name: el.getAttribute("data-transition"), time: el.style.getPropertyValue("--squiffy-transition-time") }
+    : null;
+
+const leaveStory = `
+[[forest]]:
+The forest. [[Go to the cave]](cave), [look up]
+
+[look up]:
+The stars are out.
+
+[[cave]]:
+@clear
+@leave blur 2s
+The cave. [listen]
+
+[listen]:
+@clear
+Water dripping. [[Leave]](outside)
+
+[[outside]]:
+@clear
+@leave none
+Outside.
+`;
+
+test("The old text plays the leave transition before the screen is cleared", async () => {
+    animateLeaving();
+    const { api, element } = await start(leaveStory);
+    await click(element, "look up");
+    await clickWithoutWaiting(element, "Go to the cave");
+
+    // Everything on the screen is leaving, and the cave isn't there yet
+    const forest = sectionElement(element, "forest");
+    expect(leaving(forest)).toEqual({ name: "blur", time: "2000ms" });
+    expect(forest.classList).toContain("squiffy-transition");
+    expect(sectionElement(element, "cave")).toBeNull();
+    // Back waits for it
+    api.goBack();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(leaving(forest)).not.toBeNull();
+    expect(passageElement(element, "look up")).not.toBeNull();
+
+    forest.dispatchEvent(new window.Event("animationend", { bubbles: true }));
+    await vi.runAllTimersAsync();
+    expect(sectionElement(element, "cave")).not.toBeNull();
+    // The old text is put away as it was, for going back
+    const putAway = element.querySelector<HTMLElement>(".squiffy-clear-stack .squiffy-output-section")!;
+    expect(putAway.getAttribute("data-section")).toBe("forest");
+    expect(putAway.classList).not.toContain("squiffy-leave");
+    expect(putAway.hasAttribute("style")).toBe(false);
+});
+
+test("A passage that clears the screen uses its section's leave transition, and @leave none plays none", async () => {
+    animateLeaving();
+    const { element } = await start(leaveStory);
+    await click(element, "Go to the cave");
+
+    await clickWithoutWaiting(element, "listen");
+    expect(leaving(sectionElement(element, "cave"))).toEqual({ name: "blur", time: "2000ms" });
+    await vi.runAllTimersAsync();
+    expect(passageElement(element, "listen")).not.toBeNull();
+
+    await clickWithoutWaiting(element, "Leave");
+    expect(sectionElement(element, "outside")).not.toBeNull();
+});
+
+test("The story goes on if the leave transition never ends", async () => {
+    animateLeaving();
+    const { element } = await start(leaveStory);
+    await clickWithoutWaiting(element, "Go to the cave");
+    await vi.advanceTimersByTimeAsync(1500);
+    expect(sectionElement(element, "cave")).toBeNull();
+    // Its 1s animation, and a second more
+    await vi.advanceTimersByTimeAsync(600);
+    expect(sectionElement(element, "cave")).not.toBeNull();
+});
+
+test("Without an animation for it, the leave transition doesn't hold the story up", async () => {
+    const { element } = await start(leaveStory);
+    await clickWithoutWaiting(element, "Go to the cave");
+    expect(sectionElement(element, "cave")).not.toBeNull();
+});
+
+test("Going back brings the old text back as it was", async () => {
+    animateLeaving();
+    const { api, element } = await start(leaveStory);
+    await click(element, "Go to the cave");
+    api.goBack();
+    await vi.runAllTimersAsync();
+    const forest = sectionElement(element, "forest");
+    expect(leaving(forest)).toBeNull();
+    expect(transition(forest)).toBeNull();
+    expect(sectionElement(element, "cave")).toBeNull();
+});
+
+test("The master section's leave transition is for every section that clears the screen", async () => {
+    animateLeaving();
+    const { element } = await start(`
+[[]]:
+@leave fade
+
+[[a]]:
+A. [[b]]
+
+[[b]]:
+@clear
+B.
+`);
+    await clickWithoutWaiting(element, "b");
+    expect(leaving(sectionElement(element, "a"))).toEqual({ name: "fade", time: "" });
+});
+
+test("A slide moves the way it's named, arriving or leaving", async () => {
+    const { readFileSync } = await import("fs");
+    const style = document.createElement("style");
+    style.textContent = readFileSync(new URL("./squiffy.runtime.css", import.meta.url), "utf8");
+    document.head.appendChild(style);
+
+    const animation = (classes: string) => {
+        const el = document.createElement("div");
+        el.className = classes;
+        document.body.appendChild(el);
+        const computed = getComputedStyle(el);
+        const result = `${computed.animationName} ${computed.animationDirection || "normal"}`;
+        el.remove();
+        return result;
+    };
+    // Arriving, slide-left comes in from the right, and leaving, goes off to the left, by playing
+    // the animation from the left backwards
+    expect(animation("squiffy-transition slide-left")).toBe("squiffy-transition-from-right normal");
+    expect(animation("squiffy-transition squiffy-leave slide-left")).toBe("squiffy-transition-from-left reverse");
+    expect(animation("squiffy-transition slide-up")).toBe("squiffy-transition-from-below normal");
+    expect(animation("squiffy-transition squiffy-leave slide-up")).toBe("squiffy-transition-from-above reverse");
+    // Others play backwards to leave
+    expect(animation("squiffy-transition squiffy-leave zoom")).toBe("squiffy-transition-zoom reverse");
+});

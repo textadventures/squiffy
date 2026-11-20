@@ -438,9 +438,12 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         if (get("turns") === null) state.setInternal("turns", 0, false);
         state.setSeen(sectionName);
         const master = story.sections[""];
+        const clear = master?.clear || currentSection.clear;
+        // @leave: the old text goes before anything changes on the screen
+        if (clear) await leaveTransition([currentSection, master]);
         // @class (#449): this section's classes replace the last one's
         setSectionClasses([...(master?.classes ?? []), ...(currentSection.classes ?? [])]);
-        if (master?.clear || currentSection.clear) {
+        if (clear) {
             clearScreen();
         }
         newSection(sectionName);
@@ -622,11 +625,15 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             }
         }
 
+        const clear = passages.some(p => p.clear);
+        // @leave: the passage's own, or else a master passage's, or else its section's, or the master section's
+        if (clear) await leaveTransition([passage, master, masterSection?.passages?.[""], currentSection, masterSection]);
+
         // @class in a passage (#449) adds to the section's classes
         const passageClasses = passages.flatMap(p => p.classes ?? []);
         if (passageClasses.length) setSectionClasses([...sectionClasses(), ...passageClasses]);
 
-        if (passages.some(p => p.clear)) {
+        if (clear) {
             clearScreen();
             createSectionElement();
         }
@@ -898,6 +905,8 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
                 clearStackItem.appendChild(child);
             }
         }
+        // Without its transitions, so it's as it was if the player goes back to it
+        clearStackItem.querySelectorAll<HTMLElement>(".squiffy-transition").forEach(endTransition);
 
         // NOTE: If we offer an option to disable the "back" feature, all of the above can be replaced with:
         //    outputElement.innerHTML = '';
@@ -915,7 +924,8 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             element.style.setProperty("--squiffy-transition-time", `${source!.transitionTime}ms`);
         }
         const end = (event: Event) => {
-            if (event.target !== element) return;
+            // A @leave transition started before this one ended takes the element off the screen itself
+            if (event.target !== element || element.classList.contains("squiffy-leave")) return;
             element.removeEventListener("animationend", end);
             element.removeEventListener("animationcancel", end);
             endTransition(element);
@@ -924,12 +934,58 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         element.addEventListener("animationcancel", end);
     }
 
+    // @leave: plays the first leave transition given on everything on the screen, the arrival
+    // transitions backwards, and waits for it to finish, so that clearScreen() can take it away.
+    // Links and Back wait too.
+    async function leaveTransition(from: (Section | Passage | undefined)[]) {
+        const source = from.find(s => s?.leave);
+        const name = source?.leave;
+        if (!name || name == "none" || name == "instant") return;
+        const clearStack = getClearStack();
+        const elements = [...outputElement.children].filter((c): c is HTMLElement => c !== clearStack && c instanceof HTMLElement);
+        if (!elements.length) return;
+        for (const element of elements) {
+            endTransition(element);
+            element.classList.add("squiffy-transition", "squiffy-leave", name);
+            element.setAttribute("data-transition", name);
+            if (source!.leaveTime !== undefined) {
+                element.style.setProperty("--squiffy-transition-time", `${source!.leaveTime}ms`);
+            }
+        }
+        // Each element plays the same animation, so the first one finishing means they all have
+        const first = elements[0];
+        const style = getComputedStyle(first);
+        if (!style.animationName || style.animationName == "none") return;
+        // In case the animation never ends, such as in a page that isn't shown
+        const seconds = (value: string) => Math.max(0, ...value.split(",").map(v => parseFloat(v) * (v.trim().endsWith("ms") ? 0.001 : 1) || 0));
+        const timeout = (seconds(style.animationDuration) + seconds(style.animationDelay)) * 1000 + 1000;
+        const wasRunning = runningTransitions;
+        runningTransitions = true;
+        try {
+            await new Promise<void>(resolve => {
+                const timer = setTimeout(done, timeout);
+                function done(event?: Event) {
+                    if (event && event.target !== first) return;
+                    clearTimeout(timer);
+                    first.removeEventListener("animationend", done);
+                    first.removeEventListener("animationcancel", done);
+                    resolve();
+                }
+                first.addEventListener("animationend", done);
+                first.addEventListener("animationcancel", done);
+            });
+        }
+        finally {
+            runningTransitions = wasRunning;
+        }
+    }
+
     // Takes off a transition's class, so it doesn't play again when the element is shown again,
     // such as after going back past a @clear
     function endTransition(element: HTMLElement) {
         const name = element.getAttribute("data-transition");
         if (name) element.classList.remove(name);
-        element.classList.remove("squiffy-transition");
+        element.classList.remove("squiffy-transition", "squiffy-leave");
         if (!element.classList.length) element.removeAttribute("class");
         element.removeAttribute("data-transition");
         element.style.removeProperty("--squiffy-transition-time");

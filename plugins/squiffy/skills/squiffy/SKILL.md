@@ -49,7 +49,7 @@ You step out into the night with {{gold}} gold. THE END.
 - `[name]:` starts a **passage** inside the section above it. `[name]` or `[link text](name)` links to one. Passage links can be clicked in any order, once each, until the player leaves the section. Coming back to a section shows it again with fresh passage links, so guard one-off rewards with an attribute: `{{#unless chest_open}}[chest]{{/unless}}`. Any text in single square brackets is a passage link.
 - Links can set attributes: `[[Buy]](shop, gold -= 3, has_sword = true)`.
 - `+++Link text` ends the section with a link to a new, unnamed section that follows.
-- `@set`, `@inc`, `@dec`, `@unset`, `@clear`, `@end`, `@repeat`, `@class`, `@transition` are directives: one per line, at the start of a section or passage. They always run when it's shown, even inside `{{#if}}`; use the `{{set}}`, `{{inc}}` helpers to change attributes conditionally.
+- `@set`, `@inc`, `@dec`, `@unset`, `@clear`, `@end`, `@repeat`, `@class`, `@transition`, `@leave` are directives: one per line, at the start of a section or passage. They always run when it's shown, even inside `{{#if}}`; use the `{{set}}`, `{{inc}}` helpers to change attributes conditionally.
 - `{{...}}` is the Handlebars text processor: `{{gold}}`, `{{= price * 2}}`, `{{#if gold > 5 and not has_key}}...{{else}}...{{/if}}`, `(seen "chest")`, `{{goto "end"}}`, `{{embed "map"}}`. Helpers take subexpressions in `( )`, never nested `{{ }}`.
 - `@end` marks a section as an ending. A section with no links out and no `@end` is a "dead end", which `--check` warns about.
 - Text is Markdown, and HTML works. Blank lines separate paragraphs.

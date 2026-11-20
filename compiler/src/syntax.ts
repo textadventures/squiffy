@@ -223,9 +223,10 @@ export interface ClassNode {
 }
 
 // @transition fade 1s (#489): how the section or passage appears. "none" turns off one
-// that the master section sets.
+// that the master section sets. @leave fade 1s: how the old text goes when it clears the screen.
 export interface TransitionNode {
     type: "transition";
+    directive: "transition" | "leave";
     // The transition's name, which is also its class in the stylesheet
     value: string;
     valueRange: Range;

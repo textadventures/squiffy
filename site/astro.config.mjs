@@ -61,6 +61,7 @@ export default defineConfig({
                         "images-and-files",
                         "multiple-files",
                         "buttons-panels-settings",
+                        "styling",
                         "javascript",
                         "cookbook",
                     ],
@@ -75,7 +76,7 @@ export default defineConfig({
                 },
                 {
                     label: "Publishing",
-                    items: ["publishing", "styling", "embedding"],
+                    items: ["publishing", "embedding"],
                 },
                 {
                     label: "Coming from…",
