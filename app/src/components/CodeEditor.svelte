@@ -23,10 +23,13 @@
         onCursor?: (offset: number) => void;
         // Gets the view once it's created, e.g. to move the cursor from the outline
         onView?: (view: EditorView | null) => void;
+        // A right-click (or the menu key), for the app to show its own menu instead of the
+        // browser's. Return true if it does.
+        onContextMenu?: (view: EditorView, event: MouseEvent) => boolean;
         class?: string;
     }
 
-    let { value, extensions = [], readonly = false, onChange, onSave, onCursor, onView, class: className = "" }: Props = $props();
+    let { value, extensions = [], readonly = false, onChange, onSave, onCursor, onView, onContextMenu, class: className = "" }: Props = $props();
 
     let editorEl = $state<HTMLDivElement | null>(null);
     let view: EditorView | null = null;
@@ -86,6 +89,13 @@
                 EditorView.updateListener.of(update => {
                     if (update.docChanged) onChange?.(update.state.doc.toString());
                     if (update.selectionSet || update.docChanged) onCursor?.(update.state.selection.main.head);
+                }),
+                EditorView.domEventHandlers({
+                    contextmenu(event, view) {
+                        if (!onContextMenu?.(view, event)) return false;
+                        event.preventDefault();
+                        return true;
+                    },
                 }),
                 extensionsCompartment.of(untrack(() => extensions)),
                 readonlyCompartment.of(readonlyExtension(untrack(() => readonly))),

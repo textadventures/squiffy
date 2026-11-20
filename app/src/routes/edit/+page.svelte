@@ -14,7 +14,7 @@
     import { isAsset, isSquiffyFile, isTextFile } from "#lib/file-types.js";
     import { NEW_FILE_KINDS, needsImport, newFileText, type NewFileKind } from "#lib/new-file.js";
     import { createLanguageClient, type LanguageClient } from "#lib/language/client.js";
-    import { applyEditsToString, applyTextEdits, languageFeatures, recheckProblems, toOffset, toPosition } from "#lib/language/codemirror.js";
+    import { applyEditsToString, applyTextEdits, languageCommands, languageFeatures, recheckProblems, toOffset, toPosition } from "#lib/language/codemirror.js";
     import { squiffyLanguage } from "@textadventures/squiffy-codemirror";
     import { css } from "@codemirror/lang-css";
     import { javascript } from "@codemirror/lang-javascript";
@@ -38,7 +38,9 @@
     import AssetManagerModal from "#components/AssetManagerModal.svelte";
     import FontsModal from "#components/FontsModal.svelte";
     import AboutModal from "#components/AboutModal.svelte";
-    import { addSectionOrPassage, insertSnippet, runCommand, userSnippets } from "#lib/editor-commands.js";
+    import ContextMenu, { type ContextMenuItem } from "#components/ContextMenu.svelte";
+    import { addSectionOrPassage, clipboardCommand, insertSnippet, runCommand, userSnippets } from "#lib/editor-commands.js";
+    import { formatKey } from "#lib/shortcuts.js";
     import type { ExportKind } from "#lib/language/protocol.js";
 
     const p = $derived(project.current);
@@ -64,6 +66,8 @@
     let assetsOpen = $state(false);
     let fontsOpen = $state(false);
     let aboutOpen = $state(false);
+    // The code editor's right-click menu
+    let editorMenu = $state<{ view: EditorView; x: number; y: number; keyboard: boolean; items: ContextMenuItem[] } | null>(null);
     // Changes whenever an asset is added, changed or deleted, so the preview gets it
     let assetsVersion = $state(0);
 
@@ -288,6 +292,64 @@
             extensionCache.set(path, extensions);
         }
         return extensions;
+    }
+
+    // The code editor's right-click menu, instead of the browser's: Go to definition, Find
+    // references and Rename (in a .squiffy file), then cut, copy and paste, and Find. Shift and
+    // right-click still gets the browser's menu, as does a long press on a touchscreen, where its
+    // menu is how text is selected and pasted.
+    function handleEditorContextMenu(view: EditorView, event: MouseEvent): boolean {
+        // From the menu key or Shift+F10 rather than the mouse
+        const keyboard = "pointerType" in event ? event.pointerType === "" : event.clientX === 0 && event.clientY === 0;
+        if (!keyboard && (event.shiftKey || (event as PointerEvent).pointerType === "touch")) return false;
+        let offset = view.state.selection.main.head;
+        let { clientX: x, clientY: y } = event;
+        if (keyboard) {
+            const coords = view.coordsAtPos(offset);
+            if (coords) ({ left: x, bottom: y } = coords);
+        } else {
+            // The cursor moves to where was clicked, unless that's in the selection
+            const at = view.posAtCoords({ x, y });
+            if (at !== null) {
+                offset = at;
+                if (!view.state.selection.ranges.some(r => r.from <= at && at <= r.to)) view.dispatch({ selection: { anchor: at } });
+            }
+        }
+        void showEditorMenu(view, offset, x, y, keyboard);
+        return true;
+    }
+
+    async function showEditorMenu(view: EditorView, offset: number, x: number, y: number, keyboard: boolean) {
+        const commands = view.state.facet(languageCommands);
+        const onName = commands ? await commands.hasDefinition(view, offset).catch(() => false) : false;
+        const readOnly = view.state.readOnly;
+        const hasSelection = view.state.selection.ranges.some(r => !r.empty);
+        const clipboard = (command: "cut" | "copy" | "paste", key: string) => {
+            void clipboardCommand(view, command).then(done => {
+                if (!done) showToast(`The browser didn't allow that from the menu. Press ${formatKey(key)} instead.`, "info");
+            });
+        };
+        const items: ContextMenuItem[] = [];
+        if (commands) {
+            items.push(
+                { label: "Go to definition", shortcut: formatKey("F12"), disabled: !onName, action: () => commands.definition(view) },
+                { label: "Find references", shortcut: formatKey("Shift-F12"), disabled: !onName, action: () => commands.references(view) },
+                { label: "Rename…", shortcut: formatKey("F2"), disabled: !onName || readOnly, action: () => commands.rename(view) },
+            );
+        }
+        items.push(
+            { label: "Cut", shortcut: formatKey("Mod-x"), disabled: !hasSelection || readOnly, divider: items.length > 0, action: () => clipboard("cut", "Mod-x") },
+            { label: "Copy", shortcut: formatKey("Mod-c"), disabled: !hasSelection, action: () => clipboard("copy", "Mod-c") },
+            { label: "Paste", shortcut: formatKey("Mod-v"), disabled: readOnly, action: () => clipboard("paste", "Mod-v") },
+            { label: "Find and replace", shortcut: formatKey("Mod-f"), divider: true, action: () => runCommand(view, "find") },
+        );
+        editorMenu = { view, x, y, keyboard, items };
+    }
+
+    function closeEditorMenu() {
+        const view = editorMenu?.view;
+        editorMenu = null;
+        view?.focus();
     }
 
     // Waits for an open file's editor to be on screen
@@ -1103,6 +1165,7 @@
                                 onSave={() => void p.save()}
                                 onCursor={offset => handleCursor(file.path, offset)}
                                 onView={v => { if (v) views.set(file.path, v); }}
+                                onContextMenu={handleEditorContextMenu}
                             />
                         </div>
                     </div>
@@ -1189,6 +1252,16 @@
             {/if}
         </div>
     </main>
+
+    {#if editorMenu}
+        <ContextMenu
+            x={editorMenu.x}
+            y={editorMenu.y}
+            keyboard={editorMenu.keyboard}
+            items={editorMenu.items}
+            onclose={closeEditorMenu}
+        />
+    {/if}
 
     {#if aboutOpen}
         <AboutModal onclose={() => { aboutOpen = false; }} />

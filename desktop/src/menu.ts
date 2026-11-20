@@ -116,6 +116,7 @@ export function buildMenu(options: MenuOptions): void {
             role: "help",
             submenu: [
                 { label: "Squiffy Documentation", click: () => openExternal(`${DOCS_URL}/getting-started/`) },
+                { label: "Keyboard Shortcuts", click: () => onAction("keyboard-shortcuts") },
                 { label: "Report an Issue", click: () => openExternal(ISSUES_URL) },
                 ...(isMac ? [] : [{ type: "separator" }, { role: "about" }] satisfies MenuItemConstructorOptions[]),
             ],

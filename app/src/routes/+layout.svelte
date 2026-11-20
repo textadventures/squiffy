@@ -8,6 +8,7 @@
     import NewStoryDialog from "#components/NewStoryDialog.svelte";
     import Toast from "#components/Toast.svelte";
     import SettingsModal from "#components/SettingsModal.svelte";
+    import ShortcutsModal from "#components/ShortcutsModal.svelte";
     import UpdateBanner from "#components/UpdateBanner.svelte";
     import { registerServiceWorker } from "#lib/updates.svelte.js";
     import { initDesktopShell } from "#lib/desktop-shell.js";
@@ -35,3 +36,4 @@
 <NewStoryDialog />
 <Toast />
 <SettingsModal />
+<ShortcutsModal />
