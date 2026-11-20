@@ -5,7 +5,7 @@
 // {{set}}, (link:) and friends become links to generated passages and sections, and Harlowe's
 // markup becomes Markdown and HTML.
 
-import { conditional, display, isBoolean, isListCall, lengthOf, member, print, randomInteger, targetName, skipBalanced, skipString, Tokens, Unconvertible, unescapeString } from "./expression.js";
+import { conditional, delayValue, display, isBoolean, isListCall, lengthOf, member, print, randomInteger, targetName, skipBalanced, skipString, Tokens, Unconvertible, unescapeString } from "./expression.js";
 import type { BinaryOp, Expr } from "./expression.js";
 import { audioHelper, leadingAudio, pickSource, STOP_ALL_AUDIO } from "./audio.js";
 import type { AudioAction, StoryAudio } from "./audio.js";
@@ -1207,23 +1207,26 @@ class Writer {
             }
             case "after": {
                 state.leading = false;
-                const delay = this.expr.parse(args[0] ?? "");
-                if (delay.k != "num") throw new Unconvertible("(after:) with a delay that isn't fixed");
+                // time is how long the passage has been shown, which is no time at all when this
+                // is worked out, so (after: time + 4s) is (after: 4s)
+                const delay = delayValue(this.expr.parse((args[0] ?? "").replace(/^\s*time\s*\+/, "")));
                 if (!m.hook) return "";
                 const goto = this.gotoOnly(m.hook);
-                if (goto) return goto.replace(/\}\}$/, ` after=${delay.v}}}`);
-                return `{{#animate "fadeIn" start=${delay.v}}}${this.hookContent(m.hook, state)}{{/animate}}`;
+                if (goto) return goto.replace(/\}\}$/, ` after=${delay}}}`);
+                return `{{#animate "fadeIn" start=${delay}}}${this.hookContent(m.hook, state)}{{/animate}}`;
             }
             case "live": {
                 state.leading = false;
-                const delay = this.expr.parse(args[0] ?? "1s");
-                if (delay.k != "num" || !m.hook) throw new Unconvertible("(live:)");
+                if (!m.hook) throw new Unconvertible("(live:) without a hook");
+                const delay = delayValue(this.expr.parse(args[0] ?? "1s"));
+                // A hook that only goes somewhere else goes there once
                 const goto = this.gotoOnly(m.hook, true);
-                if (goto) return goto.replace(/\}\}$/, ` after=${delay.v}}}`);
-                throw new Unconvertible("(live:), which runs its hook again and again");
+                if (goto) return goto.replace(/\}\}$/, ` after=${delay}}}`);
+                // Its hook is shown again every so often, until a (stop:) (#451)
+                return `{{#every ${delay}}}${this.hookContent(m.hook, state)}{{/every}}`;
             }
             case "stop":
-                return "";
+                return "{{stop}}";
             case "inputbox":
             case "forceinputbox":
             case "input":

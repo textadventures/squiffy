@@ -278,6 +278,14 @@ describe("Harlowe", () => {
         expect(section(script, "Start")).toBe("{{embed \"Bit\"}} {{goto \"End\"}} {{goto \"End\" after=2000}}");
     });
 
+    test("timers with delays worked out as the story runs, (live:) and (stop:) (#451)", async () => {
+        const { script, result } = await convert("Harlowe", ":: Start\n(set: $wait to 3)(after: $wait * 1s)[(goto: \"End\")] (after: time + 4s)[Late.] "
+            + "(live: 1s)[(set: $n to it + 1)$n(if: $n >= 5)[(stop:)]] (live: 2s)[(go-to: \"End\")]\n\n:: End\nThe end.");
+        expect(section(script, "Start")).toBe("@set wait = 3\n{{goto \"End\" after=(wait * 1000)}} {{#animate \"fadeIn\" start=4000}}Late.{{/animate}} "
+            + "{{#every 1000}}{{inc \"n\"}}{{n}}{{#if n >= 5}}{{stop}}{{/if}}{{/every}} {{goto \"End\" after=2000}}");
+        expect(result.problems).toEqual([]);
+    });
+
     test("a link that sets variables and goes to a passage is a link with setters", async () => {
         const { script } = await convert("Harlowe", ":: Start\n(link: \"Buy\")[(set: $gold to it - 5)(set: $sword to true)(goto: \"Shop\")] (link-goto: \"Leave\", \"Shop\")\n\n:: Shop\nShop.");
         expect(section(script, "Start")).toBe("[[Buy]](Shop, gold -= 5, sword = true) [[Leave]](Shop)");
@@ -479,6 +487,20 @@ describe("SugarCube", () => {
         const { script } = await convert("SugarCube", ":: Start\n$name and _temp. <<= $gold + 1>> <<print either(\"a\", \"b\")>> <<include \"Bit\">> <<goto [[End]]>> <<timed 2s>><<goto \"End\">><</timed>>\n\n:: Bit\nA bit.\n\n:: End\nThe end.");
         expect(section(script, "Start")).toBe(
             "{{name}} and {{temp}}. {{= gold + 1}} {{random (array \"a\" \"b\")}} {{embed \"Bit\"}} {{goto \"End\"}} {{goto \"End\" after=2000}}");
+    });
+
+    test("<<timed>> with a delay worked out as the story runs, and <<repeat>> with <<stop>> (#451)", async () => {
+        const { script, result } = await convert("SugarCube", ":: Start\n<<set $textSpeed to \"3s\">><<timed $textSpeed transition>>Hello.<</timed>> "
+            + "<<timed $textSpeed>><<goto \"End\">><</timed>> <<timed 1s>>A<<next 2s>>B<</timed>> "
+            + "<<repeat 1.5s>>Drip. <<if $dry>><<stop>><</if>><</repeat>> <<timed $textSpeed>>A<<next>>B<</timed>> "
+            + "<<timed 1s>>A<<next>><<goto \"End\">><</timed>> <<timed $textSpeed>>A<<next>><<goto \"End\">><</timed>>\n\n:: End\nThe end.");
+        expect(section(script, "Start")).toBe("@set textSpeed = \"3s\"\n{{#animate \"fadeIn\" start=textSpeed}}Hello.{{/animate}} "
+            + "{{goto \"End\" after=textSpeed}} {{#animate \"fadeIn\" start=1000}}A{{/animate}}{{#animate \"fadeIn\" start=2000}}B{{/animate}} "
+            + "{{#every 1500 append=true}}Drip. {{#if dry}}{{stop}}{{/if}}{{/every}} "
+            + "{{#animate \"fadeIn\" start=textSpeed}}A{{/animate}}{{#animate \"fadeIn\" start=textSpeed}}B{{/animate}} "
+            + "{{#animate \"fadeIn\" start=1000}}A{{/animate}}{{goto \"End\" after=2000}} "
+            + "{{!-- Twine: <<timed $textSpeed>>A<<next>><<goto \"End\">><</timed>> --}}");
+        expect(result.problems.map(p => p.reason)).toEqual(["This couldn't be converted: <<goto>> in a <<next>> after a delay that isn't fixed."]);
     });
 
     test("<<link>> that sets variables and goes to a passage is a link with setters", async () => {

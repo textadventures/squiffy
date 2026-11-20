@@ -30,6 +30,13 @@ export type Expr =
     // its item. numbers: its items are numbers, as in a loop that counts.
     | { k: "loop", kind: "item" | "index", up: number, array?: string, numbers?: boolean };
 
+// A delay for after=, start= or {{#every}} (#451): a number of milliseconds, or an expression,
+// whose value can be milliseconds or a time like "3s", in parentheses if it's a calculation
+export function delayValue(e: Expr): string {
+    const text = print(e);
+    return e.k == "bin" || e.k == "cond" || e.k == "not" || e.k == "neg" ? `(${text})` : text;
+}
+
 // Thrown when something can't be converted. The message says why, for the list of problems.
 export class Unconvertible extends Error {}
 
