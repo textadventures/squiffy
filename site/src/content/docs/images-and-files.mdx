@@ -53,6 +53,7 @@ Daylight at last.
 - **`@music file`** plays music, over and over, until another `@music` changes it. It keeps playing as the player moves from one section to the next, and if a section has the music that's already playing, it carries on rather than starting again. When the music changes, the old music fades out over a second while the new music fades in.
 - **`@music stop`** fades the music out.
 - **`@sound file`** plays a sound once, such as a door closing.
+- **`@sound stop`** stops the sounds that are playing once. The music carries on.
 
 To play music or a sound part of the way through the text, or only sometimes, use the helpers. Like other [helpers](/helpers-reference/#sound-helpers), they respect `{{#if}}`:
 
@@ -60,6 +61,7 @@ To play music or a sound part of the way through the text, or only sometimes, us
 {{#if door_open}}{{sound "creak.mp3"}}{{/if}}
 {{music "battle.mp3" fade=3}}
 {{stopmusic fade=0}}
+{{stopsounds}}
 ```
 
 `fade=` is how many seconds the change takes, and `fade=0` changes the music straight away. `{{sound}}` can have a `volume=`, from 0 (silent) to 1 (the default): `{{sound "whisper.mp3" volume=0.5}}`.

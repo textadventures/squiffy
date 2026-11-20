@@ -535,10 +535,10 @@ describe("SugarCube", () => {
     });
 
     test("what can't be converted is left as a comment", async () => {
-        const { script, result } = await convert("SugarCube", ":: Start\nHi <<masteraudio stop>> <<set $x to setup.thing()>>");
-        expect(section(script, "Start")).toBe("Hi {{!-- Twine: <<masteraudio stop>> --}} {{!-- Twine: <<set $x to setup.thing()>> --}}");
+        const { script, result } = await convert("SugarCube", ":: Start\nHi <<masteraudio mute>> <<set $x to setup.thing()>>");
+        expect(section(script, "Start")).toBe("Hi {{!-- Twine: <<masteraudio mute>> --}} {{!-- Twine: <<set $x to setup.thing()>> --}}");
         expect(result.problems.map(p => p.reason)).toEqual([
-            "This couldn't be converted: <<masteraudio>>, which changes all the story's sound at once.",
+            "This couldn't be converted: <<masteraudio>>, which changes all the story's sound at once, except to stop it.",
             "This couldn't be converted: setup.thing().",
         ]);
     });
@@ -607,8 +607,15 @@ describe("sound (#444)", () => {
         ].join("\n"));
         // At the start of a passage, they're directives
         expect(section(script, "Start")).toBe("@music music/theme.mp3\n@sound sfx/door.mp3\n{{sound \"sfx/door.mp3\" volume=0.5}}\n[[Next]]");
-        expect(section(script, "Next")).toBe("{{stopmusic fade=3}}{{music \"rain.mp3\"}}{{sound \"chime.mp3\"}}{{stopmusic}}");
-        expect(result.problems.map(p => p.text)).toEqual(["<<audio \"door\" stop>>"]);
+        // door is the only sound, so stopping every sound stops just it
+        expect(section(script, "Next")).toBe("{{stopmusic fade=3}}{{music \"rain.mp3\"}}{{stopsounds}}{{sound \"chime.mp3\"}}{{stopsounds}}{{stopmusic}}");
+        expect(result.problems).toEqual([]);
+    });
+
+    test("SugarCube: stopping everything", async () => {
+        const { script, result } = await convert("SugarCube", ":: Start\n<<masteraudio stop>><<audio \":looped\" stop>>Quiet.");
+        expect(section(script, "Start")).toBe("@sound stop\n@music stop\nQuiet.");
+        expect(result.problems).toEqual([]);
     });
 
     test("SugarCube: playlists, groups and unknown tracks aren't converted", async () => {
@@ -640,10 +647,9 @@ describe("sound (#444)", () => {
         ].join("\n"));
         expect(script).not.toContain("hal.tracks");
         expect(section(script, "Start")).toBe("@music https://example.com/theme.mp3\n@sound sfx/door.mp3\n@sound bell.mp3\n[[Next]]");
-        expect(section(script, "Next")).toBe("{{stopmusic fade=2}}{{!-- Twine: (masteraudio: 'stopall') --}}");
+        expect(section(script, "Next")).toBe("{{stopmusic fade=2}}{{stopsounds}}{{stopsounds}}{{stopmusic}}");
         expect(result.problems.map(p => p.reason)).toEqual([
-            "Squiffy can't stop a sound that plays once, only music (a track that loops), so these have been left out.",
-            "This couldn't be converted: (masteraudio:), which changes all the story's sound at once.",
+            "Squiffy stops every sound that's playing once, not just one track, so these stop the others too.",
         ]);
     });
 });

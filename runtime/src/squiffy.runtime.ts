@@ -461,7 +461,10 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         }
         // @music and @sound (#444)
         if (section.music !== undefined) set("_music", section.music);
-        for (const file of section.sounds ?? []) sound.play(file);
+        for (const file of section.sounds ?? []) {
+            if (file == "stop") sound.stopSounds();
+            else sound.play(file);
+        }
         const afterWrite: (() => void)[] = [];
         if (section.jsIndex !== undefined) {
             const sectionBefore = get("_section");
@@ -1224,6 +1227,10 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         if (state.readOnly || quiet || typeof file != "string" || !file) return "";
         const volume = Number(options?.hash?.volume ?? 1);
         sound.play(file, volume);
+        return "";
+    });
+    textProcessor.handlebars.registerHelper("stopsounds", () => {
+        if (!state.readOnly && !quiet) sound.stopSounds();
         return "";
     });
     const linkHandler = new LinkHandler();

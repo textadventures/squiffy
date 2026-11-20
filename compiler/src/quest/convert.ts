@@ -64,9 +64,17 @@ function stringAttribute(o: QuestObject, name: string): string {
     return value?.type == "string" ? value.value : "";
 }
 
-// Whether converted script plays a sound once, which Quest would stop at the next page
-function playsSound(line: string): boolean {
-    return line.includes("{{sound ");
+// Whether a script calls a function or command, such as "play sound", anywhere in it
+function calls(statements: QStmt[], fn: string): boolean {
+    return statements.some(s => {
+        switch (s.k) {
+            case "call": return s.fn == fn || calls(s.callback ?? [], fn);
+            case "if": return s.branches.some(b => calls(b.body, fn)) || calls(s.otherwise ?? [], fn);
+            case "firsttime": return calls(s.body, fn) || calls(s.otherwise ?? [], fn);
+            case "switch": return s.cases.some(c => calls(c.body, fn)) || calls(s.otherwise ?? [], fn);
+            default: return false;
+        }
+    });
 }
 
 function booleanValue(value: QuestValue | undefined): boolean | undefined {
@@ -205,7 +213,20 @@ function convertGame(game: QuestGame, options: QuestConversionOptions): QuestCon
         noteStyle: () => { styled = true; },
     });
 
-    let soundStops = false;
+    // Quest stops every sound when the player goes to another page, unless the last page with a
+    // sound was set to continue playing it (game.continuesound). That's done at the start of each
+    // page, or in the master section if the script that runs on every page plays a sound, as
+    // Quest stops sounds before running it.
+    const pageSound = (p: QuestObject) => scriptOnlyPages.has(p.name) ? "" : stringAttribute(p, "sound").trim();
+    const playsSound = storyPages.some(p => pageSound(p))
+        || [...pageScripts.values(), roomEnter ?? []].some(statements => calls(statements, "play sound"));
+    const continuesSound = storyPages.some(p => pageSound(p) && booleanValue(p.attributes.get("continuesound")));
+    const continueAttribute = attribute("continuesound");
+    const stopSounds = !playsSound ? { directives: [], lines: [] }
+        : continuesSound ? { directives: [], lines: [`{{#unless ${attributeRef(continueAttribute)}}}{{stopsounds}}{{stopmusic}}{{/unless}}`] }
+        : { directives: ["@sound stop", "@music stop"], lines: [] };
+    const stopInMaster = !!roomEnter && calls(roomEnter, "play sound");
+
     const sections: string[] = [];
     for (const page of storyPages) {
         const section = sectionNames.get(page.name)!;
@@ -233,8 +254,8 @@ function convertGame(game: QuestGame, options: QuestConversionOptions): QuestCon
             },
         };
 
-        const lines: string[] = [];
-        const directives: string[] = [];
+        const lines: string[] = stopInMaster ? [] : [...stopSounds.lines];
+        const directives: string[] = stopInMaster ? [] : [...stopSounds.directives];
         if (page.name == startPage) {
             const initial = [...dynamicLinks.values()].filter(l => l.initial !== undefined);
             const parts: string[] = [];
@@ -307,7 +328,6 @@ function convertGame(game: QuestGame, options: QuestConversionOptions): QuestCon
         };
         if (statements) {
             const script = convertScript(statements, { ...scriptContext(ctx, page.name), continueSection });
-            if (script.lines.some(playsSound)) soundStops = true;
             directives.push(...script.directives);
             lines.push(...script.lines);
             moves = script.lines.some(l => l.includes("{{goto"));
@@ -323,13 +343,17 @@ function convertGame(game: QuestGame, options: QuestConversionOptions): QuestCon
             if (youtube) {
                 lines.push(`<iframe class="quest-youtube" width="560" height="315" src="https://www.youtube.com/embed/${encodeURIComponent(youtube)}" allowfullscreen></iframe>`, "");
             }
-            const sound = stringAttribute(page, "sound").trim();
+            const sound = pageSound(page);
             if (sound) {
                 ctx.asset(sound);
-                // Quest stops a page's sound when the player goes to another page, unless the
-                // page is set to continue playing it, but Squiffy can't stop a sound
-                if (!booleanValue(page.attributes.get("continuesound"))) soundStops = true;
-                directives.push(`@sound ${sound}`);
+                if (continuesSound) {
+                    // After the sounds are stopped at the start of the page, which is in its text
+                    const continues = booleanValue(page.attributes.get("continuesound")) ?? false;
+                    lines.push(`{{sound ${quote(sound)}}}{{set ${quote(continueAttribute)} ${continues}}}`);
+                }
+                else {
+                    directives.push(`@sound ${sound}`);
+                }
             }
 
             lines.push(convertQuestText(stringAttribute(page, "description"), ctx, "block"));
@@ -361,6 +385,7 @@ function convertGame(game: QuestGame, options: QuestConversionOptions): QuestCon
     // The master section runs with every section, as the game's roomenter script runs on every page
     const master: string[] = [];
     if (clearLastPage) master.push("@clear");
+    if (stopInMaster) master.push(...stopSounds.directives, ...stopSounds.lines);
     if (roomEnter) {
         const ctx: TextContext = {
             section: "",
@@ -378,7 +403,6 @@ function convertGame(game: QuestGame, options: QuestConversionOptions): QuestCon
             },
         };
         const script = convertScript(roomEnter, scriptContext(ctx));
-        if (script.lines.some(playsSound)) soundStops = true;
         master.push(...script.directives);
         const body = finishText(escapeLineStarts(script.lines.join("\n")));
         if (body) master.push(body);
@@ -390,9 +414,6 @@ function convertGame(game: QuestGame, options: QuestConversionOptions): QuestCon
         if (value.type == "script" && setting != "roomenter" && value.value.trim()) {
             addProblem({ text: setting, reason: `The game's "${setting}" script can't be converted yet: ${oneLine(value.value)}` });
         }
-    }
-    if (soundStops) {
-        addProblem({ text: "sound", reason: "Sounds play to the end. In Quest, a sound stopped when the player went to another page, unless the page with the sound was set to continue playing it." });
     }
     for (const file of game.javascript) {
         addProblem({ text: file, reason: "The game's JavaScript was written for Quest, so it isn't part of the story." });

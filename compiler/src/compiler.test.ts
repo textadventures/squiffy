@@ -835,6 +835,19 @@ Nothing to hear. {{sound}}`;
     expect(js).toContain('"music": null');
 });
 
+test("@sound stop stops the sounds playing, and isn't a file to load", async () => {
+    const script = `[[start]]:
+@sound stop
+@sound bell.mp3
+Hello. {{stopsounds}}`;
+    const result = await compile({ scriptBaseFilename: "test.squiffy", script });
+
+    assertSuccess(result);
+    const { sections, audio } = result.output.story;
+    expect(sections.start.sounds).toEqual(["stop", "bell.mp3"]);
+    expect(audio).toEqual(["bell.mp3"]);
+});
+
 test("A story with no sound has no audio list (#444)", async () => {
     const result = await compile({ scriptBaseFilename: "test.squiffy", script: "Hello." });
     assertSuccess(result);

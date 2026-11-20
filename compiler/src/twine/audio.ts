@@ -36,14 +36,19 @@ export interface AudioAction {
     volume?: number;
 }
 
-// What a track does, as Squiffy: {{music}}, {{stopmusic}}, {{sound}}, or nothing
+// What a track does, as Squiffy: {{music}}, {{stopmusic}}, {{sound}}, {{stopsounds}}, or nothing
 export function audioHelper(ctx: PassageContext, raw: string, audio: StoryAudio, track: string, action: AudioAction): string {
     const looping = action.loop || audio.looping.has(track);
     const fade = action.fade === undefined ? "" : ` fade=${action.fade}`;
     if (action.stop) {
         if (looping) return `{{stopmusic${fade}}}`;
-        ctx.story.note("audio-stop-sound", raw, "Squiffy can't stop a sound that plays once, only music (a track that loops), so these have been left out");
-        return "";
+        // Squiffy stops every sound playing once, which is the same thing if there's only one
+        const sounds = new Set([...audio.files.keys()].filter(t => !audio.looping.has(t)));
+        sounds.add(track);
+        if (sounds.size > 1) {
+            ctx.story.note("audio-stop-sound", raw, "Squiffy stops every sound that's playing once, not just one track, so these stop the others too");
+        }
+        return "{{stopsounds}}";
     }
     if (!action.play) return "";
     const file = quote(trackFile(audio, track));
@@ -57,9 +62,13 @@ export function audioHelper(ctx: PassageContext, raw: string, audio: StoryAudio,
     return `{{sound ${file}${volume}}}`;
 }
 
+// Stops every sound and the music, as <<masteraudio stop>> and (masteraudio: "stopall") do
+export const STOP_ALL_AUDIO = "{{stopsounds}}{{stopmusic}}";
+
 // A helper that can be a directive, @music or @sound, for the start of a passage, or null
 export function audioDirective(helper: string): string | null {
     if (helper == "{{stopmusic}}") return "@music stop";
+    if (helper == "{{stopsounds}}") return "@sound stop";
     const m = /^\{\{(music|sound) "([^"&{}]+)"\}\}$/.exec(helper);
     if (!m || m[2].trim() != m[2] || m[2] == "stop") return null;
     return `@${m[1]} ${m[2]}`;

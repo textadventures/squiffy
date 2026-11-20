@@ -118,14 +118,15 @@ Play the story through after converting it. Twine and Squiffy work differently i
 | `<<audio "theme" loop play>>`, `<<audio "theme" stop>>` | `@music theme.mp3`, `@music stop`, or `{{music "theme.mp3"}}` and `{{stopmusic}}` later on: see [Sound](#sound) |
 | `<<audio "door" play>>`, `<<audio "door" volume 0.5 play>>` | `@sound door.mp3`, `{{sound "door.mp3" volume=0.5}}` |
 | `<<audio "theme" fadeoverto 3 0>>` | `{{stopmusic fade=3}}` |
+| `<<audio "door" stop>>`, `<<masteraudio stop>>`, `(masteraudio: "stopall")` | `@sound stop` or `{{stopsounds}}`, which stops every sound playing once, and for `masteraudio`, `@music stop` or `{{stopmusic}}` too |
 
 ### Sound
 
-A track that the story sets to loop anywhere becomes [music](/images-and-files/#music-and-sound), which keeps playing from one section to the next until it's changed or stopped. Any other track becomes a sound, which plays once. At the start of a passage, they're `@music` and `@sound`, and later on, `{{music}}`, `{{stopmusic}}` and `{{sound}}`.
+A track that the story sets to loop anywhere becomes [music](/images-and-files/#music-and-sound), which keeps playing from one section to the next until it's changed or stopped. Any other track becomes a sound, which plays once. At the start of a passage, they're `@music` and `@sound`, and later on, `{{music}}`, `{{stopmusic}}`, `{{sound}}` and `{{stopsounds}}`.
 
 The tracks get their files from SugarCube's `<<cacheaudio "theme" "music/theme.mp3">>`, or the Harlowe Audio Library's `hal.tracks` passage and `(newtrack:)`. Where a track has more than one file, the MP3 is used. The sound files aren't copied, so put them in the story's folder, where the converted story expects to find them.
 
-Squiffy fades from one piece of music to the next by itself, and it can't stop a sound that plays once, pause a track or change the volume of music. Stopping a sound that plays once, and the volume of music, are left out, and the rest are left as comments. All of them are listed in `twine-import.txt`.
+Squiffy fades from one piece of music to the next by itself, and it can't pause a track or change the volume of music. Squiffy stops every sound that plays once at the same time, so stopping one track stops the others too: if the story has more than one, `twine-import.txt` says so. The volume of music is left out, and the rest are left as comments, and they're listed in `twine-import.txt` too.
 
 ## What doesn't convert
 

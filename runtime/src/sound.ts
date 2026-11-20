@@ -76,6 +76,12 @@ export class Sound {
         audio.play()?.catch(done);
     }
 
+    // Stops the sounds playing once. Music carries on.
+    stopSounds() {
+        for (const audio of this.effects) audio.pause();
+        this.effects.clear();
+    }
+
     isMuted() {
         return this.muted;
     }
@@ -91,8 +97,7 @@ export class Sound {
     dispose() {
         this.disposed = true;
         this.stopMusic(0);
-        for (const audio of this.effects) audio.pause();
-        this.effects.clear();
+        this.stopSounds();
         this.removeGestureListeners();
     }
 
