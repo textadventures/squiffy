@@ -47,7 +47,7 @@ body:has(.dark) {
 
 ## Transitions
 
-While a `@transition` (dynamic-text.md) plays, the element has classes `squiffy-transition` and the name, and `--squiffy-transition-time`, so CSS can add one: `.squiffy-transition.swirl { animation-name: swirl; }` with `@keyframes swirl { from { opacity: 0; transform: rotate(-10deg); } }`.
+While a `@transition` (dynamic-text.md) plays, the element has classes `squiffy-transition` and the name, and `--squiffy-transition-time`, so CSS can add one: `.squiffy-transition.swirl { animation-name: swirl; }` with `@keyframes swirl { from { opacity: 0; transform: rotate(-10deg); } }`. `@leave` plays the same animation reversed, with `squiffy-leave` too.
 
 ## Styling some text
 

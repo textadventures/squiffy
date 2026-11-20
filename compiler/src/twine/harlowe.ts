@@ -1374,7 +1374,7 @@ class Writer {
             case "transitionarrive":
             case "t8narrive":
                 this.ctx.story.note("harlowe-transition-link", m.raw.substring(0, m.raw.indexOf(":") + 1) + ")",
-                    "Squiffy sets how a passage appears with @transition in that passage, not on the link to it, so these have been left out");
+                    "Squiffy sets how a passage appears and goes with @transition and @leave in a passage, not on a link, so these have been left out");
                 return m.hook ? this.hookContent(m.hook, state) : "";
             case "nobr":
             case "collapse":

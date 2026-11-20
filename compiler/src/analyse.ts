@@ -123,6 +123,11 @@ class TextContainer {
     // @transition (#489): how it appears, and how long that takes in milliseconds
     transition?: string;
     transitionTime?: number;
+    // @leave: how the old text goes when this clears the screen, and how long that takes
+    leave?: string;
+    leaveTime?: number;
+    // Where @leave is, to say if there's nothing for it to do
+    leaveNode?: { filename: string | undefined, range: Range };
     // The text after links have been converted
     output = "";
 
@@ -437,17 +442,22 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
                             `"${node.value}" can't be the name of a transition, so this was ignored. A name is letters, numbers, - and _, starting with a letter.`, lineCount);
                         return true;
                     }
-                    target.transition = node.value;
-                    target.transitionTime = undefined;
+                    let time: number | undefined;
                     if (node.time !== undefined) {
-                        const time = parseTransitionTime(node.time);
+                        time = parseTransitionTime(node.time);
                         if (time === undefined) {
                             report("warning", "squiffy/transition", filename, lineRange(node),
                                 `"${node.time}" isn't a time, such as 1s or 400ms, so the transition takes its usual time.`, lineCount);
                         }
-                        else {
-                            target.transitionTime = time;
-                        }
+                    }
+                    if (node.directive == "leave") {
+                        target.leave = node.value;
+                        target.leaveTime = time;
+                        target.leaveNode = { filename, range: lineRange(node) };
+                    }
+                    else {
+                        target.transition = node.value;
+                        target.transitionTime = time;
                     }
                     return true;
                 }
@@ -696,6 +706,25 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
                 found.range.start.line + 1);
         }
     });
+
+    // @leave only does something when the screen is cleared: by the section or passage it's in, or by
+    // one that it's for, as the master section's @leave is for every section
+    const master = story.sections[""];
+    const clears = (s: Section) => s.clear || Object.values(s.passages).some(p => p.clear);
+    const anyClear = Object.values(story.sections).some(clears);
+    const checkLeave = (target: TextContainer, used: boolean) => {
+        if (!target.leaveNode || target.leave == "none" || used) return;
+        report("warning", "squiffy/transition", target.leaveNode.filename, target.leaveNode.range,
+            "@leave is for when the screen is cleared, but nothing it's for has @clear, so it does nothing.",
+            target.leaveNode.range.start.line + 1);
+    };
+    for (const section of Object.values(story.sections)) {
+        const masterPassageClears = !!(section.passages[""]?.clear || master?.passages[""]?.clear);
+        checkLeave(section, section === master ? anyClear : clears(section) || !!master?.clear || (master ? Object.values(master.passages).some(p => p.clear) : false));
+        for (const passage of Object.values(section.passages)) {
+            checkLeave(passage, passage.clear || masterPassageClears || (passage.name == "" && clears(section)));
+        }
+    }
 
     const analysis: Analysis = {
         success,

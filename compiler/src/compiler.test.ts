@@ -902,6 +902,61 @@ Nothing.`;
     expect(sections.start.text).not.toContain("@transition");
 });
 
+test("@leave puts how the old text goes in the output, with its time", async () => {
+    const script = `[[start]]:
+Hello. [[cave]] [look]
+
+[look]:
+@clear
+@leave zoom 300ms
+Look.
+
+[[cave]]:
+@clear
+@leave fade 2s
+Dark.`;
+    const result = await compile({ scriptBaseFilename: "test.squiffy", script });
+
+    assertSuccess(result);
+    const { sections } = result.output.story;
+    expect(sections.cave).toMatchObject({ leave: "fade", leaveTime: 2000 });
+    expect(sections.start.passages!.look).toMatchObject({ leave: "zoom", leaveTime: 300 });
+    expect(sections.start).not.toHaveProperty("leave");
+    expect(sections.cave.text).not.toContain("@leave");
+});
+
+test("@leave warns when nothing it's for clears the screen", async () => {
+    const leaveWarnings = async (script: string) => (await analyse({ script })).diagnostics
+        .filter(d => d.code == "squiffy/transition").map(d => d.range.start.line);
+
+    // In a section, and a passage, with no @clear
+    expect(await leaveWarnings(`[[start]]:
+@leave fade
+Hello. [p]
+
+[p]:
+@leave fade
+P.`)).toEqual([1, 5]);
+    // A section's is for its passages that clear, and the master section's for every section
+    expect(await leaveWarnings(`[[]]:
+@leave fade
+
+[[start]]:
+@leave fade
+Hello. [p]
+
+[p]:
+@clear
+P.`)).toEqual([]);
+    // The master section clears every section
+    expect(await leaveWarnings(`[[]]:
+@clear
+
+[[start]]:
+@leave fade
+Hello.`)).toEqual([]);
+});
+
 test("@transition warns about a name or time it can't use (#489)", async () => {
     const analysis = await analyse({ script: `[[start]]:
 @transition fade soon

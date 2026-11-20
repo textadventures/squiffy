@@ -330,7 +330,7 @@ span.squiffy-style:is(.shake, .shudder, .rumble, .sway, .buoy, .mirror, .upside-
 
 /* Transitions for how a section or passage appears (#489), from @transition. The element has
    squiffy-transition and the transition's name as classes while it plays, and @transition's
-   time in --squiffy-transition-time. A story's stylesheet can add its own, e.g.
+   time in --squiffy-transition-time. @leave plays them backwards, with squiffy-leave too. A story's stylesheet can add its own, e.g.
    .squiffy-transition.swirl { animation-name: swirl; } */
 .squiffy-transition {
     animation-duration: var(--squiffy-transition-time, 0.5s);
@@ -376,6 +376,11 @@ span.squiffy-style:is(.shake, .shudder, .rumble, .sway, .buoy, .mirror, .upside-
 
 @keyframes squiffy-transition-slide-right {
     from { opacity: 0; transform: translateX(-3em); }
+}
+
+/* @leave plays the same animations backwards, as the old text goes before the screen is cleared */
+.squiffy-transition.squiffy-leave {
+    animation-direction: reverse;
 }
 
 /* So sliding in from the side doesn't make the page scroll sideways */

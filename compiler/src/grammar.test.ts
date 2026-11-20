@@ -64,6 +64,7 @@ describe("TextMate grammar", () => {
     test("@transition (#489)", () => {
         expect(scopeOf("@transition fade 1s", 0, "transition")).toContain("keyword.control.directive.squiffy");
         expect(scopeOf("@transition fade 1s", 0, "fade 1s")).toContain("string.unquoted.squiffy");
+        expect(scopeOf("@leave fade 1s", 0, "leave")).toContain("keyword.control.directive.squiffy");
     });
 
     test("headers", () => {

@@ -184,6 +184,9 @@ export interface Section {
     // @transition (#489): how it appears, or "none", and how long that takes in milliseconds
     transition?: string;
     transitionTime?: number;
+    // @leave: how the old text goes when this clears the screen, or "none", and how long that takes
+    leave?: string;
+    leaveTime?: number;
     attributes?: string[],
     jsIndex?: number;
     passages?: Record<string, Passage>;
@@ -202,6 +205,9 @@ export interface Passage {
     // @transition (#489): how it appears, or "none", and how long that takes in milliseconds
     transition?: string;
     transitionTime?: number;
+    // @leave: how the old text goes when this clears the screen, or "none", and how long that takes
+    leave?: string;
+    leaveTime?: number;
     // @repeat: its links stay clickable, and clicking one doesn't count towards @1, @2... and @last (#104)
     repeat?: boolean;
     attributes?: string[];

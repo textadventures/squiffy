@@ -57,6 +57,8 @@ To link to the next section from inside `{{#animate}}`, use `[[Begin>]]` and a `
 
 `@transition fade` makes a section or passage fade in as it appears, with an optional time: `@transition slide-up 1s` (default 0.5s). Built in: `fade` (or `dissolve`), `slide-up`, `slide-down`, `slide-left`, `slide-right`, `zoom`, `blur`, `pulse`, `rumble`, `shudder`, `flicker`. A passage uses its section's unless it has its own. In the master section it's for every section and passage; `@transition none` turns it off for one. They don't replay on Back or loading a save, and are plain fades under reduced motion. Custom ones: styling.md.
 
+`@leave fade` (with `@clear`) plays a transition backwards on the old text before the screen clears, e.g. `@clear` + `@leave slide-up 1s` + `@transition fade`. Same names, times, inheritance, master section and `none` as `@transition`. Clicks wait until it's done, so keep it short. A `@leave` where nothing it's for clears the screen is a warning.
+
 ## Moving on after a delay
 
 ```squiffy
