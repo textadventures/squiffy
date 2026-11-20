@@ -7,7 +7,7 @@
 
 import { conditional, display, isBoolean, lengthOf, member, print, randomInteger, targetName, skipBalanced, skipString, Tokens, Unconvertible, unescapeString } from "./expression.js";
 import type { BinaryOp, Expr } from "./expression.js";
-import { audioHelper, leadingAudio, pickSource } from "./audio.js";
+import { audioHelper, leadingAudio, pickSource, STOP_ALL_AUDIO } from "./audio.js";
 import type { AudioAction, StoryAudio } from "./audio.js";
 import { dynamicSectionLink, escapeText, isUrl, urlLink, passageLink, sectionLink, setter } from "./convert.js";
 import type { ConvertedPassage, PassageContext } from "./convert.js";
@@ -1387,7 +1387,8 @@ class Writer {
                 // Found before the story's converted
                 return "";
             case "masteraudio":
-                throw new Unconvertible("(masteraudio:), which changes all the story's sound at once");
+                if (args.length == 1 && String(literal(args[0])).toLowerCase() == "stopall") return leadingAudio(STOP_ALL_AUDIO, state);
+                throw new Unconvertible("(masteraudio:), which changes all the story's sound at once, except to stop it");
             case "playlist":
             case "newplaylist":
                 throw new Unconvertible("playlists");

@@ -7,7 +7,7 @@
 
 import { display, isDynamicTarget, lengthOf, member as memberOf, print, randomInteger, skipString, targetName, Tokens, Unconvertible, unescapeString } from "./expression.js";
 import type { BinaryOp, Expr } from "./expression.js";
-import { audioHelper, leadingAudio, pickSource } from "./audio.js";
+import { audioHelper, leadingAudio, pickSource, STOP_ALL_AUDIO } from "./audio.js";
 import type { AudioAction, StoryAudio } from "./audio.js";
 import { dynamicSectionLink, escapeText, isUrl, urlLink, passageLink, sectionLink, setter } from "./convert.js";
 import type { ConvertedPassage, PassageContext } from "./convert.js";
@@ -1177,8 +1177,9 @@ class Writer {
         const results = new Set<string>();
         for (const id of ids) {
             if (id.startsWith(":")) {
-                // A group: only stopping all the music can be converted
+                // A group: only stopping it can be converted. Looped tracks are music.
                 if (!action.stop || !/^:(all|playing|looped)$/.test(id)) throw new Unconvertible("audio groups");
+                if (id != ":looped") results.add("{{stopsounds}}");
                 results.add(`{{stopmusic${action.fade === undefined ? "" : ` fade=${action.fade}`}}}`);
                 continue;
             }
@@ -1406,7 +1407,8 @@ class Writer {
                 // sound file when the story starts
                 return "";
             case "masteraudio":
-                throw new Unconvertible("<<masteraudio>>, which changes all the story's sound at once");
+                if (args.length == 1 && args[0].toLowerCase() == "stop") return leadingAudio(STOP_ALL_AUDIO, state);
+                throw new Unconvertible("<<masteraudio>>, which changes all the story's sound at once, except to stop it");
             case "playlist":
             case "createplaylist":
             case "removeplaylist":

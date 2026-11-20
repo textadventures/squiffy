@@ -60,7 +60,7 @@ Play the story through after converting it. The editor's [story map](/story-map/
 | A page's links | `[[Go left]](Page2)` |
 | A link page, to a web address | A link to that address, which opens in a new tab |
 | A picture or YouTube video | `<img>` or a YouTube player, before the page's text |
-| A page's sound | `@sound` (see [Music and sound](/images-and-files/#music-and-sound)) |
+| A page's sound | `@sound` (see [Music and sound](/images-and-files/#music-and-sound)). As in Quest, each page starts by stopping the sounds and music, with `@sound stop` and `@music stop`, unless the last page with a sound was set to continue playing it: then it's `{{#unless continuesound}}`, and pages with a sound set `continuesound` |
 | `{page:Page2}`, `{page:Page2:Go left}` | `[[Page2]]`, `[[Go left]](Page2)` |
 | `{if lamp:...}`, `{if not lamp:...}` | `{{#if lamp}}...{{/if}}`, `{{#if not lamp}}...{{/if}}` |
 | `{if gold>5:...}`, `{if mood=happy:...}` | `{{#if gold > 5}}...{{/if}}`, `{{#if mood = "happy"}}...{{/if}}` |
@@ -95,7 +95,7 @@ A page's script runs before its text is shown, so it becomes text at the start o
 | `GetInput () { game.name = result }` | A text box, and a **Continue** link to a section that runs the rest, `{{set "name" input}}`, and shows the page's links again |
 | `ClearScreen`, before the script shows anything | `@clear` |
 | `picture ("map.png")`, `play sound ("door.mp3", false, false)` | `<img>`, `{{sound "door.mp3"}}` |
-| `play sound ("rain.mp3", false, true)`, which loops, and `stop sound` | [Music](/images-and-files/#music-and-sound), `{{music "rain.mp3"}}`, and `{{stopmusic}}` |
+| `play sound ("rain.mp3", false, true)`, which loops, and `stop sound` | [Music](/images-and-files/#music-and-sound), `{{music "rain.mp3"}}`, and `{{stopsounds}}{{stopmusic}}` |
 | `PrintCentered`, `TextFX_Typewriter`, `DisplayHttpLink`, `ShowYouTube` | Centred text, `{{#animate "typewriter"}}`, a web link, a YouTube player |
 | `SetBackgroundColour`, `SetForegroundColour`, `SetFontName`, `SetWebFontName`, `SetFontSize` | A `<style>` that sets Squiffy's [style variables](/styling/) from then on |
 
@@ -115,6 +115,5 @@ A link that a script adds or removes is shown with `{{#if}}`, and the scripts se
 - **Expressions in text**: `{either ...}`, `{eval:...}` and `{=...}`.
 - **Commands for Quest's text adventures**, such as `{object:...}` and `{exit:...}`, and `{select:...}` and `{rndalt:...}`.
 - **Links and other commands in `{random:...}`.** Its choices can be text, formatting and images.
-- **When sounds stop.** A sound that plays once plays to the end, and `stop sound` only stops music. In Quest, a sound stopped when the player went to another page, unless the page with the sound was set to continue playing it. A sound that loops becomes music, which carries on from one page to the next until the story stops it or plays other music.
 - **`TextFX_Unscramble`**, which is typed out instead.
 - **JavaScript** written for Quest.

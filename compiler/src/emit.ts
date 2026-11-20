@@ -31,7 +31,7 @@ interface OutputSection {
     clear?: boolean;
     // @music (#444): the file to play, or null to stop it
     music?: string | null;
-    // @sound: files to play once
+    // @sound: files to play once, in order, with "stop" for @sound stop, which stops the sounds playing
     sounds?: string[];
     attributes?: string[];
     jsIndex?: number;
@@ -44,7 +44,7 @@ interface OutputPassage {
     clear?: boolean;
     // @music (#444): the file to play, or null to stop it
     music?: string | null;
-    // @sound: files to play once
+    // @sound: files to play once, in order, with "stop" for @sound stop, which stops the sounds playing
     sounds?: string[];
     // Its links aren't disabled when clicked (#104)
     repeat?: boolean;
@@ -84,7 +84,7 @@ function addSounds(output: OutputSection | OutputPassage, from: { music?: string
     if (from.music !== undefined) output.music = from.music;
     if (from.sounds.length) output.sounds = from.sounds;
     if (from.music) audio.add(from.music);
-    from.sounds.forEach(file => audio.add(file));
+    from.sounds.forEach(file => { if (file != "stop") audio.add(file); });
     for (const match of from.output.matchAll(SOUND_HELPER)) audio.add(match[2]);
 }
 

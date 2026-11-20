@@ -201,11 +201,11 @@ export interface EndNode {
     range: Range;
 }
 
-// @music file, @music stop or @sound file (#444)
+// @music file, @music stop, @sound file or @sound stop (#444)
 export interface SoundNode {
     type: "sound";
     directive: "music" | "sound";
-    // The file, or "stop" for @music stop
+    // The file, or "stop" for @music stop or @sound stop
     value: string;
     valueRange: Range;
     range: Range;

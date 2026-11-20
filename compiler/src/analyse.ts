@@ -116,7 +116,7 @@ class TextContainer {
     attributes: string[] = [];
     // @music (#444): the file to play, or null for @music stop. Undefined leaves it as it is.
     music?: string | null;
-    // @sound: the files to play once
+    // @sound: the files to play once, in order, with "stop" for @sound stop
     sounds: string[] = [];
     // The text after links have been converted
     output = "";

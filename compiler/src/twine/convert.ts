@@ -77,7 +77,7 @@ export const reservedAttributes = new Set([
     "live", "animate", "eq", "ne", "gt", "gte", "lt", "lte", "and", "or", "not", "add", "sub", "mul", "div", "mod",
     "round", "floor", "ceil", "abs", "min", "max", "upper", "lower", "capitalise", "capitalize", "cond",
     "if", "unless", "each", "with", "lookup", "log", "else", "this", "turns", "previous", "previous_section",
-    "true", "false", "null", "undefined", "music", "stopmusic", "sound",
+    "true", "false", "null", "undefined", "music", "stopmusic", "sound", "stopsounds",
 ]);
 
 export class StoryContext {
@@ -700,7 +700,7 @@ function oneLine(text: string): string {
 // Directives the compiler would read at the start of a line
 const directiveLine = /^@(title|import|start|set|unset|inc|dec|ui|clear|end)\b/;
 // Lines that only hold helpers that write nothing
-const silentHelper = /\{\{(?:!--[\s\S]*?--|![^}]*|~?\s*(?:#if|#unless|else|\/if|\/unless|set|unset|inc|dec|goto|music|stopmusic|sound|append|prepend|remove|#label|\/label|#replace|\/replace|#animate|\/animate)\b(?:[^{}]|\{\{[^{}]*\}\})*)\}\}/g;
+const silentHelper = /\{\{(?:!--[\s\S]*?--|![^}]*|~?\s*(?:#if|#unless|else|\/if|\/unless|set|unset|inc|dec|goto|music|stopmusic|sound|stopsounds|append|prepend|remove|#label|\/label|#replace|\/replace|#animate|\/animate)\b(?:[^{}]|\{\{[^{}]*\}\})*)\}\}/g;
 
 function isSilent(line: string): boolean {
     return line.replace(silentHelper, "").trim() == "";

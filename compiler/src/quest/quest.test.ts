@@ -174,8 +174,11 @@ describe("converting gamebooks", () => {
             + page("Next", "Listen.", [], "<sound>drip.mp3</sound><youtube>https://www.youtube.com/watch?v=dQw4w9WgXcQ</youtube>"),
             "", noTitle,
         ), { files: ["cave.png", "helper.js"] });
-        expect(section(script, "Start")).toBe("<img class=\"quest-picture\" src=\"cave.png\" alt=\"\">\n\nLook.\n\n[[On]](Next)");
+        // Quest stops the sounds playing when the player goes to another page
+        expect(section(script, "Start")).toBe("@sound stop\n@music stop\n<img class=\"quest-picture\" src=\"cave.png\" alt=\"\">\n\nLook.\n\n[[On]](Next)");
         expect(section(script, "Next")).toBe([
+            "@sound stop",
+            "@music stop",
             "@sound drip.mp3",
             "@end",
             "<iframe class=\"quest-youtube\" width=\"560\" height=\"315\" src=\"https://www.youtube.com/embed/dQw4w9WgXcQ\" allowfullscreen></iframe>",
@@ -183,19 +186,33 @@ describe("converting gamebooks", () => {
             "Listen.",
         ].join("\n"));
         expect(result.assets).toEqual(["cave.png", "drip.mp3"]);
-        expect(result.problems.map(p => p.text)).toEqual(["sound", "drip.mp3"]);
+        expect(result.problems.map(p => p.text)).toEqual(["drip.mp3"]);
         expect(JSON.parse(result.files["squiffy.json"]).exclude).toEqual(["helper.js"]);
     });
 
     test("a sound that carries on to the next page", async () => {
         const { script, result } = await convert(gamebook(
             page("Start", "Thunder.", [["Next", "On"]], "<sound>thunder.mp3</sound><continuesound />")
-            + page("Next", "Quiet."),
+            + page("Next", "Rain.", [["Last", "On"]], "<sound>rain.mp3</sound>")
+            + page("Last", "Quiet."),
             "", noTitle,
-        ), { files: ["thunder.mp3"] });
-        expect(section(script, "Start")).toBe("@sound thunder.mp3\nThunder.\n\n[[On]](Next)");
-        // Quest doesn't stop it either, so there's nothing to say about it
+        ), { files: ["thunder.mp3", "rain.mp3"] });
+        // As in Quest, the sounds stop at the start of a page unless the last page with a sound
+        // was set to continue playing it
+        const stop = "{{#unless continuesound}}{{stopsounds}}{{stopmusic}}{{/unless}}";
+        expect(section(script, "Start")).toBe(`${stop}\n{{sound "thunder.mp3"}}{{set "continuesound" true}}\nThunder.\n\n[[On]](Next)`);
+        expect(section(script, "Next")).toBe(`${stop}\n{{sound "rain.mp3"}}{{set "continuesound" false}}\nRain.\n\n[[On]](Last)`);
+        expect(section(script, "Last")).toBe(`@end\n${stop}\nQuiet.`);
         expect(result.problems).toEqual([]);
+    });
+
+    test("sounds are stopped in the master section if the script for every page plays one", async () => {
+        const { script } = await convert(gamebook(
+            page("Start", "Hello."),
+            "<roomenter type=\"script\"><![CDATA[play sound (\"step.mp3\", false, false)]]></roomenter>", noTitle,
+        ));
+        expect(section(script, "")).toBe("@sound stop\n@music stop\n{{sound \"step.mp3\"}}");
+        expect(section(script, "Start")).toBe("@end\nHello.");
     });
 
     test("clearing the screen between pages", async () => {
@@ -516,14 +533,17 @@ describe("scripts", () => {
             play sound ("theme.mp3", true, true)
             stop sound`, "", [["End", "On"]]));
         expect(section(script, "Start")).toBe([
+            "@sound stop",
+            "@music stop",
             "{{sound \"door.mp3\"}}",
             "Creak.",
             "{{music \"theme.mp3\"}}",
-            "{{stopmusic}}",
+            "{{stopsounds}}{{stopmusic}}",
             "",
             "[[On]](End)",
         ].join("\n"));
-        expect(problems.map(p => p.text)).toEqual(["play sound (\"theme.mp3\", true, true)", "sound"]);
+        expect(section(script, "End")).toBe("@sound stop\n@music stop\n@end\nThe end.");
+        expect(problems).toEqual([]);
     });
 
     test("pictures, sounds and how the page looks", async () => {
@@ -537,6 +557,8 @@ describe("scripts", () => {
             SetWebFontName ("Press Start 2P")
             DisplayHttpLink ("Our site", "http://example.com", true)`, "", [["End", "On"]]));
         expect(section(script, "Start")).toBe([
+            "@sound stop",
+            "@music stop",
             "@clear",
             "<img src=\"map.png\" alt=\"\"><br>",
             "{{music \"rain.mp3\"}}",

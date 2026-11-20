@@ -275,6 +275,7 @@ See [Music and sound](/images-and-files/#music-and-sound) for examples.
 | `{{music}}` | `"file" [fade=seconds]` | Play music, which keeps playing from one section to the next until it's changed. The old music fades out and the new music fades in, over a second unless `fade=` says otherwise | `{{music "battle.mp3" fade=3}}` |
 | `{{stopmusic}}` | `[fade=seconds]` | Fade out the music | `{{stopmusic}}` |
 | `{{sound}}` | `"file" [volume=0 to 1]` | Play a sound once | `{{sound "door.mp3"}}` |
+| `{{stopsounds}}` | | Stop the sounds that are playing once. The music carries on | `{{stopsounds}}` |
 
 `{{music}}` and `{{sound}}` on their own, without a file, still show an attribute called `music` or `sound`.
 

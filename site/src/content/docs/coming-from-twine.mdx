@@ -234,6 +234,7 @@ See [Objects](/attributes/#objects).
 | Play music that carries on | `(track: "theme", "loop", true)` and `(track: "theme", "play")` | `<<audio "theme" loop play>>` | `@music theme.mp3` |
 | Stop the music | `(track: "theme", "stop")` | `<<audio "theme" stop>>` | `@music stop` |
 | Play a sound once | `(track: "door", "play")` | `<<audio "door" play>>` | `@sound door.mp3`, or `{{sound "door.mp3"}}` |
+| Stop the sounds | `(track: "door", "stop")` | `<<audio "door" stop>>` | `@sound stop`, or `{{stopsounds}}`, which stops every sound playing once |
 
 Squiffy fades from one track to the next by itself, and players get a mute button above the story. See [Music and sound](/images-and-files/#music-and-sound).
 

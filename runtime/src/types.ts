@@ -133,7 +133,7 @@ export interface Section {
     clear?: boolean;
     // @music (#444): the file to play, or null to stop it
     music?: string | null;
-    // @sound: files to play once
+    // @sound: files to play once, in order, with "stop" for @sound stop
     sounds?: string[];
     attributes?: string[],
     jsIndex?: number;
@@ -146,7 +146,7 @@ export interface Passage {
     clear?: boolean;
     // @music (#444): the file to play, or null to stop it
     music?: string | null;
-    // @sound: files to play once
+    // @sound: files to play once, in order, with "stop" for @sound stop
     sounds?: string[];
     // @repeat: its links stay clickable, and clicking one doesn't count towards @1, @2... and @last (#104)
     repeat?: boolean;

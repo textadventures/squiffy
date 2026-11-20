@@ -189,6 +189,31 @@ Start. {{music "theme.mp3" fade=0}}{{sound "bell.mp3" volume=0.5}} [[Next]](next
     expect(music()).toEqual([]);
 });
 
+test("@sound stop and {{stopsounds}} stop the sounds playing once, and the music carries on", async () => {
+    const { element } = await start(`
+@music theme.mp3
+{{sound "bell.mp3"}}{{sound "rain.mp3"}}Start. [[Next]](next)
+
+[[next]]:
+@sound stop
+@sound door.mp3
+Next. [[Again]](again)
+
+[[again]]:
+{{stopsounds}}Quiet.
+`);
+    expect(sounds()).toEqual(["bell.mp3", "rain.mp3"]);
+
+    await click(element, "Next");
+    // Stopped before the section's own sound plays
+    expect(sounds()).toEqual(["door.mp3"]);
+    expect(music()).toEqual(["theme.mp3"]);
+
+    await click(element, "Again");
+    expect(sounds()).toEqual([]);
+    expect(music()).toEqual(["theme.mp3"]);
+});
+
 test("{{music}} and {{sound}} on their own are still attributes", async () => {
     const { element } = await start(`
 @set music = jazz
