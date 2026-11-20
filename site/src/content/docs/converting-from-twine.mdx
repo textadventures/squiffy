@@ -113,6 +113,7 @@ Play the story through after converting it. Twine and Squiffy work differently i
 | `<span id="box">`, `<<replace "#box">>` | `{{#label "box"}}`, `{{#replace "box"}}` |
 | `either("a", "b")`, `random(1, 6)` | `(random (array "a" "b"))`, `(random (array 1 2 3 4 5 6))` |
 | `<<cycle "$size">>`, `<<textbox "$name">>`, `<<listbox>>` | `{{rotate ... set="size"}}`, `<input data-attribute="name">`, `<select>` |
+| `<<textbox "$name" "" "Next">>`, which goes to a passage when Enter is pressed | `<input data-attribute="name" data-section="Next">` |
 | `<<for _i, _item range $bag>>`, `<<for _i to 0; _i lt $bag.length; _i++>>` | [`{{#each bag}}`](/attributes/#going-through-an-array), with `_item` and `$bag[_i]` as `{{this}}`, and `_i` as `{{@index}}` |
 | `<<for _i to 1; _i lte $n; _i++>>`, counting up or down by 1 | `{{#each (range 1 n)}}`, with `_i` as `{{this}}` |
 | `$bag.join()`, `.sort()`, `.shuffle()`, `.slice()`, `.indexOf()`, `.count()`, `.first()`, `.last()` | `(join bag ",")`, `(sort bag)`, `(shuffle bag)`, `(slice bag ...)`, `(indexof bag ...)`, `(count bag ...)`, `(first bag)`, `(last bag)`. Squiffy's `sort` and `shuffle` don't change the array, so `<<run $bag.sort()>>` on its own isn't converted |

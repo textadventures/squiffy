@@ -189,6 +189,7 @@ How to write in Squiffy what you'd write in Harlowe or SugarCube.
 | Random text | `(either: "a", "b")` | `<<print either("a", "b")>>` | `{{random (array "a" "b")}}` |
 | A link that cycles through options | `(cycling-link: bind $size, "S", "L")` | `<<cycle "$size">><<option "S">><<option "L">><</cycle>>` | `{{rotate (array "S" "L") set="size"}}` |
 | A text box | `(input-box: bind $name)` | `<<textbox "$name" "">>` | `<input data-attribute="name">` |
+| A text box that goes to a passage when Enter is pressed | | `<<textbox "$name" "" "Next">>` | `<input data-attribute="name" data-section="Next">` |
 
 See [Dynamic text](/dynamic-text/) and [Player input](/player-input/).
 
@@ -270,7 +271,6 @@ Squiffy fades from one track to the next by itself, and players get a mute butto
 Some things in Harlowe and SugarCube aren't in Squiffy yet. Each one is planned, and its GitHub issue says how it might work, so you can follow it or add your thoughts:
 
 - **More text effects**, like Harlowe's `"shudder"` and `"blur"`, and a short way to style some text, like SugarCube's `@@.class;...@@` ([#453](https://github.com/textadventures/squiffy/issues/453)). Use HTML and [CSS](/styling/), and [`{{#animate}}`](/dynamic-text/#animation).
-- **A text box that moves on when Enter is pressed** ([#454](https://github.com/textadventures/squiffy/issues/454)).
 
 ### Left out on purpose
 

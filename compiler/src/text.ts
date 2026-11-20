@@ -121,7 +121,7 @@ class MappedString {
 // Offsets below are into the original text.
 export interface TextLink {
     linkType: "section" | "passage";
-    form: "named" | "unnamed" | "next";
+    form: "named" | "unnamed" | "next" | "input";
     text?: string;
     // The target as written (see LinkNode.target). For next links, the setters after ">".
     target: string;
@@ -364,6 +364,29 @@ export function transformText(text: string, getNextSectionName: () => string | n
         return result;
     };
     embeds.push(...findNamed("embed", true));
+
+    // A text box that goes to a section or passage when Enter is pressed (#454), as in
+    // <input data-attribute="name" data-section="next">. It's left as it is, and only recorded.
+    const inputTag = /<input\b(?:[^>"']|"[^"]*"|'[^']*')*>/gi;
+    const targetAttribute = /\sdata-(section|passage)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>]+))/i;
+    let tag;
+    while ((tag = inputTag.exec(input.value))) {
+        const attribute = targetAttribute.exec(tag[0]);
+        if (!attribute) continue;
+        const name = attribute[2] ?? attribute[3] ?? attribute[4];
+        const start = tag.index;
+        const nameEnd = start + attribute.index + attribute[0].length - (attribute[4] === undefined ? 1 : 0);
+        const nameStart = nameEnd - name.length;
+        links.push({
+            linkType: attribute[1].toLowerCase() == "section" ? "section" : "passage",
+            form: "input",
+            target: name,
+            start: input.mapStart(start),
+            end: input.mapEnd(start + tag[0].length),
+            targetStart: input.mapStart(nameStart),
+            targetEnd: input.mapEnd(nameEnd),
+        });
+    }
 
     return { output: input.value, links, embeds, gotos: findNamed("goto"), deactivates: findNamed("deactivate"), noNextSection };
 }

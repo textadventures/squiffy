@@ -18,6 +18,29 @@ Welcome, {{player_name}}! Your adventure begins now."></Sample>
 
 The `data-attribute` specifies which attribute will store the input value. You can then reference it using `{{player_name}}` or `{{get "player_name"}}`.
 
+It can also be a value inside an [object](/attributes/#objects), as in `data-attribute="hero.name"`.
+
+## Going on when Enter is pressed
+
+Add `data-section` to a text box, and pressing Enter in it goes to that section, just as clicking a link to it would. `data-passage` shows a passage instead. Either way, what the player typed is stored first, so the section or passage can use it.
+
+<Sample script="What is your name?
+
+&lt;input type=&quot;text&quot; data-attribute=&quot;player_name&quot; data-section=&quot;begin&quot; required&gt;
+
+[[begin]]:
+Welcome, {{player_name}}!"></Sample>
+
+Like a passage link, a text box with `data-passage` can only be used once, unless the passage has [`@repeat`](/basic-concepts/#passages-you-can-click-again), so the player can try again:
+
+<Sample script="I'm thinking of a number between 1 and 10. &lt;input type=&quot;number&quot; data-attribute=&quot;guess&quot; data-passage=&quot;check&quot;&gt;
+
+[check]:
+@repeat
+{{#if guess = &quot;7&quot;}}You got it!{{else}}It's not {{guess}}. Try again.{{/if}}"></Sample>
+
+Enter doesn't do anything until every text box in the section is [filled in properly](#input-validation). A `<textarea>` doesn't go anywhere when Enter is pressed, as Enter starts a new line in it.
+
 ## Input Validation
 
 Squiffy supports HTML5 input validation attributes. When validation attributes are present, section and passage links will be automatically disabled until all inputs pass validation.

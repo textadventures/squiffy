@@ -566,7 +566,14 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
 
         for (const link of result.links) {
             if (link.form == "next") continue;
-            if (link.linkType == "section") {
+            if (link.form == "input") {
+                const names = link.linkType == "section" ? story.sections : section.passages;
+                if (!hasOwn(names, link.target)) {
+                    warn(link.linkType == "section" ? "squiffy/unknown-section-link" : "squiffy/unknown-passage-link", link.start, link.end,
+                        `${where} there is a text box that goes to a ${link.linkType} called "${link.target}" when Enter is pressed, which doesn't exist`);
+                }
+            }
+            else if (link.linkType == "section") {
                 if (!linkDestinationExists(link.target, story.sections)) {
                     warn("squiffy/unknown-section-link", link.start, link.end,
                         `${where} there is a link to a section called [[${link.target}]], which doesn't exist`);

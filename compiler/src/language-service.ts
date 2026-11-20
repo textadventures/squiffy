@@ -799,6 +799,10 @@ export function createLanguageService(options: LanguageServiceOptions): Language
             if ((match = /\{\{~?\s*deactivate\s+["']([^"']*)$/.exec(prefix))) {
                 return passageItems(match[1]);
             }
+            // A text box that goes somewhere when Enter is pressed (#454)
+            if ((match = /<input\b[^>]*\sdata-(section|passage)\s*=\s*["']([^"']*)$/i.exec(prefix))) {
+                return match[1].toLowerCase() == "section" ? sectionItems(match[2]) : passageItems(match[2]);
+            }
             if ((match = /\[\[[^\]]*\]\]\(([^),]*)$/.exec(prefix))) {
                 return sectionItems(match[1]);
             }

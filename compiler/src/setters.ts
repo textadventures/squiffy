@@ -209,7 +209,7 @@ export function convertSetters(script: string): SetterConversionResult {
 // is just the setters part, e.g. ", gold=1".
 function convertLink(link: LinkNode, lines: string[], replace: (range: Range, text: string) => void,
     problem: (line: number, text: string, reason: string) => void): number {
-    if (link.form === "unnamed") return 0;
+    if (link.form === "unnamed" || link.form === "input") return 0;
     const comma = link.target.indexOf(",");
     if (comma === -1) return 0;
     const { targetRange } = link;
@@ -274,7 +274,7 @@ export function findAtAttributes(file: SquiffyFile): AtAttribute[] {
             for (const link of container.links) {
                 const comma = link.target.indexOf(",");
                 const { targetRange } = link;
-                if (link.form === "unnamed" || comma === -1 || targetRange.start.line !== targetRange.end.line) continue;
+                if (link.form === "unnamed" || link.form === "input" || comma === -1 || targetRange.start.line !== targetRange.end.line) continue;
                 scan(link.target.substring(comma + 1), targetRange.start.line, targetRange.start.character + comma + 1);
             }
         }
@@ -343,7 +343,7 @@ function setterSites(file: SquiffyFile): SetterSite[] {
             for (const link of container.links) {
                 const comma = link.target.indexOf(",");
                 const { targetRange } = link;
-                if (link.form === "unnamed" || comma === -1 || targetRange.start.line !== targetRange.end.line) continue;
+                if (link.form === "unnamed" || link.form === "input" || comma === -1 || targetRange.start.line !== targetRange.end.line) continue;
                 addList(link.target.substring(comma + 1), targetRange.start.line, targetRange.start.character + comma + 1, false);
             }
         }
