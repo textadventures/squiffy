@@ -59,4 +59,6 @@ The plugin tells Claude to use these command-line options. Any agent can use the
 3. **Play at random** with `--random`, to find errors and dead ends in places it wouldn't have gone itself, and the sections it never got to. Each problem comes with the options that play the story to it again. See [Playing at random](/cli/#playing-at-random).
 4. **Build the story**, when you ask it to, with no options.
 
-`--json` prints the results of `--check`, `--play` and `--random` as JSON, for an agent, or any other program, to read.
+An agent can also run your [playthrough tests](/cli/#testing-a-story) with `--test` after changing the story, to check it still plays the way you recorded.
+
+`--json` prints the results of `--check`, `--play`, `--random` and `--test` as JSON, for an agent, or any other program, to read.

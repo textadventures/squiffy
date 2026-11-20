@@ -21,6 +21,7 @@ Important notes for writing Squiffy stories:
   - \`--check\` reports problems without building: compile errors, and warnings such as unreachable sections and dead ends.
   - \`--play\` plays the story as text, printing the text and the links after each step. \`--choose\` clicks a link (by its text or number, and can be repeated), \`--choices file\` clicks one link per line of a file, \`--input attribute=value\` fills in a text box, and \`--save file.json\` carries on between runs, so an agent can play a step at a time.
   - \`--random\` plays many times, clicking at random, and reports errors, dead ends, endings reached and sections never visited, each problem with the \`--play\` options that get to it again.
+  - \`--play ... --record file.squiffy-test\` records a playthrough as a test, and \`--test\` plays every test again, reporting where the story now goes differently (\`--update\` records failing tests again).
   - Add \`--json\` to any of them for output that's easy for a program to read.
 - The syntax cheat sheet (${siteUrl}/syntax/) and the helpers reference (${siteUrl}/helpers-reference/) are the quickest way into the language. The cookbook (${siteUrl}/cookbook/) has ready-made patterns such as inventories, shops and health.`,
     // Keep llms-small.txt's line breaks, so its lists, tables and headings stay Markdown
