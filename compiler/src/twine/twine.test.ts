@@ -501,7 +501,7 @@ describe("SugarCube", () => {
         const { script } = await convert("SugarCube",
             ":: Start\n<<for _i, _x range $bag>>_i: _x $bag[_i] <<if _x is \"key\">>[[Use _x|Door][$using to _x; $pos to _i]]<</if>><<set $last to _x>><</for>><<for _a range $rows>><<for _b range _a>>_b<</for>><</for>>\n\n:: Door\nD");
         expect(section(script, "Start")).toBe(
-            "{{#each bag}}{{@index}}: {{this}} {{this}} {{#if this = \"key\"}}[[Use {{this}}]](Door, using = '{{this}}', pos = '{{@index}}'){{/if}}{{set \"last_\" this}}{{/each}}"
+            "{{#each bag}}{{@index}}: {{this}} {{this}} {{#if this = \"key\"}}[[Use {{this}}]](Door, using = '{{this}}', pos = {{@index}}){{/if}}{{set \"last_\" this}}{{/each}}"
             + "{{#each rows}}{{#each this}}{{this}}{{/each}}{{/each}}");
     });
 
@@ -523,15 +523,52 @@ describe("SugarCube", () => {
         ]);
     });
 
-    test("a link in a loop that runs more than setters, using the loop's item, can't be converted", async () => {
+    test("a link in a loop that runs more than setters sets an attribute to the loop's item (#448)", async () => {
         const { script, result } = await convert("SugarCube",
             ":: Start\n<<for _x range $bag>><<link _x \"Door\">><<set $picked to _x>><<goto \"Door\">><</link>><<link \"Look\">>A _x.<</link>> <<link \"Wave\">>Hi.<</link>><</for>>\n\n:: Door\nD");
         expect(section(script, "Start")).toBe(
-            "{{#each bag}}[[{{this}}]](Door, picked = '{{this}}'){{!-- Twine: <<link \"Look\">>A _x.<</link>> --}} [Wave](Wave){{/each}}\n\n[Wave]:\nHi.");
+            "{{#each bag}}[[{{this}}]](Door, picked = '{{this}}')[Look](Look, x = '{{this}}') [Wave](Wave){{/each}}\n\n[Look]:\nA {{x}}.\n\n[Wave]:\nHi.");
+        expect(result.problems).toEqual([]);
+    });
+
+    test("a link in a loop can use the loop's position, and a counting loop's number", async () => {
+        const { script, result } = await convert("SugarCube", [
+            ":: Start",
+            "<<for _i, _x range $bag>><<link \"Drop\">><<set $last to _i>>Dropped _x.<</link>> <</for>>",
+            "<<for _n to 1; _n lte 3; _n++>><<link \"Add\">><<set $total += _n>><<goto \"End\">><</link>> <</for>>",
+            "<<for _n to 1; _n lte 3; _n++>><<link \"Take\">><<set $total -= _n>>Took _n.<<goto \"End\">><</link>> <</for>>",
+            ":: End",
+            "E",
+        ].join("\n"));
+        expect(section(script, "Start")).toBe([
+            "{{#each bag}}[Drop](Drop, i = {{@index}}, x = '{{this}}') {{/each}}<br>",
+            "{{#each (range 1 3)}}[[Add]](End, total += {{this}}) {{/each}}<br>",
+            "{{#each (range 1 3)}}[[Take]](Start: Take, n = {{this}}) {{/each}}",
+            "",
+            "[Drop]:",
+            "@set last_ = i",
+            "Dropped {{x}}.",
+        ].join("\n"));
+        expect(section(script, "Start: Take")).toBe("@set total -= n\nTook {{n}}.{{goto \"End\"}}");
+        expect(result.problems).toEqual([]);
+    });
+
+    test("a link in a loop inside another loop can't use the outer loop's item", async () => {
+        const { script, result } = await convert("SugarCube",
+            ":: Start\n<<for _r range $rows>><<for _c range _r>><<link \"Pick\">>_r _c<</link>><</for>><</for>>");
+        expect(section(script, "Start")).toBe(
+            "{{#each rows}}{{#each this}}[Pick](Pick, c = '{{this}}'){{/each}}{{/each}}\n\n[Pick]:\n{{!-- Twine: _r --}} {{c}}");
         expect(result.problems.map(p => p.reason)).toEqual([
-            "This couldn't be converted: a link in a loop that does more than set variables to the loop's item.",
-            "This link is in a loop, and every item's link goes to the same passage, so once one has been clicked, they all have.",
+            "This couldn't be converted: a link in a loop inside another loop that uses the outer loop's item.",
         ]);
+    });
+
+    test("a Harlowe (link:) in a (for:) can use the loop's item (#448)", async () => {
+        const { script, result } = await convert("Harlowe",
+            ":: Start\n(for: each _item, ...$bag)[(link: \"Examine\")[It's a _item.]]");
+        expect(section(script, "Start")).toContain("[Examine](Examine, item = '{{this}}')");
+        expect(script).toContain("It's a {{item}}.");
+        expect(result.problems).toEqual([]);
     });
 
     test("what can't be converted is left as a comment", async () => {

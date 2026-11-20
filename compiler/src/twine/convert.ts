@@ -195,17 +195,31 @@ export class StoryContext {
     }
 
     // The loops being converted to {{#each}}, innermost last, with the Twine variables (with their
-    // $ or _) that stand for each one's item and position
-    private readonly loops: { vars: Map<string, "item" | "index">, array?: string }[] = [];
+    // $ or _) that stand for each one's item and position. numbers: its items are numbers, as in
+    // a loop that counts. A link's body (see linkBody) is an entry with setters, and no variables.
+    private readonly loops: {
+        vars: Map<string, "item" | "index">, array?: string, numbers?: boolean, setters?: Map<string, string>
+    }[] = [];
 
-    get looping(): boolean {
-        return this.loops.length > 0;
-    }
-
-    inLoop<T>(vars: Map<string, "item" | "index">, array: string | undefined, convert: () => T): T {
-        this.loops.push({ vars, array });
+    inLoop<T>(vars: Map<string, "item" | "index">, array: string | undefined, convert: () => T, numbers = false): T {
+        this.loops.push({ vars, array, numbers });
         try {
             return convert();
+        }
+        finally {
+            this.loops.pop();
+        }
+    }
+
+    // Converts the body of a link, which runs when it's clicked, after its loop has finished. In
+    // there, the loop's item and position are attributes, which the link sets to that item's (#448).
+    // Returns the setters for the link.
+    linkBody<T>(convert: () => T): { result: T, setters: string[] } {
+        if (!this.loops.length || this.loops[this.loops.length - 1].setters) return { result: convert(), setters: [] };
+        const setters = new Map<string, string>();
+        this.loops.push({ vars: new Map(), setters });
+        try {
+            return { result: convert(), setters: [...setters.values()] };
         }
         finally {
             this.loops.pop();
@@ -215,8 +229,25 @@ export class StoryContext {
     private loopVariable(name: string, temporary: boolean): Expr | undefined {
         const key = (temporary ? "_" : "$") + name;
         for (let i = this.loops.length - 1; i >= 0; i--) {
-            const kind = this.loops[i].vars.get(key);
-            if (kind) return { k: "loop", kind, up: this.loops.length - 1 - i, array: this.loops[i].array };
+            const loop = this.loops[i];
+            if (loop.setters) {
+                // In a link's body: the variables of the link's own loop are attributes now
+                const own = this.loops[i - 1];
+                const kind = own.vars.get(key);
+                if (kind) {
+                    const attribute = this.attributeName(name, temporary);
+                    // Like a link's other setters, an item is text, unless the loop counts
+                    const value = kind == "index" ? "{{@index}}" : own.numbers ? "{{this}}" : "'{{this}}'";
+                    loop.setters.set(attribute, `${attribute} = ${value}`);
+                    return { k: "var", name: attribute };
+                }
+                if (this.loops.slice(0, i - 1).some(l => l.vars.has(key))) {
+                    throw new Unconvertible("a link in a loop inside another loop that uses the outer loop's item");
+                }
+                return undefined;
+            }
+            const kind = loop.vars.get(key);
+            if (kind) return { k: "loop", kind, up: this.loops.length - 1 - i, array: loop.array, numbers: loop.numbers };
         }
         return undefined;
     }
@@ -230,6 +261,10 @@ export class StoryContext {
     // variable keeps its name unless a story variable ($) has the same name
     attribute(name: string, temporary: boolean): string {
         if (this.loopVariable(name, temporary)) throw new Unconvertible("changing a loop's variable inside the loop");
+        return this.attributeName(name, temporary);
+    }
+
+    private attributeName(name: string, temporary: boolean): string {
         let result = name;
         if (temporary && this.permanentVars.has(name)) result = "temp_" + name;
         if (reservedAttributes.has(result)) result += "_";
@@ -301,9 +336,9 @@ export function dynamicSectionLink(text: string, target: Expr, setters: string[]
     return `{{section ${print(target)} text=${quote(text)}${set}}}`;
 }
 
-export function passageLink(text: string, target: string): string {
+export function passageLink(text: string, target: string, setters: string[] = []): string {
     const linkText = text.replace(/\]/g, "&#93;").replace(/\[/g, "&#91;");
-    return `[${linkText}](${target})`;
+    return `[${linkText}](${[target, ...setters].join(", ")})`;
 }
 
 // A Squiffy setter, as in @set or a link, for name = value
@@ -446,7 +481,6 @@ export function convertTwineStory(twine: TwineStory, options: TwineConversionOpt
                 return reserved.name;
             },
             reservePassage(hint) {
-                const looping = story.looping;
                 const base = sanitisePassageName(hint) || "more";
                 let name = base;
                 for (let n = 2; extraPassages.some(p => p.startsWith(`[${name}]:\n`)) || name == section; n++) name = `${base} ${n}`;
@@ -458,12 +492,6 @@ export function convertTwineStory(twine: TwineStory, options: TwineConversionOpt
                         // Left out, rather than empty, if it can't be converted
                         extraPassages[index] = "";
                         extraPassages[index] = `[${name}]:\n${generated(content)}`;
-                        if (looping) {
-                            story.addProblem({
-                                passage: passage.name, text: oneLine(hint),
-                                reason: "This link is in a loop, and every item's link goes to the same passage, so once one has been clicked, they all have.",
-                            });
-                        }
                     },
                 };
             },
@@ -649,8 +677,8 @@ function block(content: ConvertedPassage | string): string {
     return [...c.directives, finishText(c.body)].filter(l => l.length).join("\n");
 }
 
-// A passage or section made for a link, e.g. one in a loop, which can't use the loop's item or
-// position: it's shown on its own, after the loop has finished
+// A passage or section made for a link. It's shown on its own, after the link's loop has finished,
+// so it can't use the loop's item or position: StoryContext.linkBody makes them attributes instead.
 function generated(content: ConvertedPassage | string): string {
     const c = typeof content == "string" ? { directives: [], body: content } : content;
     // Directives are expressions, rather than text with {{...}} in it

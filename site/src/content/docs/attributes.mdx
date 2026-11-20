@@ -587,6 +587,7 @@ You buy the {{item}}. [[Back to the stall]](stall)"></Sample>
 - `{{@index}}` is the item's position, starting at 0, and `@first` and `@last` are true for the first and last items. For example, `{{#each stock}}{{#unless @first}}, {{/unless}}{{this}}{{/each}}` puts a comma between the items.
 - To repeat something a number of times, go through a [`range`](/helpers-reference/#joining-sorting-and-more) of numbers: `{{#each (range 1 lives)}}♥{{/each}}`. You can go through a sorted or shuffled array, or part of one, in the same way: `{{#each (sort stock)}}`.
 - In a link's assignments, put `{{this}}` in quotes, as in `item = "{{this}}"`. The assignments run when the player clicks the link, after the loop has finished, so `item = this` wouldn't work.
+- A [passage](/basic-concepts/#passages) link in `{{#each}}` works on its own, like any other passage link. With `- [Examine the {{this}}](examine, item = "{{this}}")`, clicking one item's link turns off just that link, and the passage `[examine]` can say `It's a {{item}}.`, so the player can examine each item in turn.
 
 ### Objects
 
