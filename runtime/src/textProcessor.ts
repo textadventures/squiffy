@@ -579,7 +579,23 @@ export class TextProcessor {
             const text = fillIn(options.hash.text as string || passage, this, options, true);
             return new Handlebars.SafeString(`<a class="squiffy-link link-passage" data-passage="${escapeAttr(passage)}"${addAdditionalParameters(this, options)} role="link" tabindex="0">${text}</a>`);
         });
+
+        // {{restart}} and {{saves}} (#452): links that restart the story, asking first unless
+        // confirm=false, and open the Saved games dialog, like the page's own buttons
+        this.handlebars.registerHelper("restart", function (this: unknown, options) {
+            const text = fillIn(options.hash.text as string || processor.strings.restart, this, options, true);
+            const confirm = options.hash.confirm === false || options.hash.confirm === "false" ? " data-confirm=\"false\"" : "";
+            return new Handlebars.SafeString(`<a class="squiffy-link link-restart" data-handler="restart"${confirm} role="link" tabindex="0">${text}</a>`);
+        });
+
+        this.handlebars.registerHelper("saves", function (this: unknown, options) {
+            const text = fillIn(options.hash.text as string || processor.strings.saves, this, options, true);
+            return new Handlebars.SafeString(`<a class="squiffy-link link-saves" data-handler="saves" role="link" tabindex="0">${text}</a>`);
+        });
     }
+
+    // The default text of {{restart}} and {{saves}} links, which the runtime sets from the page's strings
+    strings = { restart: "Restart", saves: "Saved games" };
 
     // Evaluates an expression, such as gold + price * 2, with the same rules and helpers as
     // {{#if}} and {{set}}. Throws if it isn't valid, or a helper fails.

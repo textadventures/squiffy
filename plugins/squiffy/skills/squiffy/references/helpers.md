@@ -72,6 +72,8 @@ A calculation inside a helper goes in its own parentheses: `{{= (round (gold / 3
 |---|---|---|
 | `section` | `"name" [text="..."] [set="..."]` | Link to a section: `{{section "hall" text="Enter" set="visited=true, count+=1, room='hall'"}}` |
 | `passage` | `"name" [text="..."] [set="..."]` | Link to a passage |
+| `restart` | `[text="..."] [confirm=false]` | Link that restarts the story, like the Restart button, asking first unless `confirm=false`: `{{restart text="Play again"}}` at an ending |
+| `saves` | `[text="..."]` | Link that opens the Saved games dialog, like the Save button. Works even with `"saveButton": false` |
 
 `set` takes link-style assignments; single quotes for text avoid escaping.
 

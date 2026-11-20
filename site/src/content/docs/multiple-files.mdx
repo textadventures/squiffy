@@ -60,7 +60,9 @@ A saved game from a different story isn't loaded: the player is told it's for a 
 
 If you publish a new version of your story, players can still load their saved games, carrying on with the new version from where they were. If the section they were in has gone, the story starts again from the beginning, keeping their attributes.
 
-To leave out the Save button, set `saveButton` to `false`:
+You can also put a link in your story that opens the Saved games dialog, such as "Save your game" in a place the player keeps coming back to: see [Restarting and saving from the story](/basic-concepts/#restarting-and-saving-from-the-story).
+
+To leave out the Save button, set `saveButton` to `false`. A `{{saves}}` link still opens the dialog, so you can leave saving to the story:
 
 ```json
 {
@@ -117,7 +119,7 @@ To change how panels look, see [Panels](/styling/#panels) in Styling.
 
 ## The page's text in another language
 
-A published story's buttons are icons, with a tooltip that says what each one does, which screen readers read out too. Clicking Restart asks the player whether they're sure. This text, and the text of the [Saved games](#saved-games) dialog and the [panels'](#panels) Close button, is in English unless you give your own under `strings`:
+A published story's buttons are icons, with a tooltip that says what each one does, which screen readers read out too. Clicking Restart asks the player whether they're sure. This text, and the text of the [Saved games](#saved-games) dialog, the [panels'](#panels) Close button, and the [`{{restart}}` and `{{saves}}` links](/basic-concepts/#restarting-and-saving-from-the-story), is in English unless you give your own under `strings`:
 
 ```json
 {

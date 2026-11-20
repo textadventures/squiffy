@@ -20,19 +20,31 @@
     <!-- STORY_CONTENT -->
     <script>
         document.addEventListener('DOMContentLoaded', async function () {
+            const pageStrings = /* PAGE_STRINGS */;
+
             const squiffyApi = await squiffyRuntime.init({
                 element: document.getElementById('squiffy'),
                 story: story,
                 persist: true,
+                strings: pageStrings,
                 storyId: window.location.pathname,
                 /* ASSET_OPTIONS */
             });
 
-            const restartButton = document.getElementById('restart');
-            restartButton.addEventListener('click', function () {
-                if (confirm(restartButton.dataset.confirm)) {
-                    squiffyApi.restart();
-                }
+            // The Restart button, and {{restart}} links in the story (#452), which can skip the question
+            const askRestart = async function (ask) {
+                if (ask && !await squiffyRuntime.confirmDialog({
+                    message: pageStrings.restartConfirm,
+                    confirm: pageStrings.restart,
+                    cancel: pageStrings.cancel,
+                })) return;
+                squiffyApi.restart();
+            };
+            document.getElementById('restart').addEventListener('click', function () {
+                askRestart(true);
+            });
+            squiffyApi.on('restartRequested', function (event) {
+                askRestart(event.confirm);
             });
 
             // The Back button, unless the story's squiffy.json turns it off
@@ -46,19 +58,20 @@
                 });
             }
 
-            const pageStrings = /* PAGE_STRINGS */;
-
-            // The Save button, which opens the Saved games dialog, unless the story's squiffy.json
-            // turns it off
+            // The Saved games dialog, opened by the Save button (unless the story's squiffy.json
+            // turns it off) and by {{saves}} links in the story (#452)
+            let savesDialog = null;
+            const openSaves = function () {
+                if (!savesDialog) {
+                    savesDialog = squiffyRuntime.createSavesDialog(squiffyApi, {
+                        strings: pageStrings,
+                    });
+                }
+                savesDialog.open();
+            };
             const savesButton = document.getElementById('squiffy-saves-button');
-            if (savesButton) {
-                const savesDialog = squiffyRuntime.createSavesDialog(squiffyApi, {
-                    strings: pageStrings,
-                });
-                savesButton.addEventListener('click', function () {
-                    savesDialog.open();
-                });
-            }
+            if (savesButton) savesButton.addEventListener('click', openSaves);
+            squiffyApi.on('savesRequested', openSaves);
 
             // The story's panels, from its squiffy.json: beside the story, or buttons in the header
             if (story.panels && story.panels.length) {
@@ -107,7 +120,7 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></svg>
         </button>
         <!-- /SAVE_BUTTON -->
-        <button class="squiffy-header-button" id="restart" type="button" title="{{restart}}" aria-label="{{restart}}" data-confirm="{{restartConfirm}}">
+        <button class="squiffy-header-button" id="restart" type="button" title="{{restart}}" aria-label="{{restart}}">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
         </button>
         <button class="squiffy-header-button" id="squiffy-mute" type="button" data-mute="{{mute}}" data-unmute="{{unmute}}" hidden>

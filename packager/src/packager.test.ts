@@ -117,7 +117,9 @@ test("Header buttons are labelled in English, or with the story's own strings", 
 
     const html = (await createPackage(compileResult, { inlineHtml: true })).files["index.html"];
     expect(html).toContain('id="squiffy-back" type="button" title="Back" aria-label="Back"');
-    expect(html).toContain('title="Restart" aria-label="Restart" data-confirm="Are you sure you want to restart?"');
+    expect(html).toContain('title="Restart" aria-label="Restart"');
+    // The question the Restart button asks, in the page's script
+    expect(html).toContain('"restartConfirm":"Are you sure you want to restart?"');
     expect(html).toContain('data-switch-to-dark="Switch to dark mode" data-switch-to-light="Switch to light mode"');
     // The mute button (#444), which the page shows if the story has music or sounds
     expect(html).toContain('id="squiffy-mute" type="button" data-mute="Mute" data-unmute="Unmute" hidden');
@@ -127,7 +129,8 @@ test("Header buttons are labelled in English, or with the story's own strings", 
     const french = (await createPackage(compileResult, {
         strings: { restart: "Recommencer", restartConfirm: "Voulez-vous vraiment recommencer ?", back: "\"<Retour>\" & 'co'" },
     })).files["index.html"];
-    expect(french).toContain('title="Recommencer" aria-label="Recommencer" data-confirm="Voulez-vous vraiment recommencer ?"');
+    expect(french).toContain('title="Recommencer" aria-label="Recommencer"');
+    expect(french).toContain('"restartConfirm":"Voulez-vous vraiment recommencer ?"');
     expect(french).toContain('title="&#34;&#60;Retour&#62;&#34; &#38; &#39;co&#39;"');
     // Anything left out is in English
     expect(french).toContain('data-switch-to-dark="Switch to dark mode"');

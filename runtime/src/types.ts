@@ -14,6 +14,12 @@ export interface SquiffyInitOptions {
      * left alone. When not provided, paths are used as they are.
      */
     resolveAssetUrl?: (path: string) => string,
+    /**
+     * The page's text, for a story in another language: squiffy.json's "strings", by the same
+     * names. Used for the text of {{restart}} and {{saves}} links (#452), and the dialogs they
+     * open when the page doesn't handle them itself. Anything left out is in English.
+     */
+    strings?: Partial<Record<string, string>>,
 }
 
 export interface SquiffySettings {

@@ -519,6 +519,81 @@ dialog.squiffy-saves svg
     text-decoration: underline;
 }
 
+/* A question for the player, such as whether to restart, in place of the browser's confirm() */
+dialog.squiffy-confirm
+{
+    width: min(24rem, calc(100vw - 2rem));
+    box-sizing: border-box;
+    padding: 1.25rem;
+    border: 1px solid var(--squiffy-border);
+    border-radius: 0.75rem;
+    background-color: var(--squiffy-background);
+    color: var(--squiffy-text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 0.9375rem;
+    line-height: 1.4;
+    box-shadow: 0 1rem 3rem rgb(0 0 0 / 0.25);
+}
+
+dialog.squiffy-confirm::backdrop
+{
+    background-color: rgb(0 0 0 / 0.4);
+}
+
+.squiffy-confirm p
+{
+    margin: 0 0 1rem;
+}
+
+.squiffy-confirm-buttons
+{
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+.squiffy-confirm-button
+{
+    padding: 0.3em 0.8em;
+    border: 1px solid var(--squiffy-border);
+    border-radius: 0.375em;
+    background: none;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+}
+
+.squiffy-confirm-button:hover
+{
+    background-color: color-mix(in srgb, currentColor 8%, transparent);
+}
+
+.squiffy-confirm-button:focus-visible
+{
+    outline: 2px solid var(--squiffy-link);
+    outline-offset: 2px;
+}
+
+.squiffy-confirm .squiffy-confirm-primary
+{
+    border-color: var(--squiffy-link);
+    background-color: var(--squiffy-link);
+    color: var(--squiffy-background);
+}
+
+.squiffy-confirm .squiffy-confirm-danger
+{
+    border-color: var(--squiffy-error);
+    background-color: var(--squiffy-error);
+    color: var(--squiffy-background);
+}
+
+.squiffy-confirm .squiffy-confirm-primary:hover,
+.squiffy-confirm .squiffy-confirm-danger:hover
+{
+    filter: brightness(1.1);
+}
+
 /* Panels (squiffy.json's "panels"): passages always to hand, beside the story or in a dialog */
 :root
 {

@@ -1,4 +1,4 @@
-import { init } from "squiffy-runtime";
+import { init, confirmDialog } from "squiffy-runtime";
 import "squiffy-runtime/squiffy.runtime.css";
 import "./style.css";
 import { story, title } from "./story/game.squiffy";
@@ -15,8 +15,8 @@ const backButton = document.getElementById("back") as HTMLButtonElement;
 backButton.addEventListener("click", () => squiffy.goBack());
 squiffy.on("canGoBackChanged", event => backButton.disabled = !event.canGoBack);
 
-document.getElementById("restart")!.addEventListener("click", () => {
-    if (confirm("Are you sure you want to restart?")) {
+document.getElementById("restart")!.addEventListener("click", async () => {
+    if (await confirmDialog({ message: "Are you sure you want to restart?", confirm: "Restart" })) {
         squiffy.restart();
     }
 });

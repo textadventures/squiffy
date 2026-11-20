@@ -5,7 +5,7 @@
 // <<if>> becomes {{#if}}, <<set>> becomes @set or {{set}}, links with setters become links with
 // setters, and <<link>> and friends become links to generated passages and sections.
 
-import { delayValue, display, isDynamicTarget, isListCall, lengthOf, member as memberOf, print, randomInteger, skipString, targetName, Tokens, Unconvertible, unescapeString } from "./expression.js";
+import { delayValue, display, isDynamicTarget, isListCall, lengthOf, member as memberOf, print, quote, randomInteger, skipString, targetName, Tokens, Unconvertible, unescapeString } from "./expression.js";
 import type { BinaryOp, Expr } from "./expression.js";
 import { audioHelper, leadingAudio, pickSource, STOP_ALL_AUDIO } from "./audio.js";
 import type { AudioAction, StoryAudio } from "./audio.js";
@@ -1582,6 +1582,18 @@ class Writer {
 
     // <<link>>, <<button>>: the body runs when it's clicked, then the story goes to the passage
     // given, if there is one
+    // "restart" or "saves", if a link's body is only <<run UI.restart()>> or UI.saves(), or the
+    // same in <<script>>
+    private uiAction(body: Node[]): "restart" | "saves" | null {
+        if (body.length != 1 || body[0].t != "macro") return null;
+        const m = body[0];
+        const code = m.name == "run" ? m.args
+            : m.name == "script" ? (m.clauses?.[0]?.nodes ?? []).map(n => n.t == "text" || n.t == "raw" ? n.s : "\0").join("")
+                : null;
+        const match = code === null ? null : /^\s*UI\.(restart|saves)\(\s*\)\s*;?\s*$/.exec(code);
+        return match ? match[1] as "restart" | "saves" : null;
+    }
+
     private linkMacro(m: Macro, args: string[]): string {
         let text: { plain: string, squiffy: string };
         let passage: string | null = null;
@@ -1620,6 +1632,11 @@ class Writer {
         const destination = gotoArg !== null ? this.expr.passageName(gotoArg)
             : passage !== null ? { name: passage }
                 : dynamicDestination ? { expr: dynamicDestination } : null;
+
+        // A link that only runs UI.restart() or UI.saves(): {{restart}} or {{saves}} (#452). Like
+        // SugarCube's, {{restart}} asks the player first.
+        const uiAction = destination ? null : this.uiAction(significant);
+        if (uiAction) return `{{${uiAction} text=${quote(text.plain)}}}`;
 
         // Only <<set>>s: a link with setters
         const bodySetters = this.bodySetters(significant);

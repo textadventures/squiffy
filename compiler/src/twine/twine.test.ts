@@ -440,6 +440,12 @@ describe("SugarCube", () => {
         expect(section(script, "Start")).toBe("[[Cave]] [[Go in]](Cave) [[Go in]](Cave) [[Enter]](Cave) [[Buy]](Cave, gold -= 5, sword = true)");
     });
 
+    test("links that restart or open saved games (#452)", async () => {
+        const { script, result } = await convert("SugarCube", ":: Start\n<<link \"Play again\">><<run UI.restart()>><</link>> | <<link \"Load Game\">><<run UI.saves()>><</link>> | <<button \"Saves\">><<script>>UI.saves();<</script>><</button>>");
+        expect(section(script, "Start")).toBe("{{restart text=\"Play again\"}} | {{saves text=\"Load Game\"}} | {{saves text=\"Saves\"}}");
+        expect(result.problems).toEqual([]);
+    });
+
     test("<<set>>, <<unset>> and <<run>>", async () => {
         const { script } = await convert("SugarCube", ":: Start\n<<set $gold to 10, $name = \"Ann\">><<set $gold++>><<unset $old>>\nHello.\n<<set $gold *= 2>><<run $bag.push(\"key\")>><<set $bag.delete(\"map\")>>");
         expect(section(script, "Start")).toBe(

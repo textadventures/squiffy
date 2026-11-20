@@ -14,11 +14,15 @@ import { areInputsValid, setupInputValidation } from "./inputValidation.js";
 import { createAssetHtmlResolver, isAbsolute } from "./assets.js";
 import { Sound, DEFAULT_FADE } from "./sound.js";
 import { EveryTimers } from "./every.js";
+import { confirmDialog } from "./confirmDialog.js";
+import { createSavesDialog, type SavesDialog } from "./savesDialog.js";
 
 export type { SquiffyApi, SavedGame, LoadSaveResult } from "./types.js";
 export type { SquiffyEventHandler, SquiffyEventMap } from "./events.js";
 export { createSavesDialog, formatSaveTime, SAVES_STRINGS, SAVE_FILE_EXTENSION } from "./savesDialog.js";
 export type { SavesDialog, SavesDialogOptions, SavesStringName } from "./savesDialog.js";
+export { confirmDialog } from "./confirmDialog.js";
+export type { ConfirmDialogOptions } from "./confirmDialog.js";
 export { indexedDbSaveSlots, memorySaveSlots } from "./saveSlots.js";
 export { createPanels } from "./panels.js";
 export type { Panels, PanelsOptions } from "./panels.js";
@@ -1303,6 +1307,9 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     const set = state.set.bind(state);
 
     const textProcessor = new TextProcessor(() => story, state, () => currentSection);
+    const strings = options.strings ?? {};
+    if (typeof strings.restart == "string") textProcessor.strings.restart = strings.restart;
+    if (typeof strings.saves == "string") textProcessor.strings.saves = strings.saves;
 
     // Music and sound effects (#444)
     let playedSound = false;
@@ -1430,6 +1437,38 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
 
     const linkHandler = new LinkHandler();
 
+    // {{restart}} and {{saves}} links (#452). The page can handle them itself, with its own
+    // dialogs, by listening for restartRequested and savesRequested. Otherwise the runtime asks
+    // before restarting, and opens a Saved games dialog of its own.
+    let savesDialog: SavesDialog | null = null;
+    linkHandler.registerLinkHandler("restart", link => {
+        const confirm = link.getAttribute("data-confirm") !== "false";
+        // After the click has been handled, which saves the game as it is
+        queueMicrotask(async () => {
+            if (emitter.has("restartRequested")) {
+                emitter.emit("restartRequested", { confirm });
+                return;
+            }
+            if (confirm && !await confirmDialog({
+                message: strings.restartConfirm ?? "Are you sure you want to restart?",
+                confirm: strings.restart ?? "Restart",
+                cancel: strings.cancel,
+            })) return;
+            restart();
+        });
+        return {};
+    });
+    linkHandler.registerLinkHandler("saves", () => {
+        if (emitter.has("savesRequested")) {
+            emitter.emit("savesRequested", {});
+        }
+        else {
+            savesDialog ??= createSavesDialog(api, { strings });
+            savesDialog.open();
+        }
+        return {};
+    });
+
     const getSectionText = (sectionName: string) => {
         if (sectionName in story.sections) {
             return story.sections[sectionName].text || null;
@@ -1460,7 +1499,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     pluginManager.add(Plugins.LivePlugin());
     pluginManager.add(Plugins.AnimatePlugin());
 
-    return {
+    const api: SquiffyApi = {
         begin: begin,
         restart: restart,
         get: get,
@@ -1480,9 +1519,11 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             everyTimers.stopAll();
             sound.dispose();
             applyClasses([]);
+            savesDialog?.element.remove();
         },
         on: (e, h) => emitter.on(e, h),
         off: (e, h) => emitter.off(e, h),
         once: (e, h) => emitter.once(e, h),
     };
+    return api;
 };
