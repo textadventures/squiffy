@@ -64,5 +64,24 @@ jobs:
             echo "DIST_TAG=beta" >> $GITHUB_ENV
           fi
 
+      # Retried because provenance signing is flaky: when Sigstore's
+      # transparency log (Rekor) is slow, npm's client times out and retries
+      # an upload that actually went through, gets a 409 "an equivalent entry
+      # already exists" (TLOG_CREATE_ENTRY_ERROR), and fails. npm doesn't let
+      # that be turned off. `from-package` skips versions that are already on
+      # npm, so each try only publishes what's left. The pause gives the
+      # registry time to show what the last try published, so it isn't
+      # published again.
       - name: Publish to npm
-        run: npx lerna publish from-package --no-private --dist-tag ${{ env.DIST_TAG }} --yes
+        run: |
+          for attempt in 1 2 3 4 5; do
+            if npx lerna publish from-package --no-private --dist-tag "$DIST_TAG" --yes; then
+              exit 0
+            fi
+            if [ "$attempt" -lt 5 ]; then
+              echo "::warning::Publish attempt $attempt failed, retrying in 60s"
+              sleep 60
+            fi
+          done
+          echo "::error::Publish failed after 5 attempts"
+          exit 1
