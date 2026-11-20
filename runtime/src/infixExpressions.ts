@@ -6,6 +6,8 @@
 //   values:      {{set "gold" gold + price * 2}}  ->  {{set "gold" (add gold (mul price 2))}}
 //                (also {{inc}} and {{dec}}, and {{append}}, {{prepend}} and {{remove}})
 //   display:     {{= price * 2}}                  ->  {{mul price 2}}
+//   parameters:  {{goto "x" after=delay * 1000}}  ->  {{goto "x" after=(mul delay 1000)}}
+//                (also {{embed}} (#450) and {{#animate}} (#451))
 //
 // Two operators work on values rather than numbers (#446):
 //   bag contains "key"          ->  (__contains bag "key")   (lists, text and objects)
@@ -556,10 +558,11 @@ export function rewriteInfixArguments(args: string): string | null {
     return nodes && nodes.map(emit).join(" ");
 }
 
-// Rewrites the arguments to {{embed}}: a name, then parameters whose values can be expressions
-// (#450). Returns null if they don't use infix syntax.
-export function rewriteInfixEmbed(args: string): string | null {
-    const nodes = rewrite(args, "embed", "embed");
+// Rewrites the arguments to {{embed}} (#450), {{goto}} or {{#animate}} (#451): a name, then
+// parameters whose values can be expressions, e.g. after=delay * 1000. Returns null if they don't
+// use infix syntax.
+export function rewriteInfixEmbed(args: string, label = "embed"): string | null {
+    const nodes = rewrite(args, "embed", label);
     return nodes && nodes.map(emit).join(" ");
 }
 
@@ -609,7 +612,7 @@ export function splitSetters(setters: string): string[] {
     return result.map(s => s.trim()).filter(s => s !== "");
 }
 
-const tagStart = /(\\*)\{\{(~?\s*)(?:(#if|#unless|#each|#with|else\s+if|else\s+unless)(?=[\s(!])|(set|inc|dec|append|prepend|remove)(?=\s)|(=)|(#?embed)(?=\s))/g;
+const tagStart = /(\\*)\{\{(~?\s*)(?:(#if|#unless|#each|#with|else\s+if|else\s+unless)(?=[\s(!])|(set|inc|dec|append|prepend|remove)(?=\s)|(=)|(#?embed|goto|#animate)(?=\s))/g;
 
 // Finds the end of a mustache tag starting at `from`, skipping over quoted strings and objects,
 // such as {{set "hero" { hp: 10 }}}. Returns the index of the closing "}}" (or "~}}"), or -1.
@@ -659,7 +662,7 @@ export function rewriteInfixExpressions(text: string): string {
             last = argEnd;
         } else {
             const rewritten = match[3] ? rewriteInfixCondition(args)
-                : match[6] ? rewriteInfixEmbed(args)
+                : match[6] ? rewriteInfixEmbed(args, match[6].replace("#", ""))
                 : rewriteInfixArguments(args);
             if (rewritten !== null) {
                 result += text.slice(last, argStart) + " " + rewritten;

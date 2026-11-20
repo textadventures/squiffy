@@ -3937,6 +3937,40 @@ Darkness.
     }
 });
 
+test.each([
+    ["after=(delay * 1000)", 2000],
+    ["after=delay * 1000 + 500", 2500],
+    ['after="1.5s"', 1500],
+    ['after="250ms"', 250],
+    ["after=time", 3000],
+])("{{goto ... %s}} waits for a delay worked out as the story runs (#451)", async (after, ms) => {
+    vi.useFakeTimers();
+    try {
+        const script = `
+[[start]]:
+@set delay = 2
+@set time = 3s
+Waiting.{{goto "later" ${after}}}
+
+[[later]]:
+Later.
+`;
+        const { squiffyApi } = await initScript(script);
+        await vi.advanceTimersByTimeAsync(ms - 1);
+        expect(squiffyApi.get("_section")).toBe("start");
+        await vi.advanceTimersByTimeAsync(1);
+        expect(squiffyApi.get("_section")).toBe("later");
+    }
+    finally {
+        vi.useRealTimers();
+    }
+});
+
+test("{{goto ... after=}} with something that isn't a delay is an error", async () => {
+    const { element } = await initScript("{{goto \"later\" after=\"soon\"}}\n\n[[later]]:\nLater.");
+    expect(element.querySelector(".squiffy-error")?.textContent).toContain('after="3s"');
+});
+
 test("Following a link cancels a {{goto ... after=}}", async () => {
     vi.useFakeTimers();
     try {

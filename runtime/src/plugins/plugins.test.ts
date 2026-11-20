@@ -506,6 +506,23 @@ You clicked!
     expect(animateSpan?.getAttribute("data-interval")).toBe("50");
 });
 
+test("Animate plugin: times can be expressions or written in seconds (#451)", async () => {
+    const script = `
+@set n = 3
+{{#animate "typewriter" trigger="link" start="1.5s" interval=n * 10 duration="200ms"}}[Click me]{{/animate}}
+
+[Click me]:
+You clicked!
+`;
+
+    const { element } = await initScript(script);
+
+    const animateSpan = element.querySelector<HTMLElement>(".squiffy-animate");
+    expect(animateSpan?.getAttribute("data-start")).toBe("1500");
+    expect(animateSpan?.getAttribute("data-interval")).toBe("30");
+    expect(animateSpan?.getAttribute("data-duration")).toBe("200");
+});
+
 test("Animate plugin: trigger on link", async () => {
     const script = `
 {{#animate "typewriter" trigger="link"}}[Click me]{{/animate}}

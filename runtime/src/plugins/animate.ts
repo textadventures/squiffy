@@ -1,6 +1,10 @@
 import { PluginHost, SquiffyPlugin } from "../types.plugins.js";
 import Handlebars from "handlebars";
 import * as marked from "marked";
+import { parseDelay } from "../utils.js";
+
+// The parameters to the built-in animations that are times
+const timeParameters = ["start", "interval", "duration", "fadeDuration"];
 
 export function AnimatePlugin(): SquiffyPlugin {
     let squiffy: PluginHost;
@@ -132,6 +136,11 @@ export function AnimatePlugin(): SquiffyPlugin {
                     content,
                     ...options.hash,
                 };
+                // Times can be written like "1.5s" as well as in milliseconds (#451)
+                for (const key of timeParameters) {
+                    const delay = parseDelay(dataset[key]);
+                    if (delay !== null) dataset[key] = delay;
+                }
 
                 const attrs = Object.entries(dataset)
                     .map(([key, value]) =>

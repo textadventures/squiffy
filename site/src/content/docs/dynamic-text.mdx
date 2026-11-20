@@ -79,6 +79,8 @@ You can change how an animation runs by adding options after its name:
 | `loop=true` | all except `continue` | Repeat the animation forever |
 | `trigger="link"` | all except `continue` | Wait until a link inside the animated text is clicked, instead of running straight away |
 
+Times can also be written in seconds, as text: `start="1.5s"` is the same as `start=1500`. They can come from an [expression](/attributes/#calculating-values) too, such as `start=delay * 1000`.
+
 <Sample alwaysShowRestart={true} script="{{#animate &quot;typewriter&quot; interval=30}}This text types out quickly.{{/animate}}
 
 {{#animate &quot;typewriter&quot; interval=300 start=1500}}This text waits, then types slowly.{{/animate}}
@@ -139,6 +141,20 @@ You make it to the other side.
 Too slow. You fall."></Sample>
 
 The delay starts once the section has been written, so `{{goto}}` doesn't wait for an [animation](#animation) to finish. Add the animation's length to `after=` instead.
+
+The delay can be worked out as the story runs, from an attribute or an [expression](/attributes/#calculating-values). It can also be text with a number of seconds, like `"3s"`, or milliseconds, like `"500ms"`:
+
+<Sample alwaysShowRestart={true} script="@set fuse = 3
+You light a fuse {{fuse}} seconds long. [[Run!]](safe)
+{{goto &quot;boom&quot; after=fuse * 1000}}
+
+[[safe]]:
+@end
+You dive behind a rock just in time.
+
+[[boom]]:
+@end
+BOOM."></Sample>
 
 ## Replace
 

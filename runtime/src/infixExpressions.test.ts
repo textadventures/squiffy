@@ -274,6 +274,19 @@ describe("rewriteInfixEmbed (#450)", () => {
         expect(rewriteInfixExpressions('{{embed "a" n=n + 1}} {{#embed "b" ok=not done}}x{{/embed}}'))
             .toBe('{{embed "a" n=(add n 1)}} {{#embed "b" ok=(not done)}}x{{/embed}}');
     });
+
+    test("rewrites the parameters to goto and animate (#451)", () => {
+        expect(rewriteInfixExpressions('{{goto "x" after=(delay * 1000)}} {{goto "y" after=delay + 500}}'))
+            .toBe('{{goto "x" after=(mul delay 1000)}} {{goto "y" after=(add delay 500)}}');
+        expect(rewriteInfixExpressions('{{#animate "fadeIn" start=n * 100}}x{{/animate}}'))
+            .toBe('{{#animate "fadeIn" start=(mul n 100)}}x{{/animate}}');
+        expect(rewriteInfixExpressions('{{goto "x" after=delay}} {{goto (random (array "a" "b"))}} {{#animate "fadeIn"}}x{{/animate}}'))
+            .toBe('{{goto "x" after=delay}} {{goto (random (array "a" "b"))}} {{#animate "fadeIn"}}x{{/animate}}');
+    });
+
+    test("names the helper in errors", () => {
+        expect(() => rewriteInfixExpressions('{{goto "x" after=delay *}}')).toThrow("Invalid goto");
+    });
 });
 
 describe("rewriteDisplayExpression", () => {

@@ -105,7 +105,7 @@ Anything in `{{double curly brackets}}` is worked out as the text is shown. See 
 | `turns` | The number of links the player has clicked in the whole story | [Counting turns](/attributes/#counting-turns) |
 | `{{embed "map"}}` | Shows the text of another section, or a passage in this one | [Embed text](/basic-concepts/#embed-text) |
 | `{{embed "say" who="Ann"}}`, `{{#embed "box"}}...{{/embed}}` | Embeds text with parameters, or wrapping some text that it shows with `{{content}}` | [Parameters](/basic-concepts/#parameters), [Wrapping text](/basic-concepts/#wrapping-text) |
-| `{{goto "cave"}}`, `{{goto "cave" after=3000}}` | Goes to another section without a click, straight away or after a delay in milliseconds | [Go to another section](/basic-concepts/#go-to-another-section) |
+| `{{goto "cave"}}`, `{{goto "cave" after=3000}}` | Goes to another section without a click, straight away or after a delay in milliseconds (or a time like `"3s"`, or an expression) | [Go to another section](/basic-concepts/#go-to-another-section) |
 | `{{deactivate "door"}}`, `{{deactivate}}` | Turns off the links to a passage in this section, or to this passage | [Turning off passage links](/basic-concepts/#turning-off-passage-links) |
 | `{{random (array "a" "b")}}` | Picks one at random | [Random](/dynamic-text/#random) |
 | `{{rotate (array "a" "b") set="x"}}` | A link that cycles through options | [Rotate](/dynamic-text/#rotate) |
