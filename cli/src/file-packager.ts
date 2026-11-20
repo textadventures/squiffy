@@ -9,6 +9,18 @@ import { createPackage, PackageOptions } from "@textadventures/squiffy-packager"
 // A story given as a filename is just that file and its @imports, as with no squiffy.json
 const toStory = (input: string | StoryOnDisk): StoryOnDisk => typeof input == "string" ? { mainFile: input, expressions: false } : input;
 
+// What to compile a story with, given its main file's text: shared with --play, so it plays the
+// story as it's built
+export const compileSettings = (story: StoryOnDisk, script: string) => ({
+    scriptBaseFilename: path.basename(story.mainFile),
+    script,
+    externalFiles: externalFiles(story.mainFile),
+    storyFiles: story.storyFiles,
+    expressions: story.expressions,
+    projectId: story.projectId,
+    panels: story.panels,
+});
+
 async function getCompileResult(story: StoryOnDisk) {
     const inputFilename = story.mainFile;
     const inputFile = fs.readFileSync(inputFilename);
@@ -19,16 +31,7 @@ async function getCompileResult(story: StoryOnDisk) {
     else if (!story.expressions && convertSetters(inputText).converted > 0) {
         console.log("This story uses Squiffy 6's rules for @set and link setters. Run with --convert-v6 to convert it to Squiffy 7's.");
     }
-    const result = await compile({
-        scriptBaseFilename: path.basename(inputFilename),
-        script: inputText,
-        externalFiles: externalFiles(inputFilename),
-        storyFiles: story.storyFiles,
-        expressions: story.expressions,
-        projectId: story.projectId,
-        panels: story.panels,
-        globalJs: true,
-    });
+    const result = await compile({ ...compileSettings(story, inputText), globalJs: true });
     for (const diagnostic of result.diagnostics) {
         if (diagnostic.severity == "error") {
             console.error(formatDiagnostic(diagnostic));

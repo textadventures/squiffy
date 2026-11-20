@@ -92,6 +92,15 @@ describe("diagnostics", () => {
         ]);
     });
 
+    test("for the whole project at once", async () => {
+        const { ls } = project();
+        ls.updateFile("story.squiffy", main.replace("[[start]].", "[[startt]]."));
+        expect((await ls.getAllDiagnostics()).map(d => [d.file, d.code])).toEqual([
+            ["chapters/cellar.squiffy", "squiffy/unknown-section-link"],
+            ["story.squiffy", "squiffy/unknown-section-link"],
+        ]);
+    });
+
     test("keep coming after an error", async () => {
         const files = memoryFiles({ "s.squiffy": "[orphan]:\ntext\n\n[[a]]:\n[[nowhere]]" });
         const ls = createLanguageService({ files, mainFile: "s.squiffy" });

@@ -65,8 +65,12 @@ export default defineConfig({
                     items: ["editor", "story-map", "snippets", "desktop-app"],
                 },
                 {
+                    label: "Command line and AI",
+                    items: ["cli"],
+                },
+                {
                     label: "Publishing",
-                    items: ["publishing", "styling", "cli", "embedding"],
+                    items: ["publishing", "styling", "embedding"],
                 },
                 {
                     label: "Coming from…",

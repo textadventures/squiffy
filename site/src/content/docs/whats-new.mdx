@@ -50,6 +50,12 @@ Squiffy 7 brings a new editor. The language adds the [`@end`](/basic-concepts/#e
 - **Buttons in your language.** The buttons above the story are icons, and their tooltips can be [in your story's language](/multiple-files/#the-pages-text-in-another-language).
 - **A fresher look.** The default style has more space between lines, softer colours, a modern serif font, and text sizes that follow the reader's browser setting. Its colours, fonts and page width are [CSS variables](/styling/#common-changes), so they're easier to change, and a stylesheet you add in the editor starts with the most common changes, ready to uncomment.
 
+## The command-line tool
+
+- **Check a story** with [`--check`](/cli/#checking-a-story), which finds the problems the editor shows, such as links to missing sections, sections the player can't reach and dead ends, without building anything.
+- **Play a story as text** with [`--play`](/cli/#playing-a-story-from-the-command-line), clicking links with `--choose` and filling in text boxes with `--input`, and carry on from where you left off with `--save`.
+- **Play at random** with [`--random`](/cli/#playing-at-random), which plays a story many times to find errors and dead ends, and the sections it never got to, with the options that get back to each problem.
+- **For AI agents.** Add `--json` to any of these for a result that a program or an AI agent, such as Claude Code, can read, so an agent helping you write a story can check it and play it. See [For AI agents](/cli/#for-ai-agents).
 
 ## Coming from an earlier version
 

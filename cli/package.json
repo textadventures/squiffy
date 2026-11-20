@@ -38,6 +38,7 @@
     "@textadventures/squiffy-packager": "^7.0.0-beta.6",
     "finalhandler": "^2.1.0",
     "glob": "^14.0.6",
+    "jsdom": "^31.0.1",
     "serve-static": "^2.2.0",
     "squiffy-compiler": "^7.0.0-beta.6",
     "squiffy-runtime": "^7.0.0-beta.6",
@@ -45,6 +46,7 @@
   },
   "devDependencies": {
     "@types/finalhandler": "^1.2.4",
+    "@types/jsdom": "^30.0.0",
     "@types/node": "^26.6.6",
     "@types/serve-static": "^2.2.0",
     "@types/yargs": "^17.0.33",

@@ -1,4 +1,4 @@
-import { animate, stagger, text } from "animejs";
+import { animate, splitText, stagger } from "animejs";
 
 export type AnimationHandler = (el: HTMLElement, params: Record<string, any>, onComplete: () => void, loop: boolean) => void;
 
@@ -50,7 +50,7 @@ export class Animation {
 
     constructor() {
         this.registerAnimation("typewriter", function(el, params, onComplete, loop) {
-            const { chars } = text.split(el, { words: false, chars: true });
+            const { chars } = splitText(el, { words: false, chars: true });
 
             const fadeDuration = params.fadeDuration || 100;   // ms fade-in per character
             const interval = params.interval || 100;           // ms between each character appearing
@@ -66,7 +66,7 @@ export class Animation {
         }, { initiallyHidden: true });
 
         this.registerAnimation("toast", function(el, params, onComplete, loop) {
-            const { words } = text.split(el, { words: true, chars: false });
+            const { words } = splitText(el, { words: true, chars: false });
 
             const fadeDuration = params.fadeDuration || 100;   // ms fade-in per word
             const interval = params.interval || 200;           // ms between each word appearing
@@ -108,7 +108,7 @@ export class Animation {
             if (style === "wave") {
                 // Wave style needs JS animation - split into chars and animate opacity
                 el.classList.add("squiffy-continue-wave");
-                const split = text.split(el, { words: false, chars: true });
+                const split = splitText(el, { words: false, chars: true });
                 chars = split.chars as HTMLElement[];
 
                 waveAnimation = animate(chars, {
