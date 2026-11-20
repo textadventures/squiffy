@@ -20,6 +20,7 @@ export const lineRegexes = {
     music: /^@music (.*)$/,
     sound: /^@sound (.*)$/,
     class: /^@class (.*)$/,
+    transition: /^@transition (\S+)(?: (\S+))?$/,
 };
 
 // Parses one .squiffy file into a syntax tree. This never fails: problems such as a passage
@@ -197,6 +198,18 @@ export function parse(text: string, filename?: string): SquiffyFile {
         else if (match.class) {
             if (!passage) haveSection = true;
             add({ type: "class", value: match.class[1], valueRange: valueRange(i, match.class[1]), range });
+        }
+        else if (match.transition) {
+            if (!passage) haveSection = true;
+            const [, value, time] = match.transition;
+            const start = line.indexOf(value, line.indexOf("@") + 11);
+            add({
+                type: "transition",
+                value,
+                valueRange: { start: { line: i, character: start }, end: { line: i, character: start + value.length } },
+                ...(time === undefined ? {} : { time }),
+                range,
+            });
         }
         else if (match.attributes || match.unset) {
             haveSection = true;

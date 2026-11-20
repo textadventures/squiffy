@@ -45,6 +45,10 @@ body:has(.dark) {
 
 `@class` puts classes on the story's element while the section is current; in a passage, they're added until the player leaves the section. Use `body:has(.class)` to change page colours. `{{addclass}}`, `{{removeclass}}`, `{{toggleclass}}` and `(hasclass ...)` change classes mid-section or keep them across sections (helpers.md). Use class names not used elsewhere in the text. Player settings add classes too, such as `setting-textSize-Large` (project.md).
 
+## Transitions
+
+While a `@transition` (dynamic-text.md) plays, the element has classes `squiffy-transition` and the name, and `--squiffy-transition-time`, so CSS can add one: `.squiffy-transition.swirl { animation-name: swirl; }` with `@keyframes swirl { from { opacity: 0; transform: rotate(-10deg); } }`.
+
 ## Styling some text
 
 `{{#style "warning"}}KEEP OUT{{/style}}` puts the text in `<span class="squiffy-style warning">` (a `<div>` if it has blank lines), so `.warning { color: red; }` styles it. Several classes, or an attribute, work: `{{#style "warning big"}}`, `{{#style mood}}`. Built-in effects use the same helper: `shake`, `shudder`, `rumble`, `sway`, `buoy`, `pulse`, `fade-in-out`, `blink`, `flicker`, `blur`, `blurrier`, `smear`, `mirror`, `upside-down` (styled as `.squiffy-style.shudder`; moving ones stop under reduced motion). Effects combine: each after the first goes on a nested element of its own. Don't use those names for your own classes.

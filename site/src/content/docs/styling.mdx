@@ -210,6 +210,22 @@ The page's background and text colour are set on `body`, so to change them, or a
 
 To change the classes in the middle of a section, or to keep one from section to section until you take it off, use `{{addclass}}`, `{{removeclass}}` and `{{toggleclass}}`, and check them with `{{#if (hasclass "dark")}}`. See [Class helpers](/helpers-reference/#class-helpers).
 
+### Transitions
+
+While a [transition](/dynamic-text/#transitions) plays, the section or passage has the classes `squiffy-transition` and the transition's name, and the time from `@transition` is in `--squiffy-transition-time`. So you can change one of Squiffy's, or add your own with a CSS animation, which starts from how the text first looks and ends with it as normal:
+
+```css
+.squiffy-transition.swirl {
+    animation-name: swirl;
+}
+
+@keyframes swirl {
+    from { opacity: 0; transform: rotate(-10deg) scale(0.8); }
+}
+```
+
+and then `@transition swirl 1s` in your story.
+
 ### The header
 
 The Back, Restart and light/dark buttons are in a header that stays at the top of the window as the story scrolls under it. Its background is `--squiffy-background`, so if you change the page's background, set that [variable](#colours) rather than styling `body`. To make the header scroll away with the story instead:

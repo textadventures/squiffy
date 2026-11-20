@@ -120,6 +120,9 @@ class TextContainer {
     sounds: string[] = [];
     // @class (#449): classes on the story's element while the section is the current one
     classes: string[] = [];
+    // @transition (#489): how it appears, and how long that takes in milliseconds
+    transition?: string;
+    transitionTime?: number;
     // The text after links have been converted
     output = "";
 
@@ -165,6 +168,13 @@ export interface AnalysisInternals {
 export const analysisInternals = new WeakMap<Analysis, AnalysisInternals>();
 
 const lineRange = (node: { range: Range }): Range => node.range;
+
+// A @transition time (#489), such as "1s", "0.5s" or "400ms", in milliseconds
+function parseTransitionTime(time: string): number | undefined {
+    const match = /^(\d+(?:\.\d+)?|\.\d+)(s|ms)$/.exec(time);
+    if (!match) return undefined;
+    return Math.round(parseFloat(match[1]) * (match[2] == "s" ? 1000 : 1));
+}
 
 // Resolves @imports, builds the story's sections and passages, and reports diagnostics.
 export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
@@ -416,6 +426,28 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
                     if (!target) return sectionRequired(node);
                     for (const name of node.value.split(/\s+/)) {
                         if (name && !target.classes.includes(name)) target.classes.push(name);
+                    }
+                    return true;
+                }
+                case "transition": {
+                    const target = passage ?? (section = ensureSectionExists(lineCount));
+                    if (!target) return sectionRequired(node);
+                    if (!/^[A-Za-z][\w-]*$/.test(node.value)) {
+                        report("warning", "squiffy/transition", filename, node.valueRange,
+                            `"${node.value}" can't be the name of a transition, so this was ignored. A name is letters, numbers, - and _, starting with a letter.`, lineCount);
+                        return true;
+                    }
+                    target.transition = node.value;
+                    target.transitionTime = undefined;
+                    if (node.time !== undefined) {
+                        const time = parseTransitionTime(node.time);
+                        if (time === undefined) {
+                            report("warning", "squiffy/transition", filename, lineRange(node),
+                                `"${node.time}" isn't a time, such as 1s or 400ms, so the transition takes its usual time.`, lineCount);
+                        }
+                        else {
+                            target.transitionTime = time;
+                        }
                     }
                     return true;
                 }

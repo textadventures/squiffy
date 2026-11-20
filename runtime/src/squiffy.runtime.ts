@@ -444,6 +444,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             clearScreen();
         }
         newSection(sectionName);
+        startTransition(currentSectionElement, [currentSection, master]);
         const sectionElement = currentSectionElement;
         if (master) {
             await run(master, "[[]]");
@@ -636,6 +637,8 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         if (clicked) currentPassageElement.setAttribute("data-clicked-link", clicked);
 
         currentSectionElement.appendChild(currentPassageElement);
+        // @transition (#489): the passage's own, or else a master passage's, or else its section's, or the master section's
+        startTransition(currentPassageElement, [passage, master, masterSection?.passages?.[""], currentSection, masterSection]);
 
         for (const fn of runFns) {
             await fn();
@@ -681,7 +684,13 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     
     function save() {
         // TODO: Queue up all attribute changes and save them only when this is called
-        set("_output", outputElement.innerHTML);
+        // A transition still playing isn't saved, so loading the game doesn't play it again (#489)
+        let output = outputElement;
+        if (output.querySelector(".squiffy-transition")) {
+            output = outputElement.cloneNode(true) as HTMLDivElement;
+            output.querySelectorAll<HTMLElement>(".squiffy-transition").forEach(endTransition);
+        }
+        set("_output", output.innerHTML);
     }
     
     function load() {
@@ -894,9 +903,43 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         //    outputElement.innerHTML = '';
     }
 
+    // @transition (#489): plays the first transition given, as a class that the stylesheet animates.
+    // "none" (or Harlowe's "instant") plays none, so a section can turn off the master section's.
+    function startTransition(element: HTMLElement, from: (Section | Passage | undefined)[]) {
+        const source = from.find(s => s?.transition);
+        const name = source?.transition;
+        if (!name || name == "none" || name == "instant") return;
+        element.classList.add("squiffy-transition", name);
+        element.setAttribute("data-transition", name);
+        if (source!.transitionTime !== undefined) {
+            element.style.setProperty("--squiffy-transition-time", `${source!.transitionTime}ms`);
+        }
+        const end = (event: Event) => {
+            if (event.target !== element) return;
+            element.removeEventListener("animationend", end);
+            element.removeEventListener("animationcancel", end);
+            endTransition(element);
+        };
+        element.addEventListener("animationend", end);
+        element.addEventListener("animationcancel", end);
+    }
+
+    // Takes off a transition's class, so it doesn't play again when the element is shown again,
+    // such as after going back past a @clear
+    function endTransition(element: HTMLElement) {
+        const name = element.getAttribute("data-transition");
+        if (name) element.classList.remove(name);
+        element.classList.remove("squiffy-transition");
+        if (!element.classList.length) element.removeAttribute("class");
+        element.removeAttribute("data-transition");
+        element.style.removeProperty("--squiffy-transition-time");
+        if (!element.getAttribute("style")) element.removeAttribute("style");
+    }
+
     function unClearScreen() {
         const clearStack = getClearStack();
         if (!clearStack) return;
+        clearStack.querySelectorAll<HTMLElement>(".squiffy-transition").forEach(endTransition);
         for (const child of [...outputElement.children]) {
             if (child !== clearStack) {
                 child.remove();

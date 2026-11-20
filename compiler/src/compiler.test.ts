@@ -4,6 +4,7 @@ import { glob } from "glob";
 import * as path from "path";
 
 import { compile, CompileSuccess } from "./compiler.js";
+import { analyse } from "./analyse.js";
 
 // Mock crypto.randomUUID() to return a stable value for snapshot tests
 beforeAll(() => {
@@ -868,6 +869,48 @@ Nothing.`;
     expect(sections.start.passages!["look up"].classes).toEqual(["stars"]);
     expect(sections.plain).not.toHaveProperty("classes");
     expect(sections.start.text).not.toContain("@class");
+});
+
+test("@transition puts how a section or passage appears in the output, with its time (#489)", async () => {
+    const script = `[[]]:
+@transition fade
+
+[[start]]:
+@transition slide-up 1.5s
+Hello. [look up]
+
+[look up]:
+@transition zoom 400ms
+Stars.
+
+[a]:
+@transition none
+A.
+
+[[plain]]:
+Nothing.`;
+    const result = await compile({ scriptBaseFilename: "test.squiffy", script });
+
+    assertSuccess(result);
+    const { sections } = result.output.story;
+    expect(sections[""].transition).toBe("fade");
+    expect(sections[""]).not.toHaveProperty("transitionTime");
+    expect(sections.start).toMatchObject({ transition: "slide-up", transitionTime: 1500 });
+    expect(sections.start.passages!["look up"]).toMatchObject({ transition: "zoom", transitionTime: 400 });
+    expect(sections.start.passages!.a.transition).toBe("none");
+    expect(sections.plain).not.toHaveProperty("transition");
+    expect(sections.start.text).not.toContain("@transition");
+});
+
+test("@transition warns about a name or time it can't use (#489)", async () => {
+    const analysis = await analyse({ script: `[[start]]:
+@transition fade soon
+@transition .bad
+Hello.` });
+    const warnings = analysis.diagnostics.filter(d => d.code == "squiffy/transition");
+    expect(warnings.map(d => d.range.start.line)).toEqual([1, 2]);
+    expect(warnings[0].message).toContain("soon");
+    expect(warnings[1].message).toContain(".bad");
 });
 
 test("@sound stop stops the sounds playing, and isn't a file to load", async () => {

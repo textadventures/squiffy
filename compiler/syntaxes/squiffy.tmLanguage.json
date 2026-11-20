@@ -285,7 +285,7 @@
           }
         },
         {
-          "match": "^\\s*(@)(title|start|import|ui|music|sound|class)\\s+(.*?)\\s*$",
+          "match": "^\\s*(@)(title|start|import|ui|music|sound|class|transition)\\s+(.*?)\\s*$",
           "captures": {
             "0": {
               "name": "meta.directive.squiffy"

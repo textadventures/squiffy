@@ -49,7 +49,7 @@ You step out into the night with {{gold}} gold. THE END.
 - `[name]:` starts a **passage** inside the section above it. `[name]` or `[link text](name)` links to one. Passage links can be clicked in any order, once each, until the player leaves the section. Coming back to a section shows it again with fresh passage links, so guard one-off rewards with an attribute: `{{#unless chest_open}}[chest]{{/unless}}`. Any text in single square brackets is a passage link.
 - Links can set attributes: `[[Buy]](shop, gold -= 3, has_sword = true)`.
 - `+++Link text` ends the section with a link to a new, unnamed section that follows.
-- `@set`, `@inc`, `@dec`, `@unset`, `@clear`, `@end`, `@repeat`, `@class` are directives: one per line, at the start of a section or passage. They always run when it's shown, even inside `{{#if}}`; use the `{{set}}`, `{{inc}}` helpers to change attributes conditionally.
+- `@set`, `@inc`, `@dec`, `@unset`, `@clear`, `@end`, `@repeat`, `@class`, `@transition` are directives: one per line, at the start of a section or passage. They always run when it's shown, even inside `{{#if}}`; use the `{{set}}`, `{{inc}}` helpers to change attributes conditionally.
 - `{{...}}` is the Handlebars text processor: `{{gold}}`, `{{= price * 2}}`, `{{#if gold > 5 and not has_key}}...{{else}}...{{/if}}`, `(seen "chest")`, `{{goto "end"}}`, `{{embed "map"}}`. Helpers take subexpressions in `( )`, never nested `{{ }}`.
 - `@end` marks a section as an ending. A section with no links out and no `@end` is a "dead end", which `--check` warns about.
 - Text is Markdown, and HTML works. Blank lines separate paragraphs.
@@ -93,8 +93,8 @@ Read these when you need more than the above:
 - [references/syntax.md](references/syntax.md): every kind of section, passage, link and directive, master sections, `@start`, `@title`, `@repeat`, `@clear`, `@end`, embedding and `{{goto}}`. Read when writing structure beyond basic sections and links.
 - [references/attributes.md](references/attributes.md): setting attributes in Squiffy 7 and Squiffy 6, link setters, calculations, conditions, arrays, objects, `seen`/`visits`/`turns`/`previous`. Read before writing any `@set` or link setter you aren't sure of.
 - [references/helpers.md](references/helpers.md): every `{{helper}}`, with its parameters. Read before using a helper not shown above.
-- [references/dynamic-text.md](references/dynamic-text.md): random text, animation, replace, rotate, sequence, live text and delays.
+- [references/dynamic-text.md](references/dynamic-text.md): random text, animation, transitions, replace, rotate, sequence, live text and delays.
 - [references/project.md](references/project.md): `squiffy.json` (main, exclude, panels, player settings, saves, Back button, strings), stories in several files, `@import`, images, music and sound.
 - [references/player-input.md](references/player-input.md): asking the player for text, with validation.
-- [references/styling.md](references/styling.md): CSS variables, `@class` and the class helpers.
+- [references/styling.md](references/styling.md): CSS variables, `@class` and the class helpers, custom transitions.
 - [references/javascript.md](references/javascript.md): JavaScript in sections, `@ui`, the `squiffy` API, custom helpers and animations.

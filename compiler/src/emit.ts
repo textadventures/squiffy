@@ -37,6 +37,9 @@ interface OutputSection {
     sounds?: string[];
     // @class (#449): classes on the story's element while this is the current section
     classes?: string[];
+    // @transition (#489): how it appears, or "none", and how long that takes in milliseconds
+    transition?: string;
+    transitionTime?: number;
     attributes?: string[];
     jsIndex?: number;
     passages?: Record<string, OutputPassage>;
@@ -52,6 +55,9 @@ interface OutputPassage {
     sounds?: string[];
     // @class (#449): classes added to the section's when this passage is shown
     classes?: string[];
+    // @transition (#489): how it appears, or "none", and how long that takes in milliseconds
+    transition?: string;
+    transitionTime?: number;
     // Its links aren't disabled when clicked (#104)
     repeat?: boolean;
     attributes?: string[];
@@ -94,6 +100,11 @@ function addSounds(output: OutputSection | OutputPassage, from: { music?: string
     if (from.music) audio.add(from.music);
     from.sounds.forEach(file => { if (file != "stop") audio.add(file); });
     for (const match of from.output.matchAll(SOUND_HELPER)) audio.add(match[2]);
+}
+
+function addTransition(output: OutputSection | OutputPassage, from: { transition?: string; transitionTime?: number }) {
+    if (from.transition !== undefined) output.transition = from.transition;
+    if (from.transitionTime !== undefined) output.transitionTime = from.transitionTime;
 }
 
 // Produces the story data and JavaScript for an analysis that succeeded.
@@ -150,6 +161,7 @@ export function emit(analysis: Analysis, settings: EmitSettings = {}): CompileSu
         outputSection.text = section.output;
         addSounds(outputSection, section, audio);
         if (section.classes.length) outputSection.classes = section.classes;
+        addTransition(outputSection, section);
 
         if (section.attributes.length > 0) {
             outputSection.attributes = section.attributes;
@@ -188,6 +200,7 @@ export function emit(analysis: Analysis, settings: EmitSettings = {}): CompileSu
             outputPassage.text = passage.output;
             addSounds(outputPassage, passage, audio);
             if (passage.classes.length) outputPassage.classes = passage.classes;
+            addTransition(outputPassage, passage);
 
             if (passage.attributes.length > 0) {
                 outputPassage.attributes = passage.attributes;
