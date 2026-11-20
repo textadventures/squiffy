@@ -70,7 +70,7 @@ export class State {
     }
 
     // Only the store's own properties are attributes, not ones it inherits, such as valueOf
-    private has(attribute: string) {
+    has(attribute: string) {
         return Object.prototype.hasOwnProperty.call(this.store, attribute);
     }
 

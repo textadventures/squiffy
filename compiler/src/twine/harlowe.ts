@@ -5,7 +5,7 @@
 // {{set}}, (link:) and friends become links to generated passages and sections, and Harlowe's
 // markup becomes Markdown and HTML.
 
-import { conditional, display, isBoolean, lengthOf, member, print, randomInteger, targetName, skipBalanced, skipString, Tokens, Unconvertible, unescapeString } from "./expression.js";
+import { conditional, display, isBoolean, isListCall, lengthOf, member, print, randomInteger, targetName, skipBalanced, skipString, Tokens, Unconvertible, unescapeString } from "./expression.js";
 import type { BinaryOp, Expr } from "./expression.js";
 import { dynamicSectionLink, escapeText, isUrl, urlLink, passageLink, sectionLink, setter } from "./convert.js";
 import type { ConvertedPassage, PassageContext } from "./convert.js";
@@ -328,9 +328,10 @@ function tokenize(s: string): Token[] {
             i += 2;
             continue;
         }
-        const ordinal = /^(\d+)(st|nd|rd|th)\b/.exec(s.substring(i));
+        // 2nd, or 2ndlast, which is a negative position: from the end
+        const ordinal = /^(\d+)(st|nd|rd|th)(last)?\b/.exec(s.substring(i));
         if (ordinal) {
-            tokens.push({ type: "word", text: "ordinal", value: parseInt(ordinal[1]) });
+            tokens.push({ type: "word", text: "ordinal", value: parseInt(ordinal[1]) * (ordinal[3] ? -1 : 1) });
             i += ordinal[0].length;
             continue;
         }
@@ -420,6 +421,23 @@ export class HarloweExpressions {
             if (args.length != 1) throw new Unconvertible(`(${name}:) with ${args.length ? "more than one value" : "no value"}`);
             return values();
         };
+        // The values of a macro like (sorted:) as a list: ...$bag is the list itself, and values
+        // are a list of them
+        const list = (from: string[]): Expr => {
+            const spread = (v: string) => /^\s*\.\.\./.test(v) ? this.parse(v.replace(/^\s*\.\.\./, ""), it) : null;
+            if (from.length == 1) {
+                const e = spread(from[0]);
+                if (e) return e;
+            }
+            const items: Expr[] = [];
+            for (const v of from) {
+                const e = spread(v);
+                if (!e) items.push(this.parse(v, it));
+                else if (e.k == "array") items.push(...e.items);
+                else throw new Unconvertible(`(${name}:) with an array and other values`);
+            }
+            return { k: "array", items };
+        };
         switch (name) {
             case "either":
                 return { k: "call", fn: "random", args: [{ k: "array", items: values() }] };
@@ -432,10 +450,12 @@ export class HarloweExpressions {
                 return { k: "array", items: values() };
             case "range": {
                 // The whole numbers from one to the other
+                if (args.length != 2) throw new Unconvertible("(range:) without two numbers");
                 const [from, to] = values();
-                if (from?.k != "num" || to?.k != "num") throw new Unconvertible("(range:) with numbers that aren't fixed");
+                // Squiffy's (range from to) works it out as the story runs (#447). A short one
+                // with fixed numbers is written out, as it reads more simply.
+                if (from.k != "num" || to.k != "num" || Math.abs(to.v - from.v) > 20) return { k: "call", fn: "range", args: [from, to] };
                 const step = to.v >= from.v ? 1 : -1;
-                if (Math.abs(to.v - from.v) > 100) throw new Unconvertible("(range:) of more than 100 numbers");
                 const items: Expr[] = [];
                 for (let n = Math.round(from.v); n != Math.round(to.v) + step; n += step) items.push({ k: "num", v: n });
                 return { k: "array", items };
@@ -492,6 +512,21 @@ export class HarloweExpressions {
                 const items = values();
                 if (!items.length) throw new Unconvertible(`(${name}:) with no values`);
                 return { k: "call", fn: name, args: items };
+            }
+            // Lists (#447)
+            case "joined": {
+                if (!args.length) throw new Unconvertible("(joined:) with nothing to join");
+                const separator = this.parse(args[0], it);
+                return { k: "call", fn: "join", args: [list(args.slice(1)), separator] };
+            }
+            case "sorted":
+            case "shuffled":
+                if (args.length && /^\s*(via|each)\b/.test(args[0])) throw new Unconvertible(`(${name}:) with "${args[0].trim().split(/\s/)[0]}"`);
+                return { k: "call", fn: name == "sorted" ? "sort" : "shuffle", args: [list(args)] };
+            case "count": {
+                if (args.length != 2) throw new Unconvertible("(count:) with more than one value to count");
+                const [container, value] = values();
+                return { k: "call", fn: "count", args: [container, value] };
             }
             default:
                 throw new Unconvertible(`the (${name}:) macro`);
@@ -641,8 +676,13 @@ class ExpressionParser {
                 e = e.k == "call" && e.fn == "__history" ? { k: "var", name: "turns" } : lengthOf(e);
             }
             else if (property.text == "ordinal" && (e.k == "var" || e.k == "array" || e.k == "member")) {
-                // $list's 1st
-                e = member(e, { k: "num", v: (property.value as number) - 1 });
+                // $list's 1st, or $list's 2ndlast, which is bag[bag.length - 2]
+                const n = property.value as number;
+                e = n > 0 ? member(e, { k: "num", v: n - 1 }) : member(e, { k: "bin", op: "-", l: lengthOf(e), r: { k: "num", v: -n } });
+            }
+            else if (property.text == "last" && (e.k == "var" || e.k == "array" || e.k == "member")) {
+                // $list's last (#447)
+                e = { k: "call", fn: "last", args: [e] };
             }
             else if ((e.k == "var" || e.k == "member") && (property.type == "word" || property.type == "str")) {
                 // A value in a datamap: $player's hp is player.hp (#442)
@@ -1389,7 +1429,7 @@ class Writer {
         const spread = (v: string) => /^\s*\.\.\./.test(v) ? this.expr.parse(v.replace(/^\s*\.\.\./, "")) : null;
         if (values.length == 1) {
             const e = spread(values[0]);
-            if (e && (e.k == "var" || e.k == "array" || (e.k == "loop" && e.kind == "item"))) return e;
+            if (e && (e.k == "var" || e.k == "array" || (e.k == "loop" && e.kind == "item") || isListCall(e))) return e;
         }
         const items: Expr[] = [];
         for (const v of values) {

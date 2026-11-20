@@ -197,7 +197,13 @@ See [Dynamic text](/dynamic-text/) and [Player input](/player-input/).
 | Add to it | `(set: $bag to it + (a: "map"))` | `<<run $bag.push("map")>>` | `{{append "bag" "map"}}` |
 | Check what's in it | `$bag contains "key"` | `$bag.includes("key")` | `bag contains "key"` |
 | Count what's in it | `$bag's length` | `$bag.length` | `bag.length` |
+| Get an item | `$bag's 1st`, `$bag's last`, `$bag's ($i)` | `$bag[0]`, `$bag.last()`, `$bag[$i]` | `bag[0]`, `(last bag)`, `bag[i]` (positions start at 0) |
+| Write it as a list | `(joined: ", ", ...$bag)` | `$bag.join(", ")` | `(join bag ", " " and ")` |
+| Sort or shuffle it | `(sorted: ...$bag)`, `(shuffled: ...$bag)` | `$bag.sort()`, `$bag.shuffle()` | `(sort bag)`, `(shuffle bag)` |
+| Take part of it | `$bag's (range: 2, 3)` | `$bag.slice(1, 3)` | `(slice bag 1 3)` |
+| Find or count an item | `(count: $bag, "coin")` | `$bag.indexOf("key")`, `$bag.count("coin")` | `(indexof bag "key")`, `(count bag "coin")` |
 | Do something for each item | `(for: each _item, ...$bag)[_item]` | `<<for _item range $bag>>_item<</for>>` | `{{#each bag}}{{this}}{{/each}}` |
+| Count from one number to another | `(for: each _i, ...(range: 1, $n))[_i]` | `<<for _i to 1; _i lte $n; _i++>>_i<</for>>` | `{{#each (range 1 n)}}{{this}}{{/each}}` |
 
 See [Array management helpers](/helpers-reference/#array-management-helpers) and [Going through an array](/attributes/#going-through-an-array).
 
@@ -252,7 +258,6 @@ Squiffy fades from one track to the next by itself, and players get a mute butto
 
 Some things in Harlowe and SugarCube aren't in Squiffy yet. Each one is planned, and its GitHub issue says how it might work, so you can follow it or add your thoughts:
 
-- **More for arrays**, like `(joined:)`, `(sorted:)` and `(range:)` ([#447](https://github.com/textadventures/squiffy/issues/447)).
 - **Links in a loop that each do something different** ([#448](https://github.com/textadventures/squiffy/issues/448)). A section link in [`{{#each}}`](/attributes/#going-through-an-array) can set an attribute to the item, but clicking one passage link turns off every link to that passage, including the other items'.
 - **Changing the page's look for a scene**, with passage tags or `<<addclass>>` ([#449](https://github.com/textadventures/squiffy/issues/449)).
 - **Widgets**, written in your story rather than JavaScript, with their own parameters ([#450](https://github.com/textadventures/squiffy/issues/450)). [`{{embed}}`](/helpers-reference/#content-helpers) includes another section, without parameters.

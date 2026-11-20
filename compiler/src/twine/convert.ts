@@ -76,6 +76,7 @@ export const reservedAttributes = new Set([
     "length", "append", "prepend", "pop", "remove", "section", "passage", "label", "replace", "rotate", "sequence",
     "live", "animate", "eq", "ne", "gt", "gte", "lt", "lte", "and", "or", "not", "add", "sub", "mul", "div", "mod",
     "round", "floor", "ceil", "abs", "min", "max", "upper", "lower", "capitalise", "capitalize", "cond",
+    "join", "sort", "shuffle", "slice", "first", "last", "indexof", "count", "range",
     "if", "unless", "each", "with", "lookup", "log", "else", "this", "turns", "previous", "previous_section",
     "true", "false", "null", "undefined", "music", "stopmusic", "sound",
 ]);

@@ -4201,6 +4201,80 @@ test.each([
     expect(element.querySelector(".squiffy-error")?.textContent).toContain(message);
 });
 
+// List helpers (#447)
+test.each([
+    ["{{set \"x\" (join (array \"a\" \"b\" \"c\"))}}", "a, b, c"],
+    ["{{set \"x\" (join (array \"a\" \"b\" \"c\") \" / \")}}", "a / b / c"],
+    ["{{set \"x\" (join (array \"a\" \"b\" \"c\") \", \" \" and \")}}", "a, b and c"],
+    ["{{set \"x\" (join (array \"a\" \"b\") \", \" \" and \")}}", "a and b"],
+    ["{{set \"x\" (join (array \"a\") \", \" \" and \")}}", "a"],
+    ["{{set \"x\" (join unsetattr)}}", ""],
+    ["{{set \"x\" (join (array 1 2) \"\")}}", "12"],
+    ["{{set \"x\" (sort (array \"pear\" \"Apple\" \"item 10\" \"item 2\" 10 2))}}", [2, 10, "Apple", "item 2", "item 10", "pear"]],
+    ["{{set \"x\" (slice (array 1 2 3 4) 1 3)}}", [2, 3]],
+    ["{{set \"x\" (slice (array 1 2 3 4) 1)}}", [2, 3, 4]],
+    ["{{set \"x\" (slice (array 1 2 3 4) -2)}}", [3, 4]],
+    ["{{set \"x\" (slice \"hello\" 1 3)}}", "el"],
+    ["{{set \"x\" (first (array 1 2 3))}}", 1],
+    ["{{set \"x\" (last (array 1 2 3))}}", 3],
+    ["{{set \"x\" (first (array))}}", ""],
+    ["{{set \"x\" (indexof (array \"a\" \"b\") \"b\")}}", 1],
+    ["{{set \"x\" (indexof (array \"a\" \"b\") \"c\")}}", -1],
+    ["{{set \"x\" (indexof \"hello\" \"l\")}}", 2],
+    ["{{set \"x\" (count (array \"a\" \"b\" \"a\") \"a\")}}", 2],
+    ["{{set \"x\" (count \"banana\" \"an\")}}", 2],
+    ["{{set \"x\" (range 1 5)}}", [1, 2, 3, 4, 5]],
+    ["{{set \"x\" (range 3 1)}}", [3, 2, 1]],
+    ["{{set \"x\" (range 0 0)}}", [0]],
+])("list helper: %s", async (text, expected) => {
+    const { squiffyApi } = await initScript(`[[start]]:\n${text}`);
+    expect(squiffyApi.get("x")).toEqual(expected);
+});
+
+test.each([
+    ["{{= (sort \"bag\")}}", "\"sort\" needs a list, but was given the text \"bag\". To use an attribute's list, leave out the quotes"],
+    ["{{= (sort 5)}}", "\"sort\" needs a list, but was given 5"],
+    ["{{= (slice (array 1))}}", "\"slice\" needs 2 to 3 values, but was given 1"],
+    ["{{= (range 1 100000)}}", "\"range\" can make a list of up to 10,000 numbers, but was asked for 100000"],
+    ["{{= (join (array (array 1)))}}", "\"join\" needs text, but was given a list"],
+])("list helper error: %s", async (text, message) => {
+    const { element } = await initScript(`[[start]]:\n${text}`);
+    expect(element.querySelector(".squiffy-error")?.textContent).toContain(message);
+});
+
+test("list helpers with attributes, in expressions and loops (#447)", async () => {
+    const script = `
+[[start]]:
+@set bag = ["rope", "lamp", "key"]
+@set i = 1
+@set n = 3
+@set bag = (sort bag)
+@set mixed = (shuffle bag)
+You have {{join bag ", " " and "}}. First: {{first bag}}. Last: {{last bag}}. Item {{= i}}: {{= bag[i]}}.
+{{#each (range 1 3)}}n{{this}} {{/each}}
+{{#if (indexof bag "lamp") = 1}}Lamp second.{{/if}}
+{{#if (count bag "rope") > 0}}Has rope.{{/if}}
+Two: {{join (slice bag 0 2)}}.
+Down: {{#each (range 0 (n - 1))}}n{{this}} {{/each}}. Second last: {{= bag[bag.length - 2]}}.
+`;
+    const { squiffyApi, element } = await initScript(script, true);
+    expect(squiffyApi.get("bag")).toEqual(["key", "lamp", "rope"]);
+    expect([...squiffyApi.get("mixed")].sort()).toEqual(["key", "lamp", "rope"]);
+    expect(element.textContent).toContain("You have key, lamp and rope. First: key. Last: rope. Item 1: lamp.");
+    expect(element.textContent).toContain("n1 n2 n3");
+    expect(element.textContent).toContain("Lamp second.");
+    expect(element.textContent).toContain("Has rope.");
+    expect(element.textContent).toContain("Two: key, lamp.");
+    expect(element.textContent).toContain("Down: n0 n1 n2 . Second last: lamp.");
+});
+
+// An attribute can have a helper's name: {{count}} on its own shows it, rather than calling
+// the helper with no values (#447)
+test.each(["count", "first", "min", "round", "upper", "cond"])("an attribute called %s", async (name) => {
+    const { element } = await initScript(`[[start]]:\n@set ${name} = 3\nIt's {{${name}}}, then {{= ${name} + 1}}.`, true);
+    expect(element.textContent).toContain("It's 3, then 4.");
+});
+
 test("contains, ? : and the new helpers in expressions (#446)", async () => {
     const script = `
 [[start]]:

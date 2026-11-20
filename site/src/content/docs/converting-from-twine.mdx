@@ -76,6 +76,8 @@ Play the story through after converting it. Twine and Squiffy work differently i
 | `(cycling-link: bind $size, "S", "L")` | `{{rotate (array "S" "L") set="size"}}` |
 | `(input-box: bind $name)`, `(dropdown:)` | `<input data-attribute="name">`, `<select>` (see [User input](/player-input/)) |
 | `(for: each _item, ...$bag)[_item]`, `(for: _n where _n > 2, ...$list)[...]` | [`{{#each bag}}{{this}}{{/each}}`](/attributes/#going-through-an-array), with `{{#if this > 2}}` for `where` |
+| `(joined: ", ", ...$bag)`, `(sorted: ...$bag)`, `(shuffled: ...$bag)`, `(count: $bag, "coin")`, `(range: 1, $n)` | `(join bag ", ")`, `(sort bag)`, `(shuffle bag)`, `(count bag "coin")`, `(range 1 n)` |
+| `$bag's last`, `$bag's 2ndlast` | `(last bag)`, `bag[bag.length - 2]` |
 | `(set: $hero to (dm: "hp", 10))`, `$hero's hp`, `$party's 1st's name` | `@set hero = { hp: 10 }`, `{{hero.hp}}`, `{{= party[0].name}}`: see [Objects](/attributes/#objects) |
 | `(storylet:)` and `(link-storylet:)` | A link to each storylet whose condition is true |
 | `''bold''`, `//italic//`, `(text-colour: red)[...]` | Markdown and HTML |
@@ -104,6 +106,8 @@ Play the story through after converting it. Twine and Squiffy work differently i
 | `either("a", "b")`, `random(1, 6)` | `(random (array "a" "b"))`, `(random (array 1 2 3 4 5 6))` |
 | `<<cycle "$size">>`, `<<textbox "$name">>`, `<<listbox>>` | `{{rotate ... set="size"}}`, `<input data-attribute="name">`, `<select>` |
 | `<<for _i, _item range $bag>>`, `<<for _i to 0; _i lt $bag.length; _i++>>` | [`{{#each bag}}`](/attributes/#going-through-an-array), with `_item` and `$bag[_i]` as `{{this}}`, and `_i` as `{{@index}}` |
+| `<<for _i to 1; _i lte $n; _i++>>`, counting up or down by 1 | `{{#each (range 1 n)}}`, with `_i` as `{{this}}` |
+| `$bag.join()`, `.sort()`, `.shuffle()`, `.slice()`, `.indexOf()`, `.count()`, `.first()`, `.last()` | `(join bag ",")`, `(sort bag)`, `(shuffle bag)`, `(slice bag ...)`, `(indexof bag ...)`, `(count bag ...)`, `(first bag)`, `(last bag)`. Squiffy's `sort` and `shuffle` don't change the array, so `<<run $bag.sort()>>` on its own isn't converted |
 | `<<set $hero to { hp: 10 }>>`, `$hero.hp`, `$inv[_i].name` | `@set hero = { hp: 10 }`, `{{hero.hp}}`, `{{= inv[i].name}}`: see [Objects](/attributes/#objects) |
 | Widgets: `<<say "Ann">>` | A section for each widget, which `{{embed}}`s it, with its arguments in `args_0`, `args_1` and so on |
 | `''bold''`, `//italic//`, `@@color:red;...@@` | Markdown and HTML |
@@ -119,7 +123,7 @@ These are left as comments, and listed in `twine-import.txt`:
 - **Sound**, such as `<<audio>>` and `(track:)`, isn't converted yet. Use [`@music` and `@sound`](/images-and-files/#music-and-sound) instead.
 - **Things Squiffy doesn't have yet**, listed in [What Twine has that Squiffy doesn't](/coming-from-twine/#what-twine-has-that-squiffy-doesnt).
 - **`<<return>>` and `<<back>>`.** A screen the player visits and leaves, like an inventory, is better as a [panel](/multiple-files/#panels): see [Left out on purpose](/coming-from-twine/#left-out-on-purpose). Squiffy has its own Back button for undoing moves. Saving and loading from the story's text, such as Harlowe's `(save-game:)`, isn't converted either: players use Squiffy's **Save** button instead.
-- **Loops that don't go through an array**, such as `<<for _i lt 4>>`, and `<<break>>` and `<<continue>>`. Rewrite them with [`{{#each}}`](/attributes/#going-through-an-array). A link in a loop can set attributes to the item, but not to a value inside it, and if it does more than that, it can't use the item, because what it does is in a passage or section of its own.
+- **Loops that don't go through an array or count by 1**, such as `<<for _i lt 4>>`, and `<<break>>` and `<<continue>>`. Rewrite them with [`{{#each}}`](/attributes/#going-through-an-array). A link in a loop can set attributes to the item, but not to a value inside it, and if it does more than that, it can't use the item, because what it does is in a passage or section of its own.
 - **Setting a value inside an object by a name or position in a variable**, such as `<<set $inv[_i].name to "rope">>`, anywhere but at the start of a passage, where it becomes an `@set`. Squiffy's `{{set}}` takes a fixed name.
 - **Harlowe's datasets**, and JavaScript's object methods, such as `Object.keys()`.
 - **Harlowe's more unusual hooks and changers**, such as `(live:)` with no `(go-to:)` in it, `(enchant:)` on anything but how text looks, and `(append:)` on a hook in another passage.

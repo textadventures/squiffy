@@ -286,6 +286,14 @@ describe("rewriteInfixExpressions", () => {
             .toBe("{{#if (eq a 1)}}one{{else if (eq a 2)}}two{{else unless (eq a 3)}}not three{{else}}three{{/if}}");
     });
 
+    test("#each and #with (#447)", () => {
+        expect(rewriteInfixExpressions("{{#each (range 1 (count + 1))}}x{{/each}}{{#with party[leader]}}y{{/with}}"))
+            .toBe("{{#each (range 1 (add count 1))}}x{{/each}}{{#with (lookup party leader)}}y{{/with}}");
+        // Without operators, or with block parameters, they're left as they are
+        expect(rewriteInfixExpressions("{{#each bag}}x{{/each}}{{#each bag as |item i|}}y{{/each}}"))
+            .toBe("{{#each bag}}x{{/each}}{{#each bag as |item i|}}y{{/each}}");
+    });
+
     test("whitespace control", () => {
         expect(rewriteInfixExpressions("{{~#if a > 1~}}x{{~else if a < 0 ~}}y{{/if}}"))
             .toBe("{{~#if (gt a 1)~}}x{{~else if (lt a 0)~}}y{{/if}}");

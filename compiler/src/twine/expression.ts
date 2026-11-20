@@ -146,7 +146,8 @@ export function print(e: Expr, options: PrintOptions = {}): string {
             return `${base}[${print(e.key, options)}]`;
         }
         case "call":
-            if (e.fn == "__indexof") throw new Unconvertible(".indexOf(), except to check whether something is there");
+            // .indexOf() that isn't checking whether something is there (see sugarcube.ts) (#447)
+            if (e.fn == "__indexof") return print({ ...e, fn: "indexof" }, options);
             return `(${e.fn}${e.args.map(a => " " + printArgument(a, options)).join("")})`;
         case "neg": {
             const inner = print(e.e, options);
@@ -180,6 +181,12 @@ export function print(e: Expr, options: PrintOptions = {}): string {
 function printArgument(e: Expr, options: PrintOptions): string {
     const text = print(e, options);
     return precedenceOf(e) < atomPrecedence || e.k == "neg" ? `(${text})` : text;
+}
+
+// Whether an expression is a call to a helper that makes a new list (#447), which {{#each}} can
+// go through as it can an attribute
+export function isListCall(e: Expr): boolean {
+    return e.k == "call" && ["range", "sort", "shuffle", "slice"].includes(e.fn);
 }
 
 // Whether an expression can only be true or false, for Harlowe's "$a is 1 or 2"
