@@ -1409,7 +1409,8 @@ class Writer {
                 state.leading = false;
                 if (/<<\s*(?:break|continue)\s*>>/.test(m.raw)) throw new Unconvertible("<<break>> and <<continue>>");
                 const loop = this.forLoop(m.args);
-                const body = this.ctx.story.inLoop(loop.vars, loop.array, () => this.body(m, state));
+                const numbers = loop.collection.k == "call" && loop.collection.fn == "range";
+                const body = this.ctx.story.inLoop(loop.vars, loop.array, () => this.body(m, state), numbers);
                 return `{{#each ${print(loop.collection)}}}${body}{{/each}}`;
             }
             case "widget":
@@ -1589,19 +1590,22 @@ class Writer {
         }
 
         const state: EmitState = { leading: true, directives: [], nobr: false };
-        const content = this.nodes(body, state);
-        const directives = [...(setterSource === null ? [] : this.setters(setterSource, false).map(s => `@set ${s}`)), ...state.directives];
+        // In a loop, the body can use the loop's item, which the link sets an attribute to (#448)
+        const { result: [content, directives], setters: loopSetters } = this.ctx.story.linkBody(() => {
+            const content = this.nodes(body, state);
+            return [content, [...(setterSource === null ? [] : this.setters(setterSource, false).map(s => `@set ${s}`)), ...state.directives]] as const;
+        });
         if (destination) {
             // Run the body in a section of its own, which then goes on to the passage
             const goto = gotoArg !== null ? "" : "\n" + ("name" in destination
                 ? `{{goto ${print({ k: "str", v: this.sectionName(destination.name, m.raw) })}}}`
                 : `{{goto ${print(destination.expr)}}}`);
-            const section = this.ctx.addSection(`${this.ctx.section}: ${text.plain}`, { directives, body: content + goto });
-            return sectionLink(text.squiffy, section);
+            const section = this.ctx.addSection(`${this.ctx.section}: ${text.plain}`, { directives: [...directives], body: content + goto });
+            return sectionLink(text.squiffy, section, loopSetters);
         }
         // Stays in this passage: a passage link, whose passage does what the body does
-        const name = this.ctx.addPassage(text.plain, { directives, body: content });
-        return passageLink(text.squiffy, name);
+        const name = this.ctx.addPassage(text.plain, { directives: [...directives], body: content });
+        return passageLink(text.squiffy, name, loopSetters);
     }
 
     // The setters for nodes that are only <<set>>s, or null

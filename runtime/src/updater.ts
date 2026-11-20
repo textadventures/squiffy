@@ -26,18 +26,36 @@ export function updateStory(oldStory: Story,
         return outputElement.querySelectorAll(`[data-source='[[${safeQuerySelector(section)}]][${safeQuerySelector(passage)}]']`);
     }
 
+    // Links to the same passage are matched up in order, so that in an {{#each}}, the item's link
+    // that was clicked is the one that stays disabled (#448)
+    function passageLinksByName(element: Element) {
+        const byName = new Map<string, Element[]>();
+        for (const link of element.querySelectorAll("a.link-passage[data-passage]")) {
+            const name = link.getAttribute("data-passage")!;
+            if (!byName.has(name)) byName.set(name, []);
+            byName.get(name)!.push(link);
+        }
+        return byName;
+    }
+
     function updateElementTextPreservingDisabledPassageLinks(element: Element, text: string) {
-        // Record which passage links are disabled
-        const disabledPassages = Array.from(element
-            .querySelectorAll("a.link-passage.disabled"))
-            .map((el: Element) => el.getAttribute("data-passage"));
+        const oldLinks = passageLinksByName(element);
 
         element.innerHTML = text;
 
-        // Re-disable links that were disabled before the update
-        for (const passage of disabledPassages) {
-            const link = element.querySelector(`a.link-passage[data-passage="${passage}"]`);
-            if (link) disableLink(link);
+        // Re-disable links that were disabled before the update, keeping which click or
+        // {{deactivate}} disabled them, so going back enables the right ones
+        const newLinks = passageLinksByName(element);
+        for (const [name, links] of oldLinks) {
+            links.forEach((oldLink, i) => {
+                const link = newLinks.get(name)?.[i];
+                if (!link || !oldLink.classList.contains("disabled")) return;
+                disableLink(link);
+                for (const attr of ["data-clicked", "data-deactivated-by"]) {
+                    const value = oldLink.getAttribute(attr);
+                    if (value !== null) link.setAttribute(attr, value);
+                }
+            });
         }
     }
 

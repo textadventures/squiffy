@@ -418,6 +418,65 @@ Bye.
     expect(guard.classList).toContain("disabled");
 });
 
+describe("passage links in an {{#each}} (#448)", () => {
+    const script = `
+[[start]]:
+@set inventory = ["lamp", "key", "rope"]
+{{#each inventory}}
+- [Examine the {{this}}](examine, item = "{{this}}")
+{{/each}}
+
+[examine]:
+It's a {{item}}.
+`;
+    const disabled = (element: HTMLElement) =>
+        [...element.querySelectorAll("a.link-passage")].map(l => l.classList.contains("disabled"));
+
+    test("each item's link works on its own", async () => {
+        const { squiffyApi, element } = await initScript(script, true);
+        await squiffyApi.clickLink(findLink(element, "passage", "Examine the lamp"));
+        expect(disabled(element)).toEqual([true, false, false]);
+        expect(await squiffyApi.clickLink(findLink(element, "passage", "Examine the key"))).toBe(true);
+        expect(element.textContent).toContain("It's a lamp.");
+        expect(element.textContent).toContain("It's a key.");
+        expect(disabled(element)).toEqual([true, true, false]);
+    });
+
+    test("going back enables only the link that was clicked", async () => {
+        const { squiffyApi, element } = await initScript(script, true);
+        await squiffyApi.clickLink(findLink(element, "passage", "Examine the lamp"));
+        await squiffyApi.clickLink(findLink(element, "passage", "Examine the key"));
+        squiffyApi.goBack();
+        expect(disabled(element)).toEqual([true, false, false]);
+        squiffyApi.goBack();
+        expect(disabled(element)).toEqual([false, false, false]);
+        expect(element.querySelector("[data-clicked]")).toBeNull();
+    });
+
+    test("updating the story keeps the clicked link disabled, and going back still works", async () => {
+        const { squiffyApi, element } = await initScript(script, true);
+        await squiffyApi.clickLink(findLink(element, "passage", "Examine the key"));
+        const updated = await compile(script.replace("It's a", "It is a"), undefined, true);
+        squiffyApi.update(updated.story);
+        expect(disabled(element)).toEqual([false, true, false]);
+        const changed = await compile(script.replace("- [Examine", "- [Look at"), undefined, true);
+        squiffyApi.update(changed.story);
+        expect(disabled(element)).toEqual([false, true, false]);
+        squiffyApi.goBack();
+        expect(disabled(element)).toEqual([false, false, false]);
+    });
+
+    test("a saved game remembers which link was clicked", async () => {
+        const first = await initScript(script, true);
+        await first.squiffyApi.clickLink(findLink(first.element, "passage", "Examine the rope"));
+        first.element.innerHTML = "";
+        const { squiffyApi, element } = await initScript(script, true);
+        expect(disabled(element)).toEqual([false, false, true]);
+        squiffyApi.goBack();
+        expect(disabled(element)).toEqual([false, false, false]);
+    });
+});
+
 test("{{deactivate}} disables links to other passages, and going back only enables the ones it disabled", async () => {
     // https://github.com/textadventures/squiffy/issues/13
     const script = `

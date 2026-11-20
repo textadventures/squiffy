@@ -79,9 +79,13 @@ export function AnimatePlugin(): SquiffyPlugin {
                     if (oldLink.classList.contains("disabled")) {
                         link.classList.add("disabled");
                     }
-                    const tabindex = oldLink.getAttribute("tabindex");
-                    if (tabindex !== null) {
-                        link.setAttribute("tabindex", tabindex);
+                    // tabindex, and which click or {{deactivate}} disabled it, so going back
+                    // enables the right links
+                    for (const attr of ["tabindex", "data-clicked", "data-deactivated-by"]) {
+                        const value = oldLink.getAttribute(attr);
+                        if (value !== null) {
+                            link.setAttribute(attr, value);
+                        }
                     }
                 });
             };

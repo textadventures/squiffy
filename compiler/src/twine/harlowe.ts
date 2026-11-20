@@ -1385,11 +1385,12 @@ class Writer {
                 if (!lambda || (!lambda[1] && !lambda[3])) throw new Unconvertible(`(${name}:) with something other than "each _item" or "_item where ..."`);
                 const collection = this.forCollection(args.slice(1), name);
                 const hook = m.hook;
+                const numbers = collection.k == "call" && collection.fn == "range";
                 return this.ctx.story.inLoop(new Map([["_" + lambda[2], "item"]]), undefined, () => {
                     const body = this.hookContent(hook, state);
                     const shown = lambda[3] ? `{{#if ${print(this.expr.parse(lambda[3]))}}}${body}{{/if}}` : body;
                     return `{{#each ${print(collection)}}}${shown}{{/each}}`;
-                });
+                }, numbers);
             }
             case "linkstorylet": {
                 state.leading = false;
@@ -1546,21 +1547,24 @@ class Writer {
         const navigation = this.navigation(m.hook);
         if (navigation) {
             if (navigation.setters) return this.linkTo(text, navigation.target, m.raw, navigation.setters);
-            // It does more than set variables, so do that in a section of its own
-            const section = this.ctx.addSection(`${this.ctx.section}: ${textExpr.v}`, navigation.content());
-            return sectionLink(text, section);
+            // It does more than set variables, so do that in a section of its own. In a loop, it can
+            // use the loop's item, which the link sets an attribute to (#448).
+            const { result, setters } = this.ctx.story.linkBody(() => navigation.content());
+            const section = this.ctx.addSection(`${this.ctx.section}: ${textExpr.v}`, result);
+            return sectionLink(text, section, setters);
         }
 
-        const content = this.nodes(m.hook.nodes, { leading: false, directives: [] });
+        const hook = m.hook;
+        const { result: content, setters } = this.ctx.story.linkBody(() => this.nodes(hook.nodes, { leading: false, directives: [] }));
         if (m.name == "linkrepeat" || m.name == "linkrerun") {
             this.ctx.approximate(m.raw, "In Squiffy, this link can only be clicked once.");
             const passage = this.ctx.addPassage(textExpr.v, content);
-            return passageLink(text, passage);
+            return passageLink(text, passage, setters);
         }
         const label = this.ctx.newLabel(textExpr.v);
         const replacement = m.name == "linkreveal" ? text + content : content;
         const passage = this.ctx.addPassage(textExpr.v, `{{#replace "${label}"}}${replacement}{{/replace}}`);
-        return `{{#label "${label}"}}${passageLink(text, passage)}{{/label}}`;
+        return `{{#label "${label}"}}${passageLink(text, passage, setters)}{{/label}}`;
     }
 
     // If a hook only sets variables and then goes to a passage, the setters and the passage.

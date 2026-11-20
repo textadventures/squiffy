@@ -70,14 +70,16 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
 
         if (passage !== null) {
             // A passage with @repeat can be clicked again, and doesn't count towards @1, @2... and @last
+            let clicked: string | undefined;
             if (!isRepeatPassage(passage)) {
                 disableLink(link);
+                clicked = markClicked(link);
                 set("_turncount", get("_turncount") + 1);
             }
             await processLink(link);
             if (passage) {
                 currentBlockOutputElement = null;
-                await showPassage(passage);
+                await showPassage(passage, clicked);
             }
 
             emitter.emit("linkClick", { linkType: "passage" });
@@ -133,6 +135,18 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     function enableLink(link: Element) {
         link.classList.remove("disabled");
         link.removeAttribute("tabindex");
+    }
+
+    // Numbers a passage link that was clicked, so that going back can enable just that link, and
+    // not the others to the same passage, such as the other items' links in an {{#each}} (#448)
+    function markClicked(link: Element) {
+        let max = 0;
+        for (const other of outputElement.querySelectorAll("[data-clicked]")) {
+            max = Math.max(max, Number(other.getAttribute("data-clicked")) || 0);
+        }
+        const id = String(max + 1);
+        link.setAttribute("data-clicked", id);
+        return id;
     }
     
     async function begin(startAt?: StartAt) {
@@ -501,7 +515,8 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         currentSectionElement.classList.remove("links-disabled");
     }
     
-    async function showPassage(passageName: string) {
+    // clicked: the number markClicked gave the link that was clicked to get here, if any
+    async function showPassage(passageName: string, clicked?: string) {
         cancelGoto();
         const oldCanGoBack = canGoBack();
         let passage = currentSection.passages && currentSection.passages[passageName];
@@ -558,6 +573,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         currentPassageElement = document.createElement("div");
         currentPassageElement.classList.add("squiffy-output-passage");
         currentPassageElement.setAttribute("data-passage", `${passageName}`);
+        if (clicked) currentPassageElement.setAttribute("data-clicked-link", clicked);
 
         currentSectionElement.appendChild(currentPassageElement);
 
@@ -1045,6 +1061,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
 
         if (currentPassageElement) {
             const currentPassage = currentPassageElement.getAttribute("data-passage");
+            const clicked = currentPassageElement.getAttribute("data-clicked-link");
             doUndo(currentPassageElement.getAttribute("data-undo"));
             undoDeactivate(currentPassageElement);
             currentPassageElement.remove();
@@ -1071,9 +1088,18 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
                 setCurrentSectionElement();
             }
 
-            for (const link of currentSectionElement.querySelectorAll("a.squiffy-link[data-passage]")) {
-                if (link.getAttribute("data-passage") == currentPassage) {
+            if (clicked) {
+                for (const link of currentSectionElement.querySelectorAll(`a.squiffy-link[data-clicked="${clicked}"]`)) {
                     enableLink(link);
+                    link.removeAttribute("data-clicked");
+                }
+            }
+            else if (currentPassage && !isRepeatPassage(currentPassage)) {
+                // Saved before links were numbered when clicked, so enable every link to the passage
+                for (const link of currentSectionElement.querySelectorAll("a.squiffy-link[data-passage]")) {
+                    if (link.getAttribute("data-passage") == currentPassage) {
+                        enableLink(link);
+                    }
                 }
             }
 

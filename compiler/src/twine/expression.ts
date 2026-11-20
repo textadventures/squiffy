@@ -27,8 +27,8 @@ export type Expr =
     | { k: "member", e: Expr, key: Expr }
     // A loop's item ({{this}}) or position ({{@index}}), in an {{#each}} up levels out from the
     // innermost one. array is the attribute a loop by position goes through, so $list[_i] can be
-    // its item.
-    | { k: "loop", kind: "item" | "index", up: number, array?: string };
+    // its item. numbers: its items are numbers, as in a loop that counts.
+    | { k: "loop", kind: "item" | "index", up: number, array?: string, numbers?: boolean };
 
 // Thrown when something can't be converted. The message says why, for the list of problems.
 export class Unconvertible extends Error {}
@@ -131,7 +131,8 @@ export function print(e: Expr, options: PrintOptions = {}): string {
             if (!options.inLink) return loopRef(e);
             // A link fills in its setters with only its own loop's item
             if (e.up) throw new Unconvertible("a link in a loop that sets a variable to an outer loop's item");
-            return `'{{${loopRef(e)}}}'`;
+            // Filled in as text, so quoted, unless it's a number
+            return e.kind == "index" || e.numbers ? `{{${loopRef(e)}}}` : `'{{${loopRef(e)}}}'`;
         case "array": return `(array${e.items.map(i => " " + printArgument(i, options)).join("")})`;
         // Always a space before "}", so nested objects never have the "}}" that would end a tag
         case "object":
