@@ -82,6 +82,11 @@ export function seededRandom(seed: number): () => number {
 // they'd have run, up to this many in a row before giving up: a story that moves on by itself
 // forever, such as a clock, would otherwise never stop.
 const MAX_TIMERS = 100;
+// An {{#every}} (#451) can show its text again forever, such as a clock, so once its text has been
+// shown this many times in a row, with nothing else waiting to happen, play stops waiting for it
+const MAX_EVERY_TICKS = 20;
+// How the runtime marks the timers for {{#every}}s (EVERY_TICK in runtime/src/every.ts)
+const isEveryTick = (fn: unknown) => !!(fn as Record<string, unknown>)?.squiffyEvery;
 // How long to wait for something that isn't a timer before giving up
 const MAX_REAL_WAIT = 10000;
 // Animation frames are this far apart, in milliseconds
@@ -112,7 +117,7 @@ const cancelFrame = (id: number) => activeFrames?.delete(id);
 interface Environment {
     // Waits until the story has finished doing what it's doing, e.g. after a click, or is
     // waiting for the player to do something
-    settle(action?: Promise<unknown>, waitingForPlayer?: () => boolean): Promise<{ error?: unknown; stillGoing: boolean }>;
+    settle(action?: Promise<unknown>, waitingForPlayer?: () => boolean): Promise<{ error?: unknown; stillGoing: boolean; repeating?: boolean }>;
     // Errors and other messages since this was last called: the story's console output, and
     // anything thrown by a timer
     takeMessages(): { errors: string[]; console: string[] };
@@ -263,6 +268,7 @@ async function createEnvironment(): Promise<Environment> {
             action?.then(() => { done = true; }, e => { done = true; error = e; });
             let quiet = 0;
             let timers = 0;
+            let everyTicks = 0;
             let frameCount = 0;
             const started = realDateNow();
             for (;;) {
@@ -286,9 +292,13 @@ async function createEnvironment(): Promise<Environment> {
                 if (++quiet < 2) continue;
                 // Nothing's happening, so it's time for the next timer, if there is one
                 if (later.length) {
+                    if (everyTicks >= MAX_EVERY_TICKS && (done || waitingForPlayer?.()) && later.every(t => isEveryTick(t.fn))) {
+                        return { error, stillGoing: false, repeating: true };
+                    }
                     if (timers >= MAX_TIMERS) return { error, stillGoing: true };
                     later.sort((a, b) => a.due - b.due || a.id - b.id);
                     const next = later.shift()!;
+                    everyTicks = isEveryTick(next.fn) ? everyTicks + 1 : 0;
                     skipped = Math.max(skipped, next.due);
                     timers++;
                     frameCount = 0;
@@ -436,6 +446,9 @@ export interface PlayStep {
     // The story was still moving on by itself, e.g. with {{goto ... after=}} in a loop, when
     // play stopped waiting for it
     stillGoing?: boolean;
+    // Some text was still being shown again and again by an {{#every}} (#451) when play stopped
+    // waiting for it
+    repeating?: boolean;
 }
 
 export interface PlayOptions {
@@ -550,7 +563,7 @@ class Session {
     // Runs something the player does, and returns what it put on the screen
     async step(choice: string | undefined, action: () => Promise<unknown>, link?: HTMLElement): Promise<PlayStep> {
         this.went = [];
-        const { error, stillGoing } = await this.env.settle(action(), this.waitingForContinue);
+        const { error, stillGoing, repeating } = await this.env.settle(action(), this.waitingForContinue);
         const messages = this.env.takeMessages();
         if (error) messages.errors.push(formatError(error));
         // The runtime does nothing when a link goes to a section that doesn't exist
@@ -596,6 +609,7 @@ class Session {
             errors: dedupe(errors),
             console: messages.console,
             ...(stillGoing ? { stillGoing } : {}),
+            ...(repeating ? { repeating } : {}),
         };
     }
 
@@ -979,6 +993,7 @@ export function formatPlayResult(result: PlayResult, showAttributes: boolean): s
         }
         for (const line of step.console) lines.push(line);
         if (step.stillGoing) lines.push("(The story is still moving on by itself, so play stopped waiting for it here.)");
+        if (step.repeating) lines.push("(Some text is still being shown again and again, with {{#every}}, so play stopped waiting for it here.)");
     }
     lines.push("");
     if (result.stopped) {

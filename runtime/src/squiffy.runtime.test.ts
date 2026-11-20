@@ -4554,3 +4554,185 @@ Lower: {{= (lower name)["length"]}}. Abs: {{= (abs (-gold))}}. Max: {{max gold 3
     expect(element.textContent).toContain("Letters: 5. Items: 2. Rich.");
     expect(element.textContent).toContain("Lower: 5. Abs: 10. Max: 10.");
 });
+
+// {{#every}} (#451)
+describe("{{#every}}", () => {
+    beforeEach(() => {
+        vi.useFakeTimers();
+    });
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
+    const everyText = (element: HTMLElement) =>
+        [...element.querySelectorAll(".squiffy-every")].map(el => el.textContent);
+
+    test("shows its text again every so often, replacing what it showed before", async () => {
+        const { squiffyApi, element } = await initScript("@set n = 0\nTicks: {{#every 1000}}{{inc \"n\"}}{{n}}{{/every}}", true);
+        expect(everyText(element)).toEqual([""]);
+        await vi.advanceTimersByTimeAsync(999);
+        expect(everyText(element)).toEqual([""]);
+        await vi.advanceTimersByTimeAsync(1);
+        expect(everyText(element)).toEqual(["1"]);
+        await vi.advanceTimersByTimeAsync(2000);
+        expect(everyText(element)).toEqual(["3"]);
+        expect(squiffyApi.get("n")).toBe(3);
+    });
+
+    test("append=true adds to what it showed, and times= stops it", async () => {
+        const { element } = await initScript("{{#every 500 append=true times=3}}Drip. {{/every}}", true);
+        await vi.advanceTimersByTimeAsync(5000);
+        expect(everyText(element)).toEqual(["Drip. Drip. Drip. "]);
+        expect(element.querySelector(".squiffy-every")!.hasAttribute("data-every-stopped")).toBe(true);
+    });
+
+    test("{{stop}} and {{goto}} in its text", async () => {
+        const script = `
+[[start]]:
+@set fuse = 3
+{{#every 1000}}{{dec "fuse"}}{{fuse}}...{{#if fuse <= 0}}{{stop}}{{goto "boom"}}{{/if}}{{/every}}
+
+[[boom]]:
+BOOM.
+`;
+        const { squiffyApi, element } = await initScript(script, true);
+        await vi.advanceTimersByTimeAsync(2000);
+        expect(squiffyApi.get("_section")).toBe("start");
+        expect(everyText(element)).toEqual(["1..."]);
+        await vi.advanceTimersByTimeAsync(1000);
+        expect(squiffyApi.get("_section")).toBe("boom");
+        expect(visibleText(element)).toBe("0... BOOM.");
+        await vi.advanceTimersByTimeAsync(5000);
+        expect(squiffyApi.get("fuse")).toBe(0);
+    });
+
+    test.each([
+        ["delay * 100", 1000],
+        ["\"1.5s\"", 1500],
+        ["(delay * 100)", 1000],
+    ])("{{#every %s}} works out its delay as the story runs", async (delay, ms) => {
+        const { element } = await initScript(`@set delay = 10\n{{#every ${delay}}}Tick.{{/every}}`, true);
+        await vi.advanceTimersByTimeAsync(ms - 1);
+        expect(everyText(element)).toEqual([""]);
+        await vi.advanceTimersByTimeAsync(1);
+        expect(everyText(element)).toEqual(["Tick."]);
+    });
+
+    test("text with paragraphs is a block", async () => {
+        const { element } = await initScript("{{#every 1000 times=1}}\n\nOne.\n\nTwo.\n\n{{/every}}", true);
+        await vi.advanceTimersByTimeAsync(1000);
+        const every = element.querySelector(".squiffy-every")!;
+        expect(every.tagName).toBe("DIV");
+        expect(every.querySelectorAll("p").length).toBe(2);
+    });
+
+    test("nested {{#every}}s each keep their own text", async () => {
+        const { element } = await initScript("{{#every 1000 times=1}}Outer {{#every 500 times=2}}inner{{/every}}{{/every}}", true);
+        await vi.advanceTimersByTimeAsync(1000);
+        expect(everyText(element)).toEqual(["Outer ", ""]);
+        await vi.advanceTimersByTimeAsync(500);
+        expect(everyText(element)).toEqual(["Outer inner", "inner"]);
+    });
+
+    test("keeps going when a passage is shown, and stops when the player leaves the section", async () => {
+        const script = `
+[[start]]:
+@set n = 0
+{{#every 1000}}{{inc "n"}}{{/every}} [Look] [[Leave]](away)
+
+[Look]:
+You look.
+
+[[away]]:
+Away.
+`;
+        const { squiffyApi, element } = await initScript(script, true);
+        await vi.advanceTimersByTimeAsync(1500);
+        await squiffyApi.clickLink(findLink(element, "passage", "Look"));
+        await vi.advanceTimersByTimeAsync(1500);
+        expect(squiffyApi.get("n")).toBe(3);
+        await squiffyApi.clickLink(findLink(element, "section", "Leave"));
+        await vi.advanceTimersByTimeAsync(5000);
+        expect(squiffyApi.get("n")).toBe(3);
+    });
+
+    test("going back undoes what its text changed", async () => {
+        const script = `
+[[start]]:
+@set n = 0
+[[Next]](next)
+
+[[next]]:
+{{#every 1000}}{{inc "n"}}{{n}}{{/every}}
+`;
+        const { squiffyApi, element } = await initScript(script, true);
+        await squiffyApi.clickLink(findLink(element, "section", "Next"));
+        await vi.advanceTimersByTimeAsync(3000);
+        expect(squiffyApi.get("n")).toBe(3);
+        squiffyApi.goBack();
+        expect(squiffyApi.get("n")).toBe(0);
+        await vi.advanceTimersByTimeAsync(3000);
+        expect(squiffyApi.get("n")).toBe(0);
+    });
+
+    test("going back from a passage undoes the ticks since, and carries on", async () => {
+        const script = `
+[[start]]:
+@set n = 0
+{{#every 1000}}{{inc "n"}}{{/every}} [Look]
+
+[Look]:
+You look.
+`;
+        const { squiffyApi, element } = await initScript(script, true);
+        await vi.advanceTimersByTimeAsync(2000);
+        await squiffyApi.clickLink(findLink(element, "passage", "Look"));
+        await vi.advanceTimersByTimeAsync(3000);
+        expect(squiffyApi.get("n")).toBe(5);
+        squiffyApi.goBack();
+        expect(squiffyApi.get("n")).toBe(2);
+        await vi.advanceTimersByTimeAsync(1000);
+        expect(squiffyApi.get("n")).toBe(3);
+    });
+
+    test("a saved game carries on", async () => {
+        const script = "@set n = 0\n{{#every 1000}}{{inc \"n\"}}{{n}}{{/every}}";
+        const element = document.getElementById("squiffy")!;
+        const { story } = await compile(script, undefined, true);
+        const first = await init({ element, story });
+        await first.begin();
+        await vi.advanceTimersByTimeAsync(2000);
+        first.dispose();
+
+        element.innerHTML = "";
+        const second = await init({ element, story });
+        await second.begin();
+        expect(everyText(element)).toEqual(["2"]);
+        await vi.advanceTimersByTimeAsync(1000);
+        expect(everyText(element)).toEqual(["3"]);
+        expect(element.querySelector(".squiffy-every")!.getAttribute("data-every-count")).toBe("3");
+    });
+
+    test("keeps going after the story is edited, and stops when it's disposed", async () => {
+        const script = "@set n = 0\nTicks: {{#every 1000}}{{inc \"n\"}}{{/every}}";
+        const { squiffyApi } = await initScript(script, true);
+        await vi.advanceTimersByTimeAsync(1000);
+        const updated = await compile(script.replace("Ticks", "Tocks"), undefined, true);
+        squiffyApi.update(updated.story);
+        await vi.advanceTimersByTimeAsync(1000);
+        expect(squiffyApi.get("n")).toBe(2);
+        squiffyApi.dispose();
+        await vi.advanceTimersByTimeAsync(3000);
+        expect(squiffyApi.get("n")).toBe(2);
+    });
+
+    test.each([
+        ["{{#every}}x{{/every}}", "how often"],
+        ["{{#every 0}}x{{/every}}", "how often"],
+        ["{{#every \"soon\"}}x{{/every}}", "not \"soon\""],
+        ["{{#every 1000 times=0}}x{{/every}}", "times="],
+    ])("%s is an error", async (script, message) => {
+        const { element } = await initScript(script, true);
+        expect(element.querySelector(".squiffy-error")?.textContent).toContain(message);
+    });
+});

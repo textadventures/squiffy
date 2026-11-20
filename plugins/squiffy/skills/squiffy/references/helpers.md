@@ -142,6 +142,8 @@ See dynamic-text.md for details.
 | `rotate` | `(array ...) [set="attr"] [show="next"]` | A link that cycles through options |
 | `sequence` | `(array ...) [set="attr"] [show="next"]` | A link that goes through options once |
 | `live` | `"attr" [section="name"] [passage="name"]` | Show an attribute (or a section's text) and update it when the attribute changes |
+| `#every` | `ms [times=n] [append=true]` | Show the text inside again and again while the player is in the section |
+| `stop` | | Inside `{{#every}}`, stop after this time |
 
 ## Custom helpers
 

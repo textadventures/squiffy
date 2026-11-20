@@ -154,6 +154,18 @@ describe("story graph", () => {
         expect(deadEnds(graph)).toEqual([]);
     });
 
+    test("{{goto}} inside {{#every}} is conditional (#451)", async () => {
+        const graph = await one([
+            "[[a]]:", "{{#every 1000}}{{goto \"b\"}}{{/every}} [[Stay]](a)", "",
+            "[[b]]:", "@end",
+        ].join("\n"));
+        expect(edgeSummary(graph.edges)).toEqual([
+            "section:a -> section:b (goto, conditional)",
+            "section:a -> section:a (section-link)",
+        ]);
+        expect(reachable(graph)).toEqual(["section:a", "section:b"]);
+    });
+
     test("{{deactivate}} isn't a link, so it doesn't reach a passage (#13)", async () => {
         const graph = await one([
             "[[a]]:", "See [b].", "",

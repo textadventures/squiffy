@@ -73,7 +73,7 @@ The Squiffy command-line tool runs with `npx` (Node.js required). Run it in the 
    Reports errors, dead ends, endings reached and sections never visited. Each problem has the options to reproduce it, such as `--play --seed 7 --choose 'go down' --choose 'Go back up'`, or for a long route, `--choices build/random/problem-1.txt` (a file with one link per line). Run those with `--play` to see it happen.
 4. **Build** the playable page when asked: `npx @textadventures/squiffy-cli` (no flags). With `squiffy.json`, it writes to `build/`; otherwise next to the file. `--serve` serves it on http://localhost:8282, and `--inline` makes one HTML file.
 
-Time is virtual in `--play` and `--random`: animations and `{{goto ... after=}}` happen at once. Scripts a story adds to its page aren't run.
+Time is virtual in `--play` and `--random`: animations, `{{goto ... after=}}` and `{{#every}}` happen at once (a `{{#every}}` that never stops is left after 20 times). Scripts a story adds to its page aren't run.
 
 If the CLI says it doesn't know `--check`, `--play` or `--random`, it's an older version: try `npx @textadventures/squiffy-cli@beta`, or tell the author to update.
 

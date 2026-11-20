@@ -62,6 +62,15 @@ The floor starts to crumble. [[Jump!]](safe)
 
 If the player clicks a link first, the story doesn't move on. `after=` can be an expression (`after=patience * 1000`) or a time as text (`after="3s"`, `"500ms"`). The delay starts once the section is written, not after animations finish. In `--play`, it happens at once.
 
+## Repeating text
+
+```squiffy
+@set fuse = 5
+The fuse burns down: {{#every 1000}}{{dec "fuse"}}{{fuse}}...{{#if fuse <= 0}}{{stop}}{{goto "boom"}}{{/if}}{{/every}}
+```
+
+Every so often (ms, `"1.5s"` or an expression), the text inside is worked out again and replaces what it showed, first after one wait. `append=true` adds it after instead. It stops after a `{{stop}}` in it, after `times=n`, or when the player leaves the section (passages don't stop it). Back undoes what it changed. In `--play`, it runs at once, and play stops waiting after 20 times in a row with nothing else to do.
+
 ## Replace
 
 ```squiffy
