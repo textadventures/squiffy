@@ -127,6 +127,8 @@ export interface LanguageService {
     // the syntax trees of unchanged files.
     getAnalysis(): Promise<Analysis>;
     getDiagnostics(path: string): Promise<Diagnostic[]>;
+    // The diagnostics for every file in the project, e.g. for a command line check
+    getAllDiagnostics(): Promise<Diagnostic[]>;
     getDocumentSymbols(path: string): Promise<DocumentSymbol[]>;
     getDefinition(path: string, position: Position): Promise<Location | undefined>;
     getReferences(path: string, position: Position, includeDeclaration?: boolean): Promise<Location[]>;
@@ -658,6 +660,10 @@ export function createLanguageService(options: LanguageServiceOptions): Language
         async getDiagnostics(path) {
             const index = await getIndex();
             return allDiagnostics(index).filter(d => d.file == path);
+        },
+
+        async getAllDiagnostics() {
+            return allDiagnostics(await getIndex());
         },
 
         async getDocumentSymbols(path) {

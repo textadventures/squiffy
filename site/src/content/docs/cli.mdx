@@ -75,6 +75,80 @@ ERROR: mygame.squiffy line 30: Can't add passage "look" as no section has been c
 
 A warning, such as a link to a section or passage that doesn't exist, points at the line the problem is on, and the game is still created. A hint, such as an `@import` that isn't needed, is a suggestion. An error stops the game being created, so fix it and run Squiffy again.
 
+## Checking a story
+
+Use `--check` to look for problems without building anything:
+
+```bash
+npx @textadventures/squiffy-cli --check
+```
+
+As well as the errors and warnings a build shows, this finds the problems the [editor](/editor/) shows: sections that can't be reached from the start of the story, and dead ends, which are sections with no way out that aren't marked with `@end`. Each problem is shown with its file, line and column:
+
+```text
+story.squiffy:12:5: warning: The section "cellar" has no way out, as it has no links to another section. If it's one of the story's endings, add @end to say so. [squiffy/dead-end]
+
+24 sections and 6 passages, starting at "intro", with 2 endings: "escaped", "eaten".
+0 errors, 1 warning.
+```
+
+It finishes with an exit code of 1 if there are any errors.
+
+## Playing a story from the command line
+
+Use `--play` to play a story as text, without a browser. Squiffy shows the text the player would see, with the links they can click in `[brackets]`, and lists the links, with where each one goes:
+
+```bash
+npx @textadventures/squiffy-cli --play
+```
+
+```text
+(section "intro")
+
+You're standing outside a coffee shop. [Go inside] or [look around].
+
+Choices (in section "intro"):
+  1. Go inside -> section "shop"
+  2. look around -> passage "look around"
+```
+
+To click links, add `--choose` with the link's text or its number, as many times as you like. They're clicked in order:
+
+```bash
+npx @textadventures/squiffy-cli --play --choose "look around" --choose "Go inside"
+```
+
+The other options are:
+
+- `--input attribute=value` puts text in a [text box](/player-input/), when there is one for that attribute on the screen. Add it once for each text box.
+- `--save game.json` carries on from the game saved in `game.json`, if there is one, and saves the game there afterwards. So you can play a story a few links at a time. If you change the story, earlier text on the screen stays as it was, so delete the file to start again.
+- `--start section` starts at another section.
+- `--attributes` shows the story's [attributes](/attributes/) at the end.
+- `--seed 42` makes anything random in the story, such as [`{{random}}`](/dynamic-text/#random), happen the same way every time.
+
+Any errors in the story, such as a mistake in its JavaScript, are shown where they happen, and Squiffy finishes with an exit code of 1. Time passes at once: animations finish straight away, and a [`{{goto}}`](/basic-concepts/#go-to-another-section) with `after=` happens without waiting. Text from `{{#animate "continue"}}` is shown as a link to click. Script files that a story adds to its page aren't run.
+
+### Playing at random
+
+Use `--random` to play the story many times, clicking links at random, to find problems you might not come across yourself:
+
+```bash
+npx @textadventures/squiffy-cli --random
+```
+
+It plays 20 times, or as many as you say (`--random 100`), clicking up to 200 links each time, or as many as you say with `--steps`. Text boxes are filled in with something that fits. Then it lists the sections and passages it never got to, the endings it reached, and any problems: errors, and dead ends it got stuck at. For each problem, it gives the options to play the story to it again:
+
+```text
+Error in section "shop" (4 times): gold is not defined
+  To get there: --play --seed 1234 --choose 'Go inside' --choose 'Buy a coffee'
+```
+
+Use the same `--seed` to play the same way again.
+
+### For AI agents
+
+Add `--json` to `--check`, `--play` or `--random` to print the result as JSON, for a program or an AI agent such as Claude Code to read. These options let an agent check a story it's helping to write, and play through it, without a browser.
+
 ## Output Formats
 
 Squiffy supports different output formats depending on how you want to distribute your game.

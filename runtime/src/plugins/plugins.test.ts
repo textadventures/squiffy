@@ -10,9 +10,7 @@ vi.mock("animejs", () => ({
         setTimeout(() => params.onComplete?.());
     },
     stagger: () => 0,
-    text: {
-        split: (el: HTMLElement) => ({ chars: [el], words: [el], lines: [el] }),
-    },
+    splitText: (el: HTMLElement) => ({ chars: [el], words: [el], lines: [el] }),
 }));
 
 const html = `
