@@ -176,15 +176,26 @@ describe("converting gamebooks", () => {
         ), { files: ["cave.png", "helper.js"] });
         expect(section(script, "Start")).toBe("<img class=\"quest-picture\" src=\"cave.png\" alt=\"\">\n\nLook.\n\n[[On]](Next)");
         expect(section(script, "Next")).toBe([
+            "@sound drip.mp3",
             "@end",
             "<iframe class=\"quest-youtube\" width=\"560\" height=\"315\" src=\"https://www.youtube.com/embed/dQw4w9WgXcQ\" allowfullscreen></iframe>",
             "",
-            "<audio src=\"drip.mp3\" autoplay></audio><br>",
             "Listen.",
         ].join("\n"));
         expect(result.assets).toEqual(["cave.png", "drip.mp3"]);
         expect(result.problems.map(p => p.text)).toEqual(["sound", "drip.mp3"]);
         expect(JSON.parse(result.files["squiffy.json"]).exclude).toEqual(["helper.js"]);
+    });
+
+    test("a sound that carries on to the next page", async () => {
+        const { script, result } = await convert(gamebook(
+            page("Start", "Thunder.", [["Next", "On"]], "<sound>thunder.mp3</sound><continuesound />")
+            + page("Next", "Quiet."),
+            "", noTitle,
+        ), { files: ["thunder.mp3"] });
+        expect(section(script, "Start")).toBe("@sound thunder.mp3\nThunder.\n\n[[On]](Next)");
+        // Quest doesn't stop it either, so there's nothing to say about it
+        expect(result.problems).toEqual([]);
     });
 
     test("clearing the screen between pages", async () => {
@@ -498,6 +509,23 @@ describe("scripts", () => {
         ].join("\n"));
     });
 
+    test("sounds, music and stopping it", async () => {
+        const { script, problems } = await run(scriptPage("Start", `
+            play sound ("door.mp3", false, false)
+            msg ("Creak.")
+            play sound ("theme.mp3", true, true)
+            stop sound`, "", [["End", "On"]]));
+        expect(section(script, "Start")).toBe([
+            "{{sound \"door.mp3\"}}",
+            "Creak.",
+            "{{music \"theme.mp3\"}}",
+            "{{stopmusic}}",
+            "",
+            "[[On]](End)",
+        ].join("\n"));
+        expect(problems.map(p => p.text)).toEqual(["play sound (\"theme.mp3\", true, true)", "sound"]);
+    });
+
     test("pictures, sounds and how the page looks", async () => {
         const { script } = await run(scriptPage("Start", `
             ClearScreen
@@ -511,7 +539,7 @@ describe("scripts", () => {
         expect(section(script, "Start")).toBe([
             "@clear",
             "<img src=\"map.png\" alt=\"\"><br>",
-            "<audio src=\"rain.mp3\" autoplay loop></audio><br>",
+            "{{music \"rain.mp3\"}}",
             "<span style=\"display: block; text-align: center\">**Chapter 1**</span><br>",
             "{{#animate \"typewriter\" interval=50}}It was a dark night.{{/animate}}<br>",
             "<style>:root { color-scheme: light; --squiffy-background: Black; }</style><br>",

@@ -64,6 +64,11 @@ function stringAttribute(o: QuestObject, name: string): string {
     return value?.type == "string" ? value.value : "";
 }
 
+// Whether converted script plays a sound once, which Quest would stop at the next page
+function playsSound(line: string): boolean {
+    return line.includes("{{sound ");
+}
+
 function booleanValue(value: QuestValue | undefined): boolean | undefined {
     return value?.type == "boolean" ? value.value : undefined;
 }
@@ -200,7 +205,7 @@ function convertGame(game: QuestGame, options: QuestConversionOptions): QuestCon
         noteStyle: () => { styled = true; },
     });
 
-    let hasSound = false;
+    let soundStops = false;
     const sections: string[] = [];
     for (const page of storyPages) {
         const section = sectionNames.get(page.name)!;
@@ -302,6 +307,7 @@ function convertGame(game: QuestGame, options: QuestConversionOptions): QuestCon
         };
         if (statements) {
             const script = convertScript(statements, { ...scriptContext(ctx, page.name), continueSection });
+            if (script.lines.some(playsSound)) soundStops = true;
             directives.push(...script.directives);
             lines.push(...script.lines);
             moves = script.lines.some(l => l.includes("{{goto"));
@@ -320,8 +326,10 @@ function convertGame(game: QuestGame, options: QuestConversionOptions): QuestCon
             const sound = stringAttribute(page, "sound").trim();
             if (sound) {
                 ctx.asset(sound);
-                hasSound = true;
-                lines.push(`<audio src="${escapeAttribute(sound)}" autoplay></audio>`);
+                // Quest stops a page's sound when the player goes to another page, unless the
+                // page is set to continue playing it, but Squiffy can't stop a sound
+                if (!booleanValue(page.attributes.get("continuesound"))) soundStops = true;
+                directives.push(`@sound ${sound}`);
             }
 
             lines.push(convertQuestText(stringAttribute(page, "description"), ctx, "block"));
@@ -370,6 +378,7 @@ function convertGame(game: QuestGame, options: QuestConversionOptions): QuestCon
             },
         };
         const script = convertScript(roomEnter, scriptContext(ctx));
+        if (script.lines.some(playsSound)) soundStops = true;
         master.push(...script.directives);
         const body = finishText(escapeLineStarts(script.lines.join("\n")));
         if (body) master.push(body);
@@ -382,8 +391,8 @@ function convertGame(game: QuestGame, options: QuestConversionOptions): QuestCon
             addProblem({ text: setting, reason: `The game's "${setting}" script can't be converted yet: ${oneLine(value.value)}` });
         }
     }
-    if (hasSound) {
-        addProblem({ text: "sound", reason: "Each page's sound plays to the end. In Quest, it stopped when the player went to another page, unless the page was set to continue playing it." });
+    if (soundStops) {
+        addProblem({ text: "sound", reason: "Sounds play to the end. In Quest, a sound stopped when the player went to another page, unless the page with the sound was set to continue playing it." });
     }
     for (const file of game.javascript) {
         addProblem({ text: file, reason: "The game's JavaScript was written for Quest, so it isn't part of the story." });

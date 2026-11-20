@@ -80,6 +80,8 @@ Play the story through after converting it. Twine and Squiffy work differently i
 | `(storylet:)` and `(link-storylet:)` | A link to each storylet whose condition is true |
 | `''bold''`, `//italic//`, `(text-colour: red)[...]` | Markdown and HTML |
 | Passages tagged `header`, `footer` and `startup` | The master section, an `{{embed}}` at the end of each section, and the start section |
+| The [Harlowe Audio Library](https://twinelab.net/harlowe-audio/)'s `(track: "theme", "loop", true)` and `(track: "theme", "play")` | `@music theme.mp3`, or `{{music "theme.mp3"}}` later on: see [Sound](#sound) |
+| `(track: "theme", "stop")`, `(track: "door", "play")` | `@music stop`, `@sound door.mp3` |
 
 ## How SugarCube converts
 
@@ -109,6 +111,17 @@ Play the story through after converting it. Twine and Squiffy work differently i
 | `''bold''`, `//italic//`, `@@color:red;...@@` | Markdown and HTML |
 | `StoryInit`, `PassageHeader`, `PassageFooter` | The start section, the master section, an `{{embed}}` at the end of each section |
 | `StoryCaption`, `StoryBanner` | A [panel](/multiple-files/#panels) beside the story, rendered again after each section and passage. Links in it don't work |
+| `<<audio "theme" loop play>>`, `<<audio "theme" stop>>` | `@music theme.mp3`, `@music stop`, or `{{music "theme.mp3"}}` and `{{stopmusic}}` later on: see [Sound](#sound) |
+| `<<audio "door" play>>`, `<<audio "door" volume 0.5 play>>` | `@sound door.mp3`, `{{sound "door.mp3" volume=0.5}}` |
+| `<<audio "theme" fadeoverto 3 0>>` | `{{stopmusic fade=3}}` |
+
+### Sound
+
+A track that the story sets to loop anywhere becomes [music](/images-and-files/#music-and-sound), which keeps playing from one section to the next until it's changed or stopped. Any other track becomes a sound, which plays once. At the start of a passage, they're `@music` and `@sound`, and later on, `{{music}}`, `{{stopmusic}}` and `{{sound}}`.
+
+The tracks get their files from SugarCube's `<<cacheaudio "theme" "music/theme.mp3">>`, or the Harlowe Audio Library's `hal.tracks` passage and `(newtrack:)`. Where a track has more than one file, the MP3 is used. The sound files aren't copied, so put them in the story's folder, where the converted story expects to find them.
+
+Squiffy fades from one piece of music to the next by itself, and it can't stop a sound that plays once, pause a track or change the volume of music. Stopping a sound that plays once, and the volume of music, are left out, and the rest are left as comments. All of them are listed in `twine-import.txt`.
 
 ## What doesn't convert
 
@@ -116,7 +129,7 @@ These are left as comments, and listed in `twine-import.txt`:
 
 - **JavaScript.** Squiffy can't run code written for Harlowe or SugarCube, such as SugarCube's `<<script>>`, `setup` and `State`, or Harlowe's `(macro:)`.
 - **SugarCube's `StoryMenu`.** Its links go to other passages, which Squiffy's [panels](/multiple-files/#panels) don't do. A panel can show a passage from a button in the header instead.
-- **Sound**, such as `<<audio>>` and `(track:)`, isn't converted yet. Use [`@music` and `@sound`](/images-and-files/#music-and-sound) instead.
+- **Playlists, audio groups and changing all the sound at once**, such as SugarCube's `<<playlist>>` and `<<masteraudio>>`, or the Harlowe Audio Library's `(playlist:)` and `(masteraudio:)`. Pausing, muting and starting a track part of the way through aren't converted either. See [Sound](#sound) for what is.
 - **Things Squiffy doesn't have yet**, listed in [What Twine has that Squiffy doesn't](/coming-from-twine/#what-twine-has-that-squiffy-doesnt).
 - **`<<return>>` and `<<back>>`.** A screen the player visits and leaves, like an inventory, is better as a [panel](/multiple-files/#panels): see [Left out on purpose](/coming-from-twine/#left-out-on-purpose). Squiffy has its own Back button for undoing moves. Saving and loading from the story's text, such as Harlowe's `(save-game:)`, isn't converted either: players use Squiffy's **Save** button instead.
 - **Loops that don't go through an array**, such as `<<for _i lt 4>>`, and `<<break>>` and `<<continue>>`. Rewrite them with [`{{#each}}`](/attributes/#going-through-an-array). A link in a loop can set attributes to the item, but not to a value inside it, and if it does more than that, it can't use the item, because what it does is in a passage or section of its own.

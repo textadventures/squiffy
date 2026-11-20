@@ -518,10 +518,10 @@ describe("SugarCube", () => {
     });
 
     test("what can't be converted is left as a comment", async () => {
-        const { script, result } = await convert("SugarCube", ":: Start\nHi <<audio \"x\" play>> <<set $x to setup.thing()>>");
-        expect(section(script, "Start")).toBe("Hi {{!-- Twine: <<audio \"x\" play>> --}} {{!-- Twine: <<set $x to setup.thing()>> --}}");
+        const { script, result } = await convert("SugarCube", ":: Start\nHi <<masteraudio stop>> <<set $x to setup.thing()>>");
+        expect(section(script, "Start")).toBe("Hi {{!-- Twine: <<masteraudio stop>> --}} {{!-- Twine: <<set $x to setup.thing()>> --}}");
         expect(result.problems.map(p => p.reason)).toEqual([
-            "This couldn't be converted: audio macros.",
+            "This couldn't be converted: <<masteraudio>>, which changes all the story's sound at once.",
             "This couldn't be converted: setup.thing().",
         ]);
     });
@@ -553,6 +553,63 @@ describe("SugarCube", () => {
         const { result } = await convert("SugarCube", ":: Start\n<<print $name.indexOf(\"n\")>>");
         expect(result.problems.map(p => p.reason)).toEqual([
             "This couldn't be converted: .indexOf(), except to check whether something is there.",
+        ]);
+    });
+});
+
+describe("sound (#444)", () => {
+    test("SugarCube: looping tracks are music, others are sounds", async () => {
+        const { script, result } = await convert("SugarCube", [
+            ":: StoryInit",
+            "<<cacheaudio \"theme\" \"music/theme.ogg\" \"music/theme.mp3\">><<cacheaudio \"door\" \"mp3|sfx/door.mp3\">><<cacheaudio \"rain\" \"rain.mp3\">>",
+            "<<audio \"rain\" loop>>",
+            "",
+            ":: Start",
+            "<<audio \"theme\" loop play>><<audio \"door\" play>><<audio \"door\" volume 0.5 play>>",
+            "[[Next]]",
+            "",
+            ":: Next",
+            "<<audio \"theme\" fadeoverto 3 0>><<audio \"rain\" fadein>><<audio \"door\" stop>><<audio \"chime.mp3\" play>><<audio \":all\" stop>>",
+        ].join("\n"));
+        // At the start of a passage, they're directives
+        expect(section(script, "Start")).toBe("@music music/theme.mp3\n@sound sfx/door.mp3\n{{sound \"sfx/door.mp3\" volume=0.5}}\n[[Next]]");
+        expect(section(script, "Next")).toBe("{{stopmusic fade=3}}{{music \"rain.mp3\"}}{{sound \"chime.mp3\"}}{{stopmusic}}");
+        expect(result.problems.map(p => p.text)).toEqual(["<<audio \"door\" stop>>"]);
+    });
+
+    test("SugarCube: playlists, groups and unknown tracks aren't converted", async () => {
+        const { script, result } = await convert("SugarCube", ":: Start\n<<audio \"nowhere\" play>><<playlist \"list\" play>><<audio \":ui\" play>><<audio \"x.mp3\" pause>>");
+        expect(section(script, "Start")).toContain("{{!-- Twine: <<playlist \"list\" play>> --}}");
+        expect(result.problems.map(p => p.reason)).toEqual([
+            "This couldn't be converted: a track (\"nowhere\") that the story doesn't give a file for.",
+            "This couldn't be converted: playlists.",
+            "This couldn't be converted: audio groups.",
+            "This couldn't be converted: pausing a track.",
+        ]);
+    });
+
+    test("Harlowe: the Harlowe Audio Library's tracks", async () => {
+        const { script, result } = await convert("Harlowe", [
+            ":: hal.tracks",
+            "theme: https://example.com/theme.ogg, https://example.com/theme.mp3",
+            "door: sfx/door.mp3",
+            "",
+            ":: Start",
+            "{",
+            "(track: \"theme\", \"loop\", true)",
+            "(track: \"theme\", \"stop\")(track: \"theme\", \"playwhenpossible\")",
+            "}(track: 'door', 'play')(newtrack: 'bell', 'bell.mp3')(track: 'bell', 'play')",
+            "[[Next]]",
+            "",
+            ":: Next",
+            "(track: 'theme', 'fadeout', 2)(track: 'door', 'stop')(masteraudio: 'stopall')",
+        ].join("\n"));
+        expect(script).not.toContain("hal.tracks");
+        expect(section(script, "Start")).toBe("@music https://example.com/theme.mp3\n@sound sfx/door.mp3\n@sound bell.mp3\n[[Next]]");
+        expect(section(script, "Next")).toBe("{{stopmusic fade=2}}{{!-- Twine: (masteraudio: 'stopall') --}}");
+        expect(result.problems.map(p => p.reason)).toEqual([
+            "Squiffy can't stop a sound that plays once, only music (a track that loops), so these have been left out.",
+            "This couldn't be converted: (masteraudio:), which changes all the story's sound at once.",
         ]);
     });
 });
