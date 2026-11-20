@@ -61,7 +61,10 @@ Play the story through after converting it. Twine and Squiffy work differently i
 | `(set: $bag to it + (a: "key"))` | `{{append "bag" "key"}}` |
 | `$name`, `(print: $gold * 2)` | `{{name}}`, `{{= gold * 2}}` |
 | `(if: $gold > 5)[...](else-if: ...)[...](else:)[...]` | `{{#if gold > 5}}...{{else if ...}}...{{else}}...{{/if}}` |
-| `$a is 1 or 2`, `$bag contains "key"`, `visits` | `a = 1 or a = 2`, `(contains "bag" "key")`, `(visits "This passage")` |
+| `$a is 1 or 2`, `$bag contains "key"`, `$bag's length`, `visits` | `a = 1 or a = 2`, `bag contains "key"`, `bag.length`, `(visits "This passage")` |
+| `(uppercase:)`, `(lowercase:)`, `(upperfirst:)` | `(upper ...)`, `(lower ...)`, `(capitalise ...)` |
+| `(round:)`, `(floor:)`, `(ceil:)`, `(abs:)`, `(min:)`, `(max:)` | `(round ...)`, `(floor ...)` and so on |
+| `(cond: $hp > 0, "alive", "dead")` | `hp > 0 ? "alive" : "dead"` |
 | `(display: "Map")` | `{{embed "Map"}}` |
 | `(go-to: "End")`, `(after: 2s)[(go-to: "End")]` | `{{goto "End"}}`, `{{goto "End" after=2000}}` |
 | `(link: "Buy")[(set: $gold to it - 5)(go-to: "Shop")]` | `[[Buy]](Shop, gold -= 5)` |
@@ -88,7 +91,11 @@ Play the story through after converting it. Twine and Squiffy work differently i
 | `<<set $gold += 5>>`, `<<run $bag.push("key")>>` later on | `{{inc "gold" 5}}`, `{{append "bag" "key"}}` |
 | `$name`, `<<print $gold * 2>>` | `{{name}}`, `{{= gold * 2}}` |
 | `<<if $gold gt 5>>...<<elseif ...>>...<<else>>...<</if>>`, `<<switch>>` | `{{#if gold > 5}}...{{else if ...}}...{{else}}...{{/if}}` |
-| `visited("Cave")`, `turns()`, `$bag.includes("key")` | `(visits "Cave")`, `turns`, `(contains "bag" "key")` |
+| `visited("Cave")`, `turns()`, `$bag.includes("key")`, `$bag.length` | `(visits "Cave")`, `turns`, `bag contains "key"`, `bag.length` |
+| `$name.toUpperCase()`, `.toLowerCase()`, `.toUpperFirst()` | `(upper name)`, `(lower name)`, `(capitalise name)` |
+| `$name.indexOf("x") != -1` (or `=== -1`) | `name contains "x"` (or `not name contains "x"`) |
+| `Math.round()`, `Math.floor()`, `Math.ceil()`, `Math.abs()`, `Math.min()`, `Math.max()` | `(round ...)`, `(floor ...)` and so on |
+| `$hp > 0 ? "alive" : "dead"` | `hp > 0 ? "alive" : "dead"` |
 | `<<include "Map">>` | `{{embed "Map"}}` |
 | `<<goto "End">>`, `<<timed 2s>><<goto "End">><</timed>>` | `{{goto "End"}}`, `{{goto "End" after=2000}}` |
 | `<<link "Buy" "Shop">><<set $gold -= 5>><</link>>` | `[[Buy]](Shop, gold -= 5)` |

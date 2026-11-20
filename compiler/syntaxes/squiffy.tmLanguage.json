@@ -636,7 +636,7 @@
       "comment": "A setter's value. One with quotes, brackets, operators or and/or/not is an expression, as in {{#if}}. A single word is an attribute in a story with a squiffy.json, and anything else unquoted is text, as in a story without one. Of two matches at the start, the first listed wins.",
       "patterns": [
         {
-          "match": "(?=.*(?:[\"'()+*%<>!]|\\s[-/]|\\b(?:and|or|not)\\b)).+$",
+          "match": "(?=.*(?:[\"'()+*%<>!?]|\\s[-/]|\\b(?:and|or|not|contains)\\b)).+$",
           "name": "meta.expression.squiffy",
           "captures": {
             "0": {
@@ -816,8 +816,13 @@
           "name": "keyword.operator.logical.handlebars.squiffy"
         },
         {
-          "match": "!=|>=|<=|=(?!=)|>|<",
+          "match": "!=|>=|<=|=(?!=)|>|<|\\bcontains\\b",
           "name": "keyword.operator.comparison.handlebars.squiffy"
+        },
+        {
+          "comment": "a ? b : c. A : with no space before it is in an object, as in { hp: 10 }",
+          "match": "\\?|(?<=\\s):(?=\\s)",
+          "name": "keyword.operator.ternary.handlebars.squiffy"
         },
         {
           "comment": "- and / are operators only at the start of a word: a-b is an attribute name and a/b a path",

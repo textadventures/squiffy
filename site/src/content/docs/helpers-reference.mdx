@@ -32,6 +32,7 @@ Squiffy processes all text through Handlebars, which means you can use:
 | `>=` | greater than or equal to | `gte` |
 | `<` | less than | `lt` |
 | `<=` | less than or equal to | `lte` |
+| `contains` | has the value in it: see [Text helpers](#text-helpers) and [Querying arrays](#querying-arrays) | |
 | `and` or `&&` | both are true | `and` |
 | `or` or `\|\|` | either is true | `or` |
 | `not` or `!` | is not true | `not` |
@@ -40,10 +41,11 @@ Squiffy processes all text through Handlebars, which means you can use:
 | `*` | multiply | `mul` |
 | `/` | divide | `div` |
 | `%` | remainder after dividing | `mod` |
+| `? :` | one value or another: see [Choosing between two values](#choosing-between-two-values) | `cond` |
 
 Values can be attribute names, numbers, quoted strings, `true`/`false`, or helper calls in parentheses such as `(seen "intro")` or `(length "inventory")`. For attribute names containing spaces, use square brackets: `{{#if [player name] = "Bob"}}`.
 
-Calculations are worked out first (`*`, `/` and `%` before `+` and `-`), then comparisons, then `not`, then `and`, then `or`. So `gold >= price * 2 + 1` means `gold >= ((price * 2) + 1)`, `not class = "warrior"` means `not (class = "warrior")`, and `a or b and c` means `a or (b and c)`. Use parentheses to group things differently, e.g. `(a or b) and c`. A `-` in front of a value makes it negative, e.g. `-score`.
+Calculations are worked out first (`*`, `/` and `%` before `+` and `-`), then comparisons (including `contains`), then `not`, then `and`, then `or`, and `? :` last of all. So `gold >= price * 2 + 1` means `gold >= ((price * 2) + 1)`, `not class = "warrior"` means `not (class = "warrior")`, and `a or b and c` means `a or (b and c)`. Use parentheses to group things differently, e.g. `(a or b) and c`. A `-` in front of a value makes it negative, e.g. `-score`.
 
 Put spaces around `-` and `/` when they're operators. Without them they're part of a name: `my-score` is an attribute called "my-score", and `player/score` is a Handlebars path, but `my - score` subtracts.
 
@@ -67,6 +69,23 @@ That costs {{= price * 2}} gold.
 `+` adds numbers, including text that holds a number, such as an attribute set to `"5"` from a text input. If either value is other text, it joins them instead, so `name + " the Brave"` gives "Bob the Brave". The other operators only work with numbers. An attribute that hasn't been set counts as `0`, or as empty text when joining.
 
 Dividing by zero, or using `-`, `*`, `/` or `%` on something that isn't a number, shows an error in the story.
+
+To round a result, or use the [other helpers for numbers](#maths-helpers) and [for text](#text-helpers), put the calculation in parentheses: `{{= (round (gold / 3))}}`. A helper's values are each a single value, so `(round gold / 3)` doesn't work.
+
+### Choosing between two values
+
+`condition ? value : other value` is the first value if the condition is true, and the other value if it isn't. It works anywhere a calculation does, unlike `{{#if}}...{{else}}...{{/if}}`, so you can use it in `@set` and inside a helper's values:
+
+```squiffy
+@set status = hp > 0 ? "alive" : "dead"
+You are {{= hp > 0 ? "alive" : "dead"}}.
+You have {{= gold}} {{= gold = 1 ? "coin" : "coins"}}.
+{{= hp > 10 ? "well" : hp > 0 ? "hurt" : "dead"}}
+```
+
+The last one shows how to choose between more than two: `a ? b : c ? d : e` means `a ? b : (c ? d : e)`.
+
+It's converted to the `cond` helper: `{{= hp > 0 ? "alive" : "dead"}}` is the same as `{{cond (gt hp 0) "alive" "dead"}}`. Both values are worked out before one is chosen, so a helper that changes something, such as `(pop "queue")`, does so whichever value is chosen.
 
 ### Understanding parentheses vs double brackets
 
@@ -179,6 +198,37 @@ You can usually use the operator instead (see [Calculations](#calculations)). Ea
 | `{{div a b}}` | Divides a by b | `a / b` | `{{set "share" (div gold players)}}` |
 | `{{mod a b}}` | The remainder after dividing a by b | `a % b` | `{{#if (mod turn 2) = 0}}Even turn{{/if}}` |
 
+These work out a number from others. Like the helpers above, they take numbers or text that holds a number, and show an error for anything else. A calculation inside one needs `{{= }}` around it, as in the examples:
+
+| Helper | Description | Example |
+|--------|-------------|---------|
+| `{{round a}}` | Rounds a to the nearest whole number. Halves round up, so 2.5 is 3 and -2.5 is -2 | `{{= (round (gold / 3))}}` |
+| `{{round a places}}` | Rounds a to that many decimal places | `{{round price 2}}` |
+| `{{floor a}}` | Rounds a down to a whole number | `{{= (floor (gold / 3))}}` |
+| `{{ceil a}}` | Rounds a up to a whole number | `{{= (ceil (distance / speed))}}` |
+| `{{abs a}}` | a without its minus sign, so -3 is 3 | `{{= (abs (x - target))}}` |
+| `{{min a b ...}}` | The smallest of the numbers, or of the numbers in an array | `{{set "hp" (min (hp + 5) max_hp)}}` |
+| `{{max a b ...}}` | The largest of the numbers, or of the numbers in an array | `{{max scores}}` |
+
+## Text helpers
+
+| Helper | Description | Example |
+|--------|-------------|---------|
+| `{{upper text}}` | The text in capitals | `{{upper name}}` |
+| `{{lower text}}` | The text in small letters | `{{#if (lower answer) = "yes"}}` |
+| `{{capitalise text}}` | The text with a capital first letter. `capitalize` works too | `{{capitalise weapon}} in hand, you step forward.` |
+
+An attribute that hasn't been set is empty text, and a number is turned into text.
+
+To check whether some text has other text in it, use `contains`. It tells capitals from small letters, so use `lower` on both to ignore them:
+
+```squiffy
+{{#if name contains "Mac"}}A Scottish name!{{/if}}
+{{#if (lower answer) contains "yes"}}Glad to hear it.{{/if}}
+```
+
+`.length` is the number of letters, e.g. `{{#if name.length > 10}}That's a long name.{{/if}}`.
+
 ## Navigation helpers
 
 See [Attributes](/attributes/#tracking-sections-and-passages) for examples.
@@ -240,6 +290,8 @@ The `"attribute"` parameter is the **name** of an attribute that stores an array
 |--------|------------|-------------|---------|
 | `{{contains}}` | `"attribute" value` or `(array ...) value` | Check if array contains value | `{{#if (contains "inventory" "key")}}...{{/if}}` |
 | `{{length}}` | `"attribute"` or `(array ...)` | Get number of elements in array | `{{length "inventory"}}` |
+
+In a condition or calculation, you can also write `inventory contains "key"`, with the array itself rather than its name in quotes, and `inventory.length`. `contains` works on [objects](/attributes/#objects) too, where it's whether the object has a value with that name: `hero contains "hp"`.
 
 ### Examples
 

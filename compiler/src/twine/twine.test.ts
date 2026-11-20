@@ -191,7 +191,7 @@ describe("Harlowe", () => {
     test("arrays", async () => {
         const { script } = await convert("Harlowe", ":: Start\nHi (set: $bag to (a: \"key\"))(set: $bag to it + (a: \"map\"))(set: $bag to it - (a: \"key\"))(if: $bag contains \"map\" and $bag's length > 0)[Yes]");
         expect(section(script, "Start")).toBe(
-            "Hi {{set \"bag\" (array \"key\")}}{{append \"bag\" \"map\"}}{{remove \"bag\" \"key\"}}{{#if (contains \"bag\" \"map\") and (length \"bag\") > 0}}Yes{{/if}}");
+            "Hi {{set \"bag\" (array \"key\")}}{{append \"bag\" \"map\"}}{{remove \"bag\" \"key\"}}{{#if bag contains \"map\" and bag.length > 0}}Yes{{/if}}");
     });
 
     test("datamaps become objects (#442)", async () => {
@@ -338,6 +338,28 @@ describe("Harlowe", () => {
             "Hi {{!-- Twine: (alert: \"x\") --}} {{!-- Twine: (set: $x to (dm: 1, 2)'s 1st) --}}");
         expect(result.problems.map(p => p.text)).toEqual(["(alert: \"x\")", "(set: $x to (dm: 1, 2)'s 1st)"]);
     });
+
+    test("text, numbers, contains and (cond:) (#446)", async () => {
+        const { script, result } = await convert("Harlowe", [
+            ":: Start",
+            "(set: $name to \"ann\")(set: $hp to 2.6)",
+            "(print: (uppercase: $name)) (print: (upperfirst: $name)) (print: (lowercase: \"A\"))",
+            "(print: (round: $hp)) (print: (floor: $hp)) (print: (ceil: $hp)) (print: (abs: -$hp))",
+            "(print: (min: 1, $hp, 3)) (print: (max: $hp, 5))",
+            "(print: (cond: $hp > 2, \"well\", $hp > 0, \"hurt\", \"dead\"))",
+            "(if: $name contains \"n\" and $name's length is 3 and \"x\" is not in $name)[Yes]",
+        ].join("\n"));
+        expect(section(script, "Start")).toBe([
+            "@set name = \"ann\"",
+            "@set hp = 2.6",
+            "{{upper name}} {{capitalise name}} {{lower \"A\"}}<br>",
+            "{{round hp}} {{floor hp}} {{ceil hp}} {{= (abs (-hp))}}<br>",
+            "{{min 1 hp 3}} {{max hp 5}}<br>",
+            "{{= hp > 2 ? \"well\" : hp > 0 ? \"hurt\" : \"dead\"}}<br>",
+            "{{#if name contains \"n\" and name.length = 3 and not name contains \"x\"}}Yes{{/if}}",
+        ].join("\n"));
+        expect(result.problems).toEqual([]);
+    });
 });
 
 describe("SugarCube", () => {
@@ -374,7 +396,7 @@ describe("SugarCube", () => {
             "@set i = 1",
             "@set inv[i].name = \"cord\"",
             "@set current = inv[i]",
-            "{{= inv[i].name}} {{#if current.name = \"cord\"}}Yes{{/if}} {{length \"inv\"}} {{length \"player.items\"}}",
+            "{{= inv[i].name}} {{#if current.name = \"cord\"}}Yes{{/if}} {{inv.length}} {{player.items.length}}",
         ].join("\n"));
     });
 
@@ -501,6 +523,36 @@ describe("SugarCube", () => {
         expect(result.problems.map(p => p.reason)).toEqual([
             "This couldn't be converted: audio macros.",
             "This couldn't be converted: setup.thing().",
+        ]);
+    });
+
+    test("text, numbers, includes, indexOf and ? : (#446)", async () => {
+        const { script, result } = await convert("SugarCube", [
+            ":: Start",
+            "<<set $name to \"ann\">><<set $hp to 2.6>><<set $bag to [\"key\"]>>",
+            "<<print $name.toUpperCase()>> <<print $name.toUpperFirst()>> <<print $name.toLowerCase().length>>",
+            "<<print Math.round($hp)>> <<print Math.floor($hp)>> <<print Math.max($hp, 1, 2)>>",
+            "<<print $hp > 0 ? \"alive\" : \"dead\">>",
+            "<<set $status to $hp > 2 ? \"well\" : $hp > 0 ? \"hurt\" : \"dead\">>",
+            "<<if $bag.includes(\"key\") && $name.indexOf(\"n\") != -1 && $name.indexOf(\"x\") === -1 && $bag.length > 0>>Yes<</if>>",
+        ].join("\n"));
+        expect(section(script, "Start")).toBe([
+            "@set name = \"ann\"",
+            "@set hp = 2.6",
+            "@set bag = (array \"key\")",
+            "{{upper name}} {{capitalise name}} {{= (lower name)[\"length\"]}}<br>",
+            "{{round hp}} {{floor hp}} {{max hp 1 2}}<br>",
+            "{{= hp > 0 ? \"alive\" : \"dead\"}}<br>",
+            "{{set \"status\" hp > 2 ? \"well\" : hp > 0 ? \"hurt\" : \"dead\"}}",
+            "{{#if bag contains \"key\" and name contains \"n\" and not name contains \"x\" and bag.length > 0}}Yes{{/if}}",
+        ].join("\n"));
+        expect(result.problems).toEqual([]);
+    });
+
+    test(".indexOf() for anything else can't be converted (#446)", async () => {
+        const { result } = await convert("SugarCube", ":: Start\n<<print $name.indexOf(\"n\")>>");
+        expect(result.problems.map(p => p.reason)).toEqual([
+            "This couldn't be converted: .indexOf(), except to check whether something is there.",
         ]);
     });
 });

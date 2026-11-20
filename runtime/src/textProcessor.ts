@@ -174,6 +174,93 @@ export class TextProcessor {
             return a % b;
         });
 
+        // Rounding (#446). (round x) rounds to a whole number, and (round x 2) to 2 decimal places.
+        // Numbers halfway between round up, as Math.round does, and as Harlowe's (round:) does.
+        const roundingHelper = (name: string, fn: (n: number) => number, places: boolean) => {
+            this.handlebars.registerHelper(name, (...args) => {
+                const values = args.slice(0, -1).map(unwrapValue);
+                if (values.length !== 1 && !(places && values.length === 2)) {
+                    throw new Error(`"${name}" needs ${places ? "one or two values" : "one value"}, but was given ${values.length}`);
+                }
+                const n = toNumber(name, values[0]);
+                if (values.length === 1) return fn(n);
+                const scale = 10 ** toNumber(name, values[1]);
+                // toPrecision tidies up floating point errors, so (round 1.005 2) is 1.01, not 1
+                return fn(Number((n * scale).toPrecision(15))) / scale;
+            });
+        };
+        roundingHelper("round", Math.round, true);
+        roundingHelper("floor", Math.floor, false);
+        roundingHelper("ceil", Math.ceil, false);
+        roundingHelper("abs", Math.abs, false);
+
+        // (min a b c) or (min list): the smallest of the values
+        const extremeHelper = (name: string, fn: (...values: number[]) => number) => {
+            this.handlebars.registerHelper(name, (...args) => {
+                let values = args.slice(0, -1).map(unwrapValue);
+                if (values.length === 1 && Array.isArray(values[0])) {
+                    values = values[0].map(unwrapValue);
+                }
+                if (values.length === 0) {
+                    throw new Error(`"${name}" needs at least one value`);
+                }
+                return fn(...values.map(v => toNumber(name, v)));
+            });
+        };
+        extremeHelper("min", Math.min);
+        extremeHelper("max", Math.max);
+
+        // Text helpers (#446). A blank value (unset, false or "") is empty text, and a number
+        // is turned into text.
+        const toText = (name: string, v: unknown) => {
+            if (isBlank(v)) return "";
+            if (typeof v === "object") {
+                throw new Error(`"${name}" needs text, but was given ${Array.isArray(v) ? "a list" : "an object"}`);
+            }
+            return String(v);
+        };
+        const textHelper = (name: string, fn: (s: string) => string) => {
+            this.handlebars.registerHelper(name, (...args) => {
+                const values = args.slice(0, -1).map(unwrapValue);
+                if (values.length !== 1) {
+                    throw new Error(`"${name}" needs one value, but was given ${values.length}`);
+                }
+                return fn(toText(name, values[0]));
+            });
+        };
+        textHelper("upper", s => s.toUpperCase());
+        textHelper("lower", s => s.toLowerCase());
+        const capitalise = (s: string) => s.charAt(0).toUpperCase() + s.substring(1);
+        textHelper("capitalise", capitalise);
+        textHelper("capitalize", capitalise);
+
+        // (cond test a b) is a if test is true, otherwise b (#446). It's what a ? b : c in an
+        // expression is rewritten to. Handlebars works out both a and b before calling it, so a
+        // helper with side effects, such as (pop "list"), runs whichever is chosen.
+        this.handlebars.registerHelper("cond", (...args) => {
+            const values = args.slice(0, -1).map(unwrapValue);
+            if (values.length !== 3) {
+                throw new Error(`"cond" needs three values, but was given ${values.length}`);
+            }
+            return values[0] ? values[1] : values[2];
+        });
+
+        // a contains b in an expression (#446): whether list a has b in it, text a has the text b
+        // in it, or object a has a property called b. Unlike (contains "list" value), which
+        // looks up the list by its name, a here is the value itself.
+        this.handlebars.registerHelper("__contains", (container: any, value: any) => {
+            container = unwrapValue(container);
+            value = unwrapValue(value);
+            if (Array.isArray(container)) {
+                return container.some(item => unwrapValue(item) === value);
+            }
+            if (isBlank(container)) return false;
+            if (typeof container === "object") {
+                return Object.prototype.hasOwnProperty.call(container, String(value));
+            }
+            return String(container).includes(toText("contains", value));
+        });
+
         this.handlebars.registerHelper("array", function (...args) {
             args.pop(); // remove last argument - options
             return args.map(unwrapValue);
