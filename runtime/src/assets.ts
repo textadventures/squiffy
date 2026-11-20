@@ -18,7 +18,7 @@ const selector = [...urlAttributes, "srcset", "style"].map(a => `[${a}]`).join("
 
 // Anything with a scheme (http:, https:, data:, blob:, mailto: etc.), protocol-relative URLs,
 // and fragment-only references are left alone.
-const isAbsolute = (url: string) => /^[a-z][a-z0-9+.-]*:/i.test(url) || url.startsWith("//") || url.startsWith("#");
+export const isAbsolute = (url: string) => /^[a-z][a-z0-9+.-]*:/i.test(url) || url.startsWith("//") || url.startsWith("#");
 
 const resolveUrl = (url: string, resolve: AssetUrlResolver): string => {
     const trimmed = url.trim();

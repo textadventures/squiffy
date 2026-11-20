@@ -114,6 +114,10 @@ class TextContainer {
     js: string[] = [];
     clear = false;
     attributes: string[] = [];
+    // @music (#444): the file to play, or null for @music stop. Undefined leaves it as it is.
+    music?: string | null;
+    // @sound: the files to play once
+    sounds: string[] = [];
     // The text after links have been converted
     output = "";
 
@@ -395,6 +399,14 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
                             addPageFile(importFilename, settings.externalFiles, true);
                         }
                     }
+                    return true;
+                }
+                case "sound": {
+                    const target = passage ?? (section = ensureSectionExists(lineCount));
+                    if (!target) return sectionRequired(node);
+                    const value = node.value.trim();
+                    if (node.directive == "sound") target.sounds.push(value);
+                    else target.music = value == "stop" ? null : value;
                     return true;
                 }
                 case "attribute": {

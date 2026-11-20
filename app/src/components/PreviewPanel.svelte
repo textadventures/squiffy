@@ -16,6 +16,8 @@
     import ChevronRight from "@lucide/svelte/icons/chevron-right";
     import Sun from "@lucide/svelte/icons/sun";
     import Moon from "@lucide/svelte/icons/moon";
+    import Volume2 from "@lucide/svelte/icons/volume-2";
+    import VolumeX from "@lucide/svelte/icons/volume-x";
 
     interface Props {
         // Compiles the story as it is in the editor now
@@ -61,6 +63,14 @@
     let previewDark = $derived(themeOverride ? themeOverride === "dark" : editorDark);
     // The story's CSS sets its own color-scheme, so the button would make no difference
     let themeFixed = $state(false);
+    // The mute button, shown once the story names a sound file or plays one (#444)
+    let usesSound = $state(false);
+    let muted = $state(false);
+
+    function toggleMuted() {
+        muted = !muted;
+        host?.setMuted(muted);
+    }
 
     let themeTitle = $derived(themeFixed ? "This story's CSS sets its own colour scheme"
         : previewDark ? "Show the preview in light mode" : "Show the preview in dark mode");
@@ -118,6 +128,9 @@
                 },
                 onThemeFixed: fixed => {
                     themeFixed = fixed;
+                },
+                onUsesSound: value => {
+                    usesSound = value;
                 },
                 onRuntimeError: message => {
                     runtimeError = message;
@@ -204,6 +217,9 @@
         <h2 class="text-[11px] font-semibold text-surface-600-400 uppercase tracking-wide flex-1 pl-1">Preview</h2>
         <button type="button" class="btn-icon btn-icon-sm" title="Back" aria-label="Back" disabled={!canGoBack} onclick={() => host?.back()}><ArrowLeft size={14} /></button>
         <button type="button" class="btn-icon btn-icon-sm" title="Restart" aria-label="Restart" onclick={() => run(startAt)}><RotateCcw size={14} /></button>
+        {#if usesSound}
+            <button type="button" class="btn-icon btn-icon-sm" title={muted ? "Unmute" : "Mute"} aria-label={muted ? "Unmute" : "Mute"} onclick={toggleMuted}>{#if muted}<VolumeX size={14} />{:else}<Volume2 size={14} />{/if}</button>
+        {/if}
         <!-- aria-disabled rather than disabled, so the tooltip still says why -->
         <button
             type="button"

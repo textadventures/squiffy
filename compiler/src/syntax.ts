@@ -201,6 +201,16 @@ export interface EndNode {
     range: Range;
 }
 
+// @music file, @music stop or @sound file (#444)
+export interface SoundNode {
+    type: "sound";
+    directive: "music" | "sound";
+    // The file, or "stop" for @music stop
+    value: string;
+    valueRange: Range;
+    range: Range;
+}
+
 // @set, @unset, @inc or @dec
 export interface AttributeNode {
     type: "attribute";
@@ -242,6 +252,7 @@ export type StatementNode =
     | RepeatNode
     | EndNode
     | AttributeNode
+    | SoundNode
     | JsNode
     | TextNode;
 

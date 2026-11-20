@@ -21,11 +21,18 @@ interface OutputStory {
     // squiffy.json's "panels"
     panels?: Panel[];
     sections: Record<string, OutputSection>;
+    // The sound files the story names (#444), from @music, @sound and {{music}} and {{sound}}
+    // with a file in quotes, so the runtime can load them before they're needed
+    audio?: string[];
 }
 
 interface OutputSection {
     text?: string;
     clear?: boolean;
+    // @music (#444): the file to play, or null to stop it
+    music?: string | null;
+    // @sound: files to play once
+    sounds?: string[];
     attributes?: string[];
     jsIndex?: number;
     passages?: Record<string, OutputPassage>;
@@ -35,6 +42,10 @@ interface OutputSection {
 interface OutputPassage {
     text?: string;
     clear?: boolean;
+    // @music (#444): the file to play, or null to stop it
+    music?: string | null;
+    // @sound: files to play once
+    sounds?: string[];
     // Its links aren't disabled when clicked (#104)
     repeat?: boolean;
     attributes?: string[];
@@ -63,6 +74,18 @@ export interface CompileSuccess {
     getUiInfo: () => UiInfo;
     // Warnings from analysing the story
     diagnostics: Diagnostic[];
+}
+
+// {{music "file"}} or {{sound "file"}}
+const SOUND_HELPER = /\{\{\s*(?:music|sound)\s+(["'])([^"'{}]+)\1/g;
+
+// @music and @sound (#444), and the files they and the text name, for OutputStory.audio
+function addSounds(output: OutputSection | OutputPassage, from: { music?: string | null; sounds: string[]; output: string }, audio: Set<string>) {
+    if (from.music !== undefined) output.music = from.music;
+    if (from.sounds.length) output.sounds = from.sounds;
+    if (from.music) audio.add(from.music);
+    from.sounds.forEach(file => audio.add(file));
+    for (const match of from.output.matchAll(SOUND_HELPER)) audio.add(match[2]);
 }
 
 // Produces the story data and JavaScript for an analysis that succeeded.
@@ -102,6 +125,7 @@ export function emit(analysis: Analysis, settings: EmitSettings = {}): CompileSu
         output.story.uiJsIndex = output.js.length - 1;
     }
 
+    const audio = new Set<string>();
     for (const sectionName of Object.keys(story.sections)) {
         const section = story.sections[sectionName];
         const outputSection: OutputSection = {};
@@ -112,6 +136,7 @@ export function emit(analysis: Analysis, settings: EmitSettings = {}): CompileSu
         }
 
         outputSection.text = section.output;
+        addSounds(outputSection, section, audio);
 
         if (section.attributes.length > 0) {
             outputSection.attributes = section.attributes;
@@ -148,6 +173,7 @@ export function emit(analysis: Analysis, settings: EmitSettings = {}): CompileSu
             }
 
             outputPassage.text = passage.output;
+            addSounds(outputPassage, passage, audio);
 
             if (passage.attributes.length > 0) {
                 outputPassage.attributes = passage.attributes;
@@ -157,6 +183,10 @@ export function emit(analysis: Analysis, settings: EmitSettings = {}): CompileSu
                 outputPassage.jsIndex = output.js.length - 1;
             }
         }
+    }
+
+    if (audio.size) {
+        output.story.audio = [...audio];
     }
 
     const getJs = async (excludeHeader: boolean) => {
@@ -183,6 +213,9 @@ export function emit(analysis: Analysis, settings: EmitSettings = {}): CompileSu
         }
         if (output.story.panels) {
             outputJs.push(`story.panels = ${JSON.stringify(output.story.panels, null, 4)};`);
+        }
+        if (output.story.audio) {
+            outputJs.push(`story.audio = ${JSON.stringify(output.story.audio, null, 4)};`);
         }
         outputJs.push(`story.start = ${JSON.stringify(output.story.start, null, 4)};`);
         outputJs.push(`story.sections = ${JSON.stringify(output.story.sections, null, 4)};`);

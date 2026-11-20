@@ -58,6 +58,9 @@ export function createPreview(options: PreviewOptions) {
     let panelsJson = "";
     let panelButtons: HTMLElement | undefined;
     let panelSide: HTMLElement | undefined;
+    // The host's mute button (#444), which carries on to the next story loaded
+    let muted = false;
+    let usesSound = false;
     // Each load gets a new number, so a slow load that's been replaced doesn't start
     let loadCount = 0;
     const assetUrls = new Map<string, string>();
@@ -158,6 +161,7 @@ export function createPreview(options: PreviewOptions) {
 
     async function load(message: Extract<HostMessage, { type: "load" }>) {
         const thisLoad = ++loadCount;
+        api?.dispose();
         api = undefined;
         options.element.innerHTML = "";
         await addStoryFiles(message.story);
@@ -193,6 +197,15 @@ export function createPreview(options: PreviewOptions) {
         newApi.on("navigated", e => {
             if (thisLoad == loadCount) send({ type: "navigated", ...e });
         });
+        newApi.on("sound", () => {
+            if (thisLoad == loadCount && !usesSound) {
+                usesSound = true;
+                send({ type: "usesSound", usesSound });
+            }
+        });
+        newApi.setMuted(muted);
+        usesSound = newApi.usesSound();
+        send({ type: "usesSound", usesSound });
         api = newApi;
         setPanels(story.panels);
         send({ type: "canGoBackChanged", canGoBack: false });
@@ -233,6 +246,10 @@ export function createPreview(options: PreviewOptions) {
                     break;
                 case "assets":
                     setAssets(message.assets);
+                    break;
+                case "muted":
+                    muted = message.muted;
+                    api?.setMuted(muted);
                     break;
                 case "theme":
                     themeStyle.textContent = message.theme == "system" ? "" : `:root { color-scheme: ${message.theme}; }`;

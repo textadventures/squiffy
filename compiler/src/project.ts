@@ -69,6 +69,9 @@ export const PAGE_STRINGS = {
     restartConfirm: "Are you sure you want to restart?",
     switchToDark: "Switch to dark mode",
     switchToLight: "Switch to light mode",
+    // The mute button, for a story with music or sounds
+    mute: "Mute",
+    unmute: "Unmute",
     // The Saved games dialog, opened by the Save button. [name] and [time] are filled in.
     saves: "Saved games",
     saveName: "Name (optional)",

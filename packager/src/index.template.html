@@ -70,6 +70,23 @@
                 });
             }
 
+            // The mute button (#444), shown if the story has music or sounds. Whether it's muted
+            // is remembered for the story.
+            const muteButton = document.getElementById('squiffy-mute');
+            const updateMute = function () {
+                const muted = squiffyApi.isMuted();
+                muteButton.hidden = !squiffyApi.usesSound();
+                muteButton.title = muted ? muteButton.dataset.unmute : muteButton.dataset.mute;
+                muteButton.setAttribute('aria-label', muteButton.title);
+                muteButton.classList.toggle('squiffy-muted', muted);
+            };
+            muteButton.addEventListener('click', function () {
+                squiffyApi.setMuted(!squiffyApi.isMuted());
+                updateMute();
+            });
+            squiffyApi.on('sound', updateMute);
+            updateMute();
+
             await squiffyApi.begin();
             // A saved game may have somewhere to go back to
             if (backButton) backButton.disabled = !squiffyApi.canGoBack();
@@ -92,6 +109,10 @@
         <!-- /SAVE_BUTTON -->
         <button class="squiffy-header-button" id="restart" type="button" title="{{restart}}" aria-label="{{restart}}" data-confirm="{{restartConfirm}}">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+        </button>
+        <button class="squiffy-header-button" id="squiffy-mute" type="button" data-mute="{{mute}}" data-unmute="{{unmute}}" hidden>
+            <svg class="squiffy-icon-sound" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a10 10 0 0 1 0 14"/></svg>
+            <svg class="squiffy-icon-muted" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="m22 9-6 6M16 9l6 6"/></svg>
         </button>
         <button class="squiffy-header-button" id="squiffy-theme" type="button" data-switch-to-dark="{{switchToDark}}" data-switch-to-light="{{switchToLight}}">
             <svg class="squiffy-icon-dark" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>

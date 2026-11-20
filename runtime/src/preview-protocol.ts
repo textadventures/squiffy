@@ -45,7 +45,9 @@ export type HostMessage =
     | { type: "assets"; assets: PreviewAssets }
     // Shows the story in light or dark mode, e.g. to match the host's own theme. A story's own
     // CSS can still override it, e.g. with ":root { color-scheme: light; }".
-    | { type: "theme"; theme: PreviewTheme };
+    | { type: "theme"; theme: PreviewTheme }
+    // Mutes or unmutes the story's music and sounds (#444)
+    | { type: "muted"; muted: boolean };
 
 export type PreviewMessage =
     // The page has loaded and is listening
@@ -58,6 +60,9 @@ export type PreviewMessage =
     // An attribute was set. Internal attributes, whose names start with "_", aren't sent.
     | { type: "attributeSet"; name: string; value: unknown }
     | { type: "canGoBackChanged"; canGoBack: boolean }
+    // Whether the story plays music or sounds (#444), so the host can show a mute button. Sent
+    // each time a story is loaded, before "loaded", and when a sound plays.
+    | { type: "usesSound"; usesSound: boolean }
     // A section or passage was shown, or Back went to one
     | { type: "navigated"; section: string; passage?: string }
     // An error from the story's JavaScript or the runtime

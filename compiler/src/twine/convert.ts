@@ -76,7 +76,7 @@ export const reservedAttributes = new Set([
     "length", "append", "prepend", "pop", "remove", "section", "passage", "label", "replace", "rotate", "sequence",
     "live", "animate", "eq", "ne", "gt", "gte", "lt", "lte", "and", "or", "not", "add", "sub", "mul", "div", "mod",
     "if", "unless", "each", "with", "lookup", "log", "else", "this", "turns", "previous", "previous_section",
-    "true", "false", "null", "undefined",
+    "true", "false", "null", "undefined", "music", "stopmusic", "sound",
 ]);
 
 export class StoryContext {

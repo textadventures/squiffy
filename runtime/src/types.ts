@@ -50,6 +50,15 @@ export interface SquiffyApi {
     // for a panel beside the story or a dialog (#14, #443). It changes nothing: {{set}} and the
     // like are ignored, its @set and JavaScript don't run, and its links are disabled.
     renderPassage: (name: string) => string;
+    // Whether the story's music and sounds are muted (#444). It's remembered for the story when
+    // persist is on, like the light or dark theme.
+    isMuted: () => boolean;
+    setMuted: (muted: boolean) => void;
+    // Whether the story plays music or sounds: it names some files, or has played one. The
+    // "sound" event says when something plays.
+    usesSound: () => boolean;
+    // Stops the story's music and sounds for good, when it's being replaced, e.g. in the editor's preview
+    dispose: () => void;
 
     on<E extends keyof SquiffyEventMap>(
         event: E,
@@ -93,6 +102,8 @@ export interface Story {
     // squiffy.json's "id", which a saved game is checked against
     projectId?: string;
     uiJsIndex?: number;
+    // The sound files the story names (#444), to load before they're needed
+    audio?: string[];
     // Whether @set and link setters take expressions, with the same rules as {{#if}}: attributes
     // by name, and text in quotes. True for a story with a squiffy.json (#373).
     expressions?: boolean;
@@ -120,6 +131,10 @@ export interface Panel {
 export interface Section {
     text?: string;
     clear?: boolean;
+    // @music (#444): the file to play, or null to stop it
+    music?: string | null;
+    // @sound: files to play once
+    sounds?: string[];
     attributes?: string[],
     jsIndex?: number;
     passages?: Record<string, Passage>;
@@ -129,6 +144,10 @@ export interface Section {
 export interface Passage {
     text?: string;
     clear?: boolean;
+    // @music (#444): the file to play, or null to stop it
+    music?: string | null;
+    // @sound: files to play once
+    sounds?: string[];
     // @repeat: its links stay clickable, and clicking one doesn't count towards @1, @2... and @last (#104)
     repeat?: boolean;
     attributes?: string[];

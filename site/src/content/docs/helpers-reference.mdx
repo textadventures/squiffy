@@ -216,6 +216,18 @@ Example:
 
 See [Embed text](/basic-concepts/#embed-text) for an embed example.
 
+## Sound helpers
+
+See [Music and sound](/images-and-files/#music-and-sound) for examples.
+
+| Helper | Parameters | Description | Example |
+|--------|------------|-------------|---------|
+| `{{music}}` | `"file" [fade=seconds]` | Play music, which keeps playing from one section to the next until it's changed. The old music fades out and the new music fades in, over a second unless `fade=` says otherwise | `{{music "battle.mp3" fade=3}}` |
+| `{{stopmusic}}` | `[fade=seconds]` | Fade out the music | `{{stopmusic}}` |
+| `{{sound}}` | `"file" [volume=0 to 1]` | Play a sound once | `{{sound "door.mp3"}}` |
+
+`{{music}}` and `{{sound}}` on their own, without a file, still show an attribute called `music` or `sound`.
+
 ## Array management helpers
 
 These helpers let you manage arrays stored in attributes - useful for tracking items, available options, or game state.
@@ -382,7 +394,7 @@ In addition to Squiffy's custom helpers, you have access to standard Handlebars 
 
 ## Helpers and directives
 
-`{{set}}`, `{{inc}}`, `{{dec}}` and `{{unset}}` run at the point in the text where they appear, so they respect `{{#if}}`. The `@set`, `@inc`, `@dec` and `@unset` directives always run when a section or passage is shown. See [Conditional attribute changes](/attributes/#conditional-attribute-changes).
+`{{set}}`, `{{inc}}`, `{{dec}}` and `{{unset}}` run at the point in the text where they appear, so they respect `{{#if}}`. The `@set`, `@inc`, `@dec` and `@unset` directives always run when a section or passage is shown. See [Conditional attribute changes](/attributes/#conditional-attribute-changes). It's the same for `{{music}}` and `{{sound}}`, and the `@music` and `@sound` directives.
 
 ## Creating custom helpers
 
