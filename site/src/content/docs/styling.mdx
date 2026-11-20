@@ -183,7 +183,7 @@ The sign says {{#style "warning"}}KEEP OUT{{/style}}.
 
 The text is put in a `<span class="squiffy-style warning">`, or a `<div>` if it has blank lines in it, so it can be a few paragraphs. It can have more than one class, as in `{{#style "warning big"}}`, and the classes can come from an attribute: `{{#style mood}}`. Markdown and other `{{...}}` work inside it as usual.
 
-Some class names are Squiffy's own [text effects](/dynamic-text/#text-effects), such as `shudder` and `blur`, so give your own classes other names. To change how an effect looks, style `.squiffy-style.shudder`.
+Some class names are Squiffy's own [text effects](/dynamic-text/#text-effects), such as `shudder` and `blur`, so give your own classes other names. To change how an effect looks, style `.squiffy-style.shudder`. When there's more than one effect, each one after the first is on an element of its own inside the first, so that they all apply: `{{#style "warning shudder blur"}}` makes `<span class="squiffy-style warning shudder"><span class="squiffy-style blur">`.
 
 ### Changing the look for a scene
 

@@ -8,6 +8,12 @@ import { checkSegment, parsePath, valueAt, withValueAt } from "./paths.js";
 import { parseDelay } from "./utils.js";
 import { captureEveryBodies } from "./every.js";
 
+// The built-in effects for {{#style}} (#453), in squiffy.runtime.css
+const styleEffects = new Set([
+    "shake", "shudder", "rumble", "sway", "buoy", "pulse", "fade-in-out", "blink", "flicker",
+    "blur", "blurrier", "smear", "mirror", "upside-down",
+]);
+
 // An embed being shown (#450): its parameters, and the text it wraps, if any
 interface EmbedScope {
     params: Record<string, unknown>;
@@ -607,12 +613,19 @@ export class TextProcessor {
             const options = args.pop();
             const content = typeof options?.fn == "function" ? options.fn(this) as string : "";
             const classes = args.flatMap(a => String(unwrapValue(a) ?? "").split(/\s+/)).filter(c => c.length > 0);
-            const attr = escapeAttr(["squiffy-style", ...classes].join(" "));
-            if (content.includes("\n\n")) {
-                // The blank lines around the content let Markdown in it be rendered inside the div
-                return new Handlebars.SafeString(`<div class="${attr}">\n\n${content.trim()}\n\n</div>`);
+            // An element has one animation and one transform, so a second effect would replace the
+            // first. Each effect after the first goes on an element of its own inside it, where
+            // they add up.
+            const extraEffects = classes.filter(c => styleEffects.has(c)).slice(1);
+            const outer = classes.filter(c => !extraEffects.includes(c));
+            const isBlock = content.includes("\n\n");
+            const tag = isBlock ? "div" : "span";
+            // The blank lines around a block's content let Markdown in it be rendered inside the div
+            let html = isBlock ? `\n\n${content.trim()}\n\n` : content;
+            for (const c of [...extraEffects].reverse()) {
+                html = `<${tag} class="squiffy-style ${escapeAttr(c)}">${html}</${tag}>`;
             }
-            return new Handlebars.SafeString(`<span class="${attr}">${content}</span>`);
+            return new Handlebars.SafeString(`<${tag} class="${escapeAttr(["squiffy-style", ...outer].join(" "))}">${html}</${tag}>`);
         });
     }
 

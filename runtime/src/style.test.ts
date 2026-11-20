@@ -43,6 +43,24 @@ test("{{#style}} takes several classes, from strings or attributes", async () =>
     expect([...element.querySelector(".squiffy-style")!.classList]).toEqual(["squiffy-style", "big", "shudder", "gloomy"]);
 });
 
+test("{{#style}} puts each effect after the first on an element of its own, so they all apply", async () => {
+    const element = await start("{{#style \"big shudder fade-in-out mirror\"}}**Text**{{/style}}");
+    const p = element.querySelector(".squiffy-output-block p")!;
+    expect(p.innerHTML).toBe("<span class=\"squiffy-style big shudder\"><span class=\"squiffy-style fade-in-out\">"
+        + "<span class=\"squiffy-style mirror\"><strong>Text</strong></span></span></span>");
+});
+
+test("{{#style}} nests divs for several effects around paragraphs", async () => {
+    const element = await start("{{#style \"letter sway blur\"}}\nDear *you*,\n\nGoodbye.\n{{/style}}");
+    const outer = element.querySelector(".squiffy-style")!;
+    expect(outer.tagName).toBe("DIV");
+    expect([...outer.classList]).toEqual(["squiffy-style", "letter", "sway"]);
+    const inner = outer.querySelector(":scope > .squiffy-style")!;
+    expect(inner.tagName).toBe("DIV");
+    expect([...inner.classList]).toEqual(["squiffy-style", "blur"]);
+    expect([...inner.querySelectorAll("p")].map(p => p.innerHTML)).toEqual(["Dear <em>you</em>,", "Goodbye."]);
+});
+
 test("{{#style}} around paragraphs makes a div, with Markdown rendered inside", async () => {
     const element = await start(`{{#style "letter"}}
 Dear *you*,
