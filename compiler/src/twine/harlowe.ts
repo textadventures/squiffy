@@ -788,9 +788,45 @@ class Writer {
     passage(nodes: Node[]): ConvertedPassage {
         this.collectHooks(nodes);
         const state: EmitState = { leading: true, directives: [] };
+        nodes = this.passageTransition(nodes, state);
         let body = this.nodes(nodes, state);
         body += this.closeAll();
         return { directives: state.directives, body };
+    }
+
+    // (transition:)[...] around the whole passage becomes @transition (#489), with its
+    // (transition-time:), and the passage is the hook's text
+    private passageTransition(nodes: Node[], state: EmitState): Node[] {
+        const content = nodes.filter(n => !(n.t == "text" && n.s.trim() == ""));
+        const m = content[0];
+        if (content.length != 1 || m.t != "macro" || !m.hook) return nodes;
+        let name: string | undefined;
+        let time: string | undefined;
+        let hook: Hook | undefined = { nodes: [{ ...m, hook: foldChangers(m), changers: [] }], raw: m.raw };
+        // The changers, from outside in, until the passage's text
+        for (;;) {
+            const inner: Node[] | undefined = hook?.nodes.filter(n => !(n.t == "text" && n.s.trim() == ""));
+            const changer: Macro | undefined = inner?.length == 1 && inner[0].t == "macro" && inner[0].hook ? inner[0] : undefined;
+            if (!changer) break;
+            const arg = splitArgs(changer.args)[0]?.trim() ?? "";
+            const macro = normalise(changer.name);
+            const value = literal(arg);
+            if ((macro == "transition" || macro == "t8n") && typeof value == "string") name = value;
+            // A time such as 2s isn't a string in Harlowe
+            else if (macro == "transitiontime" || macro == "t8ntime") time = arg;
+            else break;
+            hook = changer.hook;
+        }
+        // A named hook stays a hook, so that it can still be changed
+        if (!name || !hook || hook.name || hook.hidden) return nodes;
+        const transition = harloweTransitions.get(name.toLowerCase());
+        if (!transition) {
+            this.ctx.story.note("harlowe-transition", `"${name}"`, "Squiffy has no equivalent for these Harlowe transitions, so they've been left out");
+            return hook.nodes;
+        }
+        const ms = time ? /^(\d+(?:\.\d+)?|\.\d+)(s|ms)$/i.exec(time.trim()) : null;
+        state.directives.push(`@transition ${transition}` + (ms ? ` ${ms[1]}${ms[2].toLowerCase()}` : ""));
+        return hook.nodes;
     }
 
     private closeAll(): string {
@@ -1329,11 +1365,16 @@ class Writer {
             case "t8ndelay":
             case "transitionskip":
             case "t8nskip":
+                // Around the whole passage, this became @transition (#489). Squiffy has none for part of one.
+                this.ctx.story.note("harlowe-transition-hook", m.raw.substring(0, m.raw.indexOf(":") + 1) + ")",
+                    "Squiffy's @transition is for a whole passage, so these transitions for part of one have been left out, and the text they changed has been kept");
+                return m.hook ? this.hookContent(m.hook, state) : "";
             case "transitiondepart":
             case "t8ndepart":
             case "transitionarrive":
             case "t8narrive":
-                // Only how the text appears, which Squiffy does its own way
+                this.ctx.story.note("harlowe-transition-link", m.raw.substring(0, m.raw.indexOf(":") + 1) + ")",
+                    "Squiffy sets how a passage appears with @transition in that passage, not on the link to it, so these have been left out");
                 return m.hook ? this.hookContent(m.hook, state) : "";
             case "nobr":
             case "collapse":
@@ -1893,6 +1934,14 @@ class Writer {
         return out;
     }
 }
+
+// Harlowe's transitions, as Squiffy's @transition (#489)
+const harloweTransitions = new Map([
+    ["instant", "none"], ["dissolve", "fade"], ["fade", "fade"], ["rumble", "rumble"], ["shudder", "shudder"],
+    ["pulse", "pulse"], ["zoom", "zoom"], ["flicker", "flicker"], ["blur", "blur"],
+    ["slide-left", "slide-left"], ["slide-right", "slide-right"], ["slide-up", "slide-up"], ["slide-down", "slide-down"],
+    ["fade-left", "slide-left"], ["fade-right", "slide-right"], ["fade-up", "slide-up"], ["fade-down", "slide-down"],
+]);
 
 // (a:)+(b:)[hook] is (a:) applied to (b:)[hook]: the hook, with the changers after the first
 // applied to it

@@ -202,6 +202,23 @@ describe("Harlowe", () => {
             "[[Cave]] [[Go in]](Cave) [[Enter]](Cave) [[Old]](Cave) [[Away]](Nowhere) <a href=\"https://example.com\" target=\"_blank\">Site</a>");
     });
 
+    test("(transition:) around a whole passage becomes @transition, with its time (#489)", async () => {
+        const { script, result } = await convert("Harlowe", [
+            ":: Start\n(t8n: \"dissolve\")+(t8n-time: 2s)[Hello. [[Cave]]]",
+            ":: Cave\n(transition: \"slide-left\")[Dark.]\n\n[[Hall]]",
+            ":: Hall\n(t8n-time: 500ms)+(transition: \"fade-up\")[A hall.]",
+            ":: Room\n(t8n: \"swirl\")[A room.]",
+        ].join("\n\n"));
+        expect(section(script, "Start")).toBe("@transition fade 2s\nHello. [[Cave]]");
+        // Only part of the passage
+        expect(section(script, "Cave")).toBe("Dark.\n\n[[Hall]]");
+        expect(section(script, "Hall")).toBe("@transition slide-up 500ms\nA hall.");
+        expect(section(script, "Room")).toBe("A room.");
+        const problems = result.problems.map(p => p.text);
+        expect(problems).toContain("\"swirl\"");
+        expect(problems).toContain("(transition:)");
+    });
+
     test("(set:) at the start of a passage becomes @set, and later on {{set}}", async () => {
         const { script } = await convert("Harlowe", ":: Start\n(set: $gold to 10)(set: $name to \"Ann\", $gold to it + 5)\nHello.\n(set: $gold to $gold - 2)(set: $won to true)(put: 3 into $x)");
         expect(section(script, "Start")).toBe(

@@ -328,9 +328,125 @@ span.squiffy-style:is(.shake, .shudder, .rumble, .sway, .buoy, .mirror, .upside-
     transform: scaleY(-1);
 }
 
+/* Transitions for how a section or passage appears (#489), from @transition. The element has
+   squiffy-transition and the transition's name as classes while it plays, and @transition's
+   time in --squiffy-transition-time. A story's stylesheet can add its own, e.g.
+   .squiffy-transition.swirl { animation-name: swirl; } */
+.squiffy-transition {
+    animation-duration: var(--squiffy-transition-time, 0.5s);
+    animation-timing-function: ease-out;
+    animation-fill-mode: both;
+}
+
+.squiffy-transition:is(.fade, .dissolve) {
+    animation-name: squiffy-transition-fade;
+}
+
+@keyframes squiffy-transition-fade {
+    from { opacity: 0; }
+}
+
+.squiffy-transition.slide-up {
+    animation-name: squiffy-transition-slide-up;
+}
+
+@keyframes squiffy-transition-slide-up {
+    from { opacity: 0; transform: translateY(2em); }
+}
+
+.squiffy-transition.slide-down {
+    animation-name: squiffy-transition-slide-down;
+}
+
+@keyframes squiffy-transition-slide-down {
+    from { opacity: 0; transform: translateY(-2em); }
+}
+
+.squiffy-transition.slide-left {
+    animation-name: squiffy-transition-slide-left;
+}
+
+@keyframes squiffy-transition-slide-left {
+    from { opacity: 0; transform: translateX(3em); }
+}
+
+.squiffy-transition.slide-right {
+    animation-name: squiffy-transition-slide-right;
+}
+
+@keyframes squiffy-transition-slide-right {
+    from { opacity: 0; transform: translateX(-3em); }
+}
+
+/* So sliding in from the side doesn't make the page scroll sideways */
+:has(> .squiffy-transition:is(.slide-left, .slide-right)) {
+    overflow-x: clip;
+}
+
+.squiffy-transition.zoom {
+    animation-name: squiffy-transition-zoom;
+}
+
+@keyframes squiffy-transition-zoom {
+    from { opacity: 0; transform: scale(0.9); }
+}
+
+.squiffy-transition.blur {
+    animation-name: squiffy-transition-blur;
+}
+
+@keyframes squiffy-transition-blur {
+    from { opacity: 0; filter: blur(8px); }
+}
+
+.squiffy-transition.pulse {
+    animation-name: squiffy-transition-pulse;
+}
+
+@keyframes squiffy-transition-pulse {
+    from { opacity: 0; transform: scale(0.95); }
+    60% { opacity: 1; transform: scale(1.02); }
+}
+
+.squiffy-transition.rumble {
+    animation-name: squiffy-transition-rumble;
+}
+
+@keyframes squiffy-transition-rumble {
+    from { opacity: 0; }
+    10%, 30%, 50%, 70% { transform: translateY(-2px); }
+    20%, 40%, 60%, 80% { transform: translateY(2px); }
+    50% { opacity: 1; }
+}
+
+.squiffy-transition.shudder {
+    animation-name: squiffy-transition-shudder;
+}
+
+@keyframes squiffy-transition-shudder {
+    from { opacity: 0; }
+    10%, 30%, 50%, 70% { transform: translateX(-2px); }
+    20%, 40%, 60%, 80% { transform: translateX(2px); }
+    50% { opacity: 1; }
+}
+
+.squiffy-transition.flicker {
+    animation-name: squiffy-transition-flicker;
+}
+
+@keyframes squiffy-transition-flicker {
+    from, 15%, 35%, 55% { opacity: 0; }
+    10%, 25%, 45% { opacity: 0.6; }
+}
+
 /* Respect the reader's reduced-motion setting */
 @media (prefers-reduced-motion: reduce)
 {
+    /* Every transition, a story's own too, is a plain fade */
+    .squiffy-transition {
+        animation-name: squiffy-transition-fade !important;
+    }
+
     .squiffy-continue-pulse,
     .squiffy-continue-glow,
     .squiffy-continue-bounce,

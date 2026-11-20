@@ -35,6 +35,7 @@ export type DiagnosticCode =
     | "squiffy/duplicate-passage"
     | "squiffy/not-in-main-file"
     | "squiffy/repeat-not-in-passage"
+    | "squiffy/transition"
     | "squiffy/redundant-import"
     | "squiffy/project-file"
     | "squiffy/unreachable-section"
@@ -221,6 +222,18 @@ export interface ClassNode {
     range: Range;
 }
 
+// @transition fade 1s (#489): how the section or passage appears. "none" turns off one
+// that the master section sets.
+export interface TransitionNode {
+    type: "transition";
+    // The transition's name, which is also its class in the stylesheet
+    value: string;
+    valueRange: Range;
+    // How long it takes, such as "1s" or "400ms", if given
+    time?: string;
+    range: Range;
+}
+
 // @set, @unset, @inc or @dec
 export interface AttributeNode {
     type: "attribute";
@@ -264,6 +277,7 @@ export type StatementNode =
     | AttributeNode
     | SoundNode
     | ClassNode
+    | TransitionNode
     | JsNode
     | TextNode;
 

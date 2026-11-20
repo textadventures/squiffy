@@ -199,6 +199,7 @@ const DIRECTIVES: [string, string][] = [
     ["music", "Plays music until it's changed, or stops it with @music stop"],
     ["sound", "Plays a sound once, or stops the sounds playing with @sound stop"],
     ["class", "Puts classes on the story while this section is shown, for its stylesheet"],
+    ["transition", "How this section or passage appears, such as @transition fade 1s"],
     ["ui", "JavaScript for the story's user interface"],
 ];
 

@@ -153,7 +153,7 @@ These are left as comments, and listed in `twine-import.txt`:
 - **Harlowe's datasets**, and JavaScript's object methods, such as `Object.keys()`.
 - **Harlowe's more unusual hooks and changers**, such as `(enchant:)` on anything but how text looks, and `(append:)` on a hook in another passage.
 
-Harlowe's `(text-style:)` effects that Squiffy also has, such as `"shudder"`, `"blur"` and `"fade-in-out"`, become [`{{#style}}`](/dynamic-text/#text-effects). Other changers and text styles that only change how something looks, such as `(link-style:)`, `(box:)`, `"condense"` and transitions, are left out, and the text they changed is kept.
+Harlowe's `(text-style:)` effects that Squiffy also has, such as `"shudder"`, `"blur"` and `"fade-in-out"`, become [`{{#style}}`](/dynamic-text/#text-effects). A `(transition:)` around a whole passage, as in `(t8n: "dissolve")+(t8n-time: 2s)[...]`, becomes [`@transition`](/styling/#transitions) in its section, as `@transition fade 2s`. Other changers and text styles that only change how something looks, such as `(link-style:)`, `(box:)`, `"condense"`, transitions for part of a passage, and `(transition-arrive:)` and `(transition-depart:)` on links, are left out, and the text they changed is kept.
 
 ### JavaScript
 
