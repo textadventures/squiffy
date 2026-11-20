@@ -124,6 +124,16 @@ describe("story graph", () => {
         expect(nodeOf(graph, "section:shared").embedded).toBe(true);
     });
 
+    test("an embed with parameters, or one that wraps text, is an embed too (#450)", async () => {
+        const graph = await one("[[a]]:\n{{embed \"say\" who=\"Ann\"}} {{#embed \"box\"}}Hi{{/embed}}\n\n[[say]]:\n{{who}}\n\n[[box]]:\n{{content}}");
+        expect(edgeSummary(graph.edges)).toEqual([
+            "section:a -> section:say (embed)",
+            "section:a -> section:box (embed)",
+        ]);
+        expect(nodeOf(graph, "section:say").embedded).toBe(true);
+        expect(nodeOf(graph, "section:box").embedded).toBe(true);
+    });
+
     test("{{goto}} is navigation, and an expression in it is an unknown exit", async () => {
         const graph = await one([
             "[[a]]:", "{{#if dead}}{{goto \"death\"}}{{/if}}", "[look]", "",

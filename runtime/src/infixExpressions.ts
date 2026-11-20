@@ -4,7 +4,7 @@
 //                (also {{#unless}}, {{else if}} and {{else unless}}, and what {{#each}} and
 //                {{#with}} go through: {{#each (range 1 (count + 1))}} (#447))
 //   values:      {{set "gold" gold + price * 2}}  ->  {{set "gold" (add gold (mul price 2))}}
-//                (also {{inc}} and {{dec}})
+//                (also {{inc}} and {{dec}}, and {{append}}, {{prepend}} and {{remove}})
 //   display:     {{= price * 2}}                  ->  {{mul price 2}}
 //
 // Two operators work on values rather than numbers (#446):
@@ -215,6 +215,24 @@ class Parser {
             throw new ExpressionError("expected a value");
         }
         result.push(this.parseExpression());
+        return result;
+    }
+
+    // {{embed}}'s arguments (#450): the name, then parameters, each of which can be an expression,
+    // e.g. {{embed "say" who=name hp=hp - 1}}
+    parseEmbed(): Node[] {
+        const result = [this.parsePrimary()];
+        while (this.peek()?.type === "ident" && this.isOp(this.peek(1), "=")) {
+            const key = this.next().text;
+            this.next(); // "="
+            if (!this.peek()) {
+                throw new ExpressionError(`expected a value after '${key}='`);
+            }
+            result.push({ kind: "raw", text: `${key}=${emit(this.parseConditional())}` });
+        }
+        if (this.peek()) {
+            throw new ExpressionError(`unexpected ${this.describe(this.peek())}`);
+        }
         return result;
     }
 
@@ -484,7 +502,7 @@ function emit(node: Node): string {
 }
 
 // "value" is a whole expression whose value is used, e.g. the right-hand side of @set
-type Mode = "condition" | "arguments" | "display" | "value";
+type Mode = "condition" | "arguments" | "embed" | "display" | "value";
 
 // Parses `text` and returns the rewritten nodes, or null if it should be left alone: it
 // doesn't use infix syntax, or it can't be parsed and has no operators (which leaves malformed
@@ -510,6 +528,7 @@ function rewrite(text: string, mode: Mode, label: string): Node[] | null {
         try {
             nodes = mode === "condition" ? parser.parseCondition()
                 : mode === "arguments" ? parser.parseArguments(1)
+                : mode === "embed" ? parser.parseEmbed()
                 : [parser.parseExpression()];
         } catch (e) {
             if (!(e instanceof ExpressionError) || (!hasOperators && !strict)) return null;
@@ -529,10 +548,18 @@ export function rewriteInfixCondition(condition: string): string | null {
     return nodes && nodes.map(emit).join(" ");
 }
 
-// Rewrites the arguments to {{set}}, {{inc}} or {{dec}}: an attribute name, then an expression.
+// Rewrites the arguments to {{set}}, {{inc}}, {{dec}}, {{append}}, {{prepend}} or {{remove}}: an
+// attribute name, then an expression.
 // Returns null if the expression doesn't use infix syntax.
 export function rewriteInfixArguments(args: string): string | null {
     const nodes = rewrite(args, "arguments", "expression");
+    return nodes && nodes.map(emit).join(" ");
+}
+
+// Rewrites the arguments to {{embed}}: a name, then parameters whose values can be expressions
+// (#450). Returns null if they don't use infix syntax.
+export function rewriteInfixEmbed(args: string): string | null {
+    const nodes = rewrite(args, "embed", "embed");
     return nodes && nodes.map(emit).join(" ");
 }
 
@@ -582,7 +609,7 @@ export function splitSetters(setters: string): string[] {
     return result.map(s => s.trim()).filter(s => s !== "");
 }
 
-const tagStart = /(\\*)\{\{(~?\s*)(?:(#if|#unless|#each|#with|else\s+if|else\s+unless)(?=[\s(!])|(set|inc|dec)(?=\s)|(=))/g;
+const tagStart = /(\\*)\{\{(~?\s*)(?:(#if|#unless|#each|#with|else\s+if|else\s+unless)(?=[\s(!])|(set|inc|dec|append|prepend|remove)(?=\s)|(=)|(#?embed)(?=\s))/g;
 
 // Finds the end of a mustache tag starting at `from`, skipping over quoted strings and objects,
 // such as {{set "hero" { hp: 10 }}}. Returns the index of the closing "}}" (or "~}}"), or -1.
@@ -631,7 +658,9 @@ export function rewriteInfixExpressions(text: string): string {
             result += text.slice(last, tagOpen) + "{{" + match[2] + rewriteDisplayExpression(args);
             last = argEnd;
         } else {
-            const rewritten = match[3] ? rewriteInfixCondition(args) : rewriteInfixArguments(args);
+            const rewritten = match[3] ? rewriteInfixCondition(args)
+                : match[6] ? rewriteInfixEmbed(args)
+                : rewriteInfixArguments(args);
             if (rewritten !== null) {
                 result += text.slice(last, argStart) + " " + rewritten;
                 last = argEnd;

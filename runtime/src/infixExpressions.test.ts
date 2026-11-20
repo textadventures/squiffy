@@ -1,5 +1,5 @@
 import { expect, test, describe } from "vitest";
-import { rewriteDisplayExpression, rewriteInfixArguments, rewriteInfixCondition, rewriteInfixExpressions, rewriteValueExpression, splitSetters } from "./infixExpressions.js";
+import { rewriteDisplayExpression, rewriteInfixArguments, rewriteInfixEmbed, rewriteInfixCondition, rewriteInfixExpressions, rewriteValueExpression, splitSetters } from "./infixExpressions.js";
 
 describe("rewriteInfixCondition", () => {
     test.each([
@@ -242,6 +242,37 @@ describe("rewriteInfixArguments", () => {
         ["\"gold\" + 1", "expected a value before '+'"],
     ])("error: %s", (input, message) => {
         expect(() => rewriteInfixArguments(input)).toThrow(message);
+    });
+});
+
+describe("list helpers take expressions", () => {
+    test("rewrites {{append}}, {{prepend}} and {{remove}}", () => {
+        expect(rewriteInfixExpressions('{{append "a" { msec: m, type: 1 }}} {{prepend "a" n + 1}} {{remove "a" x}}'))
+            .toBe('{{append "a" (__object "msec" m "type" 1)}} {{prepend "a" (add n 1)}} {{remove "a" x}}');
+    });
+});
+
+describe("rewriteInfixEmbed (#450)", () => {
+    test.each([
+        ['"say" hp=hp - 1', '"say" hp=(sub hp 1)'],
+        ['"say" who="Ann" rich=gold > 100', '"say" who="Ann" rich=(gt gold 100)'],
+        ['"say" items=[1, 2] hero={ hp: 10 }', '"say" items=(array 1 2) hero=(__object "hp" 10)'],
+        ['"say" first=inventory[0]', '"say" first=(lookup inventory 0)'],
+    ])("%s", (input, expected) => {
+        expect(rewriteInfixEmbed(input)).toBe(expected);
+    });
+
+    test.each([
+        '"say"',
+        '"say" who="Ann" mood=mood',
+        '"say" n=(add n 1)',
+    ])("leaves %s alone", input => {
+        expect(rewriteInfixEmbed(input)).toBeNull();
+    });
+
+    test("rewrites inline and block embeds in text", () => {
+        expect(rewriteInfixExpressions('{{embed "a" n=n + 1}} {{#embed "b" ok=not done}}x{{/embed}}'))
+            .toBe('{{embed "a" n=(add n 1)}} {{#embed "b" ok=(not done)}}x{{/embed}}');
     });
 });
 

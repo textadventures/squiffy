@@ -54,7 +54,8 @@ const childMacros: Record<string, string[]> = {
 };
 
 class Parser {
-    constructor(private readonly src: string) {}
+    // The story's container widgets (#450), whose calls wrap text like <<say "Ann">>Hi<</say>>
+    constructor(private readonly src: string, private readonly containerWidgets: ReadonlySet<string> = new Set()) {}
 
     // Parses until the end, or until the end of the container, or one of its child macros
     parse(start: number, container?: string): { nodes: Node[], end: number, stop?: { name: string, args: string, raw: string, close: boolean } } {
@@ -90,7 +91,7 @@ class Parser {
                         return { nodes, end: macro.end, stop: { name, args, raw: macro.raw, close: false } };
                     }
                     flush();
-                    if (containers.has(name)) {
+                    if (containers.has(name) || this.containerWidgets.has(name)) {
                         const node: Macro = { t: "macro", name, args, raw: macro.raw, clauses: [] };
                         let clause: Clause = { name, args, raw: macro.raw, nodes: [] };
                         let j = macro.end;
@@ -348,8 +349,13 @@ export class SugarCubeExpressions {
     }
 
     variable(name: string, temp: boolean): Expr {
+        // Inside a container widget, the text its call wraps (#450)
+        if (temp && name == "contents" && this.inContainerWidget) return { k: "call", fn: "content", args: [] };
         return this.ctx.story.variable(name, temp);
     }
+
+    // Whether a container widget's body is being converted
+    inContainerWidget = false;
 
     parse(source: string): Expr {
         const tokens = new Tokens(tokenize(source));
@@ -609,13 +615,8 @@ class ExpressionParser {
                 this.tokens.next();
                 const index = this.expression();
                 this.tokens.expect("]");
-                // A widget's arguments, which a call to it puts in args_0, args_1 and so on
                 if (value.v == "expr" && value.e.k == "var" && index.k == "loop" && index.kind == "index" && index.array == value.e.name) {
                     value = { v: "expr", e: { k: "loop", kind: "item", up: index.up } };
-                    continue;
-                }
-                if (value.v == "expr" && value.e.k == "var" && value.e.name == "args" && index.k == "num") {
-                    value = { v: "expr", e: { k: "var", name: `args_${index.v}` } };
                     continue;
                 }
                 // A value inside an object or list, e.g. $inventory[_i] or $player["hp"] (#442)
@@ -871,12 +872,15 @@ class Writer {
     private atLineStart = true;
     // Widget name -> the section it's converted to
     private readonly widgets: Map<string, string>;
+    // The widgets whose calls wrap text (#450)
+    readonly containerWidgets: ReadonlySet<string>;
     // Element ids targeted by <<replace>> and friends, which become labels
     private readonly targets = new Map<string, string>();
 
     constructor(private readonly ctx: PassageContext) {
         this.expr = new SugarCubeExpressions(ctx);
         this.widgets = sugarCubeWidgets(ctx.story);
+        this.containerWidgets = sugarCubeContainerWidgets(ctx.story);
     }
 
     // A widget passage: each <<widget>> in it, converted to a section
@@ -887,23 +891,28 @@ class Writer {
             const name = /^["']?([\w-]+)/.exec(n.args)?.[1]?.toLowerCase();
             const section = name ? this.widgets.get(name) : undefined;
             if (!section) continue;
-            if (/\bcontainer\b/.test(n.args)) this.ctx.approximate(n.raw, "Container widgets (whose calls have text in them) can't be converted. Wherever the story uses one, it's been left as a comment.");
             // An embedded section's directives don't run, so everything is a helper
             const state: EmitState = { leading: false, directives: [], nobr: false };
             this.open.clear();
             this.atLineStart = true;
-            let body = this.nodes(n.clauses?.[0]?.nodes ?? [], state);
+            this.expr.inContainerWidget = this.containerWidgets.has(name!);
+            let body: string;
+            try {
+                body = this.nodes(n.clauses?.[0]?.nodes ?? [], state);
+            } finally {
+                this.expr.inContainerWidget = false;
+            }
             for (const tag of [...this.open].reverse()) body += `</${tag}>`;
             result.push({ section, converted: { directives: [], body } });
         }
         return result;
     }
 
-    // A call to a widget: its arguments go in attributes _args_0, _args_1 and so on, then the
-    // widget's section is embedded
-    private widgetCall(m: Macro, section: string): string {
-        if (m.clauses) throw new Unconvertible(`the <<${m.name}>> container widget`);
-        const sets = splitMacroArgs(m.args).map((a, n) => {
+    // A call to a widget embeds the widget's section, with its arguments as the parameter args, a
+    // list, as _args is in SugarCube. A container widget's call wraps text, which the widget shows
+    // as _contents (#450).
+    private widgetCall(m: Macro, section: string, state: EmitState): string {
+        const items = splitMacroArgs(m.args).map(a => {
             let value: Expr;
             try {
                 value = /^[^"'`$_[(\-\d\s][^\s]*$/.test(a) && !["true", "false", "null"].includes(a) ? { k: "str", v: a } : this.expr.parse(a);
@@ -911,9 +920,16 @@ class Writer {
             catch {
                 value = { k: "str", v: a };
             }
-            return `{{set "args_${n}" ${print(value)}}}`;
+            return value;
         });
-        return sets.join("") + `{{embed ${print({ k: "str", v: section })}}}`;
+        // With no arguments, an empty list, so that a widget that changes _args doesn't change
+        // the story's attribute
+        const params = items.length || sugarCubeWidgetsUsingArgs(this.ctx.story).has(m.name)
+            ? ` ${this.expr.attribute("args", true)}=${print({ k: "array", items })}`
+            : "";
+        const name = print({ k: "str", v: section });
+        if (m.clauses) return `{{#embed ${name}${params}}}${this.body(m, state)}{{/embed}}`;
+        return `{{embed ${name}${params}}}`;
     }
 
     // Finds the ids that <<replace "#id">> and friends change, so they can be labels
@@ -1027,7 +1043,7 @@ class Writer {
     }
 
     private inlineText(text: string): string {
-        const nodes = new Parser(text).parse(0).nodes;
+        const nodes = new Parser(text, this.containerWidgets).parse(0).nodes;
         return this.nodes(nodes, { leading: false, directives: [], nobr: true }).replace(/\n/g, " ");
     }
 
@@ -1464,7 +1480,7 @@ class Writer {
             default:
                 if (this.widgets.has(m.name)) {
                     state.leading = false;
-                    return this.widgetCall(m, this.widgets.get(m.name)!);
+                    return this.widgetCall(m, this.widgets.get(m.name)!, state);
                 }
                 if (!knownMacros.has(m.name)) throw new Unconvertible(`the <<${m.name}>> macro, which isn't one of SugarCube's own: it's probably added by the story's JavaScript`);
                 throw new Unconvertible(`the <<${m.name}>> macro, which Squiffy has no equivalent for`);
@@ -1729,9 +1745,37 @@ export function sugarCubeWidgets(story: PassageContext["story"]): Map<string, st
     });
 }
 
+// The story's widgets that use _args (#450)
+function sugarCubeWidgetsUsingArgs(story: PassageContext["story"]): Set<string> {
+    return story.cached("sugarcube-widgets-using-args", () => {
+        const result = new Set<string>();
+        for (const p of story.twine.passages) {
+            if (!p.tags.includes("widget")) continue;
+            for (const m of p.text.matchAll(/<<widget\s+["']?([\w-]+)["']?[^>]*>>([\s\S]*?)<<\/widget>>/g)) {
+                if (/\b_args\b/.test(m[2])) result.add(m[1].toLowerCase());
+            }
+        }
+        return result;
+    });
+}
+
+// The story's container widgets (#450), <<widget "name" container>>, whose calls wrap text
+function sugarCubeContainerWidgets(story: PassageContext["story"]): Set<string> {
+    return story.cached("sugarcube-container-widgets", () => {
+        const result = new Set<string>();
+        for (const p of story.twine.passages) {
+            if (!p.tags.includes("widget")) continue;
+            for (const m of p.text.matchAll(/<<widget\s+["']?([\w-]+)["']?([^>]*)>>/g)) {
+                if (/\bcontainer\b/.test(m[2])) result.add(m[1].toLowerCase());
+            }
+        }
+        return result;
+    });
+}
+
 export function convertSugarCubeWidgets(text: string, ctx: PassageContext): { section: string, converted: ConvertedPassage }[] {
     const writer = new Writer(ctx);
-    const nodes = new Parser(writer.findTargets(text.replace(/\\\r?\n/g, ""))).parse(0).nodes;
+    const nodes = new Parser(writer.findTargets(text.replace(/\\\r?\n/g, "")), writer.containerWidgets).parse(0).nodes;
     return writer.widgetSections(nodes);
 }
 
@@ -1770,6 +1814,6 @@ export function convertSugarCubePassage(text: string, ctx: PassageContext): Conv
     const writer = new Writer(ctx);
     // A backslash at the end of a line joins it to the next
     const source = writer.findTargets(text.replace(/\\\r?\n/g, ""));
-    const nodes = new Parser(source).parse(0).nodes;
+    const nodes = new Parser(source, writer.containerWidgets).parse(0).nodes;
     return writer.passage(nodes, ctx.passage.tags.includes("nobr"));
 }

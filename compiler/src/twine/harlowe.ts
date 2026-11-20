@@ -20,6 +20,8 @@ type Node =
     | { t: "hook", hook: Hook }
     | { t: "link", raw: string, text: string, target: string }
     | { t: "var", name: string, temp: boolean, raw: string }
+    // A call to a custom macro, ($name: args)
+    | { t: "call", name: string, temp: boolean, args: string, raw: string }
     | { t: "collapse", nodes: Node[] }
     | { t: "comment", text: string, reason: string };
 
@@ -48,7 +50,7 @@ const changers = new Set([
     "opacity", "textrotate", "textrotatez", "box", "border", "b4r", "bordercolour", "bordercolor", "b4rcolour",
     "cornerradius", "textindent", "float", "hookname", "action", "linkundo", "linkfullscreen", "more",
     "clickgoto", "mouseovergoto", "mouseoverreplace", "mouseoverappend", "mouseoverprepend", "mouseoutreplace",
-    "linkstyle", "charstyle", "linestyle", "button", "textshadow", "outline", "hiddenhook", "seqlink",
+    "linkstyle", "charstyle", "linestyle", "button", "textshadow", "outline", "hiddenhook", "seqlink", "output", "out",
 ]);
 
 class Parser {
@@ -141,12 +143,14 @@ class Parser {
                     continue;
                 }
             }
-            if (/^\(\$[\w]+:/.test(rest) || /^\(_[\w]+:/.test(rest)) {
+            const call = /^\(([$_])(\w+):/.exec(rest);
+            if (call) {
                 // A call to a custom macro
                 const end = skipBalanced(src, i, "(", ")");
                 if (end != -1) {
                     flush();
-                    nodes.push({ t: "comment", text: src.substring(i, end), reason: "Custom macros, made with (macro:), can't be converted." });
+                    const raw = src.substring(i, end);
+                    nodes.push({ t: "call", name: call[2], temp: call[1] == "_", args: raw.substring(call[0].length, raw.length - 1), raw });
                     i = end;
                     continue;
                 }
@@ -894,6 +898,9 @@ class Writer {
                 return node.s;
             case "comment":
                 return this.ctx.unconvertible(node.text, node.reason);
+            case "call":
+                state.leading = false;
+                return this.call(node);
             case "var":
                 state.leading = false;
                 return display(this.expr.variable(node.name, node.temp));
@@ -1125,6 +1132,16 @@ class Writer {
             case "set":
             case "put":
                 return this.set(m, args, state);
+            // What a custom macro shows (#450)
+            case "output":
+            case "out":
+            case "outputdata":
+            case "outdata":
+                if (!this.inMacro) throw new Unconvertible(`(${m.name}:) outside a custom macro`);
+                state.leading = false;
+                if (m.hook && !args.length && (name == "output" || name == "out")) return this.hookContent(m.hook, state);
+                if (args.length != 1) throw new Unconvertible(`(${m.name}:) with more than one value`);
+                return display(this.expr.parse(args[0]));
             case "print":
                 state.leading = false;
                 if (args.length != 1) throw new Unconvertible("(print:) with more than one value");
@@ -1769,8 +1786,56 @@ class Writer {
         return { kind: "set", name, value };
     }
 
+    // A call to a custom macro embeds its section, with its arguments as the parameters (#450)
+    private call(node: Extract<Node, { t: "call" }>): string {
+        const macro = node.temp ? undefined : harloweMacros(this.ctx.story).get(node.name);
+        if (!macro) return this.ctx.unconvertible(node.raw, "Custom macros, made with (macro:), can only be converted when they're kept in a story variable ($), and only show text.");
+        try {
+            const args = splitArgs(node.args);
+            if (args.length > macro.params.length) throw new Unconvertible("more values than the macro has parameters");
+            const params = args.map((a, n) => ` ${macro.params[n]}=${print(this.expr.parse(a))}`).join("");
+            return `{{embed ${print({ k: "str", v: macro.section })}${params}}}`;
+        }
+        catch (e) {
+            if (!(e instanceof Unconvertible)) throw e;
+            return this.ctx.unconvertible(node.raw, `This couldn't be converted: ${e.message}.`);
+        }
+    }
+
+    // Whether this is the body of a custom macro, where (output:) is what it shows
+    private inMacro = false;
+
+    // A custom macro's body (#450), which becomes a section that calls to it embed. It's a code
+    // hook, so the whitespace between its macros isn't shown.
+    macroBody(source: string): ConvertedPassage {
+        const nodes = new Parser(source).parse(0).nodes.filter(n => !(n.t == "text" && n.s.trim() == ""));
+        this.collectHooks(nodes);
+        this.inMacro = true;
+        const state: EmitState = { leading: false, directives: [] };
+        let body = this.nodes(nodes, state);
+        body += this.closeAll();
+        return { directives: [], body };
+    }
+
     private set(m: Macro, args: string[], state: EmitState): string {
         let out = "";
+        // A custom macro becomes a section when it's defined (#450)
+        args = args.filter(source => {
+            const definition = /^\s*\$(\w+)\s+to\s+\(macro:/i.exec(source);
+            const macro = definition && harloweMacros(this.ctx.story).get(definition[1]);
+            if (!macro || macro.defined) return !macro;
+            macro.defined = true;
+            let converted: ConvertedPassage;
+            try {
+                converted = new Writer(this.ctx).macroBody(macro.body);
+            }
+            catch (e) {
+                if (!(e instanceof Unconvertible)) throw e;
+                converted = { directives: [], body: this.ctx.unconvertible(macro.body, `This macro couldn't be converted: ${e.message}.`) };
+            }
+            this.ctx.fillSection(macro.section, converted);
+            return false;
+        });
         for (const a of args.flatMap(source => this.assignments(source, m.name == "put"))) {
             const amount = a.value.k == "num" && Number.isInteger(a.value.v) && a.value.v >= 0 ? a.value.v : null;
             if (state.leading) {
@@ -1994,6 +2059,36 @@ export function harloweAudio(story: PassageContext["story"]): StoryAudio {
             }
         }
         return audio;
+    });
+}
+
+// The story's custom macros (#450): (set: $name to (macro: str-type _who, [ ... ])). Each becomes
+// a section, named before anything's converted so calls know where they go, with its parameters
+// as the attributes the body's temporary variables become. A macro with a parameter that takes
+// any number of values (...) isn't one of them, and stays unconverted.
+export function harloweMacros(story: PassageContext["story"]): Map<string, { section: string, params: string[], body: string, defined: boolean }> {
+    return story.cached("harlowe-macros", () => {
+        const result = new Map<string, { section: string, params: string[], body: string, defined: boolean }>();
+        for (const p of story.twine.passages) {
+            for (const m of p.text.matchAll(/\$(\w+)\s+to\s+(?=\(macro:)/gi)) {
+                if (result.has(m[1])) continue;
+                const start = m.index! + m[0].length;
+                const end = skipBalanced(p.text, start, "(", ")");
+                if (end == -1) continue;
+                const args = splitArgs(p.text.substring(start + "(macro:".length, end - 1));
+                const hook = args.pop()?.trim();
+                if (!hook?.startsWith("[") || !hook.endsWith("]")) continue;
+                const params = args.map(a => /^\s*(?:[\w-]+-type\s+)?_(\w+)\s*$/.exec(a)?.[1]);
+                if (params.some(name => !name)) continue;
+                result.set(m[1], {
+                    section: story.uniqueSectionName(`macro ${m[1]}`),
+                    params: params.map(name => story.attribute(name!, true)),
+                    body: hook.substring(1, hook.length - 1),
+                    defined: false,
+                });
+            }
+        }
+        return result;
     });
 }
 
