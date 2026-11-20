@@ -13,6 +13,10 @@ import {
     formatChoicesFile, formatPlayResult, formatRandomResult, loadPlayableStory, MAX_INLINE_CHOICES, parseChoicesFile, playRandom,
     playStory, problemComments, type RandomProblem,
 } from "./play.js";
+import {
+    findTestFiles, formatTest, formatTestResults, parseTest, runTest, testFromResult, TestFileError, TEST_EXTENSION,
+    type TestFileResult,
+} from "./playtest.js";
 import fs from "fs";
 import { findStory, StoryNotFoundError, type StoryOnDisk } from "squiffy-compiler/node";
 import { BUILD_FOLDER } from "squiffy-compiler";
@@ -60,12 +64,17 @@ const argv = yargs(hideBin(process.argv))
     .string("save")
     .describe("attributes", "With --play, show the story's attributes at the end")
     .boolean("attributes")
+    .describe("record", "With --play, record the playthrough as a test, to a .squiffy-test file, for --test")
+    .string("record")
+    .describe("test", "Play the story the way each .squiffy-test file in its folder says (or the file or folder given), and report where it does something different")
+    .describe("update", "With --test, record the tests that fail again, as the story plays now")
+    .boolean("update")
     .describe("random", "Play the story this many times (default 20), clicking links at random, and report errors, dead ends, endings and what was never visited")
     .describe("steps", "With --random, the most links to click each time (default 200)")
     .number("steps")
-    .describe("seed", "With --play or --random, a number that makes the story's randomness the same every time")
+    .describe("seed", "With --play, --record or --random, a number that makes the story's randomness the same every time")
     .number("seed")
-    .describe("json", "With --check, --play or --random, print the result as JSON")
+    .describe("json", "With --check, --play, --random or --test, print the result as JSON")
     .boolean("json")
     .version(version)
     .parseSync();
@@ -140,6 +149,9 @@ else if (argv.check) {
     const result = await checkStory(story);
     console.log(argv.json ? JSON.stringify(result, null, 2) : formatCheckResult(result));
     if (!result.success) process.exitCode = 1;
+}
+else if (argv.test !== undefined) {
+    process.exitCode = await test() ? 0 : 1;
 }
 else if (argv.play || argv.random !== undefined) {
     process.exitCode = await play() ? 0 : 1;
@@ -232,18 +244,109 @@ async function play(): Promise<boolean> {
         }
     }
 
+    const record = argv.record;
+    if (record !== undefined) {
+        if (!record) {
+            console.error(`Give the file to record the test to, e.g. --record tests/playthrough${TEST_EXTENSION}`);
+            return false;
+        }
+        if (argv.save) {
+            console.error("--record can't carry on from a saved game, as a test plays from the start.");
+            return false;
+        }
+    }
+    // A test needs a seed, so the story's randomness is the same each time it's played
+    const seed = argv.seed ?? (record ? Math.floor(Math.random() * 1000000) : undefined);
+
     const result = await playStory(loaded.playable, {
-        start: argv.start, choose, inputs, save, seed: argv.seed,
+        start: argv.start, choose, inputs, save, seed, stepAttributes: !!record,
     });
     if (argv.save) fs.writeFileSync(argv.save, JSON.stringify(result.save));
+    let recorded: string | undefined;
+    let notRecorded: string | undefined;
+    if (record) {
+        if (result.success) {
+            const test = testFromResult(result, { seed: seed!, start: argv.start, inputs });
+            fs.mkdirSync(path.dirname(path.resolve(record)), { recursive: true });
+            fs.writeFileSync(record, formatTest(test));
+            recorded = record;
+        }
+        else {
+            notRecorded = result.stopped
+                ? "The test wasn't recorded, as play stopped early."
+                : "The test wasn't recorded, as the story had errors.";
+        }
+    }
     if (argv.json) {
         // The saved game is for --save, and is mostly the HTML on the screen
-        console.log(JSON.stringify({ ...result, save: undefined }, null, 2));
+        const steps = result.steps.map(step => ({ ...step, attributes: undefined }));
+        console.log(JSON.stringify({ ...result, steps, save: undefined, recorded, notRecorded }, null, 2));
     }
     else {
         console.log(formatPlayResult(result, !!argv.attributes));
+        if (recorded) console.log(`\nRecorded the test to ${recorded} (--seed ${seed}).`);
+        if (notRecorded) console.log(`\n${notRecorded}`);
     }
     return result.success;
+}
+
+// --test: plays the story the way each test file says, and reports where it did something
+// different. With --update, a test that fails is recorded again, as the story plays now.
+async function test(): Promise<boolean> {
+    const story = await findStoryOrExit();
+    const root = path.dirname(story.projectFile ?? story.mainFile);
+    const fail = (message: string) => {
+        if (argv.json) console.log(JSON.stringify({ success: false, errors: [message] }, null, 2));
+        else console.error(message);
+        return false;
+    };
+    const target = typeof argv.test == "string" && argv.test ? argv.test : root;
+    if (!fs.existsSync(target)) return fail(`There's no file or folder called ${target}.`);
+    const files = findTestFiles(target, root);
+    if (!files.length) {
+        return fail(`There are no ${TEST_EXTENSION} files in ${path.relative(process.cwd(), target) || "this folder"}. Record one with --play --record.`);
+    }
+
+    const loaded = await loadPlayableStory(story);
+    if (!loaded.success) {
+        if (argv.json) console.log(JSON.stringify({ success: false, errors: loaded.errors }, null, 2));
+        else loaded.errors.forEach(error => console.error(error));
+        return false;
+    }
+
+    const results: TestFileResult[] = [];
+    for (const file of files) {
+        const name = path.relative(process.cwd(), file).split(path.sep).join("/");
+        let expected;
+        try {
+            expected = parseTest(fs.readFileSync(file, "utf8"));
+        }
+        catch (e) {
+            if (!(e instanceof TestFileError)) throw e;
+            results.push({ file: name, passed: false, differences: [e.message] });
+            continue;
+        }
+        const { actual, ...outcome } = await runTest(loaded.playable, expected);
+        const result: TestFileResult = { file: name, ...outcome };
+        if (!outcome.passed && argv.update) {
+            if (actual) {
+                fs.writeFileSync(file, formatTest(actual));
+                result.updated = true;
+            }
+            else {
+                result.notUpdated = "play didn't get to the end without errors, so the story or the test needs fixing first.";
+            }
+        }
+        results.push(result);
+    }
+
+    const success = results.every(r => r.passed || r.updated);
+    const notes = loaded.playable.scripts.length
+        ? [`The story's script files (${loaded.playable.scripts.join(", ")}) aren't run when testing from the command line.`]
+        : [];
+    if (argv.json) console.log(JSON.stringify({ success, tests: results, notes }, null, 2));
+    else console.log(formatTestResults(results, notes));
+    return success;
 }
 
 // The way to each problem --random found that takes too many links to give on the command line,

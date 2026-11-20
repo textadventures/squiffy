@@ -165,9 +165,68 @@ Dead end in section "Ending" (20 times): There are no links to click, and the se
 
 Use the same `--seed` to play the same way again.
 
+## Testing a story
+
+A playthrough test is a way through your story that you've recorded, to play again after you've changed the story, to check it still goes the same way. Tests run from the command line, so they can run in a CI workflow too, such as GitHub Actions, every time you push a change.
+
+### Recording a test
+
+Add `--record` to `--play`, with the file to record the test to:
+
+```bash
+npx @textadventures/squiffy-cli --play --input name=Sam --choose "Go inside" --choose "Buy a coffee" --record tests/coffee.squiffy-test
+```
+
+Squiffy plays the story as usual, and writes down the links clicked, and after each one, the sections and passages it went to, and the [attributes](/attributes/) it changed. It also writes down the seed, any `--input` and any `--start`, so the test plays the story the same way every time, including anything random. Give a `--seed` to choose the seed, or Squiffy picks one. A test isn't recorded if play stops early, such as at a link that isn't there, or the story has an error.
+
+The test is a text file, which you can read, and change by hand:
+
+```text
+# A playthrough of the story, recorded with --play --record.
+# Run it with --test, or record it again with --test --update.
+seed 150030
+input name=Sam
+
+went "intro"
+
+> Go inside
+went "shop"
+set gold = 10
+
+> Buy a coffee
+went "shop" "Buy a coffee"
+set gold = 7
+set coffee = true
+```
+
+A `> ` line is a link to click. `went` is a section the story went to, or a section and a passage. `set` is an attribute that changed, with its new value, and `unset` is one that was removed. The lines before the first `> ` are for the start of the story. The `turns`, `previous` and `previous_section` attributes, which change with every link clicked, are left out.
+
+### Running the tests
+
+Use `--test` to run every `.squiffy-test` file in the story's folder, and the folders in it, apart from the `build` folder:
+
+```bash
+npx @textadventures/squiffy-cli --test
+```
+
+Add a file or folder to run just those tests: `--test tests/coffee.squiffy-test`. For each test that fails, Squiffy says where the story went differently, which is often enough to see what changed:
+
+```text
+PASS tests/coffee.squiffy-test
+FAIL tests/tea.squiffy-test
+  At step 3 (> Buy a tea):
+    gold was set to 6, but expected set to 7.
+
+2 tests: 1 passed, 1 failed.
+```
+
+A test fails if a link it clicks isn't there any more, the story goes to a different section or passage, an attribute is set to something different, or there's an error. Squiffy finishes with an exit code of 1 if any test fails.
+
+If you changed the story on purpose, add `--update` to record the tests that fail again, as the story plays now. A test that stops at a link that isn't there any more, or has an error, can't be recorded again: change the link in the test file, or record it again with `--play --record`.
+
 ### For AI agents
 
-These options let an AI agent, such as Claude Code, check a story it's helping you write, and play through it, without a browser. Add `--json` to `--check`, `--play` or `--random` to print the result as JSON, for the agent, or any other program, to read. See [Writing with an AI agent](/writing-with-ai/), which also covers the Squiffy plugin for Claude Code.
+These options let an AI agent, such as Claude Code, check a story it's helping you write, and play through it, without a browser. Add `--json` to `--check`, `--play`, `--random` or `--test` to print the result as JSON, for the agent, or any other program, to read. See [Writing with an AI agent](/writing-with-ai/), which also covers the Squiffy plugin for Claude Code.
 
 To learn how to write a Squiffy story, an agent can read these docs as Markdown: [llms.txt](/llms.txt) introduces Squiffy and these options, [llms-full.txt](/llms-full.txt) has every page in one file, and [llms-small.txt](/llms-small.txt) leaves out the editor's pages and the long examples.
 

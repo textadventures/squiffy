@@ -473,6 +473,9 @@ export interface PlayStep {
     // Some text was still being shown again and again by an {{#every}} (#451) when play stopped
     // waiting for it
     repeating?: boolean;
+    // The story's attributes after this step, with stepAttributes, apart from internal ones
+    // starting with "_"
+    attributes?: Record<string, unknown>;
 }
 
 export interface PlayOptions {
@@ -486,6 +489,8 @@ export interface PlayOptions {
     save?: SavedGame;
     // Makes the story's randomness the same every time
     seed?: number;
+    // Gives each step the story's attributes after it, for playthrough tests (--record, --test)
+    stepAttributes?: boolean;
 }
 
 export interface PlayResult {
@@ -727,6 +732,12 @@ export async function playStory(playable: PlayableStory, options: PlayOptions = 
         session = await Session.create(playable, env);
         const s = session;
         const steps: PlayStep[] = [];
+        // Attributes are taken once a step has finished. Text boxes are filled in just before
+        // the next link is clicked, so what they set is in the next step.
+        const push = (step: PlayStep) => {
+            if (options.stepAttributes) step.attributes = structuredClone(s.attributes());
+            steps.push(step);
+        };
         let stopped: string | undefined;
         const inputs = options.inputs ?? {};
 
@@ -735,7 +746,7 @@ export async function playStory(playable: PlayableStory, options: PlayOptions = 
             await env.settle(s.api.begin());
         }
         else if (options.start !== undefined) {
-            steps.push(await s.step(undefined, () => s.api.begin({ section: options.start! })));
+            push(await s.step(undefined, () => s.api.begin({ section: options.start! })));
         }
         else if (options.save) {
             const loaded = await s.api.loadSave(options.save);
@@ -747,14 +758,14 @@ export async function playStory(playable: PlayableStory, options: PlayOptions = 
             else {
                 await s.settle();
                 const errors = env.takeMessages();
-                steps.push({
+                push({
                     went: [{ section: s.api.get("_section") }], cleared: false, text: s.currentText(),
                     errors: errors.errors, console: errors.console,
                 });
             }
         }
         else {
-            steps.push(await s.step(undefined, () => s.api.begin()));
+            push(await s.step(undefined, () => s.api.begin()));
         }
 
         for (const choice of stopped ? [] : options.choose ?? []) {
@@ -773,7 +784,7 @@ export async function playStory(playable: PlayableStory, options: PlayOptions = 
                 break;
             }
             const text = linkText(link);
-            steps.push(await s.step(text, () => s.click(link), link));
+            push(await s.step(text, () => s.click(link), link));
         }
         s.fillInputs(inputs);
         await s.settle();
