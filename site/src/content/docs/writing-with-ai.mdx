@@ -1,0 +1,62 @@
+---
+title: Writing with an AI agent
+description: Using Claude Code, or another AI agent, to help write, check and play a Squiffy story
+sidebar:
+    label: Writing with an AI agent
+---
+
+import { Aside } from "@astrojs/starlight/components";
+
+An AI agent, such as [Claude Code](https://claude.com/claude-code), can help you write a Squiffy story: drafting sections, adding choices, tracking down a broken link, or playing through the story to see whether it works. Squiffy gives it two things to work with:
+
+- A **Squiffy plugin for Claude Code**, which teaches Claude how to write Squiffy, and how to check its work.
+- The [command-line tool](/cli/), which lets an agent check a story for problems and play it, without a browser.
+
+## The Squiffy plugin for Claude Code
+
+The plugin adds a Squiffy skill to Claude Code. Whenever you ask Claude to work on a `.squiffy` file, or on a folder with a `squiffy.json`, it loads the skill, which tells it:
+
+- Squiffy's syntax: sections, passages, links, attributes, `{{...}}` text, `@end` and the rest, with a reference for every helper.
+- To read your `squiffy.json` first, because a story with one [sets attributes](/attributes/#setting-attributes) with Squiffy 7's rules, and a story without one uses [Squiffy 6's](/coming-from-squiffy-6/).
+- To check and play the story with the command-line tool after each change, as described [below](#how-an-agent-checks-its-work).
+
+The skill only loads when you're working on a Squiffy story, so it doesn't get in the way of anything else. It comes from Squiffy's GitHub repository, so it's kept up to date as Squiffy changes.
+
+### Installing it
+
+In Claude Code, add Squiffy's plugin marketplace, then install the plugin:
+
+```text
+/plugin marketplace add textadventures/squiffy
+/plugin install squiffy@squiffy
+```
+
+You only need to do this once: the plugin is then there in every folder you work in. To get the latest version, run `/plugin marketplace update squiffy`.
+
+You'll also need [Node.js](https://nodejs.org/), so that Claude can run the command-line tool with `npx`.
+
+### Using it
+
+Open Claude Code in your story's folder, and ask for what you want:
+
+- "Add a section where the player meets a guard, who lets them past if they have the key."
+- "Why can't I get to the cellar?"
+- "Play through the story and tell me if anything's confusing."
+- "Find any dead ends, and suggest how to fix them."
+
+Claude reads your story, makes its changes, checks them, and plays the parts it changed. Keep your story in version control, such as Git, or keep a copy, so you can see what it changed and undo anything you don't want.
+
+<Aside>
+The plugin is for Claude Code. Other agents can use the command-line tool in the same way: point them at this page and the [command-line docs](/cli/).
+</Aside>
+
+## How an agent checks its work
+
+The plugin tells Claude to use these command-line options. Any agent can use them, and so can you.
+
+1. **Check the story** with `--check --json`, which lists every problem, with its file and line: errors, broken links, sections that can't be reached, and dead ends. See [Checking a story](/cli/#checking-a-story).
+2. **Play the story** a link at a time, with `--play --save game.json`, adding `--choose` with the link to click each time, reading what happens before deciding what to click next. See [Playing a few links at a time](/cli/#playing-a-few-links-at-a-time).
+3. **Play at random** with `--random`, to find errors and dead ends in places it wouldn't have gone itself, and the sections it never got to. Each problem comes with the options that play the story to it again. See [Playing at random](/cli/#playing-at-random).
+4. **Build the story**, when you ask it to, with no options.
+
+`--json` prints the results of `--check`, `--play` and `--random` as JSON, for an agent, or any other program, to read.

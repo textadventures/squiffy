@@ -1,0 +1,17 @@
+{
+  "name": "squiffy",
+  "description": "Plugins for writing Squiffy interactive stories",
+  "owner": {
+    "name": "Squiffy",
+    "url": "https://squiffystory.com"
+  },
+  "plugins": [
+    {
+      "name": "squiffy",
+      "source": "./plugins/squiffy",
+      "description": "Helps Claude write, check and play Squiffy stories (.squiffy files) with the Squiffy command-line tool",
+      "category": "development",
+      "tags": ["squiffy", "interactive-fiction", "writing", "games"]
+    }
+  ]
+}
