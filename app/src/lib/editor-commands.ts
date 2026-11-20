@@ -66,3 +66,28 @@ export function userSnippets(symbols: DocumentSymbol[], text: string): Snippet[]
         content: lines.slice(s.range.start.line + 1, s.range.end.line + 1).join("\n").replace(/\s+$/, ""),
     }));
 }
+
+// Cut, copy and paste for the editor's right-click menu, which replaces the browser's own. The
+// browser may refuse to read the clipboard (Firefox only allows it from its own Paste item), so
+// paste returns false then, for the author to be told to press Ctrl/Cmd+V.
+export function selectedText(state: EditorState): string {
+    return state.selection.ranges.filter(r => !r.empty).map(r => state.sliceDoc(r.from, r.to)).join(state.lineBreak);
+}
+
+export async function clipboardCommand(view: EditorView, command: "cut" | "copy" | "paste"): Promise<boolean> {
+    view.focus();
+    try {
+        if (command === "paste") {
+            const text = await navigator.clipboard.readText();
+            view.dispatch(view.state.replaceSelection(text), { userEvent: "input.paste", scrollIntoView: true });
+            return true;
+        }
+        const text = selectedText(view.state);
+        if (!text) return true;
+        await navigator.clipboard.writeText(text);
+        if (command === "cut") view.dispatch(view.state.replaceSelection(""), { userEvent: "delete.cut", scrollIntoView: true });
+        return true;
+    } catch {
+        return false;
+    }
+}

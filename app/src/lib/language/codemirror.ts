@@ -5,8 +5,9 @@
 //   - hover previews of the section or passage a link goes to
 //   - go to definition (F12, or Ctrl/Cmd+click), find references (Shift+F12) and rename (F2)
 // Things that need the app's UI (moving to another file, showing references, asking for a name)
-// go through the callbacks in LanguageFeatureOptions.
-import { StateEffect, StateField, Text, type EditorState, type Extension } from "@codemirror/state";
+// go through the callbacks in LanguageFeatureOptions. The editor's right-click menu runs the same
+// commands, which it finds in the languageCommands facet.
+import { Facet, StateEffect, StateField, Text, type EditorState, type Extension } from "@codemirror/state";
 import { EditorView, hoverTooltip, keymap, type Command } from "@codemirror/view";
 import { foldService } from "@codemirror/language";
 import type { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
@@ -17,6 +18,7 @@ import type {
 import { squiffyLanguage } from "@textadventures/squiffy-codemirror";
 import { refreshFolding } from "../codemirror-folding.js";
 import { diagnosticKey, fixesByDiagnostic } from "../problems.js";
+import { isMac } from "../shortcuts.js";
 import type { LanguageClient } from "./client.js";
 
 const DELAY_MS = 300;
@@ -62,6 +64,19 @@ export interface LanguageFeatureOptions {
     // Tell the author something, e.g. why a rename isn't possible
     notify(message: string): void;
 }
+
+// The commands for the section or passage at the cursor, for the right-click menu
+export interface LanguageCommands {
+    definition: Command;
+    references: Command;
+    rename: Command;
+    // Whether there's a section or passage at an offset, for these commands to act on
+    hasDefinition(view: EditorView, offset: number): Promise<boolean>;
+}
+
+export const languageCommands = Facet.define<LanguageCommands, LanguageCommands | undefined>({
+    combine: values => values[0],
+});
 
 const COMPLETION_TYPES: Record<CompletionItem["kind"], string> = {
     section: "class",
@@ -217,6 +232,12 @@ export function languageFeatures(options: LanguageFeatureOptions): Extension[] {
         return true;
     };
 
+    async function hasDefinition(view: EditorView, offset: number) {
+        const doc = view.state.doc;
+        await sync(doc);
+        return (await client.call("getDefinition", path, toPosition(doc, offset))) !== undefined;
+    }
+
     async function complete(context: CompletionContext): Promise<CompletionResult | null> {
         const doc = context.state.doc;
         await sync(doc);
@@ -303,6 +324,7 @@ export function languageFeatures(options: LanguageFeatureOptions): Extension[] {
             };
         }),
         hoverTheme,
+        languageCommands.of({ definition: definitionCommand, references: referencesCommand, rename: renameCommand, hasDefinition }),
         keymap.of([
             { key: "F12", run: definitionCommand, preventDefault: true },
             { key: "Shift-F12", run: referencesCommand, preventDefault: true },
@@ -310,7 +332,8 @@ export function languageFeatures(options: LanguageFeatureOptions): Extension[] {
         ]),
         EditorView.domEventHandlers({
             mousedown(event, view) {
-                if (!(event.metaKey || event.ctrlKey) || event.button !== 0) return false;
+                // Cmd on a Mac, where Ctrl+click is a right-click
+                if (!(isMac ? event.metaKey : event.ctrlKey) || event.button !== 0) return false;
                 const offset = view.posAtCoords({ x: event.clientX, y: event.clientY });
                 if (offset === null) return false;
                 event.preventDefault();

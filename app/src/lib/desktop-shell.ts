@@ -9,6 +9,7 @@ import {
     type PickedFolder,
 } from "./project.svelte.js";
 import { settings } from "./settings.svelte.js";
+import { shortcutsDialog } from "./shortcuts-dialog.svelte.js";
 import { watchForDesktopUpdates } from "./desktop-updates.svelte.js";
 import { showToast } from "./toast.js";
 import { EditorView } from "@codemirror/view";
@@ -68,6 +69,9 @@ async function handleAction(action: MenuAction) {
             return goto(`${base}/`);
         case "settings":
             settings.open = true;
+            return;
+        case "keyboard-shortcuts":
+            shortcutsDialog.open = true;
             return;
     }
 }

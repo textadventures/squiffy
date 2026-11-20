@@ -8,6 +8,8 @@
     import { base } from "#lib/base-path.js";
     import { project, closeProject, downloadFile } from "#lib/project.svelte.js";
     import { settings } from "#lib/settings.svelte.js";
+    import { shortcutsDialog } from "#lib/shortcuts-dialog.svelte.js";
+    import { isMac } from "#lib/shortcuts.js";
     import { builtInSnippets, type Snippet } from "#lib/snippets.js";
     import type { EditorCommand } from "#lib/editor-commands.js";
     import { isNarrow } from "#lib/layout.svelte.js";
@@ -45,6 +47,7 @@
     import FoldVertical from "@lucide/svelte/icons/fold-vertical";
     import UnfoldVertical from "@lucide/svelte/icons/unfold-vertical";
     import Info from "@lucide/svelte/icons/info";
+    import Keyboard from "@lucide/svelte/icons/keyboard";
     import ExternalLink from "@lucide/svelte/icons/external-link";
     import Library from "@lucide/svelte/icons/library";
     import Gamepad2 from "@lucide/svelte/icons/gamepad-2";
@@ -90,7 +93,6 @@
 
     let { outlineOpen = false, ontoggleoutline, mapOpen = false, ontogglemap, problemCounts = { error: 0, warning: 0, hint: 0 }, problemsOpen = false, ontoggleproblems, onrun, onassets, onfonts, ondownloadproject, onexport, oncommand, onadd, onsnippet, snippets = [], onabout, onplaytab }: Props = $props();
 
-    const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform);
     const mod = isMac ? "⌘" : "Ctrl+";
 
     let runMenuItems = $derived<DropdownMenuItem[]>([
@@ -158,6 +160,7 @@
         ];
         const help: DropdownMenuItem[] = [
             { label: "Documentation", action: () => openLink(`${DOCS_URL}/getting-started/`), icon: BookOpen, divider: true, heading: "Help" },
+            { label: "Keyboard shortcuts", action: () => { shortcutsDialog.open = true; }, icon: Keyboard },
             { label: "Examples", action: () => openLink(`${DOCS_URL}/featured-examples/`), icon: Library },
             { label: "Squiffy games", action: () => openLink(GAMES_URL), icon: Gamepad2 },
             { label: "Report an issue", action: () => openLink(ISSUES_URL), icon: Bug },

@@ -31,6 +31,8 @@ npm test
 | Go to definition | F12, or Ctrl/Cmd+click |
 | Find references | Shift+F12, in a panel under the editor |
 | Rename | F2, across every link to the section or passage |
+| Right-click menu | Go to definition, Find references and Rename, then cut, copy, paste and Find (`src/components/ContextMenu.svelte`, from the `languageCommands` facet). Shift+right-click, and a long press on a touchscreen, get the browser's menu |
+| Keyboard shortcuts | A dialog from the ⋯ menu and the desktop app's Help menu, listing the editor's shortcuts and the most useful of CodeMirror's (`src/lib/shortcuts.ts`, whose test checks CodeMirror still binds them) |
 | Folding | Sections and passages |
 | Go to section or passage | Ctrl/Cmd+Shift+O, the outline's search box (which filters the map too) |
 | Story map | Sections, passages and links, drawn from the story as it's typed. Click to go to code; drag to link or add sections |

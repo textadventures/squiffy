@@ -53,10 +53,25 @@ The editor understands your story as you write:
 - It warns about a section the player can't reach, because nothing that can be reached from the start of the story links to it (a section that's only shown inside others, with `{{embed}}` or `{{live ... section=...}}`, is fine), and about a "dead end": a section with no links to another section. If a dead end is one of your story's endings, the quick fix marks it with [`@end`](/basic-concepts/#endings).
 - As you type a link, it suggests the names of your sections and passages.
 - Hover over a link to see the start of the section or passage it goes to.
-- Press F12, or Ctrl+click (Cmd+click on Mac), on a link to go to the section or passage. Shift+F12 lists every link to it.
-- Press F2 on a section or passage name, or a link to one, to rename it everywhere.
+- Right-click a link, or a section or passage name, to go to it (**Go to definition**), list every link to it (**Find references**), or rename it everywhere (**Rename**). Or put the cursor on it and press F12, Shift+F12 or F2. Ctrl+click (Cmd+click on Mac) on a link also goes to it.
+
+To get your browser's own menu instead, hold Shift as you right-click.
 
 The ⋯ menu has **Find and replace**, and **Collapse all** and **Expand all**, which fold every section and passage so you can see the shape of your story. Undo and Redo are in the toolbar.
+
+### Keyboard shortcuts
+
+**Keyboard shortcuts**, in the ⋯ menu (or the Help menu in the desktop app), lists them all. Some that are easy to miss (use Cmd instead of Ctrl on a Mac):
+
+| Shortcut | What it does |
+|---|---|
+| Ctrl+D | Select the next match of the selected text, as another cursor, to change them all at once |
+| Ctrl+Shift+L | Select every match of the selected text |
+| Alt+↑ / Alt+↓ | Move the line up or down |
+| Shift+Alt+↑ / Shift+Alt+↓ | Copy the line up or down |
+| Ctrl+Shift+K | Delete the line |
+| Ctrl+Alt+G | Go to a line |
+| F8 | Go to the next problem in the file |
 
 ## The story map
 
