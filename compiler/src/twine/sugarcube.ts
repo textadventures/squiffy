@@ -9,8 +9,8 @@ import { delayValue, display, isDynamicTarget, isListCall, lengthOf, member as m
 import type { BinaryOp, Expr } from "./expression.js";
 import { audioHelper, leadingAudio, pickSource, STOP_ALL_AUDIO } from "./audio.js";
 import type { AudioAction, StoryAudio } from "./audio.js";
-import { dynamicSectionLink, escapeText, isUrl, urlLink, passageLink, sectionLink, setter } from "./convert.js";
-import type { ConvertedPassage, PassageContext } from "./convert.js";
+import { dynamicSectionLink, escapeText, isUrl, urlLink, passageLink, sectionLink, setter, passageHtmlBlock, readHtmlBlock, topScripts } from "./convert.js";
+import type { ConvertedPassage, HtmlBlock, PassageContext } from "./convert.js";
 
 interface Macro {
     t: "macro";
@@ -36,7 +36,8 @@ type Node =
     | { t: "link", raw: string, text: string, target: string, setter?: string }
     | { t: "image", raw: string, src: string, title?: string, link?: string }
     | { t: "var", raw: string }
-    | { t: "comment", text: string, reason: string };
+    | { t: "comment", text: string, reason: string }
+    | HtmlBlock;
 
 const containers = new Set([
     "if", "for", "switch", "link", "button", "linkreplace", "linkappend", "linkprepend", "nobr", "silently", "capture",
@@ -157,14 +158,11 @@ class Parser {
                     continue;
                 }
             }
-            const scriptMatch = /^<(script|style)\b/i.exec(rest);
-            if (scriptMatch) {
-                const closeTag = `</${scriptMatch[1].toLowerCase()}>`;
-                const end = src.toLowerCase().indexOf(closeTag, i);
-                const stop = end == -1 ? src.length : end + closeTag.length;
+            const html = readHtmlBlock(src, i);
+            if (html) {
                 flush();
-                nodes.push({ t: "comment", text: src.substring(i, stop), reason: `A <${scriptMatch[1]}> in a passage isn't run by Squiffy. Move it to the story's JavaScript or CSS file.` });
-                i = stop;
+                nodes.push(html.block);
+                i = html.end;
                 continue;
             }
             const image = /^\[[<>]?img\[(?:([^|\]]*)\|)?([^\]]*)\](?:\[([^\]]*)\])?\]/i.exec(rest);
@@ -949,6 +947,7 @@ class Writer {
 
     passage(nodes: Node[], nobr: boolean): ConvertedPassage {
         const state: EmitState = { leading: true, directives: [], nobr };
+        nodes = topScripts(this.ctx, nodes, state.directives);
         let body = this.nodes(nodes, state);
         for (const tag of [...this.open].reverse()) body += `</${tag}>`;
         body = body.replace(/\uE000label ([\w-]+)\uE001/g, "{{#label \"$1\"}}").replace(/\uE000\/label\uE001/g, "{{/label}}");
@@ -974,6 +973,8 @@ class Writer {
                 return node.s;
             case "comment":
                 return this.ctx.unconvertible(node.text, node.reason);
+            case "html":
+                return passageHtmlBlock(this.ctx, node, false).text;
             case "var":
                 state.leading = false;
                 try {
@@ -1442,9 +1443,10 @@ class Writer {
                 state.leading = false;
                 if (/<<\s*(?:break|continue)\s*>>/.test(m.raw)) throw new Unconvertible("<<break>> and <<continue>>");
                 const loop = this.forLoop(m.args);
-                const numbers = loop.collection.k == "call" && loop.collection.fn == "range";
+                const numbers = loop.numbers || (loop.collection.k == "call" && loop.collection.fn == "range");
                 const body = this.ctx.story.inLoop(loop.vars, loop.array, () => this.body(m, state), numbers);
-                return `{{#each ${print(loop.collection)}}}${body}{{/each}}`;
+                const collection = print(loop.collection);
+                return `{{#each ${loop.collection.k == "cond" ? `(${collection})` : collection}}}${body}{{/each}}`;
             }
             case "widget":
                 return "";
@@ -1513,13 +1515,25 @@ class Writer {
     // What a <<for>> goes through, as {{#each}} does, and the variables (with their $ or _) that
     // stand for its item and position. It can go through an array with range, or by position:
     // <<for _i to 0; _i lt $list.length; _i++>>. Either way, $list[_i] is the item.
-    private forLoop(args: string): { collection: Expr, vars: Map<string, "item" | "index">, array?: string } {
+    private forLoop(args: string): { collection: Expr, vars: Map<string, "item" | "index">, array?: string, numbers?: boolean } {
         const range = /^\s*([$_][A-Za-z_]\w*)\s*(?:,\s*([$_][A-Za-z_]\w*)\s*)?\brange\b([\s\S]+)$/.exec(args);
         if (range) {
             const vars = new Map<string, "item" | "index">(range[2] ? [[range[1], "index"], [range[2], "item"]] : [[range[1], "item"]]);
             const collection = this.expr.parse(range[3]);
+            // A number, <<for _i range 5>>, goes through 0 to 4, with the same number as the item
+            // and its position. A calculation must be a number, but an attribute could be a list.
+            if (collection.k == "num" || collection.k == "neg" || (collection.k == "bin" && "+-*/%".includes(collection.op))) {
+                const zero: Expr = { k: "num", v: 0 };
+                const last: Expr = collection.k == "num" ? { k: "num", v: collection.v - 1 } : { k: "bin", op: "-", l: collection, r: { k: "num", v: 1 } };
+                const numbers: Expr = { k: "call", fn: "range", args: [zero, last] };
+                // (range 0 -1) would count down, so there's nothing to go through unless it's above 0
+                const counted: Expr = collection.k == "num"
+                    ? (collection.v > 0 ? numbers : { k: "array", items: [] })
+                    : { k: "cond", test: { k: "bin", op: ">", l: collection, r: zero }, then: numbers, otherwise: { k: "array", items: [] } };
+                return { collection: counted, vars: new Map([...vars.keys()].map(v => [v, "item"])), numbers: true };
+            }
             if (collection.k != "var" && collection.k != "array" && !(collection.k == "loop" && collection.kind == "item") && !isListCall(collection)) {
-                throw new Unconvertible("<<for>> with range over something other than an array");
+                throw new Unconvertible("<<for>> with range over something other than an array or a number");
             }
             // With a position as well, $list[_i] is the item too
             return { collection, vars, array: collection.k == "var" ? collection.name : undefined };
