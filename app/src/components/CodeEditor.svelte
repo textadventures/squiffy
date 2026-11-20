@@ -115,16 +115,23 @@
         });
     });
 
-    // Replaces the text only when the prop differs from what the editor shows (e.g. a file
-    // reloaded from disk), so it doesn't fight typing. Not undoable: it's a reload, not an edit.
+    // Changes the text only when the prop differs from what the editor shows (e.g. a file changed
+    // outside the editor and reloaded), so it doesn't fight typing. Only the part that differs is
+    // replaced, so the cursor and folds elsewhere stay put, and it's one step to undo, as in VS
+    // Code, in case it's a change the author didn't want.
     $effect(() => {
         if (!view) return;
-        if (value !== view.state.doc.toString()) {
-            view.dispatch({
-                changes: { from: 0, to: view.state.doc.length, insert: value },
-                annotations: Transaction.addToHistory.of(false),
-            });
-        }
+        const current = view.state.doc.toString();
+        if (value === current) return;
+        let start = 0;
+        const max = Math.min(value.length, current.length);
+        while (start < max && value.charCodeAt(start) === current.charCodeAt(start)) start++;
+        let end = 0;
+        while (end < max - start && value.charCodeAt(value.length - 1 - end) === current.charCodeAt(current.length - 1 - end)) end++;
+        view.dispatch({
+            changes: { from: start, to: current.length - end, insert: value.slice(start, value.length - end) },
+            annotations: Transaction.userEvent.of("reload"),
+        });
     });
 </script>
 

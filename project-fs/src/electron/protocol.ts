@@ -57,5 +57,19 @@ export type Reply<T> = { ok: true; value: T } | { ok: false; code: ProjectFsErro
 
 export function unwrap<T>(reply: Reply<T>): T {
     if (reply.ok) return reply.value;
-    throw new ProjectFsError(reply.code, reply.message);
+    throw new ProjectFsError(reply.code, `[project-fs:${reply.code}] ${reply.message}`);
+}
+
+const CODE_TAG = /\[project-fs:([A-Z_]+)\] /;
+
+/**
+ * The preload script's errors reach the page through contextBridge, which passes on only an
+ * error's message, not its class or code. So unwrap() puts the code in the message too, and the
+ * renderer calls this to turn it back into a ProjectFsError (with the tag taken out).
+ */
+export function fromBridgeError(err: unknown): unknown {
+    const message = err instanceof Error ? err.message : typeof err === "string" ? err : undefined;
+    const match = message === undefined ? null : CODE_TAG.exec(message);
+    if (!match || message === undefined) return err;
+    return new ProjectFsError(match[1] as ProjectFsErrorCode, message.slice(match.index + match[0].length));
 }

@@ -1,7 +1,14 @@
 import { blobUrl, ChangeEmitter } from "../base.js";
 import { parsePath } from "../paths.js";
 import type { FileChange, FileEntry, FileUrl, ProjectFileSystem } from "../types.js";
-import type { PickFileOptions, PickFolderOptions, ProjectFsBridge, RootInfo } from "./protocol.js";
+import { fromBridgeError, type PickFileOptions, type PickFolderOptions, type ProjectFsBridge, type RootInfo } from "./protocol.js";
+
+// Rebuilds the ProjectFsError a bridge call failed with, which contextBridge flattens to an Error
+function call<T>(promise: Promise<T>): Promise<T> {
+    return promise.catch((err: unknown) => {
+        throw fromBridgeError(err);
+    });
+}
 
 /**
  * The renderer half: a ProjectFileSystem that forwards to the main process through the preload
@@ -26,12 +33,12 @@ export class ElectronFileSystem implements ProjectFileSystem {
 
     async list(dir = ""): Promise<FileEntry[]> {
         parsePath(dir, true);
-        return this.bridge.list(this.rootId, dir);
+        return call(this.bridge.list(this.rootId, dir));
     }
 
     async read(path: string): Promise<Uint8Array> {
         parsePath(path);
-        return this.bridge.read(this.rootId, path);
+        return call(this.bridge.read(this.rootId, path));
     }
 
     async readText(path: string): Promise<string> {
@@ -40,17 +47,17 @@ export class ElectronFileSystem implements ProjectFileSystem {
 
     async write(path: string, data: Uint8Array | string): Promise<void> {
         parsePath(path);
-        return this.bridge.write(this.rootId, path, data);
+        return call(this.bridge.write(this.rootId, path, data));
     }
 
     async delete(path: string): Promise<void> {
         parsePath(path);
-        return this.bridge.delete(this.rootId, path);
+        return call(this.bridge.delete(this.rootId, path));
     }
 
     async exists(path: string): Promise<boolean> {
         parsePath(path);
-        return this.bridge.exists(this.rootId, path);
+        return call(this.bridge.exists(this.rootId, path));
     }
 
     async url(path: string): Promise<FileUrl> {
@@ -76,7 +83,7 @@ export class ElectronFileSystem implements ProjectFileSystem {
     release(): Promise<void> {
         this.unsubscribe?.();
         this.unsubscribe = null;
-        return this.bridge.release(this.rootId);
+        return call(this.bridge.release(this.rootId));
     }
 }
 
@@ -84,17 +91,17 @@ export class ElectronFileSystem implements ProjectFileSystem {
 export function electronOpener(bridge: ProjectFsBridge) {
     return {
         async openFolder(options?: PickFolderOptions): Promise<ElectronFileSystem | null> {
-            const info = await bridge.pickFolder(options);
+            const info = await call(bridge.pickFolder(options));
             return info && new ElectronFileSystem(bridge, info);
         },
         /** Unlike the browser, Electron can pick the main file directly; its folder is the root. */
         async openFile(options?: PickFileOptions): Promise<{ fs: ElectronFileSystem; mainFile: string } | null> {
-            const info = await bridge.pickFile(options);
+            const info = await call(bridge.pickFile(options));
             return info && { fs: new ElectronFileSystem(bridge, info), mainFile: info.mainFile };
         },
         /** Save As: pick or create a folder to become the new root, then copyProject() into it. */
         async pickNewRoot(options?: PickFolderOptions): Promise<ElectronFileSystem | null> {
-            const info = await bridge.pickNewFolder(options);
+            const info = await call(bridge.pickNewFolder(options));
             return info && new ElectronFileSystem(bridge, info);
         },
     };

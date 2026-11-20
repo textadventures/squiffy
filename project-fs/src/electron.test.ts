@@ -7,6 +7,7 @@ import { createProjectFsBridge, exposeProjectFs } from "./electron/preload.js";
 import type { ProjectFsBridge, Reply } from "./electron/protocol.js";
 import { ElectronFileSystem, electronOpener } from "./electron/renderer.js";
 import { NodeFileSystem } from "./node.js";
+import { ProjectFsError } from "./errors.js";
 import { runConformance } from "./test/conformance.js";
 import { FakeDialog, FakeIpcMain, FakeWindow } from "./test/fake-electron.js";
 
@@ -210,6 +211,27 @@ describe("Electron main-process handlers", () => {
     test("dispose removes every handler", () => {
         main.dispose();
         expect(env.ipcMain.handlers.size).toBe(0);
+    });
+
+    test("error codes survive contextBridge, which passes on only an error's message", async () => {
+        // Like contextBridge: a rejection reaches the page as a plain Error with the same message
+        const exposed: Record<string, unknown> = {};
+        const contextBridge = {
+            exposeInMainWorld(key: string, api: Record<string, unknown>) {
+                exposed[key] = Object.fromEntries(Object.entries(api).map(([name, fn]) => [name, (...args: unknown[]) => {
+                    const result = (fn as (...a: unknown[]) => unknown)(...args);
+                    return result instanceof Promise ? result.catch((err: Error) => { throw new Error(err.message); }) : result;
+                }]));
+            },
+        };
+        exposeProjectFs(contextBridge, env.win.ipcRenderer);
+        const bridge = exposed.projectFs as ProjectFsBridge;
+        env.dialog.queue.push(root);
+        const fs = (await electronOpener(bridge).openFolder())!;
+        const err = await fs.readText("missing.txt").catch((e: unknown) => e);
+        expect(err).toBeInstanceOf(ProjectFsError);
+        expect((err as ProjectFsError).code).toBe("NOT_FOUND");
+        expect((err as ProjectFsError).message).not.toContain("[project-fs:");
     });
 
     test("exposeProjectFs puts the bridge on the main world", () => {
