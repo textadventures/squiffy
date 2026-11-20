@@ -351,6 +351,12 @@ describe("Harlowe", () => {
             + "<select data-attribute=\"colour\"><option value=\"red\">red</option><option value=\"blue\">blue</option></select>");
     });
 
+    test("form controls bound to a value inside an object (#454)", async () => {
+        const { script, result } = await convert("Harlowe", ":: Start\n(set: $hero to (dm: \"name\", \"\"))(input-box: bind $hero's name) (dropdown: bind $hero's colour, \"red\")");
+        expect(section(script, "Start")).toContain("<input type=\"text\" data-attribute=\"hero.name\"> <select data-attribute=\"hero.colour\">");
+        expect(result.problems).toEqual([]);
+    });
+
     test("markup", async () => {
         const { script } = await convert("Harlowe", ":: Start\n''Bold'' //italic// **strong** *em* ~~struck~~ ^^up^^ http://example.com\n#Heading\n---\n=><=\nCentred\n{\nCollapsed\nlines\n}\n`(set: $x to 1)`");
         expect(section(script, "Start")).toBe(
@@ -589,6 +595,23 @@ Setting.addToggle("bad name", { label: "Bad" });`;
             + "{{set \"age\" 20}}<input type=\"number\" data-attribute=\"age\" value=\"20\"> "
             + "{{rotate (array \"small\" \"large\") set=\"size\"}} "
             + "<select data-attribute=\"colour\"><option value=\"red\">Red</option></select>");
+    });
+
+    test("a text box that goes to a passage when Enter is pressed (#454)", async () => {
+        const { script, result } = await convert("SugarCube", ":: Start\n<<textbox \"$name\" \"\" \"Greet\" autofocus>> <<numberbox \"$age\" 20 \"Greet\">> <<textarea \"$bio\" \"\" autofocus>>\n\n:: Greet\nHello, $name.");
+        expect(section(script, "Start")).toBe(
+            "{{set \"name\" \"\"}}<input type=\"text\" data-attribute=\"name\" value=\"\" data-section=\"Greet\"> "
+            + "{{set \"age\" 20}}<input type=\"number\" data-attribute=\"age\" value=\"20\" data-section=\"Greet\"> "
+            + "{{set \"bio\" \"\"}}<textarea data-attribute=\"bio\"></textarea>");
+        expect(result.problems).toEqual([]);
+    });
+
+    test("form controls bound to a value inside an object (#454)", async () => {
+        const { script, result } = await convert("SugarCube", ":: Start\n<<textbox \"$hero.name\" \"\">> <<textbox '$hero[\"title\"]' \"\">>");
+        expect(section(script, "Start")).toBe(
+            "{{set \"hero.name\" \"\"}}<input type=\"text\" data-attribute=\"hero.name\" value=\"\"> "
+            + "{{set \"hero.title\" \"\"}}<input type=\"text\" data-attribute=\"hero.title\" value=\"\">");
+        expect(result.problems).toEqual([]);
     });
 
     test("markup", async () => {

@@ -3353,6 +3353,139 @@ Level: <select data-attribute="level" required>
     expect(getSectionContent(element, "Continue")).toContain("Hero at level 1");
 });
 
+// Presses Enter in a text box, and waits for the story to go on
+const pressEnter = async (input: HTMLElement) => {
+    input.dispatchEvent(new window.KeyboardEvent("keypress", { key: "Enter", bubbles: true, cancelable: true }));
+    await new Promise(resolve => setTimeout(resolve, 0));
+};
+
+test("A text box with data-section goes to the section when Enter is pressed", async () => {
+    // https://github.com/textadventures/squiffy/issues/454
+    const script = `
+[[start]]:
+What's your name? <input type="text" data-attribute="name" data-section="greet">
+
+[[greet]]:
+Hello, {{name}}!
+`;
+    const { squiffyApi, element } = await initScript(script);
+    const input = element.querySelector("input") as HTMLInputElement;
+    input.value = "Ann";
+    await pressEnter(input);
+
+    expect(squiffyApi.get("_section")).toBe("greet");
+    expect(getSectionContent(element, "greet")).toContain("Hello, Ann!");
+    expect(squiffyApi.get("turns")).toBe(1);
+    expect(input.disabled).toBe(true);
+
+    squiffyApi.goBack();
+    expect(squiffyApi.get("_section")).toBe("start");
+    expect(squiffyApi.get("name")).toBe(null);
+    expect(input.disabled).toBe(false);
+});
+
+test("A text box with data-passage shows the passage when Enter is pressed, once", async () => {
+    // https://github.com/textadventures/squiffy/issues/454
+    const script = `
+[[start]]:
+What's your name? <input type="text" data-attribute="name" data-passage="greet">
+
+[greet]:
+Hello, {{name}}!
+`;
+    const { squiffyApi, element } = await initScript(script);
+    const input = element.querySelector("input") as HTMLInputElement;
+    input.value = "Ann";
+    await pressEnter(input);
+
+    expect(getPassageContent(element, "start", "greet")).toContain("Hello, Ann!");
+    expect(input.disabled).toBe(true);
+    await pressEnter(input);
+    expect(element.querySelectorAll(".squiffy-output-passage").length).toBe(1);
+
+    squiffyApi.goBack();
+    expect(element.querySelectorAll(".squiffy-output-passage").length).toBe(0);
+    expect(input.disabled).toBe(false);
+    expect(squiffyApi.get("name")).toBe(null);
+});
+
+test("A text box going to a @repeat passage can be used again", async () => {
+    // https://github.com/textadventures/squiffy/issues/454
+    const script = `
+[[start]]:
+Guess: <input type="text" data-attribute="guess" data-passage="check">
+
+[check]:
+@repeat
+You guessed {{guess}}.
+`;
+    const { element } = await initScript(script);
+    const input = element.querySelector("input") as HTMLInputElement;
+    input.value = "1";
+    await pressEnter(input);
+    input.value = "2";
+    await pressEnter(input);
+
+    expect(input.disabled).toBe(false);
+    expect(element.textContent).toContain("You guessed 1.");
+    expect(element.textContent).toContain("You guessed 2.");
+});
+
+test("Enter does nothing until the text boxes are filled in properly", async () => {
+    // https://github.com/textadventures/squiffy/issues/454
+    const script = `
+[[start]]:
+<input type="text" data-attribute="name" data-section="greet" required>
+
+[[greet]]:
+Hello, {{name}}!
+`;
+    const { squiffyApi, element } = await initScript(script);
+    const input = element.querySelector("input") as HTMLInputElement;
+    await pressEnter(input);
+    expect(squiffyApi.get("_section")).toBe("start");
+    expect(input.classList.contains("squiffy-invalid")).toBe(true);
+
+    input.value = "Ann";
+    await pressEnter(input);
+    expect(squiffyApi.get("_section")).toBe("greet");
+});
+
+test("Enter in a text box without data-section or data-passage does nothing", async () => {
+    const script = `
+[[start]]:
+<input type="text" data-attribute="name">
+
+[[greet]]:
+Hello.
+`;
+    const { squiffyApi, element } = await initScript(script);
+    await pressEnter(element.querySelector("input") as HTMLElement);
+    expect(squiffyApi.get("_section")).toBe("start");
+});
+
+test("A text box can set a value inside an object", async () => {
+    // https://github.com/textadventures/squiffy/issues/454
+    const script = `
+[[start]]:
+@set hero = { name: "", hp: 10 }
+<input type="text" data-attribute="hero.name" data-section="greet">
+
+[[greet]]:
+Hello, {{hero.name}}! You have {{hero.hp}} HP.
+`;
+    const { squiffyApi, element } = await initScript(script, true);
+    const input = element.querySelector("input") as HTMLInputElement;
+    input.value = "Ann";
+    await pressEnter(input);
+
+    expect(squiffyApi.get("hero")).toEqual({ name: "Ann", hp: 10 });
+    expect(getSectionContent(element, "greet")).toContain("Hello, Ann! You have 10 HP.");
+
+    squiffyApi.goBack();
+    expect(squiffyApi.get("hero")).toEqual({ name: "", hp: 10 });
+});
+
 // Array management helper tests
 
 test("{{append}} helper adds element to end of array", async () => {

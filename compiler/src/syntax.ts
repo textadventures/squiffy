@@ -274,10 +274,13 @@ export interface LinkNode {
     // "named": [[text]](target) or [text](target)
     // "unnamed": [[target]] or [target]
     // "next": [[text>]] or [[text]](>), linking to the next section in the story
-    form: "named" | "unnamed" | "next";
+    // "input": <input data-section="target"> or <input data-passage="target">, a text box that
+    // goes there when Enter is pressed (#454)
+    form: "named" | "unnamed" | "next" | "input";
     // The link text, for named and next links.
     text?: string;
     // The target as written, including any ", attribute=value" setters, e.g. "kitchen, seen=1".
+    // An input link's target has no setters.
     // For next links this is just the setters part (empty if there are none), since the
     // target section is only known when the story is analysed.
     target: string;

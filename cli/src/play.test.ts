@@ -121,6 +121,30 @@ Hello, {{name}}!`);
         expect(filled.steps[1].text).toBe("Hello, Robin!");
     });
 
+    test("presses Enter in a text box that goes somewhere (#454)", async () => {
+        const playable = await load(`What's your name? <input type="text" data-attribute="hero.name" data-section="greet" required>
+
+[[greet]]:
+Hello, {{hero.name}}! <input data-attribute="guess" data-passage="check">
+
+[check]:
+@repeat
+You guessed {{guess}}.`);
+
+        const empty = await playStory(playable);
+        expect(empty.steps[0].text).toBe("What's your name? [text box for hero.name, Enter to go on]");
+        expect(empty.choices).toEqual([{ number: 1, text: "Press Enter in the text box for hero.name", section: "greet", needsInput: true }]);
+        const stopped = await playStory(playable, { choose: ["1"] });
+        expect(stopped.stopped).toMatch(/can't be clicked until the text boxes are filled in/);
+
+        const result = await playStory(playable, { inputs: { "hero.name": "Robin", guess: "7" }, choose: ["1", "Press Enter in the text box for guess", "1"] });
+        expect(result.success).toBe(true);
+        expect(result.steps[1].text).toBe("Hello, Robin! [text box for guess, Enter to go on]");
+        expect(result.steps[2].text).toBe("You guessed 7.");
+        expect(result.steps[3].text).toBe("You guessed 7.");
+        expect(result.attributes).toMatchObject({ hero: { name: "Robin" }, guess: "7" });
+    });
+
     test("reports errors from the story, and links to sections that don't exist", async () => {
         const playable = await load(`[[Script]] [[Missing]]
 
@@ -300,6 +324,19 @@ Nothing links here.`;
         const playable = await load(`Name: <input type="text" data-attribute="name" required minlength="5">
 
 [[Start]]
+
+[[Start]]:
+@end
+Hello, {{name}}!`);
+
+        const result = await playRandom(playable, { runs: 2, steps: 10, seed: 1 });
+
+        expect(result.problems).toEqual([]);
+        expect(result.endings).toEqual({ Start: 2 });
+    });
+
+    test("presses Enter in text boxes that go somewhere (#454)", async () => {
+        const playable = await load(`Name: <input type="text" data-attribute="name" data-section="Start" required minlength="5">
 
 [[Start]]:
 @end

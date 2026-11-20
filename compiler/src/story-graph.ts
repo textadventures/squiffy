@@ -300,7 +300,7 @@ export function buildStoryGraph(source: GraphSource): StoryGraph {
         const dynamic = !to && link.target.includes("{{");
         if (dynamic) unknown.add(from);
         const resolvedName = target?.name;
-        const setters = link.form != "next" && link.target.trim() == resolvedName
+        const setters = link.form == "input" || (link.form != "next" && link.target.trim() == resolvedName)
             ? []
             : link.target.split(",").slice(1).map(s => s.trim()).filter(Boolean);
         const text = link.text ?? link.target.trim().split(",")[0].trim();

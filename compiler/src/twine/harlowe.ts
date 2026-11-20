@@ -5,7 +5,7 @@
 // {{set}}, (link:) and friends become links to generated passages and sections, and Harlowe's
 // markup becomes Markdown and HTML.
 
-import { conditional, delayValue, display, isBoolean, isListCall, lengthOf, member, print, randomInteger, targetName, skipBalanced, skipString, Tokens, Unconvertible, unescapeString } from "./expression.js";
+import { conditional, delayValue, display, isBoolean, isDynamicTarget, isListCall, lengthOf, member, print, randomInteger, targetName, skipBalanced, skipString, Tokens, Unconvertible, unescapeString } from "./expression.js";
 import type { BinaryOp, Expr } from "./expression.js";
 import { audioHelper, leadingAudio, pickSource, STOP_ALL_AUDIO } from "./audio.js";
 import type { AudioAction, StoryAudio } from "./audio.js";
@@ -1236,7 +1236,7 @@ class Writer {
             case "dropdown": {
                 state.leading = false;
                 const bound = this.bound(args[0] ?? "");
-                if (!bound) throw new Unconvertible("(dropdown:) without bind");
+                if (!bound) throw new Unconvertible("(dropdown:) without bind, or bound to something other than a variable or a value inside one");
                 const options = args.slice(1).map(a => this.expr.parse(a));
                 if (options.some(o => o.k != "str" && o.k != "num")) throw new Unconvertible("(dropdown:) with options that aren't fixed");
                 const html = options.map(o => {
@@ -1655,16 +1655,19 @@ class Writer {
         return `{{#replace "${label}"}}${content}{{/replace}}`;
     }
 
-    // The attribute for "bind $x", or null
+    // The attribute for "bind $x", or the value inside an object for "bind $hero's name" (#454),
+    // or null
     private bound(arg: string): string | null {
-        const match = /^2?bind\s+([$_])([A-Za-z]\w*)$/.exec(arg.trim());
+        const match = /^2?bind\s+([$_][\s\S]*)$/.exec(arg.trim());
         if (!match) return null;
-        return this.expr.attribute(match[2], match[1] == "_");
+        const e = this.expr.parse(match[1]);
+        if (e.k != "var" || isDynamicTarget(e.name)) return null;
+        return e.name;
     }
 
     private input(args: string[], raw: string): string {
         const bound = this.bound(args[0] ?? "");
-        if (!bound) throw new Unconvertible("an input box without bind");
+        if (!bound) throw new Unconvertible("an input box without bind, or bound to something other than a variable or a value inside one");
         let defaultText: string | null = null;
         let rows = 1;
         for (const a of args.slice(1)) {
