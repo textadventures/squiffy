@@ -4,6 +4,7 @@ description: How to change the colours, fonts and layout of an exported Squiffy 
 ---
 
 import {Aside} from "@astrojs/starlight/components";
+import Sample from "@components/Sample.astro";
 
 A Squiffy story is an ordinary web page, so you change how it looks with CSS. This page explains where Squiffy's styles come from, how to override them, and which rules control what.
 
@@ -214,11 +215,14 @@ To change the classes in the middle of a section, or to keep one from section to
 
 `@transition` sets how a section or passage appears, such as fading in or sliding up:
 
-```squiffy
-[[dream]]:
-@transition blur 2s
-Everything is hazy.
-```
+<Sample alwaysShowRestart={true} script="@transition blur 2s
+Everything is hazy. Somewhere, an alarm is ringing.
+
+[[Wake up]](awake)
+
+[[awake]]:
+@transition slide-up 1s
+You sit up in bed. It was only a dream."></Sample>
 
 | Transition | How the text appears |
 |---|---|
@@ -229,6 +233,54 @@ Everything is hazy.
 | `pulse` | Fades in and swells a little |
 | `rumble`, `shudder` | Fades in, shaking up and down, or from side to side |
 | `flicker` | Flickers on |
+
+Click each one to see it:
+
+<Sample alwaysShowRestart={true} script="[fade], [slide-up], [slide-down], [slide-left], [slide-right], [zoom], [blur], [pulse], [rumble], [shudder], [flicker]
+
+[fade]:
+@transition fade 1s
+Fading in.
+
+[slide-up]:
+@transition slide-up 1s
+Sliding up.
+
+[slide-down]:
+@transition slide-down 1s
+Sliding down.
+
+[slide-left]:
+@transition slide-left 1s
+Sliding left.
+
+[slide-right]:
+@transition slide-right 1s
+Sliding right.
+
+[zoom]:
+@transition zoom 1s
+Zooming in.
+
+[blur]:
+@transition blur 1s
+Coming into focus.
+
+[pulse]:
+@transition pulse 1s
+Pulsing.
+
+[rumble]:
+@transition rumble 1s
+Rumbling.
+
+[shudder]:
+@transition shudder 1s
+Shuddering.
+
+[flicker]:
+@transition flicker 1s
+Flickering on."></Sample>
 
 A time after the name, such as `2s` or `400ms`, says how long it takes. Without one, it takes half a second.
 
