@@ -1,5 +1,30 @@
 # Changelog
 
+## [7.0.0-beta.7](https://github.com/textadventures/squiffy/compare/v7.0.0-beta.6...v7.0.0-beta.7) (2026-11-20)
+
+
+### Features
+
+* --check, --play and --random in the CLI, for checking and playing stories without a browser ([#475](https://github.com/textadventures/squiffy/issues/475)) ([f9bfa37](https://github.com/textadventures/squiffy/commit/f9bfa373a5b1a824fa57d7bdf4a6b9ddcb4208ee))
+* [@class](https://github.com/class) and class helpers, so a scene can change how the page looks ([#473](https://github.com/textadventures/squiffy/issues/473)) ([ae46c35](https://github.com/textadventures/squiffy/commit/ae46c35234cf4f54905624e3bc152270ccfb22c0))
+* [@sound](https://github.com/sound) stop and {{stopsounds}}, to stop sounds playing once ([#471](https://github.com/textadventures/squiffy/issues/471)) ([0fb33ab](https://github.com/textadventures/squiffy/commit/0fb33abdb3ca5731d227c11980d2829fa429806f))
+* a Fonts dialog that copies web fonts into the story ([#464](https://github.com/textadventures/squiffy/issues/464)) ([df143ea](https://github.com/textadventures/squiffy/commit/df143ea4eb6ebe6fbff1a6bac0303d6f8f248536))
+* a Squiffy plugin for Claude Code, with a skill for writing, checking and playing stories ([#477](https://github.com/textadventures/squiffy/issues/477)) ([69fc6e3](https://github.com/textadventures/squiffy/commit/69fc6e3ba935c4b70c7b20c51230e402cbee8136))
+* array helpers for joining, sorting, slicing and counting ([#470](https://github.com/textadventures/squiffy/issues/470)) ([8c8226b](https://github.com/textadventures/squiffy/commit/8c8226becc56cf6595be0564629c02e3ef1270f6))
+* embed parameters and wrapped text, and the Twine importer converts widgets and macros ([#450](https://github.com/textadventures/squiffy/issues/450)) ([#474](https://github.com/textadventures/squiffy/issues/474)) ([fca5253](https://github.com/textadventures/squiffy/commit/fca5253091a81fc6a9ed071e49e91ce66f218667))
+* helpers for text, numbers and conditional values ([#467](https://github.com/textadventures/squiffy/issues/467)) ([8260ee1](https://github.com/textadventures/squiffy/commit/8260ee1dc5c86f69c2315be0710e4a27bccb6479))
+* music and sound, with [@music](https://github.com/music), [@sound](https://github.com/sound) and a mute button ([#468](https://github.com/textadventures/squiffy/issues/468)) ([249aa4c](https://github.com/textadventures/squiffy/commit/249aa4ce22721f60598c72c23ac467c8d9c100a5))
+* New story in the desktop app asks for a name and makes its folder ([#460](https://github.com/textadventures/squiffy/issues/460)) ([e9036db](https://github.com/textadventures/squiffy/commit/e9036db2f5de9e7e73914d928235f1f85c963f77))
+* objects, attributes that hold named values ([#465](https://github.com/textadventures/squiffy/issues/465)) ([2e50467](https://github.com/textadventures/squiffy/commit/2e504670e516fd8e7c9ca7b15c9729845f80ddd2))
+* Open file converts a Quest gamebook or Twine story in a zip ([#463](https://github.com/textadventures/squiffy/issues/463)) ([4d740ae](https://github.com/textadventures/squiffy/commit/4d740aee4e032139c4e32dcbe16628e15f9038ee))
+* passage links in a loop work on their own, and the Twine importer converts them ([#472](https://github.com/textadventures/squiffy/issues/472)) ([d013d27](https://github.com/textadventures/squiffy/commit/d013d27f6906b71601f0435b018879c00d24f845))
+* the Twine and Quest importers convert sound to [@music](https://github.com/music) and [@sound](https://github.com/sound) ([#469](https://github.com/textadventures/squiffy/issues/469)) ([ed926f0](https://github.com/textadventures/squiffy/commit/ed926f010f15c72b384f2c9b640f96d83b9f8c16))
+
+
+### Bug Fixes
+
+* Undo and Redo in the desktop app's Edit menu work in the editor ([#462](https://github.com/textadventures/squiffy/issues/462)) ([299a5f9](https://github.com/textadventures/squiffy/commit/299a5f9c9cfaa4baff87a55b4c98f8bc594a6d0f))
+
 ## [7.0.0-beta.6](https://github.com/textadventures/squiffy/compare/v7.0.0-beta.5...v7.0.0-beta.6) (2026-11-19)
 
 
