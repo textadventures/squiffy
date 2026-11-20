@@ -58,7 +58,7 @@ One per line, at the start of a section or passage, before its text. Those that 
 | `@repeat` | In a passage: its links can be clicked again. Such clicks don't count towards `@1`/`@last` |
 | `@end` | Marks the section as an ending (in a passage, marks its section). Doesn't change what the player sees |
 | `@class dark cave` | CSS classes on the story while this section is current (see styling.md) |
-| `@transition fade`, `@transition slide-up 1s` | How this section or passage appears (see styling.md) |
+| `@transition fade`, `@transition slide-up 1s` | How this section or passage appears (see dynamic-text.md) |
 | `@music theme.mp3`, `@music stop` | Play music (continues across sections), or stop it |
 | `@sound door.mp3`, `@sound stop` | Play a sound once, or stop sounds |
 | `@import chapter2.squiffy`, `@import *.squiffy` | Add another file (not needed with `squiffy.json`) |

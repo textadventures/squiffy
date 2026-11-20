@@ -47,7 +47,7 @@ body:has(.dark) {
 
 ## Transitions
 
-`@transition fade` makes a section or passage fade in as it appears, with an optional time: `@transition slide-up 1s` (default 0.5s). Built in: `fade` (or `dissolve`), `slide-up`, `slide-down`, `slide-left`, `slide-right`, `zoom`, `blur`, `pulse`, `rumble`, `shudder`, `flicker`. A passage uses its section's unless it has its own. In the master section it's for every section and passage; `@transition none` turns it off for one. They don't replay on Back or loading a save, and are plain fades under reduced motion. While playing, the element has classes `squiffy-transition` and the name, and `--squiffy-transition-time`, so CSS can add one: `.squiffy-transition.swirl { animation-name: swirl; }` with `@keyframes swirl { from { opacity: 0; transform: rotate(-10deg); } }`.
+While a `@transition` (dynamic-text.md) plays, the element has classes `squiffy-transition` and the name, and `--squiffy-transition-time`, so CSS can add one: `.squiffy-transition.swirl { animation-name: swirl; }` with `@keyframes swirl { from { opacity: 0; transform: rotate(-10deg); } }`.
 
 ## Styling some text
 

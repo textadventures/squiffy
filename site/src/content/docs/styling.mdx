@@ -4,7 +4,6 @@ description: How to change the colours, fonts and layout of an exported Squiffy 
 ---
 
 import {Aside} from "@astrojs/starlight/components";
-import Sample from "@components/Sample.astro";
 
 A Squiffy story is an ordinary web page, so you change how it looks with CSS. This page explains where Squiffy's styles come from, how to override them, and which rules control what.
 
@@ -213,82 +212,7 @@ To change the classes in the middle of a section, or to keep one from section to
 
 ### Transitions
 
-`@transition` sets how a section or passage appears, such as fading in or sliding up:
-
-<Sample alwaysShowRestart={true} script="@transition blur 2s
-Everything is hazy. Somewhere, an alarm is ringing.
-
-[[Wake up]](awake)
-
-[[awake]]:
-@transition slide-up 1s
-You sit up in bed. It was only a dream."></Sample>
-
-| Transition | How the text appears |
-|---|---|
-| `fade` | Fades in. `dissolve` is the same |
-| `slide-up`, `slide-down`, `slide-left`, `slide-right` | Fades in as it moves up, down, left or right into place |
-| `zoom` | Fades in as it grows to its full size |
-| `blur` | Comes into focus |
-| `pulse` | Fades in and swells a little |
-| `rumble`, `shudder` | Fades in, shaking up and down, or from side to side |
-| `flicker` | Flickers on |
-
-Click each one to see it:
-
-<Sample alwaysShowRestart={true} script="[fade], [slide-up], [slide-down], [slide-left], [slide-right], [zoom], [blur], [pulse], [rumble], [shudder], [flicker]
-
-[fade]:
-@transition fade 1s
-Fading in.
-
-[slide-up]:
-@transition slide-up 1s
-Sliding up.
-
-[slide-down]:
-@transition slide-down 1s
-Sliding down.
-
-[slide-left]:
-@transition slide-left 1s
-Sliding left.
-
-[slide-right]:
-@transition slide-right 1s
-Sliding right.
-
-[zoom]:
-@transition zoom 1s
-Zooming in.
-
-[blur]:
-@transition blur 1s
-Coming into focus.
-
-[pulse]:
-@transition pulse 1s
-Pulsing.
-
-[rumble]:
-@transition rumble 1s
-Rumbling.
-
-[shudder]:
-@transition shudder 1s
-Shuddering.
-
-[flicker]:
-@transition flicker 1s
-Flickering on."></Sample>
-
-A time after the name, such as `2s` or `400ms`, says how long it takes. Without one, it takes half a second.
-
-A passage appears the way its section does, unless it has a `@transition` of its own. `@transition` in the [master section](/basic-concepts/#master-sections-and-passages) is for every section and passage, and `@transition none` turns it off for one of them.
-
-Transitions only play when the text first appears: not when the player goes back, or loads a saved game. If the player has asked their system for less motion, every transition is a plain fade.
-
-While it plays, the section or passage has the classes `squiffy-transition` and the transition's name, and the time from `@transition` is in `--squiffy-transition-time`. So you can change one of Squiffy's, or add your own with a CSS animation, which starts from how the text first looks and ends with it as normal:
+While a [transition](/dynamic-text/#transitions) plays, the section or passage has the classes `squiffy-transition` and the transition's name, and the time from `@transition` is in `--squiffy-transition-time`. So you can change one of Squiffy's, or add your own with a CSS animation, which starts from how the text first looks and ends with it as normal:
 
 ```css
 .squiffy-transition.swirl {

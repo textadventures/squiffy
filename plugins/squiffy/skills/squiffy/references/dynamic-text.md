@@ -53,6 +53,10 @@ Times can be text in seconds (`start="1.5s"`) or expressions (`start=delay * 100
 
 To link to the next section from inside `{{#animate}}`, use `[[Begin>]]` and a `---` divider rather than `+++`, which would split the block. Don't overuse animations. Authors can add their own with `squiffy.registerAnimation` (javascript.md).
 
+## Transitions
+
+`@transition fade` makes a section or passage fade in as it appears, with an optional time: `@transition slide-up 1s` (default 0.5s). Built in: `fade` (or `dissolve`), `slide-up`, `slide-down`, `slide-left`, `slide-right`, `zoom`, `blur`, `pulse`, `rumble`, `shudder`, `flicker`. A passage uses its section's unless it has its own. In the master section it's for every section and passage; `@transition none` turns it off for one. They don't replay on Back or loading a save, and are plain fades under reduced motion. Custom ones: styling.md.
+
 ## Moving on after a delay
 
 ```squiffy
