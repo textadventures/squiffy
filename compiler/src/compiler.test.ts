@@ -805,3 +805,38 @@ That's everything.
     ]);
     expect(result.diagnostics.map(d => d.code)).toEqual(["squiffy/repeat-not-in-passage"]);
 });
+
+test("@music and @sound go in the output, and the files they and {{music}} and {{sound}} name are listed (#444)", async () => {
+    const script = `[[start]]:
+@music theme.mp3
+@sound bell.mp3
+Hello. {{sound "door.mp3"}} [knock]
+
+[knock]:
+@music stop
+@sound knock.mp3
+{{music 'other.ogg' fade=2}}Knock.
+
+[[quiet]]:
+Nothing to hear. {{sound}}`;
+    const result = await compile({ scriptBaseFilename: "test.squiffy", script });
+
+    assertSuccess(result);
+    const { sections, audio } = result.output.story;
+    expect(sections.start.music).toBe("theme.mp3");
+    expect(sections.start.sounds).toEqual(["bell.mp3"]);
+    expect(sections.start.passages!.knock.music).toBeNull();
+    expect(sections.start.passages!.knock.sounds).toEqual(["knock.mp3"]);
+    expect(sections.quiet).not.toHaveProperty("music");
+    expect(sections.quiet).not.toHaveProperty("sounds");
+    expect(audio).toEqual(["theme.mp3", "bell.mp3", "door.mp3", "knock.mp3", "other.ogg"]);
+    const js = await result.getJs();
+    expect(js).toContain("story.audio = [");
+    expect(js).toContain('"music": null');
+});
+
+test("A story with no sound has no audio list (#444)", async () => {
+    const result = await compile({ scriptBaseFilename: "test.squiffy", script: "Hello." });
+    assertSuccess(result);
+    expect(result.output.story).not.toHaveProperty("audio");
+});

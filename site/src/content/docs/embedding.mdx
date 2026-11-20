@@ -256,6 +256,24 @@ Returns a passage in the master section `[[]]` as HTML, with the attributes as t
 statusElement.innerHTML = squiffyApi.renderPassage('status');
 ```
 
+### isMuted() and setMuted(muted)
+
+Whether the story's [music and sounds](/images-and-files/#music-and-sound) are muted, for a mute button. With `persist` on, it's remembered for the story, and restarting doesn't change it.
+
+```javascript
+muteButton.addEventListener('click', () => {
+    squiffyApi.setMuted(!squiffyApi.isMuted());
+});
+```
+
+### usesSound()
+
+Returns whether the story plays music or sounds: it names a sound file, or has played one. The `sound` event says when something plays, for a mute button that only shows when it's needed.
+
+### dispose()
+
+Stops the story's music and sounds for good, for when you're replacing the story with another one.
+
 ## Panels
 
 The published page's [panels](/multiple-files/#panels) are part of the runtime too. `createPanels()` adds a button for each panel to the start of an element, such as your page's header, and puts side panels in an `<aside class="squiffy-panels-side">` at the end of another, which gets the class `squiffy-has-side`. They're rendered again whenever the story moves on:
@@ -350,6 +368,16 @@ Fired when `update()` changes the story, for example after an edit in the editor
 ```javascript
 squiffyApi.on('storyUpdated', () => {
     statusElement.innerHTML = squiffyApi.renderPassage('status');
+});
+```
+
+### sound
+
+Fired when music or a sound starts playing, even if it's muted:
+
+```javascript
+squiffyApi.on('sound', () => {
+    muteButton.hidden = false;
 });
 ```
 

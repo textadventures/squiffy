@@ -119,6 +119,8 @@ test("Header buttons are labelled in English, or with the story's own strings", 
     expect(html).toContain('id="squiffy-back" type="button" title="Back" aria-label="Back"');
     expect(html).toContain('title="Restart" aria-label="Restart" data-confirm="Are you sure you want to restart?"');
     expect(html).toContain('data-switch-to-dark="Switch to dark mode" data-switch-to-light="Switch to light mode"');
+    // The mute button (#444), which the page shows if the story has music or sounds
+    expect(html).toContain('id="squiffy-mute" type="button" data-mute="Mute" data-unmute="Unmute" hidden');
     // The story's own text is left alone
     expect(html).toContain("Hello {{back}}!");
 

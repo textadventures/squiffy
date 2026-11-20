@@ -59,6 +59,28 @@ describe("preview host", () => {
         expect(sent.slice(2)).toEqual([{ channel: PREVIEW_CHANNEL, type: "theme", theme: "system" }]);
     });
 
+    test("sends mute when the page is ready, and again if it reloads (#444)", () => {
+        const { channel, sent, receive } = fakeChannel();
+        const host = createPreviewHost(channel, { onUsesSound: vi.fn() });
+        host.setMuted(true);
+        expect(sent).toEqual([]);
+
+        receive({ channel: PREVIEW_CHANNEL, type: "ready" });
+        expect(sent).toEqual([{ channel: PREVIEW_CHANNEL, type: "muted", muted: true }]);
+
+        host.setMuted(false);
+        receive({ channel: PREVIEW_CHANNEL, type: "ready" });
+        expect(sent.slice(1)).toEqual([{ channel: PREVIEW_CHANNEL, type: "muted", muted: false }]);
+    });
+
+    test("tells the host whether the story uses sound (#444)", () => {
+        const { channel, receive } = fakeChannel();
+        const onUsesSound = vi.fn();
+        createPreviewHost(channel, { onUsesSound });
+        receive({ channel: PREVIEW_CHANNEL, type: "usesSound", usesSound: true });
+        expect(onUsesSound).toHaveBeenCalledWith(true);
+    });
+
     test("passes messages from the page to handlers, ignoring anything else", () => {
         const { channel, receive } = fakeChannel();
         const handlers = {

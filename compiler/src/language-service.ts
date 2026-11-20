@@ -194,6 +194,8 @@ const DIRECTIVES: [string, string][] = [
     ["clear", "Clears the screen"],
     ["repeat", "Lets the player click this passage's links again"],
     ["end", "Marks this section as an ending"],
+    ["music", "Plays music until it's changed, or stops it with @music stop"],
+    ["sound", "Plays a sound once"],
     ["ui", "JavaScript for the story's user interface"],
 ];
 

@@ -50,6 +50,12 @@ describe("TextMate grammar", () => {
         expect(result.join("\n\n")).toMatchSnapshot();
     });
 
+    test("@music and @sound (#444)", () => {
+        expect(scopeOf("@music theme.mp3", 0, "music")).toContain("keyword.control.directive.squiffy");
+        expect(scopeOf("@music theme.mp3", 0, "theme.mp3")).toContain("string.unquoted.squiffy");
+        expect(scopeOf("@sound door.mp3", 0, "sound")).toContain("keyword.control.directive.squiffy");
+    });
+
     test("headers", () => {
         expect(scopeOf("[[a room]]:", 0, "a room")).toContain("entity.name.section.squiffy");
         expect(scopeOf("[look]:", 0, "look")).toContain("entity.name.function.passage.squiffy");

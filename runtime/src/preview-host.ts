@@ -33,6 +33,8 @@ export interface PreviewHandlers {
     onNavigated?(section: string, passage?: string): void;
     // Whether the story's own CSS sets its color-scheme, so setTheme() makes no difference
     onThemeFixed?(fixed: boolean): void;
+    // Whether the story plays music or sounds, so a mute button is worth showing
+    onUsesSound?(usesSound: boolean): void;
     onRuntimeError?(message: string, stack?: string): void;
 }
 
@@ -50,6 +52,8 @@ export interface PreviewHost {
     setAssets(assets: PreviewAssets): void;
     // Shows the story in light or dark mode. It's kept if the page reloads.
     setTheme(theme: PreviewTheme): void;
+    // Mutes the story's music and sounds. It's kept for the next story loaded, and if the page reloads.
+    setMuted(muted: boolean): void;
     dispose(): void;
 }
 
@@ -57,6 +61,8 @@ export interface PreviewHost {
 // story runs with an opaque origin: it can't reach the host page, its storage or its cookies.
 export function setUpPreviewFrame(iframe: HTMLIFrameElement, previewHtml: string) {
     iframe.setAttribute("sandbox", "allow-scripts");
+    // So a story's music can start when the author starts it from the host page (#444)
+    iframe.setAttribute("allow", "autoplay");
     iframe.srcdoc = previewHtml;
 }
 
@@ -79,6 +85,7 @@ export function createPreviewHost(channel: PreviewChannel, handlers: PreviewHand
     let isReady = false;
     let queue: HostMessage[] = [];
     let theme: PreviewTheme | undefined;
+    let muted = false;
     let resolveReady: () => void;
     const ready = new Promise<void>(resolve => { resolveReady = resolve; });
 
@@ -96,6 +103,7 @@ export function createPreviewHost(channel: PreviewChannel, handlers: PreviewHand
                 // where a host can load it again
                 isReady = true;
                 if (theme) send({ type: "theme", theme });
+                if (muted) send({ type: "muted", muted });
                 const queued = queue;
                 queue = [];
                 for (const m of queued) send(m);
@@ -118,6 +126,9 @@ export function createPreviewHost(channel: PreviewChannel, handlers: PreviewHand
             case "themeFixed":
                 handlers.onThemeFixed?.(message.fixed);
                 break;
+            case "usesSound":
+                handlers.onUsesSound?.(message.usesSound);
+                break;
             case "runtimeError":
                 handlers.onRuntimeError?.(message.message, message.stack);
                 break;
@@ -135,6 +146,10 @@ export function createPreviewHost(channel: PreviewChannel, handlers: PreviewHand
             theme = value;
             // Sent when the page is ready, and again if it reloads
             if (isReady) send({ type: "theme", theme });
+        },
+        setMuted: value => {
+            muted = value;
+            if (isReady) send({ type: "muted", muted });
         },
         dispose: () => {
             stop();

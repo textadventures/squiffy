@@ -11,7 +11,8 @@ import { LinkHandler } from "./linkHandler.js";
 import { Animation } from "./animation.js";
 import { imports } from "./import.js";
 import { areInputsValid, setupInputValidation } from "./inputValidation.js";
-import { createAssetHtmlResolver } from "./assets.js";
+import { createAssetHtmlResolver, isAbsolute } from "./assets.js";
+import { Sound, DEFAULT_FADE } from "./sound.js";
 
 export type { SquiffyApi, SavedGame, LoadSaveResult } from "./types.js";
 export type { SquiffyEventHandler, SquiffyEventMap } from "./events.js";
@@ -458,6 +459,9 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         if (section.attributes) {
             await processAttributes(section.attributes);
         }
+        // @music and @sound (#444)
+        if (section.music !== undefined) set("_music", section.music);
+        for (const file of section.sounds ?? []) sound.play(file);
         const afterWrite: (() => void)[] = [];
         if (section.jsIndex !== undefined) {
             const sectionBefore = get("_section");
@@ -582,6 +586,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     function restart() {
         cancelGoto();
         state.reset();
+        sound.sync();
         // TODO: This feels like the wrong way of triggering location.reload()
         // - should be a separate setting to the scroll setting.
         if (settings.scroll === "element" || settings.scroll === "none") {
@@ -610,6 +615,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         };
 
         state.load();
+        sound.sync();
         const output = get("_output");
         if (!output) {
             runUiJs();
@@ -701,6 +707,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         for (const [attribute, value] of Object.entries(save.state)) {
             state.setInternal(attribute, value, false);
         }
+        sound.sync();
         undoLog = {};
         scrollPosition = 0;
         scrollToTop = false;
@@ -898,6 +905,8 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         if (newStory.start != story.start) {
             story = newStory;
             state.reset();
+            sound.sync();
+            sound.preload(story.audio ?? []);
             outputElement.innerHTML = "";
             go(story.start);
             return;
@@ -907,16 +916,20 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         // sees sections that were added in this update.
         const oldStory = story;
         story = newStory;
+        sound.preload(story.audio ?? []);
 
         // When re-rendering a section or passage, {{embed}} should look up passages in the
         // (new version of the) section being rendered.
         const processTextInSection = (text: string, section: Section) => {
             const previousSection = currentSection;
             currentSection = section;
+            // Text shown again after an edit doesn't play its {{sound}}s again
+            quiet = true;
             try {
                 return ui.renderHtml(text, false);
             } finally {
                 currentSection = previousSection;
+                quiet = false;
             }
         };
 
@@ -1011,6 +1024,8 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         do {
             undoLast();
         } while ((currentPassageElement ?? currentSectionElement).hasAttribute("data-goto") && getHistoryCount() > 1);
+        // The music goes back to what it was, as _music was undone
+        sound.sync();
         // The attributes were saved as they were undone, so save the output to match. Otherwise a saved
         // game would come back with the text that was undone.
         save();
@@ -1157,6 +1172,60 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     const set = state.set.bind(state);
 
     const textProcessor = new TextProcessor(() => story, state, () => currentSection);
+
+    // Music and sound effects (#444)
+    let playedSound = false;
+    // While text is shown again rather than for the first time, {{sound}} doesn't play
+    let quiet = false;
+    // How long the next change to _music fades for: fade= on {{music}} or {{stopmusic}}
+    let musicFade = DEFAULT_FADE;
+    const sound = new Sound({
+        resolveUrl: path => isAbsolute(path) || !options.resolveAssetUrl
+            ? path
+            : options.resolveAssetUrl(path.replace(/^(\.\/)+/, "")),
+        getMusic: () => get("_music"),
+        mutedKey: settings.persist ? "squiffy-muted:" + storageKey : undefined,
+        onPlay: () => {
+            playedSound = true;
+            emitter.emit("sound", {});
+        },
+    });
+    sound.preload(story.audio ?? []);
+    emitter.on("set", ({ attribute }) => {
+        if (attribute != "_music") return;
+        const fade = musicFade;
+        musicFade = DEFAULT_FADE;
+        sound.sync(fade);
+    });
+    const fadeOption = (options: { hash?: Record<string, unknown> } | undefined) => {
+        const fade = Number(options?.hash?.fade);
+        return options?.hash && "fade" in options.hash && Number.isFinite(fade) && fade >= 0 ? fade : DEFAULT_FADE;
+    };
+    // {{music}} and {{sound}} with nothing after them are still an attribute called music or
+    // sound, as they were before these helpers
+    const isHelperOptions = (value: unknown) => typeof value == "object" && value !== null && "hash" in value;
+    textProcessor.handlebars.registerHelper("music", (file: unknown, options?: { hash?: Record<string, unknown> }) => {
+        if (isHelperOptions(file)) return get("music");
+        if (state.readOnly || typeof file != "string") return "";
+        musicFade = fadeOption(options);
+        set("_music", file || null);
+        musicFade = DEFAULT_FADE;
+        return "";
+    });
+    textProcessor.handlebars.registerHelper("stopmusic", (options?: { hash?: Record<string, unknown> }) => {
+        if (state.readOnly) return "";
+        musicFade = fadeOption(options);
+        set("_music", null);
+        musicFade = DEFAULT_FADE;
+        return "";
+    });
+    textProcessor.handlebars.registerHelper("sound", (file: unknown, options?: { hash?: Record<string, unknown> }) => {
+        if (isHelperOptions(file)) return get("sound");
+        if (state.readOnly || quiet || typeof file != "string" || !file) return "";
+        const volume = Number(options?.hash?.volume ?? 1);
+        sound.play(file, volume);
+        return "";
+    });
     const linkHandler = new LinkHandler();
 
     const getSectionText = (sectionName: string) => {
@@ -1201,6 +1270,13 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         getSave: getSave,
         loadSave: loadSave,
         renderPassage: renderPassage,
+        isMuted: () => sound.isMuted(),
+        setMuted: (muted: boolean) => sound.setMuted(muted),
+        usesSound: () => playedSound || !!story.audio?.length,
+        dispose: () => {
+            cancelGoto();
+            sound.dispose();
+        },
         on: (e, h) => emitter.on(e, h),
         off: (e, h) => emitter.off(e, h),
         once: (e, h) => emitter.once(e, h),

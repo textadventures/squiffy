@@ -90,6 +90,14 @@ button#squiffy-theme[data-next="light"] .squiffy-icon-dark
     display: none;
 }
 
+/* The mute button (#444), for a story with music or sounds. It shows a speaker, crossed out
+   when the story is muted. */
+button#squiffy-mute.squiffy-muted .squiffy-icon-sound,
+button#squiffy-mute:not(.squiffy-muted) .squiffy-icon-muted
+{
+    display: none;
+}
+
 /* With a side panel (squiffy.json's "panels"), the page is wider, with the panel to the right of
    the story. It stays in view as the story scrolls, under the header. On a narrower screen, it's a
    button in the header instead. */

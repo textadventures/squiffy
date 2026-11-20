@@ -71,6 +71,7 @@ describe("preview", () => {
         expect(element.textContent).toContain("Welcome.");
         expect(messages).toEqual([
             { type: "themeFixed", fixed: false },
+            { type: "usesSound", usesSound: false },
             { type: "canGoBackChanged", canGoBack: false },
             // The story-wide turn count (#377), which isn't internal, so it's reported
             { type: "attributeSet", name: "turns", value: 0 },
@@ -96,6 +97,46 @@ describe("preview", () => {
         expect(element.textContent).not.toContain("You look around");
         expect(messages).toContainEqual({ type: "navigated", section: "start" });
         expect(messages).toContainEqual({ type: "canGoBackChanged", canGoBack: false });
+    });
+
+    test("reports a story with sound, mutes it, and stops it when another story is loaded (#444)", async () => {
+        const played: { src: string; muted: boolean; paused: boolean }[] = [];
+        vi.stubGlobal("Audio", class {
+            muted = false;
+            paused = true;
+            volume = 1;
+            loop = false;
+            preload = "";
+            constructor(public src = "") {
+                played.push(this);
+            }
+            play() {
+                this.paused = false;
+                return Promise.resolve();
+            }
+            pause() {
+                this.paused = true;
+            }
+            addEventListener() {}
+        });
+        try {
+            const { preview, messages } = setUp();
+            await preview.receive({ type: "muted", muted: true });
+            await preview.receive({ type: "load", story: { js: await compileJs("@music theme.mp3\nHello.") } });
+            expect(messages).toContainEqual({ type: "usesSound", usesSound: true });
+            const music = played.filter(a => !a.paused);
+            expect(music.map(a => a.muted)).toEqual([true]);
+
+            await preview.receive({ type: "muted", muted: false });
+            expect(music[0].muted).toBe(false);
+
+            await preview.receive({ type: "load", story: { js: await compileJs("Hello.") } });
+            expect(played.filter(a => !a.paused)).toEqual([]);
+        }
+        finally {
+            vi.unstubAllGlobals();
+            vi.stubGlobal("crypto", { randomUUID: () => "00000000-0000-0000-0000-000000000000" });
+        }
     });
 
     test("starts at a section or a passage", async () => {

@@ -227,6 +227,16 @@ See [Calculations](/helpers-reference/#calculations), [Maths helpers](/helpers-r
 
 See [Objects](/attributes/#objects).
 
+### Sound
+
+| To... | Harlowe | SugarCube | Squiffy |
+|---|---|---|---|
+| Play music that carries on | `(track: "theme", "loop", true)` and `(track: "theme", "play")` | `<<audio "theme" loop play>>` | `@music theme.mp3` |
+| Stop the music | `(track: "theme", "stop")` | `<<audio "theme" stop>>` | `@music stop` |
+| Play a sound once | `(track: "door", "play")` | `<<audio "door" play>>` | `@sound door.mp3`, or `{{sound "door.mp3"}}` |
+
+Squiffy fades from one track to the next by itself, and players get a mute button above the story. See [Music and sound](/images-and-files/#music-and-sound).
+
 ### Special passages
 
 | To... | Harlowe | SugarCube | Squiffy |
@@ -242,7 +252,6 @@ See [Objects](/attributes/#objects).
 
 Some things in Harlowe and SugarCube aren't in Squiffy yet. Each one is planned, and its GitHub issue says how it might work, so you can follow it or add your thoughts:
 
-- **Sound and music** that keep playing from one section to the next, like `<<audio>>` and `(track:)` ([#444](https://github.com/textadventures/squiffy/issues/444)). For a sound in one section, use HTML's `<audio>`: see [Images, sound and other files](/images-and-files/).
 - **More for arrays**, like `(joined:)`, `(sorted:)` and `(range:)` ([#447](https://github.com/textadventures/squiffy/issues/447)).
 - **Links in a loop that each do something different** ([#448](https://github.com/textadventures/squiffy/issues/448)). A section link in [`{{#each}}`](/attributes/#going-through-an-array) can set an attribute to the item, but clicking one passage link turns off every link to that passage, including the other items'.
 - **Changing the page's look for a scene**, with passage tags or `<<addclass>>` ([#449](https://github.com/textadventures/squiffy/issues/449)).
