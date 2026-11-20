@@ -43,7 +43,7 @@ body:has(.dark) {
 }
 ```
 
-`@class` puts classes on the story's element while the section is current; in a passage, they're added until the player leaves the section. Use `body:has(.class)` to change page colours. `{{addclass}}`, `{{removeclass}}`, `{{toggleclass}}` and `(hasclass ...)` change classes mid-section or keep them across sections (helpers.md). Use class names not used elsewhere in the text.
+`@class` puts classes on the story's element while the section is current; in a passage, they're added until the player leaves the section. Use `body:has(.class)` to change page colours. `{{addclass}}`, `{{removeclass}}`, `{{toggleclass}}` and `(hasclass ...)` change classes mid-section or keep them across sections (helpers.md). Use class names not used elsewhere in the text. Player settings add classes too, such as `setting-textSize-Large` (project.md).
 
 ## Useful selectors
 

@@ -592,10 +592,18 @@ export class TextProcessor {
             const text = fillIn(options.hash.text as string || processor.strings.saves, this, options, true);
             return new Handlebars.SafeString(`<a class="squiffy-link link-saves" data-handler="saves" role="link" tabindex="0">${text}</a>`);
         });
+
+        // {{settings}} (#452): a link that opens the Settings dialog, where the player changes the
+        // story's settings (squiffy.json's "settings")
+        this.handlebars.registerHelper("settings", function (this: unknown, options) {
+            const text = fillIn(options.hash.text as string || processor.strings.settings, this, options, true);
+            return new Handlebars.SafeString(`<a class="squiffy-link link-settings" data-handler="settings" role="link" tabindex="0">${text}</a>`);
+        });
     }
 
-    // The default text of {{restart}} and {{saves}} links, which the runtime sets from the page's strings
-    strings = { restart: "Restart", saves: "Saved games" };
+    // The default text of {{restart}}, {{saves}} and {{settings}} links, which the runtime sets
+    // from the page's strings
+    strings = { restart: "Restart", saves: "Saved games", settings: "Settings" };
 
     // Evaluates an expression, such as gold + price * 2, with the same rules and helpers as
     // {{#if}} and {{set}}. Throws if it isn't valid, or a helper fails.

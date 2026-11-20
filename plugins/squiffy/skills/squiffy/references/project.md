@@ -22,6 +22,7 @@ Docs: https://squiffystory.com/multiple-files/ and https://squiffystory.com/imag
 | `saveButton` | `false` leaves out the Save button. A `{{saves}}` link still opens the Saved games dialog |
 | `backButton` | `false` leaves out the Back button, so choices are final |
 | `panels` | Passages always to hand (below) |
+| `settings` | Options the player can change, read as `settings.name` (below) |
 | `strings` | The page's button text, for a story in another language (below) |
 | `map` | Positions on the editor's story map. Written by the editor; leave it alone |
 
@@ -73,13 +74,29 @@ You're carrying nothing.
 - `icon`: `bag`, `person`, `map`, `help`, `info`, `list`, `book`, `star` or `heart` (the label becomes a tooltip).
 - Panels only show text: `{{set}}`, `{{goto}}`, `@set` and JavaScript don't run, and links don't work. An empty side panel is hidden.
 
+## Player settings
+
+```json
+"settings": [
+  { "name": "warnings", "label": "Content warnings", "default": true, "description": "Before upsetting scenes" },
+  { "name": "textSize", "type": "list", "label": "Text size", "options": ["Small", "Medium", "Large"], "default": "Medium" },
+  { "name": "speed", "type": "range", "label": "Text speed", "min": 1, "max": 5, "step": 1, "default": 3 }
+]
+```
+
+- Types: `toggle` (the default; `true`/`false`, off unless `default`), `list` (`options`: text, or `{ "value": "large", "label": "Large text" }`; first option unless `default`), `range` (`min` to `max`, optional `step`; `min` unless `default`). `name` is letters, digits and `_`.
+- The page gets a Settings button; `{{settings}}` links to the same dialog.
+- The story reads them: `{{#if settings.warnings}}`, `{{settings.textSize}}`, `@set fast = settings.speed > 3`. It can't change them.
+- They're the player's: kept in the browser for the story, not undone by Back, kept on Restart, not in saved games. A change affects text shown afterwards, panels and `{{live "settings.speed"}}`, not text already shown.
+- Each puts a class on `div#squiffy`: `setting-warnings` while a toggle is on, `setting-textSize-Large` and `setting-speed-3` for lists and ranges (characters other than letters, digits, `-`, `_` become `-`). Style with them: `div#squiffy.setting-textSize-Large { --squiffy-font-size: 1.375rem; }`.
+
 ## Page text in another language
 
 ```json
 "strings": { "back": "Retour", "restart": "Recommencer", "restartConfirm": "Voulez-vous vraiment recommencer ?" }
 ```
 
-Keys: `back`, `restart`, `restartConfirm`, `switchToDark`, `switchToLight`, `saves`, `saveName`, `save`, `noSaves`, `savedGame`, `savedToday`, `savedYesterday`, `load`, `loadConfirm`, `saveOptions`, `overwrite`, `overwriteConfirm`, `rename`, `newName`, `saveToFile`, `loadFromFile`, `delete`, `deleteConfirm`, `cancel`, `close`, `wrongStory`, `notASave`, `cantSave`. `[name]` and `[time]` are filled in. Missing keys stay English.
+Keys: `back`, `restart`, `restartConfirm`, `switchToDark`, `switchToLight`, `saves`, `saveName`, `save`, `noSaves`, `savedGame`, `savedToday`, `savedYesterday`, `load`, `loadConfirm`, `saveOptions`, `overwrite`, `overwriteConfirm`, `rename`, `newName`, `saveToFile`, `loadFromFile`, `delete`, `deleteConfirm`, `cancel`, `close`, `wrongStory`, `notASave`, `cantSave`, `settings`, `resetSettings`. `[name]` and `[time]` are filled in. Missing keys stay English.
 
 ## Images, video and fonts
 

@@ -9,6 +9,7 @@ import type { Expr } from "./expression.js";
 import { convertHarlowePassage, harloweAudioPassages, harloweMacros } from "./harlowe.js";
 import { convertSugarCubePassage, convertSugarCubeWidgets, sugarCubeWidgets } from "./sugarcube.js";
 import { parseTwine } from "./story.js";
+import { sugarCubeSettings } from "./settings.js";
 import type { TwinePassage, TwineStory } from "./story.js";
 import { formatProjectFile } from "../project.js";
 import type { MapPositions, Panel } from "../project.js";
@@ -81,7 +82,7 @@ export const reservedAttributes = new Set([
     "join", "sort", "shuffle", "slice", "first", "last", "indexof", "count", "range",
     "if", "unless", "each", "with", "lookup", "log", "else", "this", "turns", "previous", "previous_section",
     "true", "false", "null", "undefined", "music", "stopmusic", "sound", "stopsounds",
-    "addclass", "removeclass", "toggleclass", "hasclass", "content", "restart", "saves",
+    "addclass", "removeclass", "toggleclass", "hasclass", "content", "restart", "saves", "settings",
 ]);
 
 export class StoryContext {
@@ -613,6 +614,9 @@ export function convertTwineStory(twine: TwineStory, options: TwineConversionOpt
             reason: `The story's stylesheet is in ${name}.css. Its rules for ${harlowe ? "Harlowe's elements (tw-story, tw-passage, tw-link and so on)" : "SugarCube's elements (#story, .passage, #ui-bar and so on)"} won't apply to Squiffy's, so check how it looks.${tagRules}`,
         });
     }
+    // SugarCube's player settings (#452), from the story's JavaScript
+    const settings = !harlowe && twine.script ? sugarCubeSettings(twine.script) : { settings: [], problems: [] };
+    problems.push(...settings.problems);
     // The story's JavaScript is left out of it, as it was written for another story format
     const exclude: string[] = [];
     if (twine.script) {
@@ -634,7 +638,7 @@ export function convertTwineStory(twine: TwineStory, options: TwineConversionOpt
 
     files[`${name}.squiffy`] = script;
     const map = mapPositions(sectionPassages, story);
-    files["squiffy.json"] = formatProjectFile({ main: `${name}.squiffy`, exclude, panels, ...(map ? { map } : {}) });
+    files["squiffy.json"] = formatProjectFile({ main: `${name}.squiffy`, exclude, panels, settings: settings.settings, ...(map ? { map } : {}) });
 
     return {
         title: twine.title,

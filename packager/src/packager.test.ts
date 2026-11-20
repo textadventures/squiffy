@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import { compile, PAGE_STRINGS } from "squiffy-compiler";
-import { SAVES_STRINGS } from "squiffy-runtime";
+import { SAVES_STRINGS, SETTINGS_STRINGS } from "squiffy-runtime";
 import { unzipSync, strFromU8 } from "fflate";
 import { createPackage, normaliseAssetPath } from "./packager.js";
 
@@ -107,6 +107,24 @@ test("The Saved games dialog gets the page's strings, safely", async () => {
 
 test("The runtime's Saved games dialog has the same English as PAGE_STRINGS", () => {
     for (const [name, text] of Object.entries(SAVES_STRINGS)) {
+        expect(PAGE_STRINGS[name as keyof typeof PAGE_STRINGS], name).toBe(text);
+    }
+});
+
+test("Exported page has a Settings button, which it shows for a story with settings (#452)", async () => {
+    const compileResult = await compile({ script: "Hello world!", settings: [{ name: "warnings", label: "Warnings", type: "toggle" }] });
+    if (!compileResult.success) throw new Error("Compile failed");
+
+    const html = (await createPackage(compileResult, { strings: { settings: "Réglages" } })).files["index.html"];
+    expect(html).toContain('id="squiffy-settings-button" type="button" title="Réglages" aria-label="Réglages" aria-haspopup="dialog" hidden');
+    expect(html).toContain("settingsButton.hidden = !(story.settings && story.settings.length);");
+    expect(html).toContain("squiffyRuntime.createSettingsDialog(squiffyApi");
+    expect(html).toContain("squiffyApi.on('settingsRequested', openSettings);");
+    expect(compileResult.output.story.settings).toHaveLength(1);
+});
+
+test("The runtime's Settings dialog has the same English as PAGE_STRINGS", () => {
+    for (const [name, text] of Object.entries(SETTINGS_STRINGS)) {
         expect(PAGE_STRINGS[name as keyof typeof PAGE_STRINGS], name).toBe(text);
     }
 });

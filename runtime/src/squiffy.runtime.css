@@ -594,6 +594,212 @@ dialog.squiffy-confirm::backdrop
     filter: brightness(1.1);
 }
 
+/* The Settings dialog (#452), for a story with "settings" in its squiffy.json */
+dialog.squiffy-settings
+{
+    width: min(28rem, calc(100vw - 2rem));
+    max-height: calc(100vh - 2rem);
+    box-sizing: border-box;
+    padding: 1rem 1.25rem 1.25rem;
+    border: 1px solid var(--squiffy-border);
+    border-radius: 0.75rem;
+    background-color: var(--squiffy-background);
+    color: var(--squiffy-text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 0.9375rem;
+    line-height: 1.4;
+    box-shadow: 0 1rem 3rem rgb(0 0 0 / 0.25);
+}
+
+dialog.squiffy-settings::backdrop
+{
+    background-color: rgb(0 0 0 / 0.4);
+}
+
+.squiffy-settings-header
+{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.squiffy-settings-header h2
+{
+    margin: 0;
+    font-size: 1.125rem;
+}
+
+.squiffy-settings button,
+.squiffy-settings select
+{
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+}
+
+.squiffy-settings button:focus-visible,
+.squiffy-settings input:focus-visible,
+.squiffy-settings select:focus-visible
+{
+    outline: 2px solid var(--squiffy-link);
+    outline-offset: 2px;
+}
+
+button.squiffy-settings-close
+{
+    display: inline-flex;
+    padding: 0.25em;
+    border: none;
+    border-radius: 0.375em;
+    background: none;
+    color: var(--squiffy-muted);
+}
+
+button.squiffy-settings-close:hover
+{
+    color: var(--squiffy-text);
+    background-color: color-mix(in srgb, currentColor 10%, transparent);
+}
+
+button.squiffy-settings-close svg
+{
+    width: 1.25em;
+    height: 1.25em;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.squiffy-setting
+{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--squiffy-border);
+}
+
+.squiffy-setting-text
+{
+    min-width: 0;
+}
+
+.squiffy-setting-text label
+{
+    display: block;
+}
+
+.squiffy-setting-text p
+{
+    margin: 0.125rem 0 0;
+    color: var(--squiffy-muted);
+    font-size: 0.875em;
+}
+
+.squiffy-setting select
+{
+    flex: none;
+    max-width: 50%;
+    padding: 0.25em 0.5em;
+    border: 1px solid var(--squiffy-border);
+    border-radius: 0.375em;
+    background-color: var(--squiffy-background);
+}
+
+/* A toggle is a switch */
+.squiffy-setting input[type=checkbox]
+{
+    appearance: none;
+    flex: none;
+    position: relative;
+    width: 2.5em;
+    height: 1.5em;
+    margin: 0;
+    border-radius: 0.75em;
+    background-color: color-mix(in srgb, var(--squiffy-text) 25%, transparent);
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.squiffy-setting input[type=checkbox]::before
+{
+    content: "";
+    position: absolute;
+    top: 0.1875em;
+    left: 0.1875em;
+    width: 1.125em;
+    height: 1.125em;
+    border-radius: 50%;
+    background-color: var(--squiffy-background);
+    transition: transform 0.15s;
+}
+
+.squiffy-setting input[type=checkbox]:checked
+{
+    background-color: var(--squiffy-link);
+}
+
+.squiffy-setting input[type=checkbox]:checked::before
+{
+    transform: translateX(1em);
+}
+
+.squiffy-setting-slider
+{
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 0.5rem;
+    width: 45%;
+}
+
+.squiffy-setting-slider input
+{
+    flex: 1;
+    min-width: 0;
+    accent-color: var(--squiffy-link);
+}
+
+.squiffy-setting-slider output
+{
+    min-width: 2ch;
+    text-align: end;
+    font-variant-numeric: tabular-nums;
+}
+
+.squiffy-settings-footer
+{
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 1rem;
+}
+
+button.squiffy-settings-reset
+{
+    padding: 0.3em 0.8em;
+    border: 1px solid var(--squiffy-border);
+    border-radius: 0.375em;
+    background: none;
+}
+
+button.squiffy-settings-reset:hover
+{
+    background-color: color-mix(in srgb, currentColor 8%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce)
+{
+    .squiffy-setting input[type=checkbox],
+    .squiffy-setting input[type=checkbox]::before
+    {
+        transition: none;
+    }
+}
+
 /* Panels (squiffy.json's "panels"): passages always to hand, beside the story or in a dialog */
 :root
 {

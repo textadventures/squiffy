@@ -63,6 +63,17 @@ export interface SquiffyApi {
     // Whether the story plays music or sounds: it names some files, or has played one. The
     // "sound" event says when something plays.
     usesSound: () => boolean;
+    // The story's player settings (squiffy.json's "settings", #452), which the Settings dialog shows
+    getSettings: () => PlayerSetting[];
+    // A setting's value, as the story reads it with settings.name: its default if the player
+    // hasn't changed it
+    getSetting: (name: string) => SettingValue | null;
+    // Changes a setting, as the player does in the Settings dialog. A value that isn't one the
+    // setting can have is ignored. It's remembered for the story when persist is on, and going
+    // back, restarting or loading a saved game doesn't change it.
+    setSetting: (name: string, value: SettingValue) => void;
+    // Puts every setting back to its default
+    resetSettings: () => void;
     // Stops the story's music and sounds for good, when it's being replaced, e.g. in the editor's preview
     dispose: () => void;
 
@@ -115,6 +126,8 @@ export interface Story {
     expressions?: boolean;
     // squiffy.json's "panels": passages shown beside the story, or in a dialog from a button
     panels?: Panel[];
+    // squiffy.json's "settings": options the player can change, which the story reads as settings.name
+    settings?: PlayerSetting[];
     sections: Record<string, Section>;
 }
 
@@ -133,6 +146,31 @@ export interface Panel {
     position?: "side" | "button";
     icon?: PanelIcon;
 }
+
+// A player setting (#452), from squiffy.json's "settings": "toggle" is on or off, "list" is one of
+// its options, and "range" a number from min to max
+export type PlayerSetting =
+    | PlayerSettingBase & { type: "toggle"; default?: boolean }
+    | PlayerSettingBase & { type: "list"; options: PlayerSettingOption[]; default?: string }
+    | PlayerSettingBase & { type: "range"; min: number; max: number; step?: number; default?: number };
+
+interface PlayerSettingBase {
+    // How the story refers to it: settings.name
+    name: string;
+    // What the Settings dialog calls it
+    label: string;
+    // More about it, shown under the label
+    description?: string;
+}
+
+export interface PlayerSettingOption {
+    // What the story reads
+    value: string;
+    // What the Settings dialog shows
+    label: string;
+}
+
+export type SettingValue = boolean | string | number;
 
 export interface Section {
     text?: string;

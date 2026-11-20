@@ -1,6 +1,9 @@
 import { Emitter, SquiffyEventMap } from "./events.js";
 import { parsePath, valueAt, withValueAt } from "./paths.js";
 
+// The attribute the story reads the player's settings from
+const SETTINGS = "settings";
+
 export class State {
     persist: boolean;
     storyId: string;
@@ -25,6 +28,10 @@ export class State {
         return this.persist && window.localStorage && this.storyId;
     }
 
+    // The player's settings (#452), which the story reads as the attribute "settings", e.g.
+    // settings.textSize, or null if the story has none, when "settings" is an attribute like any other
+    playerSettings: () => Record<string, unknown> | null = () => null;
+
     // While this is true, set() does nothing: e.g. while a panel is rendered, so its {{set}}s
     // don't change the story
     readOnly = false;
@@ -40,6 +47,11 @@ export class State {
     setAt(segments: string[], value: any) {
         if (this.readOnly) return;
         const [attribute, ...inside] = segments;
+        // Only the player changes their settings, in the Settings dialog
+        if (attribute == SETTINGS && this.playerSettings()) {
+            console.warn("Squiffy: the story can't change the player's settings.");
+            return;
+        }
         if (!inside.length) {
             this.setInternal(attribute, value, true);
             return;
@@ -71,6 +83,7 @@ export class State {
 
     // Only the store's own properties are attributes, not ones it inherits, such as valueOf
     has(attribute: string) {
+        if (attribute == SETTINGS && this.playerSettings()) return true;
         return Object.prototype.hasOwnProperty.call(this.store, attribute);
     }
 
@@ -82,6 +95,8 @@ export class State {
     getAt(segments: string[]): any {
         const [attribute, ...inside] = segments;
         if (!this.has(attribute)) return null;
+        const settings = attribute == SETTINGS ? this.playerSettings() : null;
+        if (settings) return inside.length ? structuredClone(valueAt(settings, inside)) : { ...settings };
         const value = inside.length ? valueAt(this.store[attribute], inside) : this.store[attribute];
         return structuredClone(value);
     }
@@ -97,7 +112,7 @@ export class State {
                 ? this.getAt([prop])
                 : Reflect.get(target, prop),
             has: (_, prop) => this.has(String(prop)),
-            ownKeys: () => Object.keys(this.store),
+            ownKeys: () => [...new Set([...Object.keys(this.store), ...(this.playerSettings() ? [SETTINGS] : [])])],
             getOwnPropertyDescriptor: (_, prop) => {
                 const key = String(prop);
                 if (this.has(key)) {

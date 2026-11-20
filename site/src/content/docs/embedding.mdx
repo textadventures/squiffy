@@ -107,7 +107,7 @@ The `squiffyRuntime.init()` function accepts an options object:
 | `scroll` | `string` | `"body"` | Scroll behavior: `"body"`, `"element"`, or `"none"` |
 | `onSet` | `function` | - | Callback when an attribute is set |
 | `resolveAssetUrl` | `function` | - | Maps an image or other file path used in the story to the URL to load it from. See [Asset URLs](#asset-urls) |
-| `strings` | `object` | - | The page's text in another language, with the [names in `squiffy.json`](/multiple-files/#the-pages-text-in-another-language). Used for the text of [`{{restart}}` and `{{saves}}`](/basic-concepts/#restarting-and-saving-from-the-story) links, and the dialogs they open. Anything left out is in English |
+| `strings` | `object` | - | The page's text in another language, with the [names in `squiffy.json`](/multiple-files/#the-pages-text-in-another-language). Used for the text of [`{{restart}}`, `{{saves}}` and `{{settings}}`](/basic-concepts/#restarting-and-saving-from-the-story) links, and the dialogs they open. Anything left out is in English |
 
 ### Persistence
 
@@ -271,6 +271,17 @@ muteButton.addEventListener('click', () => {
 
 Returns whether the story plays music or sounds: it names a sound file, or has played one. The `sound` event says when something plays, for a mute button that only shows when it's needed.
 
+### getSettings(), getSetting(name), setSetting(name, value) and resetSettings()
+
+The story's [player settings](/multiple-files/#player-settings), for your own settings controls. `getSettings()` returns them as they are in `squiffy.json`, and `getSetting()` returns one's value, which is its default until the player changes it. `setSetting()` changes it, as the Settings dialog does, and ignores a value the setting can't have. `resetSettings()` puts them all back to their defaults.
+
+```javascript
+squiffyApi.setSetting('textSize', 'Large');
+squiffyApi.getSetting('textSize');  // "Large"
+```
+
+With `persist` on, settings are remembered for the story. Going back, restarting and loading a saved game don't change them, and saved games don't include them.
+
 ### dispose()
 
 Stops the story's music and sounds for good, for when you're replacing the story with another one.
@@ -314,6 +325,24 @@ The saves are kept in the browser's IndexedDB, under the page's path. These opti
 | `slots` | Somewhere else to keep the saves: an object with `list`, `get`, `add`, `overwrite`, `rename` and `delete` methods, like the runtime's `memorySaveSlots()` |
 | `strings` | The dialog's text, using the [names in `squiffy.json`](/multiple-files/#the-pages-text-in-another-language) |
 | `fileName` | The name Save to file gives the file, before `.squiffy-save`. The page's title by default |
+| `container` | Where to put the dialog in the page. The end of the body by default |
+
+Its styles are in `squiffy.runtime.css`.
+
+## The Settings dialog
+
+The published page's Settings dialog, for a story with [player settings](/multiple-files/#player-settings), is part of the runtime too. `createSettingsDialog()` adds it to the page, and `open()` shows it:
+
+```javascript
+if (story.settings) {
+    const settingsDialog = squiffyRuntime.createSettingsDialog(squiffyApi);
+    settingsButton.addEventListener('click', () => settingsDialog.open());
+}
+```
+
+| Option | Description |
+|---|---|
+| `strings` | The dialog's text: `settings`, `resetSettings` and `close`, as in [`squiffy.json`](/multiple-files/#the-pages-text-in-another-language) |
 | `container` | Where to put the dialog in the page. The end of the body by default |
 
 Its styles are in `squiffy.runtime.css`.
@@ -414,6 +443,24 @@ squiffyApi.on('restartRequested', async (event) => {
     }
 });
 squiffyApi.on('savesRequested', () => savesDialog.open());
+```
+
+### settingsRequested
+
+Fired when the player clicks a [`{{settings}}`](/basic-concepts/#restarting-and-saving-from-the-story) link. If nothing is listening, the runtime opens a Settings dialog of its own. Listen for it to open your page's own:
+
+```javascript
+squiffyApi.on('settingsRequested', () => settingsDialog.open());
+```
+
+### settingChanged
+
+Fired when a [player setting](/multiple-files/#player-settings) changes, with its name and new value. Putting the settings back to their defaults fires it for each one that changes.
+
+```javascript
+squiffyApi.on('settingChanged', (event) => {
+    console.log(`${event.name} is now ${event.value}`);
+});
 ```
 
 ### Unsubscribing

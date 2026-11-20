@@ -187,6 +187,8 @@ The classes are on the element that holds the story (`div#squiffy` in a publishe
 
 The page's background and text colour are set on `body`, so to change them, or any other [colour](#colours), use `body:has(.dark)`, as above: the page has the class somewhere in it. A rule for `.dark` on its own styles just the story's element, and `.dark p` its paragraphs. Give your classes names that you don't use for anything else in the story's text, so `:has()` only finds them on the story.
 
+[Player settings](/multiple-files/#styling-with-settings) put classes on the same element, such as `setting-textSize-Large`, so the player can choose how the story looks.
+
 To change the classes in the middle of a section, or to keep one from section to section until you take it off, use `{{addclass}}`, `{{removeclass}}` and `{{toggleclass}}`, and check them with `{{#if (hasclass "dark")}}`. See [Class helpers](/helpers-reference/#class-helpers).
 
 ### The header

@@ -124,6 +124,8 @@ Play the story through after converting it. Twine and Squiffy work differently i
 | `<<addclass "body" "dark">>`, `<<removeclass "body" "dark">>`, `<<toggleclass "body" "dark">>` | `{{addclass "dark"}}`, `{{removeclass "dark"}}`, `{{toggleclass "dark"}}`. On anything but the page (`body`, `html`, `#story` or `#passages`), they aren't converted |
 | `StoryInit`, `PassageHeader`, `PassageFooter` | The start section, the master section, an `{{embed}}` at the end of each section |
 | `StoryCaption`, `StoryBanner` | A [panel](/multiple-files/#panels) beside the story, rendered again after each section and passage. Links in it don't work |
+| `Setting.addToggle()`, `Setting.addList()`, `Setting.addRange()` in the story's JavaScript, and `settings.fontSize` | [Player settings](/multiple-files/#player-settings) in `squiffy.json`, and `settings.fontSize`: see [JavaScript](#javascript) |
+| `<<link "Options">><<run UI.settings()>><</link>>`, and the same with `UI.restart()` and `UI.saves()` | `{{settings text="Options"}}`, `{{restart text="..."}}`, `{{saves text="..."}}` |
 | `<<audio "theme" loop play>>`, `<<audio "theme" stop>>` | `@music theme.mp3`, `@music stop`, or `{{music "theme.mp3"}}` and `{{stopmusic}}` later on: see [Sound](#sound) |
 | `<<audio "door" play>>`, `<<audio "door" volume 0.5 play>>` | `@sound door.mp3`, `{{sound "door.mp3" volume=0.5}}` |
 | `<<audio "theme" fadeoverto 3 0>>` | `{{stopmusic fade=3}}` |
@@ -156,6 +158,8 @@ Changers and text styles that only change how something looks, such as `(link-st
 ### JavaScript
 
 A Twine story's JavaScript is written for its story format, so it won't work in Squiffy as it is. It's put in `story.js` so you have it, but `squiffy.json` leaves it out of the story. To use some of it, change it to use Squiffy's [JavaScript functions](/javascript/), then remove `story.js` from `exclude` in `squiffy.json` (in the editor, choose **Include in story** from its menu in the files list).
+
+SugarCube's settings are the exception: `Setting.addToggle()`, `Setting.addList()` and `Setting.addRange()` become [player settings](/multiple-files/#player-settings) in `squiffy.json`, with their labels, defaults and lists of options (written in the call, or in a variable the script sets to a list). Their `onInit` and `onChange` functions are JavaScript, so they aren't converted, and `twine-import.txt` lists them. They usually change the page, such as its font size, which the setting's classes can do instead: a setting called `fontSize` puts a class such as `setting-fontSize-125-` on the story, which your stylesheet can use. See [Styling with settings](/multiple-files/#styling-with-settings).
 
 ### Styles
 
