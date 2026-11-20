@@ -49,6 +49,8 @@ Animations queue and play in order. `continue` shows its text as a link that pau
 | `loop=true` | all but continue | Repeat forever |
 | `trigger="link"` | all but continue | Wait for a link inside the text to be clicked |
 
+Times can be text in seconds (`start="1.5s"`) or expressions (`start=delay * 1000`).
+
 To link to the next section from inside `{{#animate}}`, use `[[Begin>]]` and a `---` divider rather than `+++`, which would split the block. Don't overuse animations. Authors can add their own with `squiffy.registerAnimation` (javascript.md).
 
 ## Moving on after a delay
@@ -58,7 +60,7 @@ The floor starts to crumble. [[Jump!]](safe)
 {{goto "fall" after=4000}}
 ```
 
-If the player clicks a link first, the story doesn't move on. The delay starts once the section is written, not after animations finish. In `--play`, it happens at once.
+If the player clicks a link first, the story doesn't move on. `after=` can be an expression (`after=patience * 1000`) or a time as text (`after="3s"`, `"500ms"`). The delay starts once the section is written, not after animations finish. In `--play`, it happens at once.
 
 ## Replace
 

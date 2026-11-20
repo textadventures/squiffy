@@ -5,6 +5,7 @@ import { State } from "./state.js";
 import { rewriteInfixExpressions, rewriteValueExpression, splitSetters } from "./infixExpressions.js";
 import { isNumeric, isBlank, toNumber } from "./numbers.js";
 import { checkSegment, parsePath, valueAt, withValueAt } from "./paths.js";
+import { parseDelay } from "./utils.js";
 
 // An embed being shown (#450): its parameters, and the text it wraps, if any
 interface EmbedScope {
@@ -103,11 +104,13 @@ export class TextProcessor {
             }
             let after = 0;
             if (options.hash.after !== undefined) {
-                after = Number(unwrapValue(options.hash.after));
-                if (!Number.isFinite(after) || after < 0) {
+                // A number of milliseconds, or a time like "3s" (#451)
+                const delay = parseDelay(unwrapValue(options.hash.after));
+                if (delay === null) {
                     return new Handlebars.SafeString(errorHtml("Error in {{goto}}:",
-                        `after= should be a number of milliseconds, e.g. after=3000, not "${options.hash.after}"`));
+                        `after= should be a number of milliseconds or a time, e.g. after=3000 or after="3s", not "${options.hash.after}"`));
                 }
+                after = delay;
             }
             this.goto ??= { section, after };
             return "";
