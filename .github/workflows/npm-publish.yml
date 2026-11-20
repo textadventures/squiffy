@@ -71,17 +71,17 @@ jobs:
       # that be turned off. `from-package` skips versions that are already on
       # npm, so each try only publishes what's left. The pause gives the
       # registry time to show what the last try published, so it isn't
-      # published again.
+      # published again: that has taken around 4 minutes.
       - name: Publish to npm
         run: |
-          for attempt in 1 2 3 4 5; do
+          for attempt in 1 2 3 4; do
             if npx lerna publish from-package --no-private --dist-tag "$DIST_TAG" --yes; then
               exit 0
             fi
-            if [ "$attempt" -lt 5 ]; then
-              echo "::warning::Publish attempt $attempt failed, retrying in 60s"
-              sleep 60
+            if [ "$attempt" -lt 4 ]; then
+              echo "::warning::Publish attempt $attempt failed, retrying in 5 minutes"
+              sleep 300
             fi
           done
-          echo "::error::Publish failed after 5 attempts"
+          echo "::error::Publish failed after 4 attempts"
           exit 1
