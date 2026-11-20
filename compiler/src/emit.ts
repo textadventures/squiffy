@@ -33,6 +33,8 @@ interface OutputSection {
     music?: string | null;
     // @sound: files to play once, in order, with "stop" for @sound stop, which stops the sounds playing
     sounds?: string[];
+    // @class (#449): classes on the story's element while this is the current section
+    classes?: string[];
     attributes?: string[];
     jsIndex?: number;
     passages?: Record<string, OutputPassage>;
@@ -46,6 +48,8 @@ interface OutputPassage {
     music?: string | null;
     // @sound: files to play once, in order, with "stop" for @sound stop, which stops the sounds playing
     sounds?: string[];
+    // @class (#449): classes added to the section's when this passage is shown
+    classes?: string[];
     // Its links aren't disabled when clicked (#104)
     repeat?: boolean;
     attributes?: string[];
@@ -137,6 +141,7 @@ export function emit(analysis: Analysis, settings: EmitSettings = {}): CompileSu
 
         outputSection.text = section.output;
         addSounds(outputSection, section, audio);
+        if (section.classes.length) outputSection.classes = section.classes;
 
         if (section.attributes.length > 0) {
             outputSection.attributes = section.attributes;
@@ -174,6 +179,7 @@ export function emit(analysis: Analysis, settings: EmitSettings = {}): CompileSu
 
             outputPassage.text = passage.output;
             addSounds(outputPassage, passage, audio);
+            if (passage.classes.length) outputPassage.classes = passage.classes;
 
             if (passage.attributes.length > 0) {
                 outputPassage.attributes = passage.attributes;

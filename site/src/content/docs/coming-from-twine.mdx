@@ -254,13 +254,15 @@ Squiffy fades from one track to the next by itself, and players get a mute butto
 | Add JavaScript | Story JavaScript | Story JavaScript | A [`@ui` block](/javascript/#running-code-when-the-story-starts), or indented lines in a section |
 | Add CSS | Story Stylesheet | Story Stylesheet | A `.css` file in the story's folder: see [Customising styles](/styling/) |
 | Show something in the sidebar | `(replace: ?sidebar)` | `StoryCaption`, `StoryMenu` | A [panel](/multiple-files/#panels), beside the story or opened from a button in the header |
+| Change the look for a scene | Tag the passage, and style `tw-story[tags~="dark"]` | Tag the passage, and style `body[data-tags~="dark"]` | `@class dark`, and style `body:has(.dark)`: see [Changing the look for a scene](/styling/#changing-the-look-for-a-scene) |
+| Add a class to the page | `(enchant: ?page, ...)` | `<<addclass "body" "dark">>`, `<<removeclass>>`, `<<toggleclass>>` | `{{addclass "dark"}}`, `{{removeclass "dark"}}`, `{{toggleclass "dark"}}` |
+| Check a passage's tags | `(passage:)'s tags contains "dark"` | `tags().includes("dark")` | `{{#if (hasclass "dark")}}` |
 | Write a comment | `<!-- ... -->` | `/* ... */` | `{{!-- ... --}}` |
 
 ## What Twine has that Squiffy doesn't
 
 Some things in Harlowe and SugarCube aren't in Squiffy yet. Each one is planned, and its GitHub issue says how it might work, so you can follow it or add your thoughts:
 
-- **Changing the page's look for a scene**, with passage tags or `<<addclass>>` ([#449](https://github.com/textadventures/squiffy/issues/449)).
 - **Widgets**, written in your story rather than JavaScript, with their own parameters ([#450](https://github.com/textadventures/squiffy/issues/450)). [`{{embed}}`](/helpers-reference/#content-helpers) includes another section, without parameters.
 - **Timers** that repeat, or wait for a time worked out as the story runs, like `<<repeat>>`, `(live:)` and `<<timed>>` ([#451](https://github.com/textadventures/squiffy/issues/451)). Squiffy can [move on after a fixed delay](/dynamic-text/#moving-on-after-a-delay).
 - **Links in the text that restart the story or open the saved games**, and player settings, like SugarCube's `UI` and `Setting` ([#452](https://github.com/textadventures/squiffy/issues/452)). They're on the buttons above the story.

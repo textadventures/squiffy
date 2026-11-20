@@ -19,6 +19,7 @@ export const lineRegexes = {
     ui: /^@ui (.*)$/,
     music: /^@music (.*)$/,
     sound: /^@sound (.*)$/,
+    class: /^@class (.*)$/,
 };
 
 // Parses one .squiffy file into a syntax tree. This never fails: problems such as a passage
@@ -192,6 +193,10 @@ export function parse(text: string, filename?: string): SquiffyFile {
             if (!passage) haveSection = true;
             const value = (match.music ?? match.sound)![1];
             add({ type: "sound", directive: match.music ? "music" : "sound", value, valueRange: valueRange(i, value), range });
+        }
+        else if (match.class) {
+            if (!passage) haveSection = true;
+            add({ type: "class", value: match.class[1], valueRange: valueRange(i, match.class[1]), range });
         }
         else if (match.attributes || match.unset) {
             haveSection = true;

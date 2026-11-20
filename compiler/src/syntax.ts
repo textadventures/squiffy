@@ -211,6 +211,16 @@ export interface SoundNode {
     range: Range;
 }
 
+// @class night forest (#449): classes on the story's element while this section is the current
+// one. In a passage, they're added to the section's when the passage is shown.
+export interface ClassNode {
+    type: "class";
+    // The class names, separated by spaces
+    value: string;
+    valueRange: Range;
+    range: Range;
+}
+
 // @set, @unset, @inc or @dec
 export interface AttributeNode {
     type: "attribute";
@@ -253,6 +263,7 @@ export type StatementNode =
     | EndNode
     | AttributeNode
     | SoundNode
+    | ClassNode
     | JsNode
     | TextNode;
 

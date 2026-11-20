@@ -196,6 +196,7 @@ const DIRECTIVES: [string, string][] = [
     ["end", "Marks this section as an ending"],
     ["music", "Plays music until it's changed, or stops it with @music stop"],
     ["sound", "Plays a sound once, or stops the sounds playing with @sound stop"],
+    ["class", "Puts classes on the story while this section is shown, for its stylesheet"],
     ["ui", "JavaScript for the story's user interface"],
 ];
 

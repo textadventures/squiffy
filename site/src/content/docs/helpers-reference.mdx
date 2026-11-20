@@ -280,6 +280,19 @@ See [Music and sound](/images-and-files/#music-and-sound) for examples.
 
 `{{music}}` and `{{sound}}` on their own, without a file, still show an attribute called `music` or `sound`.
 
+## Class helpers
+
+These change the classes on the element that holds the story, for your [CSS](/styling/#changing-the-look-for-a-scene). Unlike the classes from `@class`, which change with the section, these stay until they're taken off. The Back button and saved games put them back as they were.
+
+| Helper | Parameters | Description | Example |
+|--------|------------|-------------|---------|
+| `{{addclass}}` | `"class" ...` | Add classes | `{{addclass "dark"}}` |
+| `{{removeclass}}` | `"class" ...` | Take classes off | `{{removeclass "dark"}}` |
+| `{{toggleclass}}` | `"class" ...` | Add classes, or take them off if they're there | `{{toggleclass "big-text"}}` |
+| `hasclass` | `"class" ...` | Whether the story has all these classes, from `@class` or `{{addclass}}` | `{{#if (hasclass "dark")}}` |
+
+Each one takes one or more class names, which can be separate or in one piece of text with spaces between them: `{{addclass "dark" "rain"}}` and `{{addclass "dark rain"}}` are the same.
+
 ## Array management helpers
 
 These helpers let you manage arrays stored in attributes - useful for tracking items, available options, or game state.

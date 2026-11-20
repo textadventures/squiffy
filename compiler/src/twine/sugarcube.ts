@@ -1439,8 +1439,16 @@ class Writer {
                 throw new Unconvertible("audio groups");
             case "addclass":
             case "removeclass":
-            case "toggleclass":
-                throw new Unconvertible("macros that change elements' classes");
+            case "toggleclass": {
+                // On the page (#449), which in Squiffy is the story's element. Classes on other
+                // elements can't be converted.
+                if (!/^["'](?:html|body|#story|#passages)["']$/i.test(args[0] ?? "")) {
+                    throw new Unconvertible(`<<${m.name}>> on something other than the page ("body")`);
+                }
+                if (args.length != 2) throw new Unconvertible(`<<${m.name}>> without one class to change`);
+                state.leading = false;
+                return `{{${m.name} ${print(this.expr.parse(args[1]))}}}`;
+            }
             case "repeat":
                 throw new Unconvertible("<<repeat>>, which runs again and again");
             case "stop":

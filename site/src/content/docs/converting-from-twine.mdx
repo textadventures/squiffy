@@ -81,6 +81,7 @@ Play the story through after converting it. Twine and Squiffy work differently i
 | `(set: $hero to (dm: "hp", 10))`, `$hero's hp`, `$party's 1st's name` | `@set hero = { hp: 10 }`, `{{hero.hp}}`, `{{= party[0].name}}`: see [Objects](/attributes/#objects) |
 | `(storylet:)` and `(link-storylet:)` | A link to each storylet whose condition is true |
 | `''bold''`, `//italic//`, `(text-colour: red)[...]` | Markdown and HTML |
+| A passage's tags, and stylesheet rules for them, like `tw-story[tags~="dark"]` | `@class dark`, and `body:has(.dark)`: see [Styles](#styles) |
 | Passages tagged `header`, `footer` and `startup` | The master section, an `{{embed}}` at the end of each section, and the start section |
 | The [Harlowe Audio Library](https://twinelab.net/harlowe-audio/)'s `(track: "theme", "loop", true)` and `(track: "theme", "play")` | `@music theme.mp3`, or `{{music "theme.mp3"}}` later on: see [Sound](#sound) |
 | `(track: "theme", "stop")`, `(track: "door", "play")` | `@music stop`, `@sound door.mp3` |
@@ -113,6 +114,8 @@ Play the story through after converting it. Twine and Squiffy work differently i
 | `<<set $hero to { hp: 10 }>>`, `$hero.hp`, `$inv[_i].name` | `@set hero = { hp: 10 }`, `{{hero.hp}}`, `{{= inv[i].name}}`: see [Objects](/attributes/#objects) |
 | Widgets: `<<say "Ann">>` | A section for each widget, which `{{embed}}`s it, with its arguments in `args_0`, `args_1` and so on |
 | `''bold''`, `//italic//`, `@@color:red;...@@` | Markdown and HTML |
+| A passage's tags, and stylesheet rules for them, like `body[data-tags~="dark"]` or `body.dark` | `@class dark`, and `body:has(.dark)`: see [Styles](#styles) |
+| `<<addclass "body" "dark">>`, `<<removeclass "body" "dark">>`, `<<toggleclass "body" "dark">>` | `{{addclass "dark"}}`, `{{removeclass "dark"}}`, `{{toggleclass "dark"}}`. On anything but the page (`body`, `html`, `#story` or `#passages`), they aren't converted |
 | `StoryInit`, `PassageHeader`, `PassageFooter` | The start section, the master section, an `{{embed}}` at the end of each section |
 | `StoryCaption`, `StoryBanner` | A [panel](/multiple-files/#panels) beside the story, rendered again after each section and passage. Links in it don't work |
 | `<<audio "theme" loop play>>`, `<<audio "theme" stop>>` | `@music theme.mp3`, `@music stop`, or `{{music "theme.mp3"}}` and `{{stopmusic}}` later on: see [Sound](#sound) |
@@ -151,3 +154,5 @@ A Twine story's JavaScript is written for its story format, so it won't work in 
 ### Styles
 
 The story's stylesheet is in `story.css`, which is part of the story. Rules for Twine's own elements, such as Harlowe's `tw-story` and `tw-link` or SugarCube's `#story` and `.passage`, won't match anything in Squiffy, so you may need to change them. See [Customising styles](/styling/) for Squiffy's.
+
+A passage's tags become [`@class`](/styling/#changing-the-look-for-a-scene) in its section, except the ones that mean something to Twine or the story format, such as `widget`, `nobr` and `Twine.image`. Rules for tags, such as Harlowe's `tw-story[tags~="dark"]` and SugarCube's `body[data-tags~="dark"]` and `body.dark`, become rules for the class: `body:has(.dark)` for the whole page, as `tw-story`, `body` and `html` are, and `.dark` for the passage, such as `tw-passage[tags~="dark"]` or `.passage[data-tags~="dark"]`. See [Changing the look for a scene](/styling/#changing-the-look-for-a-scene).

@@ -135,6 +135,8 @@ export interface Section {
     music?: string | null;
     // @sound: files to play once, in order, with "stop" for @sound stop
     sounds?: string[];
+    // @class (#449): classes on the story's element while this is the current section
+    classes?: string[];
     attributes?: string[],
     jsIndex?: number;
     passages?: Record<string, Passage>;
@@ -148,6 +150,8 @@ export interface Passage {
     music?: string | null;
     // @sound: files to play once, in order, with "stop" for @sound stop
     sounds?: string[];
+    // @class (#449): classes added to the section's when this passage is shown
+    classes?: string[];
     // @repeat: its links stay clickable, and clicking one doesn't count towards @1, @2... and @last (#104)
     repeat?: boolean;
     attributes?: string[];

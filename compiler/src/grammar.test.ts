@@ -56,6 +56,11 @@ describe("TextMate grammar", () => {
         expect(scopeOf("@sound door.mp3", 0, "sound")).toContain("keyword.control.directive.squiffy");
     });
 
+    test("@class (#449)", () => {
+        expect(scopeOf("@class night forest", 0, "class")).toContain("keyword.control.directive.squiffy");
+        expect(scopeOf("@class night forest", 0, "night forest")).toContain("string.unquoted.squiffy");
+    });
+
     test("headers", () => {
         expect(scopeOf("[[a room]]:", 0, "a room")).toContain("entity.name.section.squiffy");
         expect(scopeOf("[look]:", 0, "look")).toContain("entity.name.function.passage.squiffy");

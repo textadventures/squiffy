@@ -161,6 +161,25 @@ Not on the map`));
         expect(result.problems.map(p => p.text)).toEqual(["story.css", "story.js"]);
     });
 
+    test("stylesheet rules for passage tags use the classes from @class (#449)", () => {
+        const css = [
+            "tw-story[tags~=\"dark\"] { background: black; }",
+            "tw-passage[tags~='dark'] p, [data-tags~=forest] { color: green; }",
+            "body[data-tags~=\"3d\"] .passage { color: red; }",
+            "body.mel #passages.dark, .my-body.x, tbody.y { color: blue; }",
+            "html[data-tags~=\"a\"][data-tags~=\"b\"], #story, body { margin: 0; }",
+        ].join("\n");
+        const result = convertTwine(`:: StoryData\n{"format": "Harlowe"}\n\n:: Start\nHi\n\n:: Style [stylesheet]\n${css}`);
+        expect(result.files["story.css"]).toBe([
+            "body:has(.dark) { background: black; }",
+            ".dark p, .forest { color: green; }",
+            "body:has(.\\33 d) .passage { color: red; }",
+            "body:has(.mel) #passages.dark, .my-body.x, tbody.y { color: blue; }",
+            "body:has(.a.b), #story, body { margin: 0; }",
+        ].join("\n") + "\n");
+        expect(result.problems.find(p => p.text == "story.css")!.reason).toContain("@class");
+    });
+
     test("the problems, as a text file", () => {
         const result = convertTwine(twee("Harlowe", ":: Start\n(alert: \"Hi\")"));
         expect(formatTwineProblems(result, "test.twee")).toBe(`Converted test.twee (Harlowe 1.0.0) to Squiffy: 1 passage.
@@ -495,6 +514,19 @@ describe("SugarCube", () => {
     test("tags().includes() is a check for the passages with the tag", async () => {
         const { script } = await convert("SugarCube", ":: Start [title]\nHi\n\n:: PassageHeader\n<<if tags().includes(\"title\")>>Title<</if>>");
         expect(section(script, "")).toBe("@clear\n{{#if (at (array \"Start\"))}}Title{{/if}}");
+    });
+
+    test("passage tags become @class (#449), except Twine's and the story format's own", async () => {
+        const { script } = await convert("SugarCube", ":: Start [dark forest nobr Twine.image debug-x]\nHi [[Next]]\n\n:: Next\nThere");
+        expect(section(script, "Start")).toBe("@class dark forest\nHi [[Next]]");
+        expect(section(script, "Next")).toBe("There");
+    });
+
+    test("<<addclass>>, <<removeclass>> and <<toggleclass>> on the page become helpers (#449)", async () => {
+        const { script, result } = await convert("SugarCube",
+            ":: Start\n<<addclass \"body\" \"dark\">><<removeclass \"html\" $mood>><<toggleclass \"#passages\" \"big\">><<addclass \"#hint\" \"hidden\">>");
+        expect(section(script, "Start")).toContain("{{addclass \"dark\"}}{{removeclass mood}}{{toggleclass \"big\"}}");
+        expect(result.problems.map(p => p.reason).join("\n")).toContain("<<addclass>> on something other than the page");
     });
 
     test("<<for>> with range becomes {{#each}}, with the item as this and the position as @index", async () => {
