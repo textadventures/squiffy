@@ -5,7 +5,7 @@
 // <<if>> becomes {{#if}}, <<set>> becomes @set or {{set}}, links with setters become links with
 // setters, and <<link>> and friends become links to generated passages and sections.
 
-import { display, isDynamicTarget, isListCall, lengthOf, member as memberOf, print, randomInteger, skipString, targetName, Tokens, Unconvertible, unescapeString } from "./expression.js";
+import { delayValue, display, isDynamicTarget, isListCall, lengthOf, member as memberOf, print, randomInteger, skipString, targetName, Tokens, Unconvertible, unescapeString } from "./expression.js";
 import type { BinaryOp, Expr } from "./expression.js";
 import { audioHelper, leadingAudio, pickSource, STOP_ALL_AUDIO } from "./audio.js";
 import type { AudioAction, StoryAudio } from "./audio.js";
@@ -1336,17 +1336,27 @@ class Writer {
                 return this.nodes(m.clauses![0].nodes, state);
             case "timed": {
                 state.leading = false;
-                let delay = 0;
+                // Each <<next>> waits after the one before, for its own delay, or, with none, the
+                // delay before it. A delay can be worked out as the story runs (#451).
+                let delay: Expr = { k: "num", v: 0 };
+                // The time since the text was shown, while every delay is a number
+                let total: number | null = 0;
                 let out = "";
-                for (const c of m.clauses!) {
+                m.clauses!.forEach((c, i) => {
                     const d = splitMacroArgs(c.args)[0];
-                    const ms = d ? this.expr.parse(d) : { k: "num", v: 0 } as Expr;
-                    if (ms.k != "num") throw new Unconvertible("<<timed>> with a delay that isn't fixed");
-                    delay += ms.v;
+                    if (d) delay = this.expr.parse(d);
+                    total = total !== null && delay.k == "num" ? total + delay.v : null;
                     const goto = this.gotoOnly(c.nodes);
-                    if (goto) out += goto.replace(/\}\}$/, ` after=${delay}}}`);
-                    else out += `{{#animate "fadeIn" start=${delay}}}${this.nodes(c.nodes, { ...state, leading: false })}{{/animate}}`;
-                }
+                    if (goto) {
+                        // {{goto}} waits from when the text is shown, so it needs the delays added up
+                        if (i > 0 && total === null) throw new Unconvertible("<<goto>> in a <<next>> after a delay that isn't fixed");
+                        out += goto.replace(/\}\}$/, ` after=${i == 0 ? delayValue(delay) : total}}}`);
+                    }
+                    else {
+                        // Animations play one after another, so each waits after the one before
+                        out += `{{#animate "fadeIn" start=${delayValue(delay)}}}${this.nodes(c.nodes, { ...state, leading: false })}{{/animate}}`;
+                    }
+                });
                 return out;
             }
             case "type": {
@@ -1465,9 +1475,15 @@ class Writer {
                 state.leading = false;
                 return `{{${m.name} ${print(this.expr.parse(args[1]))}}}`;
             }
-            case "repeat":
-                throw new Unconvertible("<<repeat>>, which runs again and again");
+            case "repeat": {
+                // <<repeat 1s>>: its text is added again every second, until a <<stop>> (#451)
+                state.leading = false;
+                if (!args[0]) throw new Unconvertible("<<repeat>> without a delay");
+                const delay = delayValue(this.expr.parse(args[0]));
+                return `{{#every ${delay} append=true}}${this.body(m, { ...state, leading: false })}{{/every}}`;
+            }
             case "stop":
+                return "{{stop}}";
             case "silent":
                 return "";
             case "elseif":

@@ -68,6 +68,8 @@ Play the story through after converting it. Twine and Squiffy work differently i
 | `(display: "Map")` | `{{embed "Map"}}` |
 | A custom macro: `(set: $say to (macro: str-type _who, [...]))`, `($say: "Ann")` | A section for the macro, `[[macro say]]:`, and `{{embed "macro say" who="Ann"}}`. Its parameters become the embed's [parameters](/basic-concepts/#parameters), and what it outputs with `(output:)` or `(output-data:)` is its text. A macro that takes any number of values (`...`), one kept in a temporary variable, and a call to a macro inside an expression, aren't converted |
 | `(go-to: "End")`, `(after: 2s)[(go-to: "End")]` | `{{goto "End"}}`, `{{goto "End" after=2000}}` |
+| `(after: $wait * 1s)[...]` | `{{#animate "fadeIn" start=(wait * 1000)}}...{{/animate}}` |
+| `(live: 1s)[...]`, `(stop:)` | [`{{#every 1000}}...{{/every}}`](/dynamic-text/#repeating-text), `{{stop}}` |
 | `(link: "Buy")[(set: $gold to it - 5)(go-to: "Shop")]` | `[[Buy]](Shop, gold -= 5)` |
 | `(link: "Open")[It's empty.]`, `(link-reveal:)` | A [passage](/basic-concepts/#passages) link that [replaces](/dynamic-text/#replace) the link with the text |
 | Named hooks, `(replace: ?door)`, `(show: ?note)` | [`{{#label}}` and `{{#replace}}`](/dynamic-text/#replace) |
@@ -104,6 +106,8 @@ Play the story through after converting it. Twine and Squiffy work differently i
 | `$hp > 0 ? "alive" : "dead"` | `hp > 0 ? "alive" : "dead"` |
 | `<<include "Map">>` | `{{embed "Map"}}` |
 | `<<goto "End">>`, `<<timed 2s>><<goto "End">><</timed>>` | `{{goto "End"}}`, `{{goto "End" after=2000}}` |
+| `<<timed $textSpeed>>...<<next>>...<</timed>>` | `{{#animate "fadeIn" start=textSpeed}}`, for each part. A delay like `"3s"` in a variable works as it is |
+| `<<repeat 1s>>...<</repeat>>`, `<<stop>>` | [`{{#every 1000 append=true}}...{{/every}}`](/dynamic-text/#repeating-text), `{{stop}}` |
 | `<<link "Buy" "Shop">><<set $gold -= 5>><</link>>` | `[[Buy]](Shop, gold -= 5)` |
 | `<<linkreplace "Open">>It's empty.<</linkreplace>>` | A passage link that replaces the link with the text |
 | `<span id="box">`, `<<replace "#box">>` | `{{#label "box"}}`, `{{#replace "box"}}` |
@@ -145,7 +149,7 @@ These are left as comments, and listed in `twine-import.txt`:
 - **Loops that don't go through an array or count by 1**, such as `<<for _i lt 4>>`, and `<<break>>` and `<<continue>>`. Rewrite them with [`{{#each}}`](/attributes/#going-through-an-array). A link in a loop can set attributes to the item, but not to a value inside it, and if it does more than that, it can't use the item, because what it does is in a passage or section of its own.
 - **Setting a value inside an object by a name or position in a variable**, such as `<<set $inv[_i].name to "rope">>`, anywhere but at the start of a passage, where it becomes an `@set`. Squiffy's `{{set}}` takes a fixed name.
 - **Harlowe's datasets**, and JavaScript's object methods, such as `Object.keys()`.
-- **Harlowe's more unusual hooks and changers**, such as `(live:)` with no `(go-to:)` in it, `(enchant:)` on anything but how text looks, and `(append:)` on a hook in another passage.
+- **Harlowe's more unusual hooks and changers**, such as `(enchant:)` on anything but how text looks, and `(append:)` on a hook in another passage.
 
 Changers and text styles that only change how something looks, such as `(link-style:)`, `(box:)` and transitions, are left out, and the text they changed is kept.
 
