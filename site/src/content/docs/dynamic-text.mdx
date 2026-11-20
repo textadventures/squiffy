@@ -66,6 +66,30 @@ Be careful not to overuse them though!
 
 Squiffy includes [Anime.js](https://animejs.com/), and you can define your own animations with JavaScript. See [Custom animations](/javascript/#custom-animations).
 
+## Text effects
+
+`{{#style}}` gives some text an effect that lasts, unlike an animation, which plays once:
+
+<Sample script="The ground {{#style &quot;rumble&quot;}}trembles{{/style}} beneath your feet. A voice {{#style &quot;fade-in-out&quot;}}whispers your name{{/style}}, and the room goes {{#style &quot;blur&quot;}}out of focus{{/style}}."></Sample>
+
+| Effect | What it does |
+|---|---|
+| `shake` | Shakes from side to side |
+| `shudder` | Trembles quickly from side to side |
+| `rumble` | Trembles quickly up and down |
+| `sway` | Rocks slowly from side to side |
+| `buoy` | Bobs slowly up and down |
+| `pulse` | Fades a little and back |
+| `fade-in-out` | Fades away completely and back |
+| `blink` | Blinks on and off |
+| `flicker` | Flickers like a failing light |
+| `blur`, `blurrier` | Out of focus |
+| `smear` | Smudged to the right |
+| `mirror` | Back to front |
+| `upside-down` | Upside down |
+
+You can give text more than one effect, and they all apply: `{{#style "rumble fade-in-out"}}` rumbles as it fades. You can add your own classes too: see [Styling some text](/styling/#styling-some-text). Effects that move stay still for readers who've asked their system to reduce motion.
+
 ### Animation options
 
 You can change how an animation runs by adding options after its name:

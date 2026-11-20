@@ -437,6 +437,19 @@ Example:
 {{#animate "typewriter"}}This text appears gradually.{{/animate}}
 ```
 
+### Styling text
+
+| Helper | Parameters | Description |
+|--------|------------|-------------|
+| `{{#style}}...{{/style}}` | `"class" ...` | Give the text inside one or more classes, for your [CSS](/styling/#styling-some-text) or Squiffy's [text effects](/dynamic-text/#text-effects) |
+
+The effects are `shake`, `shudder`, `rumble`, `sway`, `buoy`, `pulse`, `fade-in-out`, `blink`, `flicker`, `blur`, `blurrier`, `smear`, `mirror` and `upside-down`.
+
+Example:
+```squiffy
+The sign says {{#style "warning"}}KEEP OUT{{/style}}, and the ground {{#style "rumble"}}shakes{{/style}}.
+```
+
 ### Labels and replacement
 
 | Helper | Parameters | Description |

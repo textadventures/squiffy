@@ -82,7 +82,7 @@ export const reservedAttributes = new Set([
     "join", "sort", "shuffle", "slice", "first", "last", "indexof", "count", "range",
     "if", "unless", "each", "with", "lookup", "log", "else", "this", "turns", "previous", "previous_section",
     "true", "false", "null", "undefined", "music", "stopmusic", "sound", "stopsounds",
-    "addclass", "removeclass", "toggleclass", "hasclass", "content", "restart", "saves", "settings",
+    "addclass", "removeclass", "toggleclass", "hasclass", "content", "restart", "saves", "settings", "style",
 ]);
 
 export class StoryContext {

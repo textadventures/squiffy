@@ -45,6 +45,10 @@ body:has(.dark) {
 
 `@class` puts classes on the story's element while the section is current; in a passage, they're added until the player leaves the section. Use `body:has(.class)` to change page colours. `{{addclass}}`, `{{removeclass}}`, `{{toggleclass}}` and `(hasclass ...)` change classes mid-section or keep them across sections (helpers.md). Use class names not used elsewhere in the text. Player settings add classes too, such as `setting-textSize-Large` (project.md).
 
+## Styling some text
+
+`{{#style "warning"}}KEEP OUT{{/style}}` puts the text in `<span class="squiffy-style warning">` (a `<div>` if it has blank lines), so `.warning { color: red; }` styles it. Several classes, or an attribute, work: `{{#style "warning big"}}`, `{{#style mood}}`. Built-in effects use the same helper: `shake`, `shudder`, `rumble`, `sway`, `buoy`, `pulse`, `fade-in-out`, `blink`, `flicker`, `blur`, `blurrier`, `smear`, `mirror`, `upside-down` (styled as `.squiffy-style.shudder`; moving ones stop under reduced motion). Effects combine: each after the first goes on a nested element of its own. Don't use those names for your own classes.
+
 ## Useful selectors
 
 | Selector | What |
@@ -56,6 +60,7 @@ body:has(.dark) {
 | `button#restart`, `button#squiffy-theme` | Restart and light/dark buttons (`display: none` to hide) |
 | `aside.squiffy-panels-side`, `section.squiffy-panel` | Side panels |
 | `.squiffy-continue` | `{{#animate "continue"}}` links |
+| `.squiffy-style` | `{{#style}}` text |
 
 Hide the Back or Save buttons with `"backButton": false` / `"saveButton": false` in `squiffy.json`, not CSS.
 

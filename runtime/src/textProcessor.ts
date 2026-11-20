@@ -8,6 +8,12 @@ import { checkSegment, parsePath, valueAt, withValueAt } from "./paths.js";
 import { parseDelay } from "./utils.js";
 import { captureEveryBodies } from "./every.js";
 
+// The built-in effects for {{#style}} (#453), in squiffy.runtime.css
+const styleEffects = new Set([
+    "shake", "shudder", "rumble", "sway", "buoy", "pulse", "fade-in-out", "blink", "flicker",
+    "blur", "blurrier", "smear", "mirror", "upside-down",
+]);
+
 // An embed being shown (#450): its parameters, and the text it wraps, if any
 interface EmbedScope {
     params: Record<string, unknown>;
@@ -598,6 +604,28 @@ export class TextProcessor {
         this.handlebars.registerHelper("settings", function (this: unknown, options) {
             const text = fillIn(options.hash.text as string || processor.strings.settings, this, options, true);
             return new Handlebars.SafeString(`<a class="squiffy-link link-settings" data-handler="settings" role="link" tabindex="0">${text}</a>`);
+        });
+
+        // {{#style "warning"}}...{{/style}} (#453) gives the text it wraps one or more classes, for
+        // the story's own CSS or the built-in effects (shudder, blur, ...: .squiffy-style.shudder
+        // in squiffy.runtime.css). Text with blank lines in it is a block, so it gets a div.
+        this.handlebars.registerHelper("style", function (this: unknown, ...args: any[]) {
+            const options = args.pop();
+            const content = typeof options?.fn == "function" ? options.fn(this) as string : "";
+            const classes = args.flatMap(a => String(unwrapValue(a) ?? "").split(/\s+/)).filter(c => c.length > 0);
+            // An element has one animation and one transform, so a second effect would replace the
+            // first. Each effect after the first goes on an element of its own inside it, where
+            // they add up.
+            const extraEffects = classes.filter(c => styleEffects.has(c)).slice(1);
+            const outer = classes.filter(c => !extraEffects.includes(c));
+            const isBlock = content.includes("\n\n");
+            const tag = isBlock ? "div" : "span";
+            // The blank lines around a block's content let Markdown in it be rendered inside the div
+            let html = isBlock ? `\n\n${content.trim()}\n\n` : content;
+            for (const c of [...extraEffects].reverse()) {
+                html = `<${tag} class="squiffy-style ${escapeAttr(c)}">${html}</${tag}>`;
+            }
+            return new Handlebars.SafeString(`<${tag} class="${escapeAttr(["squiffy-style", ...outer].join(" "))}">${html}</${tag}>`);
         });
     }
 

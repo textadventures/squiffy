@@ -1697,16 +1697,30 @@ class Writer {
             case "textstyle": {
                 let open = "";
                 let close = "";
+                // The {{#style}} effects (#453) with the same look as Harlowe's
+                const effects: string[] = [];
                 for (const a of args) {
                     const style = str(this.expr.parse(a)).toLowerCase().replace(/[\s-]/g, "");
-                    const tag = { bold: "b", italic: "i", underline: "u", strike: "s", superscript: "sup", subscript: "sub" }[style];
+                    const tag = { bold: "b", italic: "i", underline: "u", strike: "s", superscript: "sup", subscript: "sub", mark: "mark" }[style];
+                    const effect = {
+                        shudder: "shudder", rumble: "rumble", sway: "sway", buoy: "buoy", fidget: "shake",
+                        blink: "blink", fadeinout: "fade-in-out", blur: "blur", blurrier: "blurrier",
+                        smear: "smear", mirror: "mirror", upsidedown: "upside-down",
+                    }[style];
                     if (tag) {
                         open += `<${tag}>`;
                         close = `</${tag}>` + close;
                     }
+                    else if (effect) {
+                        if (!effects.includes(effect)) effects.push(effect);
+                    }
                     else if (style != "none") {
                         this.ctx.story.note("harlowe-text-style", `"${style}"`, "Squiffy has no equivalent for these Harlowe text styles, so they've been left out");
                     }
+                }
+                if (effects.length) {
+                    open = `{{#style "${effects.join(" ")}"}}` + open;
+                    close += "{{/style}}";
                 }
                 return open + content + close;
             }

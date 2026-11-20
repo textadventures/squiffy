@@ -226,12 +226,115 @@ div.squiffy-output-section:not(:has(~ div.squiffy-output-section div.squiffy-out
     border-bottom: 1px solid currentColor;
 }
 
+/* Text effects for {{#style}} (#453), e.g. {{#style "shudder"}}...{{/style}} */
+span.squiffy-style:is(.shake, .shudder, .rumble, .sway, .buoy, .mirror, .upside-down) {
+    /* Transforms don't apply to inline elements */
+    display: inline-block;
+}
+
+.squiffy-style.shake {
+    animation: squiffy-shake 0.4s ease-in-out infinite;
+}
+
+@keyframes squiffy-shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-3px); }
+    75% { transform: translateX(3px); }
+}
+
+.squiffy-style.shudder {
+    animation: squiffy-shudder 0.1s linear infinite alternate;
+}
+
+@keyframes squiffy-shudder {
+    from { transform: translateX(-1px); }
+    to { transform: translateX(1px); }
+}
+
+.squiffy-style.rumble {
+    animation: squiffy-rumble 0.1s linear infinite alternate;
+}
+
+@keyframes squiffy-rumble {
+    from { transform: translateY(-1px); }
+    to { transform: translateY(1px); }
+}
+
+.squiffy-style.sway {
+    animation: squiffy-sway 2.5s ease-in-out infinite;
+}
+
+@keyframes squiffy-sway {
+    0%, 100% { transform: rotate(-3deg); }
+    50% { transform: rotate(3deg); }
+}
+
+.squiffy-style.buoy {
+    animation: squiffy-buoy 2.5s ease-in-out infinite;
+}
+
+@keyframes squiffy-buoy {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-0.25em); }
+}
+
+.squiffy-style.pulse {
+    animation: squiffy-pulse 1.5s ease-in-out infinite;
+}
+
+.squiffy-style.fade-in-out {
+    animation: squiffy-fade-in-out 3s ease-in-out infinite;
+}
+
+@keyframes squiffy-fade-in-out {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+.squiffy-style.blink {
+    animation: squiffy-blink 1s step-end infinite;
+}
+
+@keyframes squiffy-blink {
+    50% { opacity: 0; }
+}
+
+.squiffy-style.flicker {
+    animation: squiffy-flicker 3s linear infinite;
+}
+
+@keyframes squiffy-flicker {
+    0%, 19%, 21%, 23%, 54%, 56%, 100% { opacity: 1; }
+    20%, 22%, 55% { opacity: 0.2; }
+}
+
+.squiffy-style.blur {
+    filter: blur(1px);
+}
+
+.squiffy-style.blurrier {
+    filter: blur(3px);
+}
+
+.squiffy-style.smear {
+    text-shadow: 0.15em 0 0.1em color-mix(in srgb, currentColor 50%, transparent), 0.3em 0 0.15em color-mix(in srgb, currentColor 25%, transparent);
+}
+
+.squiffy-style.mirror {
+    transform: scaleX(-1);
+}
+
+.squiffy-style.upside-down {
+    transform: scaleY(-1);
+}
+
 /* Respect the reader's reduced-motion setting */
 @media (prefers-reduced-motion: reduce)
 {
     .squiffy-continue-pulse,
     .squiffy-continue-glow,
-    .squiffy-continue-bounce
+    .squiffy-continue-bounce,
+    .squiffy-style:is(.shake, .shudder, .rumble, .sway, .buoy, .pulse, .fade-in-out, .blink, .flicker)
     {
         animation: none;
     }
