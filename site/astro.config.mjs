@@ -2,8 +2,10 @@
 import { defineConfig } from "astro/config";
 import mdx from "@astrojs/mdx";
 import starlight from "@astrojs/starlight";
+import starlightLlmsTxt from "starlight-llms-txt";
 import { appLinks } from "./src/app-links.mjs";
 import { betaSite, siteUrl } from "./src/channel.mjs";
+import { llmsTxtOptions } from "./src/llms-txt.mjs";
 import squiffyGrammar from "squiffy-compiler/squiffy.tmLanguage.json" with { type: "json" };
 import javascript from "shiki/langs/javascript.mjs";
 
@@ -14,6 +16,8 @@ export default defineConfig({
     integrations: [
         starlight({
             title: "Squiffy",
+            // llms.txt, llms-full.txt and llms-small.txt: the docs as Markdown, for AI agents
+            plugins: [starlightLlmsTxt(llmsTxtOptions)],
             logo: {
                 src: "./src/assets/squiffy.png",
             },
