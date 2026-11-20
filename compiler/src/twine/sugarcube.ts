@@ -1328,7 +1328,8 @@ class Writer {
                 return "";
             case "back":
             case "return":
-                throw new Unconvertible(`<<${m.name}>>. Squiffy has its own Back button`);
+                // Left out on purpose (#445): a screen the player visits and leaves is a panel in Squiffy
+                throw new Unconvertible(`<<${m.name}>>. For a screen like an inventory, use a panel. Squiffy has its own Back button`);
             case "audio":
             case "cacheaudio":
             case "playlist":
