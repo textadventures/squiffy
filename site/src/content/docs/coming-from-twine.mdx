@@ -153,6 +153,7 @@ How to write in Squiffy what you'd write in Harlowe or SugarCube.
 | ...that wraps some text | | `<<widget "say" container>>_contents<</widget>>`, `<<say>>Hi<</say>>` | `{{content}}`, and `{{#embed "say"}}Hi{{/embed}}`: see [Wrapping text](/basic-concepts/#wrapping-text) |
 | Go to a passage without a click | `(go-to: "End")` | `<<goto "End">>` | `{{goto "End"}}` |
 | ...after a delay | `(after: 2s)[(go-to: "End")]` | `<<timed 2s>><<goto "End">><</timed>>` | `{{goto "End" after=2000}}` |
+| Show text again and again | `(live: 1s)[...]`, `(stop:)` | `<<repeat 1s>>...<</repeat>>`, `<<stop>>` | `{{#every 1000}}...{{/every}}`, `{{stop}}`: see [Repeating text](/dynamic-text/#repeating-text) |
 | Set the start passage | In Twine's story map | In Twine's story map | `@start Cave`, or put it first |
 | Set the story's title | The story's name in Twine | The story's name in Twine | `@title My Story` |
 

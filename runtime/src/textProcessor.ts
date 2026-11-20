@@ -6,6 +6,7 @@ import { rewriteInfixExpressions, rewriteValueExpression, splitSetters } from ".
 import { isNumeric, isBlank, toNumber } from "./numbers.js";
 import { checkSegment, parsePath, valueAt, withValueAt } from "./paths.js";
 import { parseDelay } from "./utils.js";
+import { captureEveryBodies } from "./every.js";
 
 // An embed being shown (#450): its parameters, and the text it wraps, if any
 interface EmbedScope {
@@ -113,6 +114,40 @@ export class TextProcessor {
                 after = delay;
             }
             this.goto ??= { section, after };
+            return "";
+        });
+
+        // {{#every 1000}}...{{/every}} (#451): text that's shown again and again while the player
+        // is in the section. This only writes the element: the runtime's timers show the text
+        // (see every.ts), first after one delay, as in Twine.
+        this.handlebars.registerHelper("every", (...args: any[]) => {
+            const options = args.pop();
+            const error = (message: string) => new Handlebars.SafeString(errorHtml("Error in {{#every}}:", message));
+            const delay = args.length ? parseDelay(unwrapValue(args[0])) : null;
+            if (delay === null || delay <= 0) {
+                return error(`expected how often to show the text, as a number of milliseconds or a time, e.g. {{#every 1000}} or {{#every "1s"}}${args.length ? `, not "${args[0]}"` : ""}`);
+            }
+            const body = options.hash.__body;
+            if (typeof options.fn != "function" || typeof body != "string") {
+                return error("it needs some text to show, e.g. {{#every 1000}}Tick.{{/every}}");
+            }
+            let attrs = ` data-every="${body}" data-every-delay="${delay}" data-every-count="0"`;
+            if (options.hash.times !== undefined) {
+                const times = Number(unwrapValue(options.hash.times));
+                if (!Number.isInteger(times) || times < 1) {
+                    return error(`times= should be a whole number of times, e.g. times=10, not "${options.hash.times}"`);
+                }
+                attrs += ` data-every-times="${times}"`;
+            }
+            if (options.hash.append) attrs += " data-every-append=\"\"";
+            // Text with paragraphs in it is a block, like {{#animate}}'s
+            const tag = decodeURIComponent(body).includes("\n\n") ? "div" : "span";
+            return new Handlebars.SafeString(`<${tag} class="squiffy-every"${attrs}></${tag}>`);
+        });
+
+        // {{stop}} (#451): the {{#every}} whose text this is stops after this time
+        this.handlebars.registerHelper("stop", () => {
+            this.stopEvery = true;
             return "";
         });
 
@@ -565,6 +600,9 @@ export class TextProcessor {
     // The passages whose links a {{deactivate}} asked to disable. Like goto, the runtime clears it
     // before showing a section or passage, and acts on it afterwards.
     deactivate = new Set<string>();
+    // Set by a {{stop}} in an {{#every}}'s text (#451). The runtime clears it before showing the
+    // text, and checks it afterwards.
+    stopEvery = false;
 
     // The embeds being shown, innermost last (#450). Each embed's text sees its own parameters
     // and the story's attributes, but not the parameters of the embed it's inside.
@@ -643,7 +681,7 @@ export class TextProcessor {
     process(text: string, inline: boolean) {
         try {
             // compat: inside an {{#each}}, a name that isn't one of the item's looks for an attribute
-            const template = this.handlebars.compile(rewriteInfixExpressions(text), { compat: true });
+            const template = this.handlebars.compile(rewriteInfixExpressions(captureEveryBodies(text)), { compat: true });
             text = template(this.context());
 
             if (inline) {

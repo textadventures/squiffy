@@ -2,7 +2,8 @@
 // Handlebars. They're accepted in:
 //   conditions:  {{#if score > 100 and has_key}}  ->  {{#if (and (gt score 100) has_key)}}
 //                (also {{#unless}}, {{else if}} and {{else unless}}, and what {{#each}} and
-//                {{#with}} go through: {{#each (range 1 (count + 1))}} (#447))
+//                {{#with}} go through: {{#each (range 1 (count + 1))}} (#447), and {{#every}}'s
+//                delay: {{#every delay * 1000}} (#451))
 //   values:      {{set "gold" gold + price * 2}}  ->  {{set "gold" (add gold (mul price 2))}}
 //                (also {{inc}} and {{dec}}, and {{append}}, {{prepend}} and {{remove}})
 //   display:     {{= price * 2}}                  ->  {{mul price 2}}
@@ -612,11 +613,11 @@ export function splitSetters(setters: string): string[] {
     return result.map(s => s.trim()).filter(s => s !== "");
 }
 
-const tagStart = /(\\*)\{\{(~?\s*)(?:(#if|#unless|#each|#with|else\s+if|else\s+unless)(?=[\s(!])|(set|inc|dec|append|prepend|remove)(?=\s)|(=)|(#?embed|goto|#animate)(?=\s))/g;
+const tagStart = /(\\*)\{\{(~?\s*)(?:(#if|#unless|#each|#with|#every|else\s+if|else\s+unless)(?=[\s(!])|(set|inc|dec|append|prepend|remove)(?=\s)|(=)|(#?embed|goto|#animate)(?=\s))/g;
 
 // Finds the end of a mustache tag starting at `from`, skipping over quoted strings and objects,
 // such as {{set "hero" { hp: 10 }}}. Returns the index of the closing "}}" (or "~}}"), or -1.
-function findTagEnd(text: string, from: number): number {
+export function findTagEnd(text: string, from: number): number {
     let quote: string | null = null;
     let braces = 0;
     for (let i = from; i < text.length; i++) {

@@ -156,6 +156,37 @@ You dive behind a rock just in time.
 @end
 BOOM."></Sample>
 
+## Repeating text
+
+`{{#every}}` shows some text again and again while the player is in the section, every so many milliseconds. Each time, its text is worked out again and replaces what it showed before, so it can count down, or change with the story's attributes. It first shows its text after one wait:
+
+<Sample alwaysShowRestart={true} script="@set fuse = 5
+The fuse burns down: {{#every 1000}}{{dec &quot;fuse&quot;}}{{fuse}}...{{#if fuse <= 0}}{{stop}}{{goto &quot;boom&quot;}}{{/if}}{{/every}}
+
+[[Run!]](safe)
+
+[[safe]]:
+@end
+You dive behind a rock just in time.
+
+[[boom]]:
+@end
+BOOM."></Sample>
+
+It stops when:
+
+- its text has a `{{stop}}` in it. The text is shown that time, and then no more.
+- it has been shown `times=` times, as in `{{#every 1000 times=3}}`.
+- the player moves on to another section. It keeps going while they click on passages in the section.
+
+With `append=true`, each time its text is added after what it showed before, rather than replacing it:
+
+<Sample alwaysShowRestart={true} script="Water drips from the ceiling. {{#every 800 append=true times=5}}Drip. {{/every}}"></Sample>
+
+Like `after=`, the wait can be an expression, such as `{{#every delay * 1000}}`, or a time as text, such as `{{#every "1.5s"}}`.
+
+Going back undoes what the text changed, along with everything else, and a saved game carries on where it was.
+
 ## Replace
 
 By creating labels, you can replace existing output when a link is clicked or when a passage or section is displayed. In the example below, we create a label called "1" using `{{#label}}`, and in the next passage we replace the text inside that label:

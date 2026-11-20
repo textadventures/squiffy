@@ -139,7 +139,7 @@ The saved game keeps the text that's on the screen, so if you change the story, 
 - `--attributes` shows the story's [attributes](/attributes/) at the end.
 - `--seed 42` makes anything random in the story, such as [`{{random}}`](/dynamic-text/#random), happen the same way every time.
 
-Any errors in the story, such as a mistake in its JavaScript, are shown where they happen, and Squiffy finishes with an exit code of 1. Time passes at once: animations finish straight away, and a [`{{goto}}`](/basic-concepts/#go-to-another-section) with `after=` happens without waiting. Text from `{{#animate "continue"}}` is shown as a link to click. Script files that a story adds to its page aren't run.
+Any errors in the story, such as a mistake in its JavaScript, are shown where they happen, and Squiffy finishes with an exit code of 1. Time passes at once: animations finish straight away, and a [`{{goto}}`](/basic-concepts/#go-to-another-section) with `after=` happens without waiting. [`{{#every}}`](/dynamic-text/#repeating-text) text is shown again and again too, until it stops, or until it has been shown 20 times in a row with nothing else to wait for, when play carries on with the text as it is then. Text from `{{#animate "continue"}}` is shown as a link to click. Script files that a story adds to its page aren't run.
 
 ### Playing at random
 

@@ -160,6 +160,28 @@ Tick. {{goto "Clock" after=1000}}`);
         expect(formatPlayResult(clock, false)).toContain(`(section "Clock" ${clock.steps[1].went.length} times)`);
     });
 
+    test("{{#every}} text that never stops isn't a story stuck moving on (#451)", async () => {
+        const playable = await load(`@set n = 0
+The clock says {{#every 1000}}{{inc "n"}}{{n}}{{/every}}. [[Fuse]]
+
+[[Fuse]]:
+@set fuse = 3
+{{#every "1s"}}{{dec "fuse"}}{{fuse}}...{{#if fuse <= 0}}{{stop}}{{goto "Boom"}}{{/if}}{{/every}}
+
+[[Boom]]:
+@end
+BOOM.`);
+
+        const result = await playStory(playable, { choose: ["Fuse"] });
+        expect(result.steps[0].repeating).toBe(true);
+        expect(result.steps[0].stillGoing).toBeUndefined();
+        expect(result.steps[0].text).toBe("The clock says 20. [Fuse]");
+        expect(formatPlayResult(result, false)).toContain("with {{#every}}, so play stopped waiting for it here");
+        expect(result.steps[1].text).toBe("0...\n\nBOOM.");
+        expect(result.steps[1].repeating).toBeUndefined();
+        expect(result.ending).toBe(true);
+    });
+
     test("animations finish at once, and continue text is clicked like a link", async () => {
         const playable = await load(`{{#label "status"}}Waiting{{/label}} [Go]
 

@@ -13,6 +13,7 @@ import { imports } from "./import.js";
 import { areInputsValid, setupInputValidation } from "./inputValidation.js";
 import { createAssetHtmlResolver, isAbsolute } from "./assets.js";
 import { Sound, DEFAULT_FADE } from "./sound.js";
+import { EveryTimers } from "./every.js";
 
 export type { SquiffyApi, SavedGame, LoadSaveResult } from "./types.js";
 export type { SquiffyEventHandler, SquiffyEventMap } from "./events.js";
@@ -46,6 +47,10 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     // the browser
     let gotoHops = 0;
     const MAX_GOTO_HOPS = 100;
+    // The {{#every}}s showing their text again and again (#451), and how many sections or passages
+    // are being shown, which they wait for
+    const everyTimers = new EveryTimers(() => currentSectionElement, tickEvery);
+    let navigating = 0;
 
     async function handleLink(link: HTMLElement): Promise<boolean> {
         if (runningTransitions) return false;
@@ -164,6 +169,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         }
         // Saved while waiting for a {{goto}}, so carry on waiting
         await resumeGoto();
+        everyTimers.sync();
     }
 
     async function resumeGoto() {
@@ -378,6 +384,17 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     }
 
     async function go(sectionName: string) {
+        navigating++;
+        try {
+            await goNow(sectionName);
+        }
+        finally {
+            navigating--;
+            everyTimers.sync();
+        }
+    }
+
+    async function goNow(sectionName: string) {
         cancelGoto();
         const oldCanGoBack = canGoBack();
         currentSection = story.sections[sectionName];
@@ -519,6 +536,17 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     
     // clicked: the number markClicked gave the link that was clicked to get here, if any
     async function showPassage(passageName: string, clicked?: string) {
+        navigating++;
+        try {
+            await showPassageNow(passageName, clicked);
+        }
+        finally {
+            navigating--;
+            everyTimers.sync();
+        }
+    }
+
+    async function showPassageNow(passageName: string, clicked?: string) {
         cancelGoto();
         const oldCanGoBack = canGoBack();
         let passage = currentSection.passages && currentSection.passages[passageName];
@@ -610,6 +638,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     
     function restart() {
         cancelGoto();
+        everyTimers.stopAll();
         state.reset();
         sound.sync();
         syncClasses();
@@ -729,6 +758,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             await new Promise(resolve => setTimeout(resolve, 50));
         }
         cancelGoto();
+        everyTimers.stopAll();
         pendingErrors.length = 0;
         state.reset();
         for (const [attribute, value] of Object.entries(save.state)) {
@@ -758,6 +788,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
 
         // Saved while waiting for a {{goto}}, so carry on waiting
         await resumeGoto();
+        everyTimers.sync();
         return { success: true };
     }
 
@@ -966,6 +997,8 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
 
         setCurrentSectionElement();
         setCurrentPassageElement();
+        // The {{#every}}s shown again start again
+        everyTimers.sync();
         emitter.emit("storyUpdated", {});
     }
 
@@ -1065,6 +1098,8 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         }
         const passage = currentPassageElement?.getAttribute("data-passage");
         emitter.emit("navigated", passage ? { section: get("_section"), passage } : { section: get("_section") });
+        // The {{#every}}s that were undone stop, and any in the section gone back to start again
+        everyTimers.sync();
     }
 
     function undoLast() {
@@ -1197,6 +1232,62 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         (currentPassageElement ?? currentSectionElement).setAttribute("data-undo", JSON.stringify(undoLog));
         undoLog = {};
     };
+
+    // Adds what's changed since to the undo log of the section or passage already shown, keeping
+    // the value from before it was shown, e.g. for an {{#every}}'s text (#451)
+    const mergeUndoLog = function() {
+        const element = currentPassageElement ?? currentSectionElement;
+        const log = JSON.parse(element.getAttribute("data-undo") || "{}");
+        for (const [attribute, value] of Object.entries(undoLog)) {
+            if (!(attribute in log)) log[attribute] = value;
+        }
+        element.setAttribute("data-undo", JSON.stringify(log));
+        undoLog = {};
+    };
+
+    // Shows an {{#every}}'s text again (#451). Returns false if it has to wait, while a section or
+    // passage is being shown.
+    function tickEvery(el: HTMLElement): boolean {
+        if (runningTransitions || navigating > 0) return false;
+        const inline = el.tagName == "SPAN";
+        const body = decodeURIComponent(el.getAttribute("data-every") || "");
+        let html: string;
+        textProcessor.stopEvery = false;
+        try {
+            html = ui.renderHtml(body, inline);
+            // Text added after text keeps its spaces, e.g. {{#every 1000 append=true}}Drip. {{/every}}
+            if (inline) html = (/^\s/.test(body) ? " " : "") + html + (/\s$/.test(body) ? " " : "");
+        }
+        catch (e) {
+            html = errorHtml("Error in {{#every}}:", e instanceof Error ? e.message : String(e));
+            textProcessor.stopEvery = true;
+        }
+        const text = document.createElement(inline ? "span" : "div");
+        text.className = "squiffy-every-text";
+        text.innerHTML = html;
+        if (el.hasAttribute("data-every-append")) el.append(text);
+        else el.replaceChildren(text);
+        pluginManager.onWrite(text);
+
+        const count = (Number(el.getAttribute("data-every-count")) || 0) + 1;
+        el.setAttribute("data-every-count", String(count));
+        const times = Number(el.getAttribute("data-every-times")) || 0;
+        if (textProcessor.stopEvery || (times && count >= times)) el.setAttribute("data-every-stopped", "");
+        textProcessor.stopEvery = false;
+
+        const element = currentPassageElement ?? currentSectionElement;
+        takeDeactivate(element);
+        const pending = takeGoto(element);
+        mergeUndoLog();
+        save();
+        if (pending) {
+            // It replaces any {{goto ... after=}} still waiting
+            clearTimeout(gotoTimer);
+            gotoHops = 0;
+            void followGoto(pending);
+        }
+        return true;
+    }
 
     const doUndo = function(undosJson: string | null) {
         if (!undosJson) return;
@@ -1386,6 +1477,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         usesSound: () => playedSound || !!story.audio?.length,
         dispose: () => {
             cancelGoto();
+            everyTimers.stopAll();
             sound.dispose();
             applyClasses([]);
         },

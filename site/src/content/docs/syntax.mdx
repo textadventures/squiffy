@@ -106,6 +106,7 @@ Anything in `{{double curly brackets}}` is worked out as the text is shown. See 
 | `{{embed "map"}}` | Shows the text of another section, or a passage in this one | [Embed text](/basic-concepts/#embed-text) |
 | `{{embed "say" who="Ann"}}`, `{{#embed "box"}}...{{/embed}}` | Embeds text with parameters, or wrapping some text that it shows with `{{content}}` | [Parameters](/basic-concepts/#parameters), [Wrapping text](/basic-concepts/#wrapping-text) |
 | `{{goto "cave"}}`, `{{goto "cave" after=3000}}` | Goes to another section without a click, straight away or after a delay in milliseconds (or a time like `"3s"`, or an expression) | [Go to another section](/basic-concepts/#go-to-another-section) |
+| `{{#every 1000}}...{{/every}}`, `{{stop}}` | Shows some text again and again while the player is in the section, until a `{{stop}}` | [Repeating text](/dynamic-text/#repeating-text) |
 | `{{deactivate "door"}}`, `{{deactivate}}` | Turns off the links to a passage in this section, or to this passage | [Turning off passage links](/basic-concepts/#turning-off-passage-links) |
 | `{{random (array "a" "b")}}` | Picks one at random | [Random](/dynamic-text/#random) |
 | `{{rotate (array "a" "b") set="x"}}` | A link that cycles through options | [Rotate](/dynamic-text/#rotate) |

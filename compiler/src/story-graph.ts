@@ -117,13 +117,14 @@ const collapsed = (position: Position): Range => ({ start: position, end: positi
 
 const comparePositions = (a: Position, b: Position) => a.line - b.line || a.character - b.character;
 
-// The parts of a container's text inside {{#if}} or {{#unless}} blocks
+// The parts of a container's text inside {{#if}} or {{#unless}} blocks, or {{#every}} (#451),
+// whose text is shown later, if the player is still there
 function conditionalRanges(container: SectionNode | PassageNode): Range[] {
     const ranges: Range[] = [];
     const open: Position[] = [];
     for (const statement of container.body) {
         if (statement.type != "text") continue;
-        for (const match of statement.text.matchAll(/\{\{~?\s*([#/])(if|unless)\b/g)) {
+        for (const match of statement.text.matchAll(/\{\{~?\s*([#/])(if|unless|every)\b/g)) {
             const position = { line: statement.range.start.line, character: match.index };
             if (match[1] == "#") {
                 open.push(position);
