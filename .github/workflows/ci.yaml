@@ -45,6 +45,11 @@ jobs:
           npm run check
           npm run build
 
+      # vite build doesn't type-check the editor, so svelte-check does
+      - name: Type-check editor
+        working-directory: app
+        run: npm run check
+
       - name: Lint
         run: npm run lint
 

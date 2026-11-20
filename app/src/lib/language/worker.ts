@@ -119,6 +119,7 @@ const handlers: WorkerApi = {
         return { file: symbol.file, range: ("nameRange" in node && node.nameRange) || node.range };
     },
     getDiagnostics: path => current().getDiagnostics(path),
+    getAllDiagnostics: () => current().getAllDiagnostics(),
     getDocumentSymbols: path => current().getDocumentSymbols(path),
     getDefinition: (path, position) => current().getDefinition(path, position),
     getReferences: (path, position, includeDeclaration) => current().getReferences(path, position, includeDeclaration),
