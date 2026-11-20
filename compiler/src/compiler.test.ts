@@ -771,6 +771,19 @@ test("A story's squiffy.json panels are in its output (#14, #443)", async () => 
     expect(await without.getJs()).not.toContain("panels");
 });
 
+test("A story's squiffy.json settings are in its output (#452)", async () => {
+    const settings = [{ name: "warnings", label: "Content warnings", type: "toggle" as const }];
+    const withSettings = await compile({ script: "Hello", settings });
+    assertSuccess(withSettings);
+    expect(withSettings.output.story.settings).toEqual(settings);
+    expect(await withSettings.getJs()).toContain("story.settings = [");
+
+    const without = await compile({ script: "Hello", settings: [] });
+    assertSuccess(without);
+    expect(without.output.story.settings).toBeUndefined();
+    expect(await without.getJs()).not.toContain("story.settings");
+});
+
 test("@repeat marks a passage, which doesn't count towards @last (#104)", async () => {
     const warnings: string[] = [];
     const result = await compile({

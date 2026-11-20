@@ -43,7 +43,7 @@ export async function loadPlayableStory(story: StoryOnDisk): Promise<LoadResult>
     if (!analysis.success) {
         return { success: false, errors: analysis.diagnostics.filter(d => d.severity == "error").map(formatDiagnostic) };
     }
-    const compiled = emit(analysis, { projectId: story.projectId, panels: story.panels });
+    const compiled = emit(analysis, { projectId: story.projectId, panels: story.panels, settings: story.settings });
     const js = compiled.output.js.map(lines => new Function("squiffy", "get", "set", lines.join("\n")));
 
     // Sections and passages that are only shown inside others, with {{embed}} or {{live}},

@@ -50,7 +50,9 @@ export function LivePlugin(): SquiffyPlugin {
                     } else {
                         newContent = el.dataset.attribute == e.attribute ? e.value : squiffy.get(el.dataset.attribute!);
                     }
-                    if (oldContent !== newContent) {
+                    // A value that's a number is the same as the text on screen, e.g. when another
+                    // part of the same attribute changes, such as another setting
+                    if (oldContent !== String(newContent)) {
                         promises.push(fadeReplace(el, newContent));
                     }
                 }

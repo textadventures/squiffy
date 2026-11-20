@@ -74,6 +74,7 @@ A calculation inside a helper goes in its own parentheses: `{{= (round (gold / 3
 | `passage` | `"name" [text="..."] [set="..."]` | Link to a passage |
 | `restart` | `[text="..."] [confirm=false]` | Link that restarts the story, like the Restart button, asking first unless `confirm=false`: `{{restart text="Play again"}}` at an ending |
 | `saves` | `[text="..."]` | Link that opens the Saved games dialog, like the Save button. Works even with `"saveButton": false` |
+| `settings` | `[text="..."]` | Link that opens the Settings dialog, for a story with `"settings"` in `squiffy.json` (project.md). `{{settings.name}}` is a setting's value, not the link |
 
 `set` takes link-style assignments; single quotes for text avoid escaping.
 

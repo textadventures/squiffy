@@ -94,7 +94,7 @@ Read these when you need more than the above:
 - [references/attributes.md](references/attributes.md): setting attributes in Squiffy 7 and Squiffy 6, link setters, calculations, conditions, arrays, objects, `seen`/`visits`/`turns`/`previous`. Read before writing any `@set` or link setter you aren't sure of.
 - [references/helpers.md](references/helpers.md): every `{{helper}}`, with its parameters. Read before using a helper not shown above.
 - [references/dynamic-text.md](references/dynamic-text.md): random text, animation, replace, rotate, sequence, live text and delays.
-- [references/project.md](references/project.md): `squiffy.json` (main, exclude, panels, saves, Back button, strings), stories in several files, `@import`, images, music and sound.
+- [references/project.md](references/project.md): `squiffy.json` (main, exclude, panels, player settings, saves, Back button, strings), stories in several files, `@import`, images, music and sound.
 - [references/player-input.md](references/player-input.md): asking the player for text, with validation.
 - [references/styling.md](references/styling.md): CSS variables, `@class` and the class helpers.
 - [references/javascript.md](references/javascript.md): JavaScript in sections, `@ui`, the `squiffy` API, custom helpers and animations.

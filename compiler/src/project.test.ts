@@ -52,6 +52,23 @@ describe("parseProjectFile", () => {
         });
     });
 
+    test("player settings are kept, with list options as values and labels", () => {
+        const text = JSON.stringify({ version: 1, main: "a.squiffy", settings: [
+            { name: " warnings ", label: "Content warnings", default: true, description: "Before upsetting scenes" },
+            { name: "textSize", type: "list", label: "Text size", options: ["Small", { value: "large", label: "Large" }, { value: "huge" }], default: "large" },
+            { name: "speed", type: "range", min: 1, max: 5, step: 1, default: 3 },
+        ] });
+        expect(parseProjectFile(text)).toEqual({
+            success: true, project: { version: 1, main: "a.squiffy", exclude: [], settings: [
+                { name: "warnings", label: "Content warnings", description: "Before upsetting scenes", type: "toggle", default: true },
+                { name: "textSize", label: "Text size", type: "list", options: [
+                    { value: "Small", label: "Small" }, { value: "large", label: "Large" }, { value: "huge", label: "huge" },
+                ], default: "large" },
+                { name: "speed", label: "speed", type: "range", min: 1, max: 5, step: 1, default: 3 },
+            ] },
+        });
+    });
+
     test("exclude is optional, other properties are ignored, and main is normalised", () => {
         expect(parseProjectFile("{ \"$schema\": \"x\", \"version\": 1, \"main\": \"./src\\\\story.squiffy\" }")).toEqual({
             success: true, project: { version: 1, main: "src/story.squiffy", exclude: [] },
@@ -79,6 +96,23 @@ describe("parseProjectFile", () => {
         ["a panel with no label", "{ \"version\": 1, \"main\": \"a.squiffy\", \"panels\": [{ \"passage\": \"x\" }] }", "panel 1 needs a \"label\""],
         ["a panel in the wrong place", "{ \"version\": 1, \"main\": \"a.squiffy\", \"panels\": [{ \"passage\": \"x\", \"label\": \"x\", \"position\": \"top\" }] }", "should be \"side\" or \"button\""],
         ["a panel with an unknown icon", "{ \"version\": 1, \"main\": \"a.squiffy\", \"panels\": [{ \"passage\": \"x\", \"label\": \"x\", \"icon\": \"cat\" }] }", "\"icon\" should be one of \"bag\""],
+        ...([
+            ["settings not a list", "{}", "\"settings\" should be a list"],
+            ["a setting that isn't an object", "[1]", "setting 1 should be an object"],
+            ["a setting with no name", "[{ \"label\": \"x\" }]", "setting 1 needs a \"name\""],
+            ["a setting with a name that isn't an attribute name", "[{ \"name\": \"text size\" }]", "setting 1 needs a \"name\" of letters"],
+            ["two settings with the same name", "[{ \"name\": \"a\" }, { \"name\": \"a\" }]", "more than one setting called \"a\""],
+            ["a setting of an unknown type", "[{ \"name\": \"a\", \"type\": \"text\" }]", "\"type\" should be \"toggle\", \"list\", \"range\""],
+            ["a toggle whose default isn't true or false", "[{ \"name\": \"a\", \"default\": \"yes\" }]", "should be true or false"],
+            ["a list with no options", "[{ \"name\": \"a\", \"type\": \"list\" }]", "needs \"options\""],
+            ["a list with an empty option", "[{ \"name\": \"a\", \"type\": \"list\", \"options\": [\"\"] }]", "needs \"options\""],
+            ["a list with an option twice", "[{ \"name\": \"a\", \"type\": \"list\", \"options\": [\"x\", \"x\"] }]", "the same option more than once"],
+            ["a list whose default isn't an option", "[{ \"name\": \"a\", \"type\": \"list\", \"options\": [\"x\"], \"default\": \"y\" }]", "should be one of its options"],
+            ["a range with no max", "[{ \"name\": \"a\", \"type\": \"range\", \"min\": 1 }]", "needs a \"min\" and a \"max\""],
+            ["a range with min above max", "[{ \"name\": \"a\", \"type\": \"range\", \"min\": 5, \"max\": 1 }]", "needs a \"min\" and a \"max\""],
+            ["a range with a step of 0", "[{ \"name\": \"a\", \"type\": \"range\", \"min\": 1, \"max\": 5, \"step\": 0 }]", "\"step\" should be a number above 0"],
+            ["a range whose default is outside it", "[{ \"name\": \"a\", \"type\": \"range\", \"min\": 1, \"max\": 5, \"default\": 9 }]", "from its \"min\" to its \"max\""],
+        ].map(([name, settings, error]) => [name, `{ "version": 1, "main": "a.squiffy", "settings": ${settings} }`, error])),
     ])("refuses %s", (_, text, error) => {
         const result = parseProjectFile(text);
         expect(result.success).toBe(false);

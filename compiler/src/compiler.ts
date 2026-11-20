@@ -1,7 +1,7 @@
 import { analyse, analysisInternals, ExternalFiles, ParseCache } from "./analyse.js";
 import { emit, CompileSuccess } from "./emit.js";
 import type { Diagnostic } from "./syntax.js";
-import type { Panel } from "./project.js";
+import type { Panel, PlayerSetting } from "./project.js";
 
 export { findV5Syntax, convertV5Syntax } from "./v5.js";
 export type { V5SyntaxMatch, V5ConversionProblem, V5ConversionResult } from "./v5.js";
@@ -28,9 +28,9 @@ export { formatDiagnostic } from "./syntax.js";
 export { findCssUrls, isRelativeUrl, resolveCssUrl, rewriteCssUrls } from "./css-urls.js";
 export {
     PROJECT_FILENAME, PROJECT_FILE_VERSION, PROJECT_SCHEMA_URL, parseProjectFile, getStoryFiles, isExcluded,
-    isAlwaysSkipped, formatProjectFile, updateProjectFile, PAGE_STRINGS, PANEL_ICONS, storyFileList, BUILD_FOLDER,
+    isAlwaysSkipped, formatProjectFile, updateProjectFile, PAGE_STRINGS, PANEL_ICONS, PLAYER_SETTING_TYPES, storyFileList, BUILD_FOLDER,
 } from "./project.js";
-export type { MapPositions, PageStringName, PageStrings, Panel, PanelIcon, ProjectFile, ParsedProjectFile, StoryFiles } from "./project.js";
+export type { MapPositions, PageStringName, PageStrings, Panel, PanelIcon, PlayerSetting, PlayerSettingOption, ProjectFile, ParsedProjectFile, StoryFiles } from "./project.js";
 export type * from "./syntax.js";
 
 interface CompilerSettings {
@@ -50,6 +50,8 @@ interface CompilerSettings {
     projectId?: string;
     // squiffy.json's "panels": see EmitSettings.panels
     panels?: Panel[];
+    // squiffy.json's "settings": see EmitSettings.settings
+    settings?: PlayerSetting[];
 }
 
 export interface CompileError {
@@ -78,5 +80,5 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         };
     }
 
-    return emit(analysis, { globalJs: settings.globalJs, projectId: settings.projectId, panels: settings.panels });
+    return emit(analysis, { globalJs: settings.globalJs, projectId: settings.projectId, panels: settings.panels, settings: settings.settings });
 }

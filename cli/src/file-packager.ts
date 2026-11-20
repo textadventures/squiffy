@@ -19,6 +19,7 @@ export const compileSettings = (story: StoryOnDisk, script: string) => ({
     expressions: story.expressions,
     projectId: story.projectId,
     panels: story.panels,
+    settings: story.settings,
 });
 
 async function getCompileResult(story: StoryOnDisk) {

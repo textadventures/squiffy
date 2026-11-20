@@ -40,7 +40,34 @@ export interface ProjectFile {
     // Passages in the master section that are always to hand: beside the story, or in a dialog
     // from a button in the header (#14, #443)
     panels?: Panel[];
+    // Options the player can change at any time, in the Settings dialog, which the story reads as
+    // settings.name (#452)
+    settings?: PlayerSetting[];
 }
+
+// A player setting, from squiffy.json's "settings". The runtime's PlayerSetting is the same.
+// "toggle" is on or off, "list" is one of its options, and "range" a number from min to max.
+export type PlayerSetting =
+    | PlayerSettingBase & { type: "toggle"; default?: boolean }
+    | PlayerSettingBase & { type: "list"; options: PlayerSettingOption[]; default?: string }
+    | PlayerSettingBase & { type: "range"; min: number; max: number; step?: number; default?: number };
+
+interface PlayerSettingBase {
+    // How the story refers to it: settings.name
+    name: string;
+    // What the Settings dialog calls it
+    label: string;
+    // More about it, shown under the label
+    description?: string;
+}
+
+// One of a list setting's options: its value, which the story reads, and its text in the dialog
+export interface PlayerSettingOption {
+    value: string;
+    label: string;
+}
+
+export const PLAYER_SETTING_TYPES = ["toggle", "list", "range"] as const;
 
 // The icons a panel's button can have. The runtime has the same list (PANEL_ICONS).
 export const PANEL_ICONS = ["bag", "person", "map", "help", "info", "list", "book", "star", "heart"] as const;
@@ -96,6 +123,9 @@ export const PAGE_STRINGS = {
     wrongStory: "This saved game is for a different story.",
     notASave: "This file isn't a saved game.",
     cantSave: "The game couldn't be saved. Try Save to file instead.",
+    // The Settings dialog, for a story with "settings"
+    settings: "Settings",
+    resetSettings: "Reset to defaults",
 } satisfies Record<string, string>;
 
 // Positions on the story map, by section name, and passages by section and passage name. Only
@@ -178,6 +208,9 @@ export function parseProjectFile(text: string): ParsedProjectFile {
     const panels = parsePanels(data.panels);
     if (typeof panels == "string") return fail(panels);
 
+    const settings = parseSettings(data.settings);
+    if (typeof settings == "string") return fail(settings);
+
     const map = parseMapPositions(data.map);
     return {
         success: true,
@@ -189,6 +222,7 @@ export function parseProjectFile(text: string): ParsedProjectFile {
             ...(saveButton !== undefined ? { saveButton } : {}),
             ...(strings !== undefined ? { strings: pickPageStrings(strings as Record<string, string>) } : {}),
             ...(panels !== undefined ? { panels } : {}),
+            ...(settings !== undefined ? { settings } : {}),
         },
     };
 }
@@ -228,6 +262,85 @@ function parsePanels(value: unknown): Panel[] | string | undefined {
         });
     }
     return panels;
+}
+
+// squiffy.json's "settings", or an error to show the author
+function parseSettings(value: unknown): PlayerSetting[] | string | undefined {
+    if (value === undefined) return undefined;
+    const example = "{ \"name\": \"warnings\", \"type\": \"toggle\", \"label\": \"Content warnings\" }";
+    if (!Array.isArray(value)) return `${PROJECT_FILENAME}'s "settings" should be a list, such as [${example}].`;
+    const settings: PlayerSetting[] = [];
+    const names = new Set<string>();
+    for (const [i, item] of value.entries()) {
+        const which = `${PROJECT_FILENAME}'s setting ${i + 1}`;
+        if (!isObject(item)) return `${which} should be an object, such as ${example}.`;
+        const name = typeof item.name == "string" ? item.name.trim() : "";
+        if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(name)) {
+            return `${which} needs a "name" of letters, digits and underscores, such as "warnings", which the story reads as settings.warnings.`;
+        }
+        if (names.has(name)) return `${PROJECT_FILENAME} has more than one setting called "${name}".`;
+        names.add(name);
+        const label = typeof item.label == "string" && item.label.trim() ? item.label.trim() : name;
+        if (item.description !== undefined && typeof item.description != "string") {
+            return `${which}'s "description" should be text.`;
+        }
+        const base = {
+            name, label,
+            ...(typeof item.description == "string" && item.description.trim() ? { description: item.description.trim() } : {}),
+        };
+        const type = item.type ?? "toggle";
+        if (type == "toggle") {
+            if (item.default !== undefined && typeof item.default != "boolean") {
+                return `${which}'s "default" should be true or false.`;
+            }
+            settings.push({ ...base, type: "toggle", ...(item.default !== undefined ? { default: item.default } : {}) });
+        }
+        else if (type == "list") {
+            const options = Array.isArray(item.options) ? item.options.map(parseSettingOption) : null;
+            if (!options || !options.length || options.some(option => !option)) {
+                return `${which} needs "options" for the player to choose from, such as ["Small", "Medium", "Large"], or objects with a "value" and a "label".`;
+            }
+            const values = (options as PlayerSettingOption[]).map(option => option.value);
+            if (new Set(values).size != values.length) return `${which} has the same option more than once.`;
+            if (item.default !== undefined && !values.includes(item.default as string)) {
+                return `${which}'s "default" should be one of its options' values.`;
+            }
+            settings.push({
+                ...base, type: "list", options: options as PlayerSettingOption[],
+                ...(item.default !== undefined ? { default: item.default as string } : {}),
+            });
+        }
+        else if (type == "range") {
+            const isNumber = (n: unknown): n is number => typeof n == "number" && Number.isFinite(n);
+            if (!isNumber(item.min) || !isNumber(item.max) || item.min > item.max) {
+                return `${which} needs a "min" and a "max", such as "min": 1, "max": 5.`;
+            }
+            if (item.step !== undefined && (!isNumber(item.step) || item.step <= 0)) {
+                return `${which}'s "step" should be a number above 0.`;
+            }
+            if (item.default !== undefined && (!isNumber(item.default) || item.default < item.min || item.default > item.max)) {
+                return `${which}'s "default" should be a number from its "min" to its "max".`;
+            }
+            settings.push({
+                ...base, type: "range", min: item.min, max: item.max,
+                ...(item.step !== undefined ? { step: item.step as number } : {}),
+                ...(item.default !== undefined ? { default: item.default as number } : {}),
+            });
+        }
+        else {
+            return `${which}'s "type" should be ${PLAYER_SETTING_TYPES.map(t => `"${t}"`).join(", ")}.`;
+        }
+    }
+    return settings;
+}
+
+// A list setting's option: text, which is both its value and its label, or { value, label }
+function parseSettingOption(option: unknown): PlayerSettingOption | null {
+    if (typeof option == "string" && option.trim()) return { value: option.trim(), label: option.trim() };
+    if (typeof option == "number" || typeof option == "boolean") return { value: String(option), label: String(option) };
+    if (!isObject(option) || typeof option.value != "string" || !option.value.trim()) return null;
+    const label = typeof option.label == "string" && option.label.trim() ? option.label.trim() : option.value.trim();
+    return { value: option.value.trim(), label };
 }
 
 const EXAMPLE_ID = "0b7c6d9e-3f1a-4e2b-9c5d-8a7f6e5d4c3b";
@@ -393,7 +506,7 @@ export function getStoryFiles(project: ProjectFile, paths: Iterable<string>, ski
 export const storyFileList = (story: StoryFiles) => [...story.included, ...story.stylesheets, ...story.scripts];
 
 // The text of a new project file. It's given a new random id, unless one is passed in.
-export function formatProjectFile(project: { main: string; exclude?: string[]; map?: MapPositions; id?: string; panels?: Panel[] }): string {
+export function formatProjectFile(project: { main: string; exclude?: string[]; map?: MapPositions; id?: string; panels?: Panel[]; settings?: PlayerSetting[] }): string {
     const json: Record<string, unknown> = {
         $schema: PROJECT_SCHEMA_URL,
         version: PROJECT_FILE_VERSION,
@@ -402,6 +515,7 @@ export function formatProjectFile(project: { main: string; exclude?: string[]; m
     };
     if (project.exclude?.length) json.exclude = project.exclude;
     if (project.panels?.length) json.panels = project.panels;
+    if (project.settings?.length) json.settings = project.settings;
     const text = JSON.stringify(json, null, 2) + "\n";
     return project.map ? updateProjectFile(text, { map: project.map })! : text;
 }

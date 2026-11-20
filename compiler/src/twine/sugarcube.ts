@@ -649,6 +649,8 @@ class ExpressionParser {
             if (path == "State.variables" || path == "State.temporary" || path == "SugarCube.State") return { v: "global", name: path };
             if (object.name == "State.variables" || object.name == "variables") return { v: "expr", e: { k: "var", name: this.s.attribute(property, false) } };
             if (object.name == "State.temporary" || object.name == "temporary") return { v: "expr", e: this.s.variable(property, true) };
+            // The player's settings (#452), which Squiffy reads the same way
+            if (object.name == "settings") return { v: "expr", e: memberOf({ k: "var", name: "settings" }, { k: "str", v: property }) };
             return { v: "global", name: path };
         }
         return { v: "member", object, property };
@@ -1582,16 +1584,16 @@ class Writer {
 
     // <<link>>, <<button>>: the body runs when it's clicked, then the story goes to the passage
     // given, if there is one
-    // "restart" or "saves", if a link's body is only <<run UI.restart()>> or UI.saves(), or the
-    // same in <<script>>
-    private uiAction(body: Node[]): "restart" | "saves" | null {
+    // "restart", "saves" or "settings", if a link's body is only <<run UI.restart()>>,
+    // UI.saves() or UI.settings(), or the same in <<script>>
+    private uiAction(body: Node[]): "restart" | "saves" | "settings" | null {
         if (body.length != 1 || body[0].t != "macro") return null;
         const m = body[0];
         const code = m.name == "run" ? m.args
             : m.name == "script" ? (m.clauses?.[0]?.nodes ?? []).map(n => n.t == "text" || n.t == "raw" ? n.s : "\0").join("")
                 : null;
-        const match = code === null ? null : /^\s*UI\.(restart|saves)\(\s*\)\s*;?\s*$/.exec(code);
-        return match ? match[1] as "restart" | "saves" : null;
+        const match = code === null ? null : /^\s*UI\.(restart|saves|settings)\(\s*\)\s*;?\s*$/.exec(code);
+        return match ? match[1] as "restart" | "saves" | "settings" : null;
     }
 
     private linkMacro(m: Macro, args: string[]): string {
@@ -1633,7 +1635,8 @@ class Writer {
             : passage !== null ? { name: passage }
                 : dynamicDestination ? { expr: dynamicDestination } : null;
 
-        // A link that only runs UI.restart() or UI.saves(): {{restart}} or {{saves}} (#452). Like
+        // A link that only runs UI.restart(), UI.saves() or UI.settings(): {{restart}}, {{saves}}
+        // or {{settings}} (#452). Like
         // SugarCube's, {{restart}} asks the player first.
         const uiAction = destination ? null : this.uiAction(significant);
         if (uiAction) return `{{${uiAction} text=${quote(text.plain)}}}`;

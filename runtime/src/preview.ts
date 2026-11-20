@@ -3,8 +3,9 @@
 
 import { init } from "./squiffy.runtime.js";
 import { createPanels, type Panels } from "./panels.js";
+import { createSettingsDialog, SETTINGS_ICON, type SettingsDialog } from "./settingsDialog.js";
 import type { HostMessage, PreviewAssets, PreviewMessage, PreviewStory } from "./preview-protocol.js";
-import type { Panel, SquiffyApi, Story } from "./types.js";
+import type { Panel, PlayerSetting, SquiffyApi, Story } from "./types.js";
 
 export interface PreviewOptions {
     // Where to show the story
@@ -57,6 +58,9 @@ export function createPreview(options: PreviewOptions) {
     let panels: Panels | undefined;
     let panelsJson = "";
     let panelButtons: HTMLElement | undefined;
+    // The Settings button (#452), after the panels' buttons, for a story with "settings"
+    let settingsButton: HTMLButtonElement | undefined;
+    let settingsDialog: SettingsDialog | undefined;
     let panelSide: HTMLElement | undefined;
     // The host's mute button (#444), which carries on to the next story loaded
     let muted = false;
@@ -172,6 +176,9 @@ export function createPreview(options: PreviewOptions) {
         panels?.dispose();
         panels = undefined;
         panelsJson = "";
+        settingsDialog?.element.remove();
+        settingsDialog = undefined;
+        settingsButton = undefined;
         panelButtons = document.createElement("div");
         panelButtons.className = "squiffy-preview-header";
         panelSide = document.createElement("div");
@@ -208,6 +215,7 @@ export function createPreview(options: PreviewOptions) {
         send({ type: "usesSound", usesSound });
         api = newApi;
         setPanels(story.panels);
+        setSettingsButton(story.settings);
         send({ type: "canGoBackChanged", canGoBack: false });
         await newApi.begin(message.startAt);
         if (thisLoad == loadCount) send({ type: "loaded" });
@@ -220,6 +228,34 @@ export function createPreview(options: PreviewOptions) {
         panelsJson = json;
         panels?.dispose();
         panels = list?.length ? createPanels(api, { panels: list, buttons: panelButtons, side: panelSide }) : undefined;
+    }
+
+    // Shows the Settings button if the story has settings
+    function setSettingsButton(list: PlayerSetting[] | undefined) {
+        if (!api || !panelButtons) return;
+        if (!list?.length) {
+            settingsButton?.remove();
+            settingsButton = undefined;
+            return;
+        }
+        if (settingsButton) {
+            panelButtons.appendChild(settingsButton);
+            return;
+        }
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "squiffy-header-button squiffy-settings-button";
+        button.title = "Settings";
+        button.setAttribute("aria-label", "Settings");
+        button.setAttribute("aria-haspopup", "dialog");
+        button.innerHTML = SETTINGS_ICON;
+        button.addEventListener("click", () => {
+            if (!api) return;
+            settingsDialog ??= createSettingsDialog(api);
+            settingsDialog.open();
+        });
+        panelButtons.appendChild(button);
+        settingsButton = button;
     }
 
     async function receive(message: HostMessage) {
@@ -236,6 +272,7 @@ export function createPreview(options: PreviewOptions) {
                         const { story } = await loadModule(message.js);
                         api.update(story);
                         setPanels(story.panels);
+                        setSettingsButton(story.settings);
                     }
                     break;
                 case "restart":

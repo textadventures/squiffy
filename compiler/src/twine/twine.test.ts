@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import { analyse } from "../analyse.js";
 import { convertTwine, formatTwineProblems, sanitiseName } from "./convert.js";
 import { parseTwine, TwineParseError } from "./story.js";
+import { parseProjectFile } from "../project.js";
 
 // A Twee story in the given format, from passages written as ":: Name" and their text
 function twee(format: "Harlowe" | "SugarCube", passages: string): string {
@@ -444,6 +445,62 @@ describe("SugarCube", () => {
         const { script, result } = await convert("SugarCube", ":: Start\n<<link \"Play again\">><<run UI.restart()>><</link>> | <<link \"Load Game\">><<run UI.saves()>><</link>> | <<button \"Saves\">><<script>>UI.saves();<</script>><</button>>");
         expect(section(script, "Start")).toBe("{{restart text=\"Play again\"}} | {{saves text=\"Load Game\"}} | {{saves text=\"Saves\"}}");
         expect(result.problems).toEqual([]);
+    });
+
+    test("links that open the Settings dialog (#452)", async () => {
+        const { script, result } = await convert("SugarCube", ":: Start\n<<link \"Options\">><<run UI.settings()>><</link>>");
+        expect(section(script, "Start")).toBe("{{settings text=\"Options\"}}");
+        expect(result.problems).toEqual([]);
+    });
+
+    test("settings from the story's JavaScript, which the story reads as settings.name (#452)", async () => {
+        const js = `var settingFontSize = ["100%", "125%", '150%'];
+setup.speeds = ["slow", "normal", "fast"];
+Setting.addHeader("Display");
+Setting.addToggle("warnings", {
+    label: "Show <b>content warnings</b>",
+    desc: "Before upsetting scenes",
+    default: true, // on unless the player turns them off
+});
+Setting.addList("fontSize", {
+    label: "Font size",
+    list: settingFontSize,
+    default: "125%",
+    onInit: resizeFont,
+    onChange: function () { resizeFont(); }
+});
+Setting.addList("speed", { label: "Speed", list: setup.speeds, default: "normal" });
+Setting.addRange("volume", { label: "Volume", min: 0, max: 10, step: 1, default: 5, onChange() { setVolume(settings.volume); } });
+Setting.addList("broken", { label: "Broken", list: makeList() });
+Setting.addToggle("bad name", { label: "Bad" });`;
+        const { script, result } = await convert("SugarCube", `:: Script [script]\n${js}\n\n:: Start\n<<if settings.warnings>>Warning!<</if>> Size: <<print settings.fontSize>>`);
+        expect(JSON.parse(result.files["squiffy.json"]).settings).toEqual([
+            { name: "warnings", label: "Show content warnings", description: "Before upsetting scenes", type: "toggle", default: true },
+            { name: "fontSize", label: "Font size", type: "list", options: [
+                { value: "100%", label: "100%" }, { value: "125%", label: "125%" }, { value: "150%", label: "150%" },
+            ], default: "125%" },
+            { name: "speed", label: "Speed", type: "list", options: [
+                { value: "slow", label: "slow" }, { value: "normal", label: "normal" }, { value: "fast", label: "fast" },
+            ], default: "normal" },
+            { name: "volume", label: "Volume", type: "range", min: 0, max: 10, step: 1, default: 5 },
+        ]);
+        expect(section(script, "Start")).toBe("{{#if settings.warnings}}Warning!{{/if}} Size: {{settings.fontSize}}");
+        const problems = result.problems.filter(p => p.text.startsWith("Setting."));
+        expect(problems.map(p => p.text)).toEqual([
+            "Setting.addHeader(\"Display\")",
+            "Setting.addList(\"fontSize\")",
+            "Setting.addRange(\"volume\")",
+            "Setting.addList(\"broken\")",
+            "Setting.addToggle(\"bad name\")",
+        ]);
+        expect(problems[1].reason).toContain("such as setting-fontSize-100-");
+        // The project file is one the compiler takes
+        expect(parseProjectFile(result.files["squiffy.json"]).success).toBe(true);
+    });
+
+    test("a story variable called settings isn't mistaken for the player's settings (#452)", async () => {
+        const { script } = await convert("SugarCube", ":: Start\n<<set $settings to 1>><<print $settings>>");
+        expect(section(script, "Start")).not.toContain("{{settings}}");
     });
 
     test("<<set>>, <<unset>> and <<run>>", async () => {

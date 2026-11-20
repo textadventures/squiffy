@@ -13,6 +13,12 @@ export type SquiffyEventMap = {
     // A {{saves}} link was clicked (#452). With a handler, the page opens its Saved games dialog.
     // Without one, the runtime opens one of its own.
     savesRequested: Record<string, never>;
+    // A {{settings}} link was clicked (#452). With a handler, the page opens its Settings dialog.
+    // Without one, the runtime opens one of its own.
+    settingsRequested: Record<string, never>;
+    // The player changed a setting (#452). Putting them back to their defaults raises it for each
+    // one that changes.
+    settingChanged: { name: string, value: unknown };
 };
 
 export type SquiffyEventHandler<E extends keyof SquiffyEventMap> =

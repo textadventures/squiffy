@@ -1,7 +1,7 @@
 import pkg from "../package.json" with { type: "json" };
 import { Analysis, analysisInternals } from "./analyse.js";
 import type { Diagnostic } from "./syntax.js";
-import type { Panel } from "./project.js";
+import type { Panel, PlayerSetting } from "./project.js";
 
 const version = pkg.version;
 
@@ -20,6 +20,8 @@ interface OutputStory {
     expressions?: boolean;
     // squiffy.json's "panels"
     panels?: Panel[];
+    // squiffy.json's "settings"
+    settings?: PlayerSetting[];
     sections: Record<string, OutputSection>;
     // The sound files the story names (#444), from @music, @sound and {{music}} and {{sound}}
     // with a file in quotes, so the runtime can load them before they're needed
@@ -69,6 +71,8 @@ export interface EmitSettings {
     projectId?: string;
     // squiffy.json's "panels", if it has any: see ProjectFile.panels
     panels?: Panel[];
+    // squiffy.json's "settings", if it has any: see ProjectFile.settings
+    settings?: PlayerSetting[];
 }
 
 export interface CompileSuccess {
@@ -122,6 +126,10 @@ export function emit(analysis: Analysis, settings: EmitSettings = {}): CompileSu
 
     if (settings.panels?.length) {
         output.story.panels = settings.panels;
+    }
+
+    if (settings.settings?.length) {
+        output.story.settings = settings.settings;
     }
 
     if (story.uiJs.length > 0) {
@@ -219,6 +227,9 @@ export function emit(analysis: Analysis, settings: EmitSettings = {}): CompileSu
         }
         if (output.story.panels) {
             outputJs.push(`story.panels = ${JSON.stringify(output.story.panels, null, 4)};`);
+        }
+        if (output.story.settings) {
+            outputJs.push(`story.settings = ${JSON.stringify(output.story.settings, null, 4)};`);
         }
         if (output.story.audio) {
             outputJs.push(`story.audio = ${JSON.stringify(output.story.audio, null, 4)};`);

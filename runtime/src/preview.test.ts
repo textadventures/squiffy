@@ -3,7 +3,7 @@ import globalJsdom from "global-jsdom";
 import { compile } from "squiffy-compiler";
 import { createPreview } from "./preview.js";
 import type { PreviewMessage } from "./preview-protocol.js";
-import type { Panel, Story } from "./types.js";
+import type { Panel, PlayerSetting, Story } from "./types.js";
 
 beforeAll(() => {
     vi.stubGlobal("crypto", { randomUUID: () => "00000000-0000-0000-0000-000000000000" });
@@ -31,8 +31,8 @@ afterEach(() => {
 });
 
 // The compiled story module, as a host would send it
-const compileJs = async (script: string, panels?: Panel[]) => {
-    const result = await compile({ script, panels });
+const compileJs = async (script: string, panels?: Panel[], settings?: PlayerSetting[]) => {
+    const result = await compile({ script, panels, settings });
     if (!result.success) throw new Error("Compile failed");
     return result.getJs();
 };
@@ -287,6 +287,28 @@ body { background: url("blob:preview/1"), url(https://example.com/x.png); }`);
         await preview.receive({ type: "load", story: { js: await compileJs(script) } });
         expect(element.querySelector("button.squiffy-panel-button")).toBeNull();
         expect(document.querySelectorAll("dialog.squiffy-panel-dialog")).toHaveLength(0);
+    });
+
+    test("shows a Settings button for a story with settings, which opens the Settings dialog", async () => {
+        const { preview, element } = setUp();
+        const settings: PlayerSetting[] = [{ name: "warnings", label: "Content warnings", type: "toggle" }];
+        const panels: Panel[] = [{ passage: "status", label: "Status" }];
+        const panelScript = "[[]]:\n\n[status]:\nScore: {{score}}\n\n" + script;
+        await preview.receive({ type: "load", story: { js: await compileJs(panelScript, panels, settings) } });
+        const buttons = () => [...element.querySelectorAll<HTMLButtonElement>(".squiffy-preview-header button")];
+        expect(buttons().map(b => b.title || b.textContent)).toEqual(["Status", "Settings"]);
+        buttons()[1].click();
+        expect(document.querySelector("dialog.squiffy-settings label")!.textContent).toBe("Content warnings");
+
+        // Still after the panels' buttons when they change
+        await preview.receive({ type: "update", js: await compileJs(panelScript, [{ passage: "status", label: "Score" }], settings) });
+        expect(buttons().map(b => b.title || b.textContent)).toEqual(["Score", "Settings"]);
+
+        await preview.receive({ type: "update", js: await compileJs(panelScript, panels) });
+        expect(buttons().map(b => b.title || b.textContent)).toEqual(["Status"]);
+
+        await preview.receive({ type: "load", story: { js: await compileJs(script) } });
+        expect(document.querySelectorAll("dialog.squiffy-settings")).toHaveLength(0);
     });
 
     test("reports errors", async () => {

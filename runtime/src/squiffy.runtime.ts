@@ -16,12 +16,16 @@ import { Sound, DEFAULT_FADE } from "./sound.js";
 import { EveryTimers } from "./every.js";
 import { confirmDialog } from "./confirmDialog.js";
 import { createSavesDialog, type SavesDialog } from "./savesDialog.js";
+import { createSettingsDialog, type SettingsDialog } from "./settingsDialog.js";
+import { PlayerSettings } from "./playerSettings.js";
 
-export type { SquiffyApi, SavedGame, LoadSaveResult } from "./types.js";
+export type { SquiffyApi, SavedGame, LoadSaveResult, PlayerSetting, PlayerSettingOption, SettingValue } from "./types.js";
 export type { SquiffyEventHandler, SquiffyEventMap } from "./events.js";
 export { createSavesDialog, formatSaveTime, SAVES_STRINGS, SAVE_FILE_EXTENSION } from "./savesDialog.js";
 export type { SavesDialog, SavesDialogOptions, SavesStringName } from "./savesDialog.js";
 export { confirmDialog } from "./confirmDialog.js";
+export { createSettingsDialog, SETTINGS_STRINGS } from "./settingsDialog.js";
+export type { SettingsDialog, SettingsDialogOptions } from "./settingsDialog.js";
 export type { ConfirmDialogOptions } from "./confirmDialog.js";
 export { indexedDbSaveSlots, memorySaveSlots } from "./saveSlots.js";
 export { createPanels } from "./panels.js";
@@ -980,6 +984,8 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         // sees sections that were added in this update.
         const oldStory = story;
         story = newStory;
+        // Its settings may have changed
+        syncClasses();
         sound.preload(story.audio ?? []);
 
         // When re-rendering a section or passage, {{embed}} should look up passages in the
@@ -1306,10 +1312,21 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     const get = state.get.bind(state);
     const set = state.set.bind(state);
 
+    // The player's settings (#452), which the story reads as settings.name
+    const playerSettings = new PlayerSettings(() => story.settings ?? [], settings.persist ? "squiffy-settings:" + storageKey : undefined);
+    state.playerSettings = () => playerSettings.any() ? playerSettings.all() : null;
+    // After a setting changes: its classes, and text that shows it, such as {{live "settings"}} and panels
+    const settingChanged = (name: string, value: unknown) => {
+        syncClasses();
+        emitter.emit("settingChanged", { name, value });
+        emitter.emit("set", { attribute: "settings", value: playerSettings.all() });
+    };
+
     const textProcessor = new TextProcessor(() => story, state, () => currentSection);
     const strings = options.strings ?? {};
     if (typeof strings.restart == "string") textProcessor.strings.restart = strings.restart;
     if (typeof strings.saves == "string") textProcessor.strings.saves = strings.saves;
+    if (typeof strings.settings == "string") textProcessor.strings.settings = strings.settings;
 
     // Music and sound effects (#444)
     let playedSound = false;
@@ -1399,8 +1416,9 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         for (const c of classes) outputElementContainer.classList.add(c);
         appliedClasses = classes;
     }
+    // With the classes from the player's settings, such as setting-textSize-Large
     function syncClasses() {
-        applyClasses([...new Set([...sectionClasses(), ...classList(CLASSES)])]);
+        applyClasses([...new Set([...sectionClasses(), ...classList(CLASSES), ...playerSettings.classes()])]);
     }
     emitter.on("set", ({ attribute }) => {
         if (attribute == SECTION_CLASSES || attribute == CLASSES) syncClasses();
@@ -1456,6 +1474,17 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             })) return;
             restart();
         });
+        return {};
+    });
+    let settingsDialog: SettingsDialog | null = null;
+    linkHandler.registerLinkHandler("settings", () => {
+        if (emitter.has("settingsRequested")) {
+            emitter.emit("settingsRequested", {});
+        }
+        else {
+            settingsDialog ??= createSettingsDialog(api, { strings });
+            settingsDialog.open();
+        }
         return {};
     });
     linkHandler.registerLinkHandler("saves", () => {
@@ -1514,12 +1543,25 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         isMuted: () => sound.isMuted(),
         setMuted: (muted: boolean) => sound.setMuted(muted),
         usesSound: () => playedSound || !!story.audio?.length,
+        getSettings: () => structuredClone(playerSettings.definitions()),
+        getSetting: (name: string) => playerSettings.get(name),
+        setSetting: (name, value) => {
+            if (playerSettings.set(name, value)) settingChanged(name, playerSettings.get(name));
+        },
+        resetSettings: () => {
+            const before = playerSettings.all();
+            playerSettings.reset();
+            for (const [name, value] of Object.entries(playerSettings.all())) {
+                if (value !== before[name]) settingChanged(name, value);
+            }
+        },
         dispose: () => {
             cancelGoto();
             everyTimers.stopAll();
             sound.dispose();
             applyClasses([]);
             savesDialog?.element.remove();
+            settingsDialog?.element.remove();
         },
         on: (e, h) => emitter.on(e, h),
         off: (e, h) => emitter.off(e, h),
