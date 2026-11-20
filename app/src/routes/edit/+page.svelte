@@ -22,6 +22,7 @@
     import { showToast } from "#lib/toast.js";
     import { chooseDialog, confirmDialog, promptDialog } from "#lib/confirm.js";
     import BackupBanner from "#components/BackupBanner.svelte";
+    import DiskChangeBar from "#components/DiskChangeBar.svelte";
     import Toolbar from "#components/Toolbar.svelte";
     import FilesPanel from "#components/FilesPanel.svelte";
     import OutlinePanel from "#components/OutlinePanel.svelte";
@@ -123,8 +124,15 @@
             loading = false;
         })();
 
+        // Saves when the author switches away, and on coming back, looks for changes made
+        // outside the editor meanwhile (e.g. by an AI agent), which a folder opened in the
+        // browser can't report as they happen
         function handleVisibilityChange() {
             if (document.hidden) void project.current?.save();
+            else void project.current?.checkDisk();
+        }
+        function handleFocus() {
+            void project.current?.checkDisk();
         }
         // Ctrl/Cmd+Shift+O: go to a section or passage, from the outline's search box.
         // Ctrl/Cmd+Enter: run the story; with Shift, from the section the cursor is in. Caught
@@ -152,9 +160,11 @@
             }
         }
         document.addEventListener("visibilitychange", handleVisibilityChange);
+        window.addEventListener("focus", handleFocus);
         window.addEventListener("keydown", handleKeydown, true);
         return () => {
             document.removeEventListener("visibilitychange", handleVisibilityChange);
+            window.removeEventListener("focus", handleFocus);
             window.removeEventListener("keydown", handleKeydown, true);
         };
     });
@@ -1083,15 +1093,18 @@
                 <EditorTabs project={p} />
                 <!-- One editor per open file, so each keeps its own cursor and undo history -->
                 {#each p.openFiles as file (file.path)}
-                    <div class="flex-1 min-h-0 {file.path === p.activePath ? "" : "hidden"}">
-                        <CodeEditor
-                            value={file.text}
-                            extensions={extensionsFor(file.path)}
-                            onChange={text => file.setText(text)}
-                            onSave={() => void p.save()}
-                            onCursor={offset => handleCursor(file.path, offset)}
-                            onView={v => { if (v) views.set(file.path, v); }}
-                        />
+                    <div class="flex-1 min-h-0 flex flex-col {file.path === p.activePath ? "" : "hidden"}">
+                        <DiskChangeBar {file} onclose={() => void p.close(file.path)} />
+                        <div class="flex-1 min-h-0">
+                            <CodeEditor
+                                value={file.text}
+                                extensions={extensionsFor(file.path)}
+                                onChange={text => file.setText(text)}
+                                onSave={() => void p.save()}
+                                onCursor={offset => handleCursor(file.path, offset)}
+                                onView={v => { if (v) views.set(file.path, v); }}
+                            />
+                        </div>
                     </div>
                 {:else}
                     <p class="flex-1 p-6 text-sm text-surface-600-400">Open a file from the list on the left.</p>

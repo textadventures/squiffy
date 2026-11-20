@@ -27,6 +27,7 @@ import { findRecentFolder, forgetFolder as forgetBrowserFolder, hasPermission, l
 import { desktopApi } from "./desktop.js";
 import { newStoryDialog, newStoryText } from "./new-story.js";
 import { needsBackup } from "./backup.js";
+import { changedPaths, readDisk, reconcile } from "./disk-changes.js";
 import { convertTwineFile, TWINE_FILE_PATTERN, twineImportMessage } from "./twine-import.js";
 import { convertQuestFile, findQuestGame, QUEST_FILE_PATTERN, questImportMessage } from "./quest-import.js";
 
@@ -83,10 +84,18 @@ export const canOpenFolders = isDesktop || hasFileSystemAccess();
 class OpenFile {
     readonly path: string;
     text = $state("");
+    // The editor's last known version of the file on disk: what it last saved or read
     savedText = $state("");
     saving = $state(false);
     saveError = $state<string | null>(null);
     dirty = $derived(this.text !== this.savedText);
+    // Changed outside the editor while it has unsaved changes: the text on disk, until the author
+    // picks which to keep (disk-changes.ts)
+    conflict = $state<string | null>(null);
+    // Deleted outside the editor
+    deleted = $state(false);
+    // Not saved, even by Save, while there's a conflict or it's deleted
+    held = $derived(this.conflict !== null || this.deleted);
 
     private autosaveTimer: ReturnType<typeof setTimeout> | undefined;
     private saveQueue: Promise<void> = Promise.resolve();
@@ -100,28 +109,86 @@ class OpenFile {
     setText(text: string) {
         if (text === this.text) return;
         this.text = text;
+        this.scheduleSave();
+    }
+
+    private scheduleSave() {
         clearTimeout(this.autosaveTimer);
         this.autosaveTimer = setTimeout(() => void this.save(), AUTOSAVE_DELAY_MS);
     }
 
-    // Saves now. Saves run one at a time, so a slow write can't land after a later one.
-    save(): Promise<void> {
+    // Saves now. Saves run one at a time, so a slow write can't land after a later one. With
+    // `force`, writes even if there's a conflict or the file was deleted.
+    save(force = false): Promise<void> {
         clearTimeout(this.autosaveTimer);
-        this.saveQueue = this.saveQueue.then(() => this.write());
+        this.saveQueue = this.saveQueue.then(() => this.write(force));
         return this.saveQueue;
     }
 
-    private async write() {
+    // Looks at the file on disk, after it's been changed outside the editor (or might have been),
+    // and reloads it or holds it (disk-changes.ts). In the save queue, so it doesn't race a save.
+    checkDisk(): Promise<void> {
+        this.saveQueue = this.saveQueue.then(async () => {
+            const disk = await readDisk(this.project.fs, this.path);
+            if (disk !== undefined) this.diskIs(disk);
+        });
+        return this.saveQueue;
+    }
+
+    private diskIs(disk: string | null) {
+        const action = reconcile(this.text, this.savedText, disk);
+        const wasHeld = this.held;
+        this.deleted = action.kind === "deleted";
+        this.conflict = action.kind === "conflict" ? action.text : null;
+        if (action.kind === "reload") {
+            this.savedText = action.text;
+            this.text = action.text;
+        } else if (action.kind === "saved") {
+            this.savedText = action.text;
+        }
+        // Changes made while it was held can be saved now
+        if (wasHeld && !this.held && this.dirty) this.scheduleSave();
+    }
+
+    // After a conflict, the author picks the text on disk
+    reload() {
+        if (this.conflict === null) return;
+        this.savedText = this.conflict;
+        this.text = this.conflict;
+        this.conflict = null;
+    }
+
+    // After a conflict or a deletion, the author picks the text in the editor
+    keepMine(): Promise<void> {
+        return this.save(true);
+    }
+
+    private async write(force: boolean) {
+        if (this.held && !force) return;
+        if (!force && this.text === this.savedText && !this.saveError) return;
+        // Last line of defence, for a change the watcher missed (or a file system that can't be
+        // watched): don't write over a file that's changed since the editor last saved or read it
+        if (!force) {
+            const disk = await readDisk(this.project.fs, this.path);
+            if (disk !== undefined && disk !== this.savedText) {
+                this.diskIs(disk);
+                if (this.held || !this.dirty) return;
+            }
+        }
         const text = this.text;
-        if (text === this.savedText && !this.saveError) return;
         this.saving = true;
         try {
             await this.project.fs.write(this.path, text);
             this.savedText = text;
             this.saveError = null;
+            this.conflict = null;
+            const recreated = this.deleted;
+            this.deleted = false;
+            // Saved again after being deleted outside the editor: back in the file list
+            if (recreated) await this.project.refreshFiles();
             // The language service reads .squiffy files from their editors, but anything else,
             // such as squiffy.json, from the project
-            if (!this.path.toLowerCase().endsWith(".squiffy")) this.project.onFileChanged?.(this.path);
+            if (recreated || !this.path.toLowerCase().endsWith(".squiffy")) this.project.onFileChanged?.(this.path);
             await this.project.touch(true);
         } catch (err) {
             this.saveError = err instanceof Error ? err.message : String(err);
@@ -136,6 +203,13 @@ class OpenFile {
 }
 
 export type { OpenFile };
+
+// Why a file isn't being saved, for the bar above its editor and when it's closed
+export function heldMessage(file: OpenFile): string {
+    return file.deleted
+        ? `${file.path} has been deleted outside the editor, and has changes here that aren't saved.`
+        : `${file.path} has been changed outside the editor, and has changes here that aren't saved.`;
+}
 
 class OpenProject {
     fs: ProjectFileSystem;
@@ -308,12 +382,24 @@ class OpenProject {
         this.activePath = path;
     }
 
-    // Saves and closes a tab, showing its neighbour if it was the one showing
+    // Saves and closes a tab, showing its neighbour if it was the one showing. If the file was
+    // changed or deleted outside the editor while it had unsaved changes, asks which to keep.
     async close(path: string) {
-        const index = this.openFiles.findIndex(f => f.path === path);
+        const file = this.fileAt(path);
+        if (!file) return;
+        if (file.held && file.dirty) {
+            const choice = await chooseDialog(`${heldMessage(file)} Keep your changes?`, [
+                { label: "Cancel", value: null },
+                { label: "Discard them", value: "discard", danger: true },
+                { label: file.deleted ? "Save it again" : "Keep my changes", value: "keep" },
+            ]);
+            if (!choice) return;
+            if (choice === "keep") await file.keepMine();
+        } else {
+            await file.save();
+        }
+        const index = this.openFiles.indexOf(file);
         if (index < 0) return;
-        const file = this.openFiles[index];
-        await file.save();
         file.stop();
         this.openFiles.splice(index, 1);
         if (this.activePath === path) {
@@ -417,12 +503,68 @@ class OpenProject {
         await this.touch();
     }
 
+    // ── Changes made outside the editor ─────────────────────────────────────
+    // By another program, such as an AI agent working on the story, a text editor or git. A
+    // file system that can be watched (a folder in the desktop app) reports them as they happen;
+    // otherwise (a folder opened in the browser) the editor looks when its window gets the focus.
+    // Either way, open files are reloaded, or held if they have unsaved changes (disk-changes.ts).
+
+    private unwatch: (() => void) | undefined;
+    private diskQueue: Promise<void> = Promise.resolve();
+
+    watch() {
+        this.unwatch ??= this.fs.watch?.(changes => void this.filesChanged(changes.map(c => c.path)));
+    }
+
+    // After the file system reports changes
+    filesChanged(paths: string[]): Promise<void> {
+        return this.queueDiskWork(async () => {
+            await this.refreshFiles();
+            for (const path of new Set(paths)) {
+                await this.fileAt(path)?.checkDisk();
+                this.onFileChanged?.(path);
+            }
+        });
+    }
+
+    // When the window gets the focus, in case anything's changed that the file system didn't
+    // report: files added or deleted, files not open whose modified time has changed, and open
+    // files whose text has changed
+    checkDisk(): Promise<void> {
+        return this.queueDiskWork(async () => {
+            const before = this.files;
+            await this.refreshFiles();
+            const changed = new Set(changedPaths(before, this.files).filter(path => !this.isOpen(path)));
+            for (const file of [...this.openFiles]) {
+                const savedText = file.savedText;
+                const deleted = file.deleted;
+                await file.checkDisk();
+                if (file.savedText !== savedText || file.deleted !== deleted) changed.add(file.path);
+            }
+            for (const path of changed) this.onFileChanged?.(path);
+        });
+    }
+
+    private queueDiskWork(work: () => Promise<void>): Promise<void> {
+        this.diskQueue = this.diskQueue.then(work).catch(() => {
+            // The folder may have gone (e.g. a removable drive): editing goes on regardless
+        });
+        return this.diskQueue;
+    }
+
+    // Open files changed or deleted outside the editor while they had unsaved changes
+    get heldFiles(): OpenFile[] {
+        return this.openFiles.filter(f => f.held && f.dirty);
+    }
+
     closeAll() {
+        this.unwatch?.();
+        this.unwatch = undefined;
         for (const f of this.openFiles) f.stop();
     }
 }
 
-export type { OpenProject };
+export { OpenProject };
 
 let current = $state<OpenProject | null>(null);
 
@@ -466,12 +608,22 @@ async function start(fs: ProjectFileSystem, source: ProjectSource, storedMainFil
     // A squiffy.json whose main file is missing still leaves something to open
     await opened.open((await fs.exists(opened.mainFile)) ? opened.mainFile : opened.storedMainFile);
     setCurrent(opened);
+    opened.watch();
     await opened.touch();
 }
 
 // Saves and closes the open project, if any
 export async function closeProject(): Promise<void> {
     if (!current) return;
+    // Files changed or deleted outside the editor while they had unsaved changes aren't saved,
+    // unless the author says to
+    for (const file of current.heldFiles) {
+        const keep = await confirmDialog(`${heldMessage(file)} Keep your changes?`, {
+            cancelLabel: "Discard them",
+            confirmLabel: file.deleted ? "Save it again" : "Keep my changes",
+        });
+        if (keep) await file.keepMine();
+    }
     await current.save();
     setCurrent(null);
 }
