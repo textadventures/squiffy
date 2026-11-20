@@ -197,7 +197,8 @@
     onkeydown={handleKeydown}
     use:trapFocus
 >
-    <div class="card bg-surface-50-950 rounded-xl shadow-xl w-full max-w-[36rem] max-h-[85dvh] p-6 flex flex-col gap-4">
+    <!-- A fixed height, so the dialog doesn't change size and jump about as a search changes the list -->
+    <div class="card bg-surface-50-950 rounded-xl shadow-xl w-full max-w-[36rem] h-[85dvh] p-6 flex flex-col gap-4">
         <div class="flex items-center justify-between">
             <h2 id="fonts-title" class="text-base font-semibold">Fonts</h2>
             <button class="btn btn-xs preset-tonal" onclick={oncancel}>Close</button>
