@@ -275,3 +275,28 @@ B.
     await clickWithoutWaiting(element, "b");
     expect(leaving(sectionElement(element, "a"))).toEqual({ name: "fade", time: "" });
 });
+
+test("A slide moves the way it's named, arriving or leaving", async () => {
+    const { readFileSync } = await import("fs");
+    const style = document.createElement("style");
+    style.textContent = readFileSync(new URL("./squiffy.runtime.css", import.meta.url), "utf8");
+    document.head.appendChild(style);
+
+    const animation = (classes: string) => {
+        const el = document.createElement("div");
+        el.className = classes;
+        document.body.appendChild(el);
+        const computed = getComputedStyle(el);
+        const result = `${computed.animationName} ${computed.animationDirection || "normal"}`;
+        el.remove();
+        return result;
+    };
+    // Arriving, slide-left comes in from the right, and leaving, goes off to the left, by playing
+    // the animation from the left backwards
+    expect(animation("squiffy-transition slide-left")).toBe("squiffy-transition-from-right normal");
+    expect(animation("squiffy-transition squiffy-leave slide-left")).toBe("squiffy-transition-from-left reverse");
+    expect(animation("squiffy-transition slide-up")).toBe("squiffy-transition-from-below normal");
+    expect(animation("squiffy-transition squiffy-leave slide-up")).toBe("squiffy-transition-from-above reverse");
+    // Others play backwards to leave
+    expect(animation("squiffy-transition squiffy-leave zoom")).toBe("squiffy-transition-zoom reverse");
+});

@@ -330,7 +330,8 @@ span.squiffy-style:is(.shake, .shudder, .rumble, .sway, .buoy, .mirror, .upside-
 
 /* Transitions for how a section or passage appears (#489), from @transition. The element has
    squiffy-transition and the transition's name as classes while it plays, and @transition's
-   time in --squiffy-transition-time. @leave plays them backwards, with squiffy-leave too. A story's stylesheet can add its own, e.g.
+   time in --squiffy-transition-time. @leave plays them backwards, with squiffy-leave too, except
+   the slides, which leave the way they're named. A story's stylesheet can add its own, e.g.
    .squiffy-transition.swirl { animation-name: swirl; } */
 .squiffy-transition {
     animation-duration: var(--squiffy-transition-time, 0.5s);
@@ -346,46 +347,70 @@ span.squiffy-style:is(.shake, .shudder, .rumble, .sway, .buoy, .mirror, .upside-
     from { opacity: 0; }
 }
 
-.squiffy-transition.slide-up {
-    animation-name: squiffy-transition-slide-up;
+/* The slides move by --squiffy-slide-distance, e.g. 100% to slide all the way off and on */
+@keyframes squiffy-transition-from-below {
+    from { opacity: 0; transform: translateY(var(--squiffy-slide-distance, 2em)); }
 }
 
-@keyframes squiffy-transition-slide-up {
-    from { opacity: 0; transform: translateY(2em); }
+@keyframes squiffy-transition-from-above {
+    from { opacity: 0; transform: translateY(calc(-1 * var(--squiffy-slide-distance, 2em))); }
+}
+
+@keyframes squiffy-transition-from-right {
+    from { opacity: 0; transform: translateX(var(--squiffy-slide-distance, 3em)); }
+}
+
+@keyframes squiffy-transition-from-left {
+    from { opacity: 0; transform: translateX(calc(-1 * var(--squiffy-slide-distance, 3em))); }
+}
+
+/* A slide moves the way it's named: slide-left comes in from the right, and leaves to the left */
+.squiffy-transition.slide-up {
+    animation-name: squiffy-transition-from-below;
 }
 
 .squiffy-transition.slide-down {
-    animation-name: squiffy-transition-slide-down;
-}
-
-@keyframes squiffy-transition-slide-down {
-    from { opacity: 0; transform: translateY(-2em); }
+    animation-name: squiffy-transition-from-above;
 }
 
 .squiffy-transition.slide-left {
-    animation-name: squiffy-transition-slide-left;
-}
-
-@keyframes squiffy-transition-slide-left {
-    from { opacity: 0; transform: translateX(3em); }
+    animation-name: squiffy-transition-from-right;
 }
 
 .squiffy-transition.slide-right {
-    animation-name: squiffy-transition-slide-right;
+    animation-name: squiffy-transition-from-left;
 }
 
-@keyframes squiffy-transition-slide-right {
-    from { opacity: 0; transform: translateX(-3em); }
-}
-
-/* @leave plays the same animations backwards, as the old text goes before the screen is cleared */
+/* @leave plays the animations backwards, as the old text goes before the screen is cleared. So
+   that a slide leaves the way it's named, it plays the opposite slide backwards. */
 .squiffy-transition.squiffy-leave {
     animation-direction: reverse;
 }
 
-/* So sliding in from the side doesn't make the page scroll sideways */
-:has(> .squiffy-transition:is(.slide-left, .slide-right)) {
+.squiffy-transition.squiffy-leave.slide-up {
+    animation-name: squiffy-transition-from-above;
+}
+
+.squiffy-transition.squiffy-leave.slide-down {
+    animation-name: squiffy-transition-from-below;
+}
+
+.squiffy-transition.squiffy-leave.slide-left {
+    animation-name: squiffy-transition-from-left;
+}
+
+.squiffy-transition.squiffy-leave.slide-right {
+    animation-name: squiffy-transition-from-right;
+}
+
+/* So a transition, a story's own too, doesn't make the page scroll sideways, or a slide make it
+   longer */
+:has(> .squiffy-transition) {
     overflow-x: clip;
+}
+
+:has(> .squiffy-transition:is(.slide-up, .slide-down)) {
+    overflow-y: clip;
 }
 
 .squiffy-transition.zoom {
