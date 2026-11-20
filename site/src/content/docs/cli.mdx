@@ -112,16 +112,29 @@ Choices (in section "intro"):
   2. look around -> passage "look around"
 ```
 
-To click links, add `--choose` with the link's text or its number, as many times as you like. They're clicked in order:
+To click a link, add `--choose` with the link's text or its number:
 
 ```bash
-npx @textadventures/squiffy-cli --play --choose "look around" --choose "Go inside"
+npx @textadventures/squiffy-cli --play --choose "look around"
 ```
 
-The other options are:
+You can add `--choose` as many times as you like, and the links are clicked in order. To click a lot of them, put them in a file, one on each line, and give it with `--choices links.txt`. Blank lines, and lines starting with `# `, are left out. The links in the file are clicked first, then any `--choose`.
+
+### Playing a few links at a time
+
+Add `--save` with a file name to carry on from where you left off. Squiffy loads the game saved in the file, if there is one, clicks the links you give it, and saves the game there again. So you can play a story a link or two at a time, deciding what to click next from what you see:
+
+```bash
+npx @textadventures/squiffy-cli --play --save game.json
+npx @textadventures/squiffy-cli --play --save game.json --choose "Go inside"
+npx @textadventures/squiffy-cli --play --save game.json --choose 2
+```
+
+The saved game keeps the text that's on the screen, so if you change the story, that text stays as it was, though what comes next is from your changes. Delete the file, or use `--start`, to start again.
+
+### Other options
 
 - `--input attribute=value` puts text in a [text box](/player-input/), when there is one for that attribute on the screen. Add it once for each text box.
-- `--save game.json` carries on from the game saved in `game.json`, if there is one, and saves the game there afterwards. So you can play a story a few links at a time. If you change the story, earlier text on the screen stays as it was, so delete the file to start again.
 - `--start section` starts at another section.
 - `--attributes` shows the story's [attributes](/attributes/) at the end.
 - `--seed 42` makes anything random in the story, such as [`{{random}}`](/dynamic-text/#random), happen the same way every time.
@@ -143,11 +156,20 @@ Error in section "shop" (4 times): gold is not defined
   To get there: --play --seed 1234 --choose 'Go inside' --choose 'Buy a coffee'
 ```
 
+When it takes more than five links to get to a problem, they're written to a file for `--choices`, in a `random` folder where the story is built (the `build` folder, for a story with a `squiffy.json`):
+
+```text
+Dead end in section "Ending" (20 times): There are no links to click, and the section isn't marked @end.
+  To get there: --play --seed 7 --choices build/random/problem-1.txt
+```
+
 Use the same `--seed` to play the same way again.
 
 ### For AI agents
 
-Add `--json` to `--check`, `--play` or `--random` to print the result as JSON, for a program or an AI agent such as Claude Code to read. These options let an agent check a story it's helping to write, and play through it, without a browser.
+These options let an AI agent, such as Claude Code, check a story it's helping you write, and play through it, without a browser. Add `--json` to `--check`, `--play` or `--random` to print the result as JSON, for the agent, or any other program, to read.
+
+To play a story, an agent can use `--save`, so each time it runs Squiffy it clicks a link, reads what happens, and decides what to click next, as a player would.
 
 ## Output Formats
 

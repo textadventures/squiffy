@@ -114,8 +114,8 @@ CLI options:
 - `--scriptonly [filename]`: Only generate JavaScript file
 - `--zip`: Create zip file
 - `--check`: Report problems without building, from the language service (`cli/src/check.ts`): what the build reports, plus unreachable sections and dead ends
-- `--play`: Play the story as text in jsdom (`cli/src/play.ts`), printing the new text and the links after each step. `--choose` (link text or number, repeatable), `--input attribute=value`, `--save file.json` (carry on between runs), `--start`, `--attributes`, `--seed`. Time is virtual: animations, transitions and `{{goto ... after=}}` happen at once
-- `--random [runs]`: Play many times clicking at random (`--steps`, `--seed`), reporting errors, dead ends, endings and sections never visited, each problem with the `--play` options that reproduce it
+- `--play`: Play the story as text in jsdom (`cli/src/play.ts`), printing the new text and the links after each step. `--choose` (link text or number, repeatable), `--choices file` (one link per line), `--input attribute=value`, `--save file.json` (carry on between runs, which is how an agent plays a step at a time), `--start`, `--attributes`, `--seed`. Time is virtual: animations, transitions and `{{goto ... after=}}` happen at once
+- `--random [runs]`: Play many times clicking at random (`--steps`, `--seed`), reporting errors, dead ends, endings and sections never visited, each problem with the `--play` options that reproduce it. A way longer than five links goes in a `--choices` file in `random/` in the build folder
 - `--json`: With `--check`, `--play` or `--random`, print the result as JSON, for AI agents and other tools
 - `--convert-v5`: Convert Squiffy 5 text processor syntax to Squiffy 6 (keeps a `.bak` of the original)
 - `--convert-twine`: Convert a Twine story (Twee, or Twine's published or archive HTML; Harlowe or SugarCube) into a new Squiffy story folder, with `twine-import.txt` listing what couldn't be converted exactly (#378). `--out` chooses the folder

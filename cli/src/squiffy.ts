@@ -9,7 +9,10 @@ import { convertV6Story } from "./convert-v6.js";
 import { convertTwineFile } from "./convert-twine.js";
 import { convertQuestFile } from "./convert-quest.js";
 import { checkStory, formatCheckResult } from "./check.js";
-import { formatPlayResult, formatRandomResult, loadPlayableStory, playRandom, playStory } from "./play.js";
+import {
+    formatChoicesFile, formatPlayResult, formatRandomResult, loadPlayableStory, MAX_INLINE_CHOICES, parseChoicesFile, playRandom,
+    playStory, problemComments, type RandomProblem,
+} from "./play.js";
 import fs from "fs";
 import { findStory, StoryNotFoundError, type StoryOnDisk } from "squiffy-compiler/node";
 import { BUILD_FOLDER } from "squiffy-compiler";
@@ -46,6 +49,8 @@ const argv = yargs(hideBin(process.argv))
     .describe("choose", "With --play, a link to click, by its text or its number. Repeat it to click several in order")
     .array("choose")
     .string("choose")
+    .describe("choices", "With --play, a file with links to click in it, one on each line, clicked before any --choose")
+    .string("choices")
     .describe("input", "With --play, text for a text box, as attribute=value. Repeat it for several")
     .array("input")
     .string("input")
@@ -183,7 +188,14 @@ async function play(): Promise<boolean> {
         }
         const seed = argv.seed ?? Math.floor(Math.random() * 1000000);
         const result = await playRandom(loaded.playable, { runs, steps, seed, start: argv.start });
-        console.log(argv.json ? JSON.stringify(result, null, 2) : formatRandomResult(result, argv.start));
+        const choicesFiles = writeChoicesFiles(story, result.problems);
+        if (argv.json) {
+            const problems = result.problems.map((p, i) => choicesFiles[i] ? { ...p, choicesFile: choicesFiles[i] } : p);
+            console.log(JSON.stringify({ ...result, problems }, null, 2));
+        }
+        else {
+            console.log(formatRandomResult(result, argv.start, choicesFiles));
+        }
         return result.success;
     }
 
@@ -197,6 +209,18 @@ async function play(): Promise<boolean> {
         inputs[input.substring(0, equals)] = input.substring(equals + 1);
     }
 
+    const choose: string[] = [];
+    if (argv.choices !== undefined) {
+        try {
+            choose.push(...parseChoicesFile(fs.readFileSync(argv.choices, "utf8")));
+        }
+        catch {
+            console.error(`Couldn't read ${argv.choices}.`);
+            return false;
+        }
+    }
+    choose.push(...argv.choose ?? []);
+
     let save;
     if (argv.save && argv.start === undefined && fs.existsSync(argv.save)) {
         try {
@@ -209,7 +233,7 @@ async function play(): Promise<boolean> {
     }
 
     const result = await playStory(loaded.playable, {
-        start: argv.start, choose: argv.choose, inputs, save, seed: argv.seed,
+        start: argv.start, choose, inputs, save, seed: argv.seed,
     });
     if (argv.save) fs.writeFileSync(argv.save, JSON.stringify(result.save));
     if (argv.json) {
@@ -220,4 +244,23 @@ async function play(): Promise<boolean> {
         console.log(formatPlayResult(result, !!argv.attributes));
     }
     return result.success;
+}
+
+// The way to each problem --random found that takes too many links to give on the command line,
+// as a file for --choices, in a "random" folder where the story is built. Files from the last
+// time are removed.
+function writeChoicesFiles(story: StoryOnDisk, problems: RandomProblem[]): (string | undefined)[] {
+    const folder = path.join(outputPathFor(story), "random");
+    if (fs.existsSync(folder)) {
+        for (const file of fs.readdirSync(folder)) {
+            if (/^problem-\d+\.txt$/.test(file)) fs.rmSync(path.join(folder, file));
+        }
+    }
+    return problems.map((problem, i) => {
+        if (problem.choices.length <= MAX_INLINE_CHOICES) return undefined;
+        fs.mkdirSync(folder, { recursive: true });
+        const file = path.join(folder, `problem-${i + 1}.txt`);
+        fs.writeFileSync(file, formatChoicesFile(problem.choices, problemComments(problem)));
+        return path.relative(process.cwd(), file).split(path.sep).join("/");
+    });
 }

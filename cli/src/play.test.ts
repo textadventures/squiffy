@@ -4,7 +4,8 @@ import os from "os";
 import path from "path";
 import { findStory } from "squiffy-compiler/node";
 import {
-    formatPlayResult, formatRandomResult, loadPlayableStory, playRandom, playStory, reproduceOptions, type PlayableStory,
+    formatChoicesFile, formatPlayResult, formatRandomResult, loadPlayableStory, parseChoicesFile, playRandom, playStory, reproduceOptions,
+    type PlayableStory,
 } from "./play.js";
 
 let dir: string;
@@ -259,6 +260,18 @@ Nothing links here.`;
         }
         expect(reproduceOptions({ seed: 5, inputs: [{ attribute: "name", value: "Sam" }], choices: ["Go in", "Bob's"] }))
             .toBe("--play --seed 5 --input name=Sam --choose 'Go in' --choose 'Bob'\\''s'");
+    });
+
+    test("gives a long way to a problem as a choices file", async () => {
+        const problem = { seed: 5, inputs: [], choices: ["Go in", "# 1 fan", "2"] };
+        expect(reproduceOptions(problem, "shop", "build/random/problem-1.txt"))
+            .toBe("--play --seed 5 --start shop --choices build/random/problem-1.txt");
+
+        const file = formatChoicesFile(problem.choices, ["Dead end in section \"x\""]);
+        expect(file).toBe("# Dead end in section \"x\"\nGo in\n# 1 fan\n2\n");
+        // "# " starts a comment (--random gives a link starting with "#" by its number instead)
+        expect(parseChoicesFile(file)).toEqual(["Go in", "2"]);
+        expect(parseChoicesFile("#1 fan\r\n\n  Leave  \n#\n")).toEqual(["#1 fan", "Leave"]);
     });
 
     test("fills in text boxes so links that need them can be clicked", async () => {

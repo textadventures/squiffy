@@ -877,8 +877,10 @@ export async function playRandom(playable: PlayableStory, options: RandomOptions
                         break;
                     }
                     const choice = clickable[Math.floor(pick() * clickable.length)];
-                    // The text finds the link, unless another link has the same text
-                    const unique = available.filter(c => c.text.toLowerCase() == choice.text.toLowerCase()).length == 1 && !/^\d+$/.test(choice.text);
+                    // The text finds the link, unless another link has the same text, or it
+                    // could be taken for a number, or a comment in a choices file
+                    const unique = available.filter(c => c.text.toLowerCase() == choice.text.toLowerCase()).length == 1
+                        && !/^\d+$/.test(choice.text) && !choice.text.startsWith("#");
                     choices.push(unique ? choice.text : String(choice.number));
                     const link = session.findLink(choices[choices.length - 1])!;
                     carryOn = visit(await session.step(choice.text, () => session.click(link), link));
@@ -916,15 +918,37 @@ export async function playRandom(playable: PlayableStory, options: RandomOptions
 
 const quote = (text: string) => /^[\w.,/@%+=:-]+$/.test(text) ? text : `'${text.replace(/'/g, "'\\''")}'`;
 
-// The command line options that play the story to where a problem happened
-export function reproduceOptions(problem: Pick<RandomProblem, "seed" | "inputs" | "choices">, start?: string): string {
+// The command line options that play the story to where a problem happened. With a choices
+// file, which has the links to click in it, it's given instead of --choose for each one.
+export function reproduceOptions(problem: Pick<RandomProblem, "seed" | "inputs" | "choices">, start?: string, choicesFile?: string): string {
     const parts = ["--play", "--seed", String(problem.seed)];
     if (start !== undefined) parts.push("--start", quote(start));
     const inputs = new Map(problem.inputs.map(i => [i.attribute, i.value]));
     for (const [attribute, value] of inputs) parts.push("--input", quote(`${attribute}=${value}`));
-    for (const choice of problem.choices) parts.push("--choose", quote(choice));
+    if (choicesFile !== undefined) parts.push("--choices", quote(choicesFile));
+    else for (const choice of problem.choices) parts.push("--choose", quote(choice));
     return parts.join(" ");
 }
+
+// A problem is given a choices file when there are more links than this to click to get to it,
+// to keep the command line short
+export const MAX_INLINE_CHOICES = 5;
+
+// A choices file, for --choices: the links to click, one on each line. Blank lines, and
+// lines starting with "# ", are left out.
+export function formatChoicesFile(choices: string[], comments: string[] = []): string {
+    return [...comments.map(c => `# ${c}`), ...choices].join("\n") + "\n";
+}
+
+export function parseChoicesFile(text: string): string[] {
+    return text.split(/\r?\n/).map(line => line.trim()).filter(line => line && line != "#" && !line.startsWith("# "));
+}
+
+// What a problem's choices file says about it
+export const problemComments = (problem: RandomProblem) => [
+    `${problem.kind == "error" ? "Error" : problem.kind == "dead-end" ? "Dead end" : "Stuck"} in section "${problem.section}": ${problem.message}`,
+    "The links to click to get there, for --choices",
+];
 
 const describePlace = (place: { section: string; passage?: string }) =>
     place.passage !== undefined ? `passage "${place.passage}" in section "${place.section}"` : `section "${place.section}"`;
@@ -980,7 +1004,8 @@ export function formatPlayResult(result: PlayResult, showAttributes: boolean): s
     return lines.join("\n");
 }
 
-export function formatRandomResult(result: RandomResult, start?: string): string {
+// choicesFiles: the choices file for each problem that has one, by its index in result.problems
+export function formatRandomResult(result: RandomResult, start?: string, choicesFiles: (string | undefined)[] = []): string {
     const lines: string[] = [];
     for (const note of result.notes) lines.push(`(${note})`);
     lines.push(`Played ${result.runs} time${result.runs == 1 ? "" : "s"}, clicking up to ${result.steps} links at random each time (--seed ${result.seed}).`);
@@ -1006,11 +1031,11 @@ export function formatRandomResult(result: RandomResult, start?: string): string
         return lines.join("\n");
     }
     lines.push(`Problems (${result.problems.length}):`);
-    for (const problem of result.problems) {
+    for (const [i, problem] of result.problems.entries()) {
         const label = problem.kind == "error" ? "Error" : problem.kind == "dead-end" ? "Dead end" : "Stuck";
         lines.push("");
         lines.push(`${label} in section "${problem.section}" (${problem.count} time${problem.count == 1 ? "" : "s"}): ${problem.message}`);
-        lines.push(`  To get there: ${reproduceOptions(problem, start)}`);
+        lines.push(`  To get there: ${reproduceOptions(problem, start, choicesFiles[i])}`);
     }
     return lines.join("\n");
 }
