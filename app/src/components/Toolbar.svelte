@@ -14,6 +14,8 @@
     import { DISCORD_URL, DOCS_URL, GAMES_URL, GITHUB_URL, ISSUES_URL } from "#lib/links.js";
     import type { ExportKind } from "#lib/language/protocol.js";
     import FolderDown from "@lucide/svelte/icons/folder-down";
+    import FolderOpen from "@lucide/svelte/icons/folder-open";
+    import { folderReveal } from "#lib/desktop.js";
     import Globe from "@lucide/svelte/icons/globe";
     import FileCode from "@lucide/svelte/icons/file-code";
     import DropdownMenu from "#components/DropdownMenu.svelte";
@@ -115,8 +117,12 @@
         void goto(`${base}/`);
     }
 
+    // In the desktop app, the story's folder in Finder, Explorer or the file manager
+    const reveal = $derived(p ? folderReveal(p.fs) : null);
+
     let fileMenuItems = $derived<DropdownMenuItem[]>([
         { label: "Save", action: () => void p?.save(), icon: Save },
+        ...(reveal ? [{ label: reveal.label, action: () => reveal.show(""), icon: FolderOpen }] : []),
         { label: "Download project (.zip)", action: () => ondownloadproject?.(), icon: FolderDown },
         { label: `Download ${p?.activePath ?? ""}`, action: () => { if (p?.activePath) void downloadFile(p.activePath); }, icon: Download, disabled: !p?.activePath },
         { label: "HTML and JavaScript (.zip)", action: () => onexport?.("zip"), icon: Globe, divider: true, heading: "Publish" },

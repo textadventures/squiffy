@@ -31,6 +31,7 @@ const api: SquiffyDesktopApi = {
         onAction: (listener) => on<[MenuAction]>("menu", listener),
         onOpenRecent: (listener) => on<[string]>("open-recent", listener),
     },
+    showInFolder: (rootId, path) => invoke("show-in-folder", rootId, path),
     onBeforeClose: (listener) =>
         on("before-close", () => {
             void listener().finally(() => ipcRenderer.send(CHANNEL_PREFIX + "close-ready"));
