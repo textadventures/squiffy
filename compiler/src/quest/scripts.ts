@@ -245,11 +245,16 @@ class Converter {
                 if (args[0]?.k == "str" && !args[0].v.trim()) return [];
                 const file = this.text(args[0], "a sound");
                 ctx.asset(file);
-                const loop = args[2]?.k == "bool" && args[2].v ? " loop" : "";
-                return [`<audio src="${escapeAttribute(file)}" autoplay${loop}></audio>`];
+                // A sound that loops is music, which carries on from one page to the next
+                if (args[2]?.k == "bool" && args[2].v) {
+                    this.ctx.approximate(s.src, "This sound loops, so it's been converted to music, which keeps playing from one page to the next until the story plays other music or stops it. In Quest, the sound stopped when the player went to another page, unless the last page with a sound was set to continue playing it.");
+                    return [`{{music ${quote(file)}}}`];
+                }
+                return [`{{sound ${quote(file)}}}`];
             }
             case "stop sound":
-                throw new Unconvertible("Squiffy can't stop a sound");
+                // Squiffy can only stop music: a sound that plays once plays to the end
+                return ["{{stopmusic}}"];
             case "ShowYouTube":
                 return this.show([`<iframe class="quest-youtube" width="560" height="315" src="https://www.youtube.com/embed/${encodeURIComponent(this.text(args[0], "a video"))}" allowfullscreen></iframe>`]);
             case "DisplayHttpLink": {

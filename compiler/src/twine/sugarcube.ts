@@ -7,6 +7,8 @@
 
 import { display, isDynamicTarget, lengthOf, member as memberOf, print, randomInteger, skipString, targetName, Tokens, Unconvertible, unescapeString } from "./expression.js";
 import type { BinaryOp, Expr } from "./expression.js";
+import { audioHelper, leadingAudio, pickSource } from "./audio.js";
+import type { AudioAction, StoryAudio } from "./audio.js";
 import { dynamicSectionLink, escapeText, isUrl, urlLink, passageLink, sectionLink, setter } from "./convert.js";
 import type { ConvertedPassage, PassageContext } from "./convert.js";
 
@@ -1119,6 +1121,72 @@ class Writer {
 
     // ---- Macros ----
 
+    // <<audio "tracks" actions>>
+    private audio(m: Macro, args: string[]): string {
+        const tracks = args[0] && /^["']/.test(args[0]) ? unescapeString(args[0]) : null;
+        if (tracks === null) throw new Unconvertible("<<audio>> with tracks that aren't fixed");
+        const action: AudioAction = { play: false, stop: false, loop: false };
+        const num = (i: number) => {
+            const raw = args[i] && /^["']/.test(args[i]) ? unescapeString(args[i]) : args[i];
+            const n = Number(raw);
+            if (raw === undefined || raw.trim() === "" || isNaN(n)) throw new Unconvertible(`<<audio>> with "${args[i - 1]}" and a value that isn't a fixed number`);
+            return n;
+        };
+        for (let i = 1; i < args.length; i++) {
+            const word = args[i].toLowerCase();
+            switch (word) {
+                case "play":
+                case "fadein":
+                    action.play = true;
+                    break;
+                case "stop":
+                case "fadeout":
+                    action.stop = true;
+                    break;
+                case "loop":
+                    action.loop = true;
+                    break;
+                case "unloop":
+                    break;
+                case "volume":
+                    action.volume = num(++i);
+                    break;
+                case "fadeoverto":
+                case "fadeto": {
+                    if (word == "fadeoverto") action.fade = num(++i);
+                    const level = num(++i);
+                    if (level > 0) action.play = true;
+                    else action.stop = true;
+                    break;
+                }
+                case "pause":
+                    throw new Unconvertible("pausing a track");
+                case "mute":
+                case "unmute":
+                    throw new Unconvertible("muting a track");
+                case "time":
+                    throw new Unconvertible("playing a track from part of the way through");
+                case "goto":
+                    throw new Unconvertible("<<audio>> with goto");
+                default:
+                    throw new Unconvertible(`<<audio>> with "${args[i]}"`);
+            }
+        }
+        const audio = sugarCubeAudio(this.ctx.story);
+        const ids = tracks.split(/\s+/).filter(t => t);
+        const results = new Set<string>();
+        for (const id of ids) {
+            if (id.startsWith(":")) {
+                // A group: only stopping all the music can be converted
+                if (!action.stop || !/^:(all|playing|looped)$/.test(id)) throw new Unconvertible("audio groups");
+                results.add(`{{stopmusic${action.fade === undefined ? "" : ` fade=${action.fade}`}}}`);
+                continue;
+            }
+            results.add(audioHelper(this.ctx, m.raw, audio, id, action));
+        }
+        return [...results].join("");
+    }
+
     private macro(m: Macro, state: EmitState): string {
         try {
             return this.macroOrThrow(m, state);
@@ -1331,14 +1399,22 @@ class Writer {
                 // Left out on purpose (#445): a screen the player visits and leaves is a panel in Squiffy
                 throw new Unconvertible(`<<${m.name}>>. For a screen like an inventory, use a panel. Squiffy has its own Back button`);
             case "audio":
+                return leadingAudio(this.audio(m, args), state);
             case "cacheaudio":
-            case "playlist":
-            case "masteraudio":
             case "waitforaudio":
+                // The tracks are found before the story's converted, and Squiffy loads every
+                // sound file when the story starts
+                return "";
+            case "masteraudio":
+                throw new Unconvertible("<<masteraudio>>, which changes all the story's sound at once");
+            case "playlist":
             case "createplaylist":
-            case "createaudiogroup":
+            case "removeplaylist":
             case "track":
-                throw new Unconvertible("audio macros");
+                throw new Unconvertible("playlists");
+            case "createaudiogroup":
+            case "removeaudiogroup":
+                throw new Unconvertible("audio groups");
             case "addclass":
             case "removeclass":
             case "toggleclass":
@@ -1564,6 +1640,32 @@ const knownMacros = new Set([
     "createaudiogroup", "createplaylist", "masteraudio", "playlist", "removeaudiogroup", "removeplaylist",
     "waitforaudio", "done", "goto", "repeat", "stop", "timed", "widget", "display", "click", "do", "redo", "track",
 ]);
+
+// The story's tracks: the files <<cacheaudio>> gives them, and the ones <<audio>> sets to loop
+export function sugarCubeAudio(story: PassageContext["story"]): StoryAudio {
+    return story.cached("sugarcube-audio", () => {
+        const audio: StoryAudio = { files: new Map(), looping: new Set() };
+        const strings = (args: string) => splitMacroArgs(args).filter(a => /^["']/.test(a)).map(unescapeString);
+        for (const p of story.twine.passages) {
+            for (const m of p.text.matchAll(/<<\s*cacheaudio\s+([\s\S]*?)>>/g)) {
+                const [track, ...sources] = strings(m[1]);
+                // A source can say its format first: "mp3|music/theme.mp3"
+                const file = pickSource(sources.map(s => s.replace(/^\w+\|/, "")));
+                if (track && file && !audio.files.has(track)) audio.files.set(track, file);
+            }
+            for (const m of p.text.matchAll(/<<\s*audio\s+([\s\S]*?)>>/g)) {
+                const args = splitMacroArgs(m[1]);
+                if (!args.slice(1).some(a => a.toLowerCase() == "loop") || !/^["']/.test(args[0] ?? "")) continue;
+                for (const track of unescapeString(args[0]).split(/\s+/)) if (track) audio.looping.add(track);
+            }
+        }
+        // Tracks added in the story's JavaScript
+        for (const m of story.twine.script.matchAll(/SimpleAudio\.tracks\.add\(\s*(["'])([^"']+)\1\s*,\s*(["'])([^"']+)\3/g)) {
+            if (!audio.files.has(m[2])) audio.files.set(m[2], m[4].replace(/^\w+\|/, ""));
+        }
+        return audio;
+    });
+}
 
 // The story's widgets, by name, with the section each is converted to
 export function sugarCubeWidgets(story: PassageContext["story"]): Map<string, string> {

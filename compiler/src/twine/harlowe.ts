@@ -7,6 +7,8 @@
 
 import { conditional, display, isBoolean, lengthOf, member, print, randomInteger, targetName, skipBalanced, skipString, Tokens, Unconvertible, unescapeString } from "./expression.js";
 import type { BinaryOp, Expr } from "./expression.js";
+import { audioHelper, leadingAudio, pickSource } from "./audio.js";
+import type { AudioAction, StoryAudio } from "./audio.js";
 import { dynamicSectionLink, escapeText, isUrl, urlLink, passageLink, sectionLink, setter } from "./convert.js";
 import type { ConvertedPassage, PassageContext } from "./convert.js";
 
@@ -1379,9 +1381,77 @@ class Writer {
             case "else":
                 // Handled in nodes()
                 return "";
+            case "track":
+                return leadingAudio(this.track(m, args), state);
+            case "newtrack":
+                // Found before the story's converted
+                return "";
+            case "masteraudio":
+                throw new Unconvertible("(masteraudio:), which changes all the story's sound at once");
+            case "playlist":
+            case "newplaylist":
+                throw new Unconvertible("playlists");
+            case "group":
+            case "newgroup":
+                throw new Unconvertible("audio groups");
             default:
                 throw new Unconvertible(`the (${m.raw.substring(1, m.raw.indexOf(":"))}:) macro, which Squiffy has no equivalent for`);
         }
+    }
+
+    // (track: "name", "command", ...values), from the Harlowe Audio Library
+    private track(m: Macro, args: string[]): string {
+        const track = literal(args[0]);
+        const command = literal(args[1]);
+        if (typeof track != "string") throw new Unconvertible("(track:) with a track that isn't fixed");
+        if (typeof command != "string") throw new Unconvertible("(track:) with a command that isn't fixed");
+        const action: AudioAction = { play: false, stop: false, loop: false };
+        const num = (i: number) => {
+            const n = literal(args[i]);
+            if (typeof n != "number") throw new Unconvertible(`(track:) "${command}" with a value that isn't a fixed number`);
+            return n;
+        };
+        switch (command.toLowerCase()) {
+            case "play":
+            case "playwhenpossible":
+                action.play = true;
+                break;
+            case "fadein":
+                action.play = true;
+                if (args[2] !== undefined) action.fade = num(2);
+                break;
+            case "stop":
+                action.stop = true;
+                break;
+            case "fadeout":
+                action.stop = true;
+                if (args[2] !== undefined) action.fade = num(2);
+                break;
+            case "fadeto":
+                if (num(2) > 0) action.play = true;
+                else action.stop = true;
+                if (args[3] !== undefined) action.fade = num(3);
+                break;
+            case "loop":
+                // Found before the story's converted
+                return "";
+            case "volume":
+                if (harloweAudio(this.ctx.story).looping.has(track)) {
+                    this.ctx.story.note("audio-music-volume", m.raw, "Squiffy plays music at full volume, so the music's volume has been left out");
+                    return "";
+                }
+                throw new Unconvertible("(track:) changing the volume of a sound on its own: give {{sound}} a volume= instead");
+            case "pause":
+                throw new Unconvertible("pausing a track");
+            case "mute":
+            case "unmute":
+                throw new Unconvertible("muting a track");
+            case "time":
+                throw new Unconvertible("playing a track from part of the way through");
+            default:
+                throw new Unconvertible(`(track:) with "${command}"`);
+        }
+        return audioHelper(this.ctx, m.raw, harloweAudio(this.ctx.story), track, action);
     }
 
     // What a (for:) goes through: an array spread out (...$list), or values, as {{#each}} takes
@@ -1834,6 +1904,52 @@ function clickableText(source: string, ctx: PassageContext): string {
         }
         result = withHookName.substring(0, at) + `|${hook}>[${text}]` + withHookName.substring(at + text.length);
     }
+}
+
+// A string, number or boolean written as it is, or undefined for anything else
+function literal(arg: string | undefined): string | number | boolean | undefined {
+    if (arg === undefined) return undefined;
+    const a = arg.trim();
+    if (/^["']/.test(a) && skipString(a, 0) == a.length) return unescapeString(a);
+    if (/^-?(\d+\.?\d*|\.\d+)$/.test(a)) return Number(a);
+    if (/^(true|false)$/i.test(a)) return a.toLowerCase() == "true";
+    return undefined;
+}
+
+// The special passages of the Harlowe Audio Library, which aren't part of the story
+export const harloweAudioPassages = new Set(["hal.tracks", "hal.config"]);
+
+// The story's tracks, from the Harlowe Audio Library's hal.tracks passage ("name: file") and
+// (newtrack:), and the ones (track:) sets to loop
+export function harloweAudio(story: PassageContext["story"]): StoryAudio {
+    return story.cached("harlowe-audio", () => {
+        const audio: StoryAudio = { files: new Map(), looping: new Set() };
+        const definitions = story.twine.passages.find(p => p.name == "hal.tracks")?.text ?? "";
+        for (const line of definitions.split(/\r?\n/)) {
+            // The name ends at the first colon: the files can be web addresses
+            const colon = line.indexOf(":");
+            if (colon == -1) continue;
+            const name = line.substring(0, colon).trim();
+            const file = pickSource(line.substring(colon + 1).split(",").map(f => f.trim()).filter(f => f));
+            if (name && file && !audio.files.has(name)) audio.files.set(name, file);
+        }
+        for (const p of story.twine.passages) {
+            for (const m of p.text.matchAll(/\((new-?track|track):/gi)) {
+                const end = skipBalanced(p.text, m.index, "(", ")");
+                if (end == -1) continue;
+                const args = splitArgs(p.text.substring(m.index + m[0].length, end - 1)).map(literal);
+                if (typeof args[0] != "string") continue;
+                if (m[1].toLowerCase() == "track") {
+                    if (typeof args[1] == "string" && args[1].toLowerCase() == "loop" && args[2] === true) audio.looping.add(args[0]);
+                }
+                else {
+                    const file = pickSource(args.slice(1).filter((a): a is string => typeof a == "string"));
+                    if (file && !audio.files.has(args[0])) audio.files.set(args[0], file);
+                }
+            }
+        }
+        return audio;
+    });
 }
 
 export function convertHarlowePassage(text: string, ctx: PassageContext): ConvertedPassage {

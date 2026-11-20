@@ -6,7 +6,7 @@
 
 import { attributeRef, print, quote, Unconvertible } from "./expression.js";
 import type { Expr } from "./expression.js";
-import { convertHarlowePassage } from "./harlowe.js";
+import { convertHarlowePassage, harloweAudioPassages } from "./harlowe.js";
 import { convertSugarCubePassage, convertSugarCubeWidgets, sugarCubeWidgets } from "./sugarcube.js";
 import { parseTwine } from "./story.js";
 import type { TwinePassage, TwineStory } from "./story.js";
@@ -387,6 +387,8 @@ export function convertTwineStory(twine: TwineStory, options: TwineConversionOpt
             else if (p.tags.includes("footer")) footers.push(p);
             else if (p.tags.includes("startup")) startup.push(p);
             else if (p.tags.some(t => t.startsWith("debug-"))) skipped.push(p);
+            // The Harlowe Audio Library's tracks and settings, which are read where they're used
+            else if (harloweAudioPassages.has(p.name)) continue;
             else storyPassages.push(p);
         }
         else {
@@ -698,7 +700,7 @@ function oneLine(text: string): string {
 // Directives the compiler would read at the start of a line
 const directiveLine = /^@(title|import|start|set|unset|inc|dec|ui|clear|end)\b/;
 // Lines that only hold helpers that write nothing
-const silentHelper = /\{\{(?:!--[\s\S]*?--|![^}]*|~?\s*(?:#if|#unless|else|\/if|\/unless|set|unset|inc|dec|goto|append|prepend|remove|#label|\/label|#replace|\/replace|#animate|\/animate)\b(?:[^{}]|\{\{[^{}]*\}\})*)\}\}/g;
+const silentHelper = /\{\{(?:!--[\s\S]*?--|![^}]*|~?\s*(?:#if|#unless|else|\/if|\/unless|set|unset|inc|dec|goto|music|stopmusic|sound|append|prepend|remove|#label|\/label|#replace|\/replace|#animate|\/animate)\b(?:[^{}]|\{\{[^{}]*\}\})*)\}\}/g;
 
 function isSilent(line: string): boolean {
     return line.replace(silentHelper, "").trim() == "";
