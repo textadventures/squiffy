@@ -11,7 +11,7 @@ import { convertQuestFile } from "./convert-quest.js";
 import { checkStory, formatCheckResult } from "./check.js";
 import {
     formatChoicesFile, formatPlayResult, formatRandomResult, loadPlayableStory, MAX_INLINE_CHOICES, parseChoicesFile, playRandom,
-    playStory, problemComments, type RandomProblem,
+    playStory, problemComments, type RandomProblem, type SectionLabels,
 } from "./play.js";
 import fs from "fs";
 import { findStory, StoryNotFoundError, type StoryOnDisk } from "squiffy-compiler/node";
@@ -188,7 +188,7 @@ async function play(): Promise<boolean> {
         }
         const seed = argv.seed ?? Math.floor(Math.random() * 1000000);
         const result = await playRandom(loaded.playable, { runs, steps, seed, start: argv.start });
-        const choicesFiles = writeChoicesFiles(story, result.problems);
+        const choicesFiles = writeChoicesFiles(story, result.problems, result.sectionLabels);
         if (argv.json) {
             const problems = result.problems.map((p, i) => choicesFiles[i] ? { ...p, choicesFile: choicesFiles[i] } : p);
             console.log(JSON.stringify({ ...result, problems }, null, 2));
@@ -249,7 +249,7 @@ async function play(): Promise<boolean> {
 // The way to each problem --random found that takes too many links to give on the command line,
 // as a file for --choices, in a "random" folder where the story is built. Files from the last
 // time are removed.
-function writeChoicesFiles(story: StoryOnDisk, problems: RandomProblem[]): (string | undefined)[] {
+function writeChoicesFiles(story: StoryOnDisk, problems: RandomProblem[], labels?: SectionLabels): (string | undefined)[] {
     const folder = path.join(outputPathFor(story), "random");
     if (fs.existsSync(folder)) {
         for (const file of fs.readdirSync(folder)) {
@@ -260,7 +260,7 @@ function writeChoicesFiles(story: StoryOnDisk, problems: RandomProblem[]): (stri
         if (problem.choices.length <= MAX_INLINE_CHOICES) return undefined;
         fs.mkdirSync(folder, { recursive: true });
         const file = path.join(folder, `problem-${i + 1}.txt`);
-        fs.writeFileSync(file, formatChoicesFile(problem.choices, problemComments(problem)));
+        fs.writeFileSync(file, formatChoicesFile(problem.choices, problemComments(problem, labels)));
         return path.relative(process.cwd(), file).split(path.sep).join("/");
     });
 }

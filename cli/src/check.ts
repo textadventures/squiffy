@@ -36,6 +36,9 @@ export interface CheckResult {
     };
     // Something to tell the author, e.g. that only one file was checked
     note?: string;
+    // What to call the sections above without names of their own, by name, e.g. "_continue1":
+    // 'the "+++Continue..." after "cave"'
+    sectionLabels?: Record<string, string>;
 }
 
 // The project's files, read from disk under a root folder
@@ -98,18 +101,22 @@ export async function checkStory(story: StoryOnDisk, cwd = process.cwd()): Promi
     // The master section, "", is part of every section rather than one of its own
     const sections = graph.nodes.filter(n => n.kind == "section" && n.name != "");
     const errors = problems.filter(p => p.severity == "error").length;
+    const start = sections.find(n => n.start);
+    const endings = sections.filter(n => n.ending);
+    const labelled = [start, ...endings].filter(n => n?.detail && n.label);
     return {
         success: errors == 0,
         errors,
         warnings: problems.filter(p => p.severity == "warning").length,
         problems,
         story: {
-            start: sections.find(n => n.start)?.name,
+            start: start?.name,
             sections: sections.length,
             passages: graph.nodes.filter(n => n.kind == "passage").length,
-            endings: sections.filter(n => n.ending).map(n => n.name),
+            endings: endings.map(n => n.name),
         },
         ...(story.note ? { note: story.note } : {}),
+        ...(labelled.length ? { sectionLabels: Object.fromEntries(labelled.map(n => [n!.name, n!.label!])) } : {}),
     };
 }
 
@@ -124,9 +131,10 @@ export function formatCheckResult(result: CheckResult): string {
     }
     if (result.problems.length) lines.push("");
     const { story } = result;
+    const describe = (section: string) => result.sectionLabels?.[section] ?? `"${section}"`;
     lines.push(`${plural(story.sections, "section")} and ${plural(story.passages, "passage")}`
-        + (story.start !== undefined ? `, starting at "${story.start}"` : "")
-        + (story.endings.length ? `, with ${plural(story.endings.length, "ending")}: ${story.endings.map(e => `"${e}"`).join(", ")}` : ", with no sections marked @end")
+        + (story.start !== undefined ? `, starting at ${describe(story.start)}` : "")
+        + (story.endings.length ? `, with ${plural(story.endings.length, "ending")}: ${story.endings.map(describe).join(", ")}` : ", with no sections marked @end")
         + ".");
     lines.push(result.errors || result.warnings
         ? `${plural(result.errors, "error")}, ${plural(result.warnings, "warning")}.`

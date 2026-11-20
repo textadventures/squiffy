@@ -67,7 +67,7 @@ The Squiffy command-line tool runs with `npx` (Node.js required). Run it in the 
    `npx @textadventures/squiffy-cli --play --save game.json --json`
    shows the start and the numbered choices. Then click one link per run, reading the result before choosing the next. The JSON has every step so far in `steps`; read the last one, and `choices`:
    `npx @textadventures/squiffy-cli --play --save game.json --choose "go down" --json`
-   `--choose` takes a link's text or number. Use `--start section` to begin somewhere else, `--input name=Ann` to fill a text box, `--attributes` to see attributes, `--seed 1` for repeatable randomness. Delete `game.json` to start again. Errors in the story (such as bad JavaScript) are reported, with exit code 1.
+   `--choose` takes a link's text or number. Use `--start section` to begin somewhere else, `--input name=Ann` to fill a text box, `--attributes` to see attributes, `--seed 1` for repeatable randomness. Delete `game.json` to start again. Errors in the story (such as bad JavaScript) are reported, with exit code 1. In the JSON, a section without a name of its own (one starting with `+++` or `---`) has an internal name such as `_continue3`: `sectionLabels` says which it is, such as `the "+++Continue..." after "cellar"`, and that's what to call it when talking to the author.
 3. **Play at random** to find problems you wouldn't reach yourself:
    `npx @textadventures/squiffy-cli --random 50 --json`
    Reports errors, dead ends, endings reached and sections never visited. Each problem has the options to reproduce it, such as `--play --seed 7 --choose 'go down' --choose 'Go back up'`, or for a long route, `--choices build/random/problem-1.txt` (a file with one link per line). Run those with `--play` to see it happen.

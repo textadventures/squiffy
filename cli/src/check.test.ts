@@ -70,7 +70,7 @@ describe("checkStory", () => {
 
         expect(result.problems).toEqual([]);
         expect(result.story.sections).toBe(2);
-        expect(formatCheckResult(result)).toBe('2 sections and 0 passages, starting at "_default", with 1 ending: "Other".\nNo problems found.');
+        expect(formatCheckResult(result)).toBe('2 sections and 0 passages, starting at the text before the first section, with 1 ending: "Other".\nNo problems found.');
     });
 
     test("formats problems with file:line:column", async () => {
@@ -80,9 +80,9 @@ describe("checkStory", () => {
         });
 
         expect(formatCheckResult(await check())).toBe(
-            "story.squiffy:1:8: warning: In section '_default' there is a link to a section called [[Missing]], which doesn't exist [squiffy/unknown-section-link]\n" +
+            "story.squiffy:1:8: warning: In the text before the first section there is a link to a section called [[Missing]], which doesn't exist [squiffy/unknown-section-link]\n" +
             "\n" +
-            "1 section and 0 passages, starting at \"_default\", with no sections marked @end.\n" +
+            "1 section and 0 passages, starting at the text before the first section, with no sections marked @end.\n" +
             "0 errors, 1 warning.");
     });
 });

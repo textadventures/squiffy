@@ -5,6 +5,7 @@ import type {
 import { positionMapper, SourceLine, transformText } from "./text.js";
 import { isScriptPath, isSquiffyPath, isStylesheetPath, PROJECT_FILENAME } from "./project.js";
 import { findV5Syntax } from "./v5.js";
+import { sectionLabels } from "./section-labels.js";
 import { attributesSetIn, BUILT_IN_ATTRIBUTES, findAtAttributes, findBuiltInAttributeSets, findUnquotedText } from "./setters.js";
 
 export interface ExternalFiles {
@@ -581,6 +582,8 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
     // Set once the sections are all known, before checking links
     let sectionNames: string[] = [];
     let sectionIndexes = new Map<string, number>();
+    // What warnings call sections without names of their own, e.g. 'the "+++Continue..." after "cave"'
+    let labels = new Map<string, string>();
 
     function checkText(container: Section | Passage, section: Section, passage: Passage | null) {
         const getNextSectionName = (): string | null => {
@@ -593,9 +596,9 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
         const toPosition = positionMapper(container.textSources, container.text.map(t => t.length));
         const toRange = (start: number, end: number): Range => ({ start: toPosition(start), end: toPosition(end) });
 
-        const where = passage
-            ? `In section '${section.name}', passage '${passage.name}'`
-            : `In section '${section.name}'`;
+        const label = labels.get(section.name);
+        const inSection = label && section.node?.kind != "named" ? `In ${label}` : `In section '${section.name}'`;
+        const where = passage ? `${inSection}, passage '${passage.name}'` : inSection;
         const legacyLine = passage ? passage.line : section.line;
         const warn = (code: DiagnosticCode, start: number, end: number, message: string, line = legacyLine) => {
             report("warning", code, section.filename, toRange(start, end), message, line);
@@ -603,7 +606,7 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
 
         for (const missing of result.noNextSection) {
             warn("squiffy/no-next-section", missing.start, missing.end,
-                `In section '${section.name}', there is a ${missing.display} link but no following section exists`, section.line);
+                `${inSection}, there is a ${missing.display} link but no following section exists`, section.line);
         }
 
         for (const link of result.links) {
@@ -686,6 +689,8 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
         }
         sectionNames = Object.keys(story.sections);
         sectionIndexes = new Map(sectionNames.map((name, i) => [name, i]));
+        const nodeNames = new Map(Object.values(story.sections).flatMap(section => section.node ? [[section.node, section.name] as const] : []));
+        labels = sectionLabels(files, node => nodeNames.get(node));
         for (const section of Object.values(story.sections)) {
             checkText(section, section, null);
             for (const passage of Object.values(section.passages)) {

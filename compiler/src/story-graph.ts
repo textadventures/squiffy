@@ -4,6 +4,7 @@
 // "unreachable section" and "dead end" diagnostics.
 
 import type { Location } from "./language-service.js";
+import { capitalise, sectionDetail, sectionLabels } from "./section-labels.js";
 import type {
     DeactivateNode, Diagnostic, EmbedNode, GotoNode, LinkNode, PassageNode, Position, Range, SectionNode, SquiffyFile,
 } from "./syntax.js";
@@ -25,6 +26,8 @@ export interface GraphNode {
     // What to call a section without a name of its own: what its +++ line says, "---" or
     // "(Start)" for the text before the first section, as in the outline
     detail?: string;
+    // For sections: what messages call it (see sectionLabels)
+    label?: string;
     // The name in the header (or the header itself, for a section without a name of its own)
     location: Location;
     // Where its own text ends (before any passages, for a section), ignoring blank lines at the
@@ -140,14 +143,6 @@ function conditionalRanges(container: SectionNode | PassageNode): Range[] {
     return ranges;
 }
 
-// What the outline calls a section without a name of its own
-function sectionDetail(node: SectionNode): string | undefined {
-    if (node.kind == "preamble") return "(Start)";
-    if (node.header?.type == "continue") return `+++${node.header.text}`;
-    if (node.header?.type == "separator") return "---";
-    return undefined;
-}
-
 // The end of a section's or passage's own text, leaving out blank lines and its passages
 function contentEnd(container: SectionNode | PassageNode): Position {
     const ownEnd = container.type == "section" && container.passages.length
@@ -245,6 +240,11 @@ export function buildStoryGraph(source: GraphSource): StoryGraph {
                 }
             }
         }
+    }
+
+    for (const [name, label] of sectionLabels(source.files.values(), node => source.nodeNames.get(node))) {
+        const node = nodeById.get(sectionId(name));
+        if (node) node.label = label;
     }
 
     // The link a +++ line adds to the section before it
@@ -444,7 +444,7 @@ export function storyGraphDiagnostics(graph: StoryGraph): Diagnostic[] {
                 range: node.location.range,
                 severity: "warning",
                 code: "squiffy/unreachable-section",
-                message: `The section "${node.name}" can't be reached from the start of the story, as nothing the player can reach links to it.`,
+                message: `${capitalise(node.label ?? `the section "${node.name}"`)} can't be reached from the start of the story, as nothing the player can reach links to it.`,
             });
         }
         else if (node.deadEnd) {
@@ -453,7 +453,7 @@ export function storyGraphDiagnostics(graph: StoryGraph): Diagnostic[] {
                 range: node.location.range,
                 severity: "warning",
                 code: "squiffy/dead-end",
-                message: `The section "${node.name}" has no way out, as it has no links to another section. If it's one of the story's endings, add @end to say so.`,
+                message: `${capitalise(node.label ?? `the section "${node.name}"`)} has no way out, as it has no links to another section. If it's one of the story's endings, add @end to say so.`,
             });
         }
     }

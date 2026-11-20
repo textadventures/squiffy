@@ -293,6 +293,25 @@ Nothing links here.`;
         expect(text).toContain("To get there: --play --seed");
     });
 
+    test("calls a section without a name of its own by its +++ or --- line, and the named section before it", async () => {
+        const playable = await load("[[cave]]:\nA cave.\n+++Continue...\nDark.\n+++Continue...\nStuck here. [look]\n\n[look]:\nNothing.\n\n---\nNever reached.");
+        const played = await playStory(playable, { choose: ["Continue...", "Continue..."] });
+        expect(played.sectionLabels).toEqual({
+            _continue1: "the first \"+++Continue...\" after \"cave\"",
+            _continue2: "the second \"+++Continue...\" after \"cave\"",
+        });
+        const playText = formatPlayResult(played, false);
+        expect(playText).toContain("(the second \"+++Continue...\" after \"cave\")");
+        expect(playText).toContain("Choices (in the second \"+++Continue...\" after \"cave\"):");
+        expect(playText).not.toContain("_continue");
+
+        const random = await playRandom(playable, { runs: 5, steps: 20, seed: 1 });
+        const randomText = formatRandomResult(random);
+        expect(randomText).toContain("Never visited: the \"---\" after \"cave\"");
+        expect(randomText).toContain("Dead end in the second \"+++Continue...\" after \"cave\"");
+        expect(randomText).not.toContain("_continue");
+    });
+
     test("gives the options that play the story back to each problem", async () => {
         const playable = await load(MAZE);
         const result = await playRandom(playable, { runs: 30, steps: 50, seed: 1 });
