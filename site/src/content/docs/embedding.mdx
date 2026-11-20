@@ -107,6 +107,7 @@ The `squiffyRuntime.init()` function accepts an options object:
 | `scroll` | `string` | `"body"` | Scroll behavior: `"body"`, `"element"`, or `"none"` |
 | `onSet` | `function` | - | Callback when an attribute is set |
 | `resolveAssetUrl` | `function` | - | Maps an image or other file path used in the story to the URL to load it from. See [Asset URLs](#asset-urls) |
+| `strings` | `object` | - | The page's text in another language, with the [names in `squiffy.json`](/multiple-files/#the-pages-text-in-another-language). Used for the text of [`{{restart}}` and `{{saves}}`](/basic-concepts/#restarting-and-saving-from-the-story) links, and the dialogs they open. Anything left out is in English |
 
 ### Persistence
 
@@ -317,6 +318,26 @@ The saves are kept in the browser's IndexedDB, under the page's path. These opti
 
 Its styles are in `squiffy.runtime.css`.
 
+## Asking the player
+
+`confirmDialog()` asks the player a question, such as whether to restart, in a dialog styled like the Saved games one, rather than with the browser's `confirm()`. It returns a promise of whether they went ahead:
+
+```javascript
+if (await squiffyRuntime.confirmDialog({ message: 'Are you sure you want to restart?', confirm: 'Restart' })) {
+    squiffyApi.restart();
+}
+```
+
+| Option | Description |
+|---|---|
+| `message` | The question |
+| `confirm` | The text of the button that goes ahead |
+| `cancel` | The text of the button that doesn't. "Cancel" by default |
+| `danger` | `true` to colour the button that goes ahead as a warning, for something that can't be undone |
+| `container` | Where to put the dialog in the page. The end of the body by default |
+
+Escape, Cancel and clicking outside the dialog all answer no. Its styles are in `squiffy.runtime.css`.
+
 ## Events
 
 You can listen for events using `on()`, `off()`, and `once()`:
@@ -379,6 +400,20 @@ Fired when music or a sound starts playing, even if it's muted:
 squiffyApi.on('sound', () => {
     muteButton.hidden = false;
 });
+```
+
+### restartRequested and savesRequested
+
+Fired when the player clicks a [`{{restart}}` or `{{saves}}`](/basic-concepts/#restarting-and-saving-from-the-story) link. If nothing is listening, the runtime handles the link itself: it asks the player whether they're sure, then restarts, or opens a Saved games dialog of its own. Listen for them to use your page's own, for example the same dialog as your Save button:
+
+```javascript
+squiffyApi.on('restartRequested', async (event) => {
+    // event.confirm is false for {{restart confirm=false}}
+    if (!event.confirm || await squiffyRuntime.confirmDialog({ message: 'Start again?', confirm: 'Restart' })) {
+        squiffyApi.restart();
+    }
+});
+squiffyApi.on('savesRequested', () => savesDialog.open());
 ```
 
 ### Unsubscribing
@@ -448,8 +483,8 @@ Here's a more complete example with custom controls:
             const statusEl = document.getElementById('status');
 
             // Restart button
-            document.getElementById('restart').addEventListener('click', function () {
-                if (confirm('Are you sure you want to restart?')) {
+            document.getElementById('restart').addEventListener('click', async function () {
+                if (await squiffyRuntime.confirmDialog({ message: 'Are you sure you want to restart?', confirm: 'Restart' })) {
                     squiffyApi.restart();
                 }
             });

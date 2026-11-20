@@ -344,6 +344,22 @@ The current carries you away. THE END.
 
 An `@end` in one of a section's passages marks the whole section as an ending. `@end` doesn't change what the player sees.
 
+### Restarting and saving from the story
+
+A published story has Restart and Save buttons above it. To give the player those choices in the story itself, such as "Play again" at an ending, use `{{restart}}` and `{{saves}}`:
+
+```squiffy
+[[Fall into the river]]:
+@end
+The current carries you away. THE END.
+
+{{restart text="Play again"}} or {{saves text="load a saved game"}}
+```
+
+`{{restart}}` asks the player whether they're sure, as the Restart button does. To restart straight away, add `confirm=false`: `{{restart text="Play again" confirm=false}}`. `{{saves}}` opens the [Saved games](/multiple-files/#saved-games) dialog, where the player can save or load a game. It works even if you've turned off the Save button, so you can offer saving only where it suits your story.
+
+Without `text`, the links say "Restart" and "Saved games", or the [`restart` and `saves` text](/multiple-files/#the-pages-text-in-another-language) in your `squiffy.json`. Like other links, they can only be clicked while the player is still in their section.
+
 ## Embed text
 
 You can embed text from another section, or from a passage in the current section, using `{{embed "section or passage name"}}`.
