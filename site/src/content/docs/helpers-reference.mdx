@@ -2,6 +2,7 @@
 title: Helpers reference
 ---
 
+import Sample from "@components/Sample.astro";
 import {Aside} from "@astrojs/starlight/components";
 
 Squiffy uses Handlebars as its text processing engine, providing a powerful set of helpers for dynamic content. This page is a quick reference for all available helpers. For the rest of Squiffy's syntax, such as links and directives, see the [Syntax cheat sheet](/syntax/).
@@ -283,7 +284,7 @@ See [Music and sound](/images-and-files/#music-and-sound) for examples.
 These helpers let you manage arrays stored in attributes - useful for tracking items, available options, or game state.
 
 <Aside type="note">
-The `"attribute"` parameter is the **name** of an attribute that stores an array (e.g., `"inventory"`). It must be a quoted string. The helper reads and modifies the array stored in that attribute.
+The `"attribute"` parameter is the **name** of an attribute that stores an array (e.g., `"inventory"`). It must be a quoted string. The helper reads and modifies the array stored in that attribute. The helpers in [Joining, sorting and more](#joining-sorting-and-more) are different: they take the array itself, without quotes.
 </Aside>
 
 ### Creating and modifying arrays
@@ -304,6 +305,33 @@ The `"attribute"` parameter is the **name** of an attribute that stores an array
 | `{{length}}` | `"attribute"` or `(array ...)` | Get number of elements in array | `{{length "inventory"}}` |
 
 In a condition or calculation, you can also write `inventory contains "key"`, with the array itself rather than its name in quotes, and `inventory.length`. `contains` works on [objects](/attributes/#objects) too, where it's whether the object has a value with that name: `hero contains "hp"`.
+
+### Joining, sorting and more
+
+These helpers take the array itself, such as `inventory`, not its name in quotes. They don't change the attribute: they give you a new array or value, so to sort an array and keep it sorted, set it: `@set inventory = (sort inventory)`. Positions start at 0, as they do for `{{@index}}` and `inventory[0]`.
+
+| Helper | Parameters | Description | Example |
+|--------|------------|-------------|---------|
+| `{{join}}` | `array`, and optionally `separator` and `last separator` | The items as text, with `", "` between them, or the separator you give. A last separator goes before the last item instead | `{{join inventory ", " " and "}}` gives "lamp, key and rope" |
+| `{{sort}}` | `array` | The items in order: numbers first, smallest first, then text, alphabetically | `@set names = (sort names)` |
+| `{{shuffle}}` | `array` | The items in a random order | `@set deck = (shuffle deck)` |
+| `{{slice}}` | `array start`, or `array start end` | The items from position `start` up to, but not including, `end`, or to the end of the array. A negative position counts back from the end. Works on text too | `(slice inventory 0 3)` is the first three, `(slice inventory -2)` the last two |
+| `{{first}}`, `{{last}}` | `array` | The first or last item, or nothing if the array is empty | `{{last visited}}` |
+| `{{indexof}}` | `array value` | The position of the value in the array, or `-1` if it isn't there. Works on text too | `{{#if (indexof queue name) = 0}}You're next.{{/if}}` |
+| `{{count}}` | `array value` | How many times the value is in the array, or some text is in other text | `You have {{count inventory "coin"}} coins.` |
+| `{{range}}` | `from to` | The whole numbers from one number to the other, counting up or down | `(range 1 5)` is 1, 2, 3, 4, 5 |
+
+To use an item at a position held in an attribute, put the attribute in square brackets: `{{= inventory[choice]}}`.
+
+`{{#each}}` can go through any of these, so `range` repeats something a number of times, even a number worked out as the story runs. A calculation inside a helper goes in brackets of its own:
+
+<Sample script="@set lives = 3
+@set bag = [&quot;rope&quot;, &quot;lamp&quot;, &quot;key&quot;]
+Lives: {{#each (range 1 lives)}}♥{{/each}}
+
+You're carrying {{join (sort bag) &quot;, &quot; &quot; and &quot;}}.
+
+Countdown: {{#each (range (lives + 2) 1)}}{{this}}... {{/each}}Go!"></Sample>
 
 ### Examples
 

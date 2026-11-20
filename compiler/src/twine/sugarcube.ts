@@ -5,7 +5,7 @@
 // <<if>> becomes {{#if}}, <<set>> becomes @set or {{set}}, links with setters become links with
 // setters, and <<link>> and friends become links to generated passages and sections.
 
-import { display, isDynamicTarget, lengthOf, member as memberOf, print, randomInteger, skipString, targetName, Tokens, Unconvertible, unescapeString } from "./expression.js";
+import { display, isDynamicTarget, isListCall, lengthOf, member as memberOf, print, randomInteger, skipString, targetName, Tokens, Unconvertible, unescapeString } from "./expression.js";
 import type { BinaryOp, Expr } from "./expression.js";
 import { audioHelper, leadingAudio, pickSource } from "./audio.js";
 import type { AudioAction, StoryAudio } from "./audio.js";
@@ -743,6 +743,25 @@ class ExpressionParser {
                 case "random":
                     if (callee.object.v == "expr") return { k: "call", fn: "random", args: [callee.object.e] };
                     break;
+                // Lists (#447). JavaScript's .join() puts a comma with no space between the items.
+                case "join":
+                    if (args.length > 1) throw new Unconvertible(".join() with more than one value");
+                    return { k: "call", fn: "join", args: [value(), args[0] ?? { k: "str", v: "," }] };
+                case "sort":
+                case "shuffle":
+                    // Squiffy's give back a new list, and leave the attribute as it was
+                    if (args.length) throw new Unconvertible(`.${callee.property}() with a function to compare the items`);
+                    return { k: "call", fn: callee.property, args: [value()] };
+                case "slice":
+                    if (args.length > 2) throw new Unconvertible(".slice() with more than two values");
+                    return { k: "call", fn: "slice", args: [value(), args[0] ?? { k: "num", v: 0 }, ...args.slice(1)] };
+                case "first":
+                case "last":
+                    noArguments();
+                    return { k: "call", fn: callee.property, args: [value()] };
+                case "count":
+                    if (args.length != 1) throw new Unconvertible(".count() with a position to start from");
+                    return { k: "call", fn: "count", args: [value(), args[0]] };
                 case "push":
                 case "pushUnique":
                 case "delete": {
@@ -1449,7 +1468,7 @@ class Writer {
         if (range) {
             const vars = new Map<string, "item" | "index">(range[2] ? [[range[1], "index"], [range[2], "item"]] : [[range[1], "item"]]);
             const collection = this.expr.parse(range[3]);
-            if (collection.k != "var" && collection.k != "array" && !(collection.k == "loop" && collection.kind == "item")) {
+            if (collection.k != "var" && collection.k != "array" && !(collection.k == "loop" && collection.kind == "item") && !isListCall(collection)) {
                 throw new Unconvertible("<<for>> with range over something other than an array");
             }
             // With a position as well, $list[_i] is the item too
@@ -1460,7 +1479,21 @@ class Writer {
             const array = this.expr.attribute(counted[3], counted[2] == "_");
             return { collection: { k: "var", name: array }, vars: new Map([["_" + counted[1], "index"]]), array };
         }
-        throw new Unconvertible("<<for>> loops, except ones that go through an array (with range, or from 0 to its length)");
+        // Counting, <<for _i to 1; _i lte 5; _i++>>, goes through (range 1 5), with _i as the item (#447)
+        const counting = /^\s*_([A-Za-z_]\w*)\s*(?:to|=)\s*([^;]+);\s*_\1\s*(lte|lt|gte|gt|<=|>=|<|>)\s*([^;]+);\s*(_\1\s*\+\+|\+\+\s*_\1|_\1\s*\+=\s*1|_\1\s*--|--\s*_\1|_\1\s*-=\s*1)\s*$/.exec(args);
+        if (counting) {
+            const from = this.expr.parse(counting[2]);
+            const bound = this.expr.parse(counting[4]);
+            const up = counting[5].includes("+");
+            const op = ({ "lt": "<", "lte": "<=", "gt": ">", "gte": ">=" } as Record<string, string>)[counting[3]] ?? counting[3];
+            if (up != op.startsWith("<")) throw new Unconvertible("a <<for>> loop that counts away from where it stops");
+            // < 5 counting up stops at 4, and > 0 counting down at 1
+            const to: Expr = op.length == 2 ? bound
+                : bound.k == "num" ? { k: "num", v: bound.v + (up ? -1 : 1) }
+                : { k: "bin", op: up ? "-" : "+", l: bound, r: { k: "num", v: 1 } };
+            return { collection: { k: "call", fn: "range", args: [from, to] }, vars: new Map([["_" + counting[1], "item"]]) };
+        }
+        throw new Unconvertible("<<for>> loops, except ones that go through an array (with range), or count up or down by 1");
     }
 
     // The attribute a form macro like <<textbox "$name">> sets

@@ -174,11 +174,15 @@ export class TextProcessor {
             return a % b;
         });
 
+        // A story can have an attribute with the same name as a helper, such as count or min,
+        // which {{count}} on its own would call the helper for, with no values. So the helpers
+        // below that need values show the attribute instead, when there is one.
         // Rounding (#446). (round x) rounds to a whole number, and (round x 2) to 2 decimal places.
         // Numbers halfway between round up, as Math.round does, and as Harlowe's (round:) does.
         const roundingHelper = (name: string, fn: (n: number) => number, places: boolean) => {
             this.handlebars.registerHelper(name, (...args) => {
                 const values = args.slice(0, -1).map(unwrapValue);
+                if (values.length === 0 && this.state.has(name)) return this.state.get(name);
                 if (values.length !== 1 && !(places && values.length === 2)) {
                     throw new Error(`"${name}" needs ${places ? "one or two values" : "one value"}, but was given ${values.length}`);
                 }
@@ -198,6 +202,7 @@ export class TextProcessor {
         const extremeHelper = (name: string, fn: (...values: number[]) => number) => {
             this.handlebars.registerHelper(name, (...args) => {
                 let values = args.slice(0, -1).map(unwrapValue);
+                if (values.length === 0 && this.state.has(name)) return this.state.get(name);
                 if (values.length === 1 && Array.isArray(values[0])) {
                     values = values[0].map(unwrapValue);
                 }
@@ -222,6 +227,7 @@ export class TextProcessor {
         const textHelper = (name: string, fn: (s: string) => string) => {
             this.handlebars.registerHelper(name, (...args) => {
                 const values = args.slice(0, -1).map(unwrapValue);
+                if (values.length === 0 && this.state.has(name)) return this.state.get(name);
                 if (values.length !== 1) {
                     throw new Error(`"${name}" needs one value, but was given ${values.length}`);
                 }
@@ -239,6 +245,7 @@ export class TextProcessor {
         // helper with side effects, such as (pop "list"), runs whichever is chosen.
         this.handlebars.registerHelper("cond", (...args) => {
             const values = args.slice(0, -1).map(unwrapValue);
+            if (values.length === 0 && this.state.has("cond")) return this.state.get("cond");
             if (values.length !== 3) {
                 throw new Error(`"cond" needs three values, but was given ${values.length}`);
             }
@@ -358,6 +365,100 @@ export class TextProcessor {
                 return 0;
             }
             return arr.length;
+        });
+
+        // More helpers for lists (#447). These take the list itself, (join bag), not its name in
+        // quotes as append and friends do, and give back a new list rather than changing the
+        // attribute, so @set bag = (sort bag) sorts it. A blank value (unset, false or "") is
+        // an empty list. Positions start at 0, as with bag[i] and {{@index}}.
+        const toList = (name: string, v: unknown): unknown[] => {
+            v = unwrapValue(v);
+            if (Array.isArray(v)) return v.map(unwrapValue);
+            if (isBlank(v)) return [];
+            if (typeof v === "string") {
+                throw new Error(`"${name}" needs a list, but was given the text "${v}". To use an attribute's list, leave out the quotes: (${name} bag), not (${name} "bag")`);
+            }
+            throw new Error(`"${name}" needs a list, but was given ${typeof v === "object" ? "an object" : String(v)}`);
+        };
+        const listHelper = (name: string, min: number, max: number, fn: (values: unknown[]) => unknown) => {
+            this.handlebars.registerHelper(name, (...args) => {
+                const values = args.slice(0, -1).map(unwrapValue);
+                if (values.length === 0 && this.state.has(name)) return this.state.get(name);
+                if (values.length < min || values.length > max) {
+                    const needs = min === max ? `${min} value${min === 1 ? "" : "s"}` : `${min} to ${max} values`;
+                    throw new Error(`"${name}" needs ${needs}, but was given ${values.length}`);
+                }
+                return fn(values);
+            });
+        };
+        // A whole number, for a position or a range
+        const toWhole = (name: string, v: unknown) => Math.trunc(toNumber(name, v));
+
+        // (join bag) is "lamp, key, rope", (join bag " / ") puts " / " between them, and
+        // (join bag ", " " and ") is "lamp, key and rope"
+        listHelper("join", 1, 3, ([list, separator, lastSeparator]) => {
+            const items = toList("join", list).map(item => toText("join", item));
+            const sep = separator === undefined ? ", " : toText("join", separator);
+            if (lastSeparator === undefined || items.length < 2) return items.join(sep);
+            return items.slice(0, -1).join(sep) + toText("join", lastSeparator) + items[items.length - 1];
+        });
+
+        // Numbers go before text, in order, and text is in alphabetical order, ignoring case,
+        // with numbers inside it in order too ("item 2" before "item 10")
+        const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
+        listHelper("sort", 1, 1, ([list]) => toList("sort", list).sort((a, b) => {
+            const aNum = typeof a === "number", bNum = typeof b === "number";
+            if (aNum && bNum) return (a as number) - (b as number);
+            if (aNum !== bNum) return aNum ? -1 : 1;
+            return collator.compare(toText("sort", a), toText("sort", b));
+        }));
+
+        listHelper("shuffle", 1, 1, ([list]) => {
+            const items = toList("shuffle", list);
+            for (let i = items.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [items[i], items[j]] = [items[j], items[i]];
+            }
+            return items;
+        });
+
+        // (slice bag 1 3) is the items from position 1 up to, but not including, 3, and
+        // (slice bag 1) is the rest from position 1. A negative position counts from the end,
+        // so (slice bag -2) is the last two. It takes part of some text in the same way.
+        listHelper("slice", 2, 3, ([container, start, end]) => {
+            const from = toWhole("slice", start), to = end === undefined ? undefined : toWhole("slice", end);
+            return typeof container === "string" ? container.slice(from, to) : toList("slice", container).slice(from, to);
+        });
+
+        // The first or last item, or nothing for an empty list
+        listHelper("first", 1, 1, ([list]) => toList("first", list)[0] ?? "");
+        listHelper("last", 1, 1, ([list]) => toList("last", list).slice(-1)[0] ?? "");
+
+        // Where a value is in a list (from 0), or where some text is in text, or -1 if it isn't
+        listHelper("indexof", 2, 2, ([container, value]) => {
+            if (typeof container === "string") return container.indexOf(toText("indexof", value));
+            return toList("indexof", container).indexOf(value);
+        });
+
+        // How many times a value is in a list, or some text is in text
+        listHelper("count", 2, 2, ([container, value]) => {
+            if (typeof container === "string") {
+                const text = toText("count", value);
+                return text === "" ? 0 : container.split(text).length - 1;
+            }
+            return toList("count", container).filter(item => item === value).length;
+        });
+
+        // (range 1 5) is the list 1, 2, 3, 4, 5, and (range 5 1) counts down
+        listHelper("range", 2, 2, ([from, to]) => {
+            const start = toWhole("range", from), end = toWhole("range", to);
+            if (Math.abs(end - start) >= 10000) {
+                throw new Error(`"range" can make a list of up to 10,000 numbers, but was asked for ${Math.abs(end - start) + 1}`);
+            }
+            const step = end >= start ? 1 : -1;
+            const result: number[] = [];
+            for (let n = start; n !== end + step; n += step) result.push(n);
+            return result;
         });
 
         const escapeAttr = (s: unknown) => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;");

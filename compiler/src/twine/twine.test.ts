@@ -326,6 +326,23 @@ describe("Harlowe", () => {
             "{{#each bag}}{{this}}; {{/each}}{{#each (array 1 2 3 4)}}{{#if this > 2}}{{this}} {{/if}}{{/each}}{{#each (array 1 2 3)}}{{= this * 2}}{{/each}}");
     });
 
+    test("(joined:), (sorted:), (shuffled:), (count:), (range:) and positions from the end (#447)", async () => {
+        const { script, result } = await convert("Harlowe", [
+            ":: Start",
+            "(print: (joined: \", \", ...$bag)) (print: (joined: \"-\", \"a\", \"b\")) (print: (count: $bag, \"key\"))",
+            "(set: $s to (sorted: ...$bag))(set: $m to (shuffled: ...$bag))",
+            "(print: $bag's last) (print: $bag's 2ndlast)",
+            "(for: each _n, ...(range: 1, $top))[_n]",
+        ].join("\n"));
+        expect(section(script, "Start")).toBe([
+            "{{join bag \", \"}} {{join (array \"a\" \"b\") \"-\"}} {{count bag \"key\"}}<br>",
+            "{{set \"s\" (sort bag)}}{{set \"m\" (shuffle bag)}}",
+            "{{last bag}} {{= bag[bag.length - 2]}}<br>",
+            "{{#each (range 1 top)}}{{this}}{{/each}}",
+        ].join("\n"));
+        expect(result.problems).toEqual([]);
+    });
+
     test("a (for:) that can't be converted is left as a comment, without its hook", async () => {
         const { script, result } = await convert("Harlowe", ":: Start\n(for: it, ...$a)[x]");
         expect(section(script, "Start")).toBe("{{!-- Twine: (for: it, ...$a)[x] --}}");
@@ -484,7 +501,7 @@ describe("SugarCube", () => {
         const { script } = await convert("SugarCube",
             ":: Start\n<<for _i, _x range $bag>>_i: _x $bag[_i] <<if _x is \"key\">>[[Use _x|Door][$using to _x; $pos to _i]]<</if>><<set $last to _x>><</for>><<for _a range $rows>><<for _b range _a>>_b<</for>><</for>>\n\n:: Door\nD");
         expect(section(script, "Start")).toBe(
-            "{{#each bag}}{{@index}}: {{this}} {{this}} {{#if this = \"key\"}}[[Use {{this}}]](Door, using = '{{this}}', pos = '{{@index}}'){{/if}}{{set \"last\" this}}{{/each}}"
+            "{{#each bag}}{{@index}}: {{this}} {{this}} {{#if this = \"key\"}}[[Use {{this}}]](Door, using = '{{this}}', pos = '{{@index}}'){{/if}}{{set \"last_\" this}}{{/each}}"
             + "{{#each rows}}{{#each this}}{{this}}{{/each}}{{/each}}");
     });
 
@@ -501,7 +518,7 @@ describe("SugarCube", () => {
             "{{!-- Twine: <<for _x range $bag>><<if _x>><<break>><</if>><</for>> --}} {{!-- Twine: <<for _c < 4>>x<</for>> --}} {{#each bag}}{{!-- Twine: <<set _x to 1>> --}}{{/each}}");
         expect(result.problems.map(p => p.reason)).toEqual([
             "This couldn't be converted: <<break>> and <<continue>>.",
-            "This couldn't be converted: <<for>> loops, except ones that go through an array (with range, or from 0 to its length).",
+            "This couldn't be converted: <<for>> loops, except ones that go through an array (with range), or count up or down by 1.",
             "This couldn't be converted: changing a loop's variable inside the loop.",
         ]);
     });
@@ -549,10 +566,27 @@ describe("SugarCube", () => {
         expect(result.problems).toEqual([]);
     });
 
-    test(".indexOf() for anything else can't be converted (#446)", async () => {
-        const { result } = await convert("SugarCube", ":: Start\n<<print $name.indexOf(\"n\")>>");
+    test("array methods and counting loops (#447)", async () => {
+        const { script, result } = await convert("SugarCube", [
+            ":: Start",
+            "<<print $name.indexOf(\"n\")>> <<print $bag.join()>> <<print $bag.join(\" and \")>> <<print $bag.count(\"key\")>>",
+            "<<set $sorted to $bag.sort()>><<set $two to $bag.slice(1, 3)>><<print $bag.first()>> <<print $bag.last()>>",
+            "<<for _i to 1; _i lte 3; _i++>>_i<</for>> <<for _i to 0; _i lt $n; _i++>>_i<</for>> <<for _i to 5; _i gt 0; _i-->>_i<</for>>",
+            "<<for _x range $bag.slice(1)>>_x<</for>>",
+        ].join("\n"));
+        expect(section(script, "Start")).toBe([
+            "{{indexof name \"n\"}} {{join bag \",\"}} {{join bag \" and \"}} {{count bag \"key\"}}<br>",
+            "{{set \"sorted\" (sort bag)}}{{set \"two\" (slice bag 1 3)}}{{first bag}} {{last bag}}<br>",
+            "{{#each (range 1 3)}}{{this}}{{/each}} {{#each (range 0 (n - 1))}}{{this}}{{/each}} {{#each (range 5 1)}}{{this}}{{/each}}<br>",
+            "{{#each (slice bag 1)}}{{this}}{{/each}}",
+        ].join("\n"));
+        expect(result.problems).toEqual([]);
+    });
+
+    test("<<for>> loops that count the wrong way can't be converted (#447)", async () => {
+        const { result } = await convert("SugarCube", ":: Start\n<<for _i to 0; _i gt 5; _i++>>_i<</for>>");
         expect(result.problems.map(p => p.reason)).toEqual([
-            "This couldn't be converted: .indexOf(), except to check whether something is there.",
+            "This couldn't be converted: a <<for>> loop that counts away from where it stops.",
         ]);
     });
 });

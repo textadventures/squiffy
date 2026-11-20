@@ -1,7 +1,8 @@
 // Rewrites infix expressions into the equivalent prefix helper calls, before the text reaches
 // Handlebars. They're accepted in:
 //   conditions:  {{#if score > 100 and has_key}}  ->  {{#if (and (gt score 100) has_key)}}
-//                (also {{#unless}}, {{else if}} and {{else unless}})
+//                (also {{#unless}}, {{else if}} and {{else unless}}, and what {{#each}} and
+//                {{#with}} go through: {{#each (range 1 (count + 1))}} (#447))
 //   values:      {{set "gold" gold + price * 2}}  ->  {{set "gold" (add gold (mul price 2))}}
 //                (also {{inc}} and {{dec}})
 //   display:     {{= price * 2}}                  ->  {{mul price 2}}
@@ -581,7 +582,7 @@ export function splitSetters(setters: string): string[] {
     return result.map(s => s.trim()).filter(s => s !== "");
 }
 
-const tagStart = /(\\*)\{\{(~?\s*)(?:(#if|#unless|else\s+if|else\s+unless)(?=[\s(!])|(set|inc|dec)(?=\s)|(=))/g;
+const tagStart = /(\\*)\{\{(~?\s*)(?:(#if|#unless|#each|#with|else\s+if|else\s+unless)(?=[\s(!])|(set|inc|dec)(?=\s)|(=))/g;
 
 // Finds the end of a mustache tag starting at `from`, skipping over quoted strings and objects,
 // such as {{set "hero" { hp: 10 }}}. Returns the index of the closing "}}" (or "~}}"), or -1.
