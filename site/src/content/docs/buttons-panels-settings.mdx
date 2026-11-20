@@ -1,0 +1,191 @@
+---
+title: Buttons, panels and settings
+description: The Back and Save buttons, saved games, panels, player settings, and the page's text in another language, set in a story's squiffy.json
+---
+
+A published story has buttons above it for going back, saving, restarting and switching between light and dark. You can change what's there, add [panels](#panels) that are always to hand, give the player [settings](#player-settings) to choose, and put the page's text into another language. All of these are set in the story's project file, `squiffy.json`: see [Stories in several files](/multiple-files/) for what it is and how to add one.
+
+## The Back button
+
+A published story has a **Back** button, which lets the player undo their choices, a section or passage at a time. To leave it out, so that the player's choices are final, set `backButton` to `false`:
+
+```json
+{
+  "version": 1,
+  "main": "story.squiffy",
+  "backButton": false
+}
+```
+
+## Saved games
+
+A published story has a **Save** button, which opens the player's list of saved games. They can save as often as they like, optionally giving each save a name, and later load, overwrite, rename or delete them. A save without a name is shown by the start of the text the player was reading, or by the heading it starts with. The player can also save the game to a file, and load it from a file, to keep it safe or carry on in another browser.
+
+Saved games are kept in the player's browser, separately for each story. They're as well as the automatic save, which lets the player close the page and carry on where they left off: loading a saved game replaces it.
+
+A saved game from a different story isn't loaded: the player is told it's for a different story. Squiffy tells them apart by their [`id`](/multiple-files/). A story without an `id` loads any saved game, so give yours one if it hasn't got one: any text will do, as long as no other story has it.
+
+If you publish a new version of your story, players can still load their saved games, carrying on with the new version from where they were. If the section they were in has gone, the story starts again from the beginning, keeping their attributes.
+
+You can also put a link in your story that opens the Saved games dialog, such as "Save your game" in a place the player keeps coming back to: see [Restarting and saving from the story](/basic-concepts/#restarting-and-saving-from-the-story).
+
+To leave out the Save button, set `saveButton` to `false`. A `{{saves}}` link still opens the dialog, so you can leave saving to the story:
+
+```json
+{
+  "version": 1,
+  "main": "story.squiffy",
+  "saveButton": false
+}
+```
+
+## Panels
+
+A panel shows a passage that's always to hand, such as the player's stats, their inventory, a map or some help. It's rendered again each time the story moves on, so it's always up to date. List your panels under `panels`:
+
+```json
+{
+  "version": 1,
+  "main": "story.squiffy",
+  "panels": [
+    { "passage": "status", "label": "Status", "position": "side" },
+    { "passage": "inventory", "label": "Inventory", "icon": "bag" },
+    { "passage": "help", "label": "Help" }
+  ]
+}
+```
+
+Each panel's passage is in the [master section](/basic-concepts/#master-sections-and-passages) `[[]]`:
+
+```squiffy
+[[]]:
+
+[status]:
+**Gold:** {{gold}}
+
+**Health:** {{health}}
+
+[inventory]:
+{{#each inventory}}
+- {{this}}
+{{else}}
+You're carrying nothing.
+{{/each}}
+
+[help]:
+Click a link to choose what happens next.
+```
+
+- `"position": "side"` shows the panel beside the story. On a narrower screen, such as a phone's, it's a button in the header instead, which shows the panel in a dialog.
+- Any other panel is a button in the header, next to the Back and Restart buttons, which shows its passage in a dialog. The dialog follows the story while it's open.
+- `label` is the button's text. To show an icon instead, with the label as its tooltip, give an `icon`: `bag`, `person`, `map`, `help`, `info`, `list`, `book`, `star` or `heart`.
+
+A panel only shows its passage: it doesn't change the story. `{{set}}`, `{{goto}}` and the like are ignored, the passage's `@set` and JavaScript don't run, and its links don't work. Opening a panel isn't a move, so Back doesn't go back to it. A side panel whose text comes out empty is hidden, so `{{#if}}` can hide it until it has something to show.
+
+To change how panels look, see [Panels](/styling/#panels) in Styling.
+
+## Player settings
+
+Settings are options the player can change at any time, such as the size of the text, whether to show content warnings, or how fast text appears. You choose what they are, and your story reads what the player chose. List them under `settings`:
+
+```json
+{
+  "version": 1,
+  "main": "story.squiffy",
+  "settings": [
+    { "name": "warnings", "label": "Content warnings", "default": true,
+      "description": "A warning before scenes some players may find upsetting" },
+    { "name": "textSize", "type": "list", "label": "Text size",
+      "options": ["Small", "Medium", "Large"], "default": "Medium" },
+    { "name": "speed", "type": "range", "label": "Text speed", "min": 1, "max": 5, "step": 1, "default": 3 }
+  ]
+}
+```
+
+The published story then has a Settings button in the header, which opens a dialog where the player changes them. You can also put a link to the dialog in your story with [`{{settings}}`](/basic-concepts/#restarting-and-saving-from-the-story), for example on the first screen.
+
+Each setting has a `name`, which your story uses to read it, and a `label`, which the dialog shows, with an optional `description` under it. Its `type` is one of:
+
+- `toggle`, or leaving `type` out: on or off, which the story reads as `true` or `false`. It's off unless its `default` is `true`.
+- `list`: one of its `options`, shown as a drop-down. An option is text, or a `value` for the story to read and a `label` for the dialog, such as `{ "value": "large", "label": "Large text" }`. It's the first option unless you give a `default`.
+- `range`: a number from `min` to `max`, shown as a slider, going up in `step`s if you give one. It's `min` unless you give a `default`.
+
+### Reading settings in the story
+
+Your story reads a setting as `settings.` and its name, like any other [attribute](/attributes/):
+
+```squiffy
+{{#if settings.warnings}}
+*Content warning: this scene describes a shipwreck.*
+{{/if}}
+
+{{#if settings.speed > 3}}The storm comes quickly.{{else}}The storm gathers slowly.{{/if}}
+```
+
+Settings belong to the player, not to the game. Your story can read them but not change them, and going back, restarting or loading a [saved game](#saved-games) leaves them as they are. They're remembered for your story in the player's browser, like the light or dark theme. A change shows in text that's shown afterwards, in [panels](#panels), and in [`{{live "settings.speed"}}`](/dynamic-text/#live), but text already on the screen stays as it was.
+
+### Styling with settings
+
+Each setting also puts a class on the story's element, so your stylesheet can follow it without the story doing anything. A toggle adds `setting-` and its name while it's on, such as `setting-warnings`. A list or range adds its name and value, such as `setting-textSize-Large` or `setting-speed-3`, with anything in the value other than letters, digits, `-` and `_` made a `-`. For example, to make the text bigger:
+
+```css
+div#squiffy.setting-textSize-Small { --squiffy-font-size: 1rem; }
+div#squiffy.setting-textSize-Large { --squiffy-font-size: 1.375rem; }
+```
+
+See [Styling](/styling/) for the classes and variables you can use.
+
+## The page's text in another language
+
+A published story's buttons are icons, with a tooltip that says what each one does, which screen readers read out too. Clicking Restart asks the player whether they're sure. This text, and the text of the [Saved games](#saved-games) and [Settings](#player-settings) dialogs, the [panels'](#panels) Close button, and the [`{{restart}}`, `{{saves}}` and `{{settings}}` links](/basic-concepts/#restarting-and-saving-from-the-story), is in English unless you give your own under `strings`:
+
+```json
+{
+  "version": 1,
+  "main": "story.squiffy",
+  "strings": {
+    "back": "Retour",
+    "restart": "Recommencer",
+    "restartConfirm": "Voulez-vous vraiment recommencer ?",
+    "switchToDark": "Passer en mode sombre",
+    "switchToLight": "Passer en mode clair"
+  }
+}
+```
+
+| String | English |
+|---|---|
+| `back` | Back |
+| `restart` | Restart |
+| `restartConfirm` | Are you sure you want to restart? |
+| `switchToDark` | Switch to dark mode |
+| `switchToLight` | Switch to light mode |
+| `saves` | Saved games |
+| `saveName` | Name (optional) |
+| `save` | Save |
+| `noSaves` | No saved games yet. |
+| `savedGame` | Saved game |
+| `savedToday` | Today, [time] |
+| `savedYesterday` | Yesterday, [time] |
+| `load` | Load |
+| `loadConfirm` | Load "[name]"? You'll lose anything you've done since you last saved. |
+| `saveOptions` | Options for [name] |
+| `overwrite` | Overwrite |
+| `overwriteConfirm` | Overwrite "[name]"? |
+| `rename` | Rename |
+| `newName` | New name |
+| `saveToFile` | Save to file |
+| `loadFromFile` | Load from file |
+| `delete` | Delete |
+| `deleteConfirm` | Delete "[name]"? This can't be undone. |
+| `cancel` | Cancel |
+| `close` | Close |
+| `wrongStory` | This saved game is for a different story. |
+| `notASave` | This file isn't a saved game. |
+| `cantSave` | The game couldn't be saved. Try Save to file instead. |
+| `settings` | Settings |
+| `resetSettings` | Reset to defaults |
+
+`[name]` is replaced with the name of the save, and `[time]` with the time it was saved.
+
+Anything you leave out stays in English. A story without a `squiffy.json` is always in English.

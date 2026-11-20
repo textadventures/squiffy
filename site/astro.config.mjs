@@ -60,6 +60,7 @@ export default defineConfig({
                         "player-input",
                         "images-and-files",
                         "multiple-files",
+                        "buttons-panels-settings",
                         "javascript",
                         "cookbook",
                     ],

@@ -34,7 +34,7 @@ Squiffy 7 brings a new editor. The language adds the [`@end`](/basic-concepts/#e
 - **Where the player came from.** The [`previous_section` and `previous` attributes](/attributes/#where-the-player-came-from) say which section, and which section or passage, the player saw before this one, so a section can begin differently depending on how they got there: `{{#if previous_section = "river"}}`.
 - **Endings.** Mark the sections where your story ends with [`@end`](/basic-concepts/#endings), and the editor won't report them as dead ends.
 - **Restart and save from the story.** [`{{restart}}`](/basic-concepts/#restarting-and-saving-from-the-story) is a link that restarts the story, for "Play again" at an ending, and `{{saves}}` opens the Saved games dialog. Restarting asks the player first in a dialog that matches the page, rather than the browser's own.
-- **Player settings.** List [settings](/multiple-files/#player-settings) in `squiffy.json`, such as text size or content warnings, and the player can change them at any time from a Settings button or a [`{{settings}}`](/basic-concepts/#restarting-and-saving-from-the-story) link. The story reads them as `settings.warnings`, and they put classes on the story for its stylesheet.
+- **Player settings.** List [settings](/buttons-panels-settings/#player-settings) in `squiffy.json`, such as text size or content warnings, and the player can change them at any time from a Settings button or a [`{{settings}}`](/basic-concepts/#restarting-and-saving-from-the-story) link. The story reads them as `settings.warnings`, and they put classes on the story for its stylesheet.
 - **Passages you can click again.** Add [`@repeat`](/basic-concepts/#passages-you-can-click-again) to a passage, and its links stay clickable, for a clue the player might want to read again, or a character who says something different each time.
 - **Turning off passage links.** [`{{deactivate "name"}}`](/basic-concepts/#turning-off-passage-links) turns off the links to a passage, so one choice can rule out another, and a passage with `@repeat` can turn itself off when it's done.
 - **Loops with links.** Inside [`{{#each}}`](/attributes/#going-through-an-array), you can use the story's attributes, and a link can use the item, so you can make a link for each thing in an array: `{{#each inventory}}[[Drop the {{this}}]](drop, item = "{{this}}"){{/each}}`. A link's text can show attributes anywhere, as in `[[Pay {{price}} gold]](shop)`.
@@ -45,11 +45,11 @@ Squiffy 7 brings a new editor. The language adds the [`@end`](/basic-concepts/#e
 
 ## Published stories
 
-- **A Back button.** Players can undo their choices, a section or passage at a time. To leave it out, see [The Back button](/multiple-files/#the-back-button).
-- **Panels.** Show the player's stats, inventory, a map or some help beside the story, or from a button in the header, always up to date. See [Panels](/multiple-files/#panels).
-- **Saved games.** Players can keep as many saved games as they like, and save them to files, from the Save button. See [Saved games](/multiple-files/#saved-games).
+- **A Back button.** Players can undo their choices, a section or passage at a time. To leave it out, see [The Back button](/buttons-panels-settings/#the-back-button).
+- **Panels.** Show the player's stats, inventory, a map or some help beside the story, or from a button in the header, always up to date. See [Panels](/buttons-panels-settings/#panels).
+- **Saved games.** Players can keep as many saved games as they like, and save them to files, from the Save button. See [Saved games](/buttons-panels-settings/#saved-games).
 - **Dark mode.** Published stories follow the reader's light or dark system setting, and have a button to switch between them. To keep your story light, see [Light and dark mode](/styling/#light-and-dark-mode).
-- **Buttons in your language.** The buttons above the story are icons, and their tooltips can be [in your story's language](/multiple-files/#the-pages-text-in-another-language).
+- **Buttons in your language.** The buttons above the story are icons, and their tooltips can be [in your story's language](/buttons-panels-settings/#the-pages-text-in-another-language).
 - **A fresher look.** The default style has more space between lines, softer colours, a modern serif font, and text sizes that follow the reader's browser setting. Its colours, fonts and page width are [CSS variables](/styling/#common-changes), so they're easier to change, and a stylesheet you add in the editor starts with the most common changes, ready to uncomment.
 
 ## The command-line tool

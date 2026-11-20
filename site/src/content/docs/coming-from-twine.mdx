@@ -95,9 +95,9 @@ If you'd rather show one section at a time, clear the screen before each one, wi
 
 ### Going back and saving
 
-As in Harlowe and SugarCube, players can undo their choices: a published Squiffy story has a **Back** button, which goes back a section or passage at a time, next to **Restart**. If you'd rather the player's choices were final, you can turn it off: see [The Back button](/multiple-files/#the-back-button).
+As in Harlowe and SugarCube, players can undo their choices: a published Squiffy story has a **Back** button, which goes back a section or passage at a time, next to **Restart**. If you'd rather the player's choices were final, you can turn it off: see [The Back button](/buttons-panels-settings/#the-back-button).
 
-The player's progress is saved automatically in their browser, so they can close the page and carry on where they left off when they come back. They can also keep as many saved games as they like, with the **Save** button: see [Saved games](/multiple-files/#saved-games).
+The player's progress is saved automatically in their browser, so they can close the page and carry on where they left off when they come back. They can also keep as many saved games as they like, with the **Save** button: see [Saved games](/buttons-panels-settings/#saved-games).
 
 ### Setting attributes
 
@@ -256,13 +256,13 @@ Squiffy fades from one track to the next by itself, and players get a mute butto
 | Run something when the story starts | A passage tagged `startup` | `StoryInit` | `@set` lines in the start section, or JavaScript in a [`@ui` block](/javascript/#running-code-when-the-story-starts) |
 | Add JavaScript | Story JavaScript | Story JavaScript | A [`@ui` block](/javascript/#running-code-when-the-story-starts), or indented lines in a section |
 | Add CSS | Story Stylesheet | Story Stylesheet | A `.css` file in the story's folder: see [Customising styles](/styling/) |
-| Show something in the sidebar | `(replace: ?sidebar)` | `StoryCaption`, `StoryMenu` | A [panel](/multiple-files/#panels), beside the story or opened from a button in the header |
+| Show something in the sidebar | `(replace: ?sidebar)` | `StoryCaption`, `StoryMenu` | A [panel](/buttons-panels-settings/#panels), beside the story or opened from a button in the header |
 | Change the look for a scene | Tag the passage, and style `tw-story[tags~="dark"]` | Tag the passage, and style `body[data-tags~="dark"]` | `@class dark`, and style `body:has(.dark)`: see [Changing the look for a scene](/styling/#changing-the-look-for-a-scene) |
 | Add a class to the page | `(enchant: ?page, ...)` | `<<addclass "body" "dark">>`, `<<removeclass>>`, `<<toggleclass>>` | `{{addclass "dark"}}`, `{{removeclass "dark"}}`, `{{toggleclass "dark"}}` |
 | Check a passage's tags | `(passage:)'s tags contains "dark"` | `tags().includes("dark")` | `{{#if (hasclass "dark")}}` |
 | Write a comment | `<!-- ... -->` | `/* ... */` | `{{!-- ... --}}` |
 | A link that restarts, or opens the saved games | | `<<link "Play again">><<run UI.restart()>><</link>>`, `UI.saves()` | `{{restart text="Play again"}}`, `{{saves}}`: see [Restarting and saving from the story](/basic-concepts/#restarting-and-saving-from-the-story) |
-| Player settings | | `Setting.addToggle("warnings", {...})`, `addList`, `addRange`, then `settings.warnings` | `"settings"` in `squiffy.json`, then `settings.warnings`: see [Player settings](/multiple-files/#player-settings) |
+| Player settings | | `Setting.addToggle("warnings", {...})`, `addList`, `addRange`, then `settings.warnings` | `"settings"` in `squiffy.json`, then `settings.warnings`: see [Player settings](/buttons-panels-settings/#player-settings) |
 | A link that opens the settings | | `<<link "Options">><<run UI.settings()>><</link>>` | `{{settings text="Options"}}` |
 
 ## What Twine has that Squiffy doesn't
@@ -276,7 +276,7 @@ Some things in Harlowe and SugarCube aren't in Squiffy yet. Each one is planned,
 
 - **Temporary variables**, like SugarCube's `_name`. In Twine, they're mostly for loop counters and values worked out along the way. In Squiffy, `{{this}}` and `{{@index}}` give you a loop's item and position, and since every attribute is saved and undone by the Back button, a value can't be left behind out of step with the story. The one exception is an embed's [parameters](/basic-concepts/#parameters), which, like a widget's `_args`, only last while the embed is shown.
 - **Loops that aren't over an array**, like `<<for _i lt 10>>`, and `<<break>>` and `<<continue>>`. A section's text is worked out each time it's shown, and a loop that never ended would freeze the page. Go through an array with [`{{#each}}`](/attributes/#going-through-an-array), and use `{{#if}}` inside it to skip items.
-- **A link back to where the player came from**, like `<<return>>`. In Twine, it's mostly for screens the player visits and leaves, like an inventory, map or help page. Squiffy's story scrolls, so going back to a section shows it again below the screen the player left, rather than putting them back where they were. Use a [panel](/multiple-files/#panels) instead: it's beside the story or opened from a button in the header, so the player never leaves the story to see it. To link back from one section to the one before, use `{{section previous_section text="Return"}}`: see [Where the player came from](/attributes/#where-the-player-came-from).
+- **A link back to where the player came from**, like `<<return>>`. In Twine, it's mostly for screens the player visits and leaves, like an inventory, map or help page. Squiffy's story scrolls, so going back to a section shows it again below the screen the player left, rather than putting them back where they were. Use a [panel](/buttons-panels-settings/#panels) instead: it's beside the story or opened from a button in the header, so the player never leaves the story to see it. To link back from one section to the one before, use `{{section previous_section text="Return"}}`: see [Where the player came from](/attributes/#where-the-player-came-from).
 - **Harlowe's and SugarCube's JavaScript**, such as `State` and `setup`. It's written for those formats' engines. Squiffy has [its own JavaScript functions](/javascript/), which can do almost anything, including adding your own helpers.
 
 ## Next steps
