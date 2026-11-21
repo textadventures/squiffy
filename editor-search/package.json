@@ -1,0 +1,39 @@
+{
+  "name": "@textadventures/editor-search",
+  "version": "7.0.0-beta.8",
+  "private": true,
+  "description": "A Find and Replace panel and a Go to line bar for CodeMirror 6, in place of its own",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/textadventures/squiffy.git",
+    "directory": "editor-search"
+  },
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest --run",
+    "dev": "vitest"
+  },
+  "peerDependencies": {
+    "@codemirror/search": "^6.7.0",
+    "@codemirror/state": "^6.5.0",
+    "@codemirror/view": "^6.37.0"
+  },
+  "devDependencies": {
+    "@codemirror/search": "^6.7.2",
+    "@codemirror/state": "^6.7.6",
+    "@codemirror/view": "^6.43.15",
+    "jsdom": "^31.0.1",
+    "typescript": "^6.0.3",
+    "vitest": "^5.1.0"
+  }
+}

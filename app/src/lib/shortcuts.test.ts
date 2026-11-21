@@ -1,14 +1,14 @@
 import { describe, expect, test } from "vitest";
 import type { KeyBinding } from "@codemirror/view";
 import { defaultKeymap, historyKeymap } from "@codemirror/commands";
-import { searchKeymap } from "@codemirror/search";
+import { editorSearchKeymap } from "@textadventures/editor-search";
 import { foldKeymap } from "@codemirror/language";
-import { lintKeymap } from "@codemirror/lint";
+import { nextDiagnostic } from "@codemirror/lint";
 import { completionKeymap } from "@codemirror/autocomplete";
 import { EDITOR_KEYS, SHORTCUT_GROUPS, formatKey, keyNames } from "./shortcuts.js";
 
 // The keymaps CodeEditor.svelte loads
-const keymaps: KeyBinding[] = [...defaultKeymap, ...historyKeymap, ...searchKeymap, ...foldKeymap, ...lintKeymap, ...completionKeymap];
+const keymaps: KeyBinding[] = [...defaultKeymap, ...historyKeymap, ...editorSearchKeymap, ...foldKeymap, { key: "F8", run: nextDiagnostic }, ...completionKeymap];
 
 // Each modifier order CodeMirror accepts means the same, so compare them sorted
 function normalise(key: string) {

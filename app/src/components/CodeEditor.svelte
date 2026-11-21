@@ -9,8 +9,9 @@
     import { history, defaultKeymap, historyKeymap, indentWithTab } from "@codemirror/commands";
     import { bracketMatching, indentOnInput, codeFolding, foldGutter, foldKeymap } from "@codemirror/language";
     import { closeBrackets, closeBracketsKeymap, autocompletion, completionKeymap, acceptCompletion } from "@codemirror/autocomplete";
-    import { searchKeymap, highlightSelectionMatches } from "@codemirror/search";
-    import { lintKeymap } from "@codemirror/lint";
+    import { highlightSelectionMatches } from "@codemirror/search";
+    import { nextDiagnostic } from "@codemirror/lint";
+    import { editorSearch, editorSearchKeymap } from "@textadventures/editor-search";
     import { editorExtensions } from "#lib/codemirror-theme.js";
     import { foldingChanged, foldMarker } from "#lib/codemirror-folding.js";
 
@@ -57,6 +58,8 @@
                 highlightActiveLine(),
                 highlightActiveLineGutter(),
                 highlightSelectionMatches(),
+                // Find and Replace and Go to line, in place of CodeMirror's own panels
+                editorSearch(),
                 history(),
                 bracketMatching(),
                 closeBrackets(),
@@ -72,9 +75,11 @@
                     ...closeBracketsKeymap,
                     ...defaultKeymap,
                     ...historyKeymap,
-                    ...searchKeymap,
+                    ...editorSearchKeymap,
                     ...foldKeymap,
-                    ...lintKeymap,
+                    // lintKeymap without Ctrl/Cmd+Shift+M, which opens CodeMirror's own list of
+                    // problems: the app shows its Problems panel for that
+                    { key: "F8", run: nextDiagnostic },
                     { key: "Tab", run: acceptCompletion },
                     indentWithTab,
                     {
