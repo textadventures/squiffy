@@ -216,7 +216,7 @@ test("shows the attributes of a game restored when the page loads", async () => 
     document.getElementById("container")!.querySelector("aside")?.remove();
     element.innerHTML = "";
     const api = await init({ element, story, persist: true, storyId: "panels-restore" });
-    panelsFor(api, [{ passage: "status", position: "side" }]);
+    panelsFor(api, [{ passage: "status", label: "Status", position: "side" }]);
     await api.begin();
     await settle();
 
