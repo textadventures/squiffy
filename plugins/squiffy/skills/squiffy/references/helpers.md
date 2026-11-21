@@ -65,6 +65,7 @@ A calculation inside a helper goes in its own parentheses: `{{= (round (gold / 3
 | `at` | `"name"` or `(array ...)` | Is the player in this section now |
 | `goto` | `"section" [after=ms]` | Go to a section once this one is shown, or after a delay (ms, `"3s"`, or an expression) |
 | `deactivate` | `"passage" ...`, or nothing | Turn off links to passages in this section, or to this passage |
+| `clear` | | Clear the screen like `@clear`, but only if the text reaches it: `{{#if previous_section != "change"}}{{clear}}{{/if}}`. Text before it in this section or passage (and the master section's) goes too; `@leave` and `@transition` apply as with `@clear` |
 
 ## Links
 

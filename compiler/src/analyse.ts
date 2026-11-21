@@ -728,20 +728,22 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
 
     // @leave only does something when the screen is cleared: by the section or passage it's in, or by
     // one that it's for, as the master section's @leave is for every section
+    // With @clear, or {{clear}} in its text (#524), which may only clear it some of the time
+    const clearsItself = (t: TextContainer | undefined) => !!t && (t.clear || t.text.some(line => /\{\{~?\s*clear\s*~?\}\}/.test(line)));
     const master = story.sections[""];
-    const clears = (s: Section) => s.clear || Object.values(s.passages).some(p => p.clear);
+    const clears = (s: Section) => clearsItself(s) || Object.values(s.passages).some(clearsItself);
     const anyClear = Object.values(story.sections).some(clears);
     const checkLeave = (target: TextContainer, used: boolean) => {
         if (!target.leaveNode || target.leave == "none" || used) return;
         report("warning", "squiffy/transition", target.leaveNode.filename, target.leaveNode.range,
-            "@leave is for when the screen is cleared, but nothing it's for has @clear, so it does nothing.",
+            "@leave is for when the screen is cleared, but nothing it's for has @clear or {{clear}}, so it does nothing.",
             target.leaveNode.range.start.line + 1);
     };
     for (const section of Object.values(story.sections)) {
-        const masterPassageClears = !!(section.passages[""]?.clear || master?.passages[""]?.clear);
-        checkLeave(section, section === master ? anyClear : clears(section) || !!master?.clear || (master ? Object.values(master.passages).some(p => p.clear) : false));
+        const masterPassageClears = clearsItself(section.passages[""]) || clearsItself(master?.passages[""]);
+        checkLeave(section, section === master ? anyClear : clears(section) || clearsItself(master) || (master ? Object.values(master.passages).some(clearsItself) : false));
         for (const passage of Object.values(section.passages)) {
-            checkLeave(passage, passage.clear || masterPassageClears || (passage.name == "" && clears(section)));
+            checkLeave(passage, clearsItself(passage) || masterPassageClears || (passage.name == "" && clears(section)));
         }
     }
 

@@ -334,6 +334,19 @@ My first reaction to the explosion was...
 
 To make the old text fade or slide away first, add [`@leave`](/dynamic-text/#when-the-screen-is-cleared).
 
+`@clear` always clears the screen, even inside an `{{#if}}`, as directives always run. To clear it only some of the time, use `{{clear}}` instead. Here, getting off the train clears the screen, but changing platforms doesn't:
+
+```squiffy
+[[platform]]:
+{{#if previous_section != "change"}}{{clear}}{{/if}}
+I am standing on the platform. [[Change platforms]](change)
+
+[[change]]:
+I cross the bridge to the other side. [[Wait here]](platform)
+```
+
+`{{clear}}` clears everything shown before it, including any text before it in the same section, such as the master section's. Only what comes after it is shown.
+
 ## Endings
 
 A section that has no links to another section is where the story stops. The editor warns about these "dead ends", in case you meant to add a link. If the section is one of your story's endings, say so with `@end` on a line on its own, and the warning goes away:

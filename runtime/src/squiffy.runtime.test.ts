@@ -741,6 +741,121 @@ Three.
     expect(scrollTo).toHaveBeenCalledWith({ top: 20, behavior: "smooth" });
 });
 
+describe("{{clear}}", () => {
+    // https://github.com/textadventures/squiffy/issues/524
+    test("clears the screen only when its {{#if}} says so", async () => {
+        const script = `
+[[start]]:
+On the train. [[get off]](platform), [[change]]
+
+[[change]]:
+At the other platform. [[back]](platform)
+
+[[platform]]:
+{{#if previous_section != "change"}}{{clear}}{{/if}}
+On the platform.
+`;
+        const { squiffyApi, element } = await initScript(script);
+        await squiffyApi.clickLink(findLink(element, "section", "get off"));
+        expect(visibleText(element)).toBe("On the platform.");
+
+        squiffyApi.goBack();
+        expect(visibleText(element)).toBe("On the train. get off, change");
+        expect(squiffyApi.get("_section")).toBe("start");
+
+        await squiffyApi.clickLink(findLink(element, "section", "change", true));
+        await squiffyApi.clickLink(findLink(element, "section", "back", true));
+        expect(visibleText(element)).toBe("On the train. get off, change At the other platform. back On the platform.");
+    });
+
+    test("takes away the text before it, in the section and in the master section", async () => {
+        const script = `
+[[]]:
+Master text.
+
+[[start]]:
+Start. [[next]]
+
+[[next]]:
+Gone. {{clear}}Kept, *still* in a paragraph.
+
+And more. [[last]]
+
+[[last]]:
+Last.
+`;
+        const { squiffyApi, element } = await initScript(script);
+        await squiffyApi.clickLink(findLink(element, "section", "next"));
+        expect(visibleText(element)).toBe("Kept, still in a paragraph. And more. last");
+        const sections = element.querySelectorAll(".squiffy-output-section");
+        expect(sections[sections.length - 1].querySelector("p")!.innerHTML).toBe("Kept, <em>still</em> in a paragraph.");
+
+        // It's a section like any other
+        await squiffyApi.clickLink(findLink(element, "section", "last"));
+        expect(visibleText(element)).toBe("Kept, still in a paragraph. And more. last Master text.Last.");
+
+        squiffyApi.goBack();
+        expect(visibleText(element)).toBe("Kept, still in a paragraph. And more. last");
+        squiffyApi.goBack();
+        expect(visibleText(element)).toBe("Master text.Start. next");
+        expect(findLink(element, "section", "next", true)).toBeDefined();
+        expect(squiffyApi.get("_section")).toBe("start");
+    });
+
+    test("in a passage, clears the screen, and going back brings it back", async () => {
+        const script = `
+[[start]]:
+@set count = 0
+Start. [look], [[on]]
+
+[look]:
+@inc count
+{{#if count > 0}}{{clear}}{{/if}}You look.
+
+[[on]]:
+On.
+`;
+        const { squiffyApi, element } = await initScript(script);
+        await squiffyApi.clickLink(findLink(element, "passage", "look"));
+        expect(visibleText(element)).toBe("You look.");
+        expect(squiffyApi.get("count")).toBe(1);
+
+        squiffyApi.goBack();
+        expect(visibleText(element)).toBe("Start. look, on");
+        expect(squiffyApi.get("count")).toBe(0);
+        expect(findLink(element, "passage", "look", true)).toBeDefined();
+    });
+
+    test("shows only what comes after it when the text is edited in the editor", async () => {
+        const script = `
+[[start]]:
+Start. [[next]]
+
+[[next]]:
+Before. {{clear}}After.
+`;
+        const { squiffyApi, element } = await initScript(script);
+        await squiffyApi.clickLink(findLink(element, "section", "next"));
+        expect(visibleText(element)).toBe("After.");
+        squiffyApi.update((await compile(script.replace("After.", "Edited."))).story);
+        expect(visibleText(element)).toBe("Edited.");
+    });
+
+    test("with no {{#if}} is the same as @clear", async () => {
+        const { squiffyApi, element } = await initScript(`
+[[start]]:
+Start. [[next]]
+
+[[next]]:
+{{clear}}
+Next.
+`);
+        await squiffyApi.clickLink(findLink(element, "section", "next"));
+        expect(visibleText(element)).toBe("Next.");
+        expect(element.querySelector(".squiffy-clear-stack")!.textContent).toContain("Start.");
+    });
+});
+
 test("Run JavaScript functions", async () => {
     const script = `
     document.getElementById('test').innerText = 'Initial JavaScript';

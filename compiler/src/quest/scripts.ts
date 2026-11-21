@@ -31,7 +31,7 @@ export interface ScriptContext extends TextContext {
 }
 
 export interface ConvertedScript {
-    // @clear, if the script clears the screen before it shows anything
+    // @clear, if the script clears the screen before it shows anything, and not only some of the time
     directives: string[];
     lines: string[];
 }
@@ -47,7 +47,7 @@ export function convertScript(statements: QStmt[], ctx: ScriptContext): Converte
 
 class Converter {
     readonly directives: string[] = [];
-    // Whether anything has been shown yet, so a ClearScreen can be @clear
+    // Whether anything has been shown yet, so a ClearScreen can be @clear, not {{clear}}
     private shown = false;
 
     constructor(private readonly ctx: ScriptContext) {}
@@ -230,7 +230,8 @@ class Converter {
                     if (!this.directives.includes("@clear")) this.directives.push("@clear");
                     return [];
                 }
-                throw new Unconvertible("Squiffy can only clear the screen before a section is shown");
+                // Part-way through the page, or only some of the time (#524)
+                return ["{{clear}}"];
             case "on ready":
                 // Waits for anything still going on, such as a sound, before running the rest
                 return this.statements(s.callback ?? [], topLevel);

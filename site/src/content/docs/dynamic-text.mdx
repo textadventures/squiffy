@@ -242,7 +242,7 @@ Transitions only play when the text first appears: not when the player goes back
 
 ### When the screen is cleared
 
-When a section or passage [clears the screen](/basic-concepts/#clear-the-screen), `@leave` says how the old text goes first. It takes the same transitions as `@transition`, played backwards, so `@leave fade` fades the old text out, and `@leave zoom` shrinks it away. A slide moves the way it's named, so `@leave slide-up` slides the old text up and away:
+When a section or passage [clears the screen](/basic-concepts/#clear-the-screen), with `@clear` or `{{clear}}`, `@leave` says how the old text goes first. It takes the same transitions as `@transition`, played backwards, so `@leave fade` fades the old text out, and `@leave zoom` shrinks it away. A slide moves the way it's named, so `@leave slide-up` slides the old text up and away:
 
 <Sample alwaysShowRestart={true} script="The lights flicker. [[Run]](corridor)
 

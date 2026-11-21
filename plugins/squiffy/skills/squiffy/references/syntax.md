@@ -54,7 +54,7 @@ One per line, at the start of a section or passage, before its text. Those that 
 | `@set greeting := Hello, {{name}}!` | Set to text after processing `{{...}}` |
 | `@set has_key` / `@set not has_key` / `@unset has_key` | Set true / false |
 | `@inc score`, `@dec health`, `@inc score 10` | Add or take away 1, or a whole number |
-| `@clear` | Clear the screen before showing this |
+| `@clear` | Clear the screen before showing this. Always, even in `{{#if}}`: use `{{clear}}` (helpers.md) to clear it only some of the time |
 | `@repeat` | In a passage: its links can be clicked again. Such clicks don't count towards `@1`/`@last` |
 | `@end` | Marks the section as an ending (in a passage, marks its section). Doesn't change what the player sees |
 | `@class dark cave` | CSS classes on the story while this section is current (see styling.md) |
