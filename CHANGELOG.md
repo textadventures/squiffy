@@ -1,5 +1,45 @@
 # Changelog
 
+## [7.0.0-beta.8](https://github.com/textadventures/squiffy/compare/v7.0.0-beta.7...v7.0.0-beta.8) (2026-11-21)
+
+
+### Features
+
+* --check and the editor report Handlebars syntax errors in a section's text ([#507](https://github.com/textadventures/squiffy/issues/507)) ([ff894c0](https://github.com/textadventures/squiffy/commit/ff894c0ded634fcb043bc1d21b09fed0668e09e6))
+* [@leave](https://github.com/leave) for how the old text goes when the screen is cleared ([#497](https://github.com/textadventures/squiffy/issues/497)) ([2383edb](https://github.com/textadventures/squiffy/commit/2383edb66b26b178bcb7c09e41f6b992f7c9e094))
+* [@transition](https://github.com/transition) for how a section or passage appears ([#492](https://github.com/textadventures/squiffy/issues/492)) ([bf01dd3](https://github.com/textadventures/squiffy/commit/bf01dd34919241408af8fd253700f2c75eadbdd1))
+* {{#every}} and {{stop}}, for text shown again and again ([#481](https://github.com/textadventures/squiffy/issues/481)) ([a7b8749](https://github.com/textadventures/squiffy/commit/a7b8749ceeea7b661b87cf4ca176c6723655ee1e))
+* {{#once}} shows its text the first time only ([#522](https://github.com/textadventures/squiffy/issues/522)) ([2e18c50](https://github.com/textadventures/squiffy/commit/2e18c50b9ef8fc34169e995a21ab3e9e7f0a2750))
+* {{#style}} for styling some text, and built-in text effects ([#488](https://github.com/textadventures/squiffy/issues/488)) ([02b03ca](https://github.com/textadventures/squiffy/commit/02b03ca6f4e2e18fc5dc637985a51d2eb2c32785))
+* {{restart}} and {{saves}} links, and a styled restart question ([#485](https://github.com/textadventures/squiffy/issues/485)) ([f69ed82](https://github.com/textadventures/squiffy/commit/f69ed82449bc90e053338795e7bb0558ed9f9170))
+* a right-click menu in the editor, and a Keyboard shortcuts dialog ([#496](https://github.com/textadventures/squiffy/issues/496)) ([05f68ac](https://github.com/textadventures/squiffy/commit/05f68acaa1b6926c6c2abf18c775f77011aaf628))
+* convert Twine's &lt;&lt;repeat&gt;&gt;, (live:) and timers with delays worked out as the story runs ([#482](https://github.com/textadventures/squiffy/issues/482)) ([ed5a57a](https://github.com/textadventures/squiffy/commit/ed5a57a3a4e8acee7a2fe1a97765ce642c3c3958))
+* delays from expressions and times like "3s" in {{goto}} and {{#animate}} ([#480](https://github.com/textadventures/squiffy/issues/480)) ([57a2ecc](https://github.com/textadventures/squiffy/commit/57a2eccdc1b81f0e628db09e96b572dba10c890b))
+* Download the app links on squiffystory.com's home page and the editor's ([#502](https://github.com/textadventures/squiffy/issues/502)) ([3f4c9d0](https://github.com/textadventures/squiffy/commit/3f4c9d0d74f727dcc3e84127c14dede854bcd3bd))
+* drag editor tabs into another order, and Show in Finder in the desktop app ([#495](https://github.com/textadventures/squiffy/issues/495)) ([8b82f80](https://github.com/textadventures/squiffy/commit/8b82f801ce9985e1dc817b63881ad95a76d567ae))
+* player settings, and a {{settings}} link ([#486](https://github.com/textadventures/squiffy/issues/486)) ([f0b6521](https://github.com/textadventures/squiffy/commit/f0b652162858e83034e710ccbd5c19119b29b449))
+* playthrough tests in the CLI, with --play --record and --test ([#504](https://github.com/textadventures/squiffy/issues/504)) ([f0803c6](https://github.com/textadventures/squiffy/commit/f0803c6a84ab82e1cf3451aef7d57161f7a34534))
+* text boxes that go to a section or passage when Enter is pressed ([#490](https://github.com/textadventures/squiffy/issues/490)) ([46bd204](https://github.com/textadventures/squiffy/commit/46bd204a19b7022ee20923c02a29b331bdc18e4b))
+* the editor picks up changes made to a story's files outside it ([#493](https://github.com/textadventures/squiffy/issues/493)) ([284afcd](https://github.com/textadventures/squiffy/commit/284afcd601f99d774c86f8d50e27aeaa65eacff7))
+* the editor's home page shows games made with Squiffy ([#509](https://github.com/textadventures/squiffy/issues/509)) ([4bee26b](https://github.com/textadventures/squiffy/commit/4bee26bceed85357cd24a3f00c2a87a84287d423))
+* the Twine importer converts Twine's CSS selectors, passage scripts and styles, and range loops over a number ([#498](https://github.com/textadventures/squiffy/issues/498)) ([02268b1](https://github.com/textadventures/squiffy/commit/02268b169927410f5985ec471b4e65198d25e8a3))
+* warn about music and sound on the story's first screen, which browsers won't play before a click ([#517](https://github.com/textadventures/squiffy/issues/517)) ([d49f59a](https://github.com/textadventures/squiffy/commit/d49f59a5a9537b0e66b2fe0f2b8b65c6bd4bb2ea))
+
+
+### Bug Fixes
+
+* {{#every}} in {{#style}}, panels after a reload, {{restart}} links in --play, and [@music](https://github.com/music) files in builds ([#505](https://github.com/textadventures/squiffy/issues/505)) ([9a8ed03](https://github.com/textadventures/squiffy/commit/9a8ed03d10838ee20910895d16a6a9e63e245ed5))
+* a story's stylesheet can change the side panel's border and padding ([#511](https://github.com/textadventures/squiffy/issues/511)) ([c7ec891](https://github.com/textadventures/squiffy/commit/c7ec891e1a0e814830e7ad18d3f54f14866712e7))
+* keep the Fonts dialog the same size while searching ([#491](https://github.com/textadventures/squiffy/issues/491)) ([670ef26](https://github.com/textadventures/squiffy/commit/670ef2685c68ede4a036500346b58dfab9d85e46))
+* links come back after {{#replace}}, even if a link inside the label has just been clicked ([#513](https://github.com/textadventures/squiffy/issues/513)) ([d75d0f4](https://github.com/textadventures/squiffy/commit/d75d0f4e6fd9def94460b6573138bb6213bbe177))
+* messages call a section without a name of its own by its +++ or --- line, not _continue1 ([#503](https://github.com/textadventures/squiffy/issues/503)) ([ca023a8](https://github.com/textadventures/squiffy/commit/ca023a8235e3ca45db2694baf838e25dd3e46888))
+* Quest gamebooks with odd flag names, or conditions in a link's text, convert to valid Squiffy ([#508](https://github.com/textadventures/squiffy/issues/508)) ([8e6704a](https://github.com/textadventures/squiffy/commit/8e6704aa9dcdbf85489f313aae39a52017f593b9))
+* run [@ui](https://github.com/ui) start-up code from a save or a chosen section, and find the master section's passages in --check and --random ([#518](https://github.com/textadventures/squiffy/issues/518)) ([22ad57b](https://github.com/textadventures/squiffy/commit/22ad57b7dc760a3cbda67802b084b818459ddd55))
+* scroll: "element" scrolls only the story's own box, not the page around it ([#515](https://github.com/textadventures/squiffy/issues/515)) ([0504a79](https://github.com/textadventures/squiffy/commit/0504a79485f3a36327d83634e0e380e17f161a8a))
+* the page scrolls down to new text once an {{#every}} in it has filled in ([#512](https://github.com/textadventures/squiffy/issues/512)) ([2ffad54](https://github.com/textadventures/squiffy/commit/2ffad542fc2bc8669ac7bdb37e53e2138c97532b))
+* the preview puts a story's classes on #squiffy, as a published story does ([#520](https://github.com/textadventures/squiffy/issues/520)) ([743334f](https://github.com/textadventures/squiffy/commit/743334fcd6ca9ffd2178be38a32f149146bd31a1))
+* typewriter text and wave continue links only break lines between words ([#510](https://github.com/textadventures/squiffy/issues/510)) ([367b59d](https://github.com/textadventures/squiffy/commit/367b59dc7296e62605a2ab3d9f9e9c2438fac3f0))
+
 ## [7.0.0-beta.7](https://github.com/textadventures/squiffy/compare/v7.0.0-beta.6...v7.0.0-beta.7) (2026-11-20)
 
 
