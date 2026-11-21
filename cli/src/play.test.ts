@@ -354,6 +354,38 @@ Hello, {{name}}!`);
         expect(result.endings).toEqual({ Start: 2 });
     });
 
+    test("leaves out {{restart}}, {{saves}} and {{settings}} links, which aren't choices", async () => {
+        const playable = await load(`Take a break: {{saves}} {{settings}} [[Go on]](end)
+
+[[end]]:
+@end
+The end. {{restart text="Play again"}}`);
+
+        expect((await playStory(playable)).choices).toEqual([{ number: 1, text: "Go on", section: "end" }]);
+        const result = await playRandom(playable, { runs: 2, steps: 10, seed: 1 });
+        expect(result.problems).toEqual([]);
+        expect(result.endings).toEqual({ end: 2 });
+    });
+
+    test("doesn't count a panel's passage as never visited", async () => {
+        await fs.writeFile(path.join(dir, "squiffy.json"), JSON.stringify({
+            version: 1, main: "story.squiffy", panels: [{ passage: "status", label: "Status" }],
+        }));
+        await fs.writeFile(path.join(dir, "story.squiffy"), `[[]]:
+
+[status]:
+Fine.
+
+[[start]]:
+@end
+The end.`);
+        const loaded = await loadPlayableStory(await findStory(dir));
+        if (!loaded.success) throw new Error(loaded.errors.join("\n"));
+
+        const result = await playRandom(loaded.playable, { runs: 1, steps: 10, seed: 1 });
+        expect(result.passages).toEqual({ total: 0, visited: 0, notVisited: [] });
+    });
+
     test("presses Enter in text boxes that go somewhere (#454)", async () => {
         const playable = await load(`Name: <input type="text" data-attribute="name" data-section="Start" required minlength="5">
 

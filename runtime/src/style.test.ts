@@ -80,3 +80,10 @@ test("{{#style}} escapes the class names, and shows helpers inside it", async ()
     expect(span.getAttribute("class")).toBe("squiffy-style a\"b");
     expect(span.textContent).toBe("Hi Ann");
 });
+
+test("{{#style}} can wrap an {{#every}}", async () => {
+    const element = await start("The wheel: {{#style \"wheel\"}}{{#every 100 times=2}}spin{{/every}}{{/style}}");
+    expect(element.querySelector(".squiffy-error")).toBeNull();
+    const span = element.querySelector(".squiffy-style.wheel")!;
+    expect(span.querySelector(".squiffy-every")).not.toBeNull();
+});

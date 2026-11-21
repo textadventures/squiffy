@@ -193,6 +193,9 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             await go(story.start);
             return;
         }
+        // As when a saved game is loaded, so that panels show the attributes it has
+        const passage = get("_passage");
+        emitter.emit("navigated", passage ? { section: get("_section"), passage } : { section: get("_section") });
         // Saved while waiting for a {{goto}}, so carry on waiting
         await resumeGoto();
         everyTimers.sync();

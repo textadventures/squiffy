@@ -199,3 +199,27 @@ test("a hot update renders the panels again", async () => {
 test("the compiler checks for the same icons the runtime has", () => {
     expect([...COMPILER_PANEL_ICONS]).toEqual([...PANEL_ICONS]);
 });
+
+test("shows the attributes of a game restored when the page loads", async () => {
+    const element = document.getElementById("squiffy")!;
+    const result = await squiffyCompile({ script });
+    if (!result.success) throw new Error("Compile failed");
+    const js = result.output.js.map(lines => new Function("squiffy", "get", "set", lines.join("\n")));
+    const story = { js: js as any, ...result.output.story };
+
+    const first = await init({ element, story, persist: true, storyId: "panels-restore" });
+    await first.begin();
+    await click(first, element, "Get the lamp");
+    expect(first.get("gold")).toBe(15);
+
+    // The page again, as it does it: the panels first, then the story begins, from the saved game
+    document.getElementById("container")!.querySelector("aside")?.remove();
+    element.innerHTML = "";
+    const api = await init({ element, story, persist: true, storyId: "panels-restore" });
+    panelsFor(api, [{ passage: "status", position: "side" }]);
+    await api.begin();
+    await settle();
+
+    expect(document.querySelector("aside.squiffy-panels-side")!.textContent).toContain("Gold: 15");
+    localStorage.clear();
+});

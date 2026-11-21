@@ -50,10 +50,13 @@ export async function loadPlayableStory(story: StoryOnDisk): Promise<LoadResult>
     const js = compiled.output.js.map(lines => new Function("squiffy", "get", "set", lines.join("\n")));
 
     // Sections and passages that are only shown inside others, with {{embed}} or {{live}},
-    // are never visited, so they're left out
+    // are never visited, so they're left out, as are the master section's passages that are
+    // squiffy.json's panels
     const graph = await storyService(story).service.getStoryGraph();
     const sectionNodes = graph.nodes.filter(n => n.kind == "section" && n.name != "");
-    const passageNodes = graph.nodes.filter(n => n.kind == "passage" && !n.embedded && !n.name.startsWith("@"));
+    const panels = new Set((story.panels ?? []).map(panel => panel.passage));
+    const passageNodes = graph.nodes.filter(n => n.kind == "passage" && !n.embedded && !n.name.startsWith("@")
+        && !(n.section == "" && panels.has(n.name)));
 
     return {
         success: true,
@@ -85,6 +88,9 @@ export function seededRandom(seed: number): () => number {
 // Timers set by {{goto ... after=}}, transitions and the like run one after another, in the order
 // they'd have run, up to this many in a row before giving up: a story that moves on by itself
 // forever, such as a clock, would otherwise never stop.
+// Links that do what the page's buttons do, rather than go somewhere in the story
+const PAGE_LINKS = new Set(["restart", "saves", "settings"]);
+
 const MAX_TIMERS = 100;
 // An {{#every}} (#451) can show its text again forever, such as a clock, so once its text has been
 // shown this many times in a row, with nothing else waiting to happen, play stops waiting for it
@@ -569,14 +575,15 @@ class Session {
 
     // The links the player can click, and the text boxes that go somewhere when Enter is
     // pressed (#454). While there's {{#animate "continue"}} text to click to see what comes next,
-    // that's all the player can click.
+    // that's all the player can click. {{restart}}, {{saves}} and {{settings}} links are left out:
+    // like the page's own buttons, they're not choices in the story, and they open dialogs.
     private clickableLinks(): HTMLElement[] {
         const section = this.currentSection();
         if (!section) return [];
         const continues = [...section.querySelectorAll<HTMLElement>(".squiffy-continue")];
         if (continues.length) return continues.slice(0, 1);
         return [...section.querySelectorAll<HTMLElement>("a.squiffy-link:not(.disabled), input[data-section]:not([disabled]), input[data-passage]:not([disabled])")]
-            .filter(link => !link.closest("[hidden]"));
+            .filter(link => !link.closest("[hidden]") && !PAGE_LINKS.has(link.getAttribute("data-handler") ?? ""));
     }
 
     private waitingForContinue = () => !!this.currentSection()?.querySelector(".squiffy-continue");
