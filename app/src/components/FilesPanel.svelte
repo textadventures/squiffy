@@ -3,6 +3,9 @@
     // other assets, #73) is managed from the Assets dialog. Each file's ⋯ menu renames, deletes,
     // downloads it, shows it in Finder (in the desktop app), or makes a .squiffy file the main one. With a squiffy.json (#361), it also
     // leaves a .squiffy file out of the story or puts it back, and excluded files are greyed out.
+    // Folders can be collapsed, and the CLI's build folder starts collapsed and greyed out
+    // (file-tree.ts).
+    import { untrack } from "svelte";
     import { basename, dirname } from "@textadventures/project-fs";
     import type { OpenProject } from "#lib/project.svelte.js";
     import { PROJECT_FILENAME } from "squiffy-compiler";
@@ -14,6 +17,8 @@
     import FileText from "@lucide/svelte/icons/file-text";
     import FileImage from "@lucide/svelte/icons/file-image";
     import Folder from "@lucide/svelte/icons/folder";
+    import ChevronRight from "@lucide/svelte/icons/chevron-right";
+    import { treeRows, foldersOf, isOpen, isBuildPath, loadFolderState, saveFolderState, type FolderState } from "#lib/file-tree.js";
     import Star from "@lucide/svelte/icons/star";
     import Plus from "@lucide/svelte/icons/plus";
     import Ellipsis from "@lucide/svelte/icons/ellipsis";
@@ -34,24 +39,30 @@
 
     let { project, onnewfile, onrename, ondelete, ondownload, onmakemain, onexclude, onopen }: Props = $props();
 
-    // The files, with a row for each folder before its contents
-    type Row = { kind: "folder"; path: string; depth: number } | { kind: "file"; path: string; depth: number };
-    let rows = $derived.by(() => {
-        const out: Row[] = [];
-        const shown = new Set<string>();
-        for (const { path } of project.files) {
-            const parts = path.split("/");
-            for (let i = 1; i < parts.length; i++) {
-                const folder = parts.slice(0, i).join("/");
-                if (!shown.has(folder)) {
-                    shown.add(folder);
-                    out.push({ kind: "folder", path: folder, depth: i - 1 });
-                }
-            }
-            out.push({ kind: "file", path, depth: parts.length - 1 });
+    // Which folders are open, kept for each project
+    let folderState = $state<FolderState>({});
+    let folderStateFor = "";
+    $effect.pre(() => {
+        const key = `${project.source.kind}:${project.source.id}`;
+        if (key !== folderStateFor) {
+            folderStateFor = key;
+            folderState = loadFolderState(project.source);
         }
-        return out;
     });
+
+    function setOpen(folders: string[], open: boolean) {
+        folderState = { ...folderState, ...Object.fromEntries(folders.map(f => [f, open])) };
+        saveFolderState(project.source, folderState);
+    }
+
+    // The file showing in the editor is never hidden in a closed folder, as when it's opened
+    // from the Problems panel
+    $effect(() => {
+        const closed = foldersOf(project.activePath).filter(f => !untrack(() => isOpen(folderState, f)));
+        if (closed.length) untrack(() => setOpen(closed, true));
+    });
+
+    let rows = $derived(treeRows(project.files.map(f => f.path), folderState));
 
     const newFileItems: DropdownMenuItem[] = (Object.keys(NEW_FILE_KINDS) as NewFileKind[])
         .map(kind => ({ label: NEW_FILE_KINDS[kind].label, action: () => onnewfile(kind) }));
@@ -93,10 +104,23 @@
         {#each rows as row (row.kind + row.path)}
             <li>
                 {#if row.kind === "folder"}
-                    <div class="flex items-center gap-1.5 py-0.5 pr-2 text-surface-600-400" style="padding-left: {0.75 + row.depth}rem">
-                        <Folder size={13} class="shrink-0 opacity-60" />
+                    {@const build = isBuildPath(row.path)}
+                    <button
+                        type="button"
+                        class="file-row w-full flex items-center gap-1.5 py-0.5 pr-2 text-left text-surface-600-400"
+                        style="padding-left: {0.75 + row.depth}rem"
+                        title={build ? `${row.path}: where the CLI builds the story, not part of the story` : row.path}
+                        aria-expanded={row.open}
+                        class:opacity-50={build}
+                        onclick={() => setOpen([row.path], !row.open)}
+                    >
+                        <ChevronRight size={12} class="shrink-0 -ml-3 transition-transform {row.open ? 'rotate-90' : ''}" />
+                        <Folder size={13} class="shrink-0 opacity-60 -ml-1" />
                         <span class="truncate">{basename(row.path)}</span>
-                    </div>
+                        {#if build}
+                            <span class="shrink-0 text-[11px]">build output</span>
+                        {/if}
+                    </button>
                 {:else}
                     {@const text = isTextFile(row.path)}
                     {@const excluded = project.isExcluded(row.path)}
@@ -109,7 +133,7 @@
                             title={excluded
                                 ? `${row.path}: not part of the story (excluded in ${PROJECT_FILENAME})`
                                 : isProjectFile ? `${row.path}: the project file, which makes this folder one story` : row.path}
-                            class:opacity-50={excluded}
+                            class:opacity-50={excluded || isBuildPath(row.path)}
                             onclick={() => onopen(row.path)}
                         >
                             {#if text}
