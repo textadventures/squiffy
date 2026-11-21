@@ -1,5 +1,5 @@
 @title The Wheel of Dubious Fortune
-@start intro
+@start before the show
 
 [[]]:
 @transition fade
@@ -38,6 +38,13 @@ Spin the wheel, play the round it lands on, and win as many points as you can. T
 Be nice to Hank. He's had a long day, and when his patience runs out, so does the show.
 
 **Studio lights** and **Timed rounds** are in the Settings. Turn off timed rounds to take as long as you like.
+
+[[before the show]]:
+The studio is dark. A sign above the stage says ON AIR, but it isn't lit yet. Somewhere, someone is testing a microphone: "One, two. One, two. Is this thing... it is? Oh."
+
+"Tonight's recording is about to begin," says a voice. "Please switch off your phones, and laugh when the sign tells you to."
+
+[[Take your seat]](intro)
 
 [[intro]]:
 @music sounds/theme.mp3

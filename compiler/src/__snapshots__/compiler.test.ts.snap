@@ -448,7 +448,7 @@ story.audio = [
     "sounds/fanfare.mp3",
     "sounds/buzzer.mp3"
 ];
-story.start = "intro";
+story.start = "before the show";
 story.sections = {
     "": {
         "text": "{{!--\\n    The Wheel of Dubious Fortune: a game show that shows off as much of Squiffy as it can.\\n\\n    This file has the start, the wheel, the commercial break, the final round and the endings.\\n    Each round is in a file of its own in rounds/, and squiffy.json adds the side panel, the\\n    Prizes and How to play buttons, and the player's settings. studio.css is the studio.\\n\\n    The theme tune, sounds/theme.mp3, is by Keehar.\\n--}}\\n{{!-- Push Hank too far, and the show's over, wherever you are --}}\\n{{#if patience <= 0 and not (at (array \\"Hank walks off\\" \\"Ending\\"))}}{{goto \\"Hank walks off\\" after=\\"1.5s\\"}}{{/if}}\\n",
@@ -464,6 +464,9 @@ story.sections = {
                 "text": "Spin the wheel, play the round it lands on, and win as many points as you can. Three rounds, then the final question.\\n\\nBe nice to Hank. He's had a long day, and when his patience runs out, so does the show.\\n\\n**Studio lights** and **Timed rounds** are in the Settings. Turn off timed rounds to take as long as you like.\\n"
             }
         }
+    },
+    "before the show": {
+        "text": "The studio is dark. A sign above the stage says ON AIR, but it isn't lit yet. Somewhere, someone is testing a microphone: \\"One, two. One, two. Is this thing... it is? Oh.\\"\\n\\n\\"Tonight's recording is about to begin,\\" says a voice. \\"Please switch off your phones, and laugh when the sign tells you to.\\"\\n\\n{{section \\"intro\\" text=\\"Take your seat\\"}}\\n"
     },
     "intro": {
         "text": "**{{#animate \\"typewriter\\" interval=120}}WELCOME TO...{{/animate}}**\\n\\n# {{#animate \\"toast\\" interval=250}}THE WHEEL OF {{#style \\"sway\\"}}DUBIOUS{{/style}} FORTUNE!{{/animate}}\\n\\n{{#animate \\"fadeIn\\" duration=1500}}\\nThe studio lights flicker. {{#if settings.lights = \\"Budget\\"}}Most of them stay off. Someone has taped a torch to a broom handle.{{else}}A thousand bulbs blaze into life, and three of them explode.{{/if}} A man in a sequined jacket stumbles onto the stage, holding his cue cards upside down.\\n\\n\\"Hello, and welcome! I'm your host, Chuck Wheelsworth!\\" He squints at the cards. \\"No, wait. I'm Hank Spinneroni. Definitely Hank.\\"\\n\\nThe studio audience (three people and a cardboard cutout) applauds uncertainly.\\n\\n\\"And YOU are tonight's lucky contestant! What's your name?\\"\\n\\n<input type=\\"text\\" data-attribute=\\"player_name\\" data-section=\\"contestant\\" placeholder=\\"Your name\\" required minlength=\\"2\\" maxlength=\\"24\\">\\n\\n{{section \\"contestant\\" text=\\"That's me!\\"}}\\n{{/animate}}\\n",

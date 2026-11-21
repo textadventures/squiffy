@@ -85,7 +85,7 @@ Use `--check` to look for problems without building anything:
 npx @textadventures/squiffy-cli --check
 ```
 
-As well as the errors and warnings a build shows, this finds the problems the [editor](/editor/) shows: sections that can't be reached from the start of the story, and dead ends, which are sections with no way out that aren't marked with `@end`. Each problem is shown with its file, line and column:
+As well as the errors and warnings a build shows, this finds the problems the [editor](/editor/) shows: sections that can't be reached from the start of the story, dead ends, which are sections with no way out that aren't marked with `@end`, and [sound on the story's first screen](/images-and-files/#music-and-sound), which browsers won't play until the player clicks something. Each problem is shown with its file, line and column:
 
 ```text
 story.squiffy:12:5: warning: The section "cellar" has no way out, as it has no links to another section. If it's one of the story's endings, add @end to say so. [squiffy/dead-end]

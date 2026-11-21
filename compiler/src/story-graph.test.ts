@@ -437,3 +437,43 @@ describe("diagnostics", () => {
         expect(await ls.getDiagnostics("story.squiffy")).toEqual([]);
     });
 });
+
+describe("sound on the first screen", () => {
+    const warnings = async (main: string) => (await service({ "story.squiffy": main }).getDiagnostics("story.squiffy"))
+        .filter(d => d.code == "squiffy/sound-on-first-screen")
+        .map(d => ({ line: d.range.start.line, character: d.range.start.character, message: d.message }));
+
+    test("@music at the start waits for the first click", async () => {
+        const result = await warnings("@title Test\n@music theme.mp3\nWelcome. [[Begin]](a)\n\n[[a]]:\n@end\nHello.");
+        expect(result).toEqual([{
+            line: 1, character: 0,
+            message: "Browsers don't play sound until the player has clicked something, so \"theme.mp3\" won't start until the player's first click. Begin the story with a title screen and a link such as \"Begin\", and play it in the section that link goes to.",
+        }]);
+    });
+
+    test("@sound, {{sound}} and {{music}} at the start", async () => {
+        const result = await warnings("[[start]]:\n@sound bang.mp3\nA {{sound \"door.mp3\"}} and {{music 'tune.mp3' fade=2}}. [[Go]](a)\n\n[[a]]:\n@end\nHello.");
+        expect(result.map(r => [r.line, r.character])).toEqual([[1, 0], [2, 2], [2, 27]]);
+        expect(result[0].message).toContain("\"bang.mp3\" won't be heard on the story's first screen");
+        expect(result[2].message).toContain("\"tune.mp3\" won't start until the player's first click");
+    });
+
+    test("not after a click: in another section, or the start's passages", async () => {
+        expect(await warnings("Welcome. [[Begin]](a) or [listen]\n\n[listen]:\n@sound bird.mp3\nTweet.\n\n[[a]]:\n@end\n@music theme.mp3\n{{sound \"door.mp3\"}}Hello.")).toEqual([]);
+    });
+
+    test("not for stopping sound, or other helpers", async () => {
+        expect(await warnings("@music stop\n@sound stop\n{{stopmusic}}{{stopsounds}} [[Begin]](a)\n\n[[a]]:\n@end\nHello.")).toEqual([]);
+    });
+
+    test("the section @start names", async () => {
+        const result = await warnings("@start title\nNever shown. [[a]]\n\n[[title]]:\n@music theme.mp3\n[[Begin]](a)\n\n[[a]]:\n@end\n@music other.mp3\nHello.");
+        expect(result.map(r => r.line)).toEqual([4]);
+    });
+
+    test("the master section's sound plays on the first screen too", async () => {
+        const result = await warnings("Welcome. [[Begin]](a)\n\n[[a]]:\n@end\nHello.\n\n[[]]:\n@music theme.mp3\n\n[]:\n@sound click.mp3");
+        expect(result.map(r => r.line)).toEqual([7]);
+        expect(result[0].message).toMatch(/^The master section plays this with every section, including the story's first screen/);
+    });
+});

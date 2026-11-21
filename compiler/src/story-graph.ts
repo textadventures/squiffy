@@ -1,7 +1,7 @@
 // The whole story as a directed graph: its sections and passages, and the links between them,
 // with which can be reached from the start and which sections are dead ends. The language
 // service builds it from its index (see getStoryGraph), for the story map and for the
-// "unreachable section" and "dead end" diagnostics.
+// "unreachable section" and "dead end" diagnostics, and the "sound on the first screen" one.
 
 import type { Location } from "./language-service.js";
 import { capitalise, sectionDetail, sectionLabels } from "./section-labels.js";
@@ -457,5 +457,52 @@ export function storyGraphDiagnostics(graph: StoryGraph): Diagnostic[] {
             });
         }
     }
+    return diagnostics;
+}
+
+// {{music "file"}} or {{sound "file"}}, as emit.ts finds them
+const SOUND_HELPER = /\{\{~?\s*(music|sound)\s+(["'])([^"'{}]+)\2/g;
+
+// Sound on the story's first screen: browsers don't let a page play sound until the player has
+// clicked something, so music there waits for their first click, and a sound played once there
+// isn't heard at all. That's the start section's own @music, @sound, {{music}} and {{sound}},
+// and the master section's @music and @sound, which play with every section, the first too.
+// (Its passages, and the start section's, are shown by a click, so they're fine.)
+export function firstScreenSoundDiagnostics(source: GraphSource): Diagnostic[] {
+    const diagnostics: Diagnostic[] = [];
+    const report = (file: string, range: Range, kind: "music" | "sound", value: string, master: boolean) => {
+        const where = master ? "The master section plays this with every section, including the story's first screen, but browsers" : "Browsers";
+        const what = kind == "music"
+            ? `so "${value}" won't start until the player's first click`
+            : `so "${value}" won't be heard on the story's first screen`;
+        diagnostics.push({
+            file,
+            range,
+            severity: "warning",
+            code: "squiffy/sound-on-first-screen",
+            message: `${where} don't play sound until the player has clicked something, ${what}. Begin the story with a title screen and a link such as "Begin", and play it in the section that link goes to.`,
+        });
+    };
+    const check = (name: string, master: boolean) => {
+        const section = source.sections.get(name);
+        if (!section?.node) return;
+        for (const statement of section.node.body) {
+            if (statement.type == "sound") {
+                if (statement.value != "stop") report(section.file, statement.range, statement.directive, statement.value, master);
+            }
+            else if (statement.type == "text" && !master) {
+                for (const match of statement.text.matchAll(SOUND_HELPER)) {
+                    const before = statement.text.substring(0, match.index);
+                    const lines = before.split("\n");
+                    const line = statement.range.start.line + lines.length - 1;
+                    const character = (lines.length == 1 ? statement.range.start.character : 0) + lines[lines.length - 1].length;
+                    const range = { start: { line, character }, end: { line, character: character + match[0].length } };
+                    report(section.file, range, match[1] as "music" | "sound", match[3], false);
+                }
+            }
+        }
+    };
+    if (source.start != "") check(source.start, false);
+    check("", true);
     return diagnostics;
 }

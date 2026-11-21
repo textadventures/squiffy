@@ -13,7 +13,7 @@ import type {
 import { getStoryFiles, globToRegExp, parseProjectFile, PROJECT_FILENAME, ProjectFile, storyFileList } from "./project.js";
 import { convertV5Syntax, findV5Syntax } from "./v5.js";
 import { findUnquotedText, splitWithOffsets } from "./setters.js";
-import { buildStoryGraph, StoryGraph, storyGraphDiagnostics } from "./story-graph.js";
+import { buildStoryGraph, firstScreenSoundDiagnostics, GraphUsage, StoryGraph, storyGraphDiagnostics } from "./story-graph.js";
 
 export type { Diagnostic, Position, Range } from "./syntax.js";
 export type { GraphEdge, GraphEdgeKind, GraphNode, StoryGraph } from "./story-graph.js";
@@ -478,15 +478,16 @@ export function createLanguageService(options: LanguageServiceOptions): Language
 
     function getGraph(index: Index) {
         if (!index.graph) {
-            const graph = buildStoryGraph({
+            const source = {
                 files: index.files,
                 sections: index.sections,
                 nodeNames: index.nodeNames,
                 usages: index.usages,
                 start: index.analysis.start,
-                resolve: usage => resolveUsage(index, usage as Usage),
-            });
-            index.graph = { graph, diagnostics: storyGraphDiagnostics(graph) };
+                resolve: (usage: GraphUsage) => resolveUsage(index, usage as Usage),
+            };
+            const graph = buildStoryGraph(source);
+            index.graph = { graph, diagnostics: [...storyGraphDiagnostics(graph), ...firstScreenSoundDiagnostics(source)] };
         }
         return index.graph;
     }
