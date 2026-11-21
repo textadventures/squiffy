@@ -5,6 +5,7 @@ import type {
 import { positionMapper, SourceLine, transformText } from "./text.js";
 import { isScriptPath, isSquiffyPath, isStylesheetPath, PROJECT_FILENAME } from "./project.js";
 import { findV5Syntax } from "./v5.js";
+import { findTemplateError } from "./templates.js";
 import { sectionLabels } from "./section-labels.js";
 import { attributesSetIn, BUILT_IN_ATTRIBUTES, findAtAttributes, findBuiltInAttributeSets, findUnquotedText } from "./setters.js";
 
@@ -604,6 +605,14 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
             report("warning", code, section.filename, toRange(start, end), message, line);
         };
 
+        // Handlebars syntax errors, which would stop the text being shown at all
+        const templateError = findTemplateError(result.output);
+        if (templateError) {
+            const range = toRange(result.mapStart(templateError.start), result.mapEnd(templateError.end));
+            report("error", "squiffy/template-syntax", section.filename, range, `${where}, ${templateError.message}`,
+                range.start.line + 1);
+        }
+
         for (const missing of result.noNextSection) {
             warn("squiffy/no-next-section", missing.start, missing.end,
                 `${inSection}, there is a ${missing.display} link but no following section exists`, section.line);
@@ -697,6 +706,7 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
                 checkText(passage, section, passage);
             }
         }
+        success &&= !legacyErrors.length;
     }
 
     if (settings.expressions) {

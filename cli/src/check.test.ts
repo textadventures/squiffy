@@ -73,6 +73,23 @@ describe("checkStory", () => {
         expect(formatCheckResult(result)).toBe('2 sections and 0 passages, starting at the text before the first section, with 1 ending: "Other".\nNo problems found.');
     });
 
+    test("finds Handlebars template errors, which would otherwise only show when the story is played", async () => {
+        await write({
+            "squiffy.json": JSON.stringify({ version: 1, main: "story.squiffy" }),
+            "story.squiffy": "[[start]]:\nThe words. \"Round {{round + 1}}, {{player_name}}\"\n[[Guess]](guess)\n\n" +
+                "[[guess]]:\n@end\n{{#unless word}}No word.{{else if x}}X.{{/if}}\n",
+        });
+
+        const result = await check();
+
+        expect(result.success).toBe(false);
+        expect(result.errors).toBe(2);
+        expect(formatCheckResult(result).split("\n").slice(0, 2)).toEqual([
+            "story.squiffy:2:19: error: In section 'start', {{round + 1}} isn't valid Handlebars. To show the result of an expression, start it with \"=\": {{= round + 1}} [squiffy/template-syntax]",
+            "story.squiffy:7:1: error: In section 'guess', {{#unless word}} is closed by {{/if}}, but it needs a {{/unless}} [squiffy/template-syntax]",
+        ]);
+    });
+
     test("formats problems with file:line:column", async () => {
         await write({
             "squiffy.json": JSON.stringify({ version: 1, main: "story.squiffy" }),

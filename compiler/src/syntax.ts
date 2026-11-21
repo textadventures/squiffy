@@ -39,7 +39,8 @@ export type DiagnosticCode =
     | "squiffy/redundant-import"
     | "squiffy/project-file"
     | "squiffy/unreachable-section"
-    | "squiffy/dead-end";
+    | "squiffy/dead-end"
+    | "squiffy/template-syntax";
 
 export interface Diagnostic {
     // The filename as the compiler was given it (scriptBaseFilename, or the name returned by

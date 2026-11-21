@@ -640,7 +640,25 @@ export function findTagEnd(text: string, from: number): number {
     return -1;
 }
 
-export function rewriteInfixExpressions(text: string): string {
+// What rewriteInfixExpressions throws for an expression it can't read, such as {{= a +}}: the
+// tag starts at start, and its closing "}}" is at end
+export class InfixRewriteError extends Error {
+    constructor(message: string, readonly start: number, readonly end: number) {
+        super(message);
+    }
+}
+
+// A part of the text that rewriteInfixExpressions replaced: text[start, end) became the
+// replacement's `length` characters
+export interface InfixEdit {
+    start: number;
+    end: number;
+    length: number;
+}
+
+// edits, if given, gets each replacement made, in order, so that a position in the rewritten text
+// can be traced back (see mapRewrittenPosition)
+export function rewriteInfixExpressions(text: string, edits?: InfixEdit[]): string {
     if (!text.includes("{{")) return text;
 
     let result = "";
@@ -655,22 +673,46 @@ export function rewriteInfixExpressions(text: string): string {
         const argEnd = findTagEnd(text, argStart);
         if (argEnd === -1) break;
 
-        const args = text.slice(argStart, argEnd);
-        if (match[5]) {
-            // {{= expression}}: replace the "=" too
-            const tagOpen = match.index + match[1].length;
-            result += text.slice(last, tagOpen) + "{{" + match[2] + rewriteDisplayExpression(args);
-            last = argEnd;
-        } else {
-            const rewritten = match[3] ? rewriteInfixCondition(args)
-                : match[6] ? rewriteInfixEmbed(args, match[6].replace("#", ""))
-                : rewriteInfixArguments(args);
-            if (rewritten !== null) {
-                result += text.slice(last, argStart) + " " + rewritten;
+        try {
+            const args = text.slice(argStart, argEnd);
+            if (match[5]) {
+                // {{= expression}}: replace the "=" too
+                const tagOpen = match.index + match[1].length;
+                const replacement = "{{" + match[2] + rewriteDisplayExpression(args);
+                result += text.slice(last, tagOpen);
+                edits?.push({ start: tagOpen, end: argEnd, length: replacement.length });
+                result += replacement;
                 last = argEnd;
+            } else {
+                const rewritten = match[3] ? rewriteInfixCondition(args)
+                    : match[6] ? rewriteInfixEmbed(args, match[6].replace("#", ""))
+                    : rewriteInfixArguments(args);
+                if (rewritten !== null) {
+                    result += text.slice(last, argStart);
+                    edits?.push({ start: argStart, end: argEnd, length: rewritten.length + 1 });
+                    result += " " + rewritten;
+                    last = argEnd;
+                }
             }
+        } catch (e) {
+            // Say which tag it was, for the compiler's diagnostics (see templates.ts)
+            if (e instanceof Error) throw new InfixRewriteError(e.message, match.index + match[1].length, argEnd);
+            throw e;
         }
         tagStart.lastIndex = argEnd;
     }
     return result + text.slice(last);
+}
+
+// Maps a position in the text rewriteInfixExpressions returned to the text it was given. A
+// position inside a replacement maps to the start of what was replaced.
+export function mapRewrittenPosition(edits: InfixEdit[], pos: number): number {
+    let shift = 0;
+    for (const edit of edits) {
+        const start = edit.start + shift;
+        if (pos < start) break;
+        if (pos < start + edit.length) return edit.start;
+        shift += edit.length - (edit.end - edit.start);
+    }
+    return pos - shift;
 }

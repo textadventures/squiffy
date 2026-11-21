@@ -94,6 +94,12 @@ story.squiffy:12:5: warning: The section "cellar" has no way out, as it has no l
 0 errors, 1 warning.
 ```
 
+The errors include mistakes in `{{...}}` text that would stop a section or passage being shown, such as an expression that needs an `=` (`{{round + 1}}` rather than `{{= round + 1}}`), or an `{{#unless}}` closed by `{{/if}}`. These stop the story building, as the build and the editor report them too:
+
+```text
+story.squiffy:7:19: error: In section 'start', {{round + 1}} isn't valid Handlebars. To show the result of an expression, start it with "=": {{= round + 1}} [squiffy/template-syntax]
+```
+
 It finishes with an exit code of 1 if there are any errors.
 
 ## Playing a story from the command line

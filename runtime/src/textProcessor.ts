@@ -2,7 +2,7 @@ import * as marked from "marked";
 import Handlebars from "handlebars";
 import { Section, Story } from "./types.js";
 import { State } from "./state.js";
-import { rewriteInfixExpressions, rewriteValueExpression, splitSetters } from "./infixExpressions.js";
+import { rewriteInfixExpressions, rewriteValueExpression, splitSetters } from "squiffy-compiler/infix-expressions";
 import { isNumeric, isBlank, toNumber } from "./numbers.js";
 import { checkSegment, parsePath, valueAt, withValueAt } from "./paths.js";
 import { parseDelay } from "./utils.js";
@@ -360,7 +360,7 @@ export class TextProcessor {
         });
 
         // An object literal in an expression, e.g. { hp: 10, name: "Ann" } (#442), which
-        // infixExpressions.ts rewrites to (__object "hp" 10 "name" "Ann")
+        // compiler/src/infix-expressions.ts rewrites to (__object "hp" 10 "name" "Ann")
         this.handlebars.registerHelper("__object", (...args) => {
             args.pop();
             const result: Record<string, unknown> = {};

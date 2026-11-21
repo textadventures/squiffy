@@ -36,7 +36,7 @@ export interface SetterConversionResult {
 // The result of converting one setter: its new text, or why it can't be converted
 export type SetterConversion = { text: string } | { problem: string };
 
-// The same as the tokenizer's numbers and literals in runtime/src/infixExpressions.ts
+// The same as the tokenizer's numbers and literals in infix-expressions.ts
 const numberPattern = /^-?\d+(\.\d+)?$/;
 const reservedWords = new Set(["and", "or", "not", "true", "false", "null", "undefined"]);
 
@@ -294,7 +294,7 @@ interface SetterSite {
 }
 
 // Splits a list of setters with the rules of a story that uses expressions (as splitSetters in
-// runtime/src/infixExpressions.ts does): on commas outside quotes, brackets and objects. Keeps
+// infix-expressions.ts does): on commas outside quotes, brackets and objects. Keeps
 // offsets.
 export function splitWithOffsets(setters: string): { text: string, offset: number }[] {
     const result: { text: string, offset: number }[] = [];
