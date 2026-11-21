@@ -4896,3 +4896,38 @@ You look.
         expect(element.querySelector(".squiffy-error")?.textContent).toContain(message);
     });
 });
+
+describe('scroll: "element"', () => {
+    // A story in a box 100px tall, whose text is 500px, as jsdom has no layout
+    const boxedStory = (element: HTMLElement) => {
+        element.style.overflowY = "auto";
+        Object.defineProperty(element, "clientHeight", { value: 100 });
+        Object.defineProperty(element, "scrollHeight", { value: 500 });
+        const scrolls: ScrollToOptions[] = [];
+        element.scrollTo = ((options: ScrollToOptions) => { scrolls.push(options); }) as typeof element.scrollTo;
+        return scrolls;
+    };
+
+    test("scrolls the story's own box, and not the page around it", async () => {
+        const element = document.getElementById("squiffy")!;
+        const scrolls = boxedStory(element);
+        const scrollIntoView = vi.fn();
+        window.Element.prototype.scrollIntoView = scrollIntoView;
+        const windowScroll = vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+
+        const { story } = await compile("[[start]]:\n[[Go on]](next)\n\n[[next]]:\nYou go on.\n\n[[Clear]](clear)\n\n[[clear]]:\n@clear\nA fresh page.");
+        const squiffyApi = await init({ element, story, scroll: "element" });
+        await squiffyApi.begin();
+        scrolls.length = 0;
+
+        await squiffyApi.clickLink(findLink(element, "section", "Go on"));
+        expect(scrolls.length).toBeGreaterThan(0);
+
+        scrolls.length = 0;
+        await squiffyApi.clickLink(findLink(element, "section", "Clear"));
+        expect(scrolls.length).toBeGreaterThan(0);
+
+        expect(scrollIntoView).not.toHaveBeenCalled();
+        expect(windowScroll).not.toHaveBeenCalled();
+    });
+});

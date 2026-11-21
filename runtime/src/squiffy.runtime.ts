@@ -886,6 +886,33 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         return outputElement.querySelector<HTMLElement>(".squiffy-clear-stack");
     }
 
+
+    // For scroll: "element", scrolls the story's own scrolling box (its nearest ancestor that
+    // scrolls, or else its own window) so that the top or the bottom of el is at the top or the
+    // bottom of it. Unlike scrollIntoView, this never scrolls the page around that box, or the page
+    // the story is in a frame of, such as the docs' samples.
+    function scrollWithin(el: Element, block: "start" | "end") {
+        const rect = el.getBoundingClientRect();
+        const box = scrollingBox(el);
+        if (box) {
+            const bounds = box.getBoundingClientRect();
+            const by = block === "start" ? rect.top - bounds.top : rect.bottom - bounds.bottom;
+            box.scrollTo({ top: box.scrollTop + by, behavior: "smooth" });
+        }
+        else {
+            const by = block === "start" ? rect.top : rect.bottom - window.innerHeight;
+            window.scrollTo({ top: window.scrollY + by, behavior: "smooth" });
+        }
+    }
+
+    function scrollingBox(el: Element): HTMLElement | null {
+        for (let e = el.parentElement; e && e !== document.body && e !== document.documentElement; e = e.parentElement) {
+            const overflow = getComputedStyle(e).overflowY;
+            if ((overflow === "auto" || overflow === "scroll") && e.scrollHeight > e.clientHeight) return e;
+        }
+        return null;
+    }
+
     function clearScreen() {
         // Callers should call createSectionElement() after calling this function, so there's a place for new
         // output to go. We don't call this automatically within this function, in case we're just about to create
@@ -1056,7 +1083,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
                 // above where the reader has scrolled to.
                 scrollToTop = false;
                 if (settings.scroll === "element") {
-                    currentSectionElement.scrollIntoView({ block: "start", inline: "nearest", behavior: "smooth" });
+                    scrollWithin(currentSectionElement, "start");
                 }
                 else {
                     const currentScrollTop = Math.max(document.body.scrollTop, document.documentElement.scrollTop);
@@ -1067,7 +1094,8 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
                 }
             }
             else if (settings.scroll === "element") {
-                outputElement.lastElementChild?.scrollIntoView({ block: "end", inline: "nearest", behavior: "smooth" });
+                const last = outputElement.lastElementChild;
+                if (last) scrollWithin(last, "end");
             }
             else {
                 let scrollTo = scrollPosition;
