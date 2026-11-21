@@ -1,11 +1,11 @@
 @title The Island
-@music sea.mp3
 
 You wake up in a small boat, drifting on a calm sea. In the distance you can see an island, with a thin column of smoke rising from the trees.
 
 Do you [[row towards the island]] or [[stay where you are]]?
 
 [[row towards the island]]:
+@music sea.mp3
 You row until your arms ache, and the boat scrapes onto a sandy beach.
 
 There are [footprints] in the sand, and an [old hut] at the top of the beach. A [[path]] leads into the trees.
@@ -53,6 +53,7 @@ You row away from the island as fast as you can. You never do find out who lit t
 
 [[stay where you are]]:
 @end
+@music sea.mp3
 You drift for hours. The island grows smaller, and then it's gone.
 
 {{restart text="Play again"}}

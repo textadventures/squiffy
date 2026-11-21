@@ -76,12 +76,16 @@ In the editor, choose the image button in the toolbar, to open **Images and othe
 
 <Sample script={sound} files={{ "style.css": soundCss }} assets={sounds}></Sample>
 
-- `@music sea.mp3`, at the start, plays the sea, over and over. It keeps playing as the player moves from one section to the next, until another `@music` changes it.
+- `@music sea.mp3`, on the beach, plays the sea, over and over. It keeps playing as the player moves from one section to the next, until another `@music` changes it.
 - `@music stop`, on the path, fades the sea out as the player walks into the trees.
-- In the endings where the player rows away, `@music sea.mp3` brings the sea back.
+- Each ending is out on the sea, so each one has `@music sea.mp3` too.
 - `{{sound "snuffle.mp3"}}` plays a sound once. It's inside the `{{else}}`, so it only plays when the player goes into the cave without the lantern. `@sound snuffle.mp3`, on a line of its own, would play it whenever the cave appears.
 
-Browsers don't let a page play sound until the player has clicked something, so the sea starts with the first click. A story with sound gets a mute button, next to Back and Restart. Here, it's under the story.
+A story with sound gets a mute button, next to Back and Restart. Here, it's under the story.
+
+<Aside>
+Browsers don't let a page play sound until the player has clicked something. So sound on the first screen of a story waits for their first click, and a sound effect there isn't heard at all. That's why the sea starts on the beach, after the first choice, and not as the story opens. If you want music from the start, begin your story with a title screen and a link such as "Begin", and start the music in the section it goes to.
+</Aside>
 
 <Aside>
 Use sound files you're allowed to share. These two were made for this tutorial, and you can use them however you like. For more, look for sounds with a CC0 or Creative Commons licence, and give credit where the licence asks for it. MP3 works in every browser.
