@@ -268,6 +268,7 @@ function edgeTitle(edge: StoryMapEdge, byId: Map<string, StoryMapNode>): string 
     if (edge.kind == "auto") {
         const name = byId.get(edge.to)!.label;
         return name == "@last" ? "@last runs once every other passage in the section has been clicked"
+            : name == "@after" ? "@after runs after every other passage in the section"
             : /^@\d+$/.test(name) ? `${name} runs when that many passages in the section have been clicked`
             : `${name} runs on its own`;
     }
