@@ -966,7 +966,7 @@ function oneLine(text: string): string {
 // Directives the compiler would read at the start of a line
 const directiveLine = /^@(title|import|start|set|unset|inc|dec|ui|clear|end|class)\b/;
 // Lines that only hold helpers that write nothing
-const silentHelper = /\{\{(?:!--[\s\S]*?--|![^}]*|~?\s*(?:#if|#unless|else|\/if|\/unless|set|unset|inc|dec|goto|music|stopmusic|sound|stopsounds|addclass|removeclass|toggleclass|append|prepend|remove|#label|\/label|#replace|\/replace|#animate|\/animate)\b(?:[^{}]|\{\{[^{}]*\}\})*)\}\}/g;
+const silentHelper = /\{\{(?:!--[\s\S]*?--|![^}]*|~?\s*(?:#if|#unless|#once|#firsttime|else|\/if|\/unless|\/once|\/firsttime|set|unset|inc|dec|goto|music|stopmusic|sound|stopsounds|addclass|removeclass|toggleclass|append|prepend|remove|#label|\/label|#replace|\/replace|#animate|\/animate)\b(?:[^{}]|\{\{[^{}]*\}\})*)\}\}/g;
 
 function isSilent(line: string): boolean {
     return line.replace(silentHelper, "").trim() == "";

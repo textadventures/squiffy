@@ -65,7 +65,7 @@ Play the story through after converting it. The editor's [story map](/story-map/
 | `{if lamp:...}`, `{if not lamp:...}` | `{{#if lamp}}...{{/if}}`, `{{#if not lamp}}...{{/if}}` |
 | `{if gold>5:...}`, `{if mood=happy:...}` | `{{#if gold > 5}}...{{/if}}`, `{{#if mood = "happy"}}...{{/if}}` |
 | `{if Page2.visited:...}` | `{{#if (seen "Page2")}}...{{/if}}` |
-| `{once:...}`, `{notfirst:...}` | `{{#if (visits "Page1") = 1}}...{{/if}}`, `{{#if (visits "Page1") > 1}}...{{/if}}` |
+| `{once:...}`, `{notfirst:...}` | `{{#once}}...{{/once}}`, `{{#once}}{{else}}...{{/once}}` (see [The first time](/dynamic-text/#the-first-time)) |
 | `{counter:gold}`, `{game.name}` | `{{= gold + 0}}` (which shows 0 before it's set, as Quest does), `{{name}}` |
 | `{random:red:green:blue}` | `{{random (array "red" "green" "blue")}}` |
 | `{img:map.png}` | `<img src="map.png">` |
@@ -89,7 +89,7 @@ A page's script runs before its text is shown, so it becomes text at the start o
 | `GetInt(game, "gold") >= 10`, `HasSeenPage(Page2)`, `player.parent = Page2` | `gold >= 10`, `(seen "Page2")`, `(at "Page2")` |
 | `RandomChance(25)` | `(random (array 1 2 3 4)) <= 1`, true a quarter of the time |
 | `switch (...) { case (...) { } }` | `{{#if}}` and `{{else if}}` |
-| `firsttime { } otherwise { }` | At the start of a page's script, `{{#if (visits "Page1") = 1}}`. Anywhere else, an attribute that remembers whether it's run |
+| `firsttime { } otherwise { }` | `{{#once}}...{{else}}...{{/once}}`. Anywhere but the start of a page's script, it has a name, such as `{{#once "firsttime_1"}}`, as the script may be shown from more than one place |
 | `MovePlayer (Page2)` | `{{goto "Page2"}}` |
 | `AddPageLink (Page1, Page2, "Go on")`, `RemovePageLink (Page1, Page2)` | An attribute for the link, which Page1 checks before showing it: see below |
 | `GetInput () { game.name = result }` | A text box, and a **Continue** link to a section that runs the rest, `{{set "name" input}}`, and shows the page's links again |

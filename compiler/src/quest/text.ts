@@ -93,10 +93,11 @@ function convertCommand(section: string, ctx: TextContext, mode: TextMode): stri
         case "command:":
         case "page:":
             return convertPageLink(section, ctx, mode);
+        // Quest remembers each of these by its own text, as {{#once}} remembers each of its own
         case "once:":
-            return `{{#if ${printCondition(visits(ctx), mode)} = 1}}${nested(section.substring(5))}{{/if}}`;
+            return `{{#once}}${nested(section.substring(5))}{{/once}}`;
         case "notfirst:":
-            return `{{#if ${printCondition(visits(ctx), mode)} > 1}}${nested(section.substring(9))}{{/if}}`;
+            return `{{#once}}{{else}}${nested(section.substring(9))}{{/once}}`;
         case "random:":
             return convertRandom(section.substring(7), ctx);
         case "img:": {
@@ -163,9 +164,6 @@ export function objectAttribute(object: string, attribute: string): string {
     return object == "game" ? attribute : `${object}_${attribute}`;
 }
 
-function visits(ctx: TextContext): Expr {
-    return { k: "call", fn: "visits", args: [{ k: "str", v: ctx.section }] };
-}
 
 // {if flag:text}, {if not flag:text}, {if counter>5:text}, {if game.flag:text}, {if Page3.visited:text}
 function convertIf(section: string, ctx: TextContext, mode: TextMode): string {

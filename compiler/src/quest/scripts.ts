@@ -21,7 +21,7 @@ export interface ScriptContext extends TextContext {
     // The attribute for a link a script adds or removes, and the value that shows it with some text
     linkAttribute(source: string, destination: string): string;
     linkValue(source: string, destination: string, text: string): Expr;
-    // A new attribute, for a firsttime that isn't at the top of a page's script
+    // A new name, for the {{#once}} of a firsttime that isn't at the top of a page's script
     newFirstTime(): string;
     // A stylesheet the game uses, from changes to its look in a script, such as SetFontName
     noteStyle(): void;
@@ -88,18 +88,18 @@ class Converter {
                 return lines;
             }
             case "firsttime": {
-                // At the top of a page's script, it's the first time the page is shown. Anywhere
-                // else, an attribute remembers whether it's run.
+                // {{#once}} remembers by where it is in the text. At the top of a page's script,
+                // that's the page. Anywhere else, the script may be shown from several places
+                // (a function, say), so it has a name to remember by.
                 const lines: string[] = [];
                 if (topLevel && this.ctx.page !== undefined && !this.ctx.inCallback) {
-                    lines.push(`{{#if (visits ${quote(this.ctx.section)}) = 1}}`, ...this.statements(s.body, false));
+                    lines.push("{{#once}}", ...this.statements(s.body, false));
                 }
                 else {
-                    const attribute = this.ctx.newFirstTime();
-                    lines.push(`{{#unless ${attribute}}}`, `{{set ${quote(attribute)} true}}`, ...this.statements(s.body, false));
+                    lines.push(`{{#once ${quote(this.ctx.newFirstTime())}}}`, ...this.statements(s.body, false));
                 }
                 if (s.otherwise) lines.push("{{else}}", ...this.statements(s.otherwise, false));
-                lines.push(topLevel && this.ctx.page !== undefined && !this.ctx.inCallback ? "{{/if}}" : "{{/unless}}");
+                lines.push("{{/once}}");
                 return lines;
             }
             case "switch": {

@@ -283,10 +283,10 @@ function convertGame(game: QuestGame, options: QuestConversionOptions): QuestCon
             // their first page to play again
             if (initial.length || parts.length) {
                 lines.push(
-                    `{{#if (visits ${quote(section)}) = 1}}`,
+                    "{{#once}}",
                     ...initial.map(l => `{{set ${quote(l.attribute)} ${print(linkValue(l, l.initial!))}}}`),
                     ...parts,
-                    "{{/if}}",
+                    "{{/once}}",
                 );
             }
         }
