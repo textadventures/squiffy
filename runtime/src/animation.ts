@@ -50,7 +50,10 @@ export class Animation {
 
     constructor() {
         this.registerAnimation("typewriter", function(el, params, onComplete, loop) {
-            const { chars } = splitText(el, { words: false, chars: true });
+            // Each character in a span, inside a span for its word, so a line only breaks
+            // between words: without the words, it could break anywhere, e.g. at the
+            // apostrophe in "let's"
+            const { chars } = splitText(el, { words: true, chars: true });
 
             const fadeDuration = params.fadeDuration || 100;   // ms fade-in per character
             const interval = params.interval || 100;           // ms between each character appearing
@@ -106,9 +109,10 @@ export class Animation {
             let chars: HTMLElement[] | null = null;
 
             if (style === "wave") {
-                // Wave style needs JS animation - split into chars and animate opacity
+                // Wave style needs JS animation - split into chars and animate opacity. Words too,
+                // so a line only breaks between words, as with typewriter.
                 el.classList.add("squiffy-continue-wave");
-                const split = splitText(el, { words: false, chars: true });
+                const split = splitText(el, { words: true, chars: true });
                 chars = split.chars as HTMLElement[];
 
                 waveAnimation = animate(chars, {
