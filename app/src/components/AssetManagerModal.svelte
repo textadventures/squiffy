@@ -7,6 +7,7 @@
     import { dirname, joinPath, parsePath, type FileUrl } from "@textadventures/project-fs";
     import { storyPath, type OpenProject } from "#lib/project.svelte.js";
     import { isAsset, isImage } from "#lib/file-types.js";
+    import { isBuildPath } from "#lib/file-tree.js";
     import { confirmDialog } from "#lib/confirm.js";
     import { trapFocus } from "#lib/actions/trapFocus.js";
     import FileIcon from "@lucide/svelte/icons/file";
@@ -22,7 +23,8 @@
     // Files added from outside the app (Finder, etc.) only show up after a fresh listing
     onMount(() => { void project.refreshFiles(); });
 
-    let assets = $derived(project.files.filter(f => isAsset(f.path)));
+    // Not the copies the CLI puts in its build folder, which the story doesn't use
+    let assets = $derived(project.files.filter(f => isAsset(f.path) && !isBuildPath(f.path)));
 
     // Thumbnails, released when the dialog closes
     let thumbUrls = $state<Record<string, string>>({});
