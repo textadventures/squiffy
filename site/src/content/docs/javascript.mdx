@@ -4,6 +4,12 @@ description: Running JavaScript in a story, reading and setting attributes from 
 ---
 
 import Sample from "@components/Sample.astro";
+import shout from "../../samples/javascript/shout.squiffy?raw";
+import uiFile from "../../samples/javascript/ui-file.squiffy?raw";
+import helpersJs from "../../samples/javascript/helpers.js?raw";
+import visit from "../../samples/javascript/visit.squiffy?raw";
+import spin from "../../samples/javascript/spin.squiffy?raw";
+import blackout from "../../samples/javascript/blackout.squiffy?raw";
 
 You can write a whole story without any JavaScript. When you need more, you can run JavaScript in any section or passage, and add your own [helpers](/helpers-reference/) and animations.
 
@@ -86,7 +92,9 @@ Health: {{health}}
 
 JavaScript in a `@ui` block runs once when the story starts, before any text is displayed. The block goes at the top of your story, and ends with `---`. There's an example in [Creating custom helpers](#creating-custom-helpers), below.
 
-You can also put the JavaScript in a separate file with `@ui filename.js`.
+You can also put the JavaScript in a separate file with `@ui filename.js`. Here, `helpers.js` adds two [helpers](#creating-custom-helpers) for the story to use:
+
+<Sample script={uiFile} files={{ "helpers.js": helpersJs }}></Sample>
 
 To add a script file to the page instead, as a `<script>` tag, put it in your story's folder. In a story with a `squiffy.json`, every `.js` file in the folder is added this way, except one you read with `@ui`: see [Stylesheets and scripts](/multiple-files/#stylesheets-and-scripts). Without one, use `@import my_script.js`. See [Importing files](/multiple-files/#importing-files).
 
@@ -94,15 +102,7 @@ To add a script file to the page instead, as a `<script>` tag, put it in your st
 
 You can add your own helpers by calling `squiffy.registerHelper` in a `@ui` block:
 
-```squiffy
-@ui
-    squiffy.registerHelper("shout", (text) => text.toUpperCase() + "!");
----
-
-Welcome to the story. {{shout "hello"}}
-```
-
-This displays "Welcome to the story. HELLO!".
+<Sample sandboxed script={shout}></Sample>
 
 `registerHelper` takes the helper's name and a function. Arguments written after the helper name are passed to the function in order. Named `key=value` arguments are passed in `options.hash` (`options` is always the last argument).
 
@@ -132,21 +132,7 @@ Only use `SafeString` for HTML you've built yourself. If part of the HTML comes 
 
 Inside a helper you can use `squiffy.get` and `squiffy.set` to read and change attributes, just as you can in a section's JavaScript. For example, this helper shows different text each time it's displayed, and then keeps showing the last one. It uses an attribute to count how many times it has been shown:
 
-```squiffy
-@ui
-    squiffy.registerHelper("visit", (attribute, ...args) => {
-        const items = args.slice(0, -1); // the last argument is "options"
-        const count = squiffy.get(attribute) || 0;
-        squiffy.set(attribute, count + 1);
-        return items[Math.min(count, items.length - 1)];
-    });
----
-
-[[tutor]]:
-{{visit "tutorvisits" "“And you are?…”" "“Ahh, here you are…”" "“You again!”"}}
-
-[[Visit the tutor again]](tutor)
-```
+<Sample sandboxed script={visit}></Sample>
 
 ## Custom animations
 
@@ -161,74 +147,15 @@ The function you give it is called with:
 
 This animation makes each letter spin and drop into place:
 
-```squiffy
-@ui
-    squiffy.registerAnimation("spin", (el, params, onComplete, loop) => {
-        const { animate, stagger, text } = squiffy.import.animejs;
-        const { chars } = text.split(el, { words: false, chars: true });
-
-        animate(chars, {
-            y: [
-                { to: "-2.75rem", ease: "outExpo", duration: 600 },
-                { to: 0, ease: "outBounce", duration: 800, delay: 100 }
-            ],
-            rotate: { from: "-1turn", delay: 0 },
-            delay: stagger(params.interval || 50),
-            ease: "inOutCirc",
-            loopDelay: 1000,
-            loop: loop,
-            onComplete: onComplete
-        });
-    });
----
-
-{{#animate "spin"}}Welcome to the story!{{/animate}}
-```
+<Sample sandboxed script={spin} height="26rem"></Sample>
 
 ## Transitions
 
 `squiffy.ui.transition` runs an effect, such as fading the screen to black, and stops the player clicking links until it has finished. Give it a function that starts the effect and returns a Promise, which resolves when the effect is done.
 
-This section fades the screen to black, goes to another section while it's dark, and then fades back in:
+This section fades the screen to black, goes to another section while it's dark, and then fades back in. Here, the screen is the box the story is in:
 
-```squiffy
-You are standing in a room. You can see a [hammer].
-
-[hammer]:
-It's nice and weighty. Perhaps you want to [[hit yourself in the face with it]](hit)?
-
-[[hit]]:
-    squiffy.ui.transition(() => new Promise(resolve => {
-        const blackout = document.createElement("div");
-        Object.assign(blackout.style, {
-            position: "fixed", inset: "0", background: "black",
-            opacity: "0", transition: "opacity 3s ease-in"
-        });
-        squiffy.element.appendChild(blackout);
-
-        // Fade to black
-        requestAnimationFrame(() => blackout.style.opacity = "1");
-
-        setTimeout(() => {
-            squiffy.story.go("wake up");
-
-            // Fade back in, then tidy up
-            blackout.style.opacity = "0";
-            blackout.addEventListener("transitionend", () => {
-                blackout.remove();
-                resolve();
-            }, { once: true });
-        }, 4000);
-    }));
-
-Bang.
-
-[[wake up]]:
-@clear
-Slowly your eyes open.
-
-That was a rather stupid thing to do.
-```
+<Sample sandboxed script={blackout} height="26rem"></Sample>
 
 ## Embedding a story in your own page
 

@@ -1,0 +1,4 @@
+body:has(.dark) {
+    --squiffy-background: #111;
+    --squiffy-text: #ccc;
+}

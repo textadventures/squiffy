@@ -1,0 +1,15 @@
+@ui
+    squiffy.registerHelper("visit", (attribute, ...args) => {
+        const items = args.slice(0, -1); // the last argument is "options"
+        const count = squiffy.get(attribute) || 0;
+        squiffy.set(attribute, count + 1);
+        return items[Math.min(count, items.length - 1)];
+    });
+---
+
+You knock on the tutor's door. [[Go in]](tutor)
+
+[[tutor]]:
+{{visit "tutorvisits" "“And you are?…”" "“Ahh, here you are…”" "“You again!”"}}
+
+[[Visit the tutor again]](tutor)

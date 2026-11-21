@@ -3,6 +3,10 @@ title: Stories in several files
 description: Splitting a story across files, stylesheets and scripts with a squiffy.json project file, or with @import
 ---
 
+import Sample from "@components/Sample.astro";
+import story from "../../samples/files/story.squiffy?raw";
+import chapter2 from "../../samples/files/chapter2.squiffy?raw";
+import projectJson from "../../samples/files/squiffy.json?raw";
 
 A story can be split across several `.squiffy` files. To make a folder of files one story, add a project file called `squiffy.json` to the folder, naming the story's main file:
 
@@ -29,6 +33,10 @@ A `squiffy.json` also means the story uses Squiffy 7's rules for [setting attrib
 - `id` identifies your story, so a player's [saved game](/buttons-panels-settings/#saved-games) can only be loaded into the story it came from. The editor and the command-line tool give a new `squiffy.json` a random one. Keep it the same when you publish a new version of your story, and don't copy it into another story.
 
 The `$schema` line is optional. It lets text editors such as VS Code check the file and suggest what can go in it.
+
+Here's a story in two files. The link in `story.squiffy` goes to a section in `chapter2.squiffy`:
+
+<Sample script={story} files={{ "chapter2.squiffy": chapter2, "squiffy.json": projectJson }}></Sample>
 
 ## Stylesheets and scripts
 

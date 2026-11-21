@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "main": "story.squiffy",
+  "settings": [
+    { "name": "warnings", "label": "Content warnings", "default": true,
+      "description": "A warning before scenes some players may find upsetting" },
+    { "name": "textSize", "type": "list", "label": "Text size",
+      "options": ["Small", "Medium", "Large"], "default": "Medium" },
+    { "name": "speed", "type": "range", "label": "Text speed", "min": 1, "max": 5, "step": 1, "default": 3 }
+  ]
+}

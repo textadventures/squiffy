@@ -1,0 +1,5 @@
+@ui
+    squiffy.registerHelper("shout", (text) => text.toUpperCase() + "!");
+---
+
+Welcome to the story. {{shout "hello"}}

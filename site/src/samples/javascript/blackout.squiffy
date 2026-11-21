@@ -1,0 +1,36 @@
+You are standing in a room. You can see a [hammer].
+
+[hammer]:
+It's nice and weighty. Perhaps you want to [[hit yourself in the face with it]](hit)?
+
+[[hit]]:
+    squiffy.ui.transition(() => new Promise(resolve => {
+        const blackout = document.createElement("div");
+        Object.assign(blackout.style, {
+            position: "fixed", inset: "0", background: "black",
+            opacity: "0", transition: "opacity 3s ease-in"
+        });
+        squiffy.element.appendChild(blackout);
+
+        // Fade to black
+        requestAnimationFrame(() => blackout.style.opacity = "1");
+
+        setTimeout(() => {
+            squiffy.story.go("wake up");
+
+            // Fade back in, then tidy up
+            blackout.style.opacity = "0";
+            blackout.addEventListener("transitionend", () => {
+                blackout.remove();
+                resolve();
+            }, { once: true });
+        }, 4000);
+    }));
+
+Bang.
+
+[[wake up]]:
+@clear
+Slowly your eyes open.
+
+That was a rather stupid thing to do.

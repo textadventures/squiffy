@@ -1,0 +1,5 @@
+div.squiffy-output-section:not(:last-child),
+div.squiffy-output-passage:not(:last-child),
+div.squiffy-output-block:not(:last-child) {
+    border-bottom: none;     /* default: 1px solid var(--squiffy-border) */
+}

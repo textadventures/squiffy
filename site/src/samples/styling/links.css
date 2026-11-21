@@ -1,0 +1,7 @@
+a.squiffy-link {
+    color: light-dark(darkgreen, lightgreen);    /* default: var(--squiffy-link) */
+}
+
+a.squiffy-link:hover {
+    color: light-dark(green, palegreen);         /* default: var(--squiffy-link-hover) */
+}

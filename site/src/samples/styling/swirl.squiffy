@@ -1,0 +1,5 @@
+The room starts to spin. [[Close your eyes]](dream)
+
+[[dream]]:
+@transition swirl 1s
+When you open them again, you're somewhere else entirely.

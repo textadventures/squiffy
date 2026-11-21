@@ -1,0 +1,8 @@
+The night is calm. [[Set sail]](storm)
+
+[[storm]]:
+{{#if settings.warnings}}
+*Content warning: this scene describes a shipwreck.*
+{{/if}}
+
+{{#if settings.speed > 3}}The storm comes quickly.{{else}}The storm gathers slowly.{{/if}} The waves rise, and the ship begins to break apart.

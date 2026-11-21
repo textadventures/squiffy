@@ -1,0 +1,29 @@
+@set gold = 10
+@set health = 3
+@set inventory = ["a map"]
+
+You're at the market. [[Buy a sword]](market, gold -= 5) or [[Head out]](road)
+
+[[market]]:
+{{append "inventory" "a sword"}}The smith hands you a sword. [[Head out]](road)
+
+[[road]]:
+@dec health
+A bramble scratches you on the way out of town.
+
+[[]]:
+
+[status]:
+**Gold:** {{gold}}
+
+**Health:** {{health}}
+
+[inventory]:
+{{#each inventory}}
+- {{this}}
+{{else}}
+You're carrying nothing.
+{{/each}}
+
+[help]:
+Click a link to choose what happens next.

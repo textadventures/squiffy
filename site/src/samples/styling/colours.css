@@ -1,0 +1,6 @@
+:root {
+    --squiffy-background: light-dark(#fdf6e3, #1e1e2e);
+    --squiffy-text: light-dark(#3b3227, #e0e0e0);
+    --squiffy-link: light-dark(darkgreen, lightgreen);
+    --squiffy-link-hover: light-dark(green, palegreen);
+}

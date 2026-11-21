@@ -1,0 +1,12 @@
+The first page of the album. [[Turn the page]](two)
+
+[[two]]:
+A photo of a beach, faded by the sun. [[Turn the page]](three)
+
+[[three]]:
+A photo of a birthday cake, with far too many candles.
+
+[[]]:
+@clear
+@leave slide-left
+@transition slide-left

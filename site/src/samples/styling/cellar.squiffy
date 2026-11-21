@@ -1,0 +1,7 @@
+You're in the kitchen. A door in the corner leads down to [[The cellar]].
+
+[[The cellar]]:
+It's cold down here, and it smells of damp. [[Go back up]](kitchen)
+
+[[kitchen]]:
+The kitchen is warm and bright again.
