@@ -278,6 +278,23 @@ describe("the text processor", () => {
             .toBe("{{#if (visits \"Start\") = 1}}First time.{{/if}}{{#if (visits \"Start\") > 1}}Again.{{/if}}");
     });
 
+    test("conditions in a link's text", async () => {
+        // A link's text ends up in a text="..." string, so text in its conditions is in single
+        // quotes, and a [name] is kept as it is
+        expect((await text("{page:Other:Tell {if player.sex=Female:him}{if met king:, again}{once:!}}")).text)
+            .toBe("[[Tell {{#if player_sex = 'Female'}}him{{/if}}{{#if [met king]}}, again{{/if}}{{#if (visits 'Start') = 1}}!{{/if}}]](Other)");
+        const quoted = await text("{page:Other:Hi {if name=O'Brien:Pat}}");
+        expect(quoted.text).toBe("[[Hi {{!-- Quest: {if name=O'Brien:Pat} --}}]](Other)");
+        expect(quoted.problems).toHaveLength(1);
+    });
+
+    test("flag names that Squiffy can't read as they are", async () => {
+        // A comma would make a list, and a digit at the start a number. Two names that become the
+        // same are kept apart.
+        expect((await text("{if Tonya died, Pregnant Woman got shot:a}{if 2×@-,flag:b}{if a,b:c}{if a]b:d}{if [x]:e}")).text)
+            .toBe("{{#if [Tonya died_ Pregnant Woman got shot]}}a{{/if}}{{#if [_2×@-_flag]}}b{{/if}}{{#if a_b}}c{{/if}}{{#if a_b_2}}d{{/if}}{{#if _x_}}e{{/if}}");
+    });
+
     test("links to pages", async () => {
         expect((await text("Go {page:Other} or {page:Other:there} or {command:Other:here}.")).text)
             .toBe("Go [[Other]] or [[there]](Other) or [[here]](Other).");
@@ -417,6 +434,22 @@ describe("scripts", () => {
             "Smile.<br>",
             "{{else}}",
             "Frown.",
+            "{{/if}}",
+            "",
+            "[[On]](End)",
+        ].join("\n"));
+    });
+
+    test("flag names that Squiffy can't read as they are", async () => {
+        const { script } = await run(scriptPage("Start", `
+            SetFlagOn ("Tonya died, Pregnant Woman got shot")
+            if (GetBoolean(game, "Tonya died, Pregnant Woman got shot")) {
+              msg ("Shot.")
+            }`, "", [["End", "On"]]));
+        expect(section(script, "Start")).toBe([
+            "{{set \"Tonya died_ Pregnant Woman got shot\" true}}",
+            "{{#if [Tonya died_ Pregnant Woman got shot]}}",
+            "Shot.",
             "{{/if}}",
             "",
             "[[On]](End)",
