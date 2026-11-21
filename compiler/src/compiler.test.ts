@@ -5,6 +5,7 @@ import * as path from "path";
 
 import { compile, CompileSuccess } from "./compiler.js";
 import { analyse } from "./analyse.js";
+import { findStory } from "./node.js";
 
 // Mock crypto.randomUUID() to return a stable value for snapshot tests
 beforeAll(() => {
@@ -105,6 +106,9 @@ for (const { dir, file: example, expressions } of examples) {
         const filename = path.basename(example);
         const warnings: string[] = [];
 
+        // An example is its folder's squiffy.json project: its other files, panels and settings
+        const project = expressions ? await findStory(path.join(dir, path.dirname(example))) : undefined;
+
         const result = await compile({
             scriptBaseFilename: filename,
             script: script,
@@ -114,6 +118,9 @@ for (const { dir, file: example, expressions } of examples) {
             },
             externalFiles: externalFiles(`${dir}/${example}`),
             expressions,
+            storyFiles: project?.storyFiles,
+            panels: project?.panels,
+            settings: project?.settings,
         });
 
         assertSuccess(result);

@@ -1,0 +1,68 @@
+# A playthrough of the story, recorded with --play --record.
+# Run it with --test, or record it again with --test --update.
+seed 4
+input player_name=priya
+
+went "intro"
+set score = 0
+set round = 0
+set patience = 3
+set prizes = []
+set rounds_tonight = 3
+set wheel = ["General Knowledge","Beat the Clock","Professor Boom's Lab","The Mystery Box","The Audience Decides"]
+set tonight = ["The Mystery Box","Professor Boom's Lab","General Knowledge"]
+
+> Press Enter in the text box for player_name
+went "contestant"
+set player_name = "Priya"
+
+> let's spin...
+
+> Spin the wheel!
+went "spin"
+set round = 1
+set tonight = ["Professor Boom's Lab","General Knowledge"]
+set spins = 16
+set landed = "The Mystery Box"
+
+> Let's play!
+went "The Mystery Box"
+set box = "goat"
+
+> Refuse to open it
+went "Refuse to open it"
+set patience = 1
+
+> Fine, open the box
+went "open the box"
+set score = 150
+set prizes = ["a goat (on loan)"]
+
+> Next round!
+went "next round"
+
+> Cut to the adverts
+went "commercial break"
+
+> Back to the show!
+went "_continue1"
+
+> Spin the wheel!
+went "spin"
+set round = 2
+set tonight = ["General Knowledge"]
+set landed = "Professor Boom's Lab"
+
+> Let's play!
+went "Professor Boom's Lab"
+set lab = {"stability":100,"mixture":[]}
+set shelf = [{"name":"Fizz","look":"fizzing blue"},{"name":"Sulk","look":"sulky green"},{"name":"Gloop","look":"suspiciously beige"},{"name":"Shriek","look":"screaming orange"}]
+
+> Present your compound
+went "compound"
+set patience = 0
+set element = "ium"
+
+> Next round!
+went "next round"
+went "Hank walks off"

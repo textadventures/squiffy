@@ -1,0 +1,62 @@
+{{!--
+    Round: Beat the Clock. Pressing Enter in the text box shows the "guess" passage, again and
+    again (it has @repeat), and its JavaScript empties the box for the next guess. The first
+    guess starts a countdown, with {{#every}}, unless the player has turned off timed rounds in
+    the Settings.
+--}}
+
+[[Beat the Clock]]:
+@set found = []
+@set clock = 20
+@set clock_running = false
+@set vegetables = ["artichoke", "asparagus", "aubergine", "bean", "beetroot", "broccoli", "cabbage", "carrot", "cauliflower", "celery", "chard", "chickpea", "corn", "courgette", "cucumber", "eggplant", "fennel", "garlic", "kale", "leek", "lentil", "lettuce", "marrow", "mushroom", "okra", "onion", "parsnip", "pea", "pepper", "potato", "pumpkin", "radish", "rocket", "shallot", "spinach", "sprout", "squash", "swede", "sweet potato", "sweetcorn", "tomato", "turnip", "watercress", "yam", "zucchini"]
+@sound sounds/fanfare.mp3
+"It's time to... {{#animate "toast"}}BEAT THE CLOCK!{{/animate}}" Hank wheels out an enormous egg timer.
+
+{{#if settings.timers}}
+"Name as many vegetables as you can! You've got {{clock}} seconds, and the clock starts with your first answer. Fifty points for each one!"
+{{else}}
+"Name as many vegetables as you can! Fifty points for each one!" He taps the egg timer. "Somebody's turned the clock off in the Settings, so take as long as you like."
+{{/if}}
+
+{{#label "clock"}}{{/label}}
+
+Type a vegetable, and press Enter: <input type="text" data-attribute="guess" data-passage="guess" placeholder="A vegetable" maxlength="30">
+
+[[That's all I can think of]](time's up)
+
+[guess]:
+@repeat
+    // Empties the text box, ready for the next guess
+    squiffy.ui.afterWrite(() => {
+        const box = squiffy.element.querySelector("input[data-passage='guess']");
+        box.value = "";
+        box.focus();
+    });
+{{set "word" (lower guess)}}
+{{#if settings.timers and not clock_running}}{{set "clock_running" true}}{{#replace "clock"}}⏱️ {{#style "countdown"}}{{#every 1000}}{{dec "clock"}}{{#if clock <= 0}}{{stop}}{{goto "time's up"}}{{else}}{{clock}}{{/if}}{{/every}}{{/style}}{{/replace}}{{/if}}
+{{#if not word}}
+Hank cups a hand to his ear. "I didn't catch that!"
+{{else if found contains word}}
+"You've said {{word}} already!"
+{{else if vegetables contains word or vegetables contains (slice word 0 -1)}}
+{{append "found" word}}{{sound "sounds/ding.mp3"}}✅ **{{capitalise word}}!**
+{{else}}
+{{sound "sounds/buzzer.mp3"}}❌ "{{guess}}? That's not a vegetable."
+{{/if}}
+
+[[time's up]]:
+@set score += found.length * 50
+{{#if found.length >= 5}}{{append "prizes" "a novelty marrow"}}{{/if}}
+{{#if clock <= 0}}{{sound "sounds/buzzer.mp3"}}{{#animate "toast"}}TIME'S UP!{{/animate}}{{/if}}
+
+{{#if found.length = 0}}
+{{dec "patience"}}
+"Not ONE vegetable?" Hank is appalled. "Do you eat nothing but crisps, {{player_name}}?"
+{{else}}
+"You named {{found.length}}: {{join found ", " " and "}}. That's {{= found.length * 50}} points!"
+
+{{#if found.length >= 5}}"And for five or more, you win our special prize: a novelty marrow!" It's a normal marrow, with googly eyes.{{/if}}
+{{/if}}
+
+[[Next round!]](next round)

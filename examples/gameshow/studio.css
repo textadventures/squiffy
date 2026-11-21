@@ -1,0 +1,153 @@
+/* The studio. With squiffy.json, every .css file in the story's folder is part of the story.
+
+   The story changes the look with classes:
+   - @class in a section: "lab", "advert", "final", "confetti", "lights-out"
+   - the "Studio lights" setting in squiffy.json, which puts "setting-lights-Budget" (or
+     "setting-lights-Dazzling") on the story
+   - {{#style "..."}} for some of the text: "wheel", "countdown", "cue-card", "advert-card" */
+
+/* It's a TV studio: always dark. This also hides the light/dark button. */
+:root {
+    color-scheme: dark;
+    --squiffy-font-family: "Avenir Next", Avenir, "Segoe UI", system-ui, sans-serif;
+    --squiffy-background: #120b2e;
+    --squiffy-text: #f3eefc;
+    --squiffy-link: #ffd23f;
+    --squiffy-link-hover: #fff3a3;
+    --squiffy-muted: #a79bd1;
+    --squiffy-border: #33286b;
+    --squiffy-side-width: 15rem;
+    --gold: #ffd23f;
+}
+
+body {
+    background-image: radial-gradient(ellipse at top, #3a1f7a 0%, transparent 60%);
+    background-attachment: fixed;
+    transition: background-color 0.8s ease;
+}
+
+div#squiffy h1 {
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    text-shadow: 0 0 12px rgb(255 210 63 / 0.6);
+}
+
+/* The scoreboard, with a row of light bulbs along the top */
+aside.squiffy-panels-side {
+    border: 2px solid var(--gold);
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    background:
+        radial-gradient(circle, var(--gold) 0 3px, transparent 4px) top / 18px 12px repeat-x,
+        rgb(255 255 255 / 0.04);
+    padding-top: 1.25rem;
+}
+
+/* The wheel, as it spins */
+.squiffy-style.wheel {
+    display: inline-block;
+    min-width: 14em;
+    padding: 0.3em 0.8em;
+    border: 3px dashed var(--gold);
+    border-radius: 2em;
+    font-size: 1.25em;
+    text-align: center;
+}
+
+/* The countdown in Beat the Clock */
+.squiffy-style.countdown {
+    font-size: 1.75em;
+    font-weight: bold;
+    font-variant-numeric: tabular-nums;
+    color: #ff5d5d;
+}
+
+/* Hank's cue cards */
+div.squiffy-style.cue-card {
+    margin: 1em auto;
+    max-width: 24rem;
+    padding: 0.75em 1.25em;
+    background: #fffbe8;
+    color: #2b2340;
+    border-radius: 0.4rem;
+    box-shadow: 0 6px 18px rgb(0 0 0 / 0.5);
+    transform: rotate(-1.5deg);
+    text-align: center;
+}
+
+/* Professor Boom's lab: everything goes green */
+body:has(.lab) {
+    --squiffy-background: #06200f;
+    --squiffy-link: #7dff9b;
+    --squiffy-link-hover: #c6ffd2;
+    background-image: radial-gradient(ellipse at bottom, #1d6b34 0%, transparent 65%);
+}
+
+/* The final question: red alert */
+body:has(.final) {
+    --squiffy-background: #2a0710;
+    background-image: radial-gradient(ellipse at top, #8a1530 0%, transparent 60%);
+}
+
+/* The commercial break: a cheap advert from the 1980s */
+body:has(.advert) {
+    --squiffy-background: #0d3b4f;
+    --squiffy-link: #ff8adf;
+    --squiffy-link-hover: #ffc1ee;
+    background-image: repeating-linear-gradient(transparent 0 2px, rgb(0 0 0 / 0.18) 2px 4px);
+}
+
+div.squiffy-style.advert-card {
+    padding: 0.5em 1.5em;
+    border: 4px double #ff8adf;
+    border-radius: 1rem;
+    background: linear-gradient(135deg, #ff8adf33, #3ff2ff33);
+    text-align: center;
+}
+
+/* The end: confetti */
+body:has(.confetti) {
+    background-image:
+        radial-gradient(circle, #ff5d5d 0 3px, transparent 4px),
+        radial-gradient(circle, var(--gold) 0 3px, transparent 4px),
+        radial-gradient(circle, #3ff2ff 0 3px, transparent 4px),
+        radial-gradient(ellipse at top, #3a1f7a 0%, transparent 60%);
+    background-size: 90px 110px, 130px 70px, 70px 150px, auto;
+    background-position: 0 0, 40px 30px, 20px 60px, center;
+    animation: confetti 6s linear infinite;
+}
+
+@keyframes confetti {
+    to { background-position: 0 440px, 40px 310px, 20px 660px, center; }
+}
+
+/* Hank walks off, and the lights go out */
+body:has(.lights-out) {
+    --squiffy-background: #000;
+    --squiffy-text: #b8b0c8;
+    background-image: none;
+}
+
+/* The "Budget" studio lights setting: one torch, taped to a broom handle */
+body:has(.setting-lights-Budget) {
+    --squiffy-background: #d9cfb8;
+    --squiffy-text: #3b3428;
+    --squiffy-link: #6b3fa0;
+    --squiffy-link-hover: #8b5fc0;
+    --squiffy-muted: #7d735f;
+    --squiffy-border: #b8ab8c;
+    --gold: #8a7a4f;
+    color-scheme: light;
+    background-image: radial-gradient(circle at 50% 10%, #fff8dc 0%, transparent 35%);
+}
+
+body:has(.setting-lights-Budget) div#squiffy h1 {
+    text-shadow: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body:has(.confetti) {
+        animation: none;
+    }
+}

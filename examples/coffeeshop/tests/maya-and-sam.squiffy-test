@@ -1,0 +1,84 @@
+# A playthrough of the story, recorded with --play --record.
+# Run it with --test, or record it again with --test --update.
+seed 124710
+input player_name=Jo
+input drink_name=The Wednesday
+
+went "intro"
+set warmth = {"maya":0,"ellis":0,"sam":0}
+set orders = {}
+
+> Tie on your apron
+went "Monday"
+set player_name = "Jo"
+
+> espresso machine
+went "Monday" "espresso machine"
+
+> The woman with the laptop
+went "Maya first"
+set warmth = {"maya":1,"ellis":0,"sam":0}
+set orders = {"Maya":"oat milk latte, extra shot"}
+
+> Here comes the rush
+went "rush"
+
+> That evening...
+went "_continue1"
+
+> Bring them a menu
+went "Bring them a menu"
+set warmth = {"maya":1,"ellis":0,"sam":1}
+set orders = {"Maya":"oat milk latte, extra shot","Sam":"red-eye, as strong as it goes"}
+
+> Closing up
+went "Closing up"
+
+> Tuesday
+went "_continue2"
+
+> ask him
+went "_continue2" "Ellis on Tuesday"
+set orders = {"Maya":"oat milk latte, extra shot","Sam":"red-eye, as strong as it goes","Ellis":"black coffee, no room"}
+
+> See what Maya wants
+went "Maya on Tuesday"
+
+> She misses it on purpose
+went "Tuesday evening"
+set warmth = {"maya":2,"ellis":0,"sam":1}
+set maya_idea = "misses"
+
+> Check on Sam
+went "Check on Sam"
+set warmth = {"maya":2,"ellis":0,"sam":2}
+
+> Close up for the night
+went "Tuesday night"
+
+> Wednesday
+went "_continue3"
+
+> Ellis
+went "_continue3" "Ellis on Wednesday"
+set warmth = {"maya":2,"ellis":1,"sam":2}
+
+> Maya
+went "_continue3" "Maya on Wednesday"
+set warmth = {"maya":3,"ellis":1,"sam":2}
+
+> Sam
+went "_continue3" "Sam on Wednesday"
+
+> ask about the hook
+went "_continue3" "ask about the hook"
+set warmth = {"maya":3,"ellis":1,"sam":3}
+set sam_on_the_wall = true
+
+> closing time
+went "closing time"
+set close_friends = 2
+
+> Write it on the board
+went "The specials board"
+set drink_name = "The Wednesday"

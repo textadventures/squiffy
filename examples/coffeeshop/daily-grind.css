@@ -1,0 +1,45 @@
+/* The Daily Grind: warm paper and espresso in the morning, fairy lights in the evening.
+   The story's @class directives put "morning" or "evening" on the story while a scene is on. */
+
+:root {
+    --squiffy-font-family: Charter, "Bitstream Charter", "Iowan Old Style", Georgia, serif;
+    --squiffy-max-width: 38rem;
+
+    --squiffy-background: light-dark(#f7f0e4, #1f1813);
+    --squiffy-text: light-dark(#3a2a1e, #eadccb);
+    --squiffy-link: light-dark(#9a4a1c, #f0a868);
+    --squiffy-link-hover: light-dark(#6f2f0b, #ffc890);
+    --squiffy-border: light-dark(#e2d3bd, #3a2c22);
+    --squiffy-muted: light-dark(#8c7561, #a89480);
+}
+
+body, div#squiffy-header {
+    transition: background-color 1.5s ease, color 1.5s ease;
+}
+
+/* Evening: the big lights go off and the fairy lights come on */
+body:has(.evening) {
+    --squiffy-background: light-dark(#2a2030, #150f18);
+    --squiffy-text: light-dark(#f1e6d6, #eadccb);
+    --squiffy-link: light-dark(#ffcf70, #ffcf70);
+    --squiffy-link-hover: light-dark(#fff0b8, #fff0b8);
+    --squiffy-border: light-dark(#463650, #2f2436);
+    --squiffy-muted: light-dark(#bfae9c, #a89480);
+}
+
+/* Each scene's heading, like the time written at the top of a page in a diary */
+div#squiffy h2 {
+    font-size: 0.85em;
+    font-weight: normal;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--squiffy-muted);
+}
+
+/* Maya's last line */
+div#squiffy blockquote {
+    margin-left: 0;
+    padding-left: 1em;
+    border-left: 3px solid var(--squiffy-link);
+    font-style: italic;
+}

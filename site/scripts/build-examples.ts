@@ -4,47 +4,23 @@
 import * as fs from "fs";
 import * as path from "path";
 import { fileURLToPath } from "url";
-import { compile } from "squiffy-compiler";
 import { findStory } from "squiffy-compiler/node";
-import { createPackage } from "@textadventures/squiffy-packager";
-import { externalFiles } from "@textadventures/squiffy-cli";
+import { createPackageFiles } from "@textadventures/squiffy-cli";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const examplesDir = path.resolve(__dirname, "../../examples");
 const outputDir = path.join(__dirname, "../public/examples");
 
+// Built as the CLI builds a story, so they have everything in their squiffy.json (panels,
+// settings, ...), their stylesheets, and the images and sounds they use
 async function packageExample(name: string): Promise<boolean> {
     console.log(`Packaging ${name}...`);
-
     const story = await findStory(path.join(examplesDir, name));
-    const warnings: string[] = [];
-    const result = await compile({
-        scriptBaseFilename: path.basename(story.mainFile),
-        script: fs.readFileSync(story.mainFile, "utf-8"),
-        onWarning: message => warnings.push(message),
-        externalFiles: externalFiles(story.mainFile),
-        storyFiles: story.storyFiles,
-        expressions: story.expressions,
-        globalJs: true,
+    return await createPackageFiles(story, path.join(outputDir, name), {
+        backButton: story.backButton,
+        saveButton: story.saveButton,
+        strings: story.strings,
     });
-
-    for (const warning of warnings) {
-        console.warn(`  Warning: ${warning}`);
-    }
-    if (!result.success) {
-        console.error(`  Failed to compile ${name}:`);
-        result.errors.forEach(error => console.error(`    ${error}`));
-        return false;
-    }
-
-    const pkg = await createPackage(result, { backButton: story.backButton, strings: story.strings });
-    const exampleOutputDir = path.join(outputDir, name);
-    fs.mkdirSync(exampleOutputDir, { recursive: true });
-    for (const [filename, content] of Object.entries(pkg.files)) {
-        fs.writeFileSync(path.join(exampleOutputDir, filename), content);
-    }
-    console.log(`  Packaged to public/examples/${name}/`);
-    return true;
 }
 
 const names = fs.readdirSync(examplesDir, { withFileTypes: true })

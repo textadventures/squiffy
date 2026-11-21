@@ -205,85 +205,161 @@ exports[`coffeeshop/coffeeshop.squiffy 1`] = `
 "export const story = {};
 story.id = "00000000-0000-0000-0000-000000000000";
 story.expressions = true;
+story.panels = [
+    {
+        "passage": "order pad",
+        "label": "Order pad",
+        "position": "side"
+    }
+];
 story.start = "intro";
 story.sections = {
-    "intro": {
-        "text": "The bell above the door jingles as you step inside The Daily Grind for your first day of work.\\n\\nIt's a small independent coffee shop—mismatched furniture, local art on the walls, the smell of fresh espresso hanging in the air. The kind of place where everyone seems to know everyone.\\n\\nBehind the counter, your new boss Carla gives you a wave. \\"You must be the new hire! Welcome aboard. What's your name?\\"\\n\\n<input type=\\"text\\" data-attribute=\\"player_name\\" placeholder=\\"Enter your name...\\" required minlength=\\"2\\" maxlength=\\"30\\">\\n\\n{{section \\"Begin your first shift\\"}}\\n"
-    },
-    "Begin your first shift": {
-        "clear": true,
-        "text": "# Day One — Morning\\n\\nCarla shows you the basics: the espresso machine, the register, where the oat milk is hiding. Within an hour, she's retreated to the back office, leaving you alone behind the counter.\\n\\n\\"You'll be fine,\\" she calls over her shoulder. \\"The regulars are friendly. Mostly.\\"\\n\\nThe morning light streams through the front windows. Two customers are already here.\\n\\nIn the corner booth, a woman in her late twenties hunches over a laptop, occasionally sighing dramatically. An older man sits by the window, staring at his empty cup like it holds the secrets of the universe.\\n\\nWho do you approach first?\\n\\n{{section \\"The woman with the laptop\\"}}\\n\\n{{section \\"The older man by the window\\"}}\\n\\n{{section \\"Wait for someone to come to you\\"}}\\n",
-        "attributes": [
-            "maya = 0",
-            "ellis = 0",
-            "sam = 0"
-        ]
-    },
-    "The woman with the laptop": {
-        "text": "You approach the corner booth. The woman looks up, startled, then breaks into a sheepish grin.\\n\\n\\"Sorry, I didn't even notice you come over. I'm Maya.\\" She gestures at her laptop screen, which appears to be mostly blank. \\"Writer. Allegedly.\\"\\n\\n\\"I'm {{player_name}}. Can I get you anything?\\"\\n\\n\\"Oat milk latte, extra shot. And maybe the ability to finish a single paragraph.\\" She laughs, but there's an edge to it. \\"Sorry. First day, right? I promise I'm not always this dramatic.\\"\\n\\n\\"Only mostly dramatic?\\" you ask.\\n\\nShe grins. \\"Exactly. You're going to fit in fine here.\\"\\n\\n{{section \\"morning continues\\" text=\\"Continue morning\\"}}\\n",
-        "attributes": [
-            "maya+=1"
-        ]
-    },
-    "The older man by the window": {
-        "text": "You approach the window table. The man looks up—early seventies, neatly dressed, with the kind of face that suggests he's forgotten how to smile but remembers that he used to.\\n\\n\\"Morning. I'm {{player_name}}, I just started—\\"\\n\\n\\"Ellis.\\" He cuts you off, not unkindly. \\"Coffee. Black. No room.\\"\\n\\nYou nod and turn to go, but he speaks again, quieter.\\n\\n\\"The last one—the girl who worked mornings—she used to say hello every day. Every single day.\\" He pauses. \\"It was nice.\\"\\n\\nYou're not sure what to say to that.\\n\\n{{section \\"morning continues\\" text=\\"Continue morning\\"}}\\n",
-        "attributes": [
-            "ellis+=1"
-        ]
-    },
-    "Wait for someone to come to you": {
-        "text": "You busy yourself wiping down the already-clean counter. After a few minutes, the older man by the window raises his empty cup, catching your eye.\\n\\nYou head over. He's early seventies, neatly dressed.\\n\\n\\"Coffee. Black. No room.\\" He pauses, then adds, almost grudgingly, \\"Please.\\"\\n\\n\\"Coming right up. I'm {{player_name}}, by the way. First day.\\"\\n\\n\\"Ellis.\\" He nods once, then turns back to the window.\\n\\n{{section \\"morning continues\\" text=\\"Continue morning\\"}}\\n"
-    },
-    "morning continues": {
-        "text": "The morning settles into a rhythm. You make drinks, you wipe tables, you learn that the espresso machine makes a concerning noise that Carla insists is \\"normal.\\"\\n\\n{{#if maya > 0}}Maya catches your eye as she's leaving, laptop tucked under her arm. \\"See you tomorrow, {{player_name}}. Maybe I'll have actually written something by then.\\" She doesn't sound convinced.{{/if}}\\n\\n{{#if ellis > 0}}Ellis leaves exact change on the table, plus a single dollar tip. He nods at you on his way out—the smallest possible acknowledgment. It feels like a victory.{{/if}}\\n\\nBy afternoon, the shop is quiet. Carla sends you home early. \\"Rest up. Evening shifts are different.\\"\\n\\n{{section \\"_continue1\\" text=\\"That evening...\\"}}"
-    },
-    "_continue1": {
-        "clear": true,
-        "text": "# Day One — Evening\\n\\nThe Daily Grind transforms at night. The overhead lights dim, fairy lights come on, and the coffee crowd gives way to something else.\\n\\nYou spot a new face: early twenties, headphones around their neck, dark circles under their eyes. They're sketching something in a worn notebook, barely looking at the page.\\n\\n{{section \\"Bring them a menu\\"}}\\n\\n{{section \\"Wait for them to come up\\"}}\\n"
-    },
-    "Bring them a menu": {
-        "text": "You grab a menu and head over. They look up, startled—then pull out an earbud.\\n\\n\\"Oh. Hey. Sorry, I'm—\\" They glance around like they're not quite sure how they got here. \\"Can I just get whatever has the most caffeine? Like, medically inadvisable amounts.\\"\\n\\n\\"Long day?\\"\\n\\n\\"Long year.\\" They almost smile. \\"I'm Sam.\\"\\n\\n\\"{{player_name}}. First day.\\"\\n\\n\\"Welcome to the chaos.\\" Sam gestures vaguely at the empty shop. \\"As you can see, it's very chaotic here.\\"\\n\\nYou laugh. Their sketch catches your eye—it's the coffee shop itself, rendered in confident lines.\\n\\n\\"That's really good.\\"\\n\\nSam immediately flips the notebook closed. \\"It's nothing. Just... keeps my hands busy.\\"\\n\\n{{section \\"End of day one\\"}}\\n",
-        "attributes": [
-            "sam+=1"
-        ]
-    },
-    "Wait for them to come up": {
-        "text": "Eventually they shuffle to the counter, headphones still half-on.\\n\\n\\"Most caffeinated thing you have. Please.\\"\\n\\n\\"Coming up.\\" You start making a red-eye. \\"I'm {{player_name}}. First day.\\"\\n\\n\\"Sam.\\" They glance around the shop. \\"You'll like it here. It's quiet. Good for... thinking. Or not thinking.\\"\\n\\nThey pay and retreat to their table, pulling out a worn sketchbook. You catch a glimpse of the drawing—the coffee shop itself, rendered in confident lines.\\n\\n{{section \\"End of day one\\"}}\\n"
-    },
-    "End of day one": {
-        "text": "The evening passes slowly. Sam stays until closing, nursing that single drink, headphones on, filling pages with sketches they won't let you see.\\n\\nAs you're locking up, Carla pokes her head out from the back. \\"Good first day?\\"\\n\\n\\"Yeah. The regulars are...\\"\\n\\n\\"Interesting?\\"\\n\\n\\"I was going to say nice.\\"\\n\\nCarla smiles. \\"Give it time. They're both.\\"\\n\\n{{section \\"_continue2\\" text=\\"Day Two\\"}}"
-    },
-    "_continue2": {
-        "clear": true,
-        "text": "# Day Two — Morning\\n\\nYou arrive to find the shop already occupied.\\n\\nEllis is in his usual spot by the window. {{#if (seen \\"The older man by the window\\")}}He nods at you when you come in—practically a standing ovation by his standards.{{else}}He doesn't look up.{{/if}}\\n\\nMaya bursts in a few minutes later, laptop bag swinging, looking either excited or panicked—it's hard to tell.\\n\\n{{#if maya > 0}}\\"{{player_name}}!\\" She makes a beeline for you. \\"Okay, so, I actually wrote something last night. Like, real words. In an order that makes sense. I think you might be good luck.\\"{{else}}\\"The usual,\\" she says, already heading for her corner booth. \\"Sorry, I'm in the zone. Maybe. Hopefully.\\"{{/if}}\\n\\n{{passage \\"Talk to Maya\\"}}\\n\\n{{passage \\"Talk to Ellis\\"}}\\n",
-        "passageCount": 2,
+    "": {
+        "text": "",
+        "transition": "fade",
         "passages": {
-            "@last": {
-                "text": "The morning rush comes and goes. For a moment, the shop is quiet, sunlight streaming through the windows.\\n\\n{{section \\"A quiet moment\\"}}\\n"
-            },
-            "Talk to Maya": {
-                "text": "You bring Maya her oat milk latte. She's staring at her screen with intense focus.\\n\\n\\"How's the writing?\\"\\n\\n{{#if (seen \\"The woman with the laptop\\")}}{{inc \\"maya\\"}}She looks up, and her expression softens. \\"Honestly? Terrifying. But yesterday, when you asked about it... I don't know. It made me feel like someone cared. Even if it was just small talk.\\"\\n\\nShe laughs. \\"That sounds pathetic, doesn't it?\\"\\n\\n\\"It sounds human.\\"\\n\\n\\"Same thing, sometimes.\\" She smiles—a real one. \\"Thanks, {{player_name}}. For asking.\\"\\n{{else}}She looks up, distracted. \\"Hmm? Oh, fine. It's fine. Everything's fine.\\"\\n\\nShe immediately returns to the screen. You get the sense she's not really in the mood to talk.{{/if}}\\n"
-            },
-            "Talk to Ellis": {
-                "text": "You approach Ellis with the coffee pot. \\"Refill?\\"\\n\\n\\"Please.\\" He watches you pour, then speaks, almost reluctantly.\\n\\n{{#if (seen \\"The older man by the window\\")}}{{inc \\"ellis\\"}}\\n\\"My wife and I used to come here every morning. Forty-three years.\\" He stares at the coffee. \\"She'd have the hazelnut thing. Too sweet. I always told her it was too sweet.\\"\\n\\nHe's quiet for a long moment.\\n\\n\\"I'd give anything to buy her one more.\\"\\n\\nYou don't say anything. Sometimes there's nothing to say. But you stand there, and that seems to be enough.\\n\\n\\"Thank you,\\" Ellis says finally. \\"For listening.\\"\\n{{else}}\\n\\"Good coffee,\\" he says. That's all.\\n\\nYou sense there's more beneath the surface, but he's not ready to share it—not yet.{{/if}}\\n"
+            "order pad": {
+                "text": "**Order pad**\\n\\n{{#each orders}}\\n- **{{@key}}:** {{this}}\\n{{else}}\\n_Nothing yet. Write down their orders._\\n{{/each}}\\n"
             }
         }
     },
-    "A quiet moment": {
-        "text": "You're wiping down tables when the door opens. Sam shuffles in, looking exhausted, still wearing yesterday's clothes.\\n\\n{{#if sam > 0}}\\"{{player_name}}.\\" They manage a tired smile. \\"Please tell me you have coffee. And maybe a will to live. I'll take either.\\"{{else}}\\"Coffee. Strongest you've got.\\" They collapse into a chair.{{/if}}\\n\\n{{section \\"Check on Sam\\"}}\\n\\n{{section \\"Give them space\\"}}\\n"
+    "intro": {
+        "text": "The bell above the door jingles as you step into The Daily Grind for your first day of work.\\n\\nIt's a small independent coffee shop: mismatched armchairs, a specials board nobody has changed since spring, and a wall of local art with one empty hook in the middle of it. The air smells of espresso and burnt sugar.\\n\\nBehind the counter, the owner gives you a wave. \\"You must be the new hire! I'm Carla. Welcome aboard. Remind me of your name?\\"\\n\\n<input type=\\"text\\" data-attribute=\\"player_name\\" data-section=\\"Monday\\" placeholder=\\"Your name\\" required minlength=\\"2\\" maxlength=\\"30\\">\\n\\n{{section \\"Monday\\" text=\\"Tie on your apron\\"}}\\n",
+        "attributes": [
+            "warmth = { maya: 0, ellis: 0, sam: 0 }",
+            "orders = {}"
+        ]
+    },
+    "Monday": {
+        "clear": true,
+        "text": "## Monday, 7am\\n\\nCarla gives you the tour in four minutes flat: the till, the grinder, the cupboard where the oat milk hides, and the {{passage \\"espresso machine\\"}}.\\n\\n\\"Here's the secret,\\" she says, handing you a notepad. \\"Learn their names. Learn their orders. Get the order right before they ask, and they're yours for life.\\"\\n\\nThen she vanishes into the back office with a stack of invoices. \\"You'll be fine! The regulars are friendly. Mostly.\\"\\n\\nTwo of them are here already. In the corner booth, a woman in her late twenties glares at a laptop as if it owes her money. By the window, an older man in a pressed shirt stares into an empty cup.\\n\\nYou've got time to talk properly to one of them before the rush.\\n\\n{{section \\"Maya first\\" text=\\"The woman with the laptop\\"}}\\n\\n{{section \\"Ellis first\\" text=\\"The man by the window\\"}}\\n",
+        "classes": [
+            "morning"
+        ],
+        "passages": {
+            "espresso machine": {
+                "text": "You give it a friendly pat. It makes a noise like {{#style \\"shudder\\"}}a walrus in a tumble dryer{{/style}}.\\n\\n\\"That's normal!\\" Carla calls from the back.\\n"
+            }
+        }
+    },
+    "Maya first": {
+        "text": "The woman looks up as you come over, startled, then grins.\\n\\n\\"Sorry, I didn't see you there. I'm Maya.\\" She turns the laptop round. The page says CHAPTER TWENTY-ONE, and nothing else. \\"Writer. Allegedly.\\"\\n\\n\\"{{player_name}}. First day. Can I get you anything?\\"\\n\\n\\"Oat milk latte, extra shot. And an ending, if you've got one going spare.\\" She laughs, but there's an edge to it. \\"Twenty chapters, and I still don't know what happens to her.\\"\\n\\nYou write _oat milk, extra shot_ on your pad, and underline it.\\n\\nBehind you, the man by the window lifts his cup. Carla gets to him before you can. \\"The usual, Ellis?\\" He nods.\\n\\n{{section \\"rush\\" text=\\"Here comes the rush\\"}}\\n",
+        "attributes": [
+            "warmth.maya+=1",
+            "orders.Maya = \\"oat milk latte, extra shot\\""
+        ]
+    },
+    "Ellis first": {
+        "text": "The man looks up as you come over. He's in his seventies, neatly pressed, with the face of someone who has forgotten how to smile but remembers that he used to.\\n\\n\\"Morning. I'm {{player_name}}, I've just started...\\"\\n\\n\\"Ellis.\\" Not unkindly. \\"Coffee. Black. No room.\\"\\n\\nYou write it down. He watches you do it.\\n\\n\\"The girl who worked mornings before you used to say hello,\\" he says. \\"Every day. Every single day.\\" He looks back out of the window. \\"It was nice.\\"\\n\\nYou aren't sure what to say to that, so you say, \\"Hello, Ellis.\\" Something in his face moves, very slightly.\\n\\nIn the corner booth, the woman with the laptop waves an empty mug. Carla gets to her first. \\"Oat milk, extra shot, Maya?\\" \\"Carla, you're a saint.\\"\\n\\n{{section \\"rush\\" text=\\"Here comes the rush\\"}}\\n",
+        "attributes": [
+            "warmth.ellis+=1",
+            "orders.Ellis = \\"black coffee, no room\\""
+        ]
+    },
+    "rush": {
+        "text": "At eight o'clock the door stops closing. Commuters, dog walkers, a man who orders a \\"small large\\" and won't explain. The espresso machine {{#style \\"shudder\\"}}groans{{/style}} like a ship in a storm.\\n\\nWhen it's over, both regulars have gone. {{#if warmth.maya}}Maya has left a napkin on the counter: _Thanks for asking. M._{{else}}Ellis has left exact change on his table, with one extra coin on top: the smallest possible tip. It feels like a medal.{{/if}}\\n\\nCarla sends you home at two. \\"Back at six. Evenings are different.\\"\\n\\n{{section \\"_continue1\\" text=\\"That evening...\\"}}"
+    },
+    "_continue1": {
+        "clear": true,
+        "text": "## Monday, 6pm\\n\\nAt night The Daily Grind turns into somewhere else. The big lights go off and the fairy lights come on, and the coffee crowd gives way to students, insomniacs, and a book group that hasn't talked about a book in years.\\n\\nIn the corner, someone in their early twenties sits alone: headphones round their neck, dark circles under their eyes, sketching in a battered notebook without looking at the page.\\n\\n{{section \\"Bring them a menu\\"}}\\n\\n{{section \\"Let them come to you\\"}}\\n",
+        "classes": [
+            "evening"
+        ],
+        "leave": "fade"
+    },
+    "Bring them a menu": {
+        "text": "They jump when you put the menu down, then pull out an earbud.\\n\\n\\"Oh. Hi. Sorry.\\" They blink at the menu. \\"Whatever has the most caffeine? Like, medically inadvisable amounts.\\"\\n\\n\\"Long day?\\"\\n\\n\\"Long year.\\" It's almost a smile. \\"I'm Sam.\\"\\n\\n\\"{{player_name}}. First day.\\"\\n\\n\\"Welcome to the chaos.\\" Sam waves at the nearly empty room.\\n\\nOver their shoulder you can see the sketch: this room, in quick, sure lines. The counter. The fairy lights. The empty hook on the art wall.\\n\\n\\"That's really good.\\"\\n\\nSam snaps the notebook shut. \\"It's nothing. It keeps my hands busy.\\"\\n\\n{{section \\"Closing up\\"}}\\n",
+        "attributes": [
+            "warmth.sam+=1",
+            "orders.Sam = \\"red-eye, as strong as it goes\\""
+        ]
+    },
+    "Let them come to you": {
+        "text": "Eventually they shuffle up to the counter, headphones still half on.\\n\\n\\"Red-eye. Please.\\"\\n\\n\\"Coming up. I'm {{player_name}}, by the way.\\"\\n\\n\\"Sam.\\" They pay in coins and go back to the corner, and pull the notebook close so that nobody can see what's in it.\\n\\n{{section \\"Closing up\\"}}\\n",
+        "attributes": [
+            "orders.Sam = \\"red-eye\\""
+        ]
+    },
+    "Closing up": {
+        "text": "Sam stays until closing, nursing one drink, filling page after page.\\n\\nAs you stack the chairs, Carla comes out of the back. \\"Good first day?\\"\\n\\n\\"Yeah. The regulars are...\\"\\n\\n\\"Interesting?\\"\\n\\n\\"I was going to say nice.\\"\\n\\nCarla smiles. \\"Give it time. They're both.\\"\\n\\n{{section \\"_continue2\\" text=\\"Tuesday\\"}}"
+    },
+    "_continue2": {
+        "clear": true,
+        "text": "## Tuesday, 7am\\n\\nEllis is in his seat by the window. Maya is in her booth, typing fast and deleting faster.\\n\\n{{#if orders.Ellis}}You don't need to ask what Ellis wants. You pour it before he's taken his coat off, and {{passage \\"Ellis on Tuesday\\" text=\\"take it over\\"}}.{{else}}You don't know what Ellis drinks. You could {{passage \\"Ellis on Tuesday\\" text=\\"ask him\\"}}.{{/if}}\\n\\nBefore you can do anything else, Maya beckons you over with the urgency of someone defusing a bomb.\\n\\n{{section \\"Maya on Tuesday\\" text=\\"See what Maya wants\\"}}\\n",
+        "classes": [
+            "morning"
+        ],
+        "leave": "fade",
+        "passages": {
+            "Ellis on Tuesday": {
+                "text": "{{#if orders.Ellis}}\\n{{inc \\"warmth.ellis\\"}}\\nYou put the cup down in front of him. Black, no room. He looks at it, and then at you.\\n\\n\\"You remembered.\\"\\n\\nHe's quiet for a while. Then: \\"My wife and I came here every morning. Forty-three years. She had the hazelnut thing, with the cream on top. Too sweet. I told her every single day it was too sweet.\\" He turns the cup round on its saucer. \\"I'd give anything to buy her one more.\\"\\n\\nThere isn't anything to say to that. But you stay a moment, and that seems to be enough.\\n\\n\\"Thank you,\\" he says at last. \\"For listening.\\"\\n{{else}}\\n{{set \\"orders.Ellis\\" \\"black coffee, no room\\"}}\\n\\"Coffee,\\" he says. \\"Black. No room.\\" He says it slowly, the way you'd say something for the second time.\\n\\nYou write it down, and he watches you do it.\\n{{/if}}\\n"
+            }
+        }
+    },
+    "Maya on Tuesday": {
+        "text": "{{#if warmth.maya}}\\"{{player_name}}! Thank goodness. I need a reader.\\"{{else}}\\"You're new. Good. Carla's sick of me. I need a reader.\\"{{/if}}\\n\\nShe spins the laptop round. \\"Last chapter. My heroine's on a station platform with a ticket out of this town in her hand. Everyone she loves is here. Everything she wants is out there. And I can't decide.\\" She pulls at her hair. \\"What would _you_ do?\\"\\n\\n{{section \\"Tuesday evening\\" text=\\"She gets on the train\\" set=\\" maya_idea = \\\\\\"train\\\\\\", warmth.maya += 1\\"}}\\n\\n{{section \\"Tuesday evening\\" text=\\"She stays\\" set=\\" maya_idea = \\\\\\"stays\\\\\\", warmth.maya += 1\\"}}\\n\\n{{section \\"Tuesday evening\\" text=\\"She misses it on purpose\\" set=\\" maya_idea = \\\\\\"misses\\\\\\", warmth.maya += 1\\"}}\\n"
+    },
+    "Tuesday evening": {
+        "text": "Maya stares at you. Then she starts typing, and doesn't stop for three hours.\\n\\nThe afternoon blurs into the evening. The door opens and Sam shuffles in, looking exhausted, still in yesterday's clothes.\\n\\n{{#if warmth.sam}}\\"{{player_name}}.\\" A tired smile. \\"Please tell me you have coffee. And a will to live. I'll take either.\\"{{else}}\\"Red-eye.\\" They drop into the corner seat like a puppet with its strings cut.{{/if}}\\n\\n{{section \\"Check on Sam\\"}}\\n\\n{{section \\"Give them space\\"}}\\n",
+        "classes": [
+            "evening"
+        ]
     },
     "Check on Sam": {
-        "text": "You bring over their usual red-eye and slide into the seat across from them for a moment.\\n\\n\\"You okay?\\"\\n\\nSam blinks, like the question doesn't compute. {{#if (seen \\"Bring them a menu\\")}}{{inc \\"sam\\"}}\\"You asked me that yesterday too.\\"\\n\\n\\"You looked like you needed it yesterday too.\\"\\n\\nSomething in their expression shifts. They reach into their bag and pull out the sketchbook, flipping to a page.\\n\\nIt's a drawing of the coffee shop. But now there's a figure behind the counter—you, rendered in careful detail.\\n\\n\\"I don't usually show people,\\" Sam says quietly. \\"But you actually seem like you see people. You know?\\"\\n{{else}}They shrug. \\"Just tired. It's nothing.\\"\\n\\nBut they don't put their headphones back on, and you take that as a good sign.{{/if}}\\n\\n{{section \\"Closing time\\"}}\\n"
+        "text": "You bring over a red-eye and sit across from them for a moment.\\n\\n\\"You okay?\\"\\n\\nSam blinks, as if the question doesn't compute.\\n\\n{{#if warmth.sam >= 2}}\\n\\"You asked me that yesterday too,\\" they say.\\n\\n\\"You looked like you needed it yesterday too.\\"\\n\\nSomething in their face shifts. They open the notebook and turn it round. It's the coffee shop again, but now there's someone behind the counter: you, drawn with real care.\\n\\n\\"There's an art school in the city,\\" Sam says, very quietly. \\"They want a portfolio by Friday. I've got forty drawings of this room, and I'm not sending any of them.\\" They close the notebook. \\"I don't show people. But you seem like you actually see people. You know?\\"\\n{{else}}\\n\\"Just tired,\\" they say. \\"It's nothing.\\"\\n\\nBut they don't put the headphones back on, and you take that as a good sign.\\n{{/if}}\\n\\n{{section \\"Tuesday night\\" text=\\"Close up for the night\\"}}\\n",
+        "attributes": [
+            "warmth.sam+=1"
+        ]
     },
     "Give them space": {
-        "text": "You leave the coffee and step away. Some people need space more than conversation.\\n\\nSam catches your eye as you walk away and nods once—a small acknowledgment. They understand.\\n\\n{{section \\"Closing time\\"}}\\n"
+        "text": "You leave the coffee and step away. Some people need room more than they need conversation.\\n\\nSam catches your eye as you go, and nods once. They understand.\\n\\n{{section \\"Tuesday night\\" text=\\"Close up for the night\\"}}\\n"
     },
-    "Closing time": {
-        "clear": true,
-        "text": "# Day Two — Closing\\n\\nThe afternoon fades. The last customers trickle out. It's just you and the empty tables and the smell of coffee grounds.\\n\\nTwo days. That's all it's been.\\n\\nBut somehow, it feels like more.\\n\\n{{#if maya > 1}}You think about Maya, finding her words again. The way she lit up when someone actually asked.{{/if}}\\n\\n{{#if ellis > 1}}You think about Ellis, carrying his grief to the same table every morning, finally letting a little of it go.{{/if}}\\n\\n{{#if sam > 1}}You think about Sam, exhausted and guarded, choosing to share something they never show anyone.{{/if}}\\n\\nThe bell above the door jingles. Carla's back from her errands.\\n\\n\\"How was day two?\\"\\n\\n{{section \\"_continue3\\" text=\\"Reflect\\"}}"
+    "Tuesday night": {
+        "text": "You lock up, and walk home under the streetlights. Two days. That's all it's been. It feels like more.\\n\\n{{section \\"_continue3\\" text=\\"Wednesday\\"}}"
     },
     "_continue3": {
-        "text": "{{#if maya > 1 and ellis > 1 and sam > 1}}\\n\\"I think I'm going to like it here,\\" you say.\\n\\nCarla smiles. \\"They like you too. I can tell. The regulars don't warm up to just anyone.\\"\\n\\nShe hands you an apron—your own, with your name embroidered on it.\\n\\n\\"Welcome to The Daily Grind, {{player_name}}. You're one of us now.\\"\\n\\n**THE END — The New Regular**\\n{{else}}\\n{{#if maya > 1 or ellis > 1 or sam > 1}}\\n\\"It was good. I think I'm getting the hang of it.\\"\\n\\nCarla nods. \\"You've got potential. Some of the regulars are starting to open up to you—that's not easy to earn.\\"\\n\\nShe pats you on the shoulder.\\n\\n\\"Same time tomorrow?\\"\\n\\n\\"Same time tomorrow.\\"\\n\\n**THE END — First Steps**\\n{{else}}\\n\\"It was... quiet.\\"\\n\\nCarla studies you for a moment. \\"The regulars here, they've got their walls up. Most of us do. But this place has a way of bringing them down—if you give it time.\\"\\n\\nShe locks the register and flips off the lights.\\n\\n\\"See you tomorrow?\\"\\n\\nYou nod. There's still more to learn about this place—and the people who call it home.\\n\\n**THE END — Room to Grow**\\n{{/if}}\\n{{/if}}\\n"
+        "clear": true,
+        "text": "## Wednesday, 7am\\n\\nCarla meets you at the door with a stick of chalk.\\n\\n\\"Tradition,\\" she says. \\"Every new barista names a drink for the specials board. Have a think. You've got until closing.\\"\\n\\nIt's your last day of training. Your regulars are all here, for once, at the same time.\\n\\n{{#if orders.Ellis}}{{passage \\"Ellis on Wednesday\\" text=\\"Ellis\\"}} is at the window.{{/if}} {{passage \\"Maya on Wednesday\\" text=\\"Maya\\"}} is in her booth, not typing, just reading. {{#if warmth.sam}}{{passage \\"Sam on Wednesday\\" text=\\"Sam\\"}}{{else}}Sam{{/if}} has come in early, which has never happened before.\\n\\nWhen you've done your rounds, it's {{section \\"closing time\\"}}.\\n",
+        "classes": [
+            "morning"
+        ],
+        "leave": "fade",
+        "passages": {
+            "Ellis on Wednesday": {
+                "text": "{{#if warmth.ellis >= 2}}\\nHis coffee's on the table before he sits down. He nods his thanks, and then he looks at the counter, and you know what he's looking at: the bottle of hazelnut syrup.\\n\\nYou could {{passage \\"make the hazelnut thing\\"}}.\\n{{else}}\\n{{inc \\"warmth.ellis\\"}}\\nYou have his black coffee, no room, on the table before he's sat down.\\n\\nHe looks at it for a moment. \\"That's two of you,\\" he says. \\"Two who remembered.\\" He doesn't explain, but he says it like it matters.\\n{{/if}}\\n"
+            },
+            "make the hazelnut thing": {
+                "text": "You make it carefully: the hazelnut, the cream on top, a dusting of cinnamon because it feels right. You set it down next to his coffee.\\n\\nHe stares at it for a long time. Long enough that you think you've made a terrible mistake.\\n\\nThen he picks it up, and takes a sip.\\n\\n\\"Too sweet,\\" he says. His eyes are wet. He's smiling. \\"She'd have liked you.\\"\\n",
+                "attributes": [
+                    "warmth.ellis+=1",
+                    "made_hazelnut"
+                ]
+            },
+            "Maya on Wednesday": {
+                "text": "{{#if warmth.maya >= 2}}{{inc \\"warmth.maya\\"}}{{/if}}\\n\\"I finished it,\\" Maya says. \\"Three in the morning. I cried on the keyboard.\\" She turns the laptop round so you can read the last line:\\n\\n{{#if maya_idea = \\"train\\"}}\\n> _The train pulled out, and for the first time in her life she didn't look back._\\n{{else if maya_idea = \\"stays\\"}}\\n> _She tore the ticket in half, and walked back into town, and everyone she loved was still there._\\n{{else}}\\n> _She watched the train go without her, and realised she'd known all along that she would._\\n{{/if}}\\n\\n{{#if warmth.maya >= 3}}\\"There's a dedication, too,\\" she says, and goes pink. \\"_For the new barista, who asked._\\"{{else}}\\"It's good, isn't it?\\" She looks surprised. \\"It's actually good.\\"{{/if}}\\n"
+            },
+            "Sam on Wednesday": {
+                "text": "{{#if warmth.sam >= 2}}\\nSam is drawing again. You look at the empty hook on the art wall, and then at them.\\n\\nYou could {{passage \\"ask about the hook\\"}}.\\n{{else}}\\nSam looks up from the notebook, and pulls out an earbud. \\"Morning, {{player_name}}.\\" It's the first time they've said your name.\\n{{/if}}\\n"
+            },
+            "ask about the hook": {
+                "text": "\\"Carla,\\" you call. \\"That hook on the art wall. Is it free?\\"\\n\\n\\"Has been for a year,\\" Carla calls back. \\"Why?\\"\\n\\nSam has gone completely still. Then, slowly, they tear a page out of the notebook: the coffee shop, the fairy lights, and you behind the counter. They hold it out without looking at you.\\n\\n\\"If I can put one up here,\\" they say, \\"maybe I can send the others.\\"\\n",
+                "attributes": [
+                    "warmth.sam+=1",
+                    "sam_on_the_wall"
+                ]
+            }
+        }
+    },
+    "closing time": {
+        "text": "The last customers drift out. Carla puts the chalk in your hand.\\n\\n\\"So? What's it called?\\"\\n\\n<input type=\\"text\\" data-attribute=\\"drink_name\\" data-section=\\"The specials board\\" placeholder=\\"Name your drink\\" required maxlength=\\"40\\">\\n\\n{{section \\"The specials board\\" text=\\"Write it on the board\\"}}\\n",
+        "attributes": [
+            "close_friends = (warmth.maya >= 2 ? 1 : 0) + (warmth.ellis >= 2 ? 1 : 0) + (warmth.sam >= 2 ? 1 : 0)"
+        ]
+    },
+    "The specials board": {
+        "clear": true,
+        "text": "You write it in your best chalk capitals: **{{upper drink_name}}**.\\n\\n{{#if made_hazelnut}}It's hazelnut, with the cream on top. You both know it's too sweet.{{/if}}\\n\\n{{#if sam_on_the_wall}}On the art wall, the empty hook isn't empty any more.{{/if}}\\n\\n{{#if close_friends >= 2}}\\nCarla stands back and looks at the board for a long time.\\n\\n\\"Three days,\\" she says. \\"Most people take months. The regulars don't warm up to just anyone, you know.\\"\\n\\nShe hands you an apron: your own, with your name sewn on the front.\\n\\n\\"Welcome to The Daily Grind, {{player_name}}. You're one of us now.\\"\\n\\n**THE END: The New Regular**\\n{{else if close_friends = 1}}\\n\\"Not bad,\\" Carla says. \\"Not bad at all. Somebody in this shop is going to come in tomorrow hoping it's you behind the counter. That's how it starts.\\"\\n\\n\\"Same time tomorrow?\\"\\n\\n\\"Same time tomorrow.\\"\\n\\n**THE END: First Steps**\\n{{else}}\\nCarla studies you for a moment. \\"The regulars here have got their walls up. Most of us do. But this place has a way of bringing them down, if you give it time.\\"\\n\\nShe flips off the lights. \\"See you tomorrow?\\"\\n\\nYou nod. There's a lot still to learn about this place, and the people who call it home.\\n\\n**THE END: Room to Grow**\\n{{/if}}\\n\\n{{restart text=\\"Start your first week again\\"}}\\n",
+        "leave": "fade"
     }
 };
 story.js = [
@@ -323,141 +399,332 @@ exports[`gameshow/gameshow.squiffy 1`] = `
 "export const story = {};
 story.id = "00000000-0000-0000-0000-000000000000";
 story.expressions = true;
+story.panels = [
+    {
+        "passage": "scoreboard",
+        "label": "Scoreboard",
+        "position": "side"
+    },
+    {
+        "passage": "prizes",
+        "label": "Prizes",
+        "icon": "star"
+    },
+    {
+        "passage": "how to play",
+        "label": "How to play",
+        "icon": "help"
+    }
+];
+story.settings = [
+    {
+        "name": "timers",
+        "label": "Timed rounds",
+        "description": "Turn this off to take as long as you like in Beat the Clock",
+        "type": "toggle",
+        "default": true
+    },
+    {
+        "name": "lights",
+        "label": "Studio lights",
+        "type": "list",
+        "options": [
+            {
+                "value": "Dazzling",
+                "label": "Dazzling"
+            },
+            {
+                "value": "Budget",
+                "label": "Budget"
+            }
+        ],
+        "default": "Dazzling"
+    }
+];
+story.audio = [
+    "sounds/theme.mp3",
+    "sounds/applause.mp3",
+    "sounds/ding.mp3",
+    "sounds/fanfare.mp3",
+    "sounds/buzzer.mp3"
+];
 story.start = "intro";
 story.sections = {
     "": {
-        "clear": true,
-        "text": "{{#if not (at \\"intro\\")}}\\n**SCORE: {{live \\"score\\"}}** | **ROUND: {{live \\"round\\"}}** | Host Patience: {{live \\"patience\\" section=\\"patience display\\"}}\\n{{/if}}\\n"
-    },
-    "patience display": {
-        "text": "{{#if patience >= 3}}_Cheerful_{{else if patience >= 1}}_Strained_{{else}}_Murderous_{{/if}}\\n"
+        "text": "{{!--\\n    The Wheel of Dubious Fortune: a game show that shows off as much of Squiffy as it can.\\n\\n    This file has the start, the wheel, the commercial break, the final round and the endings.\\n    Each round is in a file of its own in rounds/, and squiffy.json adds the side panel, the\\n    Prizes and How to play buttons, and the player's settings. studio.css is the studio.\\n--}}\\n{{!-- Push Hank too far, and the show's over, wherever you are --}}\\n{{#if patience <= 0 and not (at (array \\"Hank walks off\\" \\"Ending\\"))}}{{goto \\"Hank walks off\\" after=\\"1.5s\\"}}{{/if}}\\n",
+        "transition": "fade",
+        "passages": {
+            "scoreboard": {
+                "text": "{{#if player_name}}## {{player_name}}{{/if}}\\n\\n**Score:** {{score}}\\n\\n**Round:** {{#if round > 0}}{{round}} of {{rounds_tonight}}{{else}}Warm-up{{/if}}\\n\\n**Hank's patience:** {{#if patience > 0}}{{#each (range 1 patience)}}❤️{{/each}}{{else}}💔{{/if}}\\n_{{#if patience >= 3}}Cheerful{{else if patience = 2}}Strained{{else if patience = 1}}Brittle{{else}}Gone{{/if}}_\\n"
+            },
+            "prizes": {
+                "text": "{{#each prizes}}\\n- {{this}}\\n{{else}}\\nYou haven't won anything yet. Hank says that's \\"very on brand for this show\\".\\n{{/each}}\\n"
+            },
+            "how to play": {
+                "text": "Spin the wheel, play the round it lands on, and win as many points as you can. Three rounds, then the final question.\\n\\nBe nice to Hank. He's had a long day, and when his patience runs out, so does the show.\\n\\n**Studio lights** and **Timed rounds** are in the Settings. Turn off timed rounds to take as long as you like.\\n"
+            }
+        }
     },
     "intro": {
-        "text": "{{set \\"availableRounds\\" (array \\"GENERAL KNOWLEDGE\\" \\"SCIENCE with PROFESSOR BOOM\\" \\"MYSTERY BOX\\" \\"THE AUDIENCE DECIDES\\")}}\\n\\n**{{#animate \\"typewriter\\" interval=200}}WELCOME TO...{{/animate}}**\\n\\n{{#animate \\"toast\\" interval=200}}THE WHEEL OF _DUBIOUS_ FORTUNE!{{/animate}}\\n\\n{{#animate \\"fadeIn\\" duration=2000}}\\nThe studio lights flicker ominously. A man in a sequined jacket stumbles onto the stage, holding cue cards upside down.\\n\\n\\"Hello and welcome! I'm your host, Chuck Wheelsworth!\\" He squints at the cards. \\"No wait, that's not right. I'm Hank Spinneroni. Definitely Hank.\\"\\n\\nThe audience—three people and a cardboard cutout—applauds uncertainly.\\n\\n\\"And YOU are our lucky contestant! What's your name?\\"\\n\\n<input type=\\"text\\" data-attribute=\\"player_name\\" placeholder=\\"Enter your name...\\" required minlength=\\"2\\" maxlength=\\"30\\">\\n\\n{{section \\"_continue1\\" text=\\"Let's play!\\"}}\\n{{/animate}}\\n",
+        "text": "**{{#animate \\"typewriter\\" interval=120}}WELCOME TO...{{/animate}}**\\n\\n# {{#animate \\"toast\\" interval=250}}THE WHEEL OF {{#style \\"sway\\"}}DUBIOUS{{/style}} FORTUNE!{{/animate}}\\n\\n{{#animate \\"fadeIn\\" duration=1500}}\\nThe studio lights flicker. {{#if settings.lights = \\"Budget\\"}}Most of them stay off. Someone has taped a torch to a broom handle.{{else}}A thousand bulbs blaze into life, and three of them explode.{{/if}} A man in a sequined jacket stumbles onto the stage, holding his cue cards upside down.\\n\\n\\"Hello, and welcome! I'm your host, Chuck Wheelsworth!\\" He squints at the cards. \\"No, wait. I'm Hank Spinneroni. Definitely Hank.\\"\\n\\nThe studio audience (three people and a cardboard cutout) applauds uncertainly.\\n\\n\\"And YOU are tonight's lucky contestant! What's your name?\\"\\n\\n<input type=\\"text\\" data-attribute=\\"player_name\\" data-section=\\"contestant\\" placeholder=\\"Your name\\" required minlength=\\"2\\" maxlength=\\"24\\">\\n\\n{{section \\"contestant\\" text=\\"That's me!\\"}}\\n{{/animate}}\\n",
+        "music": "sounds/theme.mp3",
         "attributes": [
             "score = 0",
             "round = 0",
-            "patience = 3"
+            "patience = 3",
+            "prizes = []",
+            "rounds_tonight = 3",
+            "wheel = [\\"General Knowledge\\", \\"Beat the Clock\\", \\"Professor Boom's Lab\\", \\"The Mystery Box\\", \\"The Audience Decides\\"]",
+            "tonight = (slice (shuffle wheel) 0 rounds_tonight)"
         ]
+    },
+    "contestant": {
+        "text": "{{#if (lower player_name) contains \\"hank\\"}}\\n\\"Another Hank!\\" Hank clutches his chest. \\"There can only be one, {{player_name}}. We'll settle this later. Possibly with swords.\\"\\n{{else if player_name.length > 12}}\\n\\"{{player_name}}! That's a lot of name. We'll need a bigger name badge.\\" A stagehand starts writing on a second badge.\\n{{else}}\\n\\"Welcome, {{player_name}}! Or as I like to call you... {{player_name}}!\\"\\n\\nHank waits for a laugh. None comes.\\n{{/if}}\\n\\n{{embed \\"motto\\"}}\\n\\n\\"Tonight, the wheel will choose your fate {{rounds_tonight}} times, from {{wheel.length}} exciting categories: {{join wheel \\", \\" \\" and \\"}}. Then it's the final question, for double or nothing! Now, {{#animate \\"continue\\" style=\\"wave\\"}}let's spin...{{/animate}}\\"\\n\\n{{#animate \\"typewriter\\"}}THE WHEEL OF DUBIOUS FORTUNE!{{/animate}}\\n\\n{{#animate \\"fadeIn\\"}}{{section \\"spin\\" text=\\"Spin the wheel!\\"}}{{/animate}}\\n",
+        "music": null,
+        "sounds": [
+            "sounds/applause.mp3"
+        ],
+        "attributes": [
+            "player_name = (capitalise player_name)"
+        ]
+    },
+    "motto": {
+        "text": "\\"Remember our motto: _{{random (array \\"Whose Fortune Is It Anyway? (Legally, Ours)\\" \\"Spin to Win! (Winning Not Guaranteed)\\" \\"It's Not Gambling If There's a Wheel\\")}}_\\"\\n"
+    },
+    "spin": {
+        "text": "{{#if round = 1}}A rusty wheel descends from the ceiling on a fraying rope, wobbling dangerously.{{else}}The wheel creaks back down from the ceiling. It's wobbling more than before.{{/if}}\\n\\nHank gives it a mighty heave. It turns with a noise like a shopping trolley hitting a pothole:\\n\\n{{!-- Every 140ms, the wheel shows another category, until it lands. The links to the rounds are in\\n    a section of their own, embedded when it lands, so --check can see that every round is reachable --}}\\n{{#every 140}}{{inc \\"spins\\"}}{{#if spins >= 16}}{{stop}}{{sound \\"sounds/ding.mp3\\"}}{{#style \\"wheel\\"}}**{{upper landed}}!**{{/style}}\\n\\n{{embed \\"play the round\\"}}{{else}}{{#style \\"wheel\\"}}{{random wheel}}...{{/style}}{{/if}}{{/every}}\\n",
+        "attributes": [
+            "round+=1",
+            "spins = 0",
+            "landed = (first tonight)",
+            "tonight = (slice tonight 1)"
+        ]
+    },
+    "play the round": {
+        "text": "{{#if landed = \\"General Knowledge\\"}}{{section \\"General Knowledge\\" text=\\"Let's play!\\"}}{{/if}}\\n{{#if landed = \\"Beat the Clock\\"}}{{section \\"Beat the Clock\\" text=\\"Let's play!\\"}}{{/if}}\\n{{#if landed = \\"Professor Boom's Lab\\"}}{{section \\"Professor Boom's Lab\\" text=\\"Let's play!\\"}}{{/if}}\\n{{#if landed = \\"The Mystery Box\\"}}{{section \\"The Mystery Box\\" text=\\"Let's play!\\"}}{{/if}}\\n{{#if landed = \\"The Audience Decides\\"}}{{section \\"The Audience Decides\\" text=\\"Let's play!\\"}}{{/if}}\\n"
+    },
+    "next round": {
+        "text": "{{#if round = 1}}\\n\\"And we're off!\\" Hank checks his watch. \\"Wait. Is that the time? We'll be right back after these messages!\\"\\n\\n{{section \\"commercial break\\" text=\\"Cut to the adverts\\"}}\\n{{else if round < rounds_tonight}}\\nHank shuffles his cards. \\"Round {{= round + 1}}, {{player_name}}! Are you ready?\\"\\n\\n{{section \\"spin\\" text=\\"Spin the wheel!\\"}}\\n{{else}}\\nThe wheel retracts into the ceiling, shedding bolts.\\n\\n{{section \\"final question\\" text=\\"On to the final question\\"}}\\n{{/if}}\\n\\n{{!-- Commercials: the screen slides away to the left, and the advert slides in from the right --}}"
+    },
+    "commercial break": {
+        "clear": true,
+        "text": "{{#style \\"advert-card\\"}}\\n## Are YOUR wheels dubious?\\n\\nTry **SPINNERONI'S WHEEL WAX**, the wax that's {{#style \\"flicker\\"}}almost legal{{/style}} in {{random (array \\"seven\\" \\"eleven\\" \\"nearly four\\")}} countries!\\n\\n_\\"I use it on my wheel, and on my hair!\\"_ (Hank Spinneroni, paid spokesman)\\n\\nSide effects may include spinning, dizziness, and spontaneous game show appearances.\\n{{/style}}\\n\\nWhile the adverts run, you could {{saves text=\\"save your game\\"}}, or {{settings text=\\"adjust the studio lights\\"}}.\\n\\n{{section \\"_continue1\\" text=\\"Back to the show!\\"}}",
+        "sounds": [
+            "sounds/fanfare.mp3"
+        ],
+        "classes": [
+            "advert"
+        ],
+        "transition": "slide-left",
+        "leave": "slide-left"
     },
     "_continue1": {
-        "text": "\\"Welcome, {{player_name}}! Or as I like to call you... {{player_name}}!\\"\\n\\nHank pauses, waiting for laughter. None comes.\\n\\n{{embed \\"catchphrase\\"}}\\n\\n\\"Now then! {{#animate \\"continue\\" style=\\"wave\\"}}Let's spin...{{/animate}}\\"\\n\\n{{#animate \\"typewriter\\"}}THE WHEEL OF DUBIOUS FORTUNE!{{/animate}}\\n\\n{{#animate \\"fadeIn\\"}}\\nA rusty wheel descends from the ceiling, wobbling dangerously. It has several questionable categories painted on it.\\n\\n{{section \\"Spin the wheel!\\" text=\\"Spin the wheel!\\"}}\\n{{/animate}}\\n",
-        "attributes": [
-            "round = 1"
-        ],
-        "passages": {
-            "catchphrase": {
-                "text": "\\"Remember our motto: _'Whose Fortune Is It Anyway? (Legally Speaking, Ours)'_\\"\\n"
-            }
-        }
+        "clear": true,
+        "text": "\\"And we're back! Round 2, {{player_name}}!\\"\\n\\n{{section \\"spin\\" text=\\"Spin the wheel!\\"}}\\n",
+        "transition": "slide-left",
+        "leave": "slide-left"
     },
-    "Spin the wheel!": {
-        "text": "The wheel creaks to life, spinning with a sound like a shopping cart hitting a pothole.\\n\\n{{set \\"category\\" (random availableRounds)}}\\n{{remove \\"availableRounds\\" category}}\\n\\nIt lands on... {{#animate \\"toast\\"}}{{category}}!{{/animate}}\\n\\n{{live \\"category\\" section=\\"showCategory\\"}}\\n"
-    },
-    "showCategory": {
-        "text": "{{#if category = \\"GENERAL KNOWLEDGE\\"}}{{section \\"General Knowledge Round\\"}}{{/if}}\\n{{#if category = \\"SCIENCE with PROFESSOR BOOM\\"}}{{section \\"Science Round\\"}}{{/if}}\\n{{#if category = \\"MYSTERY BOX\\"}}{{section \\"Mystery Box Round\\"}}{{/if}}\\n{{#if category = \\"THE AUDIENCE DECIDES\\"}}{{section \\"Audience Round\\"}}{{/if}}\\n"
-    },
-    "General Knowledge Round": {
-        "text": "\\"Ah, General Knowledge! The knowledge of generals! Or... general... people.\\" Hank shuffles his cards.\\n\\n\\"Here's your question, {{player_name}}:\\"\\n\\n**What is the capital of France?**\\n\\nYour answer: {{#label \\"answer\\"}}{{rotate (array \\"Paris\\" \\"London\\" \\"A baguette\\" \\"France doesn't exist\\") set=\\"gk_answer\\"}}{{/label}}\\n\\nStatus: {{#label \\"status\\"}}Waiting for answer...{{/label}}\\n\\n{{passage \\"Lock in answer\\"}}\\n",
-        "passages": {
-            "Lock in answer": {
-                "text": "{{#replace \\"answer\\"}}**{{gk_answer}}**{{/replace}}\\n{{#replace \\"status\\"}}**LOCKED IN!**{{/replace}}\\n\\n{{#if gk_answer = \\"Paris\\"}}\\n{{#animate \\"toast\\"}}CORRECT!{{/animate}}\\n\\n{{#animate \\"fadeIn\\"}}\\n\\"That's right! Paris! City of lights, city of love, city of... bread?\\" Hank looks confused but happy.\\n{{/animate}}\\n\\n{{inc \\"score\\" 100}}\\n{{else}}\\n{{#if gk_answer = \\"A baguette\\"}}\\n{{dec \\"patience\\"}}\\n\\"A baguette? A BAGUETTE?!\\" Hank's eye twitches. \\"That's not even a city, {{player_name}}!\\"\\n\\nThe audience cardboard cutout falls over.\\n{{else}}\\n{{#if gk_answer = \\"France doesn't exist\\"}}\\n{{dec \\"patience\\"}}{{dec \\"patience\\"}}\\nHank stares at you for a very long time.\\n\\n\\"Security, please note that {{player_name}} is a 'flight risk.'\\"\\n{{else}}\\n\\"London? LONDON?!\\" Hank throws his cue cards in the air. \\"That's in... that's in a whole other country!\\"\\n{{dec \\"patience\\"}}\\n{{/if}}\\n{{/if}}\\n{{/if}}\\n\\n{{section \\"Next Round\\"}}\\n"
-            }
-        }
-    },
-    "Science Round": {
-        "text": "The lights flicker and a trapdoor opens in the floor. Smoke billows out.\\n\\n{{#animate \\"typewriter\\"}}PROFESSOR BOOM has entered the chat.{{/animate}}\\n\\nA wild-haired scientist emerges, goggles askew, lab coat singed.\\n\\n\\"GREETINGS, QUIZ PARTICIPANT! I am Professor Boom, and THIS—\\" he holds up a beaker of bubbling green liquid \\"—is SCIENCE!\\"\\n\\nHank backs away nervously. \\"Professor, we talked about bringing chemicals on set...\\"\\n\\n\\"SILENCE, TELEVISION MAN! The contestant must answer... {{#animate \\"toast\\"}}A SCIENCE QUESTION!{{/animate}}\\"\\n\\n**What is the chemical symbol for Gold?**\\n\\nLab Stability: {{live \\"stability\\"}}%\\n\\nChoose your answer:\\n- {{section \\"Answer: Au\\"}}\\n- {{passage \\"Answer: Go\\"}}\\n- {{passage \\"Answer: Gd\\"}}\\n- {{passage \\"Drink the beaker\\"}}\\n",
-        "attributes": [
-            "stability = 100"
-        ],
-        "passages": {
-            "@1": {
-                "text": "{{dec \\"stability\\" 10}}\\nThe beaker bubbles more aggressively.\\n"
-            },
-            "@2": {
-                "text": "{{dec \\"stability\\" 15}}\\nProfessor Boom: \\"HURRY! The compound is becoming... UNSTABLE!\\"\\n"
-            },
-            "@3": {
-                "text": "{{dec \\"stability\\" 25}}\\n{{#animate \\"toast\\"}}WARNING: CRITICAL INSTABILITY{{/animate}}\\n\\nSmall explosions begin occurring around the lab set.\\n"
-            },
-            "Answer: Go": {
-                "text": "\\"GO?! That's not even— that's just the word GO!\\" Professor Boom's hair somehow becomes more wild.\\n\\n{{dec \\"stability\\" 30}}\\n{{dec \\"patience\\"}}\\n\\n{{#if stability <= 30}}\\n{{#animate \\"toast\\"}}BOOM!{{/animate}}\\n\\nA small explosion singes Hank's eyebrows.\\n\\n\\"MY EYEBROWS! Those were RENTED!\\"\\n{{/if}}\\n"
-            },
-            "Answer: Gd": {
-                "text": "\\"Gd is GADOLINIUM! An honest mistake for a FOOL!\\"\\n\\n{{dec \\"stability\\" 20}}\\n{{dec \\"patience\\"}}\\n"
-            },
-            "Drink the beaker": {
-                "text": "You grab the beaker and drink it before anyone can stop you.\\n\\nProfessor Boom: \\"WAIT! That's my lunch!\\"\\n\\n{{#animate \\"toast\\"}}It tastes like... chicken soup?{{/animate}}\\n\\n\\"I was heating up my soup with SCIENCE. Now I have no lunch AND no science demonstration.\\"\\n\\n{{inc \\"score\\" 50}}\\nThe audience (including the cardboard) applauds your boldness.\\n"
-            }
-        }
-    },
-    "Answer: Au": {
-        "text": "{{#animate \\"toast\\"}}CORRECT!{{/animate}}\\n\\n\\"AU! YES! Gold! Aurum! The element of CHAMPIONS!\\" Professor Boom throws the beaker in the air and catches it. \\"You have pleased me, {{player_name}}!\\"\\n\\n{{inc \\"score\\" 200}}\\n\\n{{section \\"_continue2\\" text=\\"Continue...\\"}}"
-    },
-    "_continue2": {
-        "text": "Professor Boom descends back through the trapdoor, cackling.\\n\\n\\"UNTIL NEXT TIME, QUIZ PARTICIPANT! REMEMBER: SCIENCE IS JUST EXPLOSIONS IN A LAB COAT!\\"\\n\\nThe trapdoor slams shut. Hank pats out a small fire on his jacket.\\n\\n\\"Right. Well. That happened.\\"\\n\\n{{section \\"Next Round\\"}}\\n"
-    },
-    "Mystery Box Round": {
-        "text": "A golden box descends from the ceiling on a frayed rope.\\n\\n\\"Ooh, the Mystery Box!\\" Hank claps his hands. \\"This could contain ANYTHING! A prize! A question! A live animal! We genuinely don't know—the intern who loaded it quit this morning!\\"\\n\\nThe box rattles ominously.\\n\\n- {{section \\"Open the box carefully\\"}}\\n- {{section \\"Shake the box first\\"}}\\n- {{section \\"Refuse to open it\\"}}\\n"
-    },
-    "Open the box carefully": {
-        "text": "You lift the lid slowly...\\n\\n{{set \\"box_contents\\" (random (array \\"prize\\" \\"bees\\" \\"another_box\\" \\"philosophy\\"))}}\\n\\n{{#if box_contents = \\"prize\\"}}\\n{{#animate \\"toast\\"}}JACKPOT!{{/animate}}\\n\\nInside is a solid gold trophy shaped like a wheel! It's spray-painted gold, but still!\\n\\n{{inc \\"score\\" 300}}\\n\\n\\"Congratulations! You've won our grand prize: a trophy AND the satisfaction of not being attacked by whatever else could have been in there!\\"\\n{{/if}}\\n\\n{{#if box_contents = \\"bees\\"}}\\n{{#animate \\"toast\\"}}BEES!{{/animate}}\\n\\nThe box is full of bees. They seem confused but not aggressive.\\n\\n\\"Oh no, NOT AGAIN!\\" Hank runs in circles. \\"WHO KEEPS PUTTING BEES IN THE MYSTERY BOX?!\\"\\n\\n{{dec \\"patience\\"}}\\n\\nA bee lands on your nose, considers its life choices, and flies away. You feel oddly respected.\\n\\n{{inc \\"score\\" 50}}\\n{{/if}}\\n\\n{{#if box_contents = \\"another_box\\"}}\\nInside the box is... another, smaller box.\\n\\n\\"Ah, the recursive box!\\" Hank nods sagely. \\"Open it!\\"\\n\\nInside THAT box is a note that says: \\"{{player_name}} wins 100 points!\\"\\n\\n{{inc \\"score\\" 100}}\\n\\n{{#animate \\"toast\\"}}Congratulations, somehow!{{/animate}}\\n{{/if}}\\n\\n{{#if box_contents = \\"philosophy\\"}}\\nInside is a small scroll. It reads:\\n\\n_\\"What IS a prize, really? Is not the true prize the friends we made along the way? Also here's 75 points.\\"_\\n\\n{{inc \\"score\\" 75}}\\n\\nHank wipes away a single tear. \\"Beautiful.\\"\\n{{/if}}\\n\\n{{section \\"Next Round\\"}}\\n"
-    },
-    "Shake the box first": {
-        "text": "You shake the box vigorously. Something inside goes \\"CLANG\\" and then \\"moo?\\"\\n\\n{{dec \\"patience\\"}}\\n\\n\\"Please don't shake the— you know what, fine. Open it.\\"\\n\\n{{section \\"Open the box carefully\\"}}\\n"
-    },
-    "Refuse to open it": {
-        "text": "{{dec \\"patience\\"}}{{dec \\"patience\\"}}\\n\\n\\"You HAVE to open it! It's the MYSTERY BOX! The mystery is legally required to be resolved!\\"\\n\\nHank is sweating now.\\n\\n{{section \\"Open the box carefully\\"}}\\n"
-    },
-    "Audience Round": {
-        "text": "\\"THE AUDIENCE DECIDES!\\" Hank gestures grandly at the three people and cardboard cutout.\\n\\n\\"Audience members, what challenge should {{player_name}} face?\\"\\n\\nThe audience confers. One of them is asleep. The cardboard cutout offers no input.\\n\\nFinally, a woman in the front row shouts: \\"MAKE THEM {{random (array \\"SING\\" \\"DANCE\\" \\"DO AN IMPRESSION OF A BLENDER\\" \\"JUST GIVE THEM POINTS FOR FREE\\") set=\\"make_them\\"}}!\\"\\n\\n{{#if make_them = \\"SING\\"}}\\n\\"You heard her! SING, {{player_name}}! Sing like your points depend on it! Because they do!\\"\\n\\n- {{section \\"Sing beautifully\\"}}\\n- {{section \\"Sing terribly on purpose\\"}}\\n{{/if}}\\n\\n{{#if make_them = \\"DANCE\\"}}\\n\\"DANCE! Show us your moves!\\"\\n\\n- {{section \\"Dance with enthusiasm\\"}}\\n- {{section \\"Do the robot\\"}}\\n{{/if}}\\n\\n{{#if make_them = \\"DO AN IMPRESSION OF A BLENDER\\"}}\\n\\"A BLENDER! Do a blender impression! This is normal television!\\"\\n\\n- {{section \\"WHIRRRRRR\\"}}\\n- {{section \\"Refuse on grounds of dignity\\"}}\\n{{/if}}\\n\\n{{#if make_them = \\"JUST GIVE THEM POINTS FOR FREE\\"}}\\n\\"Free points?! That's not how—\\" Hank checks his cards. \\"Actually, that IS an option apparently.\\"\\n\\n{{inc \\"score\\" 150}}\\n{{#animate \\"toast\\"}}FREE POINTS!{{/animate}}\\n\\n\\"Well! That was anticlimactic! Moving on!\\"\\n\\n{{section \\"Next Round\\"}}\\n{{/if}}\\n"
-    },
-    "Sing beautifully": {
-        "text": "You belt out an operatic rendition of the show's theme song (which you're making up as you go).\\n\\nThe audience is moved. One of them wakes up specifically to applaud.\\n\\n{{inc \\"score\\" 150}}\\n{{#animate \\"toast\\"}}STANDING OVATION!{{/animate}}\\n\\n{{section \\"Next Round\\"}}\\n"
-    },
-    "Sing terribly on purpose": {
-        "text": "You screech like a cat in a tumble dryer. On purpose. For art.\\n\\n{{dec \\"patience\\"}}\\n\\nHank: \\"That was... that was really something. Moving on quickly.\\"\\n\\n{{inc \\"score\\" 25}}\\n\\n{{section \\"Next Round\\"}}\\n"
-    },
-    "Dance with enthusiasm": {
-        "text": "You dance like nobody's watching, except everyone is watching, and also there are cameras.\\n\\n{{inc \\"score\\" 125}}\\nThe cardboard cutout falls over again, but in an approving way.\\n\\n{{section \\"Next Round\\"}}\\n"
-    },
-    "Do the robot": {
-        "text": "You do the robot so convincingly that a stagehand tries to unplug you.\\n\\n{{inc \\"score\\" 100}}\\n{{#animate \\"toast\\"}}BEEP BOOP{{/animate}}\\n\\n{{section \\"Next Round\\"}}\\n"
-    },
-    "WHIRRRRRR": {
-        "text": "You spin around making blender noises. It's deeply unsettling.\\n\\n{{inc \\"score\\" 175}}\\n\\nProfessor Boom's voice echoes from below: \\"MAGNIFICENT!\\"\\n\\n{{section \\"Next Round\\"}}\\n"
-    },
-    "Refuse on grounds of dignity": {
-        "text": "\\"I'm not doing that.\\"\\n\\n{{dec \\"patience\\"}}\\n\\nHank: \\"Fair enough. Moving on with your dignity intact but your score unchanged.\\"\\n\\n{{section \\"Next Round\\"}}\\n"
-    },
-    "Next Round": {
-        "text": "{{#if (length \\"availableRounds\\") = 0}}\\n{{section \\"Final Round\\"}}\\n{{else}}\\nHank shuffles his cards. \\"Alright, {{player_name}}, ready for round {{round}}?\\"\\n\\nThe wheel looms above you, creaking expectantly.\\n\\n{{section \\"Spin the wheel!\\"}}\\n{{/if}}\\n",
-        "attributes": [
-            "round+=1"
+    "final question": {
+        "text": "The studio lights go red. {{#if settings.lights = \\"Budget\\"}}(Somebody has put a red sock over the torch.){{/if}} Dramatic music plays. Somebody backstage is humming it.\\n\\n{{#animate \\"typewriter\\"}}THE FINAL QUESTION{{/animate}}\\n\\n\\"This is it, {{player_name}}! You have **{{score}} points**, and this question is worth... {{#animate \\"toast\\"}}DOUBLE OR NOTHING!{{/animate}}\\"\\n\\nThe audience gasps. The cardboard cutout gasps too (the air conditioning came on).\\n\\n\\"Here's your final question:\\"\\n\\n{{#embed \\"cue card\\" points=\\"Double or nothing\\"}}**What is the name of your host?**{{/embed}}\\n\\n<input type=\\"text\\" data-attribute=\\"final_answer\\" data-section=\\"final answer\\" placeholder=\\"Your final answer\\" required>\\n\\n{{section \\"final answer\\" text=\\"That's my final answer\\"}}\\n",
+        "music": "sounds/theme.mp3",
+        "classes": [
+            "final"
         ]
     },
-    "Final Round": {
-        "text": "The studio lights go RED. Dramatic music plays (someone is humming aggressively in the background).\\n\\n{{#animate \\"typewriter\\"}}THE FINAL ROUND{{/animate}}\\n\\n\\"This is it, {{player_name}}! The FINAL ROUND!\\" Hank is vibrating with excitement or possibly caffeine.\\n\\n\\"You have {{score}} points! But this last question is worth... {{#animate \\"toast\\"}}DOUBLE OR NOTHING!{{/animate}}\\"\\n\\nThe audience gasps. The cardboard cutout gasps (the AC kicked in).\\n\\n\\"Here is your FINAL QUESTION:\\"\\n\\n{{#animate \\"typewriter\\"}}**What is the name of your host?**{{/animate}}\\n\\n- {{section \\"Hank Spinneroni\\"}}\\n- {{section \\"Chuck Wheelsworth\\"}}\\n- {{section \\"I genuinely don't remember\\"}}\\n"
+    "final answer": {
+        "text": "\\"{{final_answer}},\\" Hank repeats slowly. He leans in. The audience leans in. The cardboard cutout leans in, and has to be propped up again.\\n\\n\\"Is that your... final... answer?\\"\\n\\n{{section \\"the verdict\\" text=\\"It is\\"}}\\n",
+        "music": null
     },
-    "Hank Spinneroni": {
-        "text": "\\"CORRECT! I AM HANK SPINNERONI! Probably!\\"\\n\\n{{inc \\"score\\" score}}\\n{{#animate \\"toast\\"}}SCORE DOUBLED!{{/animate}}\\n\\n{{section \\"Ending\\"}}\\n"
-    },
-    "Chuck Wheelsworth": {
-        "text": "\\"That was my FIRST name! The WRONG first name! But you remembered SOMETHING!\\"\\n\\n{{inc \\"score\\" 50}}\\n\\n\\"Close enough! I'll allow it because I'm tired!\\"\\n\\n{{section \\"Ending\\"}}\\n"
-    },
-    "I genuinely don't remember": {
-        "text": "{{#if patience <= 1}}\\nHank stares at you. A vein throbs in his forehead.\\n\\n\\"It's... it's HANK. My name is HANK. I said it at the START.\\"\\n\\nHe takes a deep breath.\\n\\n\\"You know what? You still win. I just want to go home.\\"\\n\\n{{inc \\"score\\" 25}}\\n{{else}}\\nHank laughs. \\"Honestly? I respect the honesty!\\"\\n\\n{{inc \\"score\\" 75}}\\n\\n\\"The real prize was the confusion we shared along the way!\\"\\n{{/if}}\\n\\n{{section \\"Ending\\"}}\\n"
+    "the verdict": {
+        "text": "{{#if (lower final_answer) contains \\"hank\\"}}\\n{{sound \\"sounds/ding.mp3\\"}}\\n\\"CORRECT! I AM HANK SPINNERONI! Probably!\\"\\n\\n{{set \\"score\\" score * 2}}\\n{{#animate \\"toast\\"}}SCORE DOUBLED!{{/animate}}\\n{{else if (lower final_answer) contains \\"chuck\\"}}\\n{{sound \\"sounds/buzzer.mp3\\"}}\\n\\"That was my FIRST name! The WRONG first name! But you remembered SOMETHING!\\"\\n\\n{{inc \\"score\\" 50}}\\n\\"Fifty points, for listening at the start. That's more than my agent does.\\"\\n{{else}}\\n{{sound \\"sounds/buzzer.mp3\\"}}\\nHank stares at you. A vein throbs in his forehead.\\n\\n\\"It's HANK. My name is HANK. I said it at the START.\\"\\n\\n{{#if patience >= 2}}He takes a deep breath. \\"But you've been a delight, so I'm not taking your points away. That's the real double or nothing: I'm doing nothing.\\"{{else}}{{set \\"score\\" 0}}\\"Double or nothing, {{player_name}}. You get the nothing.\\"{{/if}}\\n{{/if}}\\n\\n{{section \\"Ending\\" text=\\"See how you did\\"}}\\n\\n{{!-- The endings --}}"
     },
     "Ending": {
-        "text": "{{#if score >= 500}}\\n{{#animate \\"toast\\"}}GRAND CHAMPION!{{/animate}}\\n\\nBalloons fall from the ceiling. Confetti explodes. Professor Boom emerges to set off celebratory fireworks (indoors, against regulations).\\n\\n\\"{{player_name}}, you are our GRAND CHAMPION with {{score}} points!\\"\\n\\nHank hands you an oversized novelty check. It bounces.\\n\\n\\"Congratulations! You've won fame, glory, and whatever prizes we can legally give you after the lawyers review the footage!\\"\\n\\nThe audience carries you out on their shoulders. The cardboard cutout leads the parade.\\n\\n**THE END — GRAND CHAMPION**\\n{{else}}\\n{{#if score >= 200}}\\n{{#animate \\"toast\\"}}WINNER!{{/animate}}\\n\\n\\"{{player_name}}, you finished with {{score}} points! That's... that's actually pretty good!\\"\\n\\nHank shakes your hand. \\"You've won a lovely parting gift!\\"\\n\\nA stagehand hands you a gift basket containing: one (1) cheese, a coupon for 10% off at a store that closed in 2019, and a sincere thank-you note from Hank.\\n\\n\\"Come back anytime! Assuming we're not cancelled by then!\\"\\n\\n**THE END — WINNER**\\n{{else}}\\n\\"{{player_name}}... you finished with {{score}} points.\\"\\n\\nHank looks at his cards. Looks at you. Looks at the audience.\\n\\n\\"You know what? You showed up. You tried. And in the end, isn't that what matters?\\"\\n\\n{{embed \\"catchphrase\\"}}\\n\\n\\"No, actually, points are what matter. But good effort!\\"\\n\\nHe hands you a single balloon. It's already deflating.\\n\\n**THE END — PARTICIPANT**\\n{{/if}}\\n{{/if}}\\n",
+        "clear": true,
+        "text": "# Final score: {{#every 60}}{{set \\"counted\\" (min (counted + step) score)}}{{counted}}{{#if counted >= score}}{{stop}}{{/if}}{{/every}}\\n\\n{{#if score >= 600}}\\n{{sound \\"sounds/fanfare.mp3\\"}}\\n{{#animate \\"toast\\"}}GRAND CHAMPION!{{/animate}}\\n\\nBalloons fall from the ceiling. Confetti explodes. Professor Boom bursts out of the trapdoor to set off celebratory fireworks (indoors, against regulations).\\n\\nHank hands you an oversized novelty cheque. It bounces.\\n\\n\\"{{player_name}}, you're our GRAND CHAMPION! You've won fame, glory, and whatever prizes we can legally give you once the lawyers have watched the tape!\\"\\n\\nThe audience carries you out on their shoulders. The cardboard cutout leads the parade.\\n\\n**THE END: Grand Champion**\\n{{else if score >= 250}}\\n{{sound \\"sounds/applause.mp3\\"}}\\n{{#animate \\"toast\\"}}WINNER!{{/animate}}\\n\\n\\"That's... actually pretty good!\\" Hank shakes your hand, then checks it's still got all its rings.\\n\\nA stagehand gives you a gift basket: one (1) cheese, a voucher for 10% off at a shop that closed in 2019, and a sincere thank-you note from Hank.\\n\\n\\"Come back any time! Assuming we're not cancelled!\\"\\n\\n**THE END: Winner**\\n{{else}}\\nHank looks at his cards. He looks at you. He looks at the audience.\\n\\n\\"You know what? You showed up. You tried. And isn't that what really matters?\\"\\n\\n{{embed \\"motto\\"}}\\n\\n\\"No, actually, points are what matter. But good effort!\\"\\n\\nHe gives you a single balloon. It's already deflating.\\n\\n**THE END: Participant**\\n{{/if}}\\n\\n{{#if prizes.length}}You take home: {{join prizes \\", \\" \\" and \\"}}.{{/if}}\\n\\n{{restart text=\\"Play again\\"}}\\n",
+        "music": "sounds/theme.mp3",
+        "classes": [
+            "confetti"
+        ],
+        "transition": "zoom",
+        "transitionTime": 800,
+        "leave": "zoom",
+        "attributes": [
+            "counted = 0",
+            "step = (max 1 (floor (score / 15)))"
+        ]
+    },
+    "Hank walks off": {
+        "clear": true,
+        "text": "Hank puts down his cue cards, very neatly, one on top of the other.\\n\\n\\"No,\\" he says. \\"No, I don't think so.\\"\\n\\nHe takes off the sequined jacket, folds it over his arm, and walks off the set. A door slams somewhere. A moment later the studio lights go out, {{#style \\"flicker\\"}}one by one{{/style}}.\\n\\nIn the dark, the cardboard cutout falls over.\\n\\n**THE END: Off Air**\\n\\nYou had {{score}} points. You'll never know what they were worth.\\n\\n{{restart text=\\"Try again, and be nicer to Hank\\"}}\\n\\n{{!-- Used by every round: the question, written on one of Hank's cue cards --}}",
+        "music": null,
+        "sounds": [
+            "sounds/buzzer.mp3"
+        ],
+        "classes": [
+            "lights-out"
+        ],
+        "transition": "fade",
+        "transitionTime": 1000,
+        "leave": "rumble"
+    },
+    "cue card": {
+        "text": "{{#style \\"cue-card\\"}}\\n{{content}}\\n\\n_{{points}}_\\n{{/style}}\\n"
+    },
+    "The Audience Decides": {
+        "text": "\\"THE AUDIENCE DECIDES!\\" Hank waves grandly at the audience. \\"Ladies and gentlemen and cardboard: what challenge should {{player_name}} face?\\"\\n\\n{{#each audience}}\\n- **{{name}}**, in {{seat}}, votes {{random (array \\"SING\\" \\"DANCE\\" \\"BLENDER\\") set=\\"vote\\"}}{{append \\"votes\\" vote}}{{#if @last}} (nobody knows how){{/if}}\\n{{/each}}\\n\\n{{#if (count votes \\"SING\\") >= 2}}{{set \\"challenge\\" \\"SING\\"}}{{else if (count votes \\"DANCE\\") >= 2}}{{set \\"challenge\\" \\"DANCE\\"}}{{else if (count votes \\"BLENDER\\") >= 2}}{{set \\"challenge\\" \\"BLENDER\\"}}{{else}}{{set \\"challenge\\" (first votes)}}\\"A tie! Doris has the casting vote!\\"{{/if}}\\n\\n{{#if challenge = \\"SING\\"}}\\n\\"You heard them! SING, {{player_name}}! Sing like your points depend on it! Because they do!\\"\\n\\n{{section \\"Sing beautifully\\"}}\\n\\n{{section \\"Sing terribly, on purpose\\"}}\\n{{else if challenge = \\"DANCE\\"}}\\n\\"DANCE! Show us your moves!\\"\\n\\n{{section \\"Dance like nobody's watching\\"}}\\n\\n{{section \\"Do the robot\\"}}\\n{{else}}\\n\\"An impression of a BLENDER! This is normal television!\\"\\n\\n{{section \\"WHIRRRRRR\\"}}\\n\\n{{section \\"Refuse, on grounds of dignity\\"}}\\n{{/if}}\\n",
+        "attributes": [
+            "audience = [{ name: \\"Doris\\", seat: \\"the front row\\" }, { name: \\"Gary\\", seat: \\"row C, asleep\\" }, { name: \\"Cardboard Steve\\", seat: \\"the aisle\\" }]",
+            "votes = []"
+        ]
+    },
+    "Sing beautifully": {
+        "text": "You belt out an operatic version of the show's theme tune, making up the words as you go.\\n\\nThe audience is moved. Gary wakes up specially to applaud. 150 points!\\n\\n{{#animate \\"toast\\"}}STANDING OVATION!{{/animate}}\\n\\n{{section \\"next round\\" text=\\"Next round!\\"}}\\n",
+        "sounds": [
+            "sounds/applause.mp3"
+        ],
+        "attributes": [
+            "score+=150"
+        ]
+    },
+    "Sing terribly, on purpose": {
+        "text": "You screech like a cat in a tumble dryer. On purpose. For art.\\n\\nHank: \\"That was... really something. Twenty-five points. Moving on. Quickly.\\"\\n\\n{{section \\"next round\\" text=\\"Next round!\\"}}\\n",
+        "attributes": [
+            "patience-=1",
+            "score+=25"
+        ]
+    },
+    "Dance like nobody's watching": {
+        "text": "{{#style \\"sway\\"}}You dance like nobody's watching.{{/style}} Everybody is watching. There are cameras.\\n\\nCardboard Steve falls over, but approvingly. 125 points!\\n\\n{{section \\"next round\\" text=\\"Next round!\\"}}\\n",
+        "sounds": [
+            "sounds/applause.mp3"
+        ],
+        "attributes": [
+            "score+=125"
+        ]
+    },
+    "Do the robot": {
+        "text": "You do the robot so convincingly that a stagehand tries to unplug you.\\n\\n{{#animate \\"toast\\"}}BEEP BOOP. 100 POINTS.{{/animate}}\\n\\n{{section \\"next round\\" text=\\"Next round!\\"}}\\n",
+        "attributes": [
+            "score+=100"
+        ]
+    },
+    "WHIRRRRRR": {
+        "text": "{{#style \\"shudder\\"}}You spin round, making blender noises.{{/style}} It's deeply unsettling. Doris asks if you do smoothies.\\n\\nProfessor Boom's voice echoes up from under the stage: \\"MAGNIFICENT!\\" 175 points!\\n\\n{{section \\"next round\\" text=\\"Next round!\\"}}\\n",
+        "sounds": [
+            "sounds/applause.mp3"
+        ],
+        "attributes": [
+            "score+=175"
+        ]
+    },
+    "Refuse, on grounds of dignity": {
+        "text": "\\"I'm not doing that.\\"\\n\\nHank: \\"Fair enough. You keep your dignity, and your score stays exactly where it is.\\"\\n\\n{{section \\"next round\\" text=\\"Next round!\\"}}\\n",
+        "attributes": [
+            "patience-=1"
+        ]
+    },
+    "Beat the Clock": {
+        "text": "\\"It's time to... {{#animate \\"toast\\"}}BEAT THE CLOCK!{{/animate}}\\" Hank wheels out an enormous egg timer.\\n\\n{{#if settings.timers}}\\n\\"Name as many vegetables as you can! You've got {{clock}} seconds, and the clock starts with your first answer. Fifty points for each one!\\"\\n{{else}}\\n\\"Name as many vegetables as you can! Fifty points for each one!\\" He taps the egg timer. \\"Somebody's turned the clock off in the Settings, so take as long as you like.\\"\\n{{/if}}\\n\\n{{#label \\"clock\\"}}{{/label}}\\n\\nType a vegetable, and press Enter: <input type=\\"text\\" data-attribute=\\"guess\\" data-passage=\\"guess\\" placeholder=\\"A vegetable\\" maxlength=\\"30\\">\\n\\n{{section \\"time's up\\" text=\\"That's all I can think of\\"}}\\n",
+        "sounds": [
+            "sounds/fanfare.mp3"
+        ],
+        "attributes": [
+            "found = []",
+            "clock = 20",
+            "clock_running = false",
+            "vegetables = [\\"artichoke\\", \\"asparagus\\", \\"aubergine\\", \\"bean\\", \\"beetroot\\", \\"broccoli\\", \\"cabbage\\", \\"carrot\\", \\"cauliflower\\", \\"celery\\", \\"chard\\", \\"chickpea\\", \\"corn\\", \\"courgette\\", \\"cucumber\\", \\"eggplant\\", \\"fennel\\", \\"garlic\\", \\"kale\\", \\"leek\\", \\"lentil\\", \\"lettuce\\", \\"marrow\\", \\"mushroom\\", \\"okra\\", \\"onion\\", \\"parsnip\\", \\"pea\\", \\"pepper\\", \\"potato\\", \\"pumpkin\\", \\"radish\\", \\"rocket\\", \\"shallot\\", \\"spinach\\", \\"sprout\\", \\"squash\\", \\"swede\\", \\"sweet potato\\", \\"sweetcorn\\", \\"tomato\\", \\"turnip\\", \\"watercress\\", \\"yam\\", \\"zucchini\\"]"
+        ],
         "passages": {
-            "catchphrase": {
-                "text": "\\"Remember our motto: _'Whose Fortune Is It Anyway? (Legally Speaking, Ours)'_\\"\\n"
+            "guess": {
+                "repeat": true,
+                "text": "{{set \\"word\\" (lower guess)}}\\n{{#if settings.timers and not clock_running}}{{set \\"clock_running\\" true}}{{#replace \\"clock\\"}}⏱️ {{#style \\"countdown\\"}}{{#every 1000}}{{dec \\"clock\\"}}{{#if clock <= 0}}{{stop}}{{goto \\"time's up\\"}}{{else}}{{clock}}{{/if}}{{/every}}{{/style}}{{/replace}}{{/if}}\\n{{#if not word}}\\nHank cups a hand to his ear. \\"I didn't catch that!\\"\\n{{else if found contains word}}\\n\\"You've said {{word}} already!\\"\\n{{else if vegetables contains word or vegetables contains (slice word 0 -1)}}\\n{{append \\"found\\" word}}{{sound \\"sounds/ding.mp3\\"}}✅ **{{capitalise word}}!**\\n{{else}}\\n{{sound \\"sounds/buzzer.mp3\\"}}❌ \\"{{guess}}? That's not a vegetable.\\"\\n{{/if}}\\n",
+                "jsIndex": 0
             }
         }
+    },
+    "time's up": {
+        "text": "{{#if found.length >= 5}}{{append \\"prizes\\" \\"a novelty marrow\\"}}{{/if}}\\n{{#if clock <= 0}}{{sound \\"sounds/buzzer.mp3\\"}}{{#animate \\"toast\\"}}TIME'S UP!{{/animate}}{{/if}}\\n\\n{{#if found.length = 0}}\\n{{dec \\"patience\\"}}\\n\\"Not ONE vegetable?\\" Hank is appalled. \\"Do you eat nothing but crisps, {{player_name}}?\\"\\n{{else}}\\n\\"You named {{found.length}}: {{join found \\", \\" \\" and \\"}}. That's {{= found.length * 50}} points!\\"\\n\\n{{#if found.length >= 5}}\\"And for five or more, you win our special prize: a novelty marrow!\\" It's a normal marrow, with googly eyes.{{/if}}\\n{{/if}}\\n\\n{{section \\"next round\\" text=\\"Next round!\\"}}\\n",
+        "attributes": [
+            "score += found.length * 50"
+        ]
+    },
+    "General Knowledge": {
+        "text": "\\"Ah, General Knowledge! The knowledge of generals! Or of... general... people.\\" Hank shuffles his cards, and drops two of them.\\n\\n{{#embed \\"cue card\\" points=\\"100 points\\"}}**What is the capital of France?**{{/embed}}\\n\\nYour answer: {{#label \\"answer\\"}}{{rotate (array \\"Paris\\" \\"London\\" \\"A baguette\\" \\"France doesn't exist\\") set=\\"gk_answer\\"}} _(click to change it)_{{/label}}\\n\\n{{#label \\"lock\\"}}{{passage \\"lock in\\" text=\\"Lock in your answer\\"}}{{/label}}\\n",
+        "passages": {
+            "lock in": {
+                "text": "{{#replace \\"answer\\"}}**{{gk_answer}}**{{/replace}}\\n{{#replace \\"lock\\"}}**LOCKED IN!**{{/replace}}\\n{{#if gk_answer = \\"Paris\\"}}\\n{{sound \\"sounds/ding.mp3\\"}}{{inc \\"score\\" 100}}\\n{{#animate \\"toast\\"}}CORRECT!{{/animate}}\\n\\n\\"Paris! City of light, city of love, city of... bread?\\" Hank looks confused, but happy.\\n{{else if gk_answer = \\"A baguette\\"}}\\n{{sound \\"sounds/buzzer.mp3\\"}}{{dec \\"patience\\"}}{{append \\"prizes\\" \\"a slightly stale baguette\\"}}\\n\\"A baguette? A BAGUETTE?!\\" Hank's eye twitches. \\"That's not even a city, {{player_name}}!\\"\\n\\nA stagehand hands you a baguette anyway, for some reason. The cardboard cutout falls over.\\n{{else if gk_answer = \\"France doesn't exist\\"}}\\n{{sound \\"sounds/buzzer.mp3\\"}}{{dec \\"patience\\" 2}}\\nHank stares at you for a very long time.\\n\\n\\"Security? Please make a note that {{player_name}} is a flight risk.\\"\\n{{else}}\\n{{sound \\"sounds/buzzer.mp3\\"}}{{dec \\"patience\\"}}\\n\\"London? LONDON?!\\" Hank throws his cue cards in the air. \\"That's in a whole other country!\\"\\n{{/if}}\\n\\n{{section \\"next round\\" text=\\"Next round!\\"}}\\n"
+            }
+        }
+    },
+    "The Mystery Box": {
+        "text": "A golden box descends from the ceiling on a frayed rope.\\n\\n{{#style \\"buoy\\"}}🎁{{/style}}\\n\\n\\"Ooh, the Mystery Box!\\" Hank claps his hands. \\"It could contain ANYTHING! A prize! A question! A live animal! We genuinely don't know: the intern who packed it quit this morning!\\"\\n\\nThe box rattles.\\n\\n{{section \\"open the box\\" text=\\"Open the box carefully\\"}}\\n\\n{{section \\"Shake the box first\\"}}\\n\\n{{section \\"Refuse to open it\\"}}\\n",
+        "attributes": [
+            "box = (random [\\"prize\\", \\"bees\\", \\"boxes\\", \\"philosophy\\", \\"goat\\"])"
+        ]
+    },
+    "Shake the box first": {
+        "text": "You shake the box. Something inside goes {{#if box = \\"bees\\"}}\\"BZZZZZZ\\", very crossly{{else if box = \\"goat\\"}}\\"CLANG\\", and then, quietly, \\"meh?\\"{{else if box = \\"boxes\\"}}\\"thud-thud-thud-thud\\"{{else}}\\"clink\\"{{/if}}.\\n\\n\\"Please don't shake the... you know what, fine. Open it.\\"\\n\\n{{section \\"open the box\\" text=\\"Open the box\\"}}\\n",
+        "attributes": [
+            "patience-=1"
+        ]
+    },
+    "Refuse to open it": {
+        "text": "\\"You HAVE to open it! It's the MYSTERY BOX! The mystery is legally required to be resolved!\\"\\n\\nHank is sweating now.\\n\\n{{section \\"open the box\\" text=\\"Fine, open the box\\"}}\\n",
+        "attributes": [
+            "patience-=2"
+        ]
+    },
+    "open the box": {
+        "text": "You lift the lid slowly...\\n\\n{{#if box = \\"prize\\"}}\\n{{sound \\"sounds/fanfare.mp3\\"}}{{inc \\"score\\" 300}}{{append \\"prizes\\" \\"a gold(ish) trophy\\"}}\\n{{#animate \\"toast\\"}}JACKPOT!{{/animate}}\\n\\nInside is a solid gold trophy in the shape of a wheel! It's been spray-painted, but still! 300 points!\\n{{else if box = \\"bees\\"}}\\n{{dec \\"patience\\"}}{{inc \\"score\\" 50}}{{append \\"prizes\\" \\"a bee called Kevin\\"}}\\n{{#animate \\"toast\\"}}BEES!{{/animate}}\\n\\nThe box is full of bees. They seem confused rather than angry.\\n\\n\\"Oh no, NOT AGAIN!\\" Hank runs in circles. \\"WHO KEEPS PUTTING BEES IN THE MYSTERY BOX?!\\"\\n\\nOne bee lands on your nose, considers its life choices, and decides to stay with you. You name him Kevin. Fifty points, for bravery.\\n{{else if box = \\"boxes\\"}}\\n{{inc \\"score\\" 100}}\\nInside the box is another, smaller box.\\n\\n{{#each (range 1 3)}}\\nInside {{#if @first}}that{{else}}THAT{{/if}} is an even smaller box.\\n{{/each}}\\n\\nInside the smallest box of all is a note: \\"{{player_name}} wins 100 points!\\"\\n\\n\\"The recursive box!\\" Hank nods wisely. \\"A classic.\\"\\n{{else if box = \\"philosophy\\"}}\\n{{inc \\"score\\" 75}}\\nInside is a small scroll. It reads:\\n\\n_\\"What IS a prize, really? Is not the true prize the friends we made along the way? Also, here are 75 points.\\"_\\n\\nHank wipes away a single tear. \\"Beautiful.\\"\\n{{else}}\\n{{inc \\"score\\" 150}}{{append \\"prizes\\" \\"a goat (on loan)\\"}}\\n{{#animate \\"toast\\"}}A GOAT!{{/animate}}\\n\\nThere's a goat in the box. You don't know how it fitted. Nor does the goat. 150 points, and the goat.\\n\\n\\"Is that... is that OUR goat?\\" says Hank. \\"Has it been in there since the Christmas special?\\"\\n{{/if}}\\n\\n{{section \\"next round\\" text=\\"Next round!\\"}}\\n"
+    },
+    "Professor Boom's Lab": {
+        "text": "The lights flicker, and a trapdoor opens in the floor. Green smoke billows out.\\n\\n{{#animate \\"typewriter\\"}}PROFESSOR BOOM has entered the studio.{{/animate}}\\n\\nA wild-haired scientist climbs out, goggles askew, lab coat singed. \\"GREETINGS, QUIZ PARTICIPANT! Today you will invent a NEW ELEMENT!\\"\\n\\nHank backs away. \\"Professor, we talked about bringing chemicals on set...\\"\\n\\n\\"SILENCE, TELEVISION MAN!\\" The Professor waves at a shelf of bubbling flasks. \\"Mix me a compound! Seventy-five points for every ingredient! But mind the STABILITY!\\"\\n\\n**Lab stability:** {{live \\"lab.stability\\" passage=\\"stability\\"}}\\n\\n{{#each shelf}}\\n- {{passage \\"add\\" text=\\"Add the {{look}} one\\" set=\\" chemical = \\\\\\"{{name}}\\\\\\"\\"}}\\n{{/each}}\\n\\n{{section \\"compound\\" text=\\"Present your compound\\"}}\\n",
+        "classes": [
+            "lab"
+        ],
+        "transition": "rumble",
+        "attributes": [
+            "lab = { stability: 100, mixture: [] }",
+            "shelf = [{ name: \\"Fizz\\", look: \\"fizzing blue\\" }, { name: \\"Sulk\\", look: \\"sulky green\\" }, { name: \\"Gloop\\", look: \\"suspiciously beige\\" }, { name: \\"Shriek\\", look: \\"screaming orange\\" }]"
+        ],
+        "passages": {
+            "stability": {
+                "text": "{{#if lab.stability <= 40}}{{#style \\"shake\\"}}**{{lab.stability}}%**{{/style}}{{else}}{{lab.stability}}%{{/if}}\\n"
+            },
+            "add": {
+                "text": "{{append \\"lab.mixture\\" chemical}}{{set \\"lab.stability\\" lab.stability - (random (array 20 25 30 35))}}\\nYou pour in the {{lower chemical}}. The mixture turns {{random (array \\"a deep purple\\" \\"plaid\\" \\"the colour of a Tuesday\\" \\"transparent, which is worrying\\")}}.\\n\\n{{#if lab.stability <= 10}}\\n{{#style \\"rumble\\"}}The beaker starts to hum.{{/style}}{{goto \\"kaboom\\" after=\\"2s\\"}}\\n{{else if lab.stability <= 40}}\\nProfessor Boom: \\"HURRY! The compound is becoming... UNSTABLE!\\"\\n{{/if}}\\n"
+            }
+        }
+    },
+    "compound": {
+        "text": "{{#if lab.mixture.length = 0}}\\n{{dec \\"patience\\"}}\\nYou hold up an empty beaker.\\n\\n\\"WATER?\\" Professor Boom's hair stands on end. \\"You've invented WATER?\\"\\n\\n\\"Technically it's just air,\\" says Hank.\\n\\n\\"GET OUT OF MY LABORATORY!\\"\\n{{else}}\\n{{sound \\"sounds/ding.mp3\\"}}{{append \\"prizes\\" (\\"a flask of \\" + element)}}\\nProfessor Boom holds your beaker up to the lights. Something in it blinks.\\n\\n\\"MAGNIFICENT! I shall call it... {{#animate \\"toast\\"}}{{upper element}}!{{/animate}}\\"\\n\\n\\"{{lab.mixture.length}} {{= lab.mixture.length = 1 ? \\"ingredient\\" : \\"ingredients\\"}}, {{= lab.mixture.length * 75}} points!\\" says Hank, from behind a fire extinguisher.\\n{{/if}}\\n\\nProfessor Boom vanishes back down the trapdoor, cackling. \\"UNTIL NEXT TIME! REMEMBER: SCIENCE IS JUST EXPLOSIONS IN A LAB COAT!\\"\\n\\n{{section \\"next round\\" text=\\"Next round!\\"}}\\n",
+        "attributes": [
+            "score += lab.mixture.length * 75",
+            "element = (capitalise (lower (join lab.mixture \\"o\\"))) + \\"ium\\""
+        ]
+    },
+    "kaboom": {
+        "text": "{{#style \\"shake\\"}}**BOOM!**{{/style}}\\n\\nWhen the smoke clears, Hank has no eyebrows.\\n\\n\\"MY EYEBROWS!\\" he shrieks. \\"Those were RENTED!\\"\\n\\nProfessor Boom emerges from under a desk, delighted. \\"The finest explosion of the season! Twenty-five points, for SPECTACLE!\\"\\n\\n{{section \\"next round\\" text=\\"Next round!\\"}}\\n",
+        "classes": [
+            "lab"
+        ],
+        "transition": "rumble",
+        "transitionTime": 1000,
+        "attributes": [
+            "patience-=1",
+            "score += 25"
+        ]
     }
 };
 story.js = [
+	(squiffy, get, set) => {
+		// Empties the text box, ready for the next guess
+		squiffy.ui.afterWrite(() => {
+		    const box = squiffy.element.querySelector("input[data-passage='guess']");
+		    box.value = "";
+		    box.focus();
+		});
+	},
 ];"
 `;
 

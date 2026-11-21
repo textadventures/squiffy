@@ -1,0 +1,74 @@
+# A playthrough of the story, recorded with --play --record.
+# Run it with --test, or record it again with --test --update.
+seed 858462
+input player_name=Ellen
+input drink_name=Too Sweet
+
+went "intro"
+set warmth = {"maya":0,"ellis":0,"sam":0}
+set orders = {}
+
+> Tie on your apron
+went "Monday"
+set player_name = "Ellen"
+
+> The man by the window
+went "Ellis first"
+set warmth = {"maya":0,"ellis":1,"sam":0}
+set orders = {"Ellis":"black coffee, no room"}
+
+> Here comes the rush
+went "rush"
+
+> That evening...
+went "_continue1"
+
+> Let them come to you
+went "Let them come to you"
+set orders = {"Ellis":"black coffee, no room","Sam":"red-eye"}
+
+> Closing up
+went "Closing up"
+
+> Tuesday
+went "_continue2"
+
+> take it over
+went "_continue2" "Ellis on Tuesday"
+set warmth = {"maya":0,"ellis":2,"sam":0}
+
+> See what Maya wants
+went "Maya on Tuesday"
+
+> She gets on the train
+went "Tuesday evening"
+set warmth = {"maya":1,"ellis":2,"sam":0}
+set maya_idea = "train"
+
+> Give them space
+went "Give them space"
+
+> Close up for the night
+went "Tuesday night"
+
+> Wednesday
+went "_continue3"
+
+> Ellis
+went "_continue3" "Ellis on Wednesday"
+
+> make the hazelnut thing
+went "_continue3" "make the hazelnut thing"
+set warmth = {"maya":1,"ellis":3,"sam":0}
+set made_hazelnut = true
+
+> Maya
+went "_continue3" "Maya on Wednesday"
+
+> closing time
+went "closing time"
+set close_friends = 1
+
+> Write it on the board
+went "The specials board"
+set drink_name = "Too Sweet"
