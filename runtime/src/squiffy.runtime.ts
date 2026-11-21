@@ -1414,6 +1414,10 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         if (el.hasAttribute("data-every-append")) el.append(text);
         else el.replaceChildren(text);
         pluginManager.onWrite(text);
+        // It's empty until its first tick, so when the text was written the page may not have been
+        // tall enough to scroll down to where it starts. This finishes that scroll, as the text is
+        // taller now. It never scrolls past where the new text starts, or up.
+        ui.scrollToEnd();
 
         const count = (Number(el.getAttribute("data-every-count")) || 0) + 1;
         el.setAttribute("data-every-count", String(count));
