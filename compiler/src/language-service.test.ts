@@ -146,6 +146,63 @@ describe("diagnostics", () => {
         ls.fileChanged("b.squiffy");
         expect(await ls.getDiagnostics("b.squiffy")).toEqual([]);
     });
+
+    describe("template syntax errors", () => {
+        const templateErrors = async (text: string) => {
+            const ls = createLanguageService({ files: memoryFiles({ "s.squiffy": text }), mainFile: "s.squiffy" });
+            return (await ls.getDiagnostics("s.squiffy"))
+                .filter(d => d.code == "squiffy/template-syntax")
+                .map(d => [d.severity, slice(text, d.range), d.message]);
+        };
+
+        test("an expression in a plain {{...}}", async () => {
+            const text = "[[start]]:\nThe words.\n\"Round {{round + 1}}, {{player_name}}.\"\n[[Next]](next)\n\n[[next]]:\nEnd.";
+            expect(await templateErrors(text)).toEqual([[
+                "error", "{{round + 1}}",
+                "In section 'start', {{round + 1}} isn't valid Handlebars. To show the result of an expression, start it with \"=\": {{= round + 1}}",
+            ]]);
+        });
+
+        test("blocks that don't match", async () => {
+            const text = "[[start]]:\n{{#unless word}}a{{else if x}}b{{/if}}";
+            expect(await templateErrors(text)).toEqual([[
+                "error", "{{#unless word}}", "In section 'start', {{#unless word}} is closed by {{/if}}, but it needs a {{/unless}}",
+            ]]);
+        });
+
+        test("a block that isn't closed, in a passage", async () => {
+            const text = "[[start]]:\n[Look](look)\n\n[look]:\nYou see:\n{{#each items}}\n{{this}}\n{{#if lit}}It's lit.";
+            expect(await templateErrors(text)).toEqual([[
+                "error", "{{#if lit}}", "In section 'start', passage 'look', {{#if lit}} has no {{/if}} to close it",
+            ]]);
+        });
+
+        test("an expression that can't be read", async () => {
+            const text = "[[start]]:\nHi.\n{{#if score >}}Yes{{/if}}";
+            expect(await templateErrors(text)).toEqual([[
+                "error", "{{#if score >}}",
+                "In section 'start', {{#if score >}} isn't valid: Invalid condition \"score >\": expected a value after '>'",
+            ]]);
+        });
+
+        test("are found after links and expressions that are rewritten", async () => {
+            const text = "[[start]]:\n[[Go]](next) {{= a * 2}} {{#if a > 1 and b}}[[Back]](start){{/if}} {{a/this}}\n\n[[next]]:\nN";
+            expect(await templateErrors(text)).toEqual([[
+                "error", "{{a/this}}", "In section 'start', {{a/this}} isn't valid Handlebars: Invalid path: a/this",
+            ]]);
+        });
+
+        test("stop the story being built", async () => {
+            const { compile } = await import("./compiler.js");
+            const result = await compile({ script: "[[start]]:\n{{round + 1}}" });
+            expect(result.success).toBe(false);
+        });
+
+        test("aren't reported for valid text", async () => {
+            const text = "[[start]]:\n{{#if a}}x{{else if b}}y{{else}}z{{/if}} \\{{not + a tag}} {{{raw}}} {{#every 1000}}{{= n + 1}}{{/every}}";
+            expect(await templateErrors(text)).toEqual([]);
+        });
+    });
 });
 
 describe("document symbols", () => {

@@ -71,6 +71,18 @@ const initScript = async (script: string, expressions = false) => {
     };
 };
 
+// Starts a story whose start section has this text, which the compiler would refuse, as it
+// reports template errors itself, to test how the runtime shows them (in a story built by an
+// older compiler, say)
+const initBrokenText = async (text: string) => {
+    const element = document.getElementById("squiffy")!;
+    const { story } = await compile("[[start]]:\nPlaceholder.");
+    (story.sections as any).start.text = text;
+    const squiffyApi = await init({ element, story });
+    await squiffyApi.begin();
+    return { squiffyApi, element };
+};
+
 const findLink = (element: HTMLElement, linkType: string, linkText: string, onlyEnabled: boolean = false) => {
     const links = onlyEnabled
         ? element.querySelectorAll(`.squiffy-output-section:last-child a.squiffy-link.link-${linkType}`)
@@ -2202,7 +2214,7 @@ test("arithmetic in {{set}}, {{inc}}, {{dec}} and conditions", async () => {
 });
 
 test("Invalid arithmetic shows a template error", async () => {
-    const { element } = await initScript("[[start]]:\n{{set \"gold\" gold +}}");
+    const { element } = await initBrokenText("{{set \"gold\" gold +}}");
     expect(element.querySelector(".squiffy-error")?.textContent).toContain("Invalid expression");
 });
 
@@ -3792,12 +3804,9 @@ Done.
 // Template error handling tests
 
 test("Template error displays error message instead of failing silently", async () => {
-    const script = `
-[[start]]:
-{{invalid * syntax}}
-`;
+    const script = "{{invalid * syntax}}";
 
-    const { element } = await initScript(script);
+    const { element } = await initBrokenText(script);
 
     // Should display an error message
     const errorDiv = element.querySelector(".squiffy-error");
@@ -3806,12 +3815,9 @@ test("Template error displays error message instead of failing silently", async 
 });
 
 test("Template error preserves monospace styling", async () => {
-    const script = `
-[[start]]:
-{{broken (expression}}
-`;
+    const script = "{{broken (expression}}";
 
-    const { element } = await initScript(script);
+    const { element } = await initBrokenText(script);
 
     const errorDiv = element.querySelector(".squiffy-error") as HTMLElement;
     expect(errorDiv).not.toBeNull();
@@ -3850,12 +3856,9 @@ test("Infix expressions combine with existing helpers", async () => {
 });
 
 test("Malformed infix expression shows a template error", async () => {
-    const script = `
-[[start]]:
-{{#if score >}}Yes{{/if}}
-`;
+    const script = "{{#if score >}}Yes{{/if}}";
 
-    const { element } = await initScript(script);
+    const { element } = await initBrokenText(script);
     const errorDiv = element.querySelector(".squiffy-error");
     expect(errorDiv?.textContent).toContain("Invalid condition \"score >\": expected a value after '>'");
 });

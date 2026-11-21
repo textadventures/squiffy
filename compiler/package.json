@@ -15,6 +15,9 @@
   },
   "license": "MIT",
   "preferGlobal": true,
+  "dependencies": {
+    "handlebars": "^4.7.10"
+  },
   "devDependencies": {
     "@types/node": "^26.6.6",
     "glob": "^14.0.6",
@@ -38,6 +41,10 @@
     "./language-service": {
       "types": "./dist/language-service.d.ts",
       "default": "./dist/language-service.js"
+    },
+    "./infix-expressions": {
+      "types": "./dist/infix-expressions.d.ts",
+      "default": "./dist/infix-expressions.js"
     },
     "./node": {
       "types": "./dist/node.d.ts",

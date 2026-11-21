@@ -7,7 +7,7 @@
 // it again: before the text is compiled, captureEveryBodies() copies each {{#every}}'s text into a
 // hidden __body= parameter, which the helper puts in the element it writes.
 
-import { findTagEnd } from "./infixExpressions.js";
+import { findTagEnd } from "squiffy-compiler/infix-expressions";
 
 const everyTag = /(\\*)\{\{~?\s*(?:(#every)(?=[\s}~])|(\/every)\s*~?\}\})/g;
 

@@ -1,5 +1,5 @@
 import { expect, test, describe } from "vitest";
-import { rewriteDisplayExpression, rewriteInfixArguments, rewriteInfixEmbed, rewriteInfixCondition, rewriteInfixExpressions, rewriteValueExpression, splitSetters } from "./infixExpressions.js";
+import { rewriteDisplayExpression, rewriteInfixArguments, rewriteInfixEmbed, rewriteInfixCondition, rewriteInfixExpressions, rewriteValueExpression, splitSetters, mapRewrittenPosition, InfixEdit, InfixRewriteError } from "./infix-expressions.js";
 
 describe("rewriteInfixCondition", () => {
     test.each([
@@ -526,4 +526,29 @@ describe("contains and ? : (#446)", () => {
     ])("errors: %s", (input, message) => {
         expect(() => rewriteValueExpression(input)).toThrow(message);
     });
+});
+
+describe("mapRewrittenPosition", () => {
+    test("maps positions in the rewritten text back to the text it was given", () => {
+        const text = "A {{= a * 2}} B {{#if x > 1}}C{{/if}} D";
+        const edits: InfixEdit[] = [];
+        const rewritten = rewriteInfixExpressions(text, edits);
+        expect(rewritten).toBe("A {{mul a 2}} B {{#if (gt x 1)}}C{{/if}} D");
+        for (const find of ["A", "B", "C", "{{/if}}", "D"]) {
+            expect(mapRewrittenPosition(edits, rewritten.indexOf(find))).toBe(text.indexOf(find));
+        }
+        // Inside a replacement, it's the start of what was replaced
+        expect(mapRewrittenPosition(edits, rewritten.indexOf("mul"))).toBe(text.indexOf("{{="));
+        expect(mapRewrittenPosition(edits, rewritten.indexOf("gt"))).toBe(text.indexOf(" x > 1"));
+    });
+});
+
+test("an expression that can't be read throws an error saying which tag it was in", () => {
+    const text = "Hi {{set \"gold\" gold +}} there";
+    let error: unknown;
+    try { rewriteInfixExpressions(text); } catch (e) { error = e; }
+    expect(error).toBeInstanceOf(InfixRewriteError);
+    const { start, end, message } = error as InfixRewriteError;
+    expect(text.slice(start, end)).toBe("{{set \"gold\" gold +");
+    expect(message).toBe("Invalid expression \"\"gold\" gold +\": expected a value after '+'");
 });

@@ -1,6 +1,6 @@
 // Expressions shared by the Harlowe and SugarCube converters: each parses its own format's
 // expressions into this tree, which is written out as a Squiffy expression, as {{#if}}, @set and
-// {{set}} take (see runtime/src/infixExpressions.ts).
+// {{set}} take (see ../infix-expressions.ts).
 
 // "contains" is whether a list, text or object has the value in it (#446)
 export type BinaryOp = "or" | "and" | "=" | "!=" | ">" | ">=" | "<" | "<=" | "contains" | "+" | "-" | "*" | "/" | "%";

@@ -162,6 +162,9 @@ export interface TransformResult {
     gotos: TextGoto[];
     deactivates: TextDeactivate[];
     noNextSection: NoNextSection[];
+    // Map the start and (exclusive) end of a range in output to the text that was transformed
+    mapStart: (pos: number) => number;
+    mapEnd: (pos: number) => number;
 }
 
 // The target is everything before the first comma, and the setters everything after it. With
@@ -388,7 +391,11 @@ export function transformText(text: string, getNextSectionName: () => string | n
         });
     }
 
-    return { output: input.value, links, embeds, gotos: findNamed("goto"), deactivates: findNamed("deactivate"), noNextSection };
+    return {
+        output: input.value, links, embeds, gotos: findNamed("goto"), deactivates: findNamed("deactivate"), noNextSection,
+        mapStart: pos => input.mapStart(pos),
+        mapEnd: pos => input.mapEnd(pos),
+    };
 }
 
 export interface SourceLine {

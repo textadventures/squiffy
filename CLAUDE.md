@@ -140,6 +140,7 @@ CLI options:
    - Main file: `runtime/src/squiffy.runtime.ts`
    - Entry point: `init()` function returning `SquiffyApi`
    - Plugin architecture in `runtime/src/plugins/`
+   - The rewriting of infix expressions (`{{= a + 1}}`, `{{#if a > 1}}`) is in the compiler (`compiler/src/infix-expressions.ts`, exported as `squiffy-compiler/infix-expressions`), which the runtime's build bundles. The compiler uses it too, to report Handlebars syntax errors in a section's text (`compiler/src/templates.ts`)
 
 3. **Packager** (`packager/`) - Bundles compiler output + runtime into deployable files
    - Input: `CompileSuccess` output from compiler
