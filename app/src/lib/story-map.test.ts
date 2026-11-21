@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { createLanguageService } from "squiffy-compiler/language-service";
-import { buildStoryMap, checkSectionName, findRenames, linkTo, movedNodes, nodeAtLine, pinnedPositions, renamePositions, sectionKeys, withPosition } from "./story-map.js";
+import { buildStoryMap, checkSectionName, findRenames, linkTo, movedNodes, nodeAtLine, pinnedPositions, renamePositions, revertPositions, sectionKeys, withPosition } from "./story-map.js";
 
 async function graphOf(text: string) {
     const files: Record<string, string> = { "story.squiffy": text };
@@ -177,4 +177,15 @@ describe("editing from the map", () => {
         expect(nodeAtLine(graph, "story.squiffy", 8)?.id).toBe("section:left");
         expect(nodeAtLine(graph, "other.squiffy", 8)).toBeUndefined();
     });
+});
+
+test("undoing a change to the positions leaves what's changed since", () => {
+    const before = { sections: { a: [1, 1] as [number, number] }, passages: { a: { p: [5, 5] as [number, number] } } };
+    // a moved, b added, and a's passage let go
+    const after = { sections: { a: [2, 2] as [number, number], b: [3, 3] as [number, number] }, passages: {} };
+    // Since then, c was moved
+    const now = { sections: { ...after.sections, c: [9, 9] as [number, number] }, passages: {} };
+    expect(revertPositions(now, after, before)).toEqual({ sections: { a: [1, 1], c: [9, 9] }, passages: { a: { p: [5, 5] } } });
+    expect(revertPositions(revertPositions(now, after, before), before, after)).toEqual(now);
+    expect(revertPositions(undefined, before, after)).toEqual(after);
 });

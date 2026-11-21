@@ -1,0 +1,232 @@
+// Edits to the script made from the story map: where a new section or passage goes, what deleting
+// one removes, and setting where the story starts. All worked out from the story graph and a
+// file's text, so they can be tested without an editor.
+import type { GraphNode, StoryGraph, TextEdit } from "squiffy-compiler/language-service";
+
+const NAVIGATION: ReadonlySet<string> = new Set(["section-link", "goto", "script"]);
+
+const splitLines = (text: string) => text.split(/\r?\n/);
+const blank = (line: string | undefined) => line === undefined || !line.trim();
+
+const sectionOf = (node: GraphNode) => node.kind == "section" ? node.name : node.section!;
+
+// A file's sections, in the order they're written
+function sectionsIn(graph: StoryGraph, file: string): GraphNode[] {
+    return graph.nodes
+        .filter(n => n.kind == "section" && n.location.file == file)
+        .sort((a, b) => a.range.start.line - b.range.start.line);
+}
+
+// A section with everything that follows on from it: the sections without names of their own
+// (+++ and --- lines) between it and the next named section, which only make sense after it. For
+// one of those, the whole run it's part of.
+export function blockOf(graph: StoryGraph, section: GraphNode): GraphNode[] {
+    const sections = sectionsIn(graph, section.location.file);
+    const index = sections.findIndex(s => s.id == section.id);
+    if (index < 0) return [section];
+    let first = index;
+    while (first > 0 && sections[first].detail) first--;
+    let last = index;
+    while (last + 1 < sections.length && sections[last + 1].detail) last++;
+    return sections.slice(first, last + 1);
+}
+
+export interface Place {
+    file: string;
+    // The last line of what the new section goes after. Undefined for the end of the file.
+    afterLine?: number;
+}
+
+// Where a new section goes in the script, so the file stays in a sensible order rather than
+// everything new piling up at the end.
+//
+// Linked from a section (or one of its passages): after the last of that section's own children
+// that come after it in the same file, so the choices it leads to follow it in the order they were
+// made, or straight after it if it has none. A child is its own if it's the first to link there,
+// so a link to a shared section (an ending, say) far down the file doesn't take the new one there.
+//
+// Otherwise, after the section it was made near, or at the end of the file.
+export function placeNewSection(graph: StoryGraph, where: { from?: GraphNode; near?: GraphNode; file: string }): Place {
+    const anchor = where.from ?? where.near;
+    const section = anchor && graph.nodes.find(n => n.kind == "section" && n.name == sectionOf(anchor));
+    // The master section's text is part of every section, so nothing belongs after it in particular
+    if (!section || section.name == "" || section.location.file != where.file) return { file: where.file };
+    const block = blockOf(graph, section);
+    let after = block[block.length - 1];
+
+    if (where.from) {
+        const inBlock = new Set(block.map(s => s.name));
+        const byId = new Map(graph.nodes.map(n => [n.id, n]));
+        // For each section, the first thing to link to it: in its own file if anything there does
+        const firstLinker = new Map<string, { own: boolean; line: number; section: string }>();
+        for (const edge of graph.edges) {
+            if (!edge.to || !NAVIGATION.has(edge.kind)) continue;
+            const to = byId.get(edge.to);
+            const from = byId.get(edge.from);
+            if (!to || !from || to.kind != "section") continue;
+            const linker = { own: edge.location.file == to.location.file, line: edge.location.range.start.line, section: sectionOf(from) };
+            const best = firstLinker.get(to.id);
+            if (!best || (linker.own && !best.own) || (linker.own == best.own && linker.line < best.line)) firstLinker.set(to.id, linker);
+        }
+        for (const child of sectionsIn(graph, where.file)) {
+            if (child.detail || child.name == "" || child.range.start.line <= after.range.start.line) continue;
+            const linker = firstLinker.get(child.id);
+            if (!linker?.own || !inBlock.has(linker.section)) continue;
+            const childBlock = blockOf(graph, child);
+            after = childBlock[childBlock.length - 1];
+        }
+    }
+    return { file: where.file, afterLine: after.range.end.line };
+}
+
+// Where a new passage goes: at the end of its section, after the passages it has
+export function placeNewPassage(section: GraphNode): Place {
+    return { file: section.location.file, afterLine: section.range.end.line };
+}
+
+// Adds a header ("[[name]]:" or "[name]:") on a line of its own after a line (or at the end),
+// with a blank line either side. Blank lines already there are left as they are.
+export function insertHeaderEdit(text: string, afterLine: number | undefined, header: string): TextEdit {
+    const lines = splitLines(text);
+    let last = Math.min(afterLine ?? lines.length - 1, lines.length - 1);
+    while (last >= 0 && blank(lines[last])) last--;
+    if (last < 0) {
+        const start = { line: 0, character: 0 };
+        return { range: { start, end: start }, newText: `${header}\n${text.trim() ? "\n" : ""}` };
+    }
+    const at = { line: last, character: lines[last].length };
+    // A line of its own, and a blank line before what follows, if there isn't one
+    const needsLine = last + 1 >= lines.length || !blank(lines[last + 1]);
+    return { range: { start: at, end: at }, newText: `\n\n${header}${needsLine ? "\n" : ""}` };
+}
+
+// Removes whole lines (each range is its first and last line), with the blank lines after them.
+// Ranges that touch, or have only blank lines between them, are removed as one.
+export function deleteLinesEdits(text: string, ranges: { start: number; end: number }[]): TextEdit[] {
+    const lines = splitLines(text);
+    const max = lines.length - 1;
+    const nextText = (line: number) => {
+        let n = line;
+        while (n <= max && blank(lines[n])) n++;
+        return n;
+    };
+    const merged: { start: number; next: number }[] = [];
+    for (const range of [...ranges].sort((a, b) => a.start - b.start)) {
+        if (range.start > max) continue;
+        // Up to the next line with anything on it
+        const next = nextText(Math.min(range.end, max) + 1);
+        const before = merged[merged.length - 1];
+        if (before && range.start <= before.next) before.next = Math.max(before.next, next);
+        else merged.push({ start: range.start, next });
+    }
+    return merged.map(({ start, next }) => {
+        if (next <= max) return { range: { start: { line: start, character: 0 }, end: { line: next, character: 0 } }, newText: "" };
+        // Nothing after it: back to the end of the text before, leaving the file's last line break
+        const end = { line: max, character: lines[max].length };
+        let before = start - 1;
+        while (before >= 0 && blank(lines[before])) before--;
+        if (before < 0) return { range: { start: { line: 0, character: 0 }, end }, newText: "" };
+        return { range: { start: { line: before, character: lines[before].length }, end }, newText: /\n$/.test(text) ? "\n" : "" };
+    });
+}
+
+export interface Deletion {
+    // Everything that goes, for the message: the sections and passages chosen, without passages
+    // whose section is going anyway
+    chosen: GraphNode[];
+    // Lines to remove (first and last), by file
+    ranges: Map<string, { start: number; end: number }[]>;
+    // Sections without names of their own that follow on from a section that's going, so go too
+    continuations: number;
+    // Passages that go with their sections
+    passages: number;
+    // Links from what's left to what's going, which will be broken
+    brokenLinks: number;
+    // The story starts at one of them
+    start: boolean;
+}
+
+// What deleting sections and passages from the map removes. A section goes with its passages and
+// the +++ and --- sections that follow on from it, which would otherwise carry on from whatever
+// section came before. Sections without names of their own, and the master section, can't be
+// deleted from the map: undefined if there's nothing that can be.
+export function planDeletion(graph: StoryGraph, nodes: GraphNode[]): Deletion | undefined {
+    const sections = nodes.filter(n => n.kind == "section" && !n.detail && n.name != "");
+    const goingSections = new Map<string, GraphNode>();
+    let continuations = 0;
+    for (const section of sections) {
+        // From the section itself: a (Start) or +++ before it in its run stays
+        const block = blockOf(graph, section);
+        for (const s of block.slice(block.findIndex(b => b.id == section.id))) {
+            if (goingSections.has(s.name)) continue;
+            goingSections.set(s.name, s);
+            if (s.detail) continuations++;
+        }
+    }
+    const passages = nodes.filter(n => n.kind == "passage" && !goingSections.has(n.section!));
+    const chosen = [...sections, ...passages];
+    if (!chosen.length) return undefined;
+
+    const going = new Set<string>(passages.map(p => p.id));
+    let withSections = 0;
+    for (const n of graph.nodes) {
+        if (n.kind == "section" ? goingSections.has(n.name) : goingSections.has(n.section!)) {
+            going.add(n.id);
+            if (n.kind == "passage") withSections++;
+        }
+    }
+    const ranges = new Map<string, { start: number; end: number }[]>();
+    for (const n of [...goingSections.values(), ...passages]) {
+        let list = ranges.get(n.location.file);
+        if (!list) ranges.set(n.location.file, list = []);
+        list.push({ start: n.range.start.line, end: n.range.end.line });
+    }
+    return {
+        chosen, ranges, continuations,
+        passages: withSections,
+        brokenLinks: graph.edges.filter(e => e.to && going.has(e.to) && !going.has(e.from)).length,
+        start: [...goingSections.values()].some(s => s.start),
+    };
+}
+
+// What to ask before deleting
+export function deletionMessage(d: Deletion): string {
+    const count = (n: number, one: string, many = `${one}s`) => `${n} ${n == 1 ? one : many}`;
+    const sections = d.chosen.filter(n => n.kind == "section");
+    const passages = d.chosen.filter(n => n.kind == "passage");
+    const what = d.chosen.length == 1
+        ? `the ${d.chosen[0].kind} "${d.chosen[0].name}"`
+        : [sections.length ? count(sections.length, "section") : "", passages.length ? count(passages.length, "passage") : ""].filter(Boolean).join(" and ");
+    const one = sections.length == 1;
+    const notes = [
+        d.passages ? `${one ? "Its" : "Their"} ${d.passages == 1 ? "passage goes" : `${d.passages} passages go`} too.` : "",
+        d.continuations ? `So ${d.continuations == 1 ? "does the section" : `do the ${d.continuations} sections`} that ${d.continuations == 1 ? "follows" : "follow"} on from ${one ? "it" : "them"} (+++ or ---).` : "",
+        d.brokenLinks ? `${count(d.brokenLinks, "link")} to ${d.chosen.length == 1 ? "it" : "them"} will be broken.` : "",
+        d.start ? "The story starts there, so it will start somewhere else." : "",
+    ].filter(Boolean);
+    return [`Delete ${what}?`, ...notes].join(" ");
+}
+
+// Why a name can't be used for a new passage in a section, if it can't
+export function checkPassageName(name: string, section: string, graph: StoryGraph): string | undefined {
+    if (!name || name != name.trim()) return "A name can't be empty or start or end with a space.";
+    if (/[[\]\n,"]/.test(name)) return "A name can't contain [, ], a comma or a double quote.";
+    if (name.startsWith("@")) return "Passages whose names start with @ run on their own, so add those in the script.";
+    if (/^snippet:/i.test(name)) return "A name can't start with \"snippet:\".";
+    if (graph.nodes.some(n => n.kind == "passage" && n.section == section && n.name == name)) return `This section already has a passage called '${name}'.`;
+    return undefined;
+}
+
+// Makes the story start at a section: changes the main file's @start line, or adds one at the top
+// (after @title, if that's there)
+export function startEdit(mainText: string, name: string): TextEdit {
+    const lines = splitLines(mainText);
+    const existing = lines.findIndex(line => /^@start /.test(line));
+    if (existing >= 0) {
+        return { range: { start: { line: existing, character: 0 }, end: { line: existing, character: lines[existing].length } }, newText: `@start ${name}` };
+    }
+    let line = 0;
+    while (line < lines.length && /^@title /.test(lines[line])) line++;
+    const at = line < lines.length ? { line, character: 0 } : { line: lines.length - 1, character: lines[lines.length - 1].length };
+    return { range: { start: at, end: at }, newText: line < lines.length ? `@start ${name}\n` : `\n@start ${name}\n` };
+}

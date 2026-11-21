@@ -23,6 +23,7 @@
     import type { MapPositions } from "squiffy-compiler";
     import GraphMap from "@textadventures/graph-map/GraphMap.svelte";
     import type { NodeState } from "@textadventures/graph-map/GraphMap.svelte";
+    import ContextMenu, { type ContextMenuItem } from "#components/ContextMenu.svelte";
     import { buildStoryMap, linkTo, pinnedPositions, storyMapLayout, type Point, type StoryMapEdge, type StoryMapNode } from "#lib/story-map.js";
     import ZoomIn from "@lucide/svelte/icons/zoom-in";
     import ZoomOut from "@lucide/svelte/icons/zoom-out";
@@ -36,6 +37,8 @@
     import Pencil from "@lucide/svelte/icons/pencil";
     import Play from "@lucide/svelte/icons/play";
     import Code from "@lucide/svelte/icons/code";
+    import ListPlus from "@lucide/svelte/icons/list-plus";
+    import Trash2 from "@lucide/svelte/icons/trash-2";
 
     interface Props {
         graph: StoryGraph | null;
@@ -59,6 +62,13 @@
         oncreate: (at: Point, near: GraphNode | undefined) => void;
         onrename: (node: GraphNode) => void;
         onrun: (node: GraphNode) => void;
+        // Add a passage to a section, linked from it or from one of its passages
+        onaddpassage: (from: GraphNode) => void;
+        ondelete: (nodes: GraphNode[]) => void;
+        // Make the story start at a section
+        onstart: (node: GraphNode) => void;
+        // Undo or redo the last change to the script
+        onundo: (redo: boolean) => void;
         // Forget every position the author chose
         onrelayout: () => Promise<boolean>;
         ontogglemaximized: () => void;
@@ -67,7 +77,7 @@
 
     let {
         graph, positions, query, current, trace, maximized, width, ongoto, ongotoedge, onmove, onlink, oncreate, onrename,
-        onrun, onrelayout, ontogglemaximized, onclose,
+        onrun, onaddpassage, ondelete, onstart, onundo, onrelayout, ontogglemaximized, onclose,
     }: Props = $props();
 
     // Above this, the map is slow to lay out, so it asks first. Of about 12,000 stories on
@@ -192,7 +202,56 @@
         if (await onrelayout()) map?.relayout(new Map());
     }
 
-    const instructions = "Arrow keys move between sections and passages. Enter goes to one in the editor, and F2 renames it. Plus and minus zoom, and 0 fits the whole story in view. Drag the background to pan, a box to move it, or the dot under the selected box to add a link. Shift and drag the background to select several boxes, or Shift and click one, then drag one of them to move them all.";
+    // A new section goes in the script after the selected one, or else the one nearest on the map
+    function create(at: Point) {
+        oncreate(at, selectedNode?.graphNode ?? map?.nearest(at, n => !!n.graphNode)?.graphNode);
+    }
+
+    // Named sections and passages can be deleted here. A section without a name of its own
+    // (+++, ---, the text before the first section) is part of what's around it in the script.
+    const canDelete = (g: GraphNode) => g.kind == "passage" || (!g.detail && g.name != "");
+
+    function handleDelete(nodes: StoryMapNode[]) {
+        const deletable = nodes.flatMap(n => n.graphNode && canDelete(n.graphNode) ? [n.graphNode] : []);
+        if (deletable.length) ondelete(deletable);
+    }
+
+    function handleKeydown(e: KeyboardEvent) {
+        if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+        const key = e.key.toLowerCase();
+        if (key != "z" && key != "y") return;
+        e.preventDefault();
+        onundo(key == "y" || e.shiftKey);
+    }
+
+    // The right-click menu, for a box or for the background
+    let menu = $state<{ x: number; y: number; keyboard: boolean; items: ContextMenuItem[] } | null>(null);
+
+    function showMenu(node: StoryMapNode | null, at: Point, screen: Point, keyboard: boolean) {
+        const g = node?.graphNode;
+        let items: ContextMenuItem[];
+        if (node?.kind == "missing") {
+            items = [{ label: "Show the link in the script", action: () => handleActivate(node, "open") }];
+        } else if (node && g) {
+            const section = g.kind == "section";
+            items = [
+                { label: "Show in the script", shortcut: "Enter", action: () => ongoto(node, true) },
+                { label: "Rename…", shortcut: "F2", disabled: !!g.detail, action: () => onrename(g) },
+                { label: "Add a passage…", action: () => onaddpassage(g) },
+                { label: "Run from here", divider: true, action: () => onrun(g) },
+                ...(section ? [{ label: "Start the story here", disabled: !!g.start || !!g.detail || g.name == "", action: () => onstart(g) }] : []),
+                { label: "Delete…", shortcut: "Del", divider: true, disabled: !canDelete(g), action: () => ondelete([g]) },
+            ];
+        } else {
+            items = [
+                { label: "Add a section here…", action: () => create(at) },
+                { label: "Show the whole story", shortcut: "0", divider: true, action: () => map?.fit() },
+            ];
+        }
+        menu = { ...screen, keyboard, items };
+    }
+
+    const instructions = "Arrow keys move between sections and passages. Enter goes to one in the editor, F2 renames it and Delete deletes it. The menu key, or Shift and F10, opens a menu for it. Control or Command and Z undoes the last change. Plus and minus zoom, and 0 fits the whole story in view. Drag the background to pan, a box to move it, or the dot under the selected box to add a link. Shift and drag the background to select several boxes, or Shift and click one, then drag one of them to move them all.";
 </script>
 
 <section
@@ -202,7 +261,7 @@
 >
     <header class="flex items-center gap-0.5 px-2 py-1 border-b border-surface-200-800">
         <h2 class="text-[11px] font-semibold text-surface-600-400 uppercase tracking-wide flex-1 pl-1">Map</h2>
-        <button type="button" class="btn-icon btn-icon-sm" title="Add a section" aria-label="Add a section" onclick={() => oncreate(map?.centre() ?? { x: 0, y: 0 }, selectedNode?.graphNode)}><Plus size={14} /></button>
+        <button type="button" class="btn-icon btn-icon-sm" title="Add a section" aria-label="Add a section" onclick={() => create(map?.centre() ?? { x: 0, y: 0 })}><Plus size={14} /></button>
         <button type="button" class="btn-icon btn-icon-sm" title="Zoom in (+)" aria-label="Zoom in" onclick={() => map?.zoomBy(1.25)}><ZoomIn size={14} /></button>
         <button type="button" class="btn-icon btn-icon-sm" title="Zoom out (-)" aria-label="Zoom out" onclick={() => map?.zoomBy(0.8)}><ZoomOut size={14} /></button>
         <button type="button" class="btn-icon btn-icon-sm" title="Show the whole story (0)" aria-label="Show the whole story" onclick={() => map?.fit()}><Scan size={14} /></button>
@@ -232,10 +291,11 @@
             <span class="key-badge key-ending">■</span><span>An ending (@end)</span>
             <span class="key-badge key-dead-end">!</span><span>A dead end: no way out, and not an ending</span>
             <span class="key-badge key-unreachable"></span><span>Can't be reached from the start</span>
-            <span></span><span class="text-surface-600-400 pt-1">Drag the dot under the selected box to another to add a link, or to empty space for a new section. Double-click empty space to add a section. Shift+drag empty space, or Shift+click, to select several boxes and move them together.</span>
+            <span></span><span class="text-surface-600-400 pt-1">Drag the dot under the selected box to another to add a link, or to empty space for a new section. Double-click empty space to add a section. Right-click a box for more, or press Delete to delete it. Shift+drag empty space, or Shift+click, to select several boxes and move them together.</span>
         </div>
     {/if}
-    <div class="relative flex-1 min-h-0">
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div class="relative flex-1 min-h-0" onkeydown={handleKeydown}>
         {#if !decorated}
             <p class="p-4 text-sm text-surface-600-400">Reading the story…</p>
         {:else if tooLarge}
@@ -257,8 +317,10 @@
                 onedgeactivate={ongotoedge}
                 onmove={moves => onmove(moves.flatMap(({ node, at }) => node.graphNode ? [{ node: node.graphNode, at }] : []))}
                 onconnect={(from, to, at) => { if (from.graphNode) onlink(from.graphNode, to?.graphNode ?? null, at); }}
-                oncreate={at => oncreate(at, selectedNode?.graphNode)}
+                oncreate={create}
                 onrename={n => { if (n.graphNode && !n.graphNode.detail) onrename(n.graphNode); }}
+                ondelete={handleDelete}
+                onmenu={showMenu}
                 node={drawNode}
             />
             {#if decorated.nodes.length === 0}
@@ -277,7 +339,11 @@
                 {#if !g.detail}
                     <button type="button" class="btn-icon btn-icon-sm" title="Rename (F2)" aria-label="Rename" onclick={() => onrename(g)}><Pencil size={13} /></button>
                 {/if}
+                <button type="button" class="btn-icon btn-icon-sm" title="Add a passage" aria-label="Add a passage" onclick={() => onaddpassage(g)}><ListPlus size={13} /></button>
                 <button type="button" class="btn-icon btn-icon-sm" title="Run from here" aria-label="Run from here" onclick={() => onrun(g)}><Play size={13} /></button>
+                {#if canDelete(g)}
+                    <button type="button" class="btn-icon btn-icon-sm" title="Delete (Del)" aria-label="Delete" onclick={() => ondelete([g])}><Trash2 size={13} /></button>
+                {/if}
             </div>
             {#if g.start || g.ending || (g.deadEnd && g.reachable) || !g.reachable}
                 <p class="text-surface-600-400">
@@ -297,6 +363,10 @@
         </div>
     {/if}
 </section>
+
+{#if menu}
+    <ContextMenu x={menu.x} y={menu.y} keyboard={menu.keyboard} items={menu.items} onclose={() => { menu = null; map?.focus(); }} />
+{/if}
 
 {#snippet drawNode(n: StoryMapNode, state: NodeState)}
     {@const g = n.graphNode}
