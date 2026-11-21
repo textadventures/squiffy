@@ -611,7 +611,9 @@ export class TextProcessor {
         // in squiffy.runtime.css). Text with blank lines in it is a block, so it gets a div.
         this.handlebars.registerHelper("style", function (this: unknown, ...args: any[]) {
             const options = args.pop();
-            const content = typeof options?.fn == "function" ? options.fn(this) as string : "";
+            // String(): text that's only one helper, such as an {{#every}}, comes back as the helper's
+            // SafeString
+            const content = typeof options?.fn == "function" ? String(options.fn(this)) : "";
             const classes = args.flatMap(a => String(unwrapValue(a) ?? "").split(/\s+/)).filter(c => c.length > 0);
             // An element has one animation and one transform, so a second effect would replace the
             // first. Each effect after the first goes on an element of its own inside it, where

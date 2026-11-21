@@ -103,5 +103,7 @@ export const getStoryText = (result: CompileSuccess): string => {
     for (const js of result.output.js) {
         texts.push(...js);
     }
+    // The sound files named by @music and @sound, which aren't in the text
+    texts.push(...result.output.story.audio ?? []);
     return texts.join("\n");
 };

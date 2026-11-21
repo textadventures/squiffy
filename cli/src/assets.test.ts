@@ -90,6 +90,19 @@ describe("createPackageFiles with assets", () => {
         expect(html).toContain('"cat.png":"data:image/png;base64,iVBORw=="');
     });
 
+    test("adds the sounds that @music and @sound play to the zip", async () => {
+        await writeFile("story.squiffy", `@music sounds/theme.mp3
+@sound sounds/door.mp3
+The door creaks.`);
+        await writeFile("sounds/theme.mp3");
+        await writeFile("sounds/door.mp3");
+
+        expect(await createPackageFiles(storyFile, STORY_DIR, { createZip: true })).toBe(true);
+
+        const zip = unzipSync(new Uint8Array(await fs.readFile(path.join(STORY_DIR, "output.zip"))));
+        expect(Object.keys(zip)).toEqual(expect.arrayContaining(["sounds/theme.mp3", "sounds/door.mp3"]));
+    });
+
     const importingStory = `@title Imports
 @import my_style.css
 @import my_script.js
