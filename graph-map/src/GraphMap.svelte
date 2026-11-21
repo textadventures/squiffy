@@ -533,6 +533,8 @@
         | { kind: "connect"; from: string; at: Point; target: string | null };
 
     let gesture = $state<Gesture | null>(null);
+    // The last node pressed, and when, for double-clicks
+    let lastNodeDown = { id: "", time: 0 };
     const pointers = new Map<number, Point>();
 
     const local = (e: PointerEvent | WheelEvent | MouseEvent): Point => {
@@ -562,6 +564,7 @@
         }
         if (nodeEl) {
             const id = nodeEl.getAttribute("data-node")!;
+            lastNodeDown = { id, time: performance.now() };
             const at = model.position(id)!;
             const m = toMap(transform, p);
             gesture = { kind: "node", id, start: p, offset: { x: at.x - m.x, y: at.y - m.y }, dragging: false };
@@ -704,13 +707,18 @@
     }
 
     function handleDoubleClick(e: MouseEvent) {
+        const at = toMap(transform, local(e));
+        // The node the first click was on, if it's moved from under the pointer since: selecting
+        // a node can change the host's layout (a panel about it appears, say), and the map with it
         const nodeEl = (e.target as Element).closest("[data-node]");
-        const n = nodeEl && nodesById.get(nodeEl.getAttribute("data-node")!);
+        const n = (nodeEl && nodesById.get(nodeEl.getAttribute("data-node")!))
+            || (performance.now() - lastNodeDown.time < 700 ? nodesById.get(lastNodeDown.id) : undefined);
         if (n) {
+            // The second click may have landed on the background, and let go of it
+            selected = n.id;
             onactivate?.(n, "open");
             return;
         }
-        const at = toMap(transform, local(e));
         if (edgeAt(at)) return;
         oncreate?.(at);
     }

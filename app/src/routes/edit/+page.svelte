@@ -43,6 +43,11 @@
     import FontsModal from "#components/FontsModal.svelte";
     import AboutModal from "#components/AboutModal.svelte";
     import ContextMenu, { type ContextMenuItem } from "#components/ContextMenu.svelte";
+    import Pencil from "@lucide/svelte/icons/pencil";
+    import Play from "@lucide/svelte/icons/play";
+    import Code from "@lucide/svelte/icons/code";
+    import X from "@lucide/svelte/icons/x";
+    import { narrowed, narrowing, narrowRange, setNarrow } from "#lib/narrow.js";
     import { checkPassageName, deleteLinesEdits, deletionMessage, insertHeaderEdit, placeNewPassage, placeNewSection, planDeletion, startEdit, type Place } from "#lib/map-edits.js";
     import { addSectionOrPassage, clipboardCommand, insertSnippet, runCommand, userSnippets } from "#lib/editor-commands.js";
     import { formatKey } from "#lib/shortcuts.js";
@@ -291,6 +296,8 @@
         if (!extensions) {
             extensions = [
                 squiffyLanguage,
+                // For writing one section from the full-screen map. Escape goes back to the map.
+                narrowing(() => mapPanel?.focus()),
                 languageFeatures({
                     client: c,
                     path,
@@ -299,6 +306,11 @@
                         if (path === current.mainFile) current.setTitle(s.find(x => x.kind === "title")?.name ?? "");
                     },
                     onNavigate: goToLocation,
+                    takeNavigation: location => {
+                        if (!cardShown) return false;
+                        void goToLocation(location);
+                        return true;
+                    },
                     onReferences: (name, locations) => {
                         references = { name, locations };
                     },
@@ -381,6 +393,7 @@
     // Moves the editor to a location, opening its file if need be
     async function goToLocation(location: Location) {
         if (!p) return;
+        if (await goToInCard(location, true)) return;
         narrowPane = "editor";
         try {
             await p.open(location.file);
@@ -690,10 +703,13 @@
 
     // Read the graph again as the story changes, once typing pauses
     let graphRequest = 0;
+    // The story has changed since the graph was read
+    let graphStale = false;
     $effect(() => {
         void p?.openFiles.map(f => f.text);
         void filesVersion;
         if (!mapOpen || !client) return;
+        graphStale = true;
         // Untracked, or reading the graph would read it again whenever it arrives
         const timer = setTimeout(() => void refreshGraph(), untrack(() => storyGraph) ? 400 : 0);
         return () => clearTimeout(timer);
@@ -709,20 +725,111 @@
         await syncOpenFiles();
         const graph = await c.call("getStoryGraph");
         if (request !== graphRequest) return;
+        graphStale = false;
         const before = storyGraph;
         if (before) {
             // Renamed sections and passages keep their places
-            mapPanel?.rename(movedNodes(before, graph));
+            const renamed = movedNodes(before, graph);
+            mapPanel?.rename(renamed);
+            const cardMoved = card && renamed.find(([from]) => from === card?.id);
+            if (card && cardMoved) card = { ...card, id: cardMoved[1] };
             const moved = renamePositions(mapPositions, before, graph);
             if (moved) void savePositions(moved);
         }
         storyGraph = graph;
+        // The section being written has gone
+        if (card && !graph.nodes.some(n => n.id === card?.id)) closeCard();
         if (selectWhenReady && graph.nodes.some(n => n.id === selectWhenReady)) {
             const id = selectWhenReady;
             selectWhenReady = null;
             await tick();
             mapPanel?.focusNode(id);
         }
+    }
+
+    // ---- Writing on the map (#542) ----
+
+    // With the map full screen, a section can be written without leaving it: its file's editor is
+    // shown beside the map as a card, narrowed to that section and its passages (see narrow.ts).
+    // It's the same editor, so undo, completion and problems are the script's.
+    let card = $state<{ id: string; file: string } | null>(null);
+    const cardNode = $derived(card ? storyGraph?.nodes.find(n => n.id === card?.id) : undefined);
+    const cardShown = $derived(!!card && mapOpen && mapMaximized && !isNarrow.current);
+
+    // Shows a section in the card, or the section a passage is in, with the cursor at the passage
+    // (or at `at`). If it's the section already shown, the cursor stays where it is.
+    async function openCard(node: GraphNode, focus: boolean, at?: Location["range"]["start"]) {
+        if (!p) return;
+        if (graphStale) await refreshGraph();
+        const graph = storyGraph;
+        const sectionName = node.kind === "section" ? node.name : node.section!;
+        const section = graph?.nodes.find(n => n.kind === "section" && n.name === sectionName);
+        if (!p || !graph || !section || section.name === "") return;
+        const file = section.location.file;
+        try {
+            await p.open(file);
+        } catch (err) {
+            showToast(`Couldn't open ${file}: ${errorText(err)}`);
+            return;
+        }
+        const view = await viewFor(file);
+        if (!view) return;
+        const same = card?.id === section.id && !!narrowed(view.state);
+        if (!same) {
+            card = { id: section.id, file };
+            for (const [path, other] of views) {
+                if (path !== file && narrowed(other.state)) other.dispatch({ effects: setNarrow.of(null) });
+            }
+            const lines: [number, number, boolean] = [section.range.start.line, section.range.end.line, !!section.detail];
+            let range = narrowRange(view.state, ...lines);
+            if (!range) {
+                // A header on the file's last line, with nowhere to write under it
+                view.dispatch({ changes: { from: view.state.doc.length, insert: "\n" } });
+                range = narrowRange(view.state, ...lines)!;
+            }
+            view.dispatch({ effects: setNarrow.of(range), selection: { anchor: range.from } });
+        }
+        const target = at ?? (node.kind === "passage" ? node.location.range.start : undefined);
+        if (target) {
+            const anchor = toOffset(view.state.doc, target);
+            view.dispatch({ selection: { anchor }, effects: EditorView.scrollIntoView(anchor, { y: "start", yMargin: 24 }) });
+        } else if (!same) {
+            view.dispatch({ effects: EditorView.scrollIntoView(view.state.selection.main.head, { y: "start" }) });
+        }
+        if (focus) {
+            // Once the card's on screen: an editor that's hidden can't take the focus
+            await tick();
+            view.focus();
+        }
+    }
+
+    function closeCard() {
+        if (!card) return;
+        card = null;
+        for (const view of views.values()) {
+            if (narrowed(view.state)) view.dispatch({ effects: setNarrow.of(null), scrollIntoView: true });
+        }
+    }
+
+    // Leaving the full-screen map shows the whole script again
+    $effect(() => {
+        if (card && !(mapOpen && mapMaximized && !isNarrow.current)) untrack(closeCard);
+    });
+
+    // While a section's being written on the map, going somewhere in the story (a link's
+    // definition, a problem, a search result) shows that section in the card. Says whether it did.
+    async function goToInCard(location: Location, focus: boolean): Promise<boolean> {
+        if (!cardShown || !storyGraph) return false;
+        const node = isSquiffyFile(location.file) ? nodeAtLine(storyGraph, location.file, location.range.start.line) : undefined;
+        if (!node) {
+            // Not in a section that can be shown on its own, so back to the script
+            closeCard();
+            mapMaximized = false;
+            return false;
+        }
+        await openCard(node, focus, location.range.start);
+        mapPanel?.focusNode(node.id, false);
+        return true;
     }
 
     function toggleMap() {
@@ -796,6 +903,7 @@
     // Shows a location in the editor, opening its file, without taking the focus from the map
     async function showLocation(location: Location) {
         if (!p) return;
+        if (await goToInCard(location, false)) return;
         try {
             await p.open(location.file);
         } catch (err) {
@@ -810,6 +918,7 @@
 
     function goFromMap(location: Location, focus: boolean) {
         if (focus || mapMaximized || isNarrow.current) {
+            closeCard();
             mapMaximized = false;
             void goToLocation(location);
         } else {
@@ -1411,8 +1520,24 @@
             {/if}
             <!-- Kept mounted (hidden, not removed) on a narrow screen so the cursor and undo
                  history survive opening the sidebar or the preview -->
-            <div id="editor" class="flex-1 min-w-0 flex flex-col {(isNarrow.current && narrowPane !== "editor") || (!isNarrow.current && mapOpen && mapMaximized) ? "hidden" : ""}">
-                <EditorTabs project={p} />
+            <div
+                id="editor"
+                class="min-w-0 flex flex-col {cardShown ? "map-card shrink-0 border-l border-surface-200-800" : "flex-1"} {(isNarrow.current && narrowPane !== "editor") || (!isNarrow.current && mapOpen && mapMaximized && !cardShown) ? "hidden" : ""}"
+            >
+                {#if cardShown && cardNode}
+                    <!-- The section being written from the map, in place of the tabs -->
+                    <header class="flex items-center gap-0.5 px-2 py-1 border-b border-surface-200-800 bg-surface-50-950">
+                        <h2 class="flex-1 min-w-0 truncate pl-1 text-sm font-semibold" title={cardNode.detail ?? cardNode.name}>{cardNode.detail ?? cardNode.name}</h2>
+                        {#if !cardNode.detail}
+                            <button type="button" class="btn-icon btn-icon-sm" title="Rename" aria-label="Rename" onclick={() => void renameFromMap(cardNode)}><Pencil size={14} /></button>
+                        {/if}
+                        <button type="button" class="btn-icon btn-icon-sm" title="Run from here" aria-label="Run from here" onclick={() => void runPreview(false, { section: cardNode.name })}><Play size={14} /></button>
+                        <button type="button" class="btn-icon btn-icon-sm" title="Show in the whole script" aria-label="Show in the whole script" onclick={() => goFromMap(cardNode.location, true)}><Code size={14} /></button>
+                        <button type="button" class="btn-icon btn-icon-sm" title="Close" aria-label="Close" onclick={() => { closeCard(); mapPanel?.focus(); }}><X size={14} /></button>
+                    </header>
+                {:else}
+                    <EditorTabs project={p} />
+                {/if}
                 <!-- One editor per open file, so each keeps its own cursor and undo history -->
                 {#each p.openFiles as file (file.path)}
                     <div class="flex-1 min-h-0 flex flex-col {file.path === p.activePath ? "" : "hidden"}">
@@ -1485,6 +1610,8 @@
                     current={currentNode}
                     {trace}
                     maximized={mapMaximized}
+                    card={cardShown ? card?.id ?? null : null}
+                    onedit={(node, focus) => void openCard(node, focus)}
                     width={isNarrow.current || mapMaximized ? undefined : mapWidth}
                     ongoto={(node, focus) => { const location = node.graphNode?.location; if (location) goFromMap(location, focus); }}
                     ongotoedge={(edge: StoryMapEdge) => { const location = edge.edges[0]?.location ?? edge.location; if (location) goFromMap(location, false); }}
@@ -1562,6 +1689,11 @@
 {/if}
 
 <style>
+    /* The section being written beside the full-screen map */
+    .map-card {
+        width: min(34rem, 45%);
+    }
+
     .splitter {
         width: 0.25rem;
         flex-shrink: 0;

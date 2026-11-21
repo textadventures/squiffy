@@ -33,6 +33,17 @@ npm run test:e2e:ui
 npm run test:all
 ```
 
+## The editor
+
+`e2e/editor/` tests the editor (`app/`) itself, from its dev server, which Playwright starts on port 5188. Each test starts a new story in the browser and replaces its text. `story-map.spec.ts` covers the story map: writing a section beside the full-screen map, and editing from the map.
+
+```bash
+# Just the editor's tests
+npx playwright test --project=editor
+```
+
+The dev server uses the built packages, so run `npm run build` first if you've changed the compiler, runtime or another workspace.
+
 ## Test Stories
 
 Test stories are in `e2e/test-stories/`:
