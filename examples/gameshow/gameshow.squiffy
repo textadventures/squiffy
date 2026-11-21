@@ -9,6 +9,8 @@
     This file has the start, the wheel, the commercial break, the final round and the endings.
     Each round is in a file of its own in rounds/, and squiffy.json adds the side panel, the
     Prizes and How to play buttons, and the player's settings. studio.css is the studio.
+
+    The theme tune, sounds/theme.mp3, is by Keehar.
 --}}
 {{!-- Push Hank too far, and the show's over, wherever you are --}}
 {{#if patience <= 0 and not (at (array "Hank walks off" "Ending"))}}{{goto "Hank walks off" after="1.5s"}}{{/if}}

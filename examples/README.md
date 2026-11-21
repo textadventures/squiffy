@@ -27,7 +27,7 @@ npx @textadventures/squiffy-cli --test
 
 A test that fails because the story changed on purpose can be recorded again with `--test --update`. The tests use a fixed random seed, so changing what's random in a story (such as adding a `{{random}}` before one that a test depends on) can change what a test sees.
 
-The game show's sound effects and theme tune are made with [ffmpeg](https://ffmpeg.org), by `gameshow/sounds/make-sounds.py`.
+The game show's theme tune, `gameshow/sounds/theme.mp3`, is by Keehar, and credited in its ID3 tags. Its sound effects are made with [ffmpeg](https://ffmpeg.org), by `gameshow/sounds/make-sounds.py`.
 
 ## Adding an example
 

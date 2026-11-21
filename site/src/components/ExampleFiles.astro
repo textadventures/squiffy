@@ -1,6 +1,7 @@
 ---
-// A story's files, one to a tab, each scrolling if it's long
-import { Code, TabItem, Tabs } from "@astrojs/starlight/components";
+// A story's files: their names, wrapping onto as many lines as they need, above the one that's
+// shown. Without JavaScript, every file is shown, one after another.
+import { Code } from "@astrojs/starlight/components";
 import type { ExampleFile } from "../examples";
 
 interface Props {
@@ -8,25 +9,111 @@ interface Props {
 }
 
 const { files } = Astro.props;
+
+// Each name, with the folder it's in shown more quietly
+const names = files.map(file => {
+    const slash = file.path.lastIndexOf("/");
+    return { folder: file.path.slice(0, slash + 1), name: file.path.slice(slash + 1) };
+});
 ---
 
-<div class="example-files">
-    <Tabs>
-        {files.map(file => (
-            <TabItem label={file.path}>
-                <Code code={file.code} lang={file.lang} wrap />
-            </TabItem>
+<example-files class="example-files not-content">
+    <nav aria-label="Files">
+        <ul>
+            {names.map((name, index) => (
+                <li>
+                    <button type="button" data-index={index} aria-current={index == 0 ? "true" : undefined}>
+                        {name.folder && <span class="folder">{name.folder}</span>}{name.name}
+                    </button>
+                </li>
+            ))}
+        </ul>
+    </nav>
+    <div class="files">
+        {files.map((file, index) => (
+            <section data-index={index} class:list={{ current: index == 0 }} aria-label={file.path}>
+                <Code code={file.code} lang={file.lang} title={file.path} wrap />
+            </section>
         ))}
-    </Tabs>
-</div>
+    </div>
+</example-files>
 
 <style>
-    /* The tabs scroll sideways rather than wrap their names */
-    .example-files :global([role="tab"]) {
-        white-space: nowrap;
+    .example-files {
+        display: block;
+        margin-top: 1rem;
     }
-    .example-files :global(pre) {
+    nav ul {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.375rem;
+        list-style: none;
+        margin: 0 0 0.75rem;
+        padding: 0;
+        font-family: var(--__sl-font-mono);
+        font-size: var(--sl-text-xs);
+    }
+    nav li {
+        margin: 0;
+    }
+    nav button {
+        padding: 0.25rem 0.625rem;
+        border: 1px solid var(--sl-color-gray-5);
+        border-radius: 999px;
+        background: none;
+        color: var(--sl-color-gray-2);
+        font: inherit;
+        white-space: nowrap;
+        cursor: pointer;
+    }
+    nav button .folder {
+        color: var(--sl-color-gray-3);
+    }
+    nav button:hover {
+        border-color: var(--sl-color-gray-3);
+        color: var(--sl-color-white);
+    }
+    nav button[aria-current="true"] {
+        border-color: var(--sl-color-accent);
+        background: var(--sl-color-accent-low);
+        color: var(--sl-color-white);
+    }
+    nav button[aria-current="true"] .folder {
+        color: inherit;
+    }
+    nav button:focus-visible {
+        outline: 2px solid var(--sl-color-accent);
+        outline-offset: 2px;
+    }
+    /* Once the script is running, just the chosen file. Before then, or without it, all of them,
+       and no names to choose from. */
+    example-files:not(:defined) nav {
+        display: none;
+    }
+    example-files:defined section:not(.current) {
+        display: none;
+    }
+    .files :global(pre) {
         max-height: min(36rem, 75vh);
         overflow-y: auto;
     }
 </style>
+
+<script>
+    class ExampleFiles extends HTMLElement {
+        connectedCallback() {
+            const buttons = [...this.querySelectorAll<HTMLButtonElement>("nav button")];
+            const sections = [...this.querySelectorAll<HTMLElement>(".files > section")];
+            for (const button of buttons) {
+                button.addEventListener("click", () => {
+                    for (const other of buttons) other.removeAttribute("aria-current");
+                    button.setAttribute("aria-current", "true");
+                    for (const section of sections) {
+                        section.classList.toggle("current", section.dataset.index == button.dataset.index);
+                    }
+                });
+            }
+        }
+    }
+    customElements.define("example-files", ExampleFiles);
+</script>
