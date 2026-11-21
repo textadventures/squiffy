@@ -124,9 +124,9 @@ describe("converting gamebooks", () => {
         const { script } = await convert(gamebook(page("Page1", "Hello."), "<subtitle>A story</subtitle><author>Someone</author>"));
         expect(section(script, "Page1")).toBe([
             "@end",
-            "{{#if (visits \"Page1\") = 1}}",
+            "{{#once}}",
             "<div class=\"quest-title\" style=\"text-align: center\"><h1>Test Book</h1><p>A story</p><p>Someone</p></div>",
-            "{{/if}}",
+            "{{/once}}",
             "Hello.",
         ].join("\n"));
     });
@@ -275,14 +275,14 @@ describe("the text processor", () => {
 
     test("once and notfirst", async () => {
         expect((await text("{once:First time.}{notfirst:Again.}")).text)
-            .toBe("{{#if (visits \"Start\") = 1}}First time.{{/if}}{{#if (visits \"Start\") > 1}}Again.{{/if}}");
+            .toBe("{{#once}}First time.{{/once}}{{#once}}{{else}}Again.{{/once}}");
     });
 
     test("conditions in a link's text", async () => {
         // A link's text ends up in a text="..." string, so text in its conditions is in single
         // quotes, and a [name] is kept as it is
         expect((await text("{page:Other:Tell {if player.sex=Female:him}{if met king:, again}{once:!}}")).text)
-            .toBe("[[Tell {{#if player_sex = 'Female'}}him{{/if}}{{#if [met king]}}, again{{/if}}{{#if (visits 'Start') = 1}}!{{/if}}]](Other)");
+            .toBe("[[Tell {{#if player_sex = 'Female'}}him{{/if}}{{#if [met king]}}, again{{/if}}{{#once}}!{{/once}}]](Other)");
         const quoted = await text("{page:Other:Hi {if name=O'Brien:Pat}}");
         expect(quoted.text).toBe("[[Hi {{!-- Quest: {if name=O'Brien:Pat} --}}]](Other)");
         expect(quoted.problems).toHaveLength(1);
@@ -469,19 +469,17 @@ describe("scripts", () => {
                 msg ("The lamp is on.")
               }
             }`, "", [["End", "On"]]));
-        // At the top of a script, the first time is the first visit. Anywhere else, an attribute
-        // remembers it.
+        // Anywhere but the top of a script, it has a name to remember by
         expect(section(script, "Start")).toBe([
-            "{{#if (visits \"Start\") = 1}}",
+            "{{#once}}",
             "Hello.<br>",
             "{{else}}",
             "Hello again.<br>",
-            "{{/if}}",
+            "{{/once}}",
             "{{#if lamp}}",
-            "{{#unless firsttime_1}}",
-            "{{set \"firsttime_1\" true}}",
+            "{{#once \"firsttime_1\"}}",
             "The lamp is on.",
-            "{{/unless}}",
+            "{{/once}}",
             "{{/if}}",
             "",
             "[[On]](End)",
@@ -510,9 +508,9 @@ describe("scripts", () => {
         );
         // Links that start on a page are shown when the story starts
         expect(section(script, "Start")).toBe([
-            "{{#if (visits \"Start\") = 1}}",
+            "{{#once}}",
             "{{set \"link_Start_Left\" true}}",
-            "{{/if}}",
+            "{{/once}}",
             "A fork.",
             "",
             "{{#if link_Start_Left}}",
@@ -653,10 +651,9 @@ describe("scripts", () => {
         expect(section(script, "")).toBe([
             "@clear",
             "{{inc \"turns_\"}}",
-            "{{#unless firsttime_1}}",
-            "{{set \"firsttime_1\" true}}",
+            "{{#once \"firsttime_1\"}}",
             "Welcome.<br>",
-            "{{/unless}}",
+            "{{/once}}",
             "{{#if (at \"End\")}}",
             "Nearly done.",
             "{{/if}}",

@@ -33,6 +33,29 @@ To display the result of a calculation, use `{{= ...}}`:
 
 {{quantity}} apples at {{price}} each costs {{= price * quantity}}."></Sample>
 
+## The first time
+
+`{{#once}}` shows its text the first time it's shown, and never again. With an `{{else}}`, it shows that from the second time on.
+
+<Sample script="[[cave]]:
+You're in the cave. {{#once}}A bat flies out, right past your ear!{{else}}It's quiet now.{{/once}}
+
+[[Go out and come back in]](cave)"></Sample>
+
+Each `{{#once}}` remembers for itself, so you can have several in a section, and one in text that you [embed](/basic-concepts/#embed-text) in several places is still only shown the first time, wherever that is. Helpers inside it, such as `{{inc}}`, only run that first time too.
+
+To have the same thing happen once across different places, give them the same name:
+
+```squiffy
+[[kitchen]]:
+{{#once "smell"}}Something is burning.{{/once}}
+
+[[hall]]:
+{{#once "smell"}}Something is burning.{{/once}}
+```
+
+`{{#firsttime}}` is another name for `{{#once}}`. To check whether the player has been to a particular section or passage before, use [`seen` or `visits`](/attributes/#the-seen-helper) instead.
+
 ## Random
 
 Use the `{{random}}` helper to insert random text. You can provide a list of options using the `array` function.

@@ -19,6 +19,15 @@ You have {{= gold}} {{= gold = 1 ? "coin" : "coins"}}.
 
 Operators and precedence are in attributes.md.
 
+## The first time
+
+```squiffy
+You're in the cave. {{#once}}A bat flies out!{{else}}It's quiet now.{{/once}}
+{{#once "smell"}}Something is burning.{{/once}}
+```
+
+`{{#once}}` shows its text the first time it's shown, and the `{{else}}` text (or nothing) from then on. Each one remembers for itself, including in embedded text, and helpers inside it only run that first time. Ones given the same name share their memory, for something that happens once across several sections. `{{#firsttime}}` is the same. Prefer it to `{{#if (visits "cave") = 1}}`; use `seen`/`visits` to ask about another section or passage.
+
 ## Random
 
 ```squiffy

@@ -4988,3 +4988,132 @@ test("@ui has run when a saved game is loaded before the story begins, and runs 
     await vi.waitFor(() => expect(element.textContent).toContain("ONE!"));
     expect((window as any).uiRuns).toBe(3);
 });
+
+describe("{{#once}} and {{#firsttime}}", () => {
+    const lastSection = (element: HTMLElement) =>
+        element.querySelector(".squiffy-output-section:last-child")!.textContent!.trim().replace(/\s+/g, " ");
+
+    test("Shows its text the first time, and the {{else}} text after that", async () => {
+        const script = `
+[[room]]:
+{{#once}}A bat flies out.{{else}}The cave is quiet.{{/once}} [[again]](room)
+`;
+        const { squiffyApi, element } = await initScript(script);
+        expect(lastSection(element)).toBe("A bat flies out. again");
+        await squiffyApi.clickLink(findLink(element, "section", "again", true));
+        expect(lastSection(element)).toBe("The cave is quiet. again");
+        await squiffyApi.clickLink(findLink(element, "section", "again", true));
+        expect(lastSection(element)).toBe("The cave is quiet. again");
+    });
+
+    test("Shows nothing after the first time when there's no {{else}}", async () => {
+        const script = `
+[[room]]:
+Dark.{{#once}} A bat flies out.{{/once}} [[again]](room)
+`;
+        const { squiffyApi, element } = await initScript(script);
+        expect(lastSection(element)).toBe("Dark. A bat flies out. again");
+        await squiffyApi.clickLink(findLink(element, "section", "again", true));
+        expect(lastSection(element)).toBe("Dark. again");
+    });
+
+    test("Each one remembers for itself", async () => {
+        const script = `
+[[room]]:
+{{#if lit}}{{#once}}Light!{{else}}Lit.{{/once}}{{else}}{{#once}}Dark!{{else}}Unlit.{{/once}}{{/if}} [[again]](room) [[light]](room, lit = true)
+`;
+        const { squiffyApi, element } = await initScript(script);
+        expect(lastSection(element)).toBe("Dark! again light");
+        await squiffyApi.clickLink(findLink(element, "section", "again", true));
+        expect(lastSection(element)).toBe("Unlit. again light");
+        await squiffyApi.clickLink(findLink(element, "section", "light", true));
+        expect(lastSection(element)).toBe("Light! again light");
+        await squiffyApi.clickLink(findLink(element, "section", "again", true));
+        expect(lastSection(element)).toBe("Lit. again light");
+    });
+
+    test("Remembers in embedded text, wherever it's embedded", async () => {
+        const script = `
+[[one]]:
+{{embed "bell"}} [[two]]
+
+[[two]]:
+{{embed "bell"}} [[one]]
+
+[[bell]]:
+A bell rings.{{#once}} You've never heard it before.{{/once}}
+`;
+        const { squiffyApi, element } = await initScript(script);
+        expect(lastSection(element)).toBe("A bell rings. You've never heard it before. two");
+        await squiffyApi.clickLink(findLink(element, "section", "two", true));
+        expect(lastSection(element)).toBe("A bell rings. one");
+    });
+
+    test("The same text in two passages is remembered separately", async () => {
+        const script = `
+[[room]]:
+[a] [b]
+
+[a]:
+A: {{#once}}new{{else}}old{{/once}}
+
+[b]:
+B: {{#once}}new{{else}}old{{/once}}
+`;
+        const { squiffyApi, element } = await initScript(script);
+        await squiffyApi.clickLink(findLink(element, "passage", "a", true));
+        await squiffyApi.clickLink(findLink(element, "passage", "b", true));
+        expect(lastSection(element)).toBe("a bA: newB: new");
+    });
+
+    test("Ones with the same name share their memory", async () => {
+        const script = `
+[[one]]:
+{{#once "warning"}}Mind the gap.{{/once}} [[two]]
+
+[[two]]:
+{{#once "warning"}}Mind the gap.{{else}}You mind it.{{/once}}
+`;
+        const { squiffyApi, element } = await initScript(script);
+        expect(lastSection(element)).toBe("Mind the gap. two");
+        await squiffyApi.clickLink(findLink(element, "section", "two", true));
+        expect(lastSection(element)).toBe("You mind it.");
+    });
+
+    test("Going back undoes it", async () => {
+        const script = `
+[[start]]:
+[[room]]
+
+[[room]]:
+{{#once}}A bat flies out.{{else}}The cave is quiet.{{/once}}
+`;
+        const { squiffyApi, element } = await initScript(script);
+        await squiffyApi.clickLink(findLink(element, "section", "room", true));
+        expect(lastSection(element)).toBe("A bat flies out.");
+        squiffyApi.goBack();
+        await squiffyApi.clickLink(findLink(element, "section", "room", true));
+        expect(lastSection(element)).toBe("A bat flies out.");
+    });
+
+    test("Helpers inside it only run the first time", async () => {
+        const script = `
+[[room]]:
+{{#once}}{{inc "bats"}}{{/once}}Bats: {{bats}} [[again]](room)
+`;
+        const { squiffyApi, element } = await initScript(script);
+        await squiffyApi.clickLink(findLink(element, "section", "again", true));
+        expect(lastSection(element)).toBe("Bats: 1 again");
+    });
+
+    test("firsttime is another name for it", async () => {
+        const script = `
+[[room]]:
+{{#firsttime}}A bat flies out.{{else}}The cave is quiet.{{/firsttime}} [[again]](room)
+`;
+        const { squiffyApi, element } = await initScript(script);
+        expect(lastSection(element)).toBe("A bat flies out. again");
+        await squiffyApi.clickLink(findLink(element, "section", "again", true));
+        expect(lastSection(element)).toBe("The cave is quiet. again");
+    });
+});
