@@ -14,6 +14,7 @@ Everything that can go in a `.squiffy` file. Docs: https://squiffystory.com/synt
 | `[]:` | A master passage: runs with every passage in its section, or every passage in the story if it's in `[[]]` |
 | `[@1]:`, `[@2]:`... | Runs after the player has clicked that many passage links in the section |
 | `[@last]:` | Runs once every passage link in the section has been clicked |
+| `[@after]:` | Runs after every passage link clicked in the section (`@repeat` ones too), before `@1`/`@last`. In `[[]]`, after every passage in the story |
 | `[snippet: name]:` | A snippet for the editor's Add menu, not part of the story |
 
 Text before the first section is the start of the story, unless `@start` names another section. With `squiffy.json`, the story starts in the main file.

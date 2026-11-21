@@ -614,6 +614,19 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         passages.push(passage);
         runFns.push(() => run(passage, `[[${get("_section")}]][${passageName}]`));
 
+        // [@after] runs after every passage, including those with @repeat (#523): the section's,
+        // then the master section's, the other way round from [], so the master's wraps the section's
+        const after = currentSection.passages?.["@after"];
+        if (after) {
+            passages.push(after);
+            runFns.push(() => run(after, `[[${get("_section")}]][@after]`));
+        }
+        const masterAfter = masterSection?.passages?.["@after"];
+        if (masterAfter) {
+            passages.push(masterAfter);
+            runFns.push(() => run(masterAfter, "[[]][@after]"));
+        }
+
         const turnPassageName = "@" + get("_turncount");
         // A passage with @repeat doesn't count as a turn, so @1, @2... and @last ran already if they're due
         if (currentSection.passages && !passage.repeat) {
@@ -625,7 +638,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             if ("@last" in currentSection.passages && get("_turncount") >= (currentSection.passageCount || 0)) {
                 const turnPassage = currentSection.passages["@last"];
                 passages.push(turnPassage);
-                runFns.push(() => run(turnPassage, `[[${get("_section")}]][${turnPassageName}]`));
+                runFns.push(() => run(turnPassage, `[[${get("_section")}]][@last]`));
             }
         }
 

@@ -322,6 +322,33 @@ It is just a coffee mug.
 [@last]:
 You have examined every item."></Sample>
 
+### Running a passage after every click
+
+`[@after]:` runs after every passage link the player clicks in its section, whichever it is. It's for something that happens on every click, such as time passing, without writing `[@1]:`, `[@2]:`, `[@3]:`... and working out how many clicks there can be.
+
+<Sample script="The train rattles on. You watch the [girl singing], the [man reading a book] and the [old woman].
+
+[girl singing]:
+She is nodding her head to the music in her enormous earphones.
+
+[man reading a book]:
+He's been reading the same page of *War and Peace* for a while now.
+
+[old woman]:
+She eyes you suspiciously.
+
+[@after]:
+@inc minutes
+{{= minutes}} {{= minutes = 1 ? &quot;minute&quot; : &quot;minutes&quot;}} have passed.
+
+[@last]:
+The train is pulling into the station."></Sample>
+
+- It runs after the passage that was clicked, and before `[@1]`, `[@2]`... and `[@last]`, so `[@last]` can still finish the section with a [`{{goto}}`](#go-to-another-section).
+- It runs after passages with [`@repeat`](#passages-you-can-click-again) too, although they don't count towards `[@1]`... and `[@last]`.
+- In the [master section](#master-sections-and-passages), it runs after every passage in the story, after the section's own `[@after]`, if it has one.
+- It doesn't run when the player goes to a section. For that, use the [master section](#master-sections-and-passages).
+
 ## Clear the screen
 
 Any section or passage can clear the screen using @clear on a line on its own:

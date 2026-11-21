@@ -349,6 +349,82 @@ Last turn.
     expectSingleBlock("c", ["You chose c.", "Last turn."]);
 });
 
+test("[@after] runs after every passage, before @1 and @last, and with @repeat passages", async () => {
+    // https://github.com/textadventures/squiffy/issues/523
+    const script = `
+[[start]]:
+Talk to the [guard], or look at the [a] or the [b].
+
+[guard]:
+@repeat
+Talk.
+
+[a]:
+A.
+
+[b]:
+B.
+
+[@after]:
+@inc ticks
+Tick {{ticks}}.
+
+[@1]:
+One.
+
+[@last]:
+Last.
+`;
+    const { squiffyApi, element } = await initScript(script);
+    const passageTexts = () => Array.from(element.querySelectorAll(".squiffy-output-passage"))
+        .map(p => Array.from(p.querySelectorAll(".squiffy-output-block > *")).map(c => c.textContent!.trim()));
+
+    await squiffyApi.clickLink(findLink(element, "passage", "guard"));
+    expect(passageTexts().at(-1)).toEqual(["Talk.", "Tick 1."]);
+    await squiffyApi.clickLink(findLink(element, "passage", "a"));
+    expect(passageTexts().at(-1)).toEqual(["A.", "Tick 2.", "One."]);
+    await squiffyApi.clickLink(findLink(element, "passage", "b"));
+    expect(passageTexts().at(-1)).toEqual(["B.", "Tick 3.", "Last."]);
+    expect(squiffyApi.get("ticks")).toBe(3);
+});
+
+test("[@after] in the master section runs after every passage in the story, after the section's own", async () => {
+    // https://github.com/textadventures/squiffy/issues/523
+    const script = `
+[[]]:
+
+[@after]:
+Time passes.
+
+[[start]]:
+Look at the [a], or go [[on]].
+
+[a]:
+A.
+
+[@after]:
+In start.
+
+[[on]]:
+Look at the [b].
+
+[b]:
+B.
+`;
+    const { squiffyApi, element } = await initScript(script);
+    const lastPassage = () => Array.from(element.querySelectorAll(".squiffy-output-passage")).at(-1)!
+        .querySelectorAll(".squiffy-output-block > *");
+    const texts = () => Array.from(lastPassage()).map(c => c.textContent!.trim());
+
+    await squiffyApi.clickLink(findLink(element, "passage", "a"));
+    expect(texts()).toEqual(["A.", "In start.", "Time passes."]);
+    // Going to a section isn't a passage, so it doesn't run
+    await squiffyApi.clickLink(findLink(element, "section", "on"));
+    expect(element.textContent!.match(/Time passes\./g)).toHaveLength(1);
+    await squiffyApi.clickLink(findLink(element, "passage", "b"));
+    expect(texts()).toEqual(["B.", "Time passes."]);
+});
+
 test("A passage with @repeat can be clicked again, and doesn't count towards @1 or @last", async () => {
     // https://github.com/textadventures/squiffy/issues/104
     const script = `
