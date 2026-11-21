@@ -13,6 +13,7 @@
     import { nextDiagnostic } from "@codemirror/lint";
     import { editorSearch, editorSearchKeymap } from "@textadventures/editor-search";
     import { editorExtensions } from "#lib/codemirror-theme.js";
+    import { narrowed } from "#lib/narrow.js";
     import { foldingChanged, foldMarker } from "#lib/codemirror-folding.js";
 
     interface Props {
@@ -59,7 +60,8 @@
                 highlightActiveLineGutter(),
                 highlightSelectionMatches(),
                 // Find and Replace and Go to line, in place of CodeMirror's own panels
-                editorSearch(),
+                // Only in what's shown, when the editor's narrowed to one section
+                editorSearch({ within: narrowed }),
                 history(),
                 bracketMatching(),
                 closeBrackets(),

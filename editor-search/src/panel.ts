@@ -51,7 +51,8 @@ export class SearchPanel implements Panel {
     private regexpToggle: Toggle;
     private needMatches: HTMLButtonElement[];
 
-    constructor(private view: EditorView) {
+    // `test` says which matches count, when only part of the document is searched
+    constructor(private view: EditorView, private test?: SearchQuery["test"]) {
         const phrase = (text: string) => view.state.phrase(text);
         const query = this.query = getSearchQuery(view.state);
 
@@ -162,6 +163,7 @@ export class SearchPanel implements Panel {
             regexp: pressed(this.regexpToggle.button),
             wholeWord: pressed(this.wordToggle.button),
             replace: this.replaceField.value,
+            test: this.test,
         });
         if (query.eq(this.query)) return;
         this.query = query;

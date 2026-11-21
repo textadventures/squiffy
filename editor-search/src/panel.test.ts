@@ -158,3 +158,42 @@ describe("Go to line", () => {
         expect(binding?.run).toBe(openGotoLine);
     });
 });
+
+describe("searching part of the document", () => {
+    // Only the middle line is searched: "one two one"
+    const doc = "one\none two one\none";
+    const within = () => ({ from: 4, to: 15 });
+
+    function narrowEditor() {
+        view = new EditorView({ doc, parent: document.body, extensions: [editorSearch({ within }), keymap.of(editorSearchKeymap)] });
+        return view;
+    }
+
+    test("finds, counts and replaces only what's in it", () => {
+        narrowEditor();
+        view.dispatch({ selection: { anchor: 4 } });
+        openSearchPanel(view);
+        openReplacePanel(view);
+        type($("input[name=search]"), "one");
+        expect($(".ed-search-count").textContent).toBe("1 of 2");
+        expect(view.state.selection.main.from).toBe(4);
+        // Round again, without leaving
+        findNext(view);
+        findNext(view);
+        expect(view.state.selection.main.from).toBe(4);
+        type($("input[name=replace]"), "1");
+        $<HTMLButtonElement>("button[name=replaceAll]").click();
+        expect(view.state.doc.toString()).toBe("one\n1 two 1\none");
+    });
+
+    test("so does a search for what's selected", () => {
+        narrowEditor();
+        view.dispatch({ selection: { anchor: 8, head: 11 } });
+        openSearchPanel(view);
+        expect(getSearchQuery(view.state).search).toBe("two");
+        view.dispatch({ selection: { anchor: 4, head: 7 } });
+        openSearchPanel(view);
+        expect(getSearchQuery(view.state).search).toBe("one");
+        expect($(".ed-search-count").textContent).toBe("1 of 2");
+    });
+});

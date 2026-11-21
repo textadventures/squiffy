@@ -100,6 +100,22 @@ export function insertHeaderEdit(text: string, afterLine: number | undefined, he
     return { range: { start: at, end: at }, newText: `\n\n${header}${needsLine ? "\n" : ""}` };
 }
 
+// A link, and the header of the new section or passage it links to, which has to come after it.
+// A link on a blank line under a section's text (where the cursor is in a section that's empty,
+// say) is past where the header would go, so there the header follows the link instead.
+export function linkThenHeaderEdits(text: string, link: TextEdit, afterLine: number | undefined, header: string): TextEdit[] {
+    const headerEdit = insertHeaderEdit(text, afterLine, header);
+    const at = link.range.start, headerAt = headerEdit.range.start;
+    // At the same place, they're one edit, so that the order's certain
+    if (at.line == headerAt.line && at.character == headerAt.character && link.range.end.line == at.line && link.range.end.character == at.character) {
+        return [{ range: link.range, newText: link.newText + headerEdit.newText }];
+    }
+    if (at.line < headerAt.line || (at.line == headerAt.line && at.character < headerAt.character)) return [link, headerEdit];
+    const lines = splitLines(text);
+    const needsLine = link.range.end.line + 1 >= lines.length || !blank(lines[link.range.end.line + 1]);
+    return [{ range: link.range, newText: `${link.newText}\n\n${header}${needsLine ? "\n" : ""}` }];
+}
+
 // Removes whole lines (each range is its first and last line), with the blank lines after them.
 // Ranges that touch, or have only blank lines between them, are removed as one.
 export function deleteLinesEdits(text: string, ranges: { start: number; end: number }[]): TextEdit[] {

@@ -23,6 +23,8 @@ new EditorView({
 
 `@codemirror/search` still does the searching, highlighting and replacing, since this is its panel (`search({ createPanel })`). So its commands (`openSearchPanel`, `findNext`, `replaceAll`...) and `getSearchQuery` work as before.
 
+`editorSearch()` takes @codemirror/search's `caseSensitive`, `wholeWord` and `regexp` defaults, and `within`: a function from the editor's state to the part of the document to search (`{ from, to }`, or null for all of it), for a host that shows only part of it. Matches outside it aren't found, counted or replaced. The Squiffy editor uses it while one section is being written from the story map, with the rest of the script hidden.
+
 ## What it does
 
 - **Find**: searches as you type, going to the first match from the cursor, with a count ("3 of 17", up to `MATCH_LIMIT`). Toggles for match case, whole word and regular expression (Alt+C, Alt+W, Alt+R). Enter and Shift+Enter go to the next and previous match.

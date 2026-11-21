@@ -164,6 +164,61 @@ test.describe("writing on the map", () => {
         expect((await lines(page)).join("\n")).toBe(story.trimEnd());
     });
 
+    test("Find and Replace only search the section being written", async ({ page }) => {
+        await openStory(page);
+        await write(page, "section:cave");
+        await page.keyboard.press("ControlOrMeta+F");
+        await page.locator("#editor input[name=search]").fill("hill");
+        // The script has [[hill]] in three places, and one of them is in the cave
+        await expect(page.locator("#editor .ed-search-count")).toHaveText("1 of 1");
+        await page.locator("#editor button[name=expand]").click();
+        await page.locator("#editor input[name=replace]").fill("mountain");
+        await page.locator("#editor button[name=replaceAll]").click();
+        await page.keyboard.press("Escape");
+        const script = await wholeScript(page);
+        expect(script).toContain("or go to the [[mountain]].");
+        expect(script).toContain("Go to the [[cave]] or the [[hill]].");
+        expect(script).toContain("[[hill]]:");
+    });
+
+    test("Add, in the toolbar, makes the selected text a link to a new section, which isn't shown in the card", async ({ page }) => {
+        await openStory(page);
+        await write(page, "section:cave");
+        await page.keyboard.press("ControlOrMeta+Home");
+        await page.keyboard.type("A tunnel. ");
+        for (let i = 0; i < 2; i++) await page.keyboard.press("ArrowLeft");
+        for (let i = 0; i < 6; i++) await page.keyboard.press("Shift+ArrowLeft");
+        await page.getByRole("button", { name: "Add", exact: true }).click();
+        await page.getByRole("menuitem", { name: "Section", exact: true }).click();
+        await expect(box(page, "section:tunnel")).toBeVisible();
+        // Still the cave, with the link, and without the new section's header under it
+        await expect(cardTitle(page)).toHaveText("cave");
+        await expect(async () => {
+            expect(await lines(page)).toEqual(["A [[tunnel]]. It's dark. Look at the [wall], or go to the [[hill]].", "", "[wall]:", "Damp."]);
+        }).toPass();
+        expect(await wholeScript(page)).toContain("[wall]:\nDamp.\n\n[[tunnel]]:\n\n[[empty]]:");
+    });
+
+    test("with nothing selected, Add asks for the name on the map", async ({ page }) => {
+        await openStory(page);
+        await write(page, "section:cave");
+        await page.getByRole("button", { name: "Add", exact: true }).click();
+        await page.getByRole("menuitem", { name: "Section", exact: true }).click();
+        await expect(page.getByRole("textbox", { name: "New section's name" })).toBeFocused();
+        await page.keyboard.type("pool");
+        await page.keyboard.press("Enter");
+        await expect(box(page, "section:pool")).toBeVisible();
+        // The new section's selected, so it's the one to write now
+        await expect(cardTitle(page)).toHaveText("pool");
+        await page.getByRole("button", { name: "Add", exact: true }).click();
+        await page.getByRole("menuitem", { name: "Passage", exact: true }).click();
+        await expect(page.getByRole("textbox", { name: "New passage's name" })).toBeFocused();
+        await page.keyboard.type("drip");
+        await page.keyboard.press("Enter");
+        await expect(box(page, "passage:pool/drip")).toBeVisible();
+        await expect(async () => expect(await lines(page)).toEqual(["[drip]", "", "[drip]:"])).toPass();
+    });
+
     test("the text before the first section can be written too", async ({ page }) => {
         await openStory(page, "@title Test\nHello. [[on]]\n\n[[on]]:\n@end\nDone.\n");
         await write(page, "section:_default");

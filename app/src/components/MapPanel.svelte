@@ -353,6 +353,23 @@
         });
     }
 
+    // Asks for the name of a new section to go after `near` in the script, under its box, and of
+    // a new passage in a section: for the app's own Add button, while the script's out of sight
+    export function nameSection(near: GraphNode) {
+        const node = base?.nodes.find(n => n.id == near.id);
+        const at = map?.positionOf(near.id);
+        if (!node || !at) return;
+        askName({ x: at.x, y: at.y + node.height + 8 }, "New section's name", "", name => {
+            const problem = graph ? checkSectionName(name, graph) : undefined;
+            if (!problem) oncreate(name, { near });
+            return problem;
+        });
+    }
+
+    export function namePassage(section: GraphNode) {
+        addPassage(section);
+    }
+
     // A broken link's missing section or passage, made from its red marker. Says whether it can be:
     // an embed, or a name only known when the story runs, has to be sorted out in the script.
     function createMissing(node: StoryMapNode): boolean {
