@@ -30,6 +30,9 @@
     import CodeEditor from "#components/CodeEditor.svelte";
     import ReferencesPanel from "#components/ReferencesPanel.svelte";
     import ProblemsPanel from "#components/ProblemsPanel.svelte";
+    import FindInFilesPanel from "#components/FindInFilesPanel.svelte";
+    import { findInFiles, isSearchable, type FindResults } from "#lib/find-in-files.js";
+    import { isValidSearch, type SearchSpec, type TextMatch } from "@textadventures/editor-search";
     import { collectProblems, countProblems, type Problem } from "#lib/problems.js";
     import type { CodeAction } from "squiffy-compiler/language-service";
     import PreviewPanel from "#components/PreviewPanel.svelte";
@@ -61,6 +64,13 @@
     // Session-only, like the other panels' sizes
     let problemsHeight = $state(200);
     let problemsPanel = $state<ReturnType<typeof ProblemsPanel>>();
+    // Find in Files (Ctrl/Cmd+Shift+F): what to search for, and what was found
+    let findOpen = $state(false);
+    let findSpec = $state<SearchSpec>({ search: "" });
+    let findResults = $state<FindResults | null>(null);
+    let findHeight = $state(240);
+    let findPanel = $state<ReturnType<typeof FindInFilesPanel>>();
+    let findInvalid = $derived(!!findSpec.search && !isValidSearch(findSpec));
     // The text of each open file when the problems were found, as their fixes are for that text
     let problemTexts = new Map<string, string>();
     let assetsOpen = $state(false);
@@ -148,6 +158,10 @@
                 e.preventDefault();
                 e.stopPropagation();
                 void toggleProblems();
+            } else if (e.shiftKey && e.key.toLowerCase() === "f") {
+                e.preventDefault();
+                e.stopPropagation();
+                void openFindInFiles();
             } else if (e.shiftKey && e.key.toLowerCase() === "o") {
                 e.preventDefault();
                 // At once when the outline's showing, so the next keys go to the search box; on a
@@ -342,6 +356,7 @@
             { label: "Copy", shortcut: formatKey("Mod-c"), disabled: !hasSelection, action: () => clipboard("copy", "Mod-c") },
             { label: "Paste", shortcut: formatKey("Mod-v"), disabled: readOnly, action: () => clipboard("paste", "Mod-v") },
             { label: "Find and replace", shortcut: formatKey("Mod-f"), divider: true, action: () => runCommand(view, "find") },
+            { label: "Find in files", shortcut: formatKey("Mod-Shift-f"), action: () => void openFindInFiles() },
         );
         editorMenu = { view, x, y, keyboard, items };
     }
@@ -526,6 +541,61 @@
         narrowPane = "editor";
         await tick();
         problemsPanel?.focus();
+    }
+
+    // Opens Find in Files, or goes back to its search box. Text selected in the editor, on one
+    // line, is what it searches for.
+    async function openFindInFiles() {
+        const state = activeView()?.state;
+        const selected = state && !state.selection.main.empty ? state.sliceDoc(state.selection.main.from, state.selection.main.to) : "";
+        if (selected && !selected.includes("\n")) findSpec = { ...findSpec, search: findSpec.regexp ? selected.replace(/[\\^$.*+?()[\]{}|]/g, "\\$&") : selected };
+        findOpen = true;
+        narrowPane = "editor";
+        await tick();
+        findPanel?.focus();
+    }
+
+    function closeFindInFiles() {
+        findOpen = false;
+        activeView()?.focus();
+    }
+
+    // Searches again a moment after the search, the list of files or the text of an open file
+    // changes, so the results keep up with the author's typing. An open file is searched as it
+    // is in its editor, saved or not.
+    let findRequest = 0;
+    $effect(() => {
+        const current = p;
+        if (!findOpen || !current) return;
+        const spec = $state.snapshot(findSpec);
+        const paths = current.files.map(f => f.path).filter(isSearchable);
+        const open = new Map(current.openFiles.map(f => [f.path, f.text]));
+        const request = ++findRequest;
+        if (!spec.search || !isValidSearch(spec)) {
+            findResults = null;
+            return;
+        }
+        const read = async (path: string) => {
+            const text = open.get(path);
+            if (text !== undefined) return text;
+            try {
+                return await current.fs.readText(path);
+            } catch {
+                return undefined;
+            }
+        };
+        const timer = setTimeout(async () => {
+            const results = await findInFiles(paths, read, spec);
+            if (request === findRequest) findResults = results;
+        }, 200);
+        return () => clearTimeout(timer);
+    });
+
+    function goToMatch(file: string, match: TextMatch) {
+        void goToLocation({
+            file,
+            range: { start: { line: match.line, character: match.column }, end: { line: match.endLine, character: match.endColumn } },
+        });
     }
 
     function goToProblem(problem: Problem) {
@@ -1100,6 +1170,7 @@
             {problemCounts}
             {problemsOpen}
             ontoggleproblems={() => void toggleProblems()}
+            onfindinfiles={() => void openFindInFiles()}
             ontogglemap={toggleMap}
             onrun={fromCursor => runPreview(fromCursor)}
             onassets={() => { assetsOpen = true; }}
@@ -1181,6 +1252,17 @@
                         onselect={goToProblem}
                         onfix={fix => void applyFix(fix)}
                         onclose={() => { problemsOpen = false; activeView()?.focus(); }}
+                    />
+                {/if}
+                {#if findOpen}
+                    <FindInFilesPanel
+                        bind:this={findPanel}
+                        bind:spec={findSpec}
+                        bind:height={findHeight}
+                        results={findResults}
+                        invalid={findInvalid}
+                        onselect={goToMatch}
+                        onclose={closeFindInFiles}
                     />
                 {/if}
                 {#if references}

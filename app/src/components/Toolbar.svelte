@@ -44,6 +44,7 @@
     import Undo2 from "@lucide/svelte/icons/undo-2";
     import Redo2 from "@lucide/svelte/icons/redo-2";
     import Search from "@lucide/svelte/icons/search";
+    import FileSearch from "@lucide/svelte/icons/file-search";
     import FoldVertical from "@lucide/svelte/icons/fold-vertical";
     import UnfoldVertical from "@lucide/svelte/icons/unfold-vertical";
     import Info from "@lucide/svelte/icons/info";
@@ -80,6 +81,8 @@
         onexport?: (kind: ExportKind) => void;
         // Undo, redo, find, fold all and unfold all, in the editor
         oncommand?: (command: EditorCommand) => void;
+        // Opens Find in Files
+        onfindinfiles?: () => void;
         // Adds a section or passage
         onadd?: (kind: "section" | "passage") => void;
         // Inserts a snippet at the cursor
@@ -91,7 +94,7 @@
         onplaytab?: () => void;
     }
 
-    let { outlineOpen = false, ontoggleoutline, mapOpen = false, ontogglemap, problemCounts = { error: 0, warning: 0, hint: 0 }, problemsOpen = false, ontoggleproblems, onrun, onassets, onfonts, ondownloadproject, onexport, oncommand, onadd, onsnippet, snippets = [], onabout, onplaytab }: Props = $props();
+    let { outlineOpen = false, ontoggleoutline, mapOpen = false, ontogglemap, problemCounts = { error: 0, warning: 0, hint: 0 }, problemsOpen = false, ontoggleproblems, onfindinfiles, onrun, onassets, onfonts, ondownloadproject, onexport, oncommand, onadd, onsnippet, snippets = [], onabout, onplaytab }: Props = $props();
 
     const mod = isMac ? "⌘" : "Ctrl+";
 
@@ -155,6 +158,7 @@
         ];
         const view: DropdownMenuItem[] = [
             { label: "Find and replace", action: () => oncommand?.("find"), icon: Search },
+            { label: "Find in files", action: () => onfindinfiles?.(), icon: FileSearch },
             { label: "Collapse all", action: () => oncommand?.("foldAll"), icon: FoldVertical },
             { label: "Expand all", action: () => oncommand?.("unfoldAll"), icon: UnfoldVertical },
         ];
