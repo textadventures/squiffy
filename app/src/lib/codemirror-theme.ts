@@ -43,6 +43,26 @@ export const editorTheme = EditorView.theme({
     "&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection": {
         backgroundColor: "color-mix(in srgb, var(--color-primary-500) 25%, transparent)",
     },
+    // What Find matches: yellow, as CodeMirror's own is, but from the theme, so it suits a dark
+    // background too. Stronger than a warning's tint below, and the match the author is on has an
+    // outline as well.
+    ".cm-searchMatch": {
+        backgroundColor: "color-mix(in srgb, var(--color-warning-500) 35%, transparent)",
+        borderRadius: "2px",
+    },
+    ".cm-searchMatch.cm-searchMatch-selected": {
+        backgroundColor: "color-mix(in srgb, var(--color-warning-500) 60%, transparent)",
+        outline: "1px solid var(--color-warning-700-300)",
+    },
+    // The other places the selected text appears (highlightSelectionMatches): neutral, so they
+    // don't look like matches of a search
+    ".cm-selectionMatch": {
+        backgroundColor: "color-mix(in srgb, var(--color-surface-600-400) 22%, transparent)",
+        borderRadius: "2px",
+    },
+    ".cm-searchMatch .cm-selectionMatch": {
+        backgroundColor: "transparent",
+    },
     ".cm-activeLine": {
         backgroundColor: "color-mix(in srgb, var(--color-surface-600-400) 10%, transparent)",
     },
