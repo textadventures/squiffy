@@ -4715,6 +4715,30 @@ describe("{{#every}}", () => {
         expect(squiffyApi.get("n")).toBe(3);
     });
 
+    test("scrolls down to the new text once its first tick has filled it in", async () => {
+        // The page is too short, when the section is written, to scroll down to where its text
+        // starts, as the {{#every}} is empty until it ticks. Then it's taller.
+        const { squiffyApi, element } = await initScript("[[start]]:\nStart. [[next]]\n\n[[next]]:\n{{#every 100 times=1}}\n\nA big box.\n\n{{/every}}", true);
+        let pageHeight = 900;
+        Object.defineProperty(window.HTMLElement.prototype, "scrollHeight", { configurable: true, get: () => 1000 });
+        Object.defineProperty(document.documentElement, "scrollHeight", { configurable: true, get: () => pageHeight });
+        Object.defineProperty(document.documentElement, "scrollTop", { configurable: true, get: () => 0 });
+        const scrollTo = vi.fn();
+        window.scrollTo = scrollTo;
+
+        try {
+            await squiffyApi.clickLink(findLink(element, "section", "next"));
+            expect(scrollTo).toHaveBeenLastCalledWith({ top: 900 - window.innerHeight, behavior: "smooth" });
+
+            pageHeight = 2000;
+            await vi.advanceTimersByTimeAsync(100);
+            expect(scrollTo).toHaveBeenLastCalledWith({ top: 1000, behavior: "smooth" });
+        }
+        finally {
+            delete (window.HTMLElement.prototype as any).scrollHeight;
+        }
+    });
+
     test("append=true adds to what it showed, and times= stops it", async () => {
         const { element } = await initScript("{{#every 500 append=true times=3}}Drip. {{/every}}", true);
         await vi.advanceTimersByTimeAsync(5000);
