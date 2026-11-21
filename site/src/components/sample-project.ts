@@ -10,7 +10,7 @@ import { squiffyLanguage } from "@textadventures/squiffy-codemirror";
 import { emit, formatDiagnostic, resolveCssUrl, rewriteCssUrls } from "squiffy-compiler";
 import { createLanguageService } from "squiffy-compiler/language-service";
 import { previewHtml } from "squiffy-runtime/preview-html";
-import { createPreviewHost, iframeChannel, setUpPreviewFrame, type PreviewTheme } from "squiffy-runtime/preview-host";
+import { createPreviewHost, iframeChannel, type PreviewTheme } from "squiffy-runtime/preview-host";
 import debounce from "debounce";
 import { sampleEditorExtensions, setUpCopyButton } from "./sample-editor";
 
@@ -141,8 +141,13 @@ export async function setUpProjectSample(sample: HTMLElement) {
     const iframe = document.createElement("iframe");
     iframe.className = "sample-frame";
     iframe.title = "The story";
+    // As setUpPreviewFrame does, but without its allow="autoplay", which lets the editor's preview
+    // start music when the author presses Run. On a docs page, that would let a sample start its
+    // music as the page loads, so a sample's sound waits until the reader clicks in it, as a
+    // published story's does.
+    iframe.setAttribute("sandbox", "allow-scripts");
+    iframe.srcdoc = previewHtml;
     viewer.appendChild(iframe);
-    setUpPreviewFrame(iframe, previewHtml);
     let started = false;
     const host = createPreviewHost(iframeChannel(iframe), {
         // A second ready means the page reloaded, and lost the story
