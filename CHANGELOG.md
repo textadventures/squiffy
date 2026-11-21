@@ -1,5 +1,17 @@
 # Changelog
 
+## [7.0.0-beta.9](https://github.com/textadventures/squiffy/compare/v7.0.0-beta.8...v7.0.0-beta.9) (2026-11-21)
+
+
+### Features
+
+* a new Find and Replace panel and Go to line bar in the editor ([#533](https://github.com/textadventures/squiffy/issues/533)) ([7586979](https://github.com/textadventures/squiffy/commit/75869797114ebdeeda4cf4eb960426b9281db634))
+* collapsible folders in the editor's files list, with the build folder collapsed ([#531](https://github.com/textadventures/squiffy/issues/531)) ([3a9a9a5](https://github.com/textadventures/squiffy/commit/3a9a9a53c6cd377f1f848c272ebc769993af5dc1))
+* delete, add passages and undo from the story map, with new sections placed after their parent ([#543](https://github.com/textadventures/squiffy/issues/543)) ([95a3e65](https://github.com/textadventures/squiffy/commit/95a3e65ed3600b887da1d3825722a1734aa73173))
+* Find in Files in the editor ([#534](https://github.com/textadventures/squiffy/issues/534)) ([36a4ef9](https://github.com/textadventures/squiffy/commit/36a4ef9615083d905183d82e7f1d6d3c5ad91455))
+* Replace in Files in the editor ([#536](https://github.com/textadventures/squiffy/issues/536)) ([4045959](https://github.com/textadventures/squiffy/commit/4045959fd9a1f602a4a510f6ad814a088265889d))
+* write a section beside the full-screen story map ([#544](https://github.com/textadventures/squiffy/issues/544)) ([fa362b7](https://github.com/textadventures/squiffy/commit/fa362b7a8487abb787cb3595b7699d160d969e01))
+
 ## [7.0.0-beta.8](https://github.com/textadventures/squiffy/compare/v7.0.0-beta.7...v7.0.0-beta.8) (2026-11-21)
 
 
