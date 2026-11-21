@@ -311,6 +311,34 @@ body { background: url("blob:preview/1"), url(https://example.com/x.png); }`);
         expect(document.querySelectorAll("dialog.squiffy-settings")).toHaveLength(0);
     });
 
+    test("puts the story's classes on #squiffy, as a published story does", async () => {
+        const { preview, element } = setUp();
+        const settings: PlayerSetting[] = [{ name: "warnings", label: "Content warnings", type: "toggle" }];
+        const classScript = "[[start]]:\n@class dark\nIn the [[cellar]].\n\n[[cellar]]:\nDown here.\n";
+        await preview.receive({ type: "load", story: { js: await compileJs(classScript, undefined, settings) } });
+        expect(element.id).toBe("squiffy");
+        expect(element.classList.contains("dark")).toBe(true);
+        expect(document.querySelector("div#squiffy.dark")).toBe(element);
+
+        // A setting's class, when the player changes it
+        element.querySelector<HTMLButtonElement>(".squiffy-settings-button")!.click();
+        const toggle = document.querySelector<HTMLInputElement>("dialog.squiffy-settings input[type=checkbox]")!;
+        toggle.checked = true;
+        toggle.dispatchEvent(new window.Event("change"));
+        await Promise.resolve();
+        expect(element.classList.contains("setting-warnings")).toBe(true);
+
+        // A section's class goes when the player leaves it
+        element.querySelector<HTMLAnchorElement>("a.squiffy-link")!.click();
+        await new Promise(resolve => setTimeout(resolve, 0));
+        expect(element.classList.contains("dark")).toBe(false);
+        expect(element.classList.contains("setting-warnings")).toBe(true);
+
+        // And a new story starts with none
+        await preview.receive({ type: "load", story: { js: await compileJs(script) } });
+        expect([...element.classList]).toEqual([]);
+    });
+
     test("reports errors", async () => {
         const messages: PreviewMessage[] = [];
         const preview = createPreview({
