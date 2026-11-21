@@ -123,4 +123,5 @@ Tall trees surround you.
 - `@music file` loops until changed, continuing across sections; changing it crossfades over a second. `@music stop` fades it out.
 - `@sound file` plays once; `@sound stop` stops sounds.
 - Helpers for part-way or conditional sound: `{{music "battle.mp3" fade=3}}`, `{{stopmusic fade=0}}`, `{{sound "whisper.mp3" volume=0.5}}`, `{{stopsounds}}`.
+- Browsers play no sound until the player clicks something, so don't put `@music`, `@sound`, `{{music}}` or `{{sound}}` in the start section, or `@music`/`@sound` in the master section: `--check` warns (`squiffy/sound-on-first-screen`). For music from the start, open with a title screen and a "Begin" link, and start the music in the section it goes to.
 - The Back button and saved games restore the music. `_music` holds its file name. Use MP3 for widest support.

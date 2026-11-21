@@ -3,6 +3,9 @@
 seed 4
 input player_name=priya
 
+went "before the show"
+
+> Take your seat
 went "intro"
 set score = 0
 set round = 0

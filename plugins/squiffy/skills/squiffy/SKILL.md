@@ -62,7 +62,7 @@ You step out into the night with {{gold}} gold. THE END.
 The Squiffy command-line tool runs with `npx` (Node.js required). Run it in the story's folder (the one with `squiffy.json`), or give it the `.squiffy` file for a story without one. After every change:
 
 1. **Check:** `npx @textadventures/squiffy-cli --check --json`
-   Lists problems with file, line, column, severity and code: compile errors (including `{{...}}` text that isn't valid, `squiffy/template-syntax`, e.g. `{{round + 1}}` for `{{= round + 1}}`), broken links, unreachable sections (`squiffy/unreachable-section`) and dead ends (`squiffy/dead-end`). Exit code 1 if there are errors. Fix errors. Fix warnings, or ask the author: an unreachable section may be unfinished work they want to keep.
+   Lists problems with file, line, column, severity and code: compile errors (including `{{...}}` text that isn't valid, `squiffy/template-syntax`, e.g. `{{round + 1}}` for `{{= round + 1}}`), broken links, unreachable sections (`squiffy/unreachable-section`), dead ends (`squiffy/dead-end`), and sound on the first screen, which browsers won't play before a click (`squiffy/sound-on-first-screen`). Exit code 1 if there are errors. Fix errors. Fix warnings, or ask the author: an unreachable section may be unfinished work they want to keep.
 2. **Play** a step at a time, like a player:
    `npx @textadventures/squiffy-cli --play --save game.json --json`
    shows the start and the numbered choices. Then click one link per run, reading the result before choosing the next. The JSON has every step so far in `steps`; read the last one, and `choices`:

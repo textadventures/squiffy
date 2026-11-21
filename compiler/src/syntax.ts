@@ -40,6 +40,7 @@ export type DiagnosticCode =
     | "squiffy/project-file"
     | "squiffy/unreachable-section"
     | "squiffy/dead-end"
+    | "squiffy/sound-on-first-screen"
     | "squiffy/template-syntax";
 
 export interface Diagnostic {
