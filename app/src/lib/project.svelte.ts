@@ -29,6 +29,7 @@ import { newStoryDialog, newStoryText } from "./new-story.js";
 import { needsBackup } from "./backup.js";
 import { changedPaths, readDisk, reconcile } from "./disk-changes.js";
 import { convertTwineFile, TWINE_FILE_PATTERN, twineImportMessage } from "./twine-import.js";
+import { openNextStoryOnMap } from "./map-layout.js";
 import { convertQuestFile, findQuestGame, QUEST_FILE_PATTERN, questImportMessage } from "./quest-import.js";
 
 export const SQUIFFY_FILES: FileTypeFilter[] = [
@@ -721,6 +722,7 @@ export async function importFile(file: File): Promise<string | null> {
         const fs = await browserStories.create(id, { title: converted.title, mainFile: converted.mainFile, lastOpened: Date.now() });
         for (const [path, text] of converted.files) await fs.write(path, text);
         showToast(twineImportMessage(converted), "info", 12000);
+        openNextStoryOnMap();
         return id;
     }
     if (file.name.toLowerCase().endsWith(".zip")) {
@@ -858,7 +860,10 @@ export async function pickDesktopFile(): Promise<PickedFolder | null> {
         const converted = await convertTwineFile(mainFile, text);
         if (!converted) return null;
         const folder = await writeIntoNewFolder(`the Squiffy version of ${mainFile}`, converted.files, converted.mainFile);
-        if (folder) showToast(twineImportMessage(converted), "info", 12000);
+        if (folder) {
+            showToast(twineImportMessage(converted), "info", 12000);
+            openNextStoryOnMap();
+        }
         return folder;
     }
     return { fs, mainFile: (await projectMainFile(fs)) ?? mainFile };
@@ -891,6 +896,7 @@ async function readZip(zipName: string, data: Uint8Array): Promise<{
     const twineFile = zipTwineFile(files);
     if (twineFile) {
         const converted = await convertTwineFile(zipName, new TextDecoder().decode(files.get(twineFile)));
+        if (converted) openNextStoryOnMap();
         return converted && { ...converted, message: twineImportMessage(converted) };
     }
     throw new Error(`There's no Squiffy story, Quest gamebook or Twine story in ${zipName}.`);

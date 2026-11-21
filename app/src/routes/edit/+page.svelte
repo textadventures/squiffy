@@ -38,7 +38,7 @@
     import type { CodeAction } from "squiffy-compiler/language-service";
     import PreviewPanel from "#components/PreviewPanel.svelte";
     import MapPanel, { type TraceStep } from "#components/MapPanel.svelte";
-    import { checkSectionName, emptyPositions, linkTo, movedNodes, nodeAtLine, renamePositions, revertPositions, sectionKeys, withPosition, type Point, type StoryMapEdge, type StoryMapNode } from "#lib/story-map.js";
+    import { emptyPositions, linkTo, movedNodes, nodeAtLine, renamePositions, revertPositions, sectionKeys, withPosition, type Point, type StoryMapEdge, type StoryMapNode } from "#lib/story-map.js";
     import AssetManagerModal from "#components/AssetManagerModal.svelte";
     import FontsModal from "#components/FontsModal.svelte";
     import AboutModal from "#components/AboutModal.svelte";
@@ -47,8 +47,9 @@
     import Play from "@lucide/svelte/icons/play";
     import Code from "@lucide/svelte/icons/code";
     import X from "@lucide/svelte/icons/x";
+    import { readMapLayout, saveMapLayout } from "#lib/map-layout.js";
     import { narrowed, narrowing, narrowRange, setNarrow } from "#lib/narrow.js";
-    import { checkPassageName, deleteLinesEdits, deletionMessage, insertHeaderEdit, placeNewPassage, placeNewSection, planDeletion, startEdit, type Place } from "#lib/map-edits.js";
+    import { deleteLinesEdits, deletionMessage, insertHeaderEdit, placeNewPassage, placeNewSection, planDeletion, startEdit, type Place } from "#lib/map-edits.js";
     import { addSectionOrPassage, clipboardCommand, insertSnippet, runCommand, userSnippets } from "#lib/editor-commands.js";
     import { formatKey } from "#lib/shortcuts.js";
     import type { ExportKind } from "#lib/language/protocol.js";
@@ -112,6 +113,13 @@
     let sidebarWidth = $state(240);
     let previewWidth = $state(420);
     let mapWidth = $state(480);
+    // Whether the map's open and full screen is remembered for each story, once it's been read
+    let layoutRead = $state(false);
+    $effect(() => {
+        const id = p?.source.id;
+        const layout = { open: mapOpen, maximized: mapOpen && mapMaximized };
+        if (id && layoutRead && !isNarrow.current) saveMapLayout(id, layout);
+    });
     const SIDEBAR_LIMITS = [160, 500] as const;
     const PREVIEW_LIMITS = [280, 900] as const;
     const MAP_LIMITS = [280, 1400] as const;
@@ -144,6 +152,14 @@
                 void goto(`${base}/`, { replaceState: true });
                 return;
             }
+            // The map as it was left, for an author who works there. Not on a narrow screen,
+            // where it would take the script's place.
+            const layout = readMapLayout(project.current.source.id);
+            if (layout && !isNarrow.current) {
+                mapOpen = layout.open;
+                mapMaximized = layout.maximized;
+            }
+            layoutRead = true;
             loading = false;
         })();
 
@@ -755,6 +771,10 @@
     let card = $state<{ id: string; file: string } | null>(null);
     const cardNode = $derived(card ? storyGraph?.nodes.find(n => n.id === card?.id) : undefined);
     const cardShown = $derived(!!card && mapOpen && mapMaximized && !isNarrow.current);
+    // The card floats over the right of the map, so opening it doesn't move the map. Where the
+    // map is in the window:
+    let mapArea = $state<{ top: number; right: number; width: number; height: number }>({ top: 0, right: 0, width: 0, height: 0 });
+    const cardWidth = $derived(Math.round(Math.min(544, mapArea.width * 0.45)));
 
     // Shows a section in the card, or the section a passage is in, with the cursor at the passage
     // (or at `at`). If it's the section already shown, the cursor stays where it is.
@@ -931,7 +951,10 @@
     function linkEdit(from: GraphNode, text: string): WorkspaceEdit {
         const file = from.location.file;
         const view = views.get(file);
-        if (view && p?.activePath === file && storyGraph) {
+        // Only where the author can see the cursor: with the map full screen, the script's hidden,
+        // unless that section's being written in the card
+        const cursorSeen = !mapMaximized || cardShown;
+        if (view && cursorSeen && p?.activePath === file && storyGraph) {
             const head = view.state.selection.main.head;
             const at = toPosition(view.state.doc, head);
             if (nodeAtLine(storyGraph, file, at.line)?.id === from.id && at.line > from.location.range.start.line) {
@@ -1035,32 +1058,23 @@
         other.push(change);
     }
 
-    async function askSectionName(): Promise<string | null> {
-        const graph = storyGraph;
-        const name = (await promptDialog("New section name:", "", "Add"))?.trim();
-        if (!name || !graph) return null;
-        const problem = checkSectionName(name, graph);
-        if (problem) {
-            showToast(problem, "info");
-            return null;
-        }
-        return name;
-    }
-
     // Adds a section, where it was asked for on the map, in the same file as the section it's
     // linked from or near (or the file that's open, or the main file). In the script, it goes
     // after that section, or the sections it already leads to (see placeNewSection).
-    async function createSectionFromMap(at: Point, near: GraphNode | undefined, linkFrom?: GraphNode) {
-        if (!p) return;
-        const name = await askSectionName();
+    //
+    // `from` is the section or passage it's for: the one a link was dragged from (so a link to the
+    // new section is added there, unless `link` is false, for a link that's there already).
+    // `at` is where its box goes, if the author chose.
+    async function createSectionFromMap(name: string, where: { at?: Point; near?: GraphNode; from?: GraphNode; link?: boolean }) {
         const graph = storyGraph;
-        if (!name || !p || !graph) return;
-        const file = linkFrom?.location.file ?? near?.location.file ?? (isSquiffyFile(p.activePath) ? p.activePath : p.mainFile);
+        if (!p || !graph) return;
+        const { at, near, from } = where;
+        const file = from?.location.file ?? near?.location.file ?? (isSquiffyFile(p.activePath) ? p.activePath : p.mainFile);
         try {
-            let edit = await headerEdit(placeNewSection(graph, { from: linkFrom, near, file }), `[[${name}]]:`);
-            if (linkFrom) edit = mergeEdits(linkEdit(linkFrom, `[[${name}]]`), edit);
+            let edit = await headerEdit(placeNewSection(graph, { from, near, file }), `[[${name}]]:`);
+            if (from && where.link !== false) edit = mergeEdits(linkEdit(from, `[[${name}]]`), edit);
             selectWhenReady = `section:${name}`;
-            await applyMapEdit(edit, {
+            await applyMapEdit(edit, at && {
                 before: mapPositions ?? emptyPositions(),
                 after: withPosition(mapPositions, new Map(), { kind: "section", name }, at),
             });
@@ -1070,22 +1084,17 @@
     }
 
     // Adds a passage to a section, with a link to it from the section (or from the passage it
-    // was added from), so it can be reached
-    async function addPassageFromMap(from: GraphNode) {
+    // was added from), so it can be reached (unless `link` is false, for a link that's there
+    // already)
+    async function addPassageFromMap(from: GraphNode, name: string, link = true) {
         const graph = storyGraph;
         if (!p || !graph) return;
         const sectionName = from.kind === "section" ? from.name : from.section!;
         const section = graph.nodes.find(n => n.kind === "section" && n.name === sectionName);
         if (!section) return;
-        const name = (await promptDialog("New passage name:", "", "Add"))?.trim();
-        if (!name || !p) return;
-        const problem = checkPassageName(name, sectionName, graph);
-        if (problem) {
-            showToast(problem, "info");
-            return;
-        }
         try {
-            const edit = mergeEdits(linkEdit(from, `[${name}]`), await headerEdit(placeNewPassage(section), `[${name}]:`));
+            let edit = await headerEdit(placeNewPassage(section), `[${name}]:`);
+            if (link) edit = mergeEdits(linkEdit(from, `[${name}]`), edit);
             selectWhenReady = `passage:${sectionName}/${name}`;
             await applyMapEdit(edit);
         } catch (err) {
@@ -1095,7 +1104,17 @@
 
     async function deleteFromMap(nodes: GraphNode[]) {
         const graph = storyGraph;
-        const plan = graph && planDeletion(graph, nodes);
+        if (!p || !graph) return;
+        // The text of every file with links in it, to find the links on lines of their own
+        const texts = new Map<string, string>();
+        for (const file of new Set(graph.edges.map(e => e.location.file))) {
+            try {
+                texts.set(file, await currentText(file));
+            } catch {
+                // Its links are left as they are
+            }
+        }
+        const plan = planDeletion(graph, nodes, texts);
         if (!p || !plan) return;
         if (!(await confirmDialog(deletionMessage(plan), { confirmLabel: "Delete", danger: true })) || !p) return;
         try {
@@ -1118,9 +1137,9 @@
         }
     }
 
-    async function linkFromMap(from: GraphNode, to: GraphNode | null, at: Point) {
+    async function linkFromMap(from: GraphNode, to: GraphNode | null, at: Point, name?: string) {
         if (!to) {
-            await createSectionFromMap(at, from, from);
+            if (name) await createSectionFromMap(name, { at, from });
             return;
         }
         const link = linkTo(from, to);
@@ -1131,19 +1150,23 @@
         await applyMapEdit(linkEdit(from, link.text));
     }
 
-    async function renameFromMap(node: GraphNode) {
+    // Renames a section or passage everywhere it's used. With a name (typed on the map), says why
+    // it can't be used, if it can't; without one, asks for it.
+    async function renameFromMap(node: GraphNode, name?: string): Promise<string | undefined> {
         const c = client;
-        if (!c || node.detail) return;
-        const name = (await promptDialog(`Rename the ${node.kind} "${node.name}" to:`, node.name, "Rename"))?.trim();
-        if (!name || name === node.name) return;
+        if (!c || node.detail) return undefined;
+        const asked = name === undefined;
+        name ??= (await promptDialog(`Rename the ${node.kind} "${node.name}" to:`, node.name, "Rename"))?.trim();
+        if (!name || name === node.name) return undefined;
         await syncOpenFiles();
         const result = await c.call("getRenameEdits", node.location.file, node.location.range.start, name);
-        if (!result) return;
+        if (!result) return undefined;
         if ("error" in result) {
-            showToast(result.error, "info");
-            return;
+            if (asked) showToast(result.error, "info");
+            return result.error;
         }
         await applyMapEdit(result.edit);
+        return undefined;
     }
 
     async function relayoutMap(): Promise<boolean> {
@@ -1522,7 +1545,8 @@
                  history survive opening the sidebar or the preview -->
             <div
                 id="editor"
-                class="min-w-0 flex flex-col {cardShown ? "map-card shrink-0 border-l border-surface-200-800" : "flex-1"} {(isNarrow.current && narrowPane !== "editor") || (!isNarrow.current && mapOpen && mapMaximized && !cardShown) ? "hidden" : ""}"
+                style={cardShown ? `position: fixed; top: ${mapArea.top + 8}px; left: ${mapArea.right - cardWidth - 8}px; width: ${cardWidth}px; height: ${Math.max(mapArea.height - 16, 0)}px;` : undefined}
+                class="min-w-0 flex flex-col {cardShown ? "z-10 overflow-hidden rounded-md border border-surface-200-800 bg-surface-50-950 shadow-xl" : "flex-1"} {(isNarrow.current && narrowPane !== "editor") || (!isNarrow.current && mapOpen && mapMaximized && !cardShown) ? "hidden" : ""}"
             >
                 {#if cardShown && cardNode}
                     <!-- The section being written from the map, in place of the tabs -->
@@ -1611,6 +1635,8 @@
                     {trace}
                     maximized={mapMaximized}
                     card={cardShown ? card?.id ?? null : null}
+                    {cardWidth}
+                    onarea={rect => { mapArea = rect; }}
                     onedit={(node, focus) => void openCard(node, focus)}
                     width={isNarrow.current || mapMaximized ? undefined : mapWidth}
                     ongoto={(node, focus) => { const location = node.graphNode?.location; if (location) goFromMap(location, focus); }}
@@ -1620,9 +1646,9 @@
                         moveOnMap(moves.reduce((positions, { node, at }) => withPosition(positions, keys, node, at), mapPositions ?? emptyPositions()));
                     }}
                     onlink={linkFromMap}
-                    oncreate={(at, near) => void createSectionFromMap(at, near)}
-                    onrename={node => void renameFromMap(node)}
-                    onaddpassage={node => void addPassageFromMap(node)}
+                    oncreate={(name, where) => void createSectionFromMap(name, where)}
+                    onrename={renameFromMap}
+                    onaddpassage={(from, name, link) => void addPassageFromMap(from, name, link)}
                     ondelete={nodes => void deleteFromMap(nodes)}
                     onstart={node => void startFromMap(node)}
                     onundo={undoFromMap}
@@ -1689,11 +1715,6 @@
 {/if}
 
 <style>
-    /* The section being written beside the full-screen map */
-    .map-card {
-        width: min(34rem, 45%);
-    }
-
     .splitter {
         width: 0.25rem;
         flex-shrink: 0;

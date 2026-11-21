@@ -186,6 +186,21 @@ The end.
         expect(deletionMessage(plan)).toBe("Delete 2 sections and 1 passage? So does the section that follows on from them (+++ or ---). 4 links to them will be broken.");
     });
 
+    test("a link on a line of its own goes with what it links to", async () => {
+        const text = "[[a]]:\nGo to [[b]].\n\n[[b]]\n\n[p]\n\n[p]:\nText.\n\n[[b]]:\nEnd. [[a]]\n";
+        const graph = await graphOf(text);
+        const texts = new Map([["story.squiffy", text]]);
+        const plan = planDeletion(graph, [node(graph, "section:b"), node(graph, "passage:a/p")], texts)!;
+        expect(plan).toMatchObject({ removedLinks: 2, brokenLinks: 1 });
+        expect(applyEditsToString(text, deleteLinesEdits(text, plan.ranges.get("story.squiffy")!))).toBe("[[a]]:\nGo to [[b]].\n");
+        expect(deletionMessage(plan)).toBe("Delete 1 section and 1 passage? The 2 links to them on lines of their own go too. 1 other link to them will be broken.");
+        // One section, with only the link the map would have added
+        const made = "[[a]]:\nStart.\n\n[[b]]\n\n[[b]]:\n";
+        const madePlan = planDeletion(await graphOf(made), [node(await graphOf(made), "section:b")], new Map([["story.squiffy", made]]))!;
+        expect(applyEditsToString(made, deleteLinesEdits(made, madePlan.ranges.get("story.squiffy")!))).toBe("[[a]]:\nStart.\n");
+        expect(deletionMessage(madePlan)).toBe('Delete the section "b"? The link to it on a line of its own goes too.');
+    });
+
     test("everything", async () => {
         expect((await remove("[[a]]:\nText.", "section:a")).text).toBe("");
     });

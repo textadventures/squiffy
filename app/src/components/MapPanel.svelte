@@ -13,7 +13,7 @@
 </script>
 
 <script lang="ts">
-    import { untrack } from "svelte";
+    import { tick, untrack } from "svelte";
     // The story map (#380): the story's sections as boxes, their passages hanging under them, and
     // links as arrows, drawn from the language service's story graph by @textadventures/graph-map.
     // The text is the source of truth: the map is a view of it, and editing on the map edits the
@@ -25,7 +25,8 @@
     import GraphMap from "@textadventures/graph-map/GraphMap.svelte";
     import type { NodeState } from "@textadventures/graph-map/GraphMap.svelte";
     import ContextMenu, { type ContextMenuItem } from "#components/ContextMenu.svelte";
-    import { buildStoryMap, linkTo, pinnedPositions, storyMapLayout, type Point, type StoryMapEdge, type StoryMapNode } from "#lib/story-map.js";
+    import { checkPassageName } from "#lib/map-edits.js";
+    import { buildStoryMap, checkSectionName, linkTo, pinnedPositions, storyMapLayout, type Point, type StoryMapEdge, type StoryMapNode } from "#lib/story-map.js";
     import ZoomIn from "@lucide/svelte/icons/zoom-in";
     import ZoomOut from "@lucide/svelte/icons/zoom-out";
     import Scan from "@lucide/svelte/icons/scan";
@@ -53,8 +54,12 @@
         // Where the player has been in the preview, in order
         trace: TraceStep[];
         maximized: boolean;
-        // Full screen, the id of the section being written beside the map, if one is
+        // Full screen, the id of the section being written in a card over the map, if one is
         card: string | null;
+        // How much of the map's right edge that card covers
+        cardWidth?: number;
+        // Where the map itself is in the window (without its header), whenever that changes
+        onarea?: (area: DOMRect) => void;
         // Write a section (or the section a passage is in) beside the full-screen map, taking the
         // focus or not
         onedit: (node: GraphNode, focus: boolean) => void;
@@ -64,13 +69,17 @@
         ongotoedge: (edge: StoryMapEdge) => void;
         // Sections and passages were dropped somewhere (several, if they were dragged together)
         onmove: (moves: { node: GraphNode; at: Point }[]) => void;
-        // Add a link from one node to another, or to a new section
-        onlink: (from: GraphNode, to: GraphNode | null, at: Point) => void;
-        oncreate: (at: Point, near: GraphNode | undefined) => void;
-        onrename: (node: GraphNode) => void;
+        // Add a link from one node to another, or to a new section called `name`
+        onlink: (from: GraphNode, to: GraphNode | null, at: Point, name?: string) => void;
+        // Add a section: at a place on the map, after `near` in the script; or for a broken link
+        // from `from`, which is there already (`link` is false)
+        oncreate: (name: string, where: { at?: Point; near?: GraphNode; from?: GraphNode; link?: boolean }) => void;
+        // Rename a section or passage. Resolves to why it can't have that name, if it can't.
+        onrename: (node: GraphNode, name: string) => Promise<string | undefined>;
         onrun: (node: GraphNode) => void;
-        // Add a passage to a section, linked from it or from one of its passages
-        onaddpassage: (from: GraphNode) => void;
+        // Add a passage to a section, linked from it or from one of its passages (unless `link`
+        // is false, for a broken link that's there already)
+        onaddpassage: (from: GraphNode, name: string, link?: boolean) => void;
         ondelete: (nodes: GraphNode[]) => void;
         // Make the story start at a section
         onstart: (node: GraphNode) => void;
@@ -83,7 +92,7 @@
     }
 
     let {
-        graph, positions, query, current, trace, maximized, card, onedit, width, ongoto, ongotoedge, onmove, onlink, oncreate, onrename,
+        graph, positions, query, current, trace, maximized, card, cardWidth = 0, onarea, onedit, width, ongoto, ongotoedge, onmove, onlink, oncreate, onrename,
         onrun, onaddpassage, ondelete, onstart, onundo, onrelayout, ontogglemaximized, onclose,
     }: Props = $props();
 
@@ -170,7 +179,34 @@
         const id = current;
         if (id == lastCurrent) return;
         lastCurrent = id;
-        if (id && map?.has(id)) map.reveal(id);
+        if (id && map?.has(id)) map.reveal(id, covered());
+    });
+
+    // What's over the map: the card a section's written in, and the details of the selected box.
+    // Neither takes space from the map, so that selecting a box or opening one doesn't move it.
+    let detailsHeight = $state(0);
+    const covered = () => ({ right: card ? cardWidth + 16 : 0, bottom: selectedNode?.graphNode ? detailsHeight + 16 : 0 });
+
+    // The selected box is brought out from under them
+    $effect(() => {
+        const id = selected;
+        void card;
+        void detailsHeight;
+        if (id) untrack(() => { if (map?.has(id)) map.reveal(id, covered()); });
+    });
+
+    let area = $state<HTMLDivElement>();
+    $effect(() => {
+        const el = area;
+        if (!el || !onarea) return;
+        const report = () => onarea(el.getBoundingClientRect());
+        const observer = new ResizeObserver(report);
+        observer.observe(el);
+        window.addEventListener("resize", report);
+        return () => {
+            observer.disconnect();
+            window.removeEventListener("resize", report);
+        };
     });
 
     // A node's id is changing (it's been renamed), so it keeps its place
@@ -201,6 +237,10 @@
 
     function handleActivate(node: StoryMapNode, how: "click" | "open") {
         if (node.kind == "missing") {
+            // Opening a broken link's marker makes what's missing; otherwise, to the link
+            if (how == "open" && createMissing(node)) return;
+            // Full screen, a click just selects, as for any box
+            if (how == "click" && maximized) return;
             ongotoedge({ id: "", from: "", to: node.id, kind: node.brokenEdge!.kind, edges: [node.brokenEdge!], conditional: false });
             return;
         }
@@ -230,9 +270,106 @@
         if (await onrelayout()) map?.relayout(new Map());
     }
 
+    // ---- Names, typed on the map ----
+
+    // A box to type a name in, where the section or passage is, or will be
+    let naming = $state<{
+        x: number; y: number; label: string; value: string; error: string; busy: boolean;
+        // Says why the name can't be used, if it can't
+        submit: (name: string) => string | undefined | Promise<string | undefined>;
+    } | null>(null);
+    let nameInput = $state<HTMLInputElement>();
+
+    function askName(at: Point, label: string, value: string, submit: NonNullable<typeof naming>["submit"]) {
+        if (!map) return;
+        naming = { ...map.screenPoint(at), label, value, error: "", busy: false, submit };
+        void tick().then(() => {
+            nameInput?.focus();
+            nameInput?.select();
+        });
+    }
+
+    function stopNaming(refocus: boolean) {
+        if (!naming) return;
+        naming = null;
+        if (refocus) map?.focus();
+    }
+
+    async function submitName() {
+        const current = naming;
+        if (!current || current.busy) return;
+        const name = current.value.trim();
+        if (!name) {
+            stopNaming(true);
+            return;
+        }
+        current.busy = true;
+        const error = await current.submit(name);
+        if (naming !== current) return;
+        if (error) {
+            current.error = error;
+            current.busy = false;
+            nameInput?.focus();
+        } else {
+            stopNaming(true);
+        }
+    }
+
     // A new section goes in the script after the selected one, or else the one nearest on the map
     function create(at: Point) {
-        oncreate(at, selectedNode?.graphNode ?? map?.nearest(at, n => !!n.graphNode)?.graphNode);
+        const near = selectedNode?.graphNode ?? map?.nearest(at, n => !!n.graphNode)?.graphNode;
+        askName(at, "New section's name", "", name => {
+            const problem = graph ? checkSectionName(name, graph) : undefined;
+            if (!problem) oncreate(name, { at, near });
+            return problem;
+        });
+    }
+
+    // A link dragged to empty space, for a new section there
+    function createLinked(from: GraphNode, at: Point) {
+        askName(at, "New section's name", "", name => {
+            const problem = graph ? checkSectionName(name, graph) : undefined;
+            if (!problem) onlink(from, null, at, name);
+            return problem;
+        });
+    }
+
+    function renameNode(g: GraphNode) {
+        const at = map?.positionOf(g.id);
+        if (g.detail || !at) return;
+        askName(at, `New name for ${g.name}`, g.name, name => name == g.name ? undefined : onrename(g, name));
+    }
+
+    function addPassage(g: GraphNode) {
+        const node = base?.nodes.find(n => n.id == g.id);
+        const at = map?.positionOf(g.id);
+        if (!node || !at) return;
+        const section = g.kind == "section" ? g.name : g.section!;
+        // Under the box it's added from, where passages hang
+        askName({ x: at.x, y: at.y + node.height + 8 }, "New passage's name", "", name => {
+            const problem = graph ? checkPassageName(name, section, graph) : undefined;
+            if (!problem) onaddpassage(g, name);
+            return problem;
+        });
+    }
+
+    // A broken link's missing section or passage, made from its red marker. Says whether it can be:
+    // an embed, or a name only known when the story runs, has to be sorted out in the script.
+    function createMissing(node: StoryMapNode): boolean {
+        const edge = node.brokenEdge;
+        const from = edge && graph?.nodes.find(n => n.id == edge.from);
+        const name = edge?.target;
+        if (!edge || !from || !name || !graph) return false;
+        if (edge.kind == "passage-link") {
+            const section = from.kind == "section" ? from.name : from.section!;
+            if (checkPassageName(name, section, graph)) return false;
+            onaddpassage(from, name, false);
+            return true;
+        }
+        if (edge.kind != "section-link" && edge.kind != "goto") return false;
+        if (checkSectionName(name, graph)) return false;
+        oncreate(name, { from, link: false });
+        return true;
     }
 
     // Named sections and passages can be deleted here. A section without a name of its own
@@ -259,14 +396,19 @@
         const g = node?.graphNode;
         let items: ContextMenuItem[];
         if (node?.kind == "missing") {
-            items = [{ label: "Show the link in the script", action: () => handleActivate(node, "open") }];
+            const edge = node.brokenEdge;
+            const creatable = edge?.kind == "passage-link" || edge?.kind == "section-link" || edge?.kind == "goto";
+            items = [
+                ...(creatable ? [{ label: edge.kind == "passage-link" ? "Add this passage" : "Add this section", shortcut: "Enter", action: () => { createMissing(node); } }] : []),
+                { label: "Show the link in the script", action: () => handleActivate(node, "click") },
+            ];
         } else if (node && g) {
             const section = g.kind == "section";
             items = [
                 ...(maximized ? [{ label: "Write here", shortcut: "Enter", action: () => onedit(g, true) }] : []),
                 { label: "Show in the script", shortcut: maximized ? undefined : "Enter", action: () => ongoto(node, true) },
-                { label: "Rename…", shortcut: "F2", disabled: !!g.detail, action: () => onrename(g) },
-                { label: "Add a passage…", action: () => onaddpassage(g) },
+                { label: "Rename…", shortcut: "F2", disabled: !!g.detail, action: () => renameNode(g) },
+                { label: "Add a passage…", action: () => addPassage(g) },
                 { label: "Run from here", divider: true, action: () => onrun(g) },
                 ...(section ? [{ label: "Start the story here", disabled: !!g.start || !!g.detail || g.name == "", action: () => onstart(g) }] : []),
                 { label: "Delete…", shortcut: "Del", divider: true, disabled: !canDelete(g), action: () => ondelete([g]) },
@@ -285,7 +427,7 @@
 
 <section
     aria-label="Story map"
-    class="story-map flex flex-col overflow-hidden {card ? "-order-1" : ""} border-l border-surface-200-800 bg-surface-50-950 {width === undefined ? "flex-1 min-w-0" : "shrink-0"}"
+    class="story-map flex flex-col overflow-hidden border-l border-surface-200-800 bg-surface-50-950 {width === undefined ? "flex-1 min-w-0" : "shrink-0"}"
     style={width === undefined ? undefined : `width: ${width}px`}
 >
     <header class="flex items-center gap-0.5 px-2 py-1 border-b border-surface-200-800">
@@ -320,11 +462,11 @@
             <span class="key-badge key-ending">■</span><span>An ending (@end)</span>
             <span class="key-badge key-dead-end">!</span><span>A dead end: no way out, and not an ending</span>
             <span class="key-badge key-unreachable"></span><span>Can't be reached from the start</span>
-            <span></span><span class="text-surface-600-400 pt-1">Drag the dot under the selected box to another to add a link, or to empty space for a new section. Double-click empty space to add a section. Right-click a box for more, or press Delete to delete it. Shift+drag empty space, or Shift+click, to select several boxes and move them together.</span>
+            <span></span><span class="text-surface-600-400 pt-1">Drag the dot under the selected box to another to add a link, or to empty space for a new section. Double-click empty space to add a section, or a red box to add what's missing. Right-click a box for more, or press Delete to delete it. Shift+drag empty space, or Shift+click, to select several boxes and move them together.</span>
         </div>
     {/if}
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class="relative flex-1 min-h-0" onkeydown={handleKeydown}>
+    <div bind:this={area} class="relative flex-1 min-h-0" onkeydown={handleKeydown}>
         {#if !decorated}
             <p class="p-4 text-sm text-surface-600-400">Reading the story…</p>
         {:else if tooLarge}
@@ -345,9 +487,13 @@
                 onactivate={handleActivate}
                 onedgeactivate={ongotoedge}
                 onmove={moves => onmove(moves.flatMap(({ node, at }) => node.graphNode ? [{ node: node.graphNode, at }] : []))}
-                onconnect={(from, to, at) => { if (from.graphNode) onlink(from.graphNode, to?.graphNode ?? null, at); }}
+                onconnect={(from, to, at) => {
+                    if (!from.graphNode) return;
+                    if (to?.graphNode) onlink(from.graphNode, to.graphNode, at);
+                    else if (!to) createLinked(from.graphNode, at);
+                }}
                 oncreate={create}
-                onrename={n => { if (n.graphNode && !n.graphNode.detail) onrename(n.graphNode); }}
+                onrename={n => { if (n.graphNode) renameNode(n.graphNode); }}
                 ondelete={handleDelete}
                 onmenu={showMenu}
                 node={drawNode}
@@ -356,45 +502,74 @@
                 <p class="absolute inset-0 p-4 text-sm text-surface-600-400 pointer-events-none">No sections yet.</p>
             {/if}
         {/if}
-    </div>
-    {#if selectedNode?.graphNode}
-        {@const g = selectedNode.graphNode}
-        <div class="border-t border-surface-200-800 px-3 py-2 text-xs space-y-1">
-            <div class="flex items-center gap-1">
-                <span class="font-semibold truncate flex-1" title={selectedNode.label}>
-                    {selectedNode.kind === "section" ? "Section" : "Passage"}: {selectedNode.label}
-                </span>
-                {#if maximized}
-                    <button type="button" class="btn-icon btn-icon-sm" title="Write here (Enter)" aria-label="Write here" onclick={() => onedit(g, true)}><SquarePen size={13} /></button>
+        {#if selectedNode?.graphNode}
+            {@const g = selectedNode.graphNode}
+            <div bind:clientHeight={detailsHeight} class="map-details absolute left-2 bottom-2 rounded-md border border-surface-200-800 bg-surface-50-950 shadow-md px-3 py-2 text-xs space-y-1">
+                <div class="flex items-center gap-1">
+                    <span class="font-semibold truncate flex-1" title={selectedNode.label}>
+                        {selectedNode.kind === "section" ? "Section" : "Passage"}: {selectedNode.label}
+                    </span>
+                    {#if maximized}
+                        <button type="button" class="btn-icon btn-icon-sm" title="Write here (Enter)" aria-label="Write here" onclick={() => onedit(g, true)}><SquarePen size={13} /></button>
+                    {/if}
+                    <button type="button" class="btn-icon btn-icon-sm" title={maximized ? "Show in the script" : "Go to it in the editor (Enter)"} aria-label={maximized ? "Show in the script" : "Go to it in the editor"} onclick={() => ongoto(selectedNode, true)}><Code size={13} /></button>
+                    {#if !g.detail}
+                        <button type="button" class="btn-icon btn-icon-sm" title="Rename (F2)" aria-label="Rename" onclick={() => renameNode(g)}><Pencil size={13} /></button>
+                    {/if}
+                    <button type="button" class="btn-icon btn-icon-sm" title="Add a passage" aria-label="Add a passage" onclick={() => addPassage(g)}><ListPlus size={13} /></button>
+                    <button type="button" class="btn-icon btn-icon-sm" title="Run from here" aria-label="Run from here" onclick={() => onrun(g)}><Play size={13} /></button>
+                    {#if canDelete(g)}
+                        <button type="button" class="btn-icon btn-icon-sm" title="Delete (Del)" aria-label="Delete" onclick={() => ondelete([g])}><Trash2 size={13} /></button>
+                    {/if}
+                </div>
+                {#if g.start || g.ending || (g.deadEnd && g.reachable) || !g.reachable}
+                    <p class="text-surface-600-400">
+                        {[g.start ? "The story starts here." : "", g.ending ? "An ending." : "", g.deadEnd && g.reachable ? "A dead end: there's no way out. If it's an ending, add @end." : "", g.embedded ? "Shown inside other sections, with {{embed}} or {{live}}." : !g.reachable ? "Can't be reached from the start." : ""].filter(Boolean).join(" ")}
+                    </p>
                 {/if}
-                <button type="button" class="btn-icon btn-icon-sm" title={maximized ? "Show in the script" : "Go to it in the editor (Enter)"} aria-label={maximized ? "Show in the script" : "Go to it in the editor"} onclick={() => ongoto(selectedNode, true)}><Code size={13} /></button>
-                {#if !g.detail}
-                    <button type="button" class="btn-icon btn-icon-sm" title="Rename (F2)" aria-label="Rename" onclick={() => onrename(g)}><Pencil size={13} /></button>
+                {#if links.out.length}
+                    <p class="flex flex-wrap gap-1 items-baseline"><span class="text-surface-600-400">Links to</span>
+                        {#each links.out as n (n.id)}<button type="button" class="link-chip" class:link-chip-missing={n.kind === "missing"} onclick={() => n.kind === "missing" ? handleActivate(n, "open") : map?.select(n.id)}>{n.label}</button>{/each}
+                    </p>
                 {/if}
-                <button type="button" class="btn-icon btn-icon-sm" title="Add a passage" aria-label="Add a passage" onclick={() => onaddpassage(g)}><ListPlus size={13} /></button>
-                <button type="button" class="btn-icon btn-icon-sm" title="Run from here" aria-label="Run from here" onclick={() => onrun(g)}><Play size={13} /></button>
-                {#if canDelete(g)}
-                    <button type="button" class="btn-icon btn-icon-sm" title="Delete (Del)" aria-label="Delete" onclick={() => ondelete([g])}><Trash2 size={13} /></button>
+                {#if links.into.length}
+                    <p class="flex flex-wrap gap-1 items-baseline"><span class="text-surface-600-400">Linked from</span>
+                        {#each links.into as n (n.id)}<button type="button" class="link-chip" onclick={() => map?.select(n.id)}>{n.label}</button>{/each}
+                    </p>
                 {/if}
             </div>
-            {#if g.start || g.ending || (g.deadEnd && g.reachable) || !g.reachable}
-                <p class="text-surface-600-400">
-                    {[g.start ? "The story starts here." : "", g.ending ? "An ending." : "", g.deadEnd && g.reachable ? "A dead end: there's no way out. If it's an ending, add @end." : "", g.embedded ? "Shown inside other sections, with {{embed}} or {{live}}." : !g.reachable ? "Can't be reached from the start." : ""].filter(Boolean).join(" ")}
-                </p>
-            {/if}
-            {#if links.out.length}
-                <p class="flex flex-wrap gap-1 items-baseline"><span class="text-surface-600-400">Links to</span>
-                    {#each links.out as n (n.id)}<button type="button" class="link-chip" class:link-chip-missing={n.kind === "missing"} onclick={() => n.kind === "missing" ? handleActivate(n, "open") : map?.select(n.id)}>{n.label}</button>{/each}
-                </p>
-            {/if}
-            {#if links.into.length}
-                <p class="flex flex-wrap gap-1 items-baseline"><span class="text-surface-600-400">Linked from</span>
-                    {#each links.into as n (n.id)}<button type="button" class="link-chip" onclick={() => map?.select(n.id)}>{n.label}</button>{/each}
-                </p>
-            {/if}
-        </div>
-    {/if}
+        {/if}
+    </div>
 </section>
+
+{#if naming}
+    <!-- Over the box being named, or where the new one will be -->
+    <form
+        class="name-box"
+        style="left: {naming.x}px; top: {naming.y}px;"
+        onsubmit={e => { e.preventDefault(); void submitName(); }}
+    >
+        <!-- The label's above the box, not in it, where it looks like a name that's there already -->
+        <label for="map-name" class="name-label">{naming.label}</label>
+        <input
+            bind:this={nameInput}
+            bind:value={naming.value}
+            id="map-name"
+            type="text"
+            class="input text-sm text-center"
+            aria-invalid={naming.error ? "true" : undefined}
+            aria-describedby={naming.error ? "map-name-error" : undefined}
+            autocomplete="off"
+            spellcheck="false"
+            oninput={() => { if (naming) naming.error = ""; }}
+            onkeydown={e => { if (e.key == "Escape") { e.preventDefault(); e.stopPropagation(); stopNaming(true); } }}
+            onblur={() => stopNaming(false)}
+        />
+        {#if naming.error}
+            <p id="map-name-error" role="alert" class="name-error">{naming.error}</p>
+        {/if}
+    </form>
+{/if}
 
 {#if menu}
     <ContextMenu x={menu.x} y={menu.y} keyboard={menu.keyboard} items={menu.items} onclose={() => { menu = null; map?.focus(); }} />
@@ -565,6 +740,45 @@
     /* The way the player went stands out, however long its links */
     .story-map :global(.gm-edge.trace[data-long]) {
         opacity: 1;
+    }
+
+    .name-box {
+        position: fixed;
+        z-index: 50;
+        width: 14rem;
+        /* The input, not the label above it, is where the box is */
+        transform: translate(-50%, -2.5rem);
+    }
+    .name-label {
+        display: block;
+        width: fit-content;
+        margin: 0 auto 0.25rem;
+        padding: 0.05rem 0.4rem;
+        font-size: 0.6875rem;
+        line-height: 1.1rem;
+        border-radius: 0.25rem;
+        color: var(--color-surface-50);
+        background-color: var(--color-surface-700);
+        user-select: none;
+        pointer-events: none;
+    }
+    .map-details {
+        max-width: min(28rem, calc(100% - 1rem));
+    }
+    .name-box input {
+        background-color: light-dark(white, var(--color-surface-800));
+        border: 2px solid var(--color-primary-500);
+        border-radius: 6px;
+        padding: 0.25rem 0.5rem;
+        box-shadow: 0 2px 8px rgb(0 0 0 / 0.2);
+    }
+    .name-error {
+        margin-top: 0.25rem;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        border-radius: 0.25rem;
+        color: var(--color-error-950-50);
+        background-color: light-dark(var(--color-error-100), var(--color-error-900));
     }
 
     .map-key svg {
