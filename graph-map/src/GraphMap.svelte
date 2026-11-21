@@ -437,10 +437,18 @@
 
     // Pans to bring a node into view, if it isn't. While the map's fitting the whole graph in
     // view, it already is.
-    export function reveal(id: string) {
+    // Pans as little as it can to bring a node into view. `covered` is how much of the map's right
+    // and bottom edges the host has put something over, such as a panel: a node under it isn't in
+    // view.
+    export function reveal(id: string, covered: { right?: number; bottom?: number } = {}) {
         const b = box(id);
-        if (!b || !width || autoFit) return;
-        const next = revealTransform(transform, { x: b.x - b.width / 2, y: b.y - b.height / 2, width: b.width, height: b.height }, { width, height });
+        const right = covered.right ?? 0, bottom = covered.bottom ?? 0;
+        // While the whole graph is fitted in view, only what's covered can be out of sight
+        if (!b || !width || (autoFit && !right && !bottom)) return;
+        const next = revealTransform(
+            transform, { x: b.x - b.width / 2, y: b.y - b.height / 2, width: b.width, height: b.height },
+            { width: Math.max(width - right, 100), height: Math.max(height - bottom, 100) },
+        );
         if (next) {
             autoFit = false;
             transform = next;
@@ -488,6 +496,17 @@
             }
         }
         return best;
+    }
+
+    // Where a point on the map is in the window, e.g. to put something of the host's over it
+    export function screenPoint(at: Point): Point {
+        const rect = container!.getBoundingClientRect();
+        return { x: rect.left + transform.x + at.x * transform.k, y: rect.top + transform.y + at.y * transform.k };
+    }
+
+    // The middle of a node, on the map
+    export function positionOf(id: string): Point | undefined {
+        return model.position(id);
     }
 
     // Takes the keyboard focus, e.g. after a menu closes

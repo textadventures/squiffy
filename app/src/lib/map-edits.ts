@@ -140,7 +140,10 @@ export interface Deletion {
     continuations: number;
     // Passages that go with their sections
     passages: number;
-    // Links from what's left to what's going, which will be broken
+    // Links from what's left to what's going that are on lines of their own, as the map adds
+    // them: they go too
+    removedLinks: number;
+    // Other links from what's left to what's going, in among other text, which will be broken
     brokenLinks: number;
     // The story starts at one of them
     start: boolean;
@@ -150,7 +153,12 @@ export interface Deletion {
 // the +++ and --- sections that follow on from it, which would otherwise carry on from whatever
 // section came before. Sections without names of their own, and the master section, can't be
 // deleted from the map: undefined if there's nothing that can be.
-export function planDeletion(graph: StoryGraph, nodes: GraphNode[]): Deletion | undefined {
+//
+// A link to something that's going, on a line of its own, goes with it: that's how the map adds a
+// link, so deleting a section just made from the map leaves nothing behind. It needs the text of
+// the files (`texts`, by path) to tell; without it, every link is left, and counted as broken. A
+// link in among other text is always left for the author to reword.
+export function planDeletion(graph: StoryGraph, nodes: GraphNode[], texts?: ReadonlyMap<string, string>): Deletion | undefined {
     const sections = nodes.filter(n => n.kind == "section" && !n.detail && n.name != "");
     const goingSections = new Map<string, GraphNode>();
     let continuations = 0;
@@ -181,10 +189,34 @@ export function planDeletion(graph: StoryGraph, nodes: GraphNode[]): Deletion | 
         if (!list) ranges.set(n.location.file, list = []);
         list.push({ start: n.range.start.line, end: n.range.end.line });
     }
+    let removedLinks = 0;
+    let brokenLinks = 0;
+    const lines = new Map<string, string[]>();
+    const removed = new Set<string>();
+    for (const edge of graph.edges) {
+        if (!edge.to || !going.has(edge.to) || going.has(edge.from)) continue;
+        const { file, range } = edge.location;
+        const text = texts?.get(file);
+        let fileLines = lines.get(file);
+        if (!fileLines && text !== undefined) lines.set(file, fileLines = splitLines(text));
+        const line = fileLines?.[range.start.line];
+        const alone = line !== undefined && range.end.line == range.start.line && (edge.kind == "section-link" || edge.kind == "passage-link")
+            && line.trim() == line.slice(range.start.character, range.end.character) && line.trim() != "";
+        if (!alone) {
+            brokenLinks++;
+            continue;
+        }
+        removedLinks++;
+        const key = `${file}:${range.start.line}`;
+        if (removed.has(key)) continue;
+        removed.add(key);
+        let list = ranges.get(file);
+        if (!list) ranges.set(file, list = []);
+        list.push({ start: range.start.line, end: range.start.line });
+    }
     return {
-        chosen, ranges, continuations,
+        chosen, ranges, continuations, removedLinks, brokenLinks,
         passages: withSections,
-        brokenLinks: graph.edges.filter(e => e.to && going.has(e.to) && !going.has(e.from)).length,
         start: [...goingSections.values()].some(s => s.start),
     };
 }
@@ -201,7 +233,8 @@ export function deletionMessage(d: Deletion): string {
     const notes = [
         d.passages ? `${one ? "Its" : "Their"} ${d.passages == 1 ? "passage goes" : `${d.passages} passages go`} too.` : "",
         d.continuations ? `So ${d.continuations == 1 ? "does the section" : `do the ${d.continuations} sections`} that ${d.continuations == 1 ? "follows" : "follow"} on from ${one ? "it" : "them"} (+++ or ---).` : "",
-        d.brokenLinks ? `${count(d.brokenLinks, "link")} to ${d.chosen.length == 1 ? "it" : "them"} will be broken.` : "",
+        d.removedLinks ? `${d.removedLinks == 1 ? "The link" : `The ${d.removedLinks} links`} to ${d.chosen.length == 1 ? "it" : "them"} on ${d.removedLinks == 1 ? "a line of its own goes" : "lines of their own go"} too.` : "",
+        d.brokenLinks ? `${count(d.brokenLinks, d.removedLinks ? "other link" : "link")} to ${d.chosen.length == 1 ? "it" : "them"} will be broken.` : "",
         d.start ? "The story starts there, so it will start somewhere else." : "",
     ].filter(Boolean);
     return [`Delete ${what}?`, ...notes].join(" ");

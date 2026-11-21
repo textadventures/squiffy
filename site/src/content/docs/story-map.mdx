@@ -8,7 +8,7 @@ The map button in the toolbar shows your story as a map: each section is a box, 
 ![The story map, between the script and the preview, showing the way the player went through the story in green](../../assets/editor-story-map.png)
 
 - **Click** a section or passage to go to it in the script. Moving the cursor in the script highlights the section it's in on the map.
-- **Drag** the background to move around, and scroll or pinch to zoom. The buttons above the map zoom in and out, and fit the whole story in view. **Full screen** gives the map the whole window.
+- **Drag** the background to move around, and scroll or pinch to zoom. The buttons above the map zoom in and out, and fit the whole story in view. **Full screen** gives the map the whole window. The editor remembers whether you left a story's map open, and full screen, so if you like to work on the map, that's where the story opens next time.
 - **Drag a box** to move it. It stays where you put it. Its passages come with it, and so does any box that's linked only to it, while everything else stays put.
 - To move several boxes at once, hold Shift and drag across empty space to select them, or Shift+click boxes to add them, then drag any one of them. Click empty space, or press Escape, to let them go.
 - Where you've put things is saved in `squiffy.json`, so it's the same next time you open the story, and a section keeps its place if you rename it or move it to another file. A section without a name of its own, started with `+++` or `---`, is saved under what the map calls it, such as `+++Day Two`. If you edit `squiffy.json` while the map's open, it follows: take a position out and that box is laid out again. A story from an earlier version of Squiffy may not have a `squiffy.json`, so the editor adds one, leaving out any `.squiffy` files in the folder that aren't part of the story, so the story stays the same. **Lay out again** forgets where you've put things.
@@ -27,15 +27,19 @@ Select a section or passage, then drag the dot under it:
 - to another section, to add a link to it, or to a passage in the same section, to add a passage link;
 - to an empty space, to add a new section there, with a link to it.
 
-The link goes at the cursor if it's in that section or passage, or else at the end of it. Double-click an empty space, or use **+** above the map, to add a section without a link.
+The link goes on a line of its own at the end of that section or passage. If the script's cursor is in it, and you can see the script, the link goes at the cursor instead. Double-click an empty space, or use **+** above the map, to add a section without a link.
 
-Right-click a section or passage for a menu of what you can do with it. The buttons below the map do the same for the one that's selected:
+You type a new section's name on the map, where its box will be: press Enter to add it, or Escape to change your mind. Renaming a box, and naming a new passage, work the same way.
+
+A red box is a link to a section or passage that doesn't exist yet. Double-click it (or select it and press Enter) to add what's missing. So you can write `[[the cellar]]` in a section's text, then double-click the red box that appears to make the cellar.
+
+Right-click a section or passage for a menu of what you can do with it. The buttons in the corner of the map do the same for the one that's selected:
 
 - **Rename** it everywhere it's used (or press F2).
 - **Add a passage** to the section, with a link to it.
 - **Run from here**, to play the story from it.
 - **Start the story here**, which sets [`@start`](/basic-concepts/#set-the-start-section) to that section.
-- **Delete** it (or press Delete). A section goes with its passages, and with any sections after it started with `+++` or `---`, which carry on from it. The editor tells you how many links to it will be broken first. They show on the map in red afterwards, so you can find them. To delete several at once, select them with Shift, then press Delete.
+- **Delete** it (or press Delete). A section goes with its passages, and with any sections after it started with `+++` or `---`, which carry on from it. A link to it on a line of its own, as the map adds them, is removed too. Links in among other text are left for you to reword: the editor tells you how many will be broken first, and they show on the map in red afterwards, so you can find them. To delete several at once, select them with Shift, then press Delete.
 
 Press Ctrl+Z (Cmd+Z on a Mac) on the map to undo the last thing you did there, whether that changed the script or moved a box, and Ctrl+Shift+Z or Ctrl+Y to redo it. If a change is to a file that isn't open, the editor opens it, so that it can be undone.
 
@@ -51,7 +55,7 @@ Nothing that's already in the script is moved.
 
 ## Writing on the map
 
-You can write your story without leaving the map. Make the map **full screen**, then double-click a section (or select it and press Enter). Its text opens beside the map, on its own, without the rest of the script around it. The map carries on updating as you type.
+You can write your story without leaving the map. Make the map **full screen**, then double-click a section (or select it and press Enter). Its text opens in a panel over the right of the map, on its own, without the rest of the script around it. The map stays where it is, moving only if the section's box would be hidden under the panel. The map carries on updating as you type.
 
 - A section is shown with its passages, as passage links only work inside their section. Open a passage and its section is shown, with the cursor at that passage.
 - The section's name is above its text. Use the pencil there to rename it, which changes every link to it too.
