@@ -318,8 +318,14 @@ export function escapeText(text: string): string {
 }
 
 // A link to a section. text is Squiffy text (already escaped); target is a Squiffy section name.
+// Square brackets in a link's text, which would end the link, as entities. Those in a {{...}} are
+// kept, as the compiler leaves them alone, and an expression needs them, as in {{#if [my flag]}}.
+export function escapeLinkBrackets(text: string): string {
+    return text.split(/(\{\{[\s\S]*?\}\})/).map((part, i) => i % 2 ? part : part.replace(/\]/g, "&#93;").replace(/\[/g, "&#91;")).join("");
+}
+
 export function sectionLink(text: string | null, target: string, setters: string[] = []): string {
-    const linkText = text == null ? null : text.replace(/\]/g, "&#93;").replace(/\[/g, "&#91;");
+    const linkText = text == null ? null : escapeLinkBrackets(text);
     if (setters.length == 0 && (linkText == null || linkText == target) && !target.endsWith(">")) {
         return `[[${target}]]`;
     }

@@ -138,9 +138,21 @@ function convertGame(game: QuestGame, options: QuestConversionOptions): QuestCon
     };
 
     // Quest keeps flags and counters as attributes of the game. Most can keep their names.
+    const attributeNames = new Map<string, string>();
+    const usedAttributeNames = new Set<string>();
     const attribute = (questName: string): string => {
         const trimmed = questName.trim();
-        return reservedAttributes.has(trimmed) ? trimmed + "_" : trimmed;
+        let name = attributeNames.get(trimmed);
+        if (name !== undefined) return name;
+        name = squiffyAttributeName(trimmed);
+        // Two Quest names that become the same Squiffy name are kept apart
+        if (name != trimmed) {
+            const base = name;
+            for (let i = 2; usedAttributeNames.has(name); i++) name = `${base}_${i}`;
+        }
+        attributeNames.set(trimmed, name);
+        usedAttributeNames.add(name);
+        return name;
     };
 
     const startPage = (game.start && sectionNames.has(game.start) ? game.start : undefined) ?? storyPages[0]?.name;
@@ -561,4 +573,16 @@ export function formatQuestProblems(result: QuestConversionResult, sourceName?: 
         lines.push(`  ${p.text}`, `    ${p.reason}`);
     }
     return lines.join("\n") + "\n";
+}
+
+// A Squiffy attribute name for a Quest flag, counter or attribute name. A name that isn't one
+// word is written [like this] in an expression, which can't have a comma (that makes it a list,
+// [a, b]), a square or curly bracket, a quote or a backslash in it, or start with a digit, a - or
+// a (. A dot would make it a path to a value inside an object. Quest lets a flag be called
+// anything, so those are changed to _.
+function squiffyAttributeName(name: string): string {
+    if (reservedAttributes.has(name)) return name + "_";
+    let result = name.replace(/[,.[\]{}"'`\\]/g, "_");
+    if (/^[\d(-]/.test(result)) result = "_" + result;
+    return result;
 }

@@ -3,7 +3,7 @@
 
 import { attributeRef, display, print, quote, Unconvertible } from "../twine/expression.js";
 import type { Expr } from "../twine/expression.js";
-import { sectionLink, urlLink } from "../twine/convert.js";
+import { escapeLinkBrackets, sectionLink, urlLink } from "../twine/convert.js";
 
 export interface TextContext {
     // The Squiffy section the text is in
@@ -94,9 +94,9 @@ function convertCommand(section: string, ctx: TextContext, mode: TextMode): stri
         case "page:":
             return convertPageLink(section, ctx, mode);
         case "once:":
-            return `{{#if ${print(visits(ctx))} = 1}}${nested(section.substring(5))}{{/if}}`;
+            return `{{#if ${printCondition(visits(ctx), mode)} = 1}}${nested(section.substring(5))}{{/if}}`;
         case "notfirst:":
-            return `{{#if ${print(visits(ctx))} > 1}}${nested(section.substring(9))}{{/if}}`;
+            return `{{#if ${printCondition(visits(ctx), mode)} > 1}}${nested(section.substring(9))}{{/if}}`;
         case "random:":
             return convertRandom(section.substring(7), ctx);
         case "img:": {
@@ -117,7 +117,7 @@ function convertCommand(section: string, ctx: TextContext, mode: TextMode): stri
             }
             // A passage link shows the popup's text when it's clicked
             const name = ctx.addPassage(link, convertQuestText(content, ctx, "block"));
-            return `[${nested(link).replace(/\]/g, "&#93;").replace(/\[/g, "&#91;")}](${name})`;
+            return `[${escapeLinkBrackets(nested(link))}](${name})`;
         }
         case "either ":
         case "eval:":
@@ -195,7 +195,17 @@ function convertIf(section: string, ctx: TextContext, mode: TextMode): string {
         const rhs: Expr = /^-?\d+(\.\d+)?$/.test(rhsText) ? { k: "num", v: Number(rhsText) } : { k: "str", v: rhsText };
         expr = { k: "bin", op: operator == "<>" ? "!=" : operator as "<=" | ">=" | "<" | ">" | "=", l: lhs, r: rhs };
     }
-    return `{{#if ${print(expr)}}}${text}{{/if}}`;
+    return `{{#if ${printCondition(expr, mode)}}}${text}{{/if}}`;
+}
+
+// A condition, as it's written in an {{#if}}. A link's text goes in a text="..." string, where
+// the compiler writes a " as \", which the condition can't then read, so text in it is quoted
+// with single quotes.
+function printCondition(expr: Expr, mode: TextMode): string {
+    if (mode == "block") return print(expr);
+    const printed = print(expr, { preferSingle: true });
+    if (printed.includes("\"")) throw new Unconvertible("a condition in a link's text can't compare with text that has a quote mark in it");
+    return printed;
 }
 
 // A flag or counter, game.attribute, or page.visited, in an {if}
