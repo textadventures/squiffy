@@ -242,6 +242,7 @@ See [Attributes](/attributes/#tracking-sections-and-passages) for examples.
 | `{{goto}}` | `"name" [after=milliseconds]` | Go to a section once this one has been shown, or after a delay: milliseconds, a time like `"3s"`, or an expression. See [Go to another section](/basic-concepts/#go-to-another-section) | `{{#if health <= 0}}{{goto "death"}}{{/if}}` |
 | `{{#once}}...{{else}}...{{/once}}` | `["name"]` | Show the text inside the first time it's shown, and the `{{else}}` text (or nothing) after that. Each one remembers for itself; ones with the same name share their memory. `{{#firsttime}}` is another name for it. See [The first time](/dynamic-text/#the-first-time) | `{{#once}}A bat flies out!{{else}}It's quiet.{{/once}}` |
 | `{{#every}}` | `milliseconds [times=n] [append=true]` | Show the text inside again and again while the player is in the section. See [Repeating text](/dynamic-text/#repeating-text) | `{{#every 1000}}{{dec "fuse"}}{{fuse}}...{{/every}}` |
+| `{{clear}}` | | Clear the screen, like `@clear`, but only if the text reaches it, so it can go in an `{{#if}}`. What came before it in this section or passage goes too. See [Clear the screen](/basic-concepts/#clear-the-screen) | `{{#if previous_section != "change"}}{{clear}}{{/if}}` |
 | `{{stop}}` | | Inside `{{#every}}`, stop showing its text after this time | `{{#if fuse <= 0}}{{stop}}{{/if}}` |
 | `{{deactivate}}` | `"name" ["name"...]`, or nothing for this passage | Turn off the links to passages in this section. See [Turning off passage links](/basic-concepts/#turning-off-passage-links) | `{{#if talks > 2}}{{deactivate}}{{/if}}` |
 
@@ -520,7 +521,7 @@ In addition to Squiffy's custom helpers, you have access to standard Handlebars 
 
 ## Helpers and directives
 
-`{{set}}`, `{{inc}}`, `{{dec}}` and `{{unset}}` run at the point in the text where they appear, so they respect `{{#if}}`. The `@set`, `@inc`, `@dec` and `@unset` directives always run when a section or passage is shown. See [Conditional attribute changes](/attributes/#conditional-attribute-changes). It's the same for `{{music}}` and `{{sound}}`, and the `@music` and `@sound` directives.
+`{{set}}`, `{{inc}}`, `{{dec}}` and `{{unset}}` run at the point in the text where they appear, so they respect `{{#if}}`. The `@set`, `@inc`, `@dec` and `@unset` directives always run when a section or passage is shown. See [Conditional attribute changes](/attributes/#conditional-attribute-changes). It's the same for `{{music}}` and `{{sound}}`, and the `@music` and `@sound` directives, and for `{{clear}}` and `@clear`.
 
 ## Creating custom helpers
 

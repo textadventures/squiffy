@@ -603,10 +603,39 @@ describe("scripts", () => {
         ].join("\n"));
     });
 
-    test("what can't be converted is kept in comments", async () => {
+    test("a ClearScreen after something is shown, or in an if, is {{clear}}", async () => {
+        // https://github.com/textadventures/squiffy/issues/524
         const { script, problems } = await run(scriptPage("Start", `
             msg ("Before.")
             ClearScreen
+            msg ("After.")`, "", [["End", "On"]]));
+        expect(section(script, "Start")).toBe([
+            "Before.<br>",
+            "{{clear}}",
+            "After.",
+            "",
+            "[[On]](End)",
+        ].join("\n"));
+        expect(problems).toEqual([]);
+
+        const { script: conditional } = await run(scriptPage("Start", `
+            if (GetBoolean(game, "tired")) {
+              ClearScreen
+            }
+            msg ("Morning.")`, "", [["End", "On"]]));
+        expect(section(conditional, "Start")).toBe([
+            "{{#if tired}}",
+            "{{clear}}",
+            "{{/if}}",
+            "Morning.",
+            "",
+            "[[On]](End)",
+        ].join("\n"));
+    });
+
+    test("what can't be converted is kept in comments", async () => {
+        const { script, problems } = await run(scriptPage("Start", `
+            msg ("Before.")
             JS.eval ("alert(1)")
             list add (game.items, "key")
             if (Foo(1)) {
@@ -616,7 +645,6 @@ describe("scripts", () => {
             msg (`, "", [["End", "On"]]));
         expect(section(script, "Start")).toBe([
             "Before.",
-            "{{!-- Quest: ClearScreen --}}",
             "{{!-- Quest: JS.eval (\"alert(1)\") --}}",
             "{{!-- Quest: list add (game.items, \"key\") --}}",
             "{{!-- Quest: if (Foo(1)) { msg (\"x\") } --}}",
@@ -626,7 +654,6 @@ describe("scripts", () => {
             "[[On]](End)",
         ].join("\n"));
         expect(problems.map(p => p.reason)).toEqual([
-            "This couldn't be converted: Squiffy can only clear the screen before a section is shown.",
             "This couldn't be converted: Squiffy can't run Quest's JavaScript.",
             "This couldn't be converted: Squiffy has nothing like list add.",
             "This couldn't be converted: Squiffy has nothing like Foo.",

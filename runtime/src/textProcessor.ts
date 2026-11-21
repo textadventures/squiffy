@@ -20,6 +20,29 @@ interface EmbedScope {
     content?: () => string;
 }
 
+// The comment {{clear}} writes (#524)
+export const CLEAR_MARKER = "squiffy-clear";
+
+// What's left of html once everything before its last {{clear}} is taken out, or null if it has none
+export function afterClear(html: string): string | null {
+    if (!html.includes(`<!--${CLEAR_MARKER}-->`)) return null;
+    const template = document.createElement("template");
+    template.innerHTML = html;
+    // 128: NodeFilter.SHOW_COMMENT
+    const walker = document.createTreeWalker(template.content, 128);
+    let last: ChildNode | null = null;
+    while (walker.nextNode()) {
+        if ((walker.currentNode as Comment).data == CLEAR_MARKER) last = walker.currentNode as ChildNode;
+    }
+    if (!last) return null;
+    // Everything before it, at its own level and in each element it's inside, such as a paragraph
+    for (let node: Node | null = last; node && node !== template.content; node = node.parentNode) {
+        while (node.previousSibling) node.previousSibling.remove();
+    }
+    last.remove();
+    return template.innerHTML.trim();
+}
+
 export class TextProcessor {
     getStory: () => Story;
     state: State;
@@ -150,6 +173,10 @@ export class TextProcessor {
             const tag = decodeURIComponent(body).includes("\n\n") ? "div" : "span";
             return new Handlebars.SafeString(`<${tag} class="squiffy-every"${attrs}></${tag}>`);
         });
+
+        // {{clear}} (#524): like @clear, but it can be in an {{#if}}. It writes a comment that the
+        // runtime finds once the text is rendered, and clears the screen before writing what comes after.
+        this.handlebars.registerHelper("clear", () => new Handlebars.SafeString(`<!--${CLEAR_MARKER}-->`));
 
         // {{stop}} (#451): the {{#every}} whose text this is stops after this time
         this.handlebars.registerHelper("stop", () => {

@@ -977,6 +977,10 @@ P.`)).toEqual([]);
 [[start]]:
 @leave fade
 Hello.`)).toEqual([]);
+    // {{clear}} clears it too (#524)
+    expect(await leaveWarnings(`[[start]]:
+@leave fade
+{{#if tired}}{{clear}}{{/if}}Hello.`)).toEqual([]);
 });
 
 test("@transition warns about a name or time it can't use (#489)", async () => {

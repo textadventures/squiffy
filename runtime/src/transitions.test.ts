@@ -276,6 +276,47 @@ B.
     expect(leaving(sectionElement(element, "a"))).toEqual({ name: "fade", time: "" });
 });
 
+test("{{clear}} plays the leave transition, then the new text's own transition", async () => {
+    // https://github.com/textadventures/squiffy/issues/524
+    animateLeaving();
+    const { element } = await start(`
+[[a]]:
+A. [[b]], [[c]]
+
+[[b]]:
+@leave blur 2s
+@transition fade
+{{clear}}B. [look]
+
+[look]:
+@transition zoom
+@leave slide-up
+{{clear}}Looking.
+
+[[c]]:
+C.
+`);
+    await clickWithoutWaiting(element, "b");
+    // The old text is leaving, and the new text isn't there yet
+    expect(leaving(sectionElement(element, "a"))).toEqual({ name: "blur", time: "2000ms" });
+    expect(sectionElement(element, "b").textContent).toBe("");
+    sectionElement(element, "a").dispatchEvent(new window.Event("animationend", { bubbles: true }));
+    await vi.advanceTimersByTimeAsync(0);
+    const b = sectionElement(element, "b");
+    expect(b.textContent).toContain("B.");
+    expect(transition(b)).toEqual({ name: "fade", time: "" });
+    expect(element.querySelector(".squiffy-clear-stack [data-section='a']")).not.toBeNull();
+
+    // In a passage, the passage's own transitions
+    await clickWithoutWaiting(element, "look");
+    expect(leaving(sectionElement(element, "b"))).toEqual({ name: "slide-up", time: "" });
+    await vi.runAllTimersAsync();
+    const look = passageElement(element, "look");
+    expect(look.textContent).toBe("Looking.");
+    expect(transition(look)).toEqual({ name: "zoom", time: "" });
+    expect(element.querySelectorAll(".squiffy-clear-stack .squiffy-output-passage")).toHaveLength(0);
+});
+
 test("A slide moves the way it's named, arriving or leaving", async () => {
     const { readFileSync } = await import("fs");
     const style = document.createElement("style");

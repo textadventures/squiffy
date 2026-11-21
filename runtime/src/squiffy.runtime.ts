@@ -1,5 +1,5 @@
 import { SquiffyApi, SquiffyInitOptions, Story, Section, Passage, StartAt, SavedGame, LoadSaveResult } from "./types.js";
-import { TextProcessor, errorHtml } from "./textProcessor.js";
+import { TextProcessor, afterClear, errorHtml } from "./textProcessor.js";
 import { toNumber } from "./numbers.js";
 import { Emitter, SquiffyEventMap } from "./events.js";
 import { State } from "./state.js";
@@ -43,6 +43,9 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     let scrollPosition = 0;
     // Set when the screen is cleared, so the next scroll goes up to the top of the new screen (#54)
     let scrollToTop = false;
+    // The section or passage being shown, and the ones it takes its @transition and @leave from,
+    // for a {{clear}} in its text (#524)
+    let shownFrom: (Section | Passage | undefined)[] = [];
     // Errors from setting attributes (e.g. @set gold += abc), shown at the start of the next text
     // written. A link's setters run before the next section has anywhere to show them.
     const pendingErrors: string[] = [];
@@ -443,8 +446,9 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         state.setSeen(sectionName);
         const master = story.sections[""];
         const clear = master?.clear || currentSection.clear;
+        shownFrom = [currentSection, master];
         // @leave: the old text goes before anything changes on the screen
-        if (clear) await leaveTransition([currentSection, master]);
+        if (clear) await leaveTransition(shownFrom);
         // @class (#449): this section's classes replace the last one's
         setSectionClasses([...(master?.classes ?? []), ...(currentSection.classes ?? [])]);
         if (clear) {
@@ -543,7 +547,13 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             }
         }
 
-        ui.write(section.text || "", source);
+        let html = ui.renderHtml(section.text || "", false);
+        const cleared = afterClear(html);
+        if (cleared !== null) {
+            html = cleared;
+            await clearPartWay();
+        }
+        ui.writeHtml(html, source);
 
         // Functions from squiffy.ui.afterWrite run once the text and its {{...}} are on the page (#106)
         inAfterWrite = true;
@@ -643,8 +653,9 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         }
 
         const clear = passages.some(p => p.clear);
+        shownFrom = [passage, master, masterSection?.passages?.[""], currentSection, masterSection];
         // @leave: the passage's own, or else a master passage's, or else its section's, or the master section's
-        if (clear) await leaveTransition([passage, master, masterSection?.passages?.[""], currentSection, masterSection]);
+        if (clear) await leaveTransition(shownFrom);
 
         // @class in a passage (#449) adds to the section's classes
         const passageClasses = passages.flatMap(p => p.classes ?? []);
@@ -662,7 +673,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
 
         currentSectionElement.appendChild(currentPassageElement);
         // @transition (#489): the passage's own, or else a master passage's, or else its section's, or the master section's
-        startTransition(currentPassageElement, [passage, master, masterSection?.passages?.[""], currentSection, masterSection]);
+        startTransition(currentPassageElement, shownFrom);
 
         for (const fn of runFns) {
             await fn();
@@ -936,7 +947,8 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         return null;
     }
 
-    function clearScreen() {
+    // keep: an element that stays on the screen, for {{clear}} part-way through a section
+    function clearScreen(keep?: Element) {
         // Callers should call createSectionElement() after calling this function, so there's a place for new
         // output to go. We don't call this automatically within this function, in case we're just about to create
         // a new section anyway.
@@ -954,7 +966,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
 
         // Move everything in the outputElement (except the clearStack itself) into the new clearStackItem
         for (const child of [...outputElement.children]) {
-            if (child !== clearStack) {
+            if (child !== clearStack && child !== keep) {
                 clearStackItem.appendChild(child);
             }
         }
@@ -963,6 +975,33 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
 
         // NOTE: If we offer an option to disable the "back" feature, all of the above can be replaced with:
         //    outputElement.innerHTML = '';
+    }
+
+    // {{clear}} (#524): clears the screen while a section or passage is being shown, as @clear
+    // would have before it, taking away what it has shown so far too
+    async function clearPartWay() {
+        if (currentPassageElement) {
+            await leaveTransition(shownFrom);
+            // The passage starts again on a screen of its own, as with @clear, so going back
+            // takes it away and brings back the screen as it was before it
+            const passageElement = currentPassageElement.cloneNode(false) as HTMLElement;
+            currentPassageElement.remove();
+            endTransition(passageElement);
+            clearScreen();
+            createSectionElement();
+            currentPassageElement = passageElement;
+            currentSectionElement.appendChild(passageElement);
+            startTransition(passageElement, shownFrom);
+        }
+        else {
+            // The section element stays, playing its @transition, and what's in it so far goes,
+            // such as the master section's text, along with what came before it
+            const sectionElement = currentSectionElement;
+            await leaveTransition(shownFrom, [...screenElements().filter(e => e !== sectionElement), ...sectionElement.children]);
+            sectionElement.replaceChildren();
+            clearScreen(sectionElement);
+        }
+        newBlockOutputElement();
     }
 
     // @transition (#489): plays the first transition given, as a class that the stylesheet animates.
@@ -990,12 +1029,11 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     // @leave: plays the first leave transition given on everything on the screen, the arrival
     // transitions backwards, and waits for it to finish, so that clearScreen() can take it away.
     // Links and Back wait too.
-    async function leaveTransition(from: (Section | Passage | undefined)[]) {
+    async function leaveTransition(from: (Section | Passage | undefined)[], on: Element[] = screenElements()) {
         const source = from.find(s => s?.leave);
         const name = source?.leave;
         if (!name || name == "none" || name == "instant") return;
-        const clearStack = getClearStack();
-        const elements = [...outputElement.children].filter((c): c is HTMLElement => c !== clearStack && c instanceof HTMLElement);
+        const elements = on.filter((e): e is HTMLElement => e instanceof HTMLElement);
         if (!elements.length) return;
         for (const element of elements) {
             endTransition(element);
@@ -1033,6 +1071,12 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         }
     }
 
+    // What's on the screen: the output, but not the clear stack hidden in it
+    function screenElements() {
+        const clearStack = getClearStack();
+        return [...outputElement.children].filter(c => c !== clearStack);
+    }
+
     // Takes off a transition's class, so it doesn't play again when the element is shown again,
     // such as after going back past a @clear
     function endTransition(element: HTMLElement) {
@@ -1064,9 +1108,12 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     
     const ui = {
         write: (text: string, source: string) => {
+            ui.writeHtml(ui.renderHtml(text, false), source);
+        },
+        writeHtml: (rendered: string, source: string) => {
             scrollPosition = outputElement.scrollHeight;
 
-            const html = pendingErrors.splice(0).join("") + ui.renderHtml(text, false).trim();
+            const html = pendingErrors.splice(0).join("") + rendered.trim();
 
             // Previously, we skipped the rest of this if "html" came back as an empty string.
             // But, we _do_ always want the block to be created, in the editor at least - as the
@@ -1167,7 +1214,9 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             // Text shown again after an edit doesn't play its {{sound}}s again
             quiet = true;
             try {
-                return ui.renderHtml(text, false);
+                const html = ui.renderHtml(text, false);
+                // Only what comes after a {{clear}} was shown (#524)
+                return afterClear(html) ?? html;
             } finally {
                 currentSection = previousSection;
                 quiet = false;

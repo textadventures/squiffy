@@ -94,6 +94,7 @@ A page's script runs before its text is shown, so it becomes text at the start o
 | `AddPageLink (Page1, Page2, "Go on")`, `RemovePageLink (Page1, Page2)` | An attribute for the link, which Page1 checks before showing it: see below |
 | `GetInput () { game.name = result }` | A text box, and a **Continue** link to a section that runs the rest, `{{set "name" input}}`, and shows the page's links again |
 | `ClearScreen`, before the script shows anything | `@clear` |
+| `ClearScreen` anywhere else, such as in an `if` | `{{clear}}`, which also takes away what the page has shown before it |
 | `picture ("map.png")`, `play sound ("door.mp3", false, false)` | `<img>`, `{{sound "door.mp3"}}` |
 | `play sound ("rain.mp3", false, true)`, which loops, and `stop sound` | [Music](/images-and-files/#music-and-sound), `{{music "rain.mp3"}}`, and `{{stopsounds}}{{stopmusic}}` |
 | `PrintCentered`, `TextFX_Typewriter`, `DisplayHttpLink`, `ShowYouTube` | Centred text, `{{#animate "typewriter"}}`, a web link, a YouTube player |
@@ -111,7 +112,7 @@ A link that a script adds or removes is shown with `{{#if}}`, and the scripts se
 
 ## What isn't converted yet
 
-- **Script commands beyond the gamebook editor's own**, such as lists, loops, `ShowMenu`, `wait`, your own functions, and Quest's JavaScript (`JS.`...), are kept as comments. So is a `ClearScreen` after the script has shown something, as Squiffy can only clear the screen before showing a section.
+- **Script commands beyond the gamebook editor's own**, such as lists, loops, `ShowMenu`, `wait`, your own functions, and Quest's JavaScript (`JS.`...), are kept as comments.
 - **Expressions in text**: `{either ...}`, `{eval:...}` and `{=...}`.
 - **Commands for Quest's text adventures**, such as `{object:...}` and `{exit:...}`, and `{select:...}` and `{rndalt:...}`.
 - **Links and other commands in `{random:...}`.** Its choices can be text, formatting and images.
