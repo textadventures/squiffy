@@ -1,0 +1,32 @@
+---
+// A story's files, one to a tab, each scrolling if it's long
+import { Code, TabItem, Tabs } from "@astrojs/starlight/components";
+import type { ExampleFile } from "../examples";
+
+interface Props {
+    files: ExampleFile[];
+}
+
+const { files } = Astro.props;
+---
+
+<div class="example-files">
+    <Tabs>
+        {files.map(file => (
+            <TabItem label={file.path}>
+                <Code code={file.code} lang={file.lang} wrap />
+            </TabItem>
+        ))}
+    </Tabs>
+</div>
+
+<style>
+    /* The tabs scroll sideways rather than wrap their names */
+    .example-files :global([role="tab"]) {
+        white-space: nowrap;
+    }
+    .example-files :global(pre) {
+        max-height: min(36rem, 75vh);
+        overflow-y: auto;
+    }
+</style>

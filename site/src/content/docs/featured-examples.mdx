@@ -5,9 +5,10 @@ sidebar:
 ---
 
 import Sample from "@components/Sample.astro";
-import { coffeeshop } from "../../examples";
+import ExampleFiles from "@components/ExampleFiles.astro";
+import { coffeeshop, gameshow } from "../../examples";
 
-Here are two complete stories. Play them, then see how they're made: their source is [on GitHub](https://github.com/textadventures/squiffy/tree/main/examples).
+Here are two complete stories. Play them, then see how they're made: read their source here, or download it and open it in the [editor](https://app.squiffystory.com) with **Open file**, to play it there and change it.
 
 ## Coffee Shop Confessions
 
@@ -24,7 +25,9 @@ It's a quiet story, which shows the basics of writing one:
 
 [**▶ Play Coffee Shop Confessions**](/examples/coffeeshop/index.html): the full game, in a new tab
 
-Or play it here, and change it as you go. This is the story's text without its stylesheet and side panel, which are in its [squiffy.json](https://github.com/textadventures/squiffy/tree/main/examples/coffeeshop).
+[**Download the source**](/examples/coffeeshop.zip): the story's folder, as a zip, to open in the editor
+
+Or play it here, and change it as you go. This is the story's text, without the stylesheet and the side panel that its [other files](https://github.com/textadventures/squiffy/tree/main/examples/coffeeshop) add.
 
 <Sample script={coffeeshop} alwaysShowRestart={true} height="36rem" />
 
@@ -48,6 +51,12 @@ This one shows off as much of Squiffy as it can:
 - **The endings:** a score that counts up, and [playthrough tests](/cli/#testing-a-story) of a win and of Hank walking off
 
 [**▶ Play The Wheel of Dubious Fortune**](/examples/gameshow/index.html): the full game, in a new tab
+
+[**Download the source**](/examples/gameshow.zip): the story's folder, as a zip, to open in the editor
+
+Here are its files. The sound effects and the playthrough tests are in the download, and [on GitHub](https://github.com/textadventures/squiffy/tree/main/examples/gameshow).
+
+<ExampleFiles files={gameshow} />
 
 ## More examples
 
