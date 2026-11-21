@@ -55,6 +55,9 @@ export interface LanguageFeatureOptions {
     onSymbols?(symbols: DocumentSymbol[]): void;
     // Go to a location in another file. Locations in this file are handled here.
     onNavigate?(location: Location): void;
+    // Asked before going to a location in this file: return true if the app goes there itself,
+    // e.g. while the editor shows only one section, and the location's in another
+    takeNavigation?(location: Location): boolean;
     // Show where a section or passage is used
     onReferences?(name: string, locations: Location[]): void;
     // Ask for a new name, or null to cancel
@@ -160,6 +163,7 @@ export function languageFeatures(options: LanguageFeatureOptions): Extension[] {
             options.onNavigate?.(location);
             return;
         }
+        if (options.takeNavigation?.(location)) return;
         const anchor = toOffset(view.state.doc, location.range.start);
         const head = toOffset(view.state.doc, location.range.end);
         view.dispatch({

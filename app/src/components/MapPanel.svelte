@@ -13,6 +13,7 @@
 </script>
 
 <script lang="ts">
+    import { untrack } from "svelte";
     // The story map (#380): the story's sections as boxes, their passages hanging under them, and
     // links as arrows, drawn from the language service's story graph by @textadventures/graph-map.
     // The text is the source of truth: the map is a view of it, and editing on the map edits the
@@ -38,6 +39,7 @@
     import Play from "@lucide/svelte/icons/play";
     import Code from "@lucide/svelte/icons/code";
     import ListPlus from "@lucide/svelte/icons/list-plus";
+    import SquarePen from "@lucide/svelte/icons/square-pen";
     import Trash2 from "@lucide/svelte/icons/trash-2";
 
     interface Props {
@@ -51,6 +53,11 @@
         // Where the player has been in the preview, in order
         trace: TraceStep[];
         maximized: boolean;
+        // Full screen, the id of the section being written beside the map, if one is
+        card: string | null;
+        // Write a section (or the section a passage is in) beside the full-screen map, taking the
+        // focus or not
+        onedit: (node: GraphNode, focus: boolean) => void;
         width?: number;
         // Go to a node (or a broken link) in the editor, taking the focus or not
         ongoto: (node: StoryMapNode, focus: boolean) => void;
@@ -76,7 +83,7 @@
     }
 
     let {
-        graph, positions, query, current, trace, maximized, width, ongoto, ongotoedge, onmove, onlink, oncreate, onrename,
+        graph, positions, query, current, trace, maximized, card, onedit, width, ongoto, ongotoedge, onmove, onlink, oncreate, onrename,
         onrun, onaddpassage, ondelete, onstart, onundo, onrelayout, ontogglemaximized, onclose,
     }: Props = $props();
 
@@ -178,8 +185,12 @@
         map?.relayout(new Map());
     }
 
-    export function focusNode(id: string) {
-        map?.select(id);
+    export function focusNode(id: string, announce = true) {
+        map?.select(id, announce);
+    }
+
+    export function focus() {
+        map?.focus();
     }
 
     function canConnect(from: StoryMapNode, to: StoryMapNode | null) {
@@ -193,10 +204,27 @@
             ongotoedge({ id: "", from: "", to: node.id, kind: node.brokenEdge!.kind, edges: [node.brokenEdge!], conditional: false });
             return;
         }
-        // Full-screen, a click just selects: the editor's out of sight
-        if (how == "click" && maximized) return;
+        // Full screen, the script's out of sight: a click just selects, and opening a box shows
+        // its section beside the map, to write there
+        if (maximized) {
+            if (how == "open" && node.graphNode) onedit(node.graphNode, true);
+            return;
+        }
         ongoto(node, how == "open");
     }
+
+    // While a section's being written beside the map, selecting another box shows that one
+    let followed: string | null = null;
+    $effect(() => {
+        const g = selectedNode?.graphNode;
+        if (!maximized || !card || !g) {
+            followed = null;
+            return;
+        }
+        if (g.id == followed) return;
+        followed = g.id;
+        untrack(() => onedit(g, false));
+    });
 
     async function handleRelayout() {
         if (await onrelayout()) map?.relayout(new Map());
@@ -235,7 +263,8 @@
         } else if (node && g) {
             const section = g.kind == "section";
             items = [
-                { label: "Show in the script", shortcut: "Enter", action: () => ongoto(node, true) },
+                ...(maximized ? [{ label: "Write here", shortcut: "Enter", action: () => onedit(g, true) }] : []),
+                { label: "Show in the script", shortcut: maximized ? undefined : "Enter", action: () => ongoto(node, true) },
                 { label: "Rename…", shortcut: "F2", disabled: !!g.detail, action: () => onrename(g) },
                 { label: "Add a passage…", action: () => onaddpassage(g) },
                 { label: "Run from here", divider: true, action: () => onrun(g) },
@@ -251,12 +280,12 @@
         menu = { ...screen, keyboard, items };
     }
 
-    const instructions = "Arrow keys move between sections and passages. Enter goes to one in the editor, F2 renames it and Delete deletes it. The menu key, or Shift and F10, opens a menu for it. Control or Command and Z undoes the last change. Plus and minus zoom, and 0 fits the whole story in view. Drag the background to pan, a box to move it, or the dot under the selected box to add a link. Shift and drag the background to select several boxes, or Shift and click one, then drag one of them to move them all.";
+    const instructions = "Arrow keys move between sections and passages. Enter goes to one in the editor, or with the map full screen, shows it beside the map to write there. F2 renames it and Delete deletes it. The menu key, or Shift and F10, opens a menu for it. Control or Command and Z undoes the last change. Plus and minus zoom, and 0 fits the whole story in view. Drag the background to pan, a box to move it, or the dot under the selected box to add a link. Shift and drag the background to select several boxes, or Shift and click one, then drag one of them to move them all.";
 </script>
 
 <section
     aria-label="Story map"
-    class="story-map flex flex-col overflow-hidden border-l border-surface-200-800 bg-surface-50-950 {width === undefined ? "flex-1 min-w-0" : "shrink-0"}"
+    class="story-map flex flex-col overflow-hidden {card ? "-order-1" : ""} border-l border-surface-200-800 bg-surface-50-950 {width === undefined ? "flex-1 min-w-0" : "shrink-0"}"
     style={width === undefined ? undefined : `width: ${width}px`}
 >
     <header class="flex items-center gap-0.5 px-2 py-1 border-b border-surface-200-800">
@@ -335,7 +364,10 @@
                 <span class="font-semibold truncate flex-1" title={selectedNode.label}>
                     {selectedNode.kind === "section" ? "Section" : "Passage"}: {selectedNode.label}
                 </span>
-                <button type="button" class="btn-icon btn-icon-sm" title="Go to it in the editor (Enter)" aria-label="Go to it in the editor" onclick={() => ongoto(selectedNode, true)}><Code size={13} /></button>
+                {#if maximized}
+                    <button type="button" class="btn-icon btn-icon-sm" title="Write here (Enter)" aria-label="Write here" onclick={() => onedit(g, true)}><SquarePen size={13} /></button>
+                {/if}
+                <button type="button" class="btn-icon btn-icon-sm" title={maximized ? "Show in the script" : "Go to it in the editor (Enter)"} aria-label={maximized ? "Show in the script" : "Go to it in the editor"} onclick={() => ongoto(selectedNode, true)}><Code size={13} /></button>
                 {#if !g.detail}
                     <button type="button" class="btn-icon btn-icon-sm" title="Rename (F2)" aria-label="Rename" onclick={() => onrename(g)}><Pencil size={13} /></button>
                 {/if}
