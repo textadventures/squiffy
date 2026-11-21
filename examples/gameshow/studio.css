@@ -98,7 +98,9 @@ body:has(.advert) {
     background-image: repeating-linear-gradient(transparent 0 2px, rgb(0 0 0 / 0.18) 2px 4px);
 }
 
+/* With space above it, as it's first on the screen, below the header and its fade */
 div.squiffy-style.advert-card {
+    margin: 1.5rem 0 1rem;
     padding: 0.5em 1.5em;
     border: 4px double #ff8adf;
     border-radius: 1rem;
