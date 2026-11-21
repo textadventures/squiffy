@@ -11,7 +11,8 @@
     } from "#lib/project.svelte.js";
     import { openInEditor } from "#lib/desktop-shell.js";
     import { desktopApi } from "#lib/desktop.js";
-    import { DOCS_URL } from "#lib/links.js";
+    import { DOCS_URL, GAMES_URL } from "#lib/links.js";
+    import { featuredGames, loadFeaturedGames } from "#lib/featured-games.svelte.js";
     import { TWINE_ACCEPT } from "#lib/twine-import.js";
     import { QUEST_ACCEPT } from "#lib/quest-import.js";
     import type { StoredProject } from "@textadventures/project-fs";
@@ -59,6 +60,7 @@
 
     onMount(() => {
         void refresh();
+        void loadFeaturedGames();
         if (isDesktop) return desktopApi()?.desktop.recent.onChanged(() => void refresh());
         void getLegacyAutoSave().then(saved => { legacy = saved; });
     });
@@ -276,6 +278,37 @@
             {/if}
         </section>
     {/if}
+
+    {#if featuredGames.games.length > 0}
+        <section aria-labelledby="featured-heading" class="flex flex-col gap-3">
+            <div class="flex items-baseline justify-between gap-3">
+                <h2 id="featured-heading" class="text-sm font-semibold text-surface-600-400 uppercase tracking-wide">Made with Squiffy</h2>
+                <a class="anchor text-xs" href={GAMES_URL} target="_blank" rel="noopener noreferrer">More Squiffy games</a>
+            </div>
+            <ul class="grid gap-3 grid-cols-2 sm:grid-cols-4">
+                {#each featuredGames.games as game (game.id)}
+                    <li>
+                        <a class="featured-card card preset-outlined-surface-200-800" href={game.url} target="_blank" rel="noopener noreferrer">
+                            <img src={game.cover} alt="" loading="lazy" class="featured-cover" />
+                            <span class="flex flex-col gap-0.5 p-2.5">
+                                <span class="font-medium text-sm leading-snug">{game.name}</span>
+                                {#if game.author}
+                                    <span class="text-xs text-surface-600-400 truncate">{game.author}</span>
+                                {/if}
+                                {#if game.description}
+                                    <span class="featured-description text-xs text-surface-600-400">{game.description}</span>
+                                {/if}
+                            </span>
+                        </a>
+                    </li>
+                {/each}
+            </ul>
+            <p class="text-xs text-surface-600-400">
+                Featured games from <a class="anchor" href={GAMES_URL} target="_blank" rel="noopener noreferrer">textadventures.co.uk</a>,
+                where you can <a class="anchor" href="{DOCS_URL}/publishing/" target="_blank" rel="noopener noreferrer">publish your story</a> too.
+            </p>
+        </section>
+    {/if}
 </main>
 
 <style>
@@ -286,6 +319,28 @@
         gap: 0.35rem;
         padding: 1rem;
         text-align: left;
+    }
+    .featured-card {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+    }
+    .featured-card:hover {
+        background-color: var(--color-surface-100-900);
+    }
+    .featured-cover {
+        width: 100%;
+        aspect-ratio: 1;
+        object-fit: cover;
+        background-color: var(--color-surface-100-900);
+    }
+    .featured-description {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
     }
     .start-card:hover:not(:disabled),
     .story-row:hover:not(:disabled) {
