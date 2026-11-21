@@ -345,6 +345,17 @@ These helpers take the array itself, such as `inventory`, not its name in quotes
 
 To use an item at a position held in an attribute, put the attribute in square brackets: `{{= inventory[choice]}}`.
 
+When each item needs a helper or a link, use `join` as a block, like `{{#each}}`. It shows its text for each item and puts the separators between them. Inside it, `{{this}}` is the item, and `{{@index}}`, `@first` and `@last` work as they do in `{{#each}}`. An `{{else}}` is shown if the array is empty:
+
+<Sample script="@set ways = [&quot;north&quot;, &quot;south&quot;, &quot;east&quot;]
+@set nothing = []
+You can go {{#join ways &quot;, &quot; &quot; or &quot;}}[[{{this}}]](go, to = &quot;{{this}}&quot;){{/join}}.
+
+You have {{#join nothing}}{{this}}{{else}}nothing{{/join}}.
+
+[[go]]:
+You go {{to}}."></Sample>
+
 `{{#each}}` can go through any of these, so `range` repeats something a number of times, even a number worked out as the story runs. A calculation inside a helper goes in brackets of its own:
 
 <Sample script="@set lives = 3
