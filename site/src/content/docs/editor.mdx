@@ -23,6 +23,10 @@ The editor saves as you go, a moment after you stop typing, and the toolbar show
 
 A story kept in your browser is in the browser's storage, which the browser can clear, and it isn't shared between browsers or devices. To keep a copy, use **File > Download project (.zip)**, or **Download project** on the reminder the editor shows once you've made changes. **Open file** brings it back into your browser. A story in a folder you opened is saved to the files themselves.
 
+### Changes made outside the editor
+
+If a story's files are changed by another program while it's open in the editor, such as a text editor, git, or an [AI agent](/writing-with-ai/), the editor picks up the changes: as they happen in the desktop app, and when you come back to the editor's window in a browser. A file you haven't changed in the editor reloads, and Undo takes you back to what you had. If you have changed it, the editor stops saving it, and asks whether to use the changed file or keep your changes. A file deleted outside the editor isn't put back unless you say so.
+
 ## Installing the editor
 
 The editor is a Progressive Web App (PWA). In browsers that support it, such as Chrome and Edge, you can install it from the address bar, and it then opens in its own window like any other app. Once it's been loaded, the editor works offline.
@@ -50,7 +54,7 @@ The **Add** menu inserts:
 
 The editor understands your story as you write:
 
-- It underlines problems, such as a link to a section that doesn't exist. Hover over a problem to see what's wrong, and in many cases there's a quick fix, such as creating the missing section.
+- It underlines problems, such as a link to a section that doesn't exist, or `{{...}}` text that isn't valid, such as an `{{#if}}` without its `{{/if}}`. Hover over a problem to see what's wrong, and in many cases there's a quick fix, such as creating the missing section.
 - The problems button in the toolbar shows how many problems the story has. Click it, or press Ctrl+Shift+M (Cmd+Shift+M on Mac), to list every problem in every file of the story. Choose one to go to it, or use its quick fix from the list.
 - It warns about a section the player can't reach, because nothing that can be reached from the start of the story links to it (a section that's only shown inside others, with `{{embed}}` or `{{live ... section=...}}`, is fine), and about a "dead end": a section with no links to another section. If a dead end is one of your story's endings, the quick fix marks it with [`@end`](/basic-concepts/#endings).
 - As you type a link, it suggests the names of your sections and passages.

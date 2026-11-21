@@ -12,14 +12,15 @@ import step2 from "../../tutorial/2-passages.squiffy?raw";
 import step3 from "../../tutorial/3-attributes.squiffy?raw";
 import step4 from "../../tutorial/4-conditions.squiffy?raw";
 import step5 from "../../tutorial/5-endings.squiffy?raw";
+import step6 from "../../tutorial/6-atmosphere.squiffy?raw";
 
-In this tutorial, you'll write a short story about a castaway who finds a mysterious island. Along the way, you'll use everything you need for most Squiffy stories: sections and passages, remembering what the player has done, choices that depend on it, and endings. Then you'll publish it, ready to share.
+In this tutorial, you'll write a short story about a castaway who finds a mysterious island. Along the way, you'll use everything you need for most Squiffy stories: sections and passages, remembering what the player has done, choices that depend on it, endings, and a little atmosphere. Then you'll publish it, ready to share.
 
 It takes about half an hour. You don't need to know any programming.
 
 ## Start a new story
 
-Open the editor at [app.squiffystory.com](https://app.squiffystory.com/), or the [desktop app](/desktop-app/), and choose **New story**.
+Open the editor at [app.squiffystory.com](https://app.squiffystory.com/), or the [desktop app](/desktop-app/), and choose **New story**. The desktop app asks for the story's name first: call it "The Island".
 
 The new story has some text in it already, to get you started. Select all of it (Ctrl+A, or Cmd+A on Mac) and delete it: you're going to write your own.
 
@@ -90,13 +91,29 @@ Look at the sections for the endings in the editor. Each one is underlined: the 
 
 ## Add endings
 
-To tell Squiffy that a section is an ending, put `@end` on a line of its own at the start of it:
+To tell Squiffy that a section is an ending, put `@end` on a line of its own at the start of it. And give the player a way to play again, with a `{{restart}}` link:
 
 <Sample script={step5}></Sample>
 
-`@end` doesn't change what the player sees, but the warnings go away, and the story map marks the endings with a double outline. Open the map now to see the whole story: three endings, with the start at the top. When you play the story, the parts you've visited are outlined in green, so you can see which paths you haven't tested yet.
+- `@end` doesn't change what the player sees, but the warnings go away, and the story map marks the endings with a double outline.
+- `{{restart text="Play again"}}` is a link that starts the story again from the beginning, once the player says they're sure. Anything in `{{double curly brackets}}` is worked out as the story runs, like the `{{#if}}` you used earlier. A published story also has a Restart button above it, but a link at the end is easier to find.
+
+Open the map now to see the whole story: three endings, with the start at the top. When you play the story, the parts you've visited are outlined in green, so you can see which paths you haven't tested yet.
 
 The finished story has three endings, an object to find, and a choice that depends on it. That's a complete Squiffy story.
+
+## Set the mood
+
+The story works, but you can make it feel more like being there. Make each part of the story fade in as it appears, the cave come slowly into focus, and the thing in the dark tremble:
+
+<Sample alwaysShowRestart={true} script={step6}></Sample>
+
+- `@transition fade 1s` makes text fade in over a second as it appears. There are others, such as `slide-up` and `zoom`: see [Transitions](/dynamic-text/#transitions).
+- `[[]]:`, a section with no name, is the **master section**. What you put in it applies to every section and passage in the story, so here everything fades in. It can go anywhere in the file; the end is a good place, out of the way.
+- The cave has a `@transition` of its own, `blur 2s`, which it uses instead: as the player goes in, it slowly comes into focus.
+- `{{#style "shudder"}}...{{/style}}` makes the text inside it tremble, for as long as it's on the screen. There are more effects, such as `flicker`, `sway` and `blur`: see [Text effects](/dynamic-text/#text-effects).
+
+A little of this goes a long way. Too many effects make a story harder to read, so save them for the moments that matter.
 
 ## Publish it
 
@@ -117,8 +134,10 @@ Here are some ideas for taking your story further, and where to find out how:
 
 - **Add more to the island.** Let the player find more things, and count them with [`@inc`](/attributes/#using-directives). Show different text the second time they visit somewhere, with [`{{visits}}`](/attributes/#the-visits-helper).
 - **Ask the player's name**, and use it in the story: see [Player input](/player-input/).
-- **Add some atmosphere** with [random text](/dynamic-text/#random), text that types itself out, or fades in: see [Animation](/dynamic-text/#animation).
-- **Change how it looks**, with your own fonts and colours: see [Customising styles](/styling/).
+- **Let the player look again.** Put [`@repeat`](/basic-concepts/#passages-you-can-click-again) in the footprints passage, and its link stays clickable.
+- **Add more atmosphere** with [random text](/dynamic-text/#random), text that types itself out with an [animation](/dynamic-text/#animation), or [music and sound](/images-and-files/#music-and-sound).
+- **Change how it looks**, with your own fonts and colours: see [Customising styles](/styling/). Make the cave dark while the player is in it with [`@class`](/styling/#changing-the-look-for-a-scene).
+- **Show what the player is carrying** beside the story, always up to date, with a [panel](/buttons-panels-settings/#panels).
 - **Borrow some patterns** from the [Cookbook](/cookbook/), such as an inventory, health, or a shop.
 - **Play some complete stories**, and see how they work, in [Examples](/featured-examples/).
 

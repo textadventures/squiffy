@@ -105,16 +105,21 @@ Anything in `{{double curly brackets}}` is worked out as the text is shown. See 
 | `{{set "gold" 10}}`, `{{inc "gold" 5}}`, `{{dec "gold"}}`, `{{unset "has_key"}}` | Change an attribute at that point in the text, so they respect `{{#if}}` | [Conditional attribute changes](/attributes/#conditional-attribute-changes) |
 | `(seen "cave")`, `(visits "cave")`, `(at "cave")` | Whether the player has seen a section or passage, how many times, and whether they're there now | [Tracking sections and passages](/attributes/#tracking-sections-and-passages) |
 | `turns` | The number of links the player has clicked in the whole story | [Counting turns](/attributes/#counting-turns) |
+| `previous_section`, `previous` | The section, or the section or passage, the player saw before this one | [Where the player came from](/attributes/#where-the-player-came-from) |
 | `{{embed "map"}}` | Shows the text of another section, or a passage in this one | [Embed text](/basic-concepts/#embed-text) |
 | `{{embed "say" who="Ann"}}`, `{{#embed "box"}}...{{/embed}}` | Embeds text with parameters, or wrapping some text that it shows with `{{content}}` | [Parameters](/basic-concepts/#parameters), [Wrapping text](/basic-concepts/#wrapping-text) |
 | `{{goto "cave"}}`, `{{goto "cave" after=3000}}` | Goes to another section without a click, straight away or after a delay in milliseconds (or a time like `"3s"`, or an expression) | [Go to another section](/basic-concepts/#go-to-another-section) |
 | `{{#every 1000}}...{{/every}}`, `{{stop}}` | Shows some text again and again while the player is in the section, until a `{{stop}}` | [Repeating text](/dynamic-text/#repeating-text) |
+| `{{restart text="Play again"}}`, `{{saves}}`, `{{settings}}` | Links that restart the story, open the Saved games dialog, or open the Settings dialog | [Restarting and saving from the story](/basic-concepts/#restarting-and-saving-from-the-story) |
 | `{{deactivate "door"}}`, `{{deactivate}}` | Turns off the links to a passage in this section, or to this passage | [Turning off passage links](/basic-concepts/#turning-off-passage-links) |
 | `{{random (array "a" "b")}}` | Picks one at random | [Random](/dynamic-text/#random) |
 | `{{rotate (array "a" "b") set="x"}}` | A link that cycles through options | [Rotate](/dynamic-text/#rotate) |
 | `{{sequence (array "a" "b")}}` | A link that goes through options once | [Sequence](/dynamic-text/#sequence) |
 | `{{live "score"}}` | Shows an attribute, and updates when it changes | [Live](/dynamic-text/#live) |
 | `{{#animate "typewriter"}}...{{/animate}}` | Animates some text. Also `toast`, `fadeIn` and `continue` | [Animation](/dynamic-text/#animation) |
+| `{{#style "shudder"}}...{{/style}}` | Gives some text an effect that lasts, such as `shudder`, `flicker` or `blur`, or a class for your CSS | [Text effects](/dynamic-text/#text-effects) |
+| `{{addclass "dark"}}`, `{{removeclass "dark"}}`, `{{toggleclass "dark"}}`, `(hasclass "dark")` | Change and check the classes on the story, for your CSS | [Class helpers](/helpers-reference/#class-helpers) |
+| `{{stopsounds}}` | Stops the sounds playing once, as `@sound stop` does | [Music and sound](/images-and-files/#music-and-sound) |
 | `{{#label "x"}}...{{/label}}`, `{{#replace "x"}}...{{/replace}}` | Marks some text, and replaces it later | [Replace](/dynamic-text/#replace) |
 | `{{section "cave" text="Go in"}}`, `{{passage "look"}}` | Links, made by a helper | [Creating links with helpers](/attributes/#creating-links-with-helpers) |
 | `(array "a" "b")`, `{{append "bag" "key"}}`, `(contains "bag" "key")` | Arrays | [Array management helpers](/helpers-reference/#array-management-helpers) |
@@ -139,6 +144,7 @@ The project file, which makes a folder of `.squiffy` files one story. See [Stori
 | `"id": "…"` | Identifies the story, so a saved game can only be loaded into the story it came from. See [Saved games](/buttons-panels-settings/#saved-games) |
 | `"saveButton": false` | Leaves out the Save button and its Saved games dialog. See [Saved games](/buttons-panels-settings/#saved-games) |
 | `"backButton": false` | Leaves out the Back button for players. See [The Back button](/buttons-panels-settings/#the-back-button) |
+| `"settings"` | Options the player can change at any time, such as text size or content warnings, from a Settings button. See [Player settings](/buttons-panels-settings/#player-settings) |
 | `"panels"` | Passages that are always to hand, such as the player's stats or inventory: beside the story, or in a dialog from a button in the header. See [Panels](/buttons-panels-settings/#panels) |
 | `"strings"` | The text of the page's buttons, for a story in another language. See [The page's text in another language](/buttons-panels-settings/#the-pages-text-in-another-language) |
 | `"map"` | Where you've put things on the editor's story map. The editor writes this |

@@ -37,10 +37,16 @@ It's pitch dark. You feel your way forward, and something snuffles in the darkne
 @end
 You row back across the sea together, and she tells you stories all the way.
 
+{{restart text="Play again"}}
+
 [[run back to the boat]]:
 @end
 You row away from the island as fast as you can. You never do find out who lit that fire.
 
+{{restart text="Play again"}}
+
 [[stay where you are]]:
 @end
 You drift for hours. The island grows smaller, and then it's gone.
+
+{{restart text="Play again"}}
