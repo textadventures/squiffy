@@ -1,0 +1,18 @@
+/* Arriving, in from the right */
+.squiffy-transition.train {
+    animation-name: train-in;
+}
+
+@keyframes train-in {
+    from { transform: translateX(100vw); }
+}
+
+/* Leaving, out to the left */
+.squiffy-transition.squiffy-leave.train {
+    animation-name: train-out;
+    animation-direction: normal;
+}
+
+@keyframes train-out {
+    to { transform: translateX(-100vw); }
+}

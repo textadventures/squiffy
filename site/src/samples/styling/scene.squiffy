@@ -1,0 +1,8 @@
+The path ends at the mouth of a [[cave]].
+
+[[cave]]:
+@class dark underground
+It's cold, and very dark. [[Go back outside]](outside)
+
+[[outside]]:
+You blink in the sunlight.

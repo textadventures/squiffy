@@ -4,6 +4,25 @@ description: How to change the colours, fonts and layout of your story, and how 
 ---
 
 import {Aside} from "@astrojs/starlight/components";
+import Sample from "@components/Sample.astro";
+import story from "../../samples/styling/story.squiffy?raw";
+import cellar from "../../samples/styling/cellar.squiffy?raw";
+import warning from "../../samples/styling/warning.squiffy?raw";
+import scene from "../../samples/styling/scene.squiffy?raw";
+import swirl from "../../samples/styling/swirl.squiffy?raw";
+import slides from "../../samples/styling/slides.squiffy?raw";
+import train from "../../samples/styling/train.squiffy?raw";
+import lightCss from "../../samples/styling/light.css?raw";
+import fontsCss from "../../samples/styling/fonts.css?raw";
+import coloursCss from "../../samples/styling/colours.css?raw";
+import linksCss from "../../samples/styling/links.css?raw";
+import dividersCss from "../../samples/styling/dividers.css?raw";
+import cellarCss from "../../samples/styling/cellar.css?raw";
+import warningCss from "../../samples/styling/warning.css?raw";
+import sceneCss from "../../samples/styling/scene.css?raw";
+import swirlCss from "../../samples/styling/swirl.css?raw";
+import slidesCss from "../../samples/styling/slides.css?raw";
+import trainCss from "../../samples/styling/train.css?raw";
 
 A Squiffy story is an ordinary web page, so you change how it looks with CSS. This page explains where Squiffy's styles come from, how to override them, and which rules control what.
 
@@ -24,11 +43,9 @@ A story follows the reader's light or dark system setting. Readers can also swit
 
 To keep a story in light mode whatever the reader's setting (or in dark mode, with `dark`):
 
-```css
-:root {
-    color-scheme: light;    /* default: light dark */
-}
-```
+<Sample script={story} files={{ "style.css": lightCss }}></Sample>
+
+To see it, switch this site to dark mode, from the menu at the top of the page: the sample stays light.
 
 This also hides the light/dark button, as it would have no effect. Do this if your own CSS sets a background or text colour for one mode only. For example, a story that sets `body { background-color: white; }` would show light text on a white background in dark mode.
 
@@ -40,14 +57,7 @@ In the editor, the preview follows the editor's own theme, which you choose in *
 
 Set these variables to change the story's font and the width of the page:
 
-```css
-:root {
-    --squiffy-font-family: "Helvetica Neue", Arial, sans-serif;  /* default: Charter, …, Georgia, serif */
-    --squiffy-font-size: 1.25rem;                                /* default: 1.125rem */
-    --squiffy-line-height: 1.5;                                  /* default: 1.6 */
-    --squiffy-max-width: 50rem;                                  /* default: 42rem */
-}
-```
+<Sample script={story} files={{ "style.css": fontsCss }}></Sample>
 
 | Variable | What it sets | Default |
 | --- | --- | --- |
@@ -105,14 +115,7 @@ Files that a stylesheet refers to with `url()` are included when you publish you
 
 Set these variables to change Squiffy's colours. `light-dark()` gives a colour for each mode, so the story still works in both:
 
-```css
-:root {
-    --squiffy-background: light-dark(#fdf6e3, #1e1e2e);
-    --squiffy-text: light-dark(#3b3227, #e0e0e0);
-    --squiffy-link: light-dark(darkgreen, lightgreen);
-    --squiffy-link-hover: light-dark(green, palegreen);
-}
-```
+<Sample script={story} files={{ "style.css": coloursCss }}></Sample>
 
 If you've [kept your story in one mode](#light-and-dark-mode), you can give just one colour: `--squiffy-link: darkgreen;`.
 
@@ -131,15 +134,7 @@ If you've [kept your story in one mode](#light-and-dark-mode), you can give just
 
 Links are `a.squiffy-link`. The easiest way to change their colour is with the `--squiffy-link` and `--squiffy-link-hover` [variables](#colours). The underline is the same colour as the text, so you can also change the colour with a rule:
 
-```css
-a.squiffy-link {
-    color: darkgreen;      /* default: var(--squiffy-link) */
-}
-
-a.squiffy-link:hover {
-    color: limegreen;      /* default: var(--squiffy-link-hover) */
-}
-```
+<Sample script={story} files={{ "style.css": linksCss }}></Sample>
 
 Once the player has moved on to a new section, the old links are disabled. They are shown in the same colour as the surrounding text, without an underline.
 
@@ -147,39 +142,19 @@ Once the player has moved on to a new section, the old links are disabled. They 
 
 When the player moves on, a faint line separates each section from the next. Change its colour with `--squiffy-border`, or to remove it:
 
-```css
-div.squiffy-output-section:not(:last-child),
-div.squiffy-output-passage:not(:last-child),
-div.squiffy-output-block:not(:last-child) {
-    border-bottom: none;     /* default: 1px solid var(--squiffy-border) */
-}
-```
+<Sample script={story} files={{ "style.css": dividersCss }}></Sample>
 
 ### Styling a particular section
 
 Each section's output has a `data-section` attribute with the section's name, and each passage has a `data-passage` attribute, so you can style one on its own:
 
-```css
-.squiffy-output-section[data-section="The cellar"] {
-    background-color: #222;
-    color: #ddd;
-}
-```
+<Sample script={cellar} files={{ "style.css": cellarCss }}></Sample>
 
 ### Styling some text
 
 To style a word or a few sentences, give them a class with `{{#style}}`, and style the class in your CSS:
 
-```squiffy
-The sign says {{#style "warning"}}KEEP OUT{{/style}}.
-```
-
-```css
-.warning {
-    color: red;
-    font-weight: bold;
-}
-```
+<Sample script={warning} files={{ "style.css": warningCss }}></Sample>
 
 The text is put in a `<span class="squiffy-style warning">`, or a `<div>` if it has blank lines in it, so it can be a few paragraphs. It can have more than one class, as in `{{#style "warning big"}}`, and the classes can come from an attribute: `{{#style mood}}`. Markdown and other `{{...}}` work inside it as usual.
 
@@ -189,18 +164,7 @@ Some class names are Squiffy's own [text effects](/dynamic-text/#text-effects), 
 
 To change how the story looks while the player is in a section, such as a dark cave or a dream, give the section some classes with `@class`, and style them in your CSS:
 
-```squiffy
-[[cave]]:
-@class dark underground
-It's cold, and very dark.
-```
-
-```css
-body:has(.dark) {
-    --squiffy-background: #111;
-    --squiffy-text: #ccc;
-}
-```
+<Sample script={scene} files={{ "style.css": sceneCss }}></Sample>
 
 The classes are on the element that holds the story (`div#squiffy` in a published story) while that section is the current one, and they're taken off when the player moves on to another section. The Back button and saved games put them back as they were. In a passage, `@class` adds its classes to the section's, until the player leaves the section. `@class` in the [master section](/basic-concepts/#master-sections-and-passages) puts its classes on every section.
 
@@ -214,48 +178,19 @@ To change the classes in the middle of a section, or to keep one from section to
 
 While a [transition](/dynamic-text/#transitions) plays, the section or passage has the classes `squiffy-transition` and the transition's name, and the time from `@transition` is in `--squiffy-transition-time`. So you can change one of Squiffy's, or add your own with a CSS animation, which starts from how the text first looks and ends with it as normal:
 
-```css
-.squiffy-transition.swirl {
-    animation-name: swirl;
-}
+<Sample script={swirl} files={{ "style.css": swirlCss }}></Sample>
 
-@keyframes swirl {
-    from { opacity: 0; transform: rotate(-10deg) scale(0.8); }
-}
-```
-
-and then `@transition swirl 1s` in your story.
+The story uses it with `@transition swirl 1s`.
 
 The slides move by `--squiffy-slide-distance`, which is `2em` up and down, and `3em` to the sides. To slide all the way across, set it to `100%`:
 
-```css
-:root {
-    --squiffy-slide-distance: 100%;
-}
-```
+<Sample script={slides} files={{ "style.css": slidesCss }}></Sample>
+
+Here, the [master section](/basic-concepts/#master-sections-and-passages) clears the screen for every section, sliding the old page off to the left and the new one in from the right.
 
 [`@leave`](/dynamic-text/#when-the-screen-is-cleared) plays the same animations backwards, with the `squiffy-leave` class as well, so `@leave swirl` makes the text spin away. That suits most transitions, but not one that moves across the screen: played backwards, a transition that comes in from the right goes back out to the right. To give `@leave` an animation of its own, style `.squiffy-transition.squiffy-leave` and your class, and play it forwards, from how the text looks to how it goes:
 
-```css
-/* Arriving, in from the right */
-.squiffy-transition.train {
-    animation-name: train-in;
-}
-
-@keyframes train-in {
-    from { transform: translateX(100vw); }
-}
-
-/* Leaving, out to the left */
-.squiffy-transition.squiffy-leave.train {
-    animation-name: train-out;
-    animation-direction: normal;
-}
-
-@keyframes train-out {
-    to { transform: translateX(-100vw); }
-}
-```
+<Sample script={train} files={{ "style.css": trainCss }}></Sample>
 
 Squiffy's own slides work like this already, so `@leave slide-left` goes off to the left.
 

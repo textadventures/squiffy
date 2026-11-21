@@ -1,0 +1,14 @@
+You're on a cliff path, high above the shore. [[Climb down to the beach]](beach)
+
+[[beach]]:
+@music sea.mp3
+Waves roll in across the sand. There's a dark cave at the foot of the cliff. [[Go into the cave]](cave)
+
+[[cave]]:
+@music stop
+@sound snuffle.mp3
+Something sniffs at you in the dark. [[Run back outside]](outside)
+
+[[outside]]:
+@music sea.mp3
+Daylight, and the sound of the sea again.

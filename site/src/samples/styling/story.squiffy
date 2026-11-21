@@ -1,0 +1,7 @@
+You're in a quiet library. Dust drifts in the light from a tall window. You could [read a book], or [[leave]].
+
+[read a book]:
+You take down a heavy book. Its pages smell of old paper.
+
+[[leave]]:
+You step out into the busy street.

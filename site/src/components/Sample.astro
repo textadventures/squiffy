@@ -16,16 +16,20 @@ interface Props {
     assets?: Record<string, string>;
     // The script's file name, for a sample with files. "story.squiffy" if it isn't given
     main?: string;
+    // Runs a sample without files in the preview page too, for a script whose JavaScript would
+    // otherwise change the docs page, such as one covering the window with a position: fixed
+    // element. alert() doesn't work there.
+    sandboxed?: boolean;
 }
 
 import Split from "./Split.astro";
 import "squiffy-runtime/squiffy.runtime.css";
 
-const { script, alwaysShowRestart, files, assets, main = "story.squiffy" } = Astro.props;
+const { script, alwaysShowRestart, files, assets, main = "story.squiffy", sandboxed } = Astro.props;
 
 // A sample with files is in the preview, which scrolls in its own frame, so it has a height
-const project = !!files || !!assets;
-const height = Astro.props.height ?? (project ? "26rem" : undefined);
+const project = !!files || !!assets || !!sandboxed;
+const height = Astro.props.height ?? (files || assets ? "26rem" : sandboxed ? "20rem" : undefined);
 const sourceFiles = project ? [[main, script], ...Object.entries(files ?? {})] : [];
 const languageOf = (path: string) => path.endsWith(".css") ? "css" : path.endsWith(".js") ? "js" : path.endsWith(".json") ? "json" : "squiffy";
 
@@ -122,8 +126,11 @@ const buttonsClass = "sample-buttons" + (!alwaysShowRestart && !project ? " hidd
         outline: 2px solid var(--sl-color-accent);
         outline-offset: -2px;
     }
-    .sample.project .copy {
+    .sample.project:has(.sample-tabs:not([hidden])) .copy {
         top: 2.25rem;
+    }
+    .sample .sample-tabs[hidden] {
+        display: none;
     }
     .sample .sample-source-name {
         margin: 0;
@@ -280,10 +287,10 @@ const buttonsClass = "sample-buttons" + (!alwaysShowRestart && !project ? " hidd
                  how the sample's code reaches llms.txt (starlight-llms-txt converts this HTML to Markdown). -->
             {project ? (
                 <>
-                    <div class="sample-tabs" role="tablist" aria-label="Files"></div>
+                    <div class="sample-tabs" role="tablist" aria-label="Files" hidden={!files}></div>
                     {sourceFiles.map(([path, text]) => (
                         <>
-                            <p class="sample-source sample-source-name"><code>{path}</code>:</p>
+                            {files && <p class="sample-source sample-source-name"><code>{path}</code>:</p>}
                             <pre class="sample-source" data-path={path}><code class={`language-${languageOf(path)}`}>{text}</code></pre>
                         </>
                     ))}

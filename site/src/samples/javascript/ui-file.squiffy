@@ -1,0 +1,8 @@
+@ui helpers.js
+
+The guard looks up. {{shout "who goes there"}}
+
+[[Say your name]](name)
+
+[[name]]:
+You lean in and tell him: {{whisper "Ann"}} The guard nods, and lets you pass.

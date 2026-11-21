@@ -1,0 +1,21 @@
+@ui
+    squiffy.registerAnimation("spin", (el, params, onComplete, loop) => {
+        const { animate, stagger, text } = squiffy.import.animejs;
+        const { chars } = text.split(el, { words: false, chars: true });
+
+        animate(chars, {
+            y: [
+                { to: "-2.75rem", ease: "outExpo", duration: 600 },
+                { to: 0, ease: "outBounce", duration: 800, delay: 100 }
+            ],
+            rotate: { from: "-1turn", delay: 0 },
+            delay: stagger(params.interval || 50),
+            ease: "inOutCirc",
+            loopDelay: 1000,
+            loop: loop,
+            onComplete: onComplete
+        });
+    });
+---
+
+{{#animate "spin"}}Welcome to the story!{{/animate}}

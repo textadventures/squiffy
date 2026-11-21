@@ -1,0 +1,13 @@
+You wait on the platform. [[Get on the train]](train)
+
+[[train]]:
+@clear
+@leave train 1s
+@transition train 1s
+The train rattles through the countryside. [[Get off]](station)
+
+[[station]]:
+@clear
+@leave train 1s
+@transition train 1s
+You step out at a little station in the hills.

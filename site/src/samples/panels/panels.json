@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "main": "story.squiffy",
+  "panels": [
+    { "passage": "status", "label": "Status", "position": "side" },
+    { "passage": "inventory", "label": "Inventory", "icon": "bag" },
+    { "passage": "help", "label": "Help" }
+  ]
+}

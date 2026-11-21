@@ -3,6 +3,11 @@ title: Images, sound and other files
 description: Adding pictures, sound, video and fonts to a story
 ---
 
+import Sample from "@components/Sample.astro";
+import sea from "../../samples/sound/sea.squiffy?raw";
+
+export const sounds = { "sea.mp3": "/tutorial/sounds/sea.mp3", "snuffle.mp3": "/tutorial/sounds/snuffle.mp3" };
+
 A story can show images, play sound and video, and use its own fonts. The files go in your story's folder, and they're included when you [publish](/publishing/) it.
 
 ## Adding files
@@ -35,20 +40,9 @@ To use a font, add it with the editor's **Fonts** button, or add its files yours
 
 Play music with `@music`, at the start of a section or passage:
 
-```squiffy
-[[forest]]:
-@music sounds/forest.mp3
-Tall trees surround you. [[Go into the cave]](cave)
+<Sample script={sea} assets={sounds}></Sample>
 
-[[cave]]:
-@music sounds/cave.mp3
-@sound sounds/drip.mp3
-Water drips from the roof. [[Leave]](outside)
-
-[[outside]]:
-@music stop
-Daylight at last.
-```
+The sea plays on the beach, stops in the cave, where something sniffs at you, and comes back outside. Turn your sound on to hear it.
 
 - **`@music file`** plays music, over and over, until another `@music` changes it. It keeps playing as the player moves from one section to the next, and if a section has the music that's already playing, it carries on rather than starting again. When the music changes, the old music fades out over a second while the new music fades in.
 - **`@music stop`** fades the music out.

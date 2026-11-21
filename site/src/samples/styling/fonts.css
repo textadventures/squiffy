@@ -1,0 +1,6 @@
+:root {
+    --squiffy-font-family: "Helvetica Neue", Arial, sans-serif;  /* default: Charter, …, Georgia, serif */
+    --squiffy-font-size: 1.25rem;                                /* default: 1.125rem */
+    --squiffy-line-height: 1.5;                                  /* default: 1.6 */
+    --squiffy-max-width: 50rem;                                  /* default: 42rem */
+}
