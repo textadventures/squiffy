@@ -2,12 +2,15 @@
 interface Props {
     script: string;
     alwaysShowRestart?: boolean;
+    // For a long story: the height of the source and of the story beside it, each of which
+    // scrolls, e.g. "36rem". Without it, both are as tall as their text.
+    height?: string;
 }
 
 import Split from "./Split.astro";
 import "squiffy-runtime/squiffy.runtime.css";
 
-const { script, alwaysShowRestart } = Astro.props;
+const { script, alwaysShowRestart, height } = Astro.props;
 
 const buttonsClass = "sample-buttons" + (!alwaysShowRestart ? " hidden" : "");
 ---
@@ -69,6 +72,22 @@ const buttonsClass = "sample-buttons" + (!alwaysShowRestart ? " hidden" : "");
     }
     .sample .editor {
         position: relative;
+    }
+    /* A sample with a height: the source and the story each scroll. Never taller than most of
+       the window, so that on a phone, where they're one above the other, each fits. */
+    .sample.fixed-height .editor .cm-editor {
+        height: min(var(--sample-height), 75vh);
+    }
+    .sample.fixed-height .viewer-container {
+        display: flex;
+        flex-direction: column;
+        height: min(var(--sample-height), 75vh);
+        box-sizing: border-box;
+    }
+    .sample.fixed-height .viewer {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
     }
     /* Like the copy button on the docs' static code blocks (Expressive Code's), shown on hover
        where there's a mouse, and always on touch screens */
@@ -155,7 +174,10 @@ const buttonsClass = "sample-buttons" + (!alwaysShowRestart ? " hidden" : "");
     }
 </style>
 
-<squiffy-sample class="sample not-content" data-always-show-restart={alwaysShowRestart}>
+<squiffy-sample
+    class:list={["sample", "not-content", { "fixed-height": height }]}
+    style={height ? `--sample-height: ${height}` : undefined}
+    data-always-show-restart={alwaysShowRestart}>
     <Split gap="0.75rem" min="200px">
         <div slot="left" class="editor">
             <!-- The script, which the editor replaces. Without JavaScript it's shown as it is, and it's
@@ -311,6 +333,7 @@ const buttonsClass = "sample-buttons" + (!alwaysShowRestart ? " hidden" : "");
             });
 
             const alwaysShowRestart = this.dataset.alwaysShowRestart === 'true';
+            const fixedHeight = this.classList.contains('fixed-height');
 
             async function initRuntime(script: string, outputContainer: HTMLElement, restartButton: HTMLElement, backButton: HTMLElement) {
                 const result = await squiffyCompile({
@@ -352,6 +375,27 @@ const buttonsClass = "sample-buttons" + (!alwaysShowRestart ? " hidden" : "");
                     });
 
                     await squiffyApi.begin();
+
+                    // With a height, the story scrolls in its own box (not with the runtime's
+                    // scroll: 'element', whose scrollIntoView would scroll the page too): after a
+                    // click, to where the new text starts, or to the top if the screen was cleared
+                    if (fixedHeight) {
+                        // What was there before the click: how tall it was, and its last section,
+                        // which a cleared screen moves into a hidden stack, for Back. (linkClick
+                        // comes too late, as it's after the new text.)
+                        let before = 0;
+                        let lastSection: Element | null = null;
+                        const remember = () => {
+                            before = outputContainer.scrollHeight;
+                            lastSection = [...outputContainer.querySelectorAll('.squiffy-output-section')].pop() ?? null;
+                        };
+                        outputContainer.addEventListener('click', remember, { capture: true });
+                        outputContainer.addEventListener('keydown', remember, { capture: true });
+                        squiffyApi.on('navigated', () => requestAnimationFrame(() => {
+                            const cleared = !!lastSection?.closest('.squiffy-clear-stack');
+                            outputContainer.scrollTo({ top: cleared ? 0 : Math.max(0, before - 16), behavior: 'smooth' });
+                        }));
+                    }
 
                     // The buttons appear once a link is clicked (or straight away, with alwaysShowRestart)
                     const buttons = restartButton.parentElement!;

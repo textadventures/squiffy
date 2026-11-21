@@ -1,0 +1,79 @@
+{{!-- Round: The Mystery Box. What's in the box is chosen at random as soon as it arrives --}}
+
+[[The Mystery Box]]:
+@set box = (random ["prize", "bees", "boxes", "philosophy", "goat"])
+A golden box descends from the ceiling on a frayed rope.
+
+{{#style "buoy"}}🎁{{/style}}
+
+"Ooh, the Mystery Box!" Hank claps his hands. "It could contain ANYTHING! A prize! A question! A live animal! We genuinely don't know: the intern who packed it quit this morning!"
+
+The box rattles.
+
+[[Open the box carefully]](open the box)
+
+[[Shake the box first]]
+
+[[Refuse to open it]]
+
+[[Shake the box first]]:
+@dec patience
+You shake the box. Something inside goes {{#if box = "bees"}}"BZZZZZZ", very crossly{{else if box = "goat"}}"CLANG", and then, quietly, "meh?"{{else if box = "boxes"}}"thud-thud-thud-thud"{{else}}"clink"{{/if}}.
+
+"Please don't shake the... you know what, fine. Open it."
+
+[[Open the box]](open the box)
+
+[[Refuse to open it]]:
+@dec patience 2
+"You HAVE to open it! It's the MYSTERY BOX! The mystery is legally required to be resolved!"
+
+Hank is sweating now.
+
+[[Fine, open the box]](open the box)
+
+[[open the box]]:
+You lift the lid slowly...
+
+{{#if box = "prize"}}
+{{sound "sounds/fanfare.mp3"}}{{inc "score" 300}}{{append "prizes" "a gold(ish) trophy"}}
+{{#animate "toast"}}JACKPOT!{{/animate}}
+
+Inside is a solid gold trophy in the shape of a wheel! It's been spray-painted, but still! 300 points!
+{{else if box = "bees"}}
+{{dec "patience"}}{{inc "score" 50}}{{append "prizes" "a bee called Kevin"}}
+{{#animate "toast"}}BEES!{{/animate}}
+
+The box is full of bees. They seem confused rather than angry.
+
+"Oh no, NOT AGAIN!" Hank runs in circles. "WHO KEEPS PUTTING BEES IN THE MYSTERY BOX?!"
+
+One bee lands on your nose, considers its life choices, and decides to stay with you. You name him Kevin. Fifty points, for bravery.
+{{else if box = "boxes"}}
+{{inc "score" 100}}
+Inside the box is another, smaller box.
+
+{{#each (range 1 3)}}
+Inside {{#if @first}}that{{else}}THAT{{/if}} is an even smaller box.
+{{/each}}
+
+Inside the smallest box of all is a note: "{{player_name}} wins 100 points!"
+
+"The recursive box!" Hank nods wisely. "A classic."
+{{else if box = "philosophy"}}
+{{inc "score" 75}}
+Inside is a small scroll. It reads:
+
+_"What IS a prize, really? Is not the true prize the friends we made along the way? Also, here are 75 points."_
+
+Hank wipes away a single tear. "Beautiful."
+{{else}}
+{{inc "score" 150}}{{append "prizes" "a goat (on loan)"}}
+{{#animate "toast"}}A GOAT!{{/animate}}
+
+There's a goat in the box. You don't know how it fitted. Nor does the goat. 150 points, and the goat.
+
+"Is that... is that OUR goat?" says Hank. "Has it been in there since the Christmas special?"
+{{/if}}
+
+[[Next round!]](next round)

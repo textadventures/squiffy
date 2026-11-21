@@ -1,149 +1,153 @@
 @title Coffee Shop Confessions
 @start intro
 
+[[]]:
+@transition fade
+
+[order pad]:
+**Order pad**
+
+{{#each orders}}
+- **{{@key}}:** {{this}}
+{{else}}
+_Nothing yet. Write down their orders._
+{{/each}}
+
 [[intro]]:
-The bell above the door jingles as you step inside The Daily Grind for your first day of work.
+@set warmth = { maya: 0, ellis: 0, sam: 0 }
+@set orders = {}
+The bell above the door jingles as you step into The Daily Grind for your first day of work.
 
-It's a small independent coffee shop—mismatched furniture, local art on the walls, the smell of fresh espresso hanging in the air. The kind of place where everyone seems to know everyone.
+It's a small independent coffee shop: mismatched armchairs, a specials board nobody has changed since spring, and a wall of local art with one empty hook in the middle of it. The air smells of espresso and burnt sugar.
 
-Behind the counter, your new boss Carla gives you a wave. "You must be the new hire! Welcome aboard. What's your name?"
+Behind the counter, the owner gives you a wave. "You must be the new hire! I'm Carla. Welcome aboard. Remind me of your name?"
 
-<input type="text" data-attribute="player_name" placeholder="Enter your name..." required minlength="2" maxlength="30">
+<input type="text" data-attribute="player_name" data-section="Monday" placeholder="Your name" required minlength="2" maxlength="30">
 
-[[Begin your first shift]]
+[[Tie on your apron]](Monday)
 
-[[Begin your first shift]]:
-@set maya = 0
-@set ellis = 0
-@set sam = 0
+[[Monday]]:
 @clear
+@class morning
 
-# Day One — Morning
+## Monday, 7am
 
-Carla shows you the basics: the espresso machine, the register, where the oat milk is hiding. Within an hour, she's retreated to the back office, leaving you alone behind the counter.
+Carla gives you the tour in four minutes flat: the till, the grinder, the cupboard where the oat milk hides, and the [espresso machine].
 
-"You'll be fine," she calls over her shoulder. "The regulars are friendly. Mostly."
+"Here's the secret," she says, handing you a notepad. "Learn their names. Learn their orders. Get the order right before they ask, and they're yours for life."
 
-The morning light streams through the front windows. Two customers are already here.
+Then she vanishes into the back office with a stack of invoices. "You'll be fine! The regulars are friendly. Mostly."
 
-In the corner booth, a woman in her late twenties hunches over a laptop, occasionally sighing dramatically. An older man sits by the window, staring at his empty cup like it holds the secrets of the universe.
+Two of them are here already. In the corner booth, a woman in her late twenties glares at a laptop as if it owes her money. By the window, an older man in a pressed shirt stares into an empty cup.
 
-Who do you approach first?
+You've got time to talk properly to one of them before the rush.
 
-[[The woman with the laptop]]
+[[The woman with the laptop]](Maya first)
 
-[[The older man by the window]]
+[[The man by the window]](Ellis first)
 
-[[Wait for someone to come to you]]
+[espresso machine]:
+You give it a friendly pat. It makes a noise like {{#style "shudder"}}a walrus in a tumble dryer{{/style}}.
 
-[[The woman with the laptop]]:
-@inc maya
-You approach the corner booth. The woman looks up, startled, then breaks into a sheepish grin.
+"That's normal!" Carla calls from the back.
 
-"Sorry, I didn't even notice you come over. I'm Maya." She gestures at her laptop screen, which appears to be mostly blank. "Writer. Allegedly."
+[[Maya first]]:
+@inc warmth.maya
+@set orders.Maya = "oat milk latte, extra shot"
+The woman looks up as you come over, startled, then grins.
 
-"I'm {{player_name}}. Can I get you anything?"
+"Sorry, I didn't see you there. I'm Maya." She turns the laptop round. The page says CHAPTER TWENTY-ONE, and nothing else. "Writer. Allegedly."
 
-"Oat milk latte, extra shot. And maybe the ability to finish a single paragraph." She laughs, but there's an edge to it. "Sorry. First day, right? I promise I'm not always this dramatic."
+"{{player_name}}. First day. Can I get you anything?"
 
-"Only mostly dramatic?" you ask.
+"Oat milk latte, extra shot. And an ending, if you've got one going spare." She laughs, but there's an edge to it. "Twenty chapters, and I still don't know what happens to her."
 
-She grins. "Exactly. You're going to fit in fine here."
+You write _oat milk, extra shot_ on your pad, and underline it.
 
-[[Continue morning]](morning continues)
+Behind you, the man by the window lifts his cup. Carla gets to him before you can. "The usual, Ellis?" He nods.
 
-[[The older man by the window]]:
-@inc ellis
-You approach the window table. The man looks up—early seventies, neatly dressed, with the kind of face that suggests he's forgotten how to smile but remembers that he used to.
+[[Here comes the rush]](rush)
 
-"Morning. I'm {{player_name}}, I just started—"
+[[Ellis first]]:
+@inc warmth.ellis
+@set orders.Ellis = "black coffee, no room"
+The man looks up as you come over. He's in his seventies, neatly pressed, with the face of someone who has forgotten how to smile but remembers that he used to.
 
-"Ellis." He cuts you off, not unkindly. "Coffee. Black. No room."
+"Morning. I'm {{player_name}}, I've just started..."
 
-You nod and turn to go, but he speaks again, quieter.
+"Ellis." Not unkindly. "Coffee. Black. No room."
 
-"The last one—the girl who worked mornings—she used to say hello every day. Every single day." He pauses. "It was nice."
+You write it down. He watches you do it.
 
-You're not sure what to say to that.
+"The girl who worked mornings before you used to say hello," he says. "Every day. Every single day." He looks back out of the window. "It was nice."
 
-[[Continue morning]](morning continues)
+You aren't sure what to say to that, so you say, "Hello, Ellis." Something in his face moves, very slightly.
 
-[[Wait for someone to come to you]]:
-You busy yourself wiping down the already-clean counter. After a few minutes, the older man by the window raises his empty cup, catching your eye.
+In the corner booth, the woman with the laptop waves an empty mug. Carla gets to her first. "Oat milk, extra shot, Maya?" "Carla, you're a saint."
 
-You head over. He's early seventies, neatly dressed.
+[[Here comes the rush]](rush)
 
-"Coffee. Black. No room." He pauses, then adds, almost grudgingly, "Please."
+[[rush]]:
+At eight o'clock the door stops closing. Commuters, dog walkers, a man who orders a "small large" and won't explain. The espresso machine {{#style "shudder"}}groans{{/style}} like a ship in a storm.
 
-"Coming right up. I'm {{player_name}}, by the way. First day."
+When it's over, both regulars have gone. {{#if warmth.maya}}Maya has left a napkin on the counter: _Thanks for asking. M._{{else}}Ellis has left exact change on his table, with one extra coin on top: the smallest possible tip. It feels like a medal.{{/if}}
 
-"Ellis." He nods once, then turns back to the window.
-
-[[Continue morning]](morning continues)
-
-[[morning continues]]:
-
-The morning settles into a rhythm. You make drinks, you wipe tables, you learn that the espresso machine makes a concerning noise that Carla insists is "normal."
-
-{{#if maya > 0}}Maya catches your eye as she's leaving, laptop tucked under her arm. "See you tomorrow, {{player_name}}. Maybe I'll have actually written something by then." She doesn't sound convinced.{{/if}}
-
-{{#if ellis > 0}}Ellis leaves exact change on the table, plus a single dollar tip. He nods at you on his way out—the smallest possible acknowledgment. It feels like a victory.{{/if}}
-
-By afternoon, the shop is quiet. Carla sends you home early. "Rest up. Evening shifts are different."
+Carla sends you home at two. "Back at six. Evenings are different."
 
 +++That evening...
 @clear
+@leave fade
+@class evening
 
-# Day One — Evening
+## Monday, 6pm
 
-The Daily Grind transforms at night. The overhead lights dim, fairy lights come on, and the coffee crowd gives way to something else.
+At night The Daily Grind turns into somewhere else. The big lights go off and the fairy lights come on, and the coffee crowd gives way to students, insomniacs, and a book group that hasn't talked about a book in years.
 
-You spot a new face: early twenties, headphones around their neck, dark circles under their eyes. They're sketching something in a worn notebook, barely looking at the page.
+In the corner, someone in their early twenties sits alone: headphones round their neck, dark circles under their eyes, sketching in a battered notebook without looking at the page.
 
 [[Bring them a menu]]
 
-[[Wait for them to come up]]
+[[Let them come to you]]
 
 [[Bring them a menu]]:
-@inc sam
-You grab a menu and head over. They look up, startled—then pull out an earbud.
+@inc warmth.sam
+@set orders.Sam = "red-eye, as strong as it goes"
+They jump when you put the menu down, then pull out an earbud.
 
-"Oh. Hey. Sorry, I'm—" They glance around like they're not quite sure how they got here. "Can I just get whatever has the most caffeine? Like, medically inadvisable amounts."
+"Oh. Hi. Sorry." They blink at the menu. "Whatever has the most caffeine? Like, medically inadvisable amounts."
 
 "Long day?"
 
-"Long year." They almost smile. "I'm Sam."
+"Long year." It's almost a smile. "I'm Sam."
 
 "{{player_name}}. First day."
 
-"Welcome to the chaos." Sam gestures vaguely at the empty shop. "As you can see, it's very chaotic here."
+"Welcome to the chaos." Sam waves at the nearly empty room.
 
-You laugh. Their sketch catches your eye—it's the coffee shop itself, rendered in confident lines.
+Over their shoulder you can see the sketch: this room, in quick, sure lines. The counter. The fairy lights. The empty hook on the art wall.
 
 "That's really good."
 
-Sam immediately flips the notebook closed. "It's nothing. Just... keeps my hands busy."
+Sam snaps the notebook shut. "It's nothing. It keeps my hands busy."
 
-[[End of day one]]
+[[Closing up]]
 
-[[Wait for them to come up]]:
-Eventually they shuffle to the counter, headphones still half-on.
+[[Let them come to you]]:
+@set orders.Sam = "red-eye"
+Eventually they shuffle up to the counter, headphones still half on.
 
-"Most caffeinated thing you have. Please."
+"Red-eye. Please."
 
-"Coming up." You start making a red-eye. "I'm {{player_name}}. First day."
+"Coming up. I'm {{player_name}}, by the way."
 
-"Sam." They glance around the shop. "You'll like it here. It's quiet. Good for... thinking. Or not thinking."
+"Sam." They pay in coins and go back to the corner, and pull the notebook close so that nobody can see what's in it.
 
-They pay and retreat to their table, pulling out a worn sketchbook. You catch a glimpse of the drawing—the coffee shop itself, rendered in confident lines.
+[[Closing up]]
 
-[[End of day one]]
+[[Closing up]]:
+Sam stays until closing, nursing one drink, filling page after page.
 
-[[End of day one]]:
-
-The evening passes slowly. Sam stays until closing, nursing that single drink, headphones on, filling pages with sketches they won't let you see.
-
-As you're locking up, Carla pokes her head out from the back. "Good first day?"
+As you stack the chairs, Carla comes out of the back. "Good first day?"
 
 "Yeah. The regulars are..."
 
@@ -153,159 +157,217 @@ As you're locking up, Carla pokes her head out from the back. "Good first day?"
 
 Carla smiles. "Give it time. They're both."
 
-+++Day Two
++++Tuesday
 @clear
+@leave fade
+@class morning
 
-# Day Two — Morning
+## Tuesday, 7am
 
-You arrive to find the shop already occupied.
+Ellis is in his seat by the window. Maya is in her booth, typing fast and deleting faster.
 
-Ellis is in his usual spot by the window. {{#if (seen "The older man by the window")}}He nods at you when you come in—practically a standing ovation by his standards.{{else}}He doesn't look up.{{/if}}
+{{#if orders.Ellis}}You don't need to ask what Ellis wants. You pour it before he's taken his coat off, and [take it over](Ellis on Tuesday).{{else}}You don't know what Ellis drinks. You could [ask him](Ellis on Tuesday).{{/if}}
 
-Maya bursts in a few minutes later, laptop bag swinging, looking either excited or panicked—it's hard to tell.
+Before you can do anything else, Maya beckons you over with the urgency of someone defusing a bomb.
 
-{{#if maya > 0}}"{{player_name}}!" She makes a beeline for you. "Okay, so, I actually wrote something last night. Like, real words. In an order that makes sense. I think you might be good luck."{{else}}"The usual," she says, already heading for her corner booth. "Sorry, I'm in the zone. Maybe. Hopefully."{{/if}}
+[[See what Maya wants]](Maya on Tuesday)
 
-[Talk to Maya]
+[Ellis on Tuesday]:
+{{#if orders.Ellis}}
+{{inc "warmth.ellis"}}
+You put the cup down in front of him. Black, no room. He looks at it, and then at you.
 
-[Talk to Ellis]
+"You remembered."
 
-[@last]:
+He's quiet for a while. Then: "My wife and I came here every morning. Forty-three years. She had the hazelnut thing, with the cream on top. Too sweet. I told her every single day it was too sweet." He turns the cup round on its saucer. "I'd give anything to buy her one more."
 
-The morning rush comes and goes. For a moment, the shop is quiet, sunlight streaming through the windows.
+There isn't anything to say to that. But you stay a moment, and that seems to be enough.
 
-[[A quiet moment]]
-
-[Talk to Maya]:
-You bring Maya her oat milk latte. She's staring at her screen with intense focus.
-
-"How's the writing?"
-
-{{#if (seen "The woman with the laptop")}}{{inc "maya"}}She looks up, and her expression softens. "Honestly? Terrifying. But yesterday, when you asked about it... I don't know. It made me feel like someone cared. Even if it was just small talk."
-
-She laughs. "That sounds pathetic, doesn't it?"
-
-"It sounds human."
-
-"Same thing, sometimes." She smiles—a real one. "Thanks, {{player_name}}. For asking."
-{{else}}She looks up, distracted. "Hmm? Oh, fine. It's fine. Everything's fine."
-
-She immediately returns to the screen. You get the sense she's not really in the mood to talk.{{/if}}
-
-[Talk to Ellis]:
-You approach Ellis with the coffee pot. "Refill?"
-
-"Please." He watches you pour, then speaks, almost reluctantly.
-
-{{#if (seen "The older man by the window")}}{{inc "ellis"}}
-"My wife and I used to come here every morning. Forty-three years." He stares at the coffee. "She'd have the hazelnut thing. Too sweet. I always told her it was too sweet."
-
-He's quiet for a long moment.
-
-"I'd give anything to buy her one more."
-
-You don't say anything. Sometimes there's nothing to say. But you stand there, and that seems to be enough.
-
-"Thank you," Ellis says finally. "For listening."
+"Thank you," he says at last. "For listening."
 {{else}}
-"Good coffee," he says. That's all.
+{{set "orders.Ellis" "black coffee, no room"}}
+"Coffee," he says. "Black. No room." He says it slowly, the way you'd say something for the second time.
 
-You sense there's more beneath the surface, but he's not ready to share it—not yet.{{/if}}
+You write it down, and he watches you do it.
+{{/if}}
 
-[[A quiet moment]]:
+[[Maya on Tuesday]]:
+{{#if warmth.maya}}"{{player_name}}! Thank goodness. I need a reader."{{else}}"You're new. Good. Carla's sick of me. I need a reader."{{/if}}
 
-You're wiping down tables when the door opens. Sam shuffles in, looking exhausted, still wearing yesterday's clothes.
+She spins the laptop round. "Last chapter. My heroine's on a station platform with a ticket out of this town in her hand. Everyone she loves is here. Everything she wants is out there. And I can't decide." She pulls at her hair. "What would _you_ do?"
 
-{{#if sam > 0}}"{{player_name}}." They manage a tired smile. "Please tell me you have coffee. And maybe a will to live. I'll take either."{{else}}"Coffee. Strongest you've got." They collapse into a chair.{{/if}}
+[[She gets on the train]](Tuesday evening, maya_idea = "train", warmth.maya += 1)
+
+[[She stays]](Tuesday evening, maya_idea = "stays", warmth.maya += 1)
+
+[[She misses it on purpose]](Tuesday evening, maya_idea = "misses", warmth.maya += 1)
+
+[[Tuesday evening]]:
+@class evening
+Maya stares at you. Then she starts typing, and doesn't stop for three hours.
+
+The afternoon blurs into the evening. The door opens and Sam shuffles in, looking exhausted, still in yesterday's clothes.
+
+{{#if warmth.sam}}"{{player_name}}." A tired smile. "Please tell me you have coffee. And a will to live. I'll take either."{{else}}"Red-eye." They drop into the corner seat like a puppet with its strings cut.{{/if}}
 
 [[Check on Sam]]
 
 [[Give them space]]
 
 [[Check on Sam]]:
-You bring over their usual red-eye and slide into the seat across from them for a moment.
+@inc warmth.sam
+You bring over a red-eye and sit across from them for a moment.
 
 "You okay?"
 
-Sam blinks, like the question doesn't compute. {{#if (seen "Bring them a menu")}}{{inc "sam"}}"You asked me that yesterday too."
+Sam blinks, as if the question doesn't compute.
+
+{{#if warmth.sam >= 2}}
+"You asked me that yesterday too," they say.
 
 "You looked like you needed it yesterday too."
 
-Something in their expression shifts. They reach into their bag and pull out the sketchbook, flipping to a page.
+Something in their face shifts. They open the notebook and turn it round. It's the coffee shop again, but now there's someone behind the counter: you, drawn with real care.
 
-It's a drawing of the coffee shop. But now there's a figure behind the counter—you, rendered in careful detail.
+"There's an art school in the city," Sam says, very quietly. "They want a portfolio by Friday. I've got forty drawings of this room, and I'm not sending any of them." They close the notebook. "I don't show people. But you seem like you actually see people. You know?"
+{{else}}
+"Just tired," they say. "It's nothing."
 
-"I don't usually show people," Sam says quietly. "But you actually seem like you see people. You know?"
-{{else}}They shrug. "Just tired. It's nothing."
+But they don't put the headphones back on, and you take that as a good sign.
+{{/if}}
 
-But they don't put their headphones back on, and you take that as a good sign.{{/if}}
-
-[[Closing time]]
+[[Close up for the night]](Tuesday night)
 
 [[Give them space]]:
-You leave the coffee and step away. Some people need space more than conversation.
+You leave the coffee and step away. Some people need room more than they need conversation.
 
-Sam catches your eye as you walk away and nods once—a small acknowledgment. They understand.
+Sam catches your eye as you go, and nods once. They understand.
 
-[[Closing time]]
+[[Close up for the night]](Tuesday night)
 
-[[Closing time]]:
+[[Tuesday night]]:
+You lock up, and walk home under the streetlights. Two days. That's all it's been. It feels like more.
+
++++Wednesday
 @clear
+@leave fade
+@class morning
 
-# Day Two — Closing
+## Wednesday, 7am
 
-The afternoon fades. The last customers trickle out. It's just you and the empty tables and the smell of coffee grounds.
+Carla meets you at the door with a stick of chalk.
 
-Two days. That's all it's been.
+"Tradition," she says. "Every new barista names a drink for the specials board. Have a think. You've got until closing."
 
-But somehow, it feels like more.
+It's your last day of training. Your regulars are all here, for once, at the same time.
 
-{{#if maya > 1}}You think about Maya, finding her words again. The way she lit up when someone actually asked.{{/if}}
+{{#if orders.Ellis}}[Ellis](Ellis on Wednesday) is at the window.{{/if}} [Maya](Maya on Wednesday) is in her booth, not typing, just reading. {{#if warmth.sam}}[Sam](Sam on Wednesday){{else}}Sam{{/if}} has come in early, which has never happened before.
 
-{{#if ellis > 1}}You think about Ellis, carrying his grief to the same table every morning, finally letting a little of it go.{{/if}}
+When you've done your rounds, it's [[closing time]].
 
-{{#if sam > 1}}You think about Sam, exhausted and guarded, choosing to share something they never show anyone.{{/if}}
+[Ellis on Wednesday]:
+{{#if warmth.ellis >= 2}}
+His coffee's on the table before he sits down. He nods his thanks, and then he looks at the counter, and you know what he's looking at: the bottle of hazelnut syrup.
 
-The bell above the door jingles. Carla's back from her errands.
+You could [make the hazelnut thing].
+{{else}}
+{{inc "warmth.ellis"}}
+You have his black coffee, no room, on the table before he's sat down.
 
-"How was day two?"
+He looks at it for a moment. "That's two of you," he says. "Two who remembered." He doesn't explain, but he says it like it matters.
+{{/if}}
 
-+++Reflect
+[make the hazelnut thing]:
+@inc warmth.ellis
+@set made_hazelnut
+You make it carefully: the hazelnut, the cream on top, a dusting of cinnamon because it feels right. You set it down next to his coffee.
 
-{{#if maya > 1 and ellis > 1 and sam > 1}}
-"I think I'm going to like it here," you say.
+He stares at it for a long time. Long enough that you think you've made a terrible mistake.
 
-Carla smiles. "They like you too. I can tell. The regulars don't warm up to just anyone."
+Then he picks it up, and takes a sip.
 
-She hands you an apron—your own, with your name embroidered on it.
+"Too sweet," he says. His eyes are wet. He's smiling. "She'd have liked you."
+
+[Maya on Wednesday]:
+{{#if warmth.maya >= 2}}{{inc "warmth.maya"}}{{/if}}
+"I finished it," Maya says. "Three in the morning. I cried on the keyboard." She turns the laptop round so you can read the last line:
+
+{{#if maya_idea = "train"}}
+> _The train pulled out, and for the first time in her life she didn't look back._
+{{else if maya_idea = "stays"}}
+> _She tore the ticket in half, and walked back into town, and everyone she loved was still there._
+{{else}}
+> _She watched the train go without her, and realised she'd known all along that she would._
+{{/if}}
+
+{{#if warmth.maya >= 3}}"There's a dedication, too," she says, and goes pink. "_For the new barista, who asked._"{{else}}"It's good, isn't it?" She looks surprised. "It's actually good."{{/if}}
+
+[Sam on Wednesday]:
+{{#if warmth.sam >= 2}}
+Sam is drawing again. You look at the empty hook on the art wall, and then at them.
+
+You could [ask about the hook].
+{{else}}
+Sam looks up from the notebook, and pulls out an earbud. "Morning, {{player_name}}." It's the first time they've said your name.
+{{/if}}
+
+[ask about the hook]:
+@inc warmth.sam
+@set sam_on_the_wall
+"Carla," you call. "That hook on the art wall. Is it free?"
+
+"Has been for a year," Carla calls back. "Why?"
+
+Sam has gone completely still. Then, slowly, they tear a page out of the notebook: the coffee shop, the fairy lights, and you behind the counter. They hold it out without looking at you.
+
+"If I can put one up here," they say, "maybe I can send the others."
+
+[[closing time]]:
+@set close_friends = (warmth.maya >= 2 ? 1 : 0) + (warmth.ellis >= 2 ? 1 : 0) + (warmth.sam >= 2 ? 1 : 0)
+The last customers drift out. Carla puts the chalk in your hand.
+
+"So? What's it called?"
+
+<input type="text" data-attribute="drink_name" data-section="The specials board" placeholder="Name your drink" required maxlength="40">
+
+[[Write it on the board]](The specials board)
+
+[[The specials board]]:
+@clear
+@leave fade
+@end
+You write it in your best chalk capitals: **{{upper drink_name}}**.
+
+{{#if made_hazelnut}}It's hazelnut, with the cream on top. You both know it's too sweet.{{/if}}
+
+{{#if sam_on_the_wall}}On the art wall, the empty hook isn't empty any more.{{/if}}
+
+{{#if close_friends >= 2}}
+Carla stands back and looks at the board for a long time.
+
+"Three days," she says. "Most people take months. The regulars don't warm up to just anyone, you know."
+
+She hands you an apron: your own, with your name sewn on the front.
 
 "Welcome to The Daily Grind, {{player_name}}. You're one of us now."
 
-**THE END — The New Regular**
-{{else}}
-{{#if maya > 1 or ellis > 1 or sam > 1}}
-"It was good. I think I'm getting the hang of it."
-
-Carla nods. "You've got potential. Some of the regulars are starting to open up to you—that's not easy to earn."
-
-She pats you on the shoulder.
+**THE END: The New Regular**
+{{else if close_friends = 1}}
+"Not bad," Carla says. "Not bad at all. Somebody in this shop is going to come in tomorrow hoping it's you behind the counter. That's how it starts."
 
 "Same time tomorrow?"
 
 "Same time tomorrow."
 
-**THE END — First Steps**
+**THE END: First Steps**
 {{else}}
-"It was... quiet."
+Carla studies you for a moment. "The regulars here have got their walls up. Most of us do. But this place has a way of bringing them down, if you give it time."
 
-Carla studies you for a moment. "The regulars here, they've got their walls up. Most of us do. But this place has a way of bringing them down—if you give it time."
+She flips off the lights. "See you tomorrow?"
 
-She locks the register and flips off the lights.
+You nod. There's a lot still to learn about this place, and the people who call it home.
 
-"See you tomorrow?"
-
-You nod. There's still more to learn about this place—and the people who call it home.
-
-**THE END — Room to Grow**
+**THE END: Room to Grow**
 {{/if}}
-{{/if}}
+
+{{restart text="Start your first week again"}}

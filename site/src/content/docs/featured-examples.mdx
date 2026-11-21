@@ -5,42 +5,62 @@ sidebar:
 ---
 
 import Sample from "@components/Sample.astro";
+import ExampleFiles from "@components/ExampleFiles.astro";
 import { coffeeshop, gameshow } from "../../examples";
 
-Here are some complete example stories that demonstrate Squiffy's capabilities.
+Here are two complete stories. Play them, then see how they're made: read their source here, or download it and open it in the [editor](https://app.squiffystory.com) with **Open file**, to play it there and change it.
 
 ## Coffee Shop Confessions
 
-A narrative-driven story about your first two days working at a coffee shop called "The Daily Grind". This example demonstrates:
+Three days of training at The Daily Grind, a little coffee shop with a handful of regulars, each with something they aren't saying. Learn their orders, listen, and see who you get to know. There's only time to get to know some of them properly, so each playthrough is different.
 
-- Text input for player customization
-- Variable tracking with `@set` and `@inc`
-- Conditional text based on player choices
-- Relationship tracking with multiple characters
-- Multiple story endings
+It's a quiet story, which shows the basics of writing one:
 
-[**▶ Play Coffee Shop Confessions**](/examples/coffeeshop/index.html) — Open the full game in a new tab
+- A [text box](/player-input/) for your name, which goes on when you press Enter, and another at the end to name a drink
+- An [object](/attributes/#objects) that keeps track of how well you know each regular, and another for their orders, set by [directives and links](/attributes/#setting-attributes)
+- [Passages](/basic-concepts/#passages) for the rounds you do each morning, and conditional text that remembers what you did on earlier days
+- A [side panel](/buttons-panels-settings/#panels) for your order pad, which fills in as you learn the regulars' orders
+- A [stylesheet](/styling/#changing-the-look-for-a-scene) that dims the lights when `@class evening` says it's the evening, and [transitions](/dynamic-text/#when-the-screen-is-cleared) between the days
+- Three [endings](/basic-concepts/#endings), each with a [Play again link](/basic-concepts/#restarting-and-saving-from-the-story), and [playthrough tests](/cli/#testing-a-story)
 
-<Sample script={coffeeshop} alwaysShowRestart={true} />
+[**▶ Play Coffee Shop Confessions**](/examples/coffeeshop/index.html): the full game, in a new tab
+
+[**Download the source**](/examples/coffeeshop.zip): the story's folder, as a zip, to open in the editor
+
+Or play it here, and change it as you go. This is the story's text, without the stylesheet and the side panel that its [other files](https://github.com/textadventures/squiffy/tree/main/examples/coffeeshop) add.
+
+<Sample script={coffeeshop} alwaysShowRestart={true} height="36rem" />
 
 ## The Wheel of Dubious Fortune
 
-An interactive game show hosted by the chaotic Hank. This example demonstrates:
+Welcome to the most chaotic game show on television, hosted by Hank Spinneroni (probably). Spin the wheel, play three of its five rounds, and try not to push Hank too far.
 
-- Animations (`{{#animate "typewriter"}}` and `{{#animate "toast"}}`)
-- Live updates (`{{live "score"}}`)
-- Randomization (`{{random}}`)
-- Complex state tracking (score, rounds, patience)
-- Nested conditional logic
-- Dynamic scoring system
+This one shows off as much of Squiffy as it can:
 
-[**▶ Play The Wheel of Dubious Fortune**](/examples/gameshow/index.html) — Open the full game in a new tab
+- **Several files:** the main story, and each round in a [file of its own](/multiple-files/), with a stylesheet and sound effects alongside
+- **The wheel:** [repeating text](/dynamic-text/#repeating-text) that spins through the categories until it lands, from an array that's [shuffled and sliced](/helpers-reference/#joining-sorting-and-more) at the start of the show
+- **Beat the Clock:** a [text box that goes on when you press Enter](/player-input/#going-on-when-enter-is-pressed), again and again, with a countdown that [goes to another section](/dynamic-text/#moving-on-after-a-delay) when time's up, and a little [JavaScript](/javascript/) to empty the box after each guess
+- **Professor Boom's Lab:** an [array of objects](/attributes/#objects) made into links by `{{#each}}`, and [live text](/dynamic-text/#live) that [shakes](/dynamic-text/#text-effects) as the lab gets less stable
+- **General Knowledge:** a [rotate link](/dynamic-text/#rotate) to choose an answer, and [labels to replace](/dynamic-text/#replace) when it's locked in
+- **The Audience Decides:** random votes, counted with the array helpers
+- **The Mystery Box:** random contents, decided as soon as it arrives
+- **The look and sound of the show:** [animations](/dynamic-text/#animation), [text effects](/dynamic-text/#text-effects), [@class](/styling/#changing-the-look-for-a-scene) for the lab, the adverts and the finale, [transitions](/dynamic-text/#transitions) as the adverts slide in and out, and [music and sound](/images-and-files/#music-and-sound), with a theme tune by Keehar
+- **Around the story:** a [scoreboard panel](/buttons-panels-settings/#panels), Prizes and How to play buttons, and [player settings](/buttons-panels-settings/#player-settings) for the studio lights and the timer, with links in the adverts to [save your game and change the settings](/basic-concepts/#restarting-and-saving-from-the-story)
+- **Hank's patience:** the [master section](/basic-concepts/#master-sections-and-passages) ends the show from anywhere if it runs out, with [`{{goto}}`](/basic-concepts/#go-to-another-section)
+- **The final question:** a cue card made with an [embed that wraps the question](/basic-concepts/#wrapping-text), and a text box for your answer, checked with the text helpers
+- **The endings:** a score that counts up, confetti from a [script in the story's folder](/multiple-files/#stylesheets-and-scripts), and [playthrough tests](/cli/#testing-a-story) of a win and of Hank walking off
 
-<Sample script={gameshow} alwaysShowRestart={true} />
+[**▶ Play The Wheel of Dubious Fortune**](/examples/gameshow/index.html): the full game, in a new tab
+
+[**Download the source**](/examples/gameshow.zip): the story's folder, as a zip, to open in the editor
+
+Here are its files. The sound effects and the playthrough tests are in the download, and [on GitHub](https://github.com/textadventures/squiffy/tree/main/examples/gameshow).
+
+<ExampleFiles files={gameshow} />
 
 ## More examples
 
-For short examples of particular things, such as an inventory, a shop or random events, see the [Cookbook](/cookbook/). Every page of these docs also has examples you can play and change. The source of these two stories is [on GitHub](https://github.com/textadventures/squiffy/tree/main/examples).
+For short examples of particular things, such as an inventory, a shop or random events, see the [Cookbook](/cookbook/). Every page of these docs also has examples you can play and change.
 
 ## Games made with Squiffy
 

@@ -2,5 +2,25 @@
   "$schema": "https://squiffystory.com/schema/squiffy.json",
   "version": 1,
   "id": "69f98581-092f-442a-a592-70e2d41cf2ee",
-  "main": "gameshow.squiffy"
+  "main": "gameshow.squiffy",
+  "panels": [
+    { "passage": "scoreboard", "label": "Scoreboard", "position": "side" },
+    { "passage": "prizes", "label": "Prizes", "icon": "star" },
+    { "passage": "how to play", "label": "How to play", "icon": "help" }
+  ],
+  "settings": [
+    {
+      "name": "timers",
+      "label": "Timed rounds",
+      "description": "Turn this off to take as long as you like in Beat the Clock",
+      "default": true
+    },
+    {
+      "name": "lights",
+      "type": "list",
+      "label": "Studio lights",
+      "options": ["Dazzling", "Budget"],
+      "default": "Dazzling"
+    }
+  ]
 }

@@ -1,0 +1,35 @@
+{{!-- Round: General Knowledge. A rotate link to choose an answer, and labels to replace once it's locked in --}}
+
+[[General Knowledge]]:
+"Ah, General Knowledge! The knowledge of generals! Or of... general... people." Hank shuffles his cards, and drops two of them.
+
+{{#embed "cue card" points="100 points"}}**What is the capital of France?**{{/embed}}
+
+Your answer: {{#label "answer"}}{{rotate (array "Paris" "London" "A baguette" "France doesn't exist") set="gk_answer"}} _(click to change it)_{{/label}}
+
+{{#label "lock"}}[Lock in your answer](lock in){{/label}}
+
+[lock in]:
+{{#replace "answer"}}**{{gk_answer}}**{{/replace}}
+{{#replace "lock"}}**LOCKED IN!**{{/replace}}
+{{#if gk_answer = "Paris"}}
+{{sound "sounds/ding.mp3"}}{{inc "score" 100}}
+{{#animate "toast"}}CORRECT!{{/animate}}
+
+"Paris! City of light, city of love, city of... bread?" Hank looks confused, but happy.
+{{else if gk_answer = "A baguette"}}
+{{sound "sounds/buzzer.mp3"}}{{dec "patience"}}{{append "prizes" "a slightly stale baguette"}}
+"A baguette? A BAGUETTE?!" Hank's eye twitches. "That's not even a city, {{player_name}}!"
+
+A stagehand hands you a baguette anyway, for some reason. The cardboard cutout falls over.
+{{else if gk_answer = "France doesn't exist"}}
+{{sound "sounds/buzzer.mp3"}}{{dec "patience" 2}}
+Hank stares at you for a very long time.
+
+"Security? Please make a note that {{player_name}} is a flight risk."
+{{else}}
+{{sound "sounds/buzzer.mp3"}}{{dec "patience"}}
+"London? LONDON?!" Hank throws his cue cards in the air. "That's in a whole other country!"
+{{/if}}
+
+[[Next round!]](next round)

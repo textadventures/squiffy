@@ -1,0 +1,81 @@
+{{!--
+    Round: Professor Boom's Lab. The shelf is an array of objects, and each one has a passage
+    link made by {{#each}}, which can be clicked once. The stability is shown with {{live}},
+    so it changes as the mixture gets worse.
+--}}
+
+[[Professor Boom's Lab]]:
+@class lab
+@transition rumble
+@set lab = { stability: 100, mixture: [] }
+@set shelf = [{ name: "Fizz", look: "fizzing blue" }, { name: "Sulk", look: "sulky green" }, { name: "Gloop", look: "suspiciously beige" }, { name: "Shriek", look: "screaming orange" }]
+The lights flicker, and a trapdoor opens in the floor. Green smoke billows out.
+
+{{#animate "typewriter"}}PROFESSOR BOOM has entered the studio.{{/animate}}
+
+A wild-haired scientist climbs out, goggles askew, lab coat singed. "GREETINGS, QUIZ PARTICIPANT! Today you will invent a NEW ELEMENT!"
+
+Hank backs away. "Professor, we talked about bringing chemicals on set..."
+
+"SILENCE, TELEVISION MAN!" The Professor waves at a shelf of bubbling flasks. "Mix me a compound! Seventy-five points for every ingredient! But mind the STABILITY!"
+
+**Lab stability:** {{live "lab.stability" passage="stability"}}
+
+{{#each shelf}}
+- [Add the {{look}} one](add, chemical = "{{name}}")
+{{/each}}
+
+[[Present your compound]](compound)
+
+[stability]:
+{{#if lab.stability <= 40}}{{#style "shake"}}**{{lab.stability}}%**{{/style}}{{else}}{{lab.stability}}%{{/if}}
+
+[add]:
+{{append "lab.mixture" chemical}}{{set "lab.stability" lab.stability - (random (array 20 25 30 35))}}
+You pour in the {{lower chemical}}. The mixture turns {{random (array "a deep purple" "plaid" "the colour of a Tuesday" "transparent, which is worrying")}}.
+
+{{#if lab.stability <= 10}}
+{{#style "rumble"}}The beaker starts to hum.{{/style}}{{goto "kaboom" after="2s"}}
+{{else if lab.stability <= 40}}
+Professor Boom: "HURRY! The compound is becoming... UNSTABLE!"
+{{/if}}
+
+[[compound]]:
+@set score += lab.mixture.length * 75
+@set element = (capitalise (lower (join lab.mixture "o"))) + "ium"
+{{#if lab.mixture.length = 0}}
+{{dec "patience"}}
+You hold up an empty beaker.
+
+"WATER?" Professor Boom's hair stands on end. "You've invented WATER?"
+
+"Technically it's just air," says Hank.
+
+"GET OUT OF MY LABORATORY!"
+{{else}}
+{{sound "sounds/ding.mp3"}}{{append "prizes" ("a flask of " + element)}}
+Professor Boom holds your beaker up to the lights. Something in it blinks.
+
+"MAGNIFICENT! I shall call it... {{#animate "toast"}}{{upper element}}!{{/animate}}"
+
+"{{lab.mixture.length}} {{= lab.mixture.length = 1 ? "ingredient" : "ingredients"}}, {{= lab.mixture.length * 75}} points!" says Hank, from behind a fire extinguisher.
+{{/if}}
+
+Professor Boom vanishes back down the trapdoor, cackling. "UNTIL NEXT TIME! REMEMBER: SCIENCE IS JUST EXPLOSIONS IN A LAB COAT!"
+
+[[Next round!]](next round)
+
+[[kaboom]]:
+@class lab
+@transition rumble 1s
+@dec patience
+@set score += 25
+{{#style "shake"}}**BOOM!**{{/style}}
+
+When the smoke clears, Hank has no eyebrows.
+
+"MY EYEBROWS!" he shrieks. "Those were RENTED!"
+
+Professor Boom emerges from under a desk, delighted. "The finest explosion of the season! Twenty-five points, for SPECTACLE!"
+
+[[Next round!]](next round)

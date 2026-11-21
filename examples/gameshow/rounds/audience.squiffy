@@ -1,0 +1,89 @@
+{{!--
+    Round: The Audience Decides. The audience is an array of objects, and each one votes at
+    random. Most votes wins, and if there's a tie, Doris in the front row has the casting vote.
+--}}
+
+[[The Audience Decides]]:
+@set audience = [{ name: "Doris", seat: "the front row" }, { name: "Gary", seat: "row C, asleep" }, { name: "Cardboard Steve", seat: "the aisle" }]
+@set votes = []
+"THE AUDIENCE DECIDES!" Hank waves grandly at the audience. "Ladies and gentlemen and cardboard: what challenge should {{player_name}} face?"
+
+{{#each audience}}
+- **{{name}}**, in {{seat}}, votes {{random (array "SING" "DANCE" "BLENDER") set="vote"}}{{append "votes" vote}}{{#if @last}} (nobody knows how){{/if}}
+{{/each}}
+
+{{#if (count votes "SING") >= 2}}{{set "challenge" "SING"}}{{else if (count votes "DANCE") >= 2}}{{set "challenge" "DANCE"}}{{else if (count votes "BLENDER") >= 2}}{{set "challenge" "BLENDER"}}{{else}}{{set "challenge" (first votes)}}"A tie! Doris has the casting vote!"{{/if}}
+
+{{#if challenge = "SING"}}
+"You heard them! SING, {{player_name}}! Sing like your points depend on it! Because they do!"
+
+[[Sing beautifully]]
+
+[[Sing terribly, on purpose]]
+{{else if challenge = "DANCE"}}
+"DANCE! Show us your moves!"
+
+[[Dance like nobody's watching]]
+
+[[Do the robot]]
+{{else}}
+"An impression of a BLENDER! This is normal television!"
+
+[[WHIRRRRRR]]
+
+[[Refuse, on grounds of dignity]]
+{{/if}}
+
+[[Sing beautifully]]:
+@sound sounds/applause.mp3
+@inc score 150
+You belt out an operatic version of the show's theme tune, making up the words as you go.
+
+The audience is moved. Gary wakes up specially to applaud. 150 points!
+
+{{#animate "toast"}}STANDING OVATION!{{/animate}}
+
+[[Next round!]](next round)
+
+[[Sing terribly, on purpose]]:
+@dec patience
+@inc score 25
+You screech like a cat in a tumble dryer. On purpose. For art.
+
+Hank: "That was... really something. Twenty-five points. Moving on. Quickly."
+
+[[Next round!]](next round)
+
+[[Dance like nobody's watching]]:
+@sound sounds/applause.mp3
+@inc score 125
+{{#style "sway"}}You dance like nobody's watching.{{/style}} Everybody is watching. There are cameras.
+
+Cardboard Steve falls over, but approvingly. 125 points!
+
+[[Next round!]](next round)
+
+[[Do the robot]]:
+@inc score 100
+You do the robot so convincingly that a stagehand tries to unplug you.
+
+{{#animate "toast"}}BEEP BOOP. 100 POINTS.{{/animate}}
+
+[[Next round!]](next round)
+
+[[WHIRRRRRR]]:
+@sound sounds/applause.mp3
+@inc score 175
+{{#style "shudder"}}You spin round, making blender noises.{{/style}} It's deeply unsettling. Doris asks if you do smoothies.
+
+Professor Boom's voice echoes up from under the stage: "MAGNIFICENT!" 175 points!
+
+[[Next round!]](next round)
+
+[[Refuse, on grounds of dignity]]:
+@dec patience
+"I'm not doing that."
+
+Hank: "Fair enough. You keep your dignity, and your score stays exactly where it is."
+
+[[Next round!]](next round)
