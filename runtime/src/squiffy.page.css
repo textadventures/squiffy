@@ -117,7 +117,10 @@ button#squiffy-mute:not(.squiffy-muted) .squiffy-icon-muted
         grid-column: 1 / -1;
     }
 
-    div#squiffy-container.squiffy-has-side > aside.squiffy-panels-side
+    /* :where() takes the container's id out of the selector's specificity, so a story's own
+       aside.squiffy-panels-side { ... } rule, which comes after this, changes the border and the
+       padding too */
+    :where(div#squiffy-container.squiffy-has-side) > aside.squiffy-panels-side
     {
         position: sticky;
         top: 3.5rem;
