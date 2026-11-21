@@ -38,7 +38,7 @@
     import type { CodeAction } from "squiffy-compiler/language-service";
     import PreviewPanel from "#components/PreviewPanel.svelte";
     import MapPanel, { type TraceStep } from "#components/MapPanel.svelte";
-    import { emptyPositions, linkTo, movedNodes, nodeAtLine, renamePositions, revertPositions, sectionKeys, withPosition, type Point, type StoryMapEdge, type StoryMapNode } from "#lib/story-map.js";
+    import { checkSectionName, emptyPositions, linkTo, movedNodes, nodeAtLine, renamePositions, revertPositions, sectionKeys, withPosition, type Point, type StoryMapEdge, type StoryMapNode } from "#lib/story-map.js";
     import AssetManagerModal from "#components/AssetManagerModal.svelte";
     import FontsModal from "#components/FontsModal.svelte";
     import AboutModal from "#components/AboutModal.svelte";
@@ -49,7 +49,7 @@
     import X from "@lucide/svelte/icons/x";
     import { readMapLayout, saveMapLayout } from "#lib/map-layout.js";
     import { narrowed, narrowing, narrowRange, setNarrow } from "#lib/narrow.js";
-    import { deleteLinesEdits, deletionMessage, insertHeaderEdit, placeNewPassage, placeNewSection, planDeletion, startEdit, type Place } from "#lib/map-edits.js";
+    import { checkPassageName, deleteLinesEdits, deletionMessage, insertHeaderEdit, linkThenHeaderEdits, placeNewPassage, placeNewSection, planDeletion, startEdit, type Place } from "#lib/map-edits.js";
     import { addSectionOrPassage, clipboardCommand, insertSnippet, runCommand, userSnippets } from "#lib/editor-commands.js";
     import { formatKey } from "#lib/shortcuts.js";
     import type { ExportKind } from "#lib/language/protocol.js";
@@ -738,6 +738,7 @@
         const c = client;
         if (!c) return;
         const request = ++graphRequest;
+        const cardDoc = card ? views.get(card.file)?.state.doc : undefined;
         await syncOpenFiles();
         const graph = await c.call("getStoryGraph");
         if (request !== graphRequest) return;
@@ -753,6 +754,11 @@
             if (moved) void savePositions(moved);
         }
         storyGraph = graph;
+        // Only if the story hasn't changed again since it was read
+        if (cardResync && card && views.get(card.file)?.state.doc === cardDoc) {
+            cardResync = false;
+            resyncCard(graph);
+        }
         // The section being written has gone
         if (card && !graph.nodes.some(n => n.id === card?.id)) closeCard();
         if (selectWhenReady && graph.nodes.some(n => n.id === selectWhenReady)) {
@@ -821,6 +827,55 @@
             await tick();
             view.focus();
         }
+    }
+
+    // The toolbar's Add, while a section's being written in the card. In the script, it adds an
+    // empty header to type a name in, which the card doesn't show. So here, text that's selected
+    // becomes a link to a new section or passage of that name, as in the script, and otherwise
+    // the name's asked for on the map.
+    async function addFromCard(kind: "section" | "passage") {
+        const graph = storyGraph;
+        const section = cardNode;
+        const view = card ? views.get(card.file) : undefined;
+        if (!p || !graph || !section || !view) return;
+        const selection = view.state.selection.main;
+        const name = view.state.sliceDoc(selection.from, selection.to).replace(/[[\]\n]/g, "").trim();
+        if (!name) {
+            if (kind === "section") mapPanel?.nameSection(section);
+            else mapPanel?.namePassage(section);
+            return;
+        }
+        const problem = kind === "section" ? checkSectionName(name, graph) : checkPassageName(name, section.name, graph);
+        if (problem) {
+            showToast(problem, "info");
+            return;
+        }
+        const file = section.location.file;
+        const doc = view.state.doc;
+        const link: WorkspaceEdit = {
+            [file]: [{ range: { start: toPosition(doc, selection.from), end: toPosition(doc, selection.to) }, newText: kind === "section" ? `[[${name}]]` : `[${name}]` }],
+        };
+        try {
+            const edit = kind === "section"
+                ? await linkThenHeader(link, placeNewSection(graph, { from: section, file }), `[[${name}]]:`)
+                : await linkThenHeader(link, placeNewPassage(section), `[${name}]:`);
+            await applyMapEdit(edit);
+        } catch (err) {
+            showToast(`Couldn't add the ${kind}: ${errorText(err)}`);
+        }
+    }
+
+    // After a change made from the map, what the card shows is worked out again from the story:
+    // a new section added straight after the one being written isn't part of it, though it's
+    // where the card's text ended.
+    let cardResync = false;
+    function resyncCard(graph: StoryGraph) {
+        const section = card && graph.nodes.find(n => n.id === card?.id);
+        const view = card ? views.get(card.file) : undefined;
+        if (!section || !view || !narrowed(view.state)) return;
+        const range = narrowRange(view.state, section.range.start.line, section.range.end.line, !!section.detail);
+        const now = narrowed(view.state);
+        if (range && (range.from !== now?.from || range.to !== now.to)) view.dispatch({ effects: setNarrow.of(range) });
     }
 
     function closeCard() {
@@ -974,6 +1029,13 @@
         return { [place.file]: [insertHeaderEdit(await currentText(place.file), place.afterLine, header)] };
     }
 
+    // A link, with the header of the new section or passage it links to, which goes after it
+    async function linkThenHeader(link: WorkspaceEdit, place: Place, header: string): Promise<WorkspaceEdit> {
+        const edit = link[place.file]?.[0];
+        if (!edit) return mergeEdits(link, await headerEdit(place, header));
+        return mergeEdits({}, { [place.file]: linkThenHeaderEdits(await currentText(place.file), edit, place.afterLine, header) });
+    }
+
     // Two edits as one. Text added at the same place goes in the order given, `a`'s first.
     function mergeEdits(a: WorkspaceEdit, b: WorkspaceEdit): WorkspaceEdit {
         const merged: WorkspaceEdit = { ...a };
@@ -1031,6 +1093,7 @@
     }
 
     async function applyMapEdit(edit: WorkspaceEdit, positions?: MapChange["positions"]) {
+        cardResync = true;
         const files = Object.keys(edit);
         await openForEdit(files);
         recordMapChange({ files: files.filter(file => views.has(file)), positions });
@@ -1071,8 +1134,10 @@
         const { at, near, from } = where;
         const file = from?.location.file ?? near?.location.file ?? (isSquiffyFile(p.activePath) ? p.activePath : p.mainFile);
         try {
-            let edit = await headerEdit(placeNewSection(graph, { from, near, file }), `[[${name}]]:`);
-            if (from && where.link !== false) edit = mergeEdits(linkEdit(from, `[[${name}]]`), edit);
+            const place = placeNewSection(graph, { from, near, file });
+            const edit = from && where.link !== false
+                ? await linkThenHeader(linkEdit(from, `[[${name}]]`), place, `[[${name}]]:`)
+                : await headerEdit(place, `[[${name}]]:`);
             selectWhenReady = `section:${name}`;
             await applyMapEdit(edit, at && {
                 before: mapPositions ?? emptyPositions(),
@@ -1093,8 +1158,8 @@
         const section = graph.nodes.find(n => n.kind === "section" && n.name === sectionName);
         if (!section) return;
         try {
-            let edit = await headerEdit(placeNewPassage(section), `[${name}]:`);
-            if (link) edit = mergeEdits(linkEdit(from, `[${name}]`), edit);
+            const place = placeNewPassage(section);
+            const edit = link ? await linkThenHeader(linkEdit(from, `[${name}]`), place, `[${name}]:`) : await headerEdit(place, `[${name}]:`);
             selectWhenReady = `passage:${sectionName}/${name}`;
             await applyMapEdit(edit);
         } catch (err) {
@@ -1499,7 +1564,11 @@
             ondownloadproject={handleDownloadProject}
             onexport={handleExport}
             oncommand={command => { const v = activeView(); if (v) runCommand(v, command); }}
-            onadd={kind => { const v = activeView(); if (v && isSquiffyFile(p.activePath)) addSectionOrPassage(v, kind, symbols); }}
+            onadd={kind => {
+                const v = activeView();
+                if (cardShown) void addFromCard(kind);
+                else if (v && isSquiffyFile(p.activePath)) addSectionOrPassage(v, kind, symbols);
+            }}
             onsnippet={content => { const v = activeView(); if (v) insertSnippet(v, content); }}
             {snippets}
             onabout={() => { aboutOpen = true; }}

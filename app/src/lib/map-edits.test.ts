@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 import { createLanguageService, type GraphNode, type StoryGraph } from "squiffy-compiler/language-service";
 import { applyEditsToString } from "./language/codemirror.js";
 import {
-    blockOf, checkPassageName, deleteLinesEdits, deletionMessage, insertHeaderEdit, placeNewPassage, placeNewSection, planDeletion, startEdit,
+    blockOf, checkPassageName, deleteLinesEdits, deletionMessage, insertHeaderEdit, linkThenHeaderEdits, placeNewPassage, placeNewSection, planDeletion, startEdit,
 } from "./map-edits.js";
 
 async function graphOf(text: string, others: Record<string, string> = {}) {
@@ -122,6 +122,22 @@ describe("adding a header", () => {
 
     test("keeps Windows line endings", () => {
         expect(add("[[a]]:\r\nText.\r\n\r\n[[b]]:\r\nMore.\r\n", 2)).toBe("[[a]]:\r\nText.\r\n\r\n[[n]]:\r\n\r\n[[b]]:\r\nMore.\r\n");
+    });
+});
+
+describe("a link with the header it links to", () => {
+    const at = (line: number, character: number) => ({ range: { start: { line, character }, end: { line, character } }, newText: "[p]" });
+    const apply = (text: string, link: ReturnType<typeof at>, afterLine?: number) => applyEditsToString(text, linkThenHeaderEdits(text, link, afterLine, "[p]:"));
+
+    test("the header goes after the section's text, when the link's in it", () => {
+        expect(apply("[[a]]:\nLook. \n\n[[b]]:\n", at(1, 6), 2)).toBe("[[a]]:\nLook. [p]\n\n[p]:\n\n[[b]]:\n");
+    });
+
+    test("and after the link, when that's on a blank line under the text", () => {
+        // An empty section, with the cursor on the line under its header
+        expect(apply("[[a]]:\n\n[[b]]:\n", at(1, 0), 1)).toBe("[[a]]:\n[p]\n\n[p]:\n\n[[b]]:\n");
+        expect(apply("[[a]]:\n", at(1, 0), 1)).toBe("[[a]]:\n[p]\n\n[p]:\n");
+        expect(apply("[[a]]:\nText.\n\n\n[[b]]:\n", at(3, 0), 3)).toBe("[[a]]:\nText.\n\n[p]\n\n[p]:\n\n[[b]]:\n");
     });
 });
 
