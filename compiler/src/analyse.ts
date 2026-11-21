@@ -618,11 +618,16 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
                 `${inSection}, there is a ${missing.display} link but no following section exists`, section.line);
         }
 
+        // Like the runtime, a passage link can go to one of the master section's passages
+        const masterPassages = story.sections[""]?.passages ?? {};
+
         for (const link of result.links) {
             if (link.form == "next") continue;
             if (link.form == "input") {
-                const names = link.linkType == "section" ? story.sections : section.passages;
-                if (!hasOwn(names, link.target)) {
+                const exists = link.linkType == "section"
+                    ? hasOwn(story.sections, link.target)
+                    : hasOwn(section.passages, link.target) || hasOwn(masterPassages, link.target);
+                if (!exists) {
                     warn(link.linkType == "section" ? "squiffy/unknown-section-link" : "squiffy/unknown-passage-link", link.start, link.end,
                         `${where} there is a text box that goes to a ${link.linkType} called "${link.target}" when Enter is pressed, which doesn't exist`);
                 }
@@ -633,16 +638,16 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
                         `${where} there is a link to a section called [[${link.target}]], which doesn't exist`);
                 }
             }
-            else if (!linkDestinationExists(link.target, section.passages)) {
+            else if (!linkDestinationExists(link.target, section.passages) && !linkDestinationExists(link.target, masterPassages)) {
                 warn("squiffy/unknown-passage-link", link.start, link.end,
                     `${where} there is a link to a passage called [${link.target}], which doesn't exist`);
             }
         }
 
         // Like the runtime's embed helper, a name can refer to a passage in the
-        // current section or to any section.
+        // current section or the master section, or to any section.
         for (const embed of result.embeds) {
-            if (!(embed.name in section.passages) && !(embed.name in story.sections)) {
+            if (!(embed.name in section.passages) && !(embed.name in story.sections) && !hasOwn(masterPassages, embed.name)) {
                 warn("squiffy/unknown-embed", embed.start, embed.end,
                     `${where} there is an embed of {{embed "${embed.name}"}}, but no section or passage with that name exists`);
             }
@@ -658,7 +663,6 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
         }
 
         // {{deactivate}} disables links to a passage in this section, or in the master section
-        const masterPassages = story.sections[""]?.passages ?? {};
         for (const deactivate of result.deactivates) {
             if (!(deactivate.name in section.passages) && !(deactivate.name in masterPassages)) {
                 warn("squiffy/unknown-deactivate", deactivate.start, deactivate.end,

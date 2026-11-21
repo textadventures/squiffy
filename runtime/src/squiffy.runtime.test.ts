@@ -4931,3 +4931,60 @@ describe('scroll: "element"', () => {
         expect(windowScroll).not.toHaveBeenCalled();
     });
 });
+
+// The CLI's --play carries on from a saved game without beginning the story first, and the
+// editor's preview begins at the section being edited
+const helperStory = `
+@ui
+    window.uiRuns = (window.uiRuns || 0) + 1;
+    squiffy.registerHelper("shout", (text) => text.toUpperCase() + "!");
+---
+
+{{shout "one"}} [[b]]
+
+[[b]]:
+{{shout "two"}} [[c]] [more]
+
+[more]:
+{{shout "more"}}
+
+[[c]]:
+{{shout "three"}}
+`;
+
+const initHelperStory = async () => {
+    const compiled = await compile(helperStory);
+    const element = document.getElementById("squiffy")!;
+    element.innerHTML = "";
+    const api = await init({ element, story: compiled.story, scroll: "element" });
+    return { api, element };
+};
+
+test("@ui has run when the story begins at another section", async () => {
+    const { api, element } = await initHelperStory();
+    await api.begin({ section: "b", passage: "more" });
+    expect(element.textContent).toContain("TWO!");
+    expect(element.textContent).toContain("MORE!");
+    expect((window as any).uiRuns).toBe(1);
+});
+
+test("@ui has run when a saved game is loaded before the story begins, and runs once", async () => {
+    const first = await initHelperStory();
+    await first.api.begin({ section: "b" });
+    const save = JSON.parse(JSON.stringify(first.api.getSave()));
+    expect((window as any).uiRuns).toBe(1);
+
+    const { api, element } = await initHelperStory();
+    expect(await api.loadSave(save)).toEqual({ success: true });
+    expect((window as any).uiRuns).toBe(2);
+    await api.clickLink(element.querySelector<HTMLElement>("a.squiffy-link[data-section='c']")!);
+    expect(element.textContent).toContain("THREE!");
+    expect(element.querySelector(".squiffy-error")).toBeNull();
+
+    // Loading again doesn't run it again, but restarting does, as that resets the attributes
+    await api.loadSave(save);
+    expect((window as any).uiRuns).toBe(2);
+    api.restart();
+    await vi.waitFor(() => expect(element.textContent).toContain("ONE!"));
+    expect((window as any).uiRuns).toBe(3);
+});

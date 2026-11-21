@@ -917,7 +917,12 @@ export async function playRandom(playable: PlayableStory, options: RandomOptions
             const visit = (step: PlayStep) => {
                 for (const place of step.went) {
                     visitedSections.add(place.section);
-                    if (place.passage !== undefined) visitedPassages.add(`${place.section}/${place.passage}`);
+                    if (place.passage !== undefined) {
+                        // A passage that isn't in the section is one of the master section's,
+                        // which can be shown from any section
+                        const own = Object.prototype.hasOwnProperty.call(playable.story.sections[place.section]?.passages ?? {}, place.passage);
+                        visitedPassages.add(`${own ? place.section : ""}/${place.passage}`);
+                    }
                 }
                 const section = session.api.get("_section") ?? "";
                 for (const message of step.errors) {

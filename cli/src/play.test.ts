@@ -77,6 +77,36 @@ describe("playStory", () => {
         expect(text).toContain("Attributes:\n  turns = 3\n  gold = 7\n");
     });
 
+    // A story whose helpers come from @ui, as an agent plays it: a step at a time, from a save
+    const HELPERS = `@ui
+    squiffy.registerHelper("shout", (text) => text.toUpperCase() + "!");
+---
+
+{{shout "one"}} [[Go on]](next)
+
+[[next]]:
+{{shout "two"}} [[Finish]](last)
+
+[[last]]:
+@end
+{{#if (shout "x")}}{{shout "three"}}{{/if}}`;
+
+    test("runs @ui before carrying on from a saved game", async () => {
+        const playable = await load(HELPERS);
+        const first = await playStory(playable, { choose: ["Go on"] });
+        expect(first.steps[1].text).toBe("TWO! [Finish]");
+
+        const second = await playStory(playable, { save: first.save, choose: ["Finish"] });
+        expect(second.steps[1].text).toBe("THREE!");
+        expect(second.steps[1].errors).toEqual([]);
+    });
+
+    test("runs @ui before starting at another section", async () => {
+        const result = await playStory(await load(HELPERS), { start: "next", choose: ["Finish"] });
+        expect(result.steps.map(step => step.text)).toEqual(["TWO! [Finish]", "THREE!"]);
+        expect(result.steps.flatMap(step => step.errors)).toEqual([]);
+    });
+
     test("stops at a link that isn't there, saying what the links are", async () => {
         const result = await playStory(await load(SHOP), { choose: ["Go in", "Go in"] });
 
@@ -384,6 +414,26 @@ The end.`);
 
         const result = await playRandom(loaded.playable, { runs: 1, steps: 10, seed: 1 });
         expect(result.passages).toEqual({ total: 0, visited: 0, notVisited: [] });
+    });
+
+    test("counts a master section's passage as visited when it's shown from another section", async () => {
+        const playable = await load(`[[start]]:
+@end
+[Wait](stare) or [look].
+
+[look]:
+You look.
+
+[[]]:
+
+[stare]:
+You stare.
+
+[never]:
+Not linked to.`);
+
+        const result = await playRandom(playable, { runs: 3, steps: 10, seed: 1 });
+        expect(result.passages).toEqual({ total: 3, visited: 2, notVisited: ["/never"] });
     });
 
     test("presses Enter in text boxes that go somewhere (#454)", async () => {

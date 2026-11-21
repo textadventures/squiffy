@@ -279,6 +279,14 @@ describe("story graph", () => {
         expect(deadEnds(graph)).toEqual([]);
     });
 
+    test("a link to one of the master section's passages isn't unknown, and makes it reachable", async () => {
+        const main = "[[a]]:\n[Wait](stare) <input data-passage=\"stare\"> {{embed \"stare\"}} [nothing]\n@end\n\n[[]]:\n\n[stare]:\nYou stare.";
+        const diagnostics = await service({ "story.squiffy": main }).getDiagnostics("story.squiffy");
+        expect(diagnostics.map(d => [d.code, d.message])).toEqual([
+            ["squiffy/unknown-passage-link", "In section 'a' there is a link to a passage called [nothing], which doesn't exist"],
+        ]);
+    });
+
     test("@start sets where reachability starts from", async () => {
         const graph = await one("@start b\n\n[[a]]:\n[[b]]\n\n[[b]]:\n@end");
         expect(nodeOf(graph, "section:b").start).toBe(true);
