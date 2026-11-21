@@ -32,7 +32,7 @@
     import ProblemsPanel from "#components/ProblemsPanel.svelte";
     import FindInFilesPanel from "#components/FindInFilesPanel.svelte";
     import { findInFiles, isSearchable, type FindResults } from "#lib/find-in-files.js";
-    import { isValidSearch, type SearchSpec, type TextMatch } from "@textadventures/editor-search";
+    import { isValidSearch, replaceChanges, replaceInText, type SearchSpec, type TextMatch } from "@textadventures/editor-search";
     import { collectProblems, countProblems, type Problem } from "#lib/problems.js";
     import type { CodeAction } from "squiffy-compiler/language-service";
     import PreviewPanel from "#components/PreviewPanel.svelte";
@@ -70,6 +70,8 @@
     let findResults = $state<FindResults | null>(null);
     let findHeight = $state(240);
     let findPanel = $state<ReturnType<typeof FindInFilesPanel>>();
+    let findReplace = $state("");
+    let findReplaceOpen = $state(false);
     let findInvalid = $derived(!!findSpec.search && !isValidSearch(findSpec));
     // The text of each open file when the problems were found, as their fixes are for that text
     let problemTexts = new Map<string, string>();
@@ -590,6 +592,61 @@
         }, 200);
         return () => clearTimeout(timer);
     });
+
+    // Replaces the matches in one file, or with `only`, one of them. An open file is changed in
+    // its editor, as one step to undo there; others are changed on disk. Returns how many.
+    async function replaceInFile(current: NonNullable<typeof p>, file: string, spec: SearchSpec, only?: TextMatch): Promise<number> {
+        const view = views.get(file);
+        if (view && current.isOpen(file)) {
+            const changes = replaceChanges(view.state.doc, spec, findReplace, only);
+            if (changes.length) view.dispatch({ changes, userEvent: "input.replace" });
+            return changes.length;
+        }
+        const replaced = replaceInText(await current.fs.readText(file), spec, findReplace, only);
+        if (replaced.count) await current.writeText(file, replaced.text);
+        return replaced.count;
+    }
+
+    async function replaceMatch(file: string, match: TextMatch) {
+        const current = p;
+        if (!current) return;
+        try {
+            const count = await replaceInFile(current, file, $state.snapshot(findSpec), match);
+            if (!count) showToast("That text has changed since the search.", "info");
+        } catch (err) {
+            showToast(`Couldn't change ${file}: ${errorText(err)}`);
+        }
+    }
+
+    // Replaces every match in every file, once the author has agreed: files that aren't open
+    // have no undo
+    async function replaceAllInFiles() {
+        const current = p;
+        const found = findResults;
+        if (!current || !found?.total) return;
+        const spec = $state.snapshot(findSpec);
+        const closed = found.files.filter(f => !current.isOpen(f.file)).length;
+        const matches = `${found.total}${found.capped ? "+" : ""} match${found.total === 1 && !found.capped ? "" : "es"}`;
+        const where = found.capped ? "the story's files" : `${found.files.length} file${found.files.length === 1 ? "" : "s"}`;
+        const warning = closed || found.capped ? " Changes to files that aren't open can't be undone." : "";
+        const agreed = await chooseDialog(`Replace ${matches} in ${where} with '${findReplace}'?${warning}`, [
+            { label: "Cancel", value: false },
+            { label: "Replace all", value: true },
+        ]);
+        if (!agreed) return;
+        let total = 0;
+        let files = 0;
+        for (const file of current.files.map(f => f.path).filter(isSearchable)) {
+            try {
+                const count = await replaceInFile(current, file, spec);
+                total += count;
+                if (count) files++;
+            } catch (err) {
+                showToast(`Couldn't change ${file}: ${errorText(err)}`);
+            }
+        }
+        showToast(`Replaced ${total} match${total === 1 ? "" : "es"} in ${files} file${files === 1 ? "" : "s"}.`, "info");
+    }
 
     function goToMatch(file: string, match: TextMatch) {
         void goToLocation({
@@ -1259,6 +1316,10 @@
                         bind:this={findPanel}
                         bind:spec={findSpec}
                         bind:height={findHeight}
+                        bind:replace={findReplace}
+                        bind:replaceOpen={findReplaceOpen}
+                        onreplace={(file, match) => void replaceMatch(file, match)}
+                        onreplaceall={() => void replaceAllInFiles()}
                         results={findResults}
                         invalid={findInvalid}
                         onselect={goToMatch}

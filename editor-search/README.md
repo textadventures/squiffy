@@ -33,6 +33,8 @@ new EditorView({
 
 `searchText(text, { search, caseSensitive, wholeWord, regexp }, limit)` gives the matches in a string, by line and column, with the same matching as the panel. It's for a search of files that aren't open in an editor, such as Squiffy's Find in Files.
 
+`replaceInText(text, spec, replace)` gives the text with every match replaced, and how many there were, keeping its line breaks. `replaceChanges(doc, spec, replace)` gives the same as changes to a CodeMirror document, for a file that's open in an editor, so it's one step to undo. Both take a line and column to replace one match only. In a regular expression's replacement, `$1` is its first group, `$&` the whole match and `$$` a dollar sign, as in the Find panel.
+
 ## Colours
 
 The layout is a CodeMirror base theme. The colours come from custom properties, set on the editor from the app's own theme. With none set, they fall back to tints of the editor's text colour.

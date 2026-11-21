@@ -1,13 +1,17 @@
 <script lang="ts">
+    import { tick } from "svelte";
     // Find in Files (Ctrl/Cmd+Shift+F), as a panel under the editor, like the Problems panel:
     // a search of every text file in the project, with the matches listed by file. Clicking one
-    // moves the editor there. The page does the searching, as the text changes.
+    // moves the editor there. With the Replace row open, a match can be replaced, or all of them.
+    // The page does the searching, as the text changes, and the replacing.
     import type { SearchSpec, TextMatch } from "@textadventures/editor-search";
     import { excerpt, summary, type FindResults } from "#lib/find-in-files.js";
     import X from "@lucide/svelte/icons/x";
     import CaseSensitive from "@lucide/svelte/icons/case-sensitive";
     import WholeWord from "@lucide/svelte/icons/whole-word";
     import Regex from "@lucide/svelte/icons/regex";
+    import ChevronRight from "@lucide/svelte/icons/chevron-right";
+    import Replace from "@lucide/svelte/icons/replace";
 
     interface Props {
         spec: SearchSpec;
@@ -15,13 +19,18 @@
         results: FindResults | null;
         // The search isn't a regular expression that parses
         invalid?: boolean;
+        // What to replace matches with, and whether the Replace row is showing
+        replace: string;
+        replaceOpen: boolean;
         onselect: (file: string, match: TextMatch) => void;
+        onreplace: (file: string, match: TextMatch) => void;
+        onreplaceall: () => void;
         onclose: () => void;
         // The panel's height in pixels, which dragging its top edge changes
         height?: number;
     }
 
-    let { spec = $bindable(), results, invalid = false, onselect, onclose, height = $bindable(240) }: Props = $props();
+    let { spec = $bindable(), results, invalid = false, replace = $bindable(), replaceOpen = $bindable(), onselect, onreplace, onreplaceall, onclose, height = $bindable(240) }: Props = $props();
 
     const MIN_HEIGHT = 80;
 
@@ -53,6 +62,25 @@
     }
 
     let input = $state<HTMLInputElement>();
+    let replaceInput = $state<HTMLInputElement>();
+
+    async function toggleReplace() {
+        replaceOpen = !replaceOpen;
+        if (!replaceOpen) return;
+        await tick();
+        replaceInput?.focus();
+    }
+
+    // Enter in the Replace box replaces every match (the page asks first)
+    function handleReplaceKeydown(e: KeyboardEvent) {
+        if (e.key === "Enter" && results?.total) {
+            e.preventDefault();
+            onreplaceall();
+        } else if (e.key === "Escape") {
+            e.preventDefault();
+            onclose();
+        }
+    }
     let list = $state<HTMLDivElement>();
 
     const none = $derived(invalid || (!!spec.search && results !== null && results.total === 0));
@@ -105,7 +133,10 @@
 
 <section aria-label="Find in files" class="relative flex flex-col shrink-0 border-t border-surface-200-800 bg-surface-50-950" style="height: {height}px">
     <div role="separator" aria-orientation="horizontal" aria-label="Resize find in files" class="splitter-rows" onpointerdown={handleSplitterPointerDown}></div>
-    <header class="flex items-center gap-2 px-3 py-1.5 border-b border-surface-200-800 bg-surface-100-900">
+    <header class="header px-3 py-1.5 border-b border-surface-200-800 bg-surface-100-900">
+        <button type="button" class="expand btn-icon btn-icon-sm" title="Replace" aria-label="Replace" aria-expanded={replaceOpen} onclick={() => void toggleReplace()}>
+            <ChevronRight size={14} />
+        </button>
         <h2 class="text-xs font-semibold shrink-0">Find in files</h2>
         <div class="field" class:none role="search">
             <input
@@ -128,8 +159,23 @@
                 <Regex size={16} />
             </button>
         </div>
-        <span class="text-xs text-surface-600-400 flex-1 truncate tabular-nums" role="status">{status}</span>
+        <span class="text-xs text-surface-600-400 truncate tabular-nums" role="status">{status}</span>
         <button type="button" class="btn-icon btn-icon-sm" aria-label="Close find in files" title="Close" onclick={onclose}><X size={14} /></button>
+        {#if replaceOpen}
+            <div class="field replace-field">
+                <input
+                    bind:this={replaceInput}
+                    bind:value={replace}
+                    type="text"
+                    placeholder="Replace with"
+                    aria-label="Replace with"
+                    autocomplete="off"
+                    spellcheck="false"
+                    onkeydown={handleReplaceKeydown}
+                />
+            </div>
+            <button type="button" class="btn btn-sm preset-outlined-surface-300-700 text-xs justify-self-start" disabled={!results?.total} onclick={onreplaceall}>Replace all</button>
+        {/if}
     </header>
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div bind:this={list} class="flex-1 min-h-0 overflow-y-auto text-xs" onkeydown={handleListKeydown}>
@@ -143,16 +189,27 @@
                     <ul>
                         {#each result.matches as match, i (i)}
                             {@const e = excerpt(match)}
-                            <li>
+                            <li class="row flex items-center">
                                 <button
                                     type="button"
-                                    class="match w-full text-left flex gap-3 pl-5 pr-3 py-0.5"
+                                    class="match flex-1 min-w-0 text-left flex gap-3 pl-5 pr-3 py-0.5"
                                     onclick={() => onselect(result.file, match)}
                                     title="Go to {result.file} line {match.line + 1}"
                                 >
                                     <span class="line text-surface-600-400 shrink-0 tabular-nums text-right">{match.line + 1}</span>
                                     <span class="font-mono truncate">{e.before}<mark>{e.match}</mark>{e.after}</span>
                                 </button>
+                                {#if replaceOpen}
+                                    <button
+                                        type="button"
+                                        class="replace-one shrink-0 mr-2"
+                                        title="Replace this match"
+                                        aria-label="Replace this match on line {match.line + 1}"
+                                        onclick={() => onreplace(result.file, match)}
+                                    >
+                                        <Replace size={14} />
+                                    </button>
+                                {/if}
                             </li>
                         {/each}
                     </ul>
@@ -187,8 +244,7 @@
         display: flex;
         align-items: center;
         gap: 2px;
-        flex: 0 1 22rem;
-        min-width: 8rem;
+        min-width: 0;
         height: 28px;
         padding: 0 3px 0 8px;
         border: 1px solid var(--color-surface-300-700);
@@ -255,10 +311,46 @@
     .line {
         min-width: 2.5em;
     }
-    .match:hover,
-    .match:focus-visible {
+    .row:hover,
+    .row:focus-within {
         background-color: var(--color-surface-100-900);
+    }
+    .match:focus-visible {
         outline: none;
+    }
+    .expand :global(svg) {
+        transition: transform 0.1s;
+    }
+    .expand[aria-expanded="true"] :global(svg) {
+        transform: rotate(90deg);
+    }
+    /* A grid, so the Replace field lines up under the Find field */
+    .header {
+        display: grid;
+        grid-template-columns: auto auto minmax(8rem, 22rem) minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 0.375rem 0.5rem;
+    }
+    .replace-field {
+        grid-column: 3;
+    }
+    .replace-one {
+        display: inline-flex;
+        padding: 2px;
+        border-radius: 4px;
+        color: var(--color-surface-600-400);
+        opacity: 0;
+    }
+    .row:hover .replace-one,
+    .replace-one:focus-visible {
+        opacity: 1;
+    }
+    .replace-one:hover {
+        background-color: var(--color-surface-200-800);
+        color: var(--color-surface-950-50);
+    }
+    .replace-one:focus-visible {
+        outline: 2px solid var(--color-primary-500);
     }
     .match:focus-visible {
         box-shadow: inset 2px 0 0 var(--color-primary-500);
