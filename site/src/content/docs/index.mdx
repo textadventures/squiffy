@@ -14,7 +14,7 @@ next:
     label: Getting started
 hero:
   title: Create interactive stories
-  tagline: A simple, free tool for writing multiple-choice games and interactive fiction. No programming required.
+  tagline: Write choice-based games and interactive fiction in plain text, and publish them anywhere on the web. Free, open source, and no programming required.
   image:
     alt: Squiffy logo
     file: ../../assets/squiffy.png
@@ -47,6 +47,10 @@ hero:
 import { Aside, Card, CardGrid, LinkCard } from "@astrojs/starlight/components";
 import Sample from "@components/Sample.astro";
 
+<Aside type="note" title="Squiffy 7 is here">
+	A new editor with a story map, a desktop app, calculations, music and sound, panels, saved games, Twine and Quest import, and much more. [See what's new](/whats-new/).
+</Aside>
+
 ## Try it
 
 This is a complete Squiffy story. Play it on the right, or change the text on the left and watch it update.
@@ -71,33 +75,39 @@ Links in `[[double brackets]]` move the story on to a new section. Links in `[si
 		Format your text with Markdown, for **bold**, *italics*, lists and more, or use HTML when you need complete control. See [Basic concepts](/basic-concepts/).
 	</Card>
 	<Card title="Choices that matter" icon="setting">
-		Use [attributes](/attributes/) to remember what the player has done, then show different text depending on their choices, their score, or which parts of the story they've already seen.
+		Use [attributes](/attributes/) to remember what the player has done, and show different text depending on their choices, their score, or how many times they've [been somewhere](/attributes/#the-visits-helper).
 
-		Add variety with [random text, rotating links and text that updates itself](/dynamic-text/).
+		Keep track of gold, health and inventories with [calculations](/attributes/#calculating-values), and add variety with [random text, rotating links and timers](/dynamic-text/).
+	</Card>
+	<Card title="An editor that knows your story" icon="laptop">
+		[The editor](/editor/) draws your story as a [map](/story-map/) as you write, and underlines links to missing sections, dead ends and sections nobody can reach, often with a quick fix. Rename a section everywhere at once, or test from any section.
+
+		It runs in your web browser, with nothing to install and no account to create, and works offline. Or download the [desktop app](/desktop-app/), for Mac, Windows and Linux.
 	</Card>
 	<Card title="Bring your story to life" icon="star">
-		Make text [type itself out](/dynamic-text/#animation), or each scene [fade or slide in](/dynamic-text/#transitions). Make words [shudder, flicker or blur](/dynamic-text/#text-effects), change the look of a scene with your own [styles](/styling/), and add [music and sound](/images-and-files/#music-and-sound).
+		Add [music and sound](/images-and-files/#music-and-sound), make each scene [fade or slide in](/dynamic-text/#transitions), make text [type itself out](/dynamic-text/#animation), or make words [shudder, flicker or blur](/dynamic-text/#text-effects). [Change the look](/styling/#changing-the-look-for-a-scene) of a scene, and choose from over 2,000 [fonts](/styling/#fonts).
 
-		Ask for the player's name, or any other input, with built-in [validation](/player-input/#input-validation).
+		Ask for the player's name, or anything else, with built-in [validation](/player-input/#input-validation).
 	</Card>
-	<Card title="Write anywhere" icon="laptop">
-		[The editor](/editor/) runs in your web browser, with nothing to install and no account to create. Install it to your device and it works offline, too.
+	<Card title="Made for players" icon="mobile-android">
+		Your finished story runs in the player's web browser, on phones, tablets and computers alike, with nothing to download or install.
 
-		Or download the [desktop app](/desktop-app/), for Mac, Windows and Linux.
-
-		Prefer your own text editor? Use the [command-line tool](/cli/) instead.
-	</Card>
-	<Card title="Plays on any device" icon="mobile-android">
-		Your finished story runs in the player's web browser, on phones, tablets and computers alike. There's nothing for them to download or install.
-
-		Players' progress is saved automatically, so they can close the page and come back later to carry on where they left off.
+		Players can go [back](/buttons-panels-settings/#the-back-button) a step, keep as many [saved games](/buttons-panels-settings/#saved-games) as they like, and read in [light or dark mode](/styling/#light-and-dark-mode). Show their stats or inventory in a [panel](/buttons-panels-settings/#panels) beside the story, and let them choose [settings](/buttons-panels-settings/#player-settings) such as content warnings.
 	</Card>
 	<Card title="Share with the world" icon="rocket">
-		Squiffy creates plain HTML, CSS and JavaScript, so you can [publish your story](/publishing/) to [textadventures.co.uk](https://textadventures.co.uk/), [itch.io](https://itch.io/), your own website, or anywhere else that hosts web pages.
-
-		You can even export it as a single HTML file, to share however you like.
+		Squiffy creates plain HTML, CSS and JavaScript, so you can [publish your story](/publishing/) to [textadventures.co.uk](https://textadventures.co.uk/), [itch.io](https://itch.io/), your own website, or anywhere else that hosts web pages. You can even export it as a single HTML file.
 
 		See what other people are making in the [catalogue of Squiffy games](https://textadventures.co.uk/games/platform/squiffy).
+	</Card>
+	<Card title="Bring your stories with you" icon="document">
+		Open a [Twine](/converting-from-twine/) story, written in Harlowe or SugarCube, or a [Quest](/converting-from-quest/) gamebook, and the editor converts it to Squiffy.
+
+		Stories from [Squiffy 6](/coming-from-squiffy-6/) still work, and Squiffy can convert most of a [Squiffy 5](/coming-from-squiffy-5/) story for you.
+	</Card>
+	<Card title="Test it, or let AI help" icon="approve-check">
+		The [command-line tool](/cli/) checks your story for problems, plays it [at random](/cli/#playing-at-random) to find errors and dead ends, and replays [playthrough tests](/cli/#testing-a-story) to check it still works after a change.
+
+		Write with an [AI agent](/writing-with-ai/) such as Claude Code, and it can check and play your story as it goes.
 	</Card>
 	<Card title="Extend with JavaScript" icon="seti:javascript">
 		When you need more, add [JavaScript](/javascript/) to any section or passage, create your own [helpers](/javascript/#creating-custom-helpers) and animations, or [embed your story](/embedding/) in your own web page or app.
@@ -111,7 +121,7 @@ Links in `[[double brackets]]` move the story on to a new section. Links in `[si
 
 ## Find your way around
 
-New to Squiffy? Start with **[Getting started](/getting-started/)**, then write your first story with the **[tutorial](/tutorial/)**. Already know Squiffy? See **[What's new in Squiffy 7](/whats-new/)**. Coming from [Twine](/coming-from-twine/), [Squiffy 6](/coming-from-squiffy-6/) or [Squiffy 5](/coming-from-squiffy-5/)? There's a guide for each.
+New to Squiffy? Start with **[Getting started](/getting-started/)**, then write your first story with the **[tutorial](/tutorial/)**. Already know Squiffy? See **[What's new in Squiffy 7](/whats-new/)**. Coming from [Twine](/coming-from-twine/), [Squiffy 6](/coming-from-squiffy-6/) or [Squiffy 5](/coming-from-squiffy-5/)? There's a guide for each, and you can [convert a Quest gamebook](/converting-from-quest/) too.
 
 <CardGrid>
 	<LinkCard
@@ -125,7 +135,7 @@ New to Squiffy? Start with **[Getting started](/getting-started/)**, then write 
 	<LinkCard
 		title="Using the editor"
 		href="/editor/"
-		description="A tour of the editor: saving, writing tools, testing and exporting." />
+		description="A tour of the editor: files, writing tools, finding problems, testing and exporting." />
 	<LinkCard
 		title="Basic concepts"
 		href="/basic-concepts/"
@@ -139,6 +149,14 @@ New to Squiffy? Start with **[Getting started](/getting-started/)**, then write 
 		href="/dynamic-text/"
 		description="Conditions, random text, animation, rotating links and live updates." />
 	<LinkCard
+		title="Story map"
+		href="/story-map/"
+		description="See your story as a map of sections and links, and edit it from there." />
+	<LinkCard
+		title="Buttons, panels and settings"
+		href="/buttons-panels-settings/"
+		description="The Back button, saved games, panels beside the story, and player settings." />
+	<LinkCard
 		title="Examples"
 		href="/featured-examples/"
 		description="Complete stories to play, and to learn from." />
@@ -150,6 +168,10 @@ New to Squiffy? Start with **[Getting started](/getting-started/)**, then write 
 		title="Publishing your story"
 		href="/publishing/"
 		description="Share your story on textadventures.co.uk, itch.io or your own website." />
+	<LinkCard
+		title="Writing with AI"
+		href="/writing-with-ai/"
+		description="Let an AI agent help write, check and play-test your story." />
 	<LinkCard
 		title="Command line and embedding"
 		href="/cli/"
