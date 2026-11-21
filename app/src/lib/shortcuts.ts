@@ -18,7 +18,7 @@ export interface ShortcutGroup {
 export const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform);
 
 // The editor's own, which aren't CodeMirror's
-export const EDITOR_KEYS = new Set(["Mod-s", "Mod-Enter", "Mod-Shift-Enter", "Mod-Shift-o", "Mod-Shift-m", "F12", "Mod-click", "Shift-F12", "F2"]);
+export const EDITOR_KEYS = new Set(["Mod-s", "Mod-Enter", "Mod-Shift-Enter", "Mod-Shift-o", "Mod-Shift-m", "Mod-Shift-f", "F12", "Mod-click", "Shift-F12", "F2"]);
 
 export const SHORTCUT_GROUPS: ShortcutGroup[] = [
     {
@@ -69,6 +69,7 @@ export const SHORTCUT_GROUPS: ShortcutGroup[] = [
             { keys: ["Mod-f"], description: "Find" },
             { keys: ["Mod-h"], mac: ["Mod-Alt-f"], description: "Find and replace" },
             { keys: ["F3", "Mod-g"], description: "Find the next match (with Shift, the one before)" },
+            { keys: ["Mod-Shift-f"], description: "Find in every file" },
             { keys: ["Mod-Alt-g"], description: "Go to a line" },
         ],
     },

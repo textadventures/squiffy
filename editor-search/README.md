@@ -29,6 +29,10 @@ new EditorView({
 - **Replace**: a second row, shown by the chevron and remembered while the panel is closed. Enter replaces the match, Ctrl/Cmd+Enter replaces them all. Hidden in a read-only editor.
 - **Go to line**: `12`, `12:5` (line and column), `+3` or `-3` (from the cursor), `50%`.
 
+## Searching other text
+
+`searchText(text, { search, caseSensitive, wholeWord, regexp }, limit)` gives the matches in a string, by line and column, with the same matching as the panel. It's for a search of files that aren't open in an editor, such as Squiffy's Find in Files.
+
 ## Colours
 
 The layout is a CodeMirror base theme. The colours come from custom properties, set on the editor from the app's own theme. With none set, they fall back to tints of the editor's text colour.

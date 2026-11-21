@@ -36,3 +36,4 @@ export const editorSearchKeymap: readonly KeyBinding[] = [
 export { openGotoLine, closeGotoLine, parseLineTarget } from "./goto-line.js";
 export { openReplacePanel, setReplaceOpen } from "./panel.js";
 export { findMatches, matchIndex, MATCH_LIMIT, type Match, type Matches } from "./matches.js";
+export { searchText, isValidSearch, type SearchSpec, type TextMatch } from "./text-search.js";
