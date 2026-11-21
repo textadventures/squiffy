@@ -183,6 +183,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     async function begin(startAt?: StartAt) {
         if (startAt && startAt.section in story.sections) {
             // Start somewhere else in a fresh story, e.g. from the section being edited
+            runUiJs();
             await go(startAt.section);
             if (startAt.passage !== undefined && get("_section") == startAt.section) {
                 await showPassage(startAt.passage);
@@ -679,6 +680,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         cancelGoto();
         everyTimers.stopAll();
         state.reset();
+        uiJsRun = false;
         sound.sync();
         syncClasses();
         // TODO: This feels like the wrong way of triggering location.reload()
@@ -703,17 +705,23 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         set("_output", output.innerHTML);
     }
     
-    function load() {
-        const runUiJs = () => {
-            if (story.uiJsIndex !== undefined) {
-                runJs(story.uiJsIndex, {
-                    registerAnimation: animation.registerAnimation.bind(animation),
-                    registerHelper: textProcessor.handlebars.registerHelper.bind(textProcessor.handlebars),
-                    SafeString: textProcessor.handlebars.SafeString,
-                });
-            }
-        };
+    // The story's @ui JavaScript, which registers its helpers and animations. It runs once before
+    // any text is shown, however the story starts: from the beginning, from a section the author
+    // chose, or from a saved game. Restarting runs it again, as that resets the attributes.
+    let uiJsRun = false;
+    function runUiJs() {
+        if (uiJsRun) return;
+        uiJsRun = true;
+        if (story.uiJsIndex !== undefined) {
+            runJs(story.uiJsIndex, {
+                registerAnimation: animation.registerAnimation.bind(animation),
+                registerHelper: textProcessor.handlebars.registerHelper.bind(textProcessor.handlebars),
+                SafeString: textProcessor.handlebars.SafeString,
+            });
+        }
+    }
 
+    function load() {
         state.load();
         sound.sync();
         syncClasses();
@@ -815,6 +823,8 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         scrollPosition = 0;
         scrollToTop = false;
         showSavedOutput(save.state._output as string);
+        // As load() does, for a game loaded before the story has begun
+        runUiJs();
 
         if (!currentSection) {
             // The section the game was saved in isn't in the story any more, so start again from
