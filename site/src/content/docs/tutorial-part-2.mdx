@@ -1,0 +1,124 @@
+---
+title: "Tutorial: make it your own"
+description: Give your story its own colours and font, a dark cave, the sound of the sea, and a panel showing what the player is carrying
+sidebar:
+    label: "Tutorial: make it your own"
+---
+
+import { Aside } from "@astrojs/starlight/components";
+import Sample from "@components/Sample.astro";
+import look from "../../tutorial/part-2/1-look/story.squiffy?raw";
+import lookCss from "../../tutorial/part-2/1-look/style.css?raw";
+import cave from "../../tutorial/part-2/2-cave/story.squiffy?raw";
+import caveCss from "../../tutorial/part-2/2-cave/style.css?raw";
+import sound from "../../tutorial/part-2/3-sound/story.squiffy?raw";
+import soundCss from "../../tutorial/part-2/3-sound/style.css?raw";
+import panel from "../../tutorial/part-2/4-panel/story.squiffy?raw";
+import panelCss from "../../tutorial/part-2/4-panel/style.css?raw";
+import panelJson from "../../tutorial/part-2/4-panel/squiffy.json?raw";
+
+export const sounds = { "sea.mp3": "/tutorial/sounds/sea.mp3", "snuffle.mp3": "/tutorial/sounds/snuffle.mp3" };
+
+In the [first part of the tutorial](/tutorial/), you wrote a short story about a castaway on a mysterious island. In this part, you'll make it look and sound like your own: with its own colours and font, a cave that goes dark, the sound of the sea, and a panel beside the story showing what the player is carrying.
+
+Your story is more than its script now. A stylesheet sets how it looks, sound files play in it, and `squiffy.json`, the project file, sets up the panel. They're all files in your story, side by side.
+
+It takes about half an hour. You don't need to know any CSS: you'll copy what you need from here.
+
+## Get the story
+
+Open the story you wrote in the first part in the editor, or the [desktop app](/desktop-app/).
+
+If you don't have it, or you'd like to start from the same place as this tutorial, download <a href="/tutorial/the-island.zip" download>the-island.zip</a>. Choose **Open file** on the editor's home page (in the desktop app, **File > Open File…**), and choose the zip. It opens as a new story.
+
+<Aside type="tip">
+As in the first part, every step has the story so far, which you can play and edit. These samples have more than one file: choose a file's tab to see it.
+</Aside>
+
+## Choose your colours and font
+
+A story's look comes from a **stylesheet**, written in CSS. To add one, choose **+** at the top of the files list, then **Stylesheet (.css)**, and call it `style.css`. Your story uses it straight away.
+
+The new stylesheet has the most common changes in it already, as comments, between `/*` and `*/`. Replace all of it with this:
+
+<Sample script={look} files={{ "style.css": lookCss }}></Sample>
+
+- Each line in `:root { ... }` sets one of Squiffy's **variables**: `--squiffy-background` for the page, `--squiffy-text` for the text, `--squiffy-link` for links, and `--squiffy-link-hover` for a link under the mouse pointer.
+- `light-dark(...)` gives two colours: one for light mode, and one for dark mode. A published story follows the player's light or dark setting, and has a button to switch, so it needs both. Use the button beside the story in the editor to check each of them.
+- `--squiffy-font-family` sets the font. Georgia is a font almost every computer and phone already has.
+
+Try some colours of your own: change a colour, and the story changes as you type. A colour can be a name, such as `teal`, or a code such as `#0d6b6b`, which you can get from any colour picker.
+
+For a font that players won't already have, choose **Fonts** in the toolbar (the **T**), and pick one of over 2,000. The editor copies it into your story, with a stylesheet of its own that sets `--squiffy-font-family`, so take that line out of `style.css`. See [Fonts](/styling/#fonts).
+
+## Make the cave dark
+
+The cave should feel different from the sunny beach. To change how the story looks in one scene, give its section a **class** with `@class`, and style the class in your stylesheet:
+
+<Sample script={cave} files={{ "style.css": caveCss }}></Sample>
+
+- `@class cave`, in the cave section, puts a class called `cave` on the story while the player is in the cave. It's taken off again when they move on.
+- In `style.css`, `body:has(.cave)` means "when the page has the `cave` class somewhere in it". Inside it, the variables are set again, to dark colours, with orange links like firelight.
+- The cave has only one colour of each, not `light-dark(...)`: it's dark whichever mode the player is in.
+
+Play through to the cave, and then to one of the endings: the colours change back when you leave.
+
+You can give a section more than one class, as in `@class cave night`, and use the same class in many sections. See [Changing the look for a scene](/styling/#changing-the-look-for-a-scene).
+
+## Add the sound of the sea
+
+Sound needs some files. Download these two, which are free to use in your story:
+
+- <a href="/tutorial/sounds/sea.mp3" download>sea.mp3</a>: waves on a beach, for the music
+- <a href="/tutorial/sounds/snuffle.mp3" download>snuffle.mp3</a>: something sniffing in the dark
+
+In the editor, choose the image button in the toolbar, to open **Images and other files**, then **Add files**, and choose them. (If you downloaded the-island.zip, you'll need to add these too.) Then add the sound to your story:
+
+<Sample script={sound} files={{ "style.css": soundCss }} assets={sounds}></Sample>
+
+- `@music sea.mp3`, on the beach, plays the sea, over and over. It keeps playing as the player moves from one section to the next, until another `@music` changes it.
+- `@music stop`, on the path, fades the sea out as the player walks into the trees.
+- Each ending is out on the sea, so each one has `@music sea.mp3` too.
+- `{{sound "snuffle.mp3"}}` plays a sound once. It's inside the `{{else}}`, so it only plays when the player goes into the cave without the lantern. `@sound snuffle.mp3`, on a line of its own, would play it whenever the cave appears.
+
+A story with sound gets a mute button, next to Back and Restart. Here, it's under the story.
+
+<Aside>
+Browsers don't let a page play sound until the player has clicked something. So sound on the first screen of a story waits for their first click, and a sound effect there isn't heard at all. That's why the sea starts on the beach, after the first choice, and not as the story opens. If you want music from the start, begin your story with a title screen and a link such as "Begin", and start the music in the section it goes to.
+</Aside>
+
+<Aside>
+Use sound files you're allowed to share. These two were made for this tutorial, and you can use them however you like. For more, look for sounds with a CC0 or Creative Commons licence, and give credit where the licence asks for it. MP3 works in every browser.
+</Aside>
+
+See [Music and sound](/images-and-files/#music-and-sound) for more, such as fading between tracks and setting the volume.
+
+## Show what the player is carrying
+
+Once the player has the lantern, it would help to see that they're carrying it. A **panel** shows a passage beside the story, and it's always up to date.
+
+Panels are set up in `squiffy.json`, the project file, which every new story has. Open it from the files list, and add the `panels` part. Yours also has an `id`, which identifies your story's saved games: leave it as it is.
+
+<Sample script={panel} files={{ "style.css": panelCss, "squiffy.json": panelJson }} assets={sounds}></Sample>
+
+- In `squiffy.json`, `panels` lists the story's panels. This one shows the passage called `inventory`, with the label "Inventory". `"position": "side"` puts it beside the story, and `"icon": "bag"` is for when there isn't room, such as on a phone, or here: then it's a button with a bag on it, at the top of the story, which shows the panel in a dialog.
+- `squiffy.json` is written in JSON, which is fussy about commas: there's one after each value except the last. If the editor underlines something, check the commas first.
+- The `inventory` passage goes in the master section, `[[]]:`, which you added in the first part, so it belongs to the whole story.
+- It only shows anything once `has_lantern` is set. A side panel with nothing to show is hidden, so it appears when the player picks up the lantern.
+
+A panel only shows its passage. Its links don't work, and it doesn't change the story. See [Panels](/buttons-panels-settings/#panels) for more, such as a panel for some help, or the player's score.
+
+## Publish it again
+
+When you publish your story, from the **File** menu, its stylesheet and sound files are included. **HTML (one file)** puts them all inside the one web page, and **HTML and JavaScript (.zip)** has them as files beside it. See [Publishing your story](/publishing/).
+
+To compare your story with this tutorial's, download <a href="/tutorial/the-island-part-2.zip" download>the-island-part-2.zip</a>, which has everything from this part in it.
+
+## Where next
+
+- **Let the player choose.** With [player settings](/buttons-panels-settings/#player-settings), the player can change things such as the text size, or whether to play sound effects, from a Settings button.
+- **Style some words.** Give a word or two a class with [`{{#style "warning"}}`](/styling/#styling-some-text), and style it in your stylesheet.
+- **Change the transitions.** Make your own, or change how the built-in ones look: see [Transitions](/styling/#transitions) in Customising styles.
+- **Add pictures.** Add an image in **Images and other files**, and **Insert** puts it into your story: see [Images and other files](/images-and-files/).
+- **Look under the hood.** Every variable and class you can style is in [Customising styles](/styling/), and a story can run its own [JavaScript](/javascript/) too.
+- **See it all together.** The [game show example](/featured-examples/) uses panels, settings, sound, timers and its own styles.

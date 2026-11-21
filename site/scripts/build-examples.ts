@@ -1,7 +1,8 @@
 // Builds each example story in the repo's examples/ folder (each folder with a squiffy.json in it)
 // into public/examples/<name>/, so the Examples page can link to it as a standalone game, and zips
 // its source into public/examples/<name>.zip, for the page to offer as a download that opens in the
-// editor.
+// editor. It also zips the tutorial's story, as it is at the end of each part, into
+// public/tutorial/, for the second part to start from and the reader to compare with.
 
 import * as fs from "fs";
 import * as path from "path";
@@ -65,6 +66,30 @@ for (const name of names) {
     if (!await packageExample(name)) failed++;
     else zipSource(name);
 }
+
+// The tutorial's story, from its step files, with the squiffy.json a new story has unless the
+// step has its own, and the sounds the second part uses
+const tutorialDir = path.join(__dirname, "../src/tutorial");
+const tutorialOutputDir = path.join(__dirname, "../public/tutorial");
+function zipTutorial(zipName: string, files: Record<string, string>) {
+    const zip: Record<string, Uint8Array> = {};
+    for (const [name, source] of Object.entries(files)) {
+        zip[`The Island/${name}`] = fs.readFileSync(path.join(tutorialDir, source));
+    }
+    if (!files["squiffy.json"]) {
+        zip["The Island/squiffy.json"] = new TextEncoder().encode(JSON.stringify({ $schema: "https://squiffystory.com/schema/squiffy.json", version: 1, main: "story.squiffy" }, null, 2) + "\n");
+    }
+    fs.writeFileSync(path.join(tutorialOutputDir, zipName), zipSync(zip));
+    console.log(`Zipped the tutorial's story to public/tutorial/${zipName} (${Object.keys(zip).length} files)`);
+}
+zipTutorial("the-island.zip", { "story.squiffy": "6-atmosphere.squiffy" });
+zipTutorial("the-island-part-2.zip", {
+    "story.squiffy": "part-2/4-panel/story.squiffy",
+    "style.css": "part-2/4-panel/style.css",
+    "squiffy.json": "part-2/4-panel/squiffy.json",
+    "sea.mp3": "../../public/tutorial/sounds/sea.mp3",
+    "snuffle.mp3": "../../public/tutorial/sounds/snuffle.mp3",
+});
 
 if (failed > 0) {
     console.error(`${failed} example${failed == 1 ? "" : "s"} failed to build`);

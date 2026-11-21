@@ -1,0 +1,13 @@
+{
+  "$schema": "https://squiffystory.com/schema/squiffy.json",
+  "version": 1,
+  "main": "story.squiffy",
+  "panels": [
+    {
+      "passage": "inventory",
+      "label": "Inventory",
+      "icon": "bag",
+      "position": "side"
+    }
+  ]
+}
