@@ -8,6 +8,7 @@ import panels from "../../samples/panels/panels.squiffy?raw";
 import panelsJson from "../../samples/panels/panels.json?raw";
 import settings from "../../samples/panels/settings.squiffy?raw";
 import settingsJson from "../../samples/panels/settings.json?raw";
+import settingsCss from "../../samples/panels/settings.css?raw";
 
 A published story has buttons above it for going back, saving, restarting and switching between light and dark. You can change what's there, add [panels](#panels) that are always to hand, give the player [settings](#player-settings) to choose, and put the page's text into another language. All of these are set in the story's project file, `squiffy.json`: see [Stories in several files](/multiple-files/) for what it is and how to add one.
 
@@ -93,10 +94,9 @@ Settings belong to the player, not to the game. Your story can read them but not
 
 Each setting also puts a class on the story's element, so your stylesheet can follow it without the story doing anything. A toggle adds `setting-` and its name while it's on, such as `setting-warnings`. A list or range adds its name and value, such as `setting-textSize-Large` or `setting-speed-3`, with anything in the value other than letters, digits, `-` and `_` made a `-`. For example, to make the text bigger:
 
-```css
-div#squiffy.setting-textSize-Small { --squiffy-font-size: 1rem; }
-div#squiffy.setting-textSize-Large { --squiffy-font-size: 1.375rem; }
-```
+<Sample script={settings} files={{ "style.css": settingsCss, "squiffy.json": settingsJson }}></Sample>
+
+Open the Settings, with the cog, and choose a text size: the story's text changes straight away.
 
 See [Styling](/styling/) for the classes and variables you can use.
 
