@@ -326,6 +326,30 @@ export class TextProcessor {
         textHelper("capitalise", capitalise);
         textHelper("capitalize", capitalise);
 
+        // {{#once}}...{{else}}...{{/once}} shows its text the first time it's shown, and the
+        // {{else}} text (or nothing) after that. Each one remembers for itself, wherever it is:
+        // in a section or passage shown again, or in text embedded in several places. Which ones
+        // have been shown is in _once, an attribute, so going back undoes it. One with a name,
+        // {{#once "warning"}}, shares its memory with the others of that name. firsttime, as
+        // Quest has it, is another name for once.
+        const once = function (this: unknown, ...args: any[]) {
+            const options = args.pop();
+            if (typeof options?.fn != "function") {
+                throw new Error("once wraps the text to show the first time: {{#once}}...{{/once}}");
+            }
+            const name = args.length ? unwrapValue(args[0]) : undefined;
+            if (args.length && (typeof name != "string" || !name)) {
+                throw new Error("the name of a {{#once}} is text, such as {{#once \"warning\"}}");
+            }
+            const key = name ?? processor.positionKey(options.loc);
+            const shown: string[] = processor.state.get("_once") || [];
+            if (shown.includes(key)) return options.inverse(this);
+            processor.state.set("_once", [...shown, key]);
+            return options.fn(this);
+        };
+        this.handlebars.registerHelper("once", once);
+        this.handlebars.registerHelper("firsttime", once);
+
         // (cond test a b) is a if test is true, otherwise b (#446). It's what a ? b : c in an
         // expression is rewritten to. Handlebars works out both a and b before calling it, so a
         // helper with side effects, such as (pop "list"), runs whichever is chosen.
@@ -728,11 +752,25 @@ export class TextProcessor {
         });
     }
 
+    // The texts being processed, innermost last: a section's or passage's, and any it embeds
+    private processing: string[] = [];
+
+    // Identifies a place in the text being processed, for a {{#once}} to remember itself by: a
+    // hash of the text, and where in it the block starts. A name that starts with a space can't
+    // be the name an author gave one.
+    private positionKey(loc?: { start: { line: number; column: number } }): string {
+        const text = this.processing[this.processing.length - 1] ?? "";
+        let hash = 5381;
+        for (let i = 0; i < text.length; i++) hash = ((hash * 33) ^ text.charCodeAt(i)) >>> 0;
+        return ` ${hash.toString(36)}:${loc?.start.line ?? 0}:${loc?.start.column ?? 0}`;
+    }
+
     private expressionCache = new Map<string, HandlebarsTemplateDelegate>();
     // Where the __value helper puts the value of the expression being evaluated
     private evaluated: unknown;
 
     process(text: string, inline: boolean) {
+        this.processing.push(text);
         try {
             // compat: inside an {{#each}}, a name that isn't one of the item's looks for an attribute
             const template = this.handlebars.compile(rewriteInfixExpressions(captureEveryBodies(text)), { compat: true });
@@ -748,6 +786,8 @@ export class TextProcessor {
             const errorMessage = e instanceof Error ? e.message : String(e);
             console.error("Squiffy template error:", errorMessage);
             return errorHtml("Template error:", errorMessage);
+        } finally {
+            this.processing.pop();
         }
     }
 }
