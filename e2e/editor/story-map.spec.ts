@@ -185,6 +185,52 @@ test.describe("editing from the map", () => {
         await expect(box(page, "section:cave")).toBeVisible();
     });
 
+    test("selecting a box, or opening one to write in, leaves the others where they are", async ({ page }) => {
+        await openStory(page);
+        // Where the other boxes are: the selected one grows an outline and a dot to drag
+        const middle = async (id: string) => {
+            const b = (await box(page, id).boundingBox())!;
+            return [Math.round(b.x + b.width / 2), Math.round(b.y + b.height / 2)];
+        };
+        const others = async () => [await middle("section:cave"), await middle("section:hill")];
+        const before = await others();
+        await box(page, "section:start").click();
+        await expect(page.getByText("Section: start")).toBeVisible();
+        expect(await others()).toEqual(before);
+        await page.keyboard.press("Enter");
+        await expect(cardTitle(page)).toHaveText("start");
+        expect(await others()).toEqual(before);
+    });
+
+    test("a section dragged out from another, then deleted, leaves nothing behind", async ({ page }) => {
+        await openStory(page);
+        const script = async () => {
+            await page.getByRole("button", { name: "Show the editor" }).click();
+            const text = (await lines(page)).join("\n");
+            await page.getByRole("button", { name: "Full screen" }).click();
+            return text;
+        };
+        await box(page, "section:hill").click();
+        const handle = await page.locator('[data-handle="section:hill"]').boundingBox();
+        await page.mouse.move(handle!.x + handle!.width / 2, handle!.y + handle!.height / 2);
+        await page.mouse.down();
+        await page.mouse.move(120, 300, { steps: 5 });
+        await page.mouse.up();
+        await page.keyboard.type("summit");
+        await page.keyboard.press("Enter");
+        await expect(box(page, "section:summit")).toBeVisible();
+        expect(await script()).toBe(`${story.trimEnd()}\n\n[[summit]]\n\n[[summit]]:\n`);
+
+        await box(page, "section:summit").click();
+        await page.keyboard.press("Delete");
+        await expect(page.getByText('Delete the section "summit"? The link to it on a line of its own goes too.')).toBeVisible();
+        await page.getByRole("button", { name: "Delete", exact: true }).last().click();
+        await expect(box(page, "section:summit")).toHaveCount(0);
+        // No red box for a link left behind
+        await expect(page.locator('[data-node^="missing:"]')).toHaveCount(0);
+        expect(await script()).toBe(`${story.trimEnd()}\n`);
+    });
+
     test("a passage added from the menu goes at the end of its section, with a link", async ({ page }) => {
         await openStory(page);
         await box(page, "section:cave").click({ button: "right" });
@@ -195,4 +241,63 @@ test.describe("editing from the map", () => {
         await page.getByRole("button", { name: "Show the editor" }).click();
         expect((await lines(page)).join("\n")).toContain("go to the [[hill]].\n\n[floor]\n\n[wall]:\nDamp.\n\n[floor]:\n\n[[empty]]:");
     });
+
+    test("a new section is named where its box will be", async ({ page }) => {
+        await openStory(page);
+        await map(page).dblclick({ position: { x: 60, y: 60 } });
+        const name = page.getByRole("textbox", { name: "New section's name" });
+        await expect(name).toBeFocused();
+        // A name that's taken is refused, and the box stays to try again
+        await page.keyboard.type("cave");
+        await page.keyboard.press("Enter");
+        await expect(page.getByRole("alert")).toHaveText("There's already a section called 'cave'.");
+        await name.fill("meadow");
+        await page.keyboard.press("Enter");
+        await expect(name).toBeHidden();
+        await expect(box(page, "section:meadow")).toBeVisible();
+        await expect(map(page)).toBeFocused();
+        // Escape gives up
+        await map(page).dblclick({ position: { x: 60, y: 60 } });
+        await page.keyboard.type("never");
+        await page.keyboard.press("Escape");
+        await expect(name).toBeHidden();
+        await expect(box(page, "section:never")).toHaveCount(0);
+    });
+
+    test("F2 renames a box where it is", async ({ page }) => {
+        await openStory(page);
+        await box(page, "section:cave").click();
+        await page.keyboard.press("F2");
+        const name = page.getByRole("textbox", { name: "New name for cave" });
+        await expect(name).toHaveValue("cave");
+        await page.keyboard.type("grotto");
+        await page.keyboard.press("Enter");
+        await expect(box(page, "section:grotto")).toBeVisible();
+        await expect(box(page, "section:cave")).toHaveCount(0);
+        await expect(box(page, "passage:grotto/wall")).toBeVisible();
+    });
+
+    test("double-clicking a broken link's red box adds what's missing", async ({ page }) => {
+        await openStory(page, "[[start]]:\nGo [[nowhere]], or look at the [sky].\n\n[[end]]:\n@end\nDone. [[start]]\n");
+        await page.locator('[data-node$="link:nowhere"]').dblclick();
+        await expect(box(page, "section:nowhere")).toBeVisible();
+        await page.locator('[data-node$="link:sky"]').dblclick();
+        await expect(box(page, "passage:start/sky")).toBeVisible();
+        await expect(page.locator('[data-node^="missing:"]')).toHaveCount(0);
+        await page.getByRole("button", { name: "Show the editor" }).click();
+        // No second link, and each goes where it belongs in the script
+        expect((await lines(page)).join("\n")).toBe("[[start]]:\nGo [[nowhere]], or look at the [sky].\n\n[sky]:\n\n[[nowhere]]:\n\n[[end]]:\n@end\nDone. [[start]]");
+    });
+});
+
+test("a story opens with its map as it was left", async ({ page }) => {
+    await openStory(page);
+    await page.reload();
+    await expect(page.getByRole("button", { name: "Show the editor" })).toBeVisible();
+    // Whichever sections it has: the text typed just before reloading may not have been saved
+    await expect(page.locator("[data-node]").first()).toBeVisible();
+    await page.getByRole("button", { name: "Close map" }).click();
+    await page.reload();
+    await expect(editor(page)).toBeVisible();
+    await expect(map(page)).toHaveCount(0);
 });
