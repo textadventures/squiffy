@@ -123,7 +123,7 @@ These take the **array itself** (no quotes) and return a new value, without chan
 
 | Helper | Description |
 |---|---|
-| `join` | `{{join bag ", " " and "}}` gives "lamp, key and rope" |
+| `join` | `{{join bag ", " " and "}}` gives "lamp, key and rope". As a block, it shows its text for each item, with the separators between: `{{#join ways ", " " or "}}[[{{this}}]](go, to = "{{this}}"){{/join}}`. `this`, `@index`, `@first`, `@last` and `{{else}}` (empty array) work as in `{{#each}}` |
 | `sort` | Numbers first, smallest first, then text alphabetically |
 | `shuffle` | Random order |
 | `slice` | `(slice bag 0 3)` first three, `(slice bag -2)` last two. Works on text |

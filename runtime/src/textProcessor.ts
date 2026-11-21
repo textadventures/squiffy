@@ -506,11 +506,37 @@ export class TextProcessor {
 
         // (join bag) is "lamp, key, rope", (join bag " / ") puts " / " between them, and
         // (join bag ", " " and ") is "lamp, key and rope"
-        listHelper("join", 1, 3, ([list, separator, lastSeparator]) => {
-            const items = toList("join", list).map(item => toText("join", item));
+        // As a block, {{#join bag ", " " and "}}...{{/join}} shows its text for each item, as
+        // {{#each}} does (with this, @index, @first and @last), and puts the separators between
+        // them, for lists of links (#525). {{else}} is shown for an empty list.
+        const joinTexts = (items: string[], sep: string, lastSep: string | undefined) => {
+            if (lastSep === undefined || items.length < 2) return items.join(sep);
+            return items.slice(0, -1).join(sep) + lastSep + items[items.length - 1];
+        };
+        this.handlebars.registerHelper("join", function (this: unknown, ...args: any[]) {
+            const options = args.pop();
+            const values = args.map(unwrapValue);
+            const block = typeof options?.fn === "function";
+            if (!block && values.length === 0 && processor.hasAttribute("join")) return processor.getAttribute("join");
+            if (values.length < 1 || values.length > 3) {
+                throw new Error(`"join" needs 1 to 3 values, but was given ${values.length}`);
+            }
+            const [list, separator, lastSeparator] = values;
             const sep = separator === undefined ? ", " : toText("join", separator);
-            if (lastSeparator === undefined || items.length < 2) return items.join(sep);
-            return items.slice(0, -1).join(sep) + toText("join", lastSeparator) + items[items.length - 1];
+            const lastSep = lastSeparator === undefined ? undefined : toText("join", lastSeparator);
+            const items = toList("join", list);
+            if (!block) return joinTexts(items.map(item => toText("join", item)), sep, lastSep);
+
+            if (items.length === 0) return options.inverse(this);
+            const escape = Handlebars.Utils.escapeExpression;
+            const texts = items.map((item, index) => {
+                const data = Handlebars.createFrame(options.data ?? {});
+                data.index = index;
+                data.first = index === 0;
+                data.last = index === items.length - 1;
+                return String(options.fn(item, { data, blockParams: [item, index] }));
+            });
+            return joinTexts(texts, escape(sep), lastSep === undefined ? undefined : escape(lastSep));
         });
 
         // Numbers go before text, in order, and text is in alphabetical order, ignoring case,

@@ -3700,6 +3700,77 @@ B: {{#each empty}}{{this}}{{else}}nothing{{/each}}.
     expect(element.textContent).toContain("B: nothing.");
 });
 
+// {{#join}} as a block (#525)
+
+test("{{#join}} shows its text for each item, with separators between them", async () => {
+    const script = `
+[[start]]:
+@set gold = 3
+@set bag = ["lamp", "key", "rope"]
+@set two = ["lamp", "key"]
+@set one = ["lamp"]
+@set empty = []
+A: {{#join bag ", " " and "}}the {{this}}{{/join}}.
+B: {{#join two ", " " and "}}the {{this}}{{/join}}.
+C: {{#join one ", " " and "}}the {{this}}{{/join}}.
+D: {{#join empty ", " " and "}}the {{this}}{{else}}nothing{{/join}}.
+E: {{#join empty}}the {{this}}{{/join}}.
+F: {{#join bag}}{{this}}{{/join}}.
+G: {{#join bag " / "}}{{@index}}{{#if @first}}F{{/if}}{{#if @last}}L{{/if}}{{/join}}.
+H: {{#join bag "; " as |item i|}}{{i}}={{item}}{{/join}}.
+I: {{#join two}}{{this}} {{gold}} {{../gold}}{{/join}}.
+J: {{#join bag " < " " & "}}{{this}}{{/join}}.
+K: {{join bag ", " " and "}}.
+`;
+
+    const { element } = await initScript(script, true);
+    const text = element.textContent;
+    expect(text).toContain("A: the lamp, the key and the rope.");
+    expect(text).toContain("B: the lamp and the key.");
+    expect(text).toContain("C: the lamp.");
+    expect(text).toContain("D: nothing.");
+    expect(text).toContain("E: .");
+    expect(text).toContain("F: lamp, key, rope.");
+    expect(text).toContain("G: 0F / 1 / 2L.");
+    expect(text).toContain("H: 0=lamp; 1=key; 2=rope.");
+    expect(text).toContain("I: lamp 3 3, key 3 3.");
+    expect(text).toContain("J: lamp < key & rope.");
+    expect(text).toContain("K: lamp, key and rope.");
+});
+
+test("{{#join}} can list links, and items that are objects", async () => {
+    const script = `
+[[start]]:
+@set ways = ["north", "south"]
+@set people = [{"who": "man", "as": "a man"}, {"who": "woman", "as": "a woman"}]
+I can see {{#join people ", " " and "}}{{passage this.who text=this.as}}{{/join}}.
+
+Change to {{#join ways ", " " or "}}the [[{{this}}]](change, to = "{{this}}"){{/join}}.
+
+[man]:
+He nods.
+
+[woman]:
+She waves.
+
+[[change]]:
+You go {{to}}.
+`;
+
+    const { squiffyApi, element } = await initScript(script, true);
+    expect(element.textContent).toContain("I can see a man and a woman.");
+    expect(element.textContent).toContain("Change to the north or the south.");
+    await squiffyApi.clickLink(findLink(element, "passage", "a woman"));
+    expect(element.textContent).toContain("She waves.");
+    await squiffyApi.clickLink(findLink(element, "section", "south"));
+    expect(element.textContent).toContain("You go south.");
+});
+
+test("{{#join}} reports a value that isn't a list", async () => {
+    const { element } = await initScript("[[start]]:\n{{#join \"bag\"}}{{this}}{{/join}}");
+    expect(element.querySelector(".squiffy-error")?.textContent).toContain("\"join\" needs a list, but was given the text \"bag\"");
+});
+
 test("Attributes can be read inside {{#each}}", async () => {
     const script = `
 [[start]]:
