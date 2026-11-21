@@ -62,6 +62,12 @@ export function createPreview(options: PreviewOptions) {
     let settingsButton: HTMLButtonElement | undefined;
     let settingsDialog: SettingsDialog | undefined;
     let panelSide: HTMLElement | undefined;
+    // The runtime puts the story's classes (@class, {{addclass}}, settings such as
+    // setting-textSize-Large) on the element it's given, which here is inside the header and side
+    // panels' layout. They're copied to the preview's own element, which is #squiffy as on a
+    // published page, so stylesheets with rules such as div#squiffy.dark work here too.
+    let classObserver: MutationObserver | undefined;
+    let mirroredClasses: string[] = [];
     // The host's mute button (#444), which carries on to the next story loaded
     let muted = false;
     let usesSound = false;
@@ -163,10 +169,22 @@ export function createPreview(options: PreviewOptions) {
         }
     }
 
+    function mirrorClasses(from: HTMLElement | undefined) {
+        const classes = from ? [...from.classList].filter(c => c != "squiffy-preview-story") : [];
+        for (const c of mirroredClasses) {
+            if (!classes.includes(c)) options.element.classList.remove(c);
+        }
+        for (const c of classes) options.element.classList.add(c);
+        mirroredClasses = classes;
+    }
+
     async function load(message: Extract<HostMessage, { type: "load" }>) {
         const thisLoad = ++loadCount;
         api?.dispose();
         api = undefined;
+        classObserver?.disconnect();
+        classObserver = undefined;
+        mirrorClasses(undefined);
         options.element.innerHTML = "";
         await addStoryFiles(message.story);
         const { story } = await loadModule(message.story.js);
@@ -187,6 +205,8 @@ export function createPreview(options: PreviewOptions) {
         container.className = "squiffy-preview-story";
         panelSide.appendChild(container);
         options.element.append(panelButtons, panelSide);
+        classObserver = new MutationObserver(() => mirrorClasses(container));
+        classObserver.observe(container, { attributes: true, attributeFilter: ["class"] });
 
         const newApi = await init({
             element: container,
@@ -218,6 +238,8 @@ export function createPreview(options: PreviewOptions) {
         setSettingsButton(story.settings);
         send({ type: "canGoBackChanged", canGoBack: false });
         await newApi.begin(message.startAt);
+        // Now, rather than waiting for the observer, so they're there when the host hears it's loaded
+        if (thisLoad == loadCount) mirrorClasses(container);
         if (thisLoad == loadCount) send({ type: "loaded" });
     }
 
