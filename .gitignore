@@ -31,6 +31,7 @@ playwright/.cache/
 
 # Built examples (generated during site build)
 site/public/examples/
+site/public/tutorial/*.zip
 
 # Desktop app: the editor copied in for packaging, and the packages
 desktop/resources/

@@ -1,0 +1,14 @@
+:root {
+    --squiffy-background: light-dark(#f8f3e8, #16222c);
+    --squiffy-text: light-dark(#33302a, #e4ded2);
+    --squiffy-link: light-dark(#0d6b6b, #72cfc6);
+    --squiffy-link-hover: light-dark(#074848, #a8ebe4);
+    --squiffy-font-family: Georgia, "Times New Roman", serif;
+}
+
+body:has(.cave) {
+    --squiffy-background: #0e0c0a;
+    --squiffy-text: #d9c9a7;
+    --squiffy-link: #f0a64b;
+    --squiffy-link-hover: #ffc77d;
+}

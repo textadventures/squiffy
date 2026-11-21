@@ -49,7 +49,7 @@ export default defineConfig({
             sidebar: [
                 {
                     label: "Start here",
-                    items: ["getting-started", "tutorial", "whats-new", "featured-examples"],
+                    items: ["getting-started", "tutorial", "tutorial-part-2", "whats-new", "featured-examples"],
                 },
                 {
                     label: "Writing stories",

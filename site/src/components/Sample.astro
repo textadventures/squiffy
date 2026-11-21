@@ -5,14 +5,32 @@ interface Props {
     // For a long story: the height of the source and of the story beside it, each of which
     // scrolls, e.g. "36rem". Without it, both are as tall as their text.
     height?: string;
+    // A story with files, as the editor has it: the story's other files, such as a stylesheet,
+    // a script or a squiffy.json, by their path in the story's folder. Each has a tab, after the
+    // script's. Without a squiffy.json, it has the one a new story has. The story runs in the
+    // runtime's sandboxed preview page (sample-project.ts), so its CSS and scripts only change
+    // the story.
+    files?: Record<string, string>;
+    // Sounds and images the story uses, by their path in the story's folder, with the URL on the
+    // site to load each from, e.g. { "sounds/sea.mp3": "/tutorial/sounds/sea.mp3" }
+    assets?: Record<string, string>;
+    // The script's file name, for a sample with files. "story.squiffy" if it isn't given
+    main?: string;
 }
 
 import Split from "./Split.astro";
 import "squiffy-runtime/squiffy.runtime.css";
 
-const { script, alwaysShowRestart, height } = Astro.props;
+const { script, alwaysShowRestart, files, assets, main = "story.squiffy" } = Astro.props;
 
-const buttonsClass = "sample-buttons" + (!alwaysShowRestart ? " hidden" : "");
+// A sample with files is in the preview, which scrolls in its own frame, so it has a height
+const project = !!files || !!assets;
+const height = Astro.props.height ?? (project ? "26rem" : undefined);
+const sourceFiles = project ? [[main, script], ...Object.entries(files ?? {})] : [];
+const languageOf = (path: string) => path.endsWith(".css") ? "css" : path.endsWith(".js") ? "js" : path.endsWith(".json") ? "json" : "squiffy";
+
+// A sample with files always shows its buttons: a hot update can't tell when they're needed
+const buttonsClass = "sample-buttons" + (!alwaysShowRestart && !project ? " hidden" : "");
 ---
 
 <style is:global>
@@ -73,10 +91,87 @@ const buttonsClass = "sample-buttons" + (!alwaysShowRestart ? " hidden" : "");
     .sample .editor {
         position: relative;
     }
+    /* A sample with files: a tab for each file, above its editor */
+    .sample .sample-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.125rem;
+        padding: 0.25rem 0.25rem 0;
+        background: var(--sl-color-gray-6);
+        border-bottom: 1px solid var(--sl-color-hairline);
+    }
+    .sample .sample-tab {
+        font: inherit;
+        font-family: var(--sl-font-mono);
+        font-size: 0.8rem;
+        padding: 0.25rem 0.625rem;
+        color: var(--sl-color-gray-3);
+        background: none;
+        border: none;
+        border-bottom: 2px solid transparent;
+        cursor: pointer;
+    }
+    .sample .sample-tab:hover {
+        color: var(--sl-color-white);
+    }
+    .sample .sample-tab[aria-selected="true"] {
+        color: var(--sl-color-white);
+        border-bottom-color: var(--sl-color-accent);
+    }
+    .sample .sample-tab:focus-visible {
+        outline: 2px solid var(--sl-color-accent);
+        outline-offset: -2px;
+    }
+    .sample.project .copy {
+        top: 2.25rem;
+    }
+    .sample .sample-source-name {
+        margin: 0;
+        padding: 0.5rem 0.5rem 0;
+        font-size: 0.8rem;
+    }
+    /* The story in the preview page, which scrolls itself */
+    .sample.project .viewer-container {
+        padding: 0;
+    }
+    .sample.project .viewer {
+        overflow: hidden;
+    }
+    .sample .sample-frame {
+        display: block;
+        width: 100%;
+        height: 100%;
+        border: 0;
+    }
+    .sample.project .sample-buttons {
+        padding: 0.25rem;
+        border-top: 1px solid var(--sl-color-hairline);
+    }
+    .sample .mute[aria-pressed="true"] .sound-on,
+    .sample .mute[aria-pressed="false"] .sound-off {
+        display: none;
+    }
     /* A sample with a height: the source and the story each scroll. Never taller than most of
        the window, so that on a phone, where they're one above the other, each fits. */
     .sample.fixed-height .editor .cm-editor {
         height: min(var(--sample-height), 75vh);
+    }
+    /* With tabs, the tabs and the file are the height together */
+    .sample.fixed-height.project .editor {
+        display: flex;
+        flex-direction: column;
+        height: min(var(--sample-height), 75vh);
+    }
+    .sample.fixed-height.project .editor .cm-editor {
+        flex: 1;
+        min-height: 0;
+        height: auto;
+    }
+    /* The editors of the files whose tabs aren't chosen, and the mute button for a story with no
+       sound: their own display rules would show them */
+    .sample .cm-editor[hidden],
+    .sample .sample-button[hidden] {
+        display: none !important;
     }
     .sample.fixed-height .viewer-container {
         display: flex;
@@ -175,14 +270,27 @@ const buttonsClass = "sample-buttons" + (!alwaysShowRestart ? " hidden" : "");
 </style>
 
 <squiffy-sample
-    class:list={["sample", "not-content", { "fixed-height": height }]}
+    class:list={["sample", "not-content", { "fixed-height": height, "project": project }]}
     style={height ? `--sample-height: ${height}` : undefined}
-    data-always-show-restart={alwaysShowRestart}>
+    data-always-show-restart={alwaysShowRestart}
+    data-assets={project ? JSON.stringify(assets ?? {}) : undefined}>
     <Split gap="0.75rem" min="200px">
         <div slot="left" class="editor">
             <!-- The script, which the editor replaces. Without JavaScript it's shown as it is, and it's
                  how the sample's code reaches llms.txt (starlight-llms-txt converts this HTML to Markdown). -->
-            <pre class="sample-source"><code class="language-squiffy">{script}</code></pre>
+            {project ? (
+                <>
+                    <div class="sample-tabs" role="tablist" aria-label="Files"></div>
+                    {sourceFiles.map(([path, text]) => (
+                        <>
+                            <p class="sample-source sample-source-name"><code>{path}</code>:</p>
+                            <pre class="sample-source" data-path={path}><code class={`language-${languageOf(path)}`}>{text}</code></pre>
+                        </>
+                    ))}
+                </>
+            ) : (
+                <pre class="sample-source"><code class="language-squiffy">{script}</code></pre>
+            )}
             <div class="copy">
                 <div class="feedback" aria-live="polite"></div>
                 <button type="button" title="Copy to clipboard" aria-label="Copy to clipboard">
@@ -202,6 +310,12 @@ const buttonsClass = "sample-buttons" + (!alwaysShowRestart ? " hidden" : "");
                 <button type="button" class="sample-button restart" title="Restart" aria-label="Restart">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
                 </button>
+                {project && (
+                    <button type="button" class="sample-button mute" title="Mute" aria-label="Mute" aria-pressed="false" hidden>
+                        <svg class="sound-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+                        <svg class="sound-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="m23 9-6 6"/><path d="m17 9 6 6"/></svg>
+                    </button>
+                )}
             </div>
         </div>
     </Split>
@@ -209,29 +323,21 @@ const buttonsClass = "sample-buttons" + (!alwaysShowRestart ? " hidden" : "");
 
 <script>
     import {basicSetup, EditorView} from 'codemirror';
-    import { HighlightStyle, syntaxHighlighting } from '@codemirror/language';
-    import { tags as t } from '@lezer/highlight';
     import { squiffyLanguage } from '@textadventures/squiffy-codemirror';
     import { compile as squiffyCompile } from 'squiffy-compiler';
     import {init as runtimeInit} from 'squiffy-runtime';
     import type { SquiffyApi } from 'squiffy-runtime';
     import debounce from 'debounce';
-
-    // The same highlighting as the editor (app/src/lib/codemirror-theme.ts), in Starlight's colors,
-    // whose -high shades are the readable ones in both light and dark mode
-    const squiffyHighlightStyle = HighlightStyle.define([
-        { tag: t.keyword, color: 'var(--sl-color-accent-high)', fontWeight: 'bold' },
-        { tag: t.comment, color: 'var(--sl-color-gray-3)', fontStyle: 'italic' },
-        { tag: t.tagName, color: 'var(--sl-color-accent-high)' },
-        { tag: t.heading, color: 'var(--sl-color-accent-high)', fontWeight: 'bold' },
-        { tag: t.heading2, color: 'var(--sl-color-purple-high)', fontWeight: 'bold' },
-        { tag: t.link, color: 'var(--sl-color-accent-high)', textDecoration: 'underline' },
-        { tag: t.processingInstruction, color: 'var(--sl-color-orange-high)' },
-        { tag: t.monospace, color: 'var(--sl-color-gray-3)' },
-    ]);
+    import { sampleEditorExtensions, setUpCopyButton } from './sample-editor';
 
     class Sample extends HTMLElement {
         connectedCallback() {
+            // A sample with files runs in the preview, from its own module, which only these load
+            if (this.classList.contains('project')) {
+                import('./sample-project').then(m => m.setUpProjectSample(this));
+                return;
+            }
+
             const editor = this.querySelector('.editor') as HTMLElement;
             if (!editor) return;
 
@@ -272,65 +378,13 @@ const buttonsClass = "sample-buttons" + (!alwaysShowRestart ? " hidden" : "");
                 extensions: [
                     basicSetup,
                     squiffyLanguage,
-                    syntaxHighlighting(squiffyHighlightStyle),
-                    EditorView.lineWrapping,
-                    EditorView.theme({
-                        ".cm-content": {fontSize: "13px"},
-                        ".cm-lineNumbers": {fontSize: "13px"},
-                        // basicSetup's own colours are light-only, so use Starlight's, which follow
-                        // the site's light/dark switch
-                        ".cm-gutters": {
-                            backgroundColor: "var(--sl-color-gray-6)",
-                            color: "var(--sl-color-gray-3)",
-                            borderRight: "1px solid var(--sl-color-hairline)",
-                        },
-                        ".cm-activeLine": {
-                            backgroundColor: "color-mix(in srgb, var(--sl-color-accent) 12%, transparent)",
-                        },
-                        ".cm-activeLineGutter": {
-                            backgroundColor: "color-mix(in srgb, var(--sl-color-accent) 20%, transparent)",
-                            color: "var(--sl-color-white)",
-                        },
-                        "&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection": {
-                            backgroundColor: "color-mix(in srgb, var(--sl-color-accent) 30%, transparent)",
-                        },
-                        ".cm-cursor": {borderLeftColor: "var(--sl-color-white)"},
-                    }),
+                    ...sampleEditorExtensions,
                     updateListener
                 ],
                 parent: editor
             });
 
-            // Copies the script as it is now, with any changes the reader has made
-            const copyButton = this.querySelector('.copy button') as HTMLButtonElement;
-            const copyFeedback = this.querySelector('.copy .feedback') as HTMLElement;
-            let hideFeedback: ReturnType<typeof setTimeout> | undefined;
-            copyButton.addEventListener('click', async () => {
-                const text = editorView.state.doc.toString();
-                try {
-                    await navigator.clipboard.writeText(text);
-                } catch {
-                    // As Expressive Code's copy button does, fall back to the old way where the
-                    // Clipboard API isn't allowed
-                    const textarea = document.createElement('textarea');
-                    textarea.value = text;
-                    textarea.style.position = 'fixed';
-                    textarea.style.opacity = '0';
-                    document.body.appendChild(textarea);
-                    textarea.select();
-                    const copied = document.execCommand('copy');
-                    textarea.remove();
-                    copyButton.focus();
-                    if (!copied) return;
-                }
-                copyFeedback.textContent = 'Copied!';
-                copyFeedback.classList.add('show');
-                clearTimeout(hideFeedback);
-                hideFeedback = setTimeout(() => {
-                    copyFeedback.classList.remove('show');
-                    copyFeedback.textContent = '';
-                }, 1500);
-            });
+            setUpCopyButton(this, () => editorView.state.doc.toString());
 
             const alwaysShowRestart = this.dataset.alwaysShowRestart === 'true';
             const fixedHeight = this.classList.contains('fixed-height');
