@@ -29,6 +29,7 @@
     "@codemirror/view": "^6.43.15",
     "@lezer/highlight": "^1.2.5",
     "@lucide/svelte": "^1.70.0",
+    "@textadventures/editor-search": "^7.0.0-beta.8",
     "@textadventures/graph-map": "^7.0.0-beta.8",
     "@textadventures/project-fs": "^7.0.0-beta.8",
     "@textadventures/squiffy-codemirror": "^7.0.0-beta.8",

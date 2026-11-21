@@ -66,7 +66,8 @@ export const SHORTCUT_GROUPS: ShortcutGroup[] = [
     {
         heading: "Find",
         shortcuts: [
-            { keys: ["Mod-f"], description: "Find and replace" },
+            { keys: ["Mod-f"], description: "Find" },
+            { keys: ["Mod-h"], mac: ["Mod-Alt-f"], description: "Find and replace" },
             { keys: ["F3", "Mod-g"], description: "Find the next match (with Shift, the one before)" },
             { keys: ["Mod-Alt-g"], description: "Go to a line" },
         ],

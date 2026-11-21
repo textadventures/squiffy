@@ -8,6 +8,7 @@
     "codemirror-lang",
     "project-fs",
     "graph-map",
+    "editor-search",
     "app",
     "cli",
     "packager",

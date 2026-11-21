@@ -20,6 +20,14 @@ export const editorTheme = EditorView.theme({
         backgroundColor: "var(--color-surface-50-950)",
         color: "var(--color-surface-900-100)",
         fontSize: "var(--editor-font-size, 14px)",
+        // The Find and Go to line panels (@textadventures/editor-search)
+        "--ed-search-bg": "var(--color-surface-100-900)",
+        "--ed-search-border": "var(--color-surface-300-700)",
+        "--ed-search-field-bg": "var(--color-surface-50-950)",
+        "--ed-search-muted": "var(--color-surface-600-400)",
+        "--ed-search-accent": "var(--color-primary-500)",
+        "--ed-search-accent-fg": "var(--color-primary-contrast-500)",
+        "--ed-search-error": "var(--color-error-500)",
     },
     ".cm-content, .cm-gutters": {
         // Quest Viva uses text-xs for short scripts; a whole story reads better a size up

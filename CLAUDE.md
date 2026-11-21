@@ -160,6 +160,7 @@ CLI options:
 - **site**: Marketing/documentation site at squiffystory.com, with a beta channel at beta.squiffystory.com (Astro + Starlight; see "Docs site" above)
 - **project-fs**: Private workspace (`@textadventures/project-fs`) with the editor's file system layer: list/read/write/delete over a rooted project tree, with in-memory, File System Access, OPFS, Node and Electron adapters and a shared conformance suite. No Squiffy imports, so it can become a standalone package later (#215). See `project-fs/README.md`.
 - **graph-map**: Private workspace (`@textadventures/graph-map`) with the editor's story map component (#380): a Svelte map of a directed graph with a live force-directed layout (Barnes–Hut repulsion, springs, rows by rank), pan, zoom, drag-to-link and keyboard access. No Squiffy imports, like `project-fs`, so Quest Viva can use it too. The TypeScript core builds to `dist/`; `GraphMap.svelte` is shipped as source. See `graph-map/README.md`.
+- **editor-search**: Private workspace (`@textadventures/editor-search`) with the editor's Find and Replace panel and Go to line bar, in place of CodeMirror's own: plain DOM on `@codemirror/search` (which still does the searching), coloured by `--ed-search-*` custom properties that `app/src/lib/codemirror-theme.ts` sets. No Squiffy imports, like `project-fs`, as it's meant for Quest Viva's editor too, from a shared repo in time. See `editor-search/README.md`.
 - **types**: Type definitions for `.squiffy` imports, used by the Vite plugin
 - **vite-plugin**: Vite plugin that compiles `.squiffy` imports, so a story can be built into a web app. `examples/vite-app` is a private workspace that uses it.
 - **plugins/squiffy**: Not a package. A Claude Code plugin with a Squiffy skill (`skills/squiffy/SKILL.md`, and `references/` beside it), for authors whose own Claude Code works on a story folder with none of this repo's context. `.claude-plugin/marketplace.json` at the root makes this repo its marketplace (`/plugin marketplace add textadventures/squiffy`, `/plugin install squiffy@squiffy`; `/plugin marketplace add ./` to try a local copy, and `claude plugin validate ./` to check it). It has no `version`, so installs follow the latest commit on `main`, and release-please doesn't need to bump it. The skill summarises the docs for an agent, so **a change to the language (syntax, directives, helpers, setter rules, `squiffy.json` properties, CLI options) needs the same change in the skill's references**, as well as in `site/`. `runtime/src/skill.test.ts` fails if a helper the runtime registers is missing from either the docs' `helpers-reference.mdx` or the skill's `references/helpers.md`. Documented in `site/src/content/docs/writing-with-ai.mdx`.
@@ -198,7 +199,7 @@ When working on the compiler or runtime:
 When working on the editor:
 1. Run `npm run dev` in the app directory
 2. Changes hot-reload automatically
-3. The editor uses local versions of compiler, runtime, packager, project-fs, graph-map and codemirror-lang (rebuild them after changing them; `GraphMap.svelte` itself hot-reloads)
+3. The editor uses local versions of compiler, runtime, packager, project-fs, graph-map, editor-search and codemirror-lang (rebuild them after changing them; `GraphMap.svelte` itself hot-reloads)
 
 ## Module System
 
