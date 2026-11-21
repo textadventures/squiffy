@@ -334,6 +334,14 @@ describe("for the story map", () => {
         expect(nodeOf(graph, "section:c").contentEnd).toEqual({ line: 11, character: 6 });
     });
 
+    test("the whole of a section (with its passages) or a passage", async () => {
+        const graph = await one("[[a]]:\nOne.\n\n[p]:\nPassage.\n\n[q]:\nMore.\n\n\n[[b]]:\n\n[snippet:s]:\nText\n\n[[c]]:\nEnd.\n");
+        // Up to the line before the next header, blank lines and all
+        expect(graph.nodes.map(n => [n.id, n.range.start.line, n.range.end.line])).toEqual([
+            ["section:a", 0, 9], ["passage:a/p", 3, 5], ["passage:a/q", 6, 9], ["section:b", 10, 11], ["section:c", 15, 17],
+        ]);
+    });
+
     test("a broken link or embed says what it's written with", async () => {
         const graph = await one("[[a]]:\n[[Go]](nowhere, x=1) [[elsewhere]] [gone] {{embed \"lost\"}} [[x]]({{dest}})");
         expect(graph.edges.map(e => [e.to, e.target])).toEqual([

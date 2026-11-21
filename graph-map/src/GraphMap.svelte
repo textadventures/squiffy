@@ -33,6 +33,13 @@
         oncreate?: (at: Point) => void;
         // F2 on a node
         onrename?: (node: N) => void;
+        // Delete or Backspace: the selected node, or the nodes selected together
+        ondelete?: (nodes: N[]) => void;
+        // A right-click (or a long press, or the menu key or Shift+F10 for the selected node) on
+        // a node, which is selected first, or on the background. `at` is the point on the map and
+        // `screen` the point in the window to show a menu at. Without this, the browser's own
+        // menu is shown.
+        onmenu?: (node: N | null, at: Point, screen: Point, keyboard: boolean) => void;
     }
 
     export interface NodeState {
@@ -63,7 +70,7 @@
 
     let {
         graph, layout, pinned = NONE, selected = $bindable(null), longEdge = 400, label, instructions, node: drawNode, canConnect,
-        onactivate, onedgeactivate, onmove, onconnect, oncreate, onrename,
+        onactivate, onedgeactivate, onmove, onconnect, oncreate, onrename, ondelete, onmenu,
     }: GraphMapProps<N, E> = $props();
 
     // svelte-ignore state_referenced_locally
@@ -467,6 +474,27 @@
         return toMap(transform, { x: width / 2, y: height / 2 });
     }
 
+    // The node whose centre is nearest a point on the map, of those the host accepts
+    export function nearest(at: Point, accept: (node: N) => boolean = () => true): N | undefined {
+        let best: N | undefined;
+        let bestDistance = Infinity;
+        for (const n of graph.nodes) {
+            const p = model.position(n.id);
+            if (!p || n.decoration || !accept(n)) continue;
+            const distance = Math.hypot(p.x - at.x, p.y - at.y);
+            if (distance < bestDistance) {
+                best = n;
+                bestDistance = distance;
+            }
+        }
+        return best;
+    }
+
+    // Takes the keyboard focus, e.g. after a menu closes
+    export function focus() {
+        container?.focus({ preventScroll: true });
+    }
+
     // Whether a node has been laid out yet
     export function has(id: string) {
         return model.position(id) !== undefined;
@@ -687,6 +715,29 @@
         oncreate?.(at);
     }
 
+    function handleContextMenu(e: MouseEvent) {
+        if (!onmenu) return;
+        e.preventDefault();
+        const rect = container!.getBoundingClientRect();
+        // From the menu key or Shift+F10 rather than a pointer: for the selected node, under it
+        const keyboard = "pointerType" in e ? e.pointerType === "" : e.button != 2;
+        if (keyboard) {
+            const n = selected ? nodesById.get(selected) : undefined;
+            const at = n && model.position(n.id);
+            if (n && at) {
+                onmenu(n, at, { x: rect.left + transform.x + at.x * transform.k, y: rect.top + transform.y + (at.y + n.height / 2) * transform.k }, true);
+            } else {
+                onmenu(null, centre(), { x: rect.left + width / 2, y: rect.top + height / 2 }, true);
+            }
+            return;
+        }
+        const nodeEl = (e.target as Element).closest("[data-node]");
+        const n = nodeEl ? nodesById.get(nodeEl.getAttribute("data-node")!) : undefined;
+        if (n) select(n.id);
+        container?.focus({ preventScroll: true });
+        onmenu(n ?? null, toMap(transform, local(e)), { x: e.clientX, y: e.clientY }, false);
+    }
+
     // Scroll pans; pinch (which browsers send as Ctrl+scroll) or Ctrl/Cmd+scroll zooms
     function handleWheel(e: WheelEvent) {
         e.preventDefault();
@@ -741,6 +792,13 @@
             e.preventDefault();
             const n = nodesById.get(selected);
             if (n) onrename?.(n);
+        } else if ((e.key == "Delete" || e.key == "Backspace") && ondelete && !e.altKey && !e.ctrlKey && !e.metaKey) {
+            // The nodes selected together, unless another's been selected since
+            const ids = group.size && (!selected || group.has(selected)) ? [...group] : selected ? [selected] : [];
+            const nodes = ids.map(id => nodesById.get(id)).filter(n => n !== undefined);
+            if (!nodes.length) return;
+            e.preventDefault();
+            ondelete(nodes);
         } else if (e.key == "Escape" && (selected || group.size)) {
             e.preventDefault();
             selected = null;
@@ -788,6 +846,7 @@
     onpointerup={handlePointerUp}
     onpointercancel={handlePointerUp}
     ondblclick={handleDoubleClick}
+    oncontextmenu={handleContextMenu}
     onkeydown={handleKeydown}
     onpointerleave={() => { hovered = null; }}
 >

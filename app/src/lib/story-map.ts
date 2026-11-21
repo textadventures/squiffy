@@ -386,6 +386,29 @@ export function withPosition(positions: MapPositions | undefined, keys: Map<stri
     return next;
 }
 
+// Undoes (or redoes) a change to the positions: wherever `from` and `to` differ, `current` takes
+// what `to` has. Anything else in `current` is left alone, as it may have changed since (a
+// section renamed, or another box moved).
+export function revertPositions(current: MapPositions | undefined, from: MapPositions, to: MapPositions): MapPositions {
+    const same = (a: [number, number] | undefined, b: [number, number] | undefined) => a?.[0] === b?.[0] && a?.[1] === b?.[1];
+    const revert = (now: Record<string, [number, number]>, a: Record<string, [number, number]>, b: Record<string, [number, number]>) => {
+        const next = { ...now };
+        for (const key of new Set([...Object.keys(a), ...Object.keys(b)])) {
+            if (same(a[key], b[key])) continue;
+            if (b[key]) next[key] = b[key];
+            else delete next[key];
+        }
+        return next;
+    };
+    const passages: MapPositions["passages"] = {};
+    const sections = new Set([...Object.keys(current?.passages ?? {}), ...Object.keys(from.passages), ...Object.keys(to.passages)]);
+    for (const section of sections) {
+        const next = revert(current?.passages[section] ?? {}, from.passages[section] ?? {}, to.passages[section] ?? {});
+        if (Object.keys(next).length) passages[section] = next;
+    }
+    return { sections: revert(current?.sections ?? {}, from.sections, to.sections), passages };
+}
+
 // Sections and passages that have been renamed between two versions of the story: one that's
 // gone and one that's new, of the same kind, whose headers are on the same line of the same
 // file. That catches a rename however it's done, from the map, F2, or typing over the name.

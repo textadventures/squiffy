@@ -30,6 +30,9 @@ export interface GraphNode {
     label?: string;
     // The name in the header (or the header itself, for a section without a name of its own)
     location: Location;
+    // All of it, from its header to the end of its text, in its file: for a section, with its
+    // passages. What to remove to delete it, and where something can be added after it.
+    range: Range;
     // Where its own text ends (before any passages, for a section), ignoring blank lines at the
     // end: where a new link from it can be added
     contentEnd: Position;
@@ -182,7 +185,8 @@ export function buildStoryGraph(source: GraphSource): StoryGraph {
         const detail = node ? sectionDetail(node) : undefined;
         addNode({
             id, kind: "section", name, ...(detail ? { detail } : {}),
-            location: { file: section.file, range }, contentEnd: node ? contentEnd(node) : range.end,
+            location: { file: section.file, range }, range: node?.range ?? range,
+            contentEnd: node ? contentEnd(node) : range.end,
             reachable: false, deadEnd: false,
             ...(name == source.start ? { start: true } : {}),
         });
@@ -191,7 +195,8 @@ export function buildStoryGraph(source: GraphSource): StoryGraph {
             const pid = passageId(name, passageName);
             addNode({
                 id: pid, kind: "passage", name: passageName, section: name,
-                location: { file: section.file, range: passage.nameRange }, contentEnd: contentEnd(passage),
+                location: { file: section.file, range: passage.nameRange }, range: passage.range,
+                contentEnd: contentEnd(passage),
                 reachable: false, deadEnd: false,
             });
             containerIds.set(passage, pid);

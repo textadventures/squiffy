@@ -27,7 +27,27 @@ Select a section or passage, then drag the dot under it:
 - to another section, to add a link to it, or to a passage in the same section, to add a passage link;
 - to an empty space, to add a new section there, with a link to it.
 
-The link goes at the cursor if it's in that section or passage, or else at the end of it. Double-click an empty space, or use **+** above the map, to add a section without a link. Below the map, you can rename the selected section or passage everywhere it's used (or press F2), or run the story from it.
+The link goes at the cursor if it's in that section or passage, or else at the end of it. Double-click an empty space, or use **+** above the map, to add a section without a link.
+
+Right-click a section or passage for a menu of what you can do with it. The buttons below the map do the same for the one that's selected:
+
+- **Rename** it everywhere it's used (or press F2).
+- **Add a passage** to the section, with a link to it.
+- **Run from here**, to play the story from it.
+- **Start the story here**, which sets [`@start`](/basic-concepts/#set-the-start-section) to that section.
+- **Delete** it (or press Delete). A section goes with its passages, and with any sections after it started with `+++` or `---`, which carry on from it. The editor tells you how many links to it will be broken first. They show on the map in red afterwards, so you can find them. To delete several at once, select them with Shift, then press Delete.
+
+Press Ctrl+Z (Cmd+Z on a Mac) on the map to undo the last thing you did there, whether that changed the script or moved a box, and Ctrl+Shift+Z or Ctrl+Y to redo it. If a change is to a file that isn't open, the editor opens it, so that it can be undone.
+
+### Where new sections go in the script
+
+A section you add from the map goes where it makes sense in the script, not at the end of the file:
+
+- A section added with a link from another goes after the sections that one already leads to, or straight after it if it doesn't lead anywhere yet. So a section's choices follow it in the script, in the order you added them. A section that something earlier in the file links to as well, such as an ending that several sections lead to, doesn't count.
+- A section added without a link goes after the selected section, or else after the one nearest to it on the map.
+- A new passage goes at the end of its section.
+
+Nothing that's already in the script is moved.
 
 ## Testing with the map
 
@@ -35,4 +55,4 @@ When you run your story, the sections and passages the player visits, and the li
 
 ## Using the keyboard
 
-Click the map, or tab to it, then use the arrow keys to move between sections and passages. Enter goes to the selected one in the script, F2 renames it, **+** and **-** zoom, and **0** fits the whole story in view. A screen reader reads out each section's links in and out as you move to it.
+Click the map, or tab to it, then use the arrow keys to move between sections and passages. Enter goes to the selected one in the script, F2 renames it, Delete deletes it, and the menu key (or Shift+F10) opens its menu. **+** and **-** zoom, and **0** fits the whole story in view. A screen reader reads out each section's links in and out as you move to it.

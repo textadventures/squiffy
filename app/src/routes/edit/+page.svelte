@@ -21,6 +21,7 @@
     import { isNarrow } from "#lib/layout.svelte.js";
     import { showToast } from "#lib/toast.js";
     import { chooseDialog, confirmDialog, promptDialog } from "#lib/confirm.js";
+    import { redo, undo } from "@codemirror/commands";
     import BackupBanner from "#components/BackupBanner.svelte";
     import DiskChangeBar from "#components/DiskChangeBar.svelte";
     import Toolbar from "#components/Toolbar.svelte";
@@ -37,11 +38,12 @@
     import type { CodeAction } from "squiffy-compiler/language-service";
     import PreviewPanel from "#components/PreviewPanel.svelte";
     import MapPanel, { type TraceStep } from "#components/MapPanel.svelte";
-    import { checkSectionName, linkTo, movedNodes, nodeAtLine, renamePositions, sectionKeys, withPosition, type Point, type StoryMapEdge, type StoryMapNode } from "#lib/story-map.js";
+    import { checkSectionName, emptyPositions, linkTo, movedNodes, nodeAtLine, renamePositions, revertPositions, sectionKeys, withPosition, type Point, type StoryMapEdge, type StoryMapNode } from "#lib/story-map.js";
     import AssetManagerModal from "#components/AssetManagerModal.svelte";
     import FontsModal from "#components/FontsModal.svelte";
     import AboutModal from "#components/AboutModal.svelte";
     import ContextMenu, { type ContextMenuItem } from "#components/ContextMenu.svelte";
+    import { checkPassageName, deleteLinesEdits, deletionMessage, insertHeaderEdit, placeNewPassage, placeNewSection, planDeletion, startEdit, type Place } from "#lib/map-edits.js";
     import { addSectionOrPassage, clipboardCommand, insertSnippet, runCommand, userSnippets } from "#lib/editor-commands.js";
     import { formatKey } from "#lib/shortcuts.js";
     import type { ExportKind } from "#lib/language/protocol.js";
@@ -832,19 +834,96 @@
         return { [file]: [{ range: { start: at, end: at }, newText: `${headerOnly ? "\n" : "\n\n"}${text}` }] };
     }
 
-    // A new section at the end of a file
-    async function newSectionEdit(file: string, name: string): Promise<WorkspaceEdit> {
-        const text = p?.fileAt(file)?.text ?? await p!.fs.readText(file);
-        const lines = text.split("\n");
-        const end = { line: lines.length - 1, character: lines[lines.length - 1].length };
-        const gap = text.endsWith("\n\n") || text === "" ? "" : text.endsWith("\n") ? "\n" : "\n\n";
-        return { [file]: [{ range: { start: end, end }, newText: `${gap}[[${name}]]:\n` }] };
+    // A file's text as it is now: in its editor, if it's open
+    const currentText = async (file: string) => p?.fileAt(file)?.text ?? await p!.fs.readText(file);
+
+    // A new section's or passage's header, somewhere in a file (see map-edits)
+    async function headerEdit(place: Place, header: string): Promise<WorkspaceEdit> {
+        return { [place.file]: [insertHeaderEdit(await currentText(place.file), place.afterLine, header)] };
     }
 
+    // Two edits as one. Text added at the same place goes in the order given, `a`'s first.
     function mergeEdits(a: WorkspaceEdit, b: WorkspaceEdit): WorkspaceEdit {
         const merged: WorkspaceEdit = { ...a };
-        for (const [file, edits] of Object.entries(b)) merged[file] = [...merged[file] ?? [], ...edits];
+        for (const [file, edits] of Object.entries(b)) {
+            const list = [...merged[file] ?? []];
+            for (const edit of edits) {
+                const same = list.findIndex(e => e.range.start.line === edit.range.start.line && e.range.start.character === edit.range.start.character
+                    && e.range.end.line === e.range.start.line && e.range.end.character === e.range.start.character
+                    && edit.range.end.line === edit.range.start.line && edit.range.end.character === edit.range.start.character);
+                if (same >= 0) list[same] = { range: list[same].range, newText: list[same].newText + edit.newText };
+                else list.push(edit);
+            }
+            merged[file] = list;
+        }
         return merged;
+    }
+
+    // Changes made from the map: the files whose script changed, and any change to where boxes
+    // are. Undoing from the map undoes them where they were made, which may not be the file
+    // that's open.
+    interface MapChange {
+        files: string[];
+        positions?: { before: MapPositions; after: MapPositions };
+    }
+    let mapUndo: MapChange[] = [];
+    let mapRedo: MapChange[] = [];
+
+    function recordMapChange(change: MapChange) {
+        mapUndo.push(change);
+        mapRedo = [];
+    }
+
+    // Moves boxes, as a change that can be undone
+    function moveOnMap(next: MapPositions) {
+        recordMapChange({ files: [], positions: { before: mapPositions ?? emptyPositions(), after: next } });
+        savePositions(next);
+    }
+
+    // Opens the files an edit changes, so that it goes into their editors' undo histories. The
+    // file that's open stays in front.
+    async function openForEdit(files: string[]) {
+        const current = p;
+        const closed = files.filter(file => !views.has(file));
+        if (!current || !closed.length) return;
+        const active = current.activePath;
+        for (const file of closed) {
+            try {
+                await current.open(file);
+                await viewFor(file);
+            } catch {
+                // It's changed on disk instead
+            }
+        }
+        if (active && current.fileAt(active)) current.activePath = active;
+    }
+
+    async function applyMapEdit(edit: WorkspaceEdit, positions?: MapChange["positions"]) {
+        const files = Object.keys(edit);
+        await openForEdit(files);
+        recordMapChange({ files: files.filter(file => views.has(file)), positions });
+        if (positions) savePositions(positions.after);
+        await applyEdits(edit);
+    }
+
+    // Undo or redo from the map: the last change made from it, or else the open file's last change
+    function undoFromMap(isRedo: boolean) {
+        const [stack, other] = isRedo ? [mapRedo, mapUndo] : [mapUndo, mapRedo];
+        const change = stack.pop();
+        if (!change) {
+            const view = p?.activePath ? views.get(p.activePath) : undefined;
+            if (view) (isRedo ? redo : undo)(view);
+            return;
+        }
+        for (const file of change.files) {
+            const view = views.get(file);
+            if (view) (isRedo ? redo : undo)(view);
+        }
+        if (change.positions) {
+            const { before, after } = change.positions;
+            savePositions(isRedo ? revertPositions(mapPositions, before, after) : revertPositions(mapPositions, after, before));
+        }
+        other.push(change);
     }
 
     async function askSectionName(): Promise<string | null> {
@@ -860,20 +939,73 @@
     }
 
     // Adds a section, where it was asked for on the map, in the same file as the section it's
-    // near (or the file that's open, or the main file)
+    // linked from or near (or the file that's open, or the main file). In the script, it goes
+    // after that section, or the sections it already leads to (see placeNewSection).
     async function createSectionFromMap(at: Point, near: GraphNode | undefined, linkFrom?: GraphNode) {
         if (!p) return;
         const name = await askSectionName();
-        if (!name || !p) return;
+        const graph = storyGraph;
+        if (!name || !p || !graph) return;
         const file = linkFrom?.location.file ?? near?.location.file ?? (isSquiffyFile(p.activePath) ? p.activePath : p.mainFile);
         try {
-            let edit = await newSectionEdit(file, name);
+            let edit = await headerEdit(placeNewSection(graph, { from: linkFrom, near, file }), `[[${name}]]:`);
             if (linkFrom) edit = mergeEdits(linkEdit(linkFrom, `[[${name}]]`), edit);
-            savePositions(withPosition(mapPositions, new Map(), { kind: "section", name }, at));
             selectWhenReady = `section:${name}`;
-            await applyEdits(edit);
+            await applyMapEdit(edit, {
+                before: mapPositions ?? emptyPositions(),
+                after: withPosition(mapPositions, new Map(), { kind: "section", name }, at),
+            });
         } catch (err) {
             showToast(`Couldn't add the section: ${errorText(err)}`);
+        }
+    }
+
+    // Adds a passage to a section, with a link to it from the section (or from the passage it
+    // was added from), so it can be reached
+    async function addPassageFromMap(from: GraphNode) {
+        const graph = storyGraph;
+        if (!p || !graph) return;
+        const sectionName = from.kind === "section" ? from.name : from.section!;
+        const section = graph.nodes.find(n => n.kind === "section" && n.name === sectionName);
+        if (!section) return;
+        const name = (await promptDialog("New passage name:", "", "Add"))?.trim();
+        if (!name || !p) return;
+        const problem = checkPassageName(name, sectionName, graph);
+        if (problem) {
+            showToast(problem, "info");
+            return;
+        }
+        try {
+            const edit = mergeEdits(linkEdit(from, `[${name}]`), await headerEdit(placeNewPassage(section), `[${name}]:`));
+            selectWhenReady = `passage:${sectionName}/${name}`;
+            await applyMapEdit(edit);
+        } catch (err) {
+            showToast(`Couldn't add the passage: ${errorText(err)}`);
+        }
+    }
+
+    async function deleteFromMap(nodes: GraphNode[]) {
+        const graph = storyGraph;
+        const plan = graph && planDeletion(graph, nodes);
+        if (!p || !plan) return;
+        if (!(await confirmDialog(deletionMessage(plan), { confirmLabel: "Delete", danger: true })) || !p) return;
+        try {
+            const edit: WorkspaceEdit = {};
+            for (const [file, ranges] of plan.ranges) edit[file] = deleteLinesEdits(await currentText(file), ranges);
+            await applyMapEdit(edit);
+        } catch (err) {
+            showToast(`Couldn't delete: ${errorText(err)}`);
+        }
+    }
+
+    // Makes the story start at a section, with @start in the main file
+    async function startFromMap(node: GraphNode) {
+        if (!p) return;
+        const file = p.mainFile;
+        try {
+            await applyMapEdit({ [file]: [startEdit(await currentText(file), node.name)] });
+        } catch (err) {
+            showToast(`Couldn't change where the story starts: ${errorText(err)}`);
         }
     }
 
@@ -887,7 +1019,7 @@
             showToast(link.error, "info");
             return;
         }
-        await applyEdits(linkEdit(from, link.text));
+        await applyMapEdit(linkEdit(from, link.text));
     }
 
     async function renameFromMap(node: GraphNode) {
@@ -902,14 +1034,14 @@
             showToast(result.error, "info");
             return;
         }
-        await applyEdits(result.edit);
+        await applyMapEdit(result.edit);
     }
 
     async function relayoutMap(): Promise<boolean> {
         const saved = mapPositions && (Object.keys(mapPositions.sections).length || Object.keys(mapPositions.passages).length);
         if (saved) {
             if (!(await confirmDialog("Lay out the map again? Everything you've moved by hand goes back to where the map puts it.", { confirmLabel: "Lay out again" }))) return false;
-            savePositions({ sections: {}, passages: {} });
+            moveOnMap(emptyPositions());
         }
         return true;
     }
@@ -1358,11 +1490,15 @@
                     ongotoedge={(edge: StoryMapEdge) => { const location = edge.edges[0]?.location ?? edge.location; if (location) goFromMap(location, false); }}
                     onmove={moves => {
                         const keys = storyGraph ? sectionKeys(storyGraph) : new Map<string, string>();
-                        savePositions(moves.reduce((positions, { node, at }) => withPosition(positions, keys, node, at), mapPositions ?? { sections: {}, passages: {} }));
+                        moveOnMap(moves.reduce((positions, { node, at }) => withPosition(positions, keys, node, at), mapPositions ?? emptyPositions()));
                     }}
                     onlink={linkFromMap}
                     oncreate={(at, near) => void createSectionFromMap(at, near)}
                     onrename={node => void renameFromMap(node)}
+                    onaddpassage={node => void addPassageFromMap(node)}
+                    ondelete={nodes => void deleteFromMap(nodes)}
+                    onstart={node => void startFromMap(node)}
+                    onundo={undoFromMap}
                     onrun={node => void runPreview(false, node.kind === "section" ? { section: node.name } : { section: node.section!, passage: node.name })}
                     onrelayout={relayoutMap}
                     ontogglemaximized={() => { mapMaximized = !mapMaximized; }}
