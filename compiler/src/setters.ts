@@ -464,3 +464,64 @@ export function findBuiltInAttributeSets(file: SquiffyFile, text: string): Built
     });
     return result.sort((a, b) => a.range.start.line - b.range.start.line || a.range.start.character - b.range.start.character);
 }
+
+// What a story sets an attribute to, as far as can be told before it's played: the text values it
+// sets, and whether it's ever set to something else (an expression, or anything that isn't text)
+export interface AttributeValues {
+    values: Set<string>;
+    // Set somewhere to something that can't be known, such as another attribute or a sum
+    unknown: boolean;
+}
+
+// A value as written in a setter, {{set}} or squiffy.set(): text in quotes is that text, and
+// values that clear an attribute or can't name anything (false, true, null, numbers) are
+// nothing. A plain word is text by the Squiffy 6 rules, so it's taken as text too, but as it
+// might be an attribute instead, it's also unknown. Anything else is unknown.
+function literalValue(text: string): { value?: string, unknown?: boolean } {
+    const value = text.trim();
+    const quoted = /^(["'])([^"'\\]*)\1$/.exec(value);
+    if (quoted) return { value: quoted[2] };
+    if (/^(true|false|null|undefined)$/.test(value) || numberPattern.test(value)) return {};
+    if (/^[A-Za-z_]\w*$/.test(value)) return { value, unknown: true };
+    return { unknown: true };
+}
+
+// The values a story's files set each attribute to: with @set and link setters, {{set}} and
+// {{unset}}, and squiffy.set() in its JavaScript. For {{goto name}}, where the attribute says
+// which section to go to.
+export function attributeValues(files: Iterable<SquiffyFile>): Map<string, AttributeValues> {
+    const result = new Map<string, AttributeValues>();
+    const add = (attribute: string, found: { value?: string, unknown?: boolean }) => {
+        let entry = result.get(attribute);
+        if (!entry) result.set(attribute, entry = { values: new Set(), unknown: false });
+        if (found.value) entry.values.add(found.value);
+        if (found.unknown) entry.unknown = true;
+    };
+    for (const file of files) {
+        for (const site of setterSites(file)) {
+            const match = /^\s*(not\s+)?(\w+(?:\.\w+)*)\s*(?:(:?=(?!=)|[-+*/]=)\s*(.*?))?\s*$/.exec(site.text);
+            if (!match) continue;
+            const [, not, attribute, operator, value] = match;
+            if (not || operator === undefined) add(attribute, {});
+            else add(attribute, operator == "=" || operator == ":=" ? literalValue(value) : { unknown: true });
+        }
+        for (const section of [file.preamble, ...file.sections] as (SectionNode | SnippetNode)[]) {
+            if (section.type !== "section") continue;
+            for (const container of [section, ...section.passages]) {
+                for (const node of container.body) {
+                    if (node.type === "text") {
+                        for (const match of node.text.matchAll(/\{\{~?\s*set\s+(["'])([\w.]+)\1\s+(.*?)\s*~?\}\}/g)) {
+                            add(match[2], literalValue(match[3]));
+                        }
+                    }
+                    else if (node.type === "js") {
+                        for (const match of node.code.matchAll(/\bset\(\s*(["'])([\w.]+)\1\s*,\s*([^)]*?)\s*\)/g)) {
+                            add(match[2], literalValue(match[3]));
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return result;
+}
