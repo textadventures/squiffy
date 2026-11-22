@@ -70,6 +70,9 @@ const argv = yargs(hideBin(process.argv))
     .boolean("attributes")
     .describe("record", "With --play, record the playthrough as a test, to a .squiffy-test file, for --test")
     .string("record")
+    .describe("ignore", "With --record, attributes for the test not to record or compare, where * matches any characters. Repeat it for several")
+    .array("ignore")
+    .string("ignore")
     .describe("test", "Play the story the way each .squiffy-test file in its folder says (or the file or folder given), and report where it does something different")
     .describe("update", "With --test, record the tests that fail again, as the story plays now")
     .boolean("update")
@@ -259,11 +262,16 @@ async function play(): Promise<boolean> {
             return false;
         }
     }
+    const ignore = (argv.ignore ?? []).flatMap(names => names.split(/[\s,]+/)).filter(name => name);
+    if (ignore.length && !record) {
+        console.error("--ignore goes with --play --record. To ignore attributes in a test, add an ignore line to the test file.");
+        return false;
+    }
     // A test needs a seed, so the story's randomness is the same each time it's played
     const seed = argv.seed ?? (record ? Math.floor(Math.random() * 1000000) : undefined);
 
     const writeTest = (result: PlayResult, testInputs: Record<string, string>) => {
-        const test = testFromResult(result, { seed: seed!, start: argv.start, inputs: testInputs });
+        const test = testFromResult(result, { seed: seed!, start: argv.start, inputs: testInputs, ignore });
         fs.mkdirSync(path.dirname(path.resolve(record!)), { recursive: true });
         fs.writeFileSync(record!, formatTest(test));
     };
@@ -336,6 +344,7 @@ async function test(): Promise<boolean> {
         else console.error(message);
         return false;
     };
+    if (argv.ignore?.length) return fail("--ignore goes with --play --record. To ignore attributes in a test, add an ignore line to the test file.");
     const target = typeof argv.test == "string" && argv.test ? argv.test : root;
     if (!fs.existsSync(target)) return fail(`There's no file or folder called ${target}.`);
     const files = findTestFiles(target, root);

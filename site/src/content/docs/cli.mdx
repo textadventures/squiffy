@@ -250,6 +250,23 @@ set coffee = true
 
 A `> ` line is a link to click. `went` is a section the story went to, or a section and a passage. `set` is an attribute that changed, with its new value, and `unset` is one that was removed. The lines before the first `> ` are for the start of the story. The `turns`, `previous` and `previous_section` attributes, which change with every link clicked, are left out.
 
+#### Ignoring attributes
+
+Some attributes are only the story's own bookkeeping, such as one that remembers whether some text has been shown. If you change how the story keeps track of that, the test fails, even though the story plays the same. To leave attributes out of a test, add `--ignore` when you record it, with the attributes' names. A `*` matches any characters, so `seen_*` ignores `seen_hall`, `seen_kitchen` and so on:
+
+```bash
+npx @textadventures/squiffy-cli --play --choose "Go inside" --ignore told --ignore "seen_*" --record tests/coffee.squiffy-test
+```
+
+This adds an `ignore` line to the test, before the first `went`, and the test doesn't record or compare those attributes:
+
+```text
+seed 150030
+ignore told seen_*
+```
+
+You can add an `ignore` line to a test you've already recorded too. `ignore *` ignores every attribute, so the test only checks the links, sections and passages. `--test --update` keeps a test's `ignore` lines when it records it again.
+
 ### Running the tests
 
 Use `--test` to run every `.squiffy-test` file in the story's folder, and the folders in it, apart from the `build` folder:
@@ -269,7 +286,7 @@ FAIL tests/tea.squiffy-test
 2 tests: 1 passed, 1 failed.
 ```
 
-A test fails if a link it clicks isn't there any more, the story goes to a different section or passage, an attribute is set to something different, or there's an error. Squiffy finishes with an exit code of 1 if any test fails.
+A test fails if a link it clicks isn't there any more, the story goes to a different section or passage, an attribute it doesn't ignore is set to something different, or there's an error. Squiffy finishes with an exit code of 1 if any test fails.
 
 If you changed the story on purpose, add `--update` to record the tests that fail again, as the story plays now. A test that stops at a link that isn't there any more, or has an error, can't be recorded again: change the link in the test file, or record it again with `--play --record`.
 
