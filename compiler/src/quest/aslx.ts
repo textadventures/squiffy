@@ -177,6 +177,8 @@ export interface QuestGame {
     pages: QuestObject[];
     // The page the player starts on
     start?: string;
+    // The player object, whose attributes can be shown with {player.alias} and so on
+    player?: QuestObject;
     // The JavaScript files the game includes
     javascript: string[];
 }
@@ -200,10 +202,14 @@ export function parseQuestGame(source: string): QuestGame {
 
     const pages: QuestObject[] = [];
     let start: string | undefined;
+    let player: QuestObject | undefined;
     const isPlayer = (o: QuestObject) => o.name == "player" || o.inherits.includes("defaultplayer");
     const collect = (objects: QuestObject[]) => {
         for (const o of objects) {
-            if (isPlayer(o)) continue;
+            if (isPlayer(o)) {
+                player ??= o;
+                continue;
+            }
             pages.push(o);
             if (o.children.some(isPlayer)) start ??= o.name;
             collect(o.children);
@@ -212,7 +218,7 @@ export function parseQuestGame(source: string): QuestGame {
     collect(asl.children.filter(e => e.name == "object").map(readObject));
 
     const javascript = asl.children.filter(e => e.name == "javascript" && e.attrs.src).map(e => e.attrs.src);
-    return { aslVersion: asl.attrs.version ?? "", gamebook, game, gameDefaults, pages, start, javascript };
+    return { aslVersion: asl.attrs.version ?? "", gamebook, game, gameDefaults, pages, start, player, javascript };
 }
 
 // Whether some text is a Quest game file

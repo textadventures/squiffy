@@ -153,6 +153,13 @@ class Parser {
                     continue;
                 }
             }
+            const tag = c == "<" ? /^<\/?[A-Za-z][^<>]*>/.exec(src.substring(i, i + 2000)) : null;
+            if (tag) {
+                // An HTML tag is text: target="_blank" isn't a temporary variable
+                text += tag[0];
+                i += tag[0].length;
+                continue;
+            }
             const variable = /^([$_])([A-Za-z]\w*)/.exec(rest);
             if (variable && (variable[1] == "$" || !/\w/.test(src[i - 1] ?? ""))) {
                 const after = src.substring(i + variable[0].length, i + variable[0].length + 4);

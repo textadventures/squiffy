@@ -253,6 +253,13 @@ Start:
 });
 
 describe("Harlowe", () => {
+    test("_blank in an HTML attribute isn't a temporary variable", async () => {
+        const { script } = await convert("Harlowe", ":: Start\n(set: _x to 1)<a href=\"https://example.com\" target=\"_blank\">Site</a> <a href=\"https://example.org\" target=\u201d_blank\u201d>Other</a> _x");
+        expect(section(script, "Start")).toContain("<a href=\"https://example.com\" target=\"_blank\">Site</a> <a href=\"https://example.org\" target=\u201d_blank\u201d>Other</a>");
+        expect(script).not.toContain("{{blank}}");
+        expect(section(script, "Start")).toMatch(/\{\{x\}\}$/);
+    });
+
     test("links", async () => {
         const { script } = await convert("Harlowe", ":: Start\n[[Cave]] [[Go in->Cave]] [[Cave<-Enter]] [[Old|Cave]] [[Away->Nowhere]] [[Site->https://example.com]]\n\n:: Cave\nDark.");
         expect(section(script, "Start")).toBe(
@@ -516,6 +523,13 @@ describe("Harlowe", () => {
 });
 
 describe("SugarCube", () => {
+    test("_blank in an HTML attribute isn't a temporary variable", async () => {
+        const { script } = await convert("SugarCube", ":: Start\n<<set _x to 1>><a href=\"https://example.com\" target=\"_blank\">Site</a> <a href=\"https://example.org\" target=\u201d_blank\u201d>Other</a> _x");
+        expect(section(script, "Start")).toContain("<a href=\"https://example.com\" target=\"_blank\">Site</a> <a href=\"https://example.org\" target=\u201d_blank\u201d>Other</a>");
+        expect(script).not.toContain("{{blank}}");
+        expect(section(script, "Start")).toMatch(/\{\{x\}\}$/);
+    });
+
     test("links, with setters", async () => {
         const { script } = await convert("SugarCube", ":: Start\n[[Cave]] [[Go in|Cave]] [[Go in->Cave]] [[Cave<-Enter]] [[Buy|Cave][$gold -= 5; $sword to true]]\n\n:: Cave\nDark.");
         expect(section(script, "Start")).toBe("[[Cave]] [[Go in]](Cave) [[Go in]](Cave) [[Enter]](Cave) [[Buy]](Cave, gold -= 5, sword = true)");
