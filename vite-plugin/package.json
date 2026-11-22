@@ -8,7 +8,8 @@
     "directory": "vite-plugin"
   },
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "timeout": 60000
   },
   "type": "module",
   "main": "./dist/index.js",

@@ -12,5 +12,8 @@
     "README.md",
     "LICENSE"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "publishConfig": {
+    "timeout": 60000
+  }
 }

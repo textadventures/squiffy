@@ -57,5 +57,8 @@
     "dist",
     "syntaxes/squiffy.tmLanguage.json"
   ],
-  "type": "module"
+  "type": "module",
+  "publishConfig": {
+    "timeout": 60000
+  }
 }
