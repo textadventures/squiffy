@@ -3,7 +3,7 @@
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import { serve } from "./server.js";
-import { createPackageFiles, writeScriptFile } from "./file-packager.js";
+import { createPackageFiles, createTestingFiles, writeScriptFile } from "./file-packager.js";
 import { convertV5File } from "./convert-v5.js";
 import { convertV6Story } from "./convert-v6.js";
 import { convertTwineFile } from "./convert-twine.js";
@@ -171,17 +171,20 @@ else if (options.scriptOnly) {
 else {
     const story = await findStoryOrExit();
     const outputPath = outputPathFor(story);
-    const result = await createPackageFiles(story, outputPath, {
-        createZip: !!options.zip,
+    const packageOptions = {
         inlineHtml: !!options.inline,
         backButton: story.backButton,
         saveButton: story.saveButton,
+        startAnywhere: story.startAnywhere,
         strings: story.strings,
-    });
+    };
+    const result = await createPackageFiles(story, outputPath, { ...packageOptions, createZip: !!options.zip });
 
     if (result && options.serve) {
         const port = (argv.p as number) || 8282;
-        serve(outputPath, port);
+        // The page that's served can start at any section, and has the story's @test sections.
+        // The files just written don't, as they're the story as it'll be published.
+        serve(outputPath, port, await createTestingFiles(story, packageOptions));
     }
 }
 

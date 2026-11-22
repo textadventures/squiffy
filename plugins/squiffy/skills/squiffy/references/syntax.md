@@ -58,6 +58,7 @@ One per line, at the start of a section or passage, before its text. Those that 
 | `@clear` | Clear the screen before showing this. Always, even in `{{#if}}`: use `{{clear}}` (helpers.md) to clear it only some of the time |
 | `@repeat` | In a passage: its links can be clicked again. Such clicks don't count towards `@1`/`@last` |
 | `@end` | Marks the section as an ending (in a passage, marks its section). Doesn't change what the player sees |
+| `@test` | Marks the section as one for testing, such as one that sets attributes and then `{{goto}}`s a late scene. It, and sections only it leads to, aren't reported as unreachable, and `--random` doesn't expect to visit them. Left out of the published story, so the story itself mustn't link to it (`squiffy/link-to-test-section`) (see project.md, "Starting at a later section") |
 | `@class dark cave` | CSS classes on the story while this section is current (see styling.md) |
 | `@tag passenger settled` | Tags on this section or passage, for `(passages tagged="passenger")`, `(sections tagged=...)` and `(tags "name")` (see helpers.md). Doesn't change what the player sees |
 | `@transition fade`, `@transition slide-up 1s` | How this section or passage appears (see dynamic-text.md) |

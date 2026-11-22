@@ -42,6 +42,8 @@ interface CompilerSettings {
     onWarning?: (message: string) => void;
     externalFiles?: ExternalFiles;
     globalJs?: boolean;
+    // Leave out the sections marked with @test: see EmitSettings.omitTestSections
+    omitTestSections?: boolean;
     parseCache?: ParseCache;
     // In folder mode, the story's other files: see AnalyseSettings.storyFiles
     storyFiles?: string[];
@@ -83,5 +85,5 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         };
     }
 
-    return emit(analysis, { globalJs: settings.globalJs, projectId: settings.projectId, panels: settings.panels, settings: settings.settings, persistent: settings.persistent });
+    return emit(analysis, { globalJs: settings.globalJs, omitTestSections: settings.omitTestSections, projectId: settings.projectId, panels: settings.panels, settings: settings.settings, persistent: settings.persistent });
 }

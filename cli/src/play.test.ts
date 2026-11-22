@@ -419,6 +419,31 @@ The end. {{restart text="Play again"}}`);
         expect(result.endings).toEqual({ end: 2 });
     });
 
+    test("doesn't count sections for testing as never visited, though --start can start at one", async () => {
+        const playable = await load(`[[start]]:
+@end
+The end.
+
+[[shortcuts]]:
+@test
+[[To the end with a medal]](with medal)
+
+[[with medal]]:
+@set medal
+[look]
+
+[look]:
+Shiny.
+{{goto "start"}}`);
+        const result = await playRandom(playable, { runs: 2, steps: 10, seed: 1 });
+        expect(result.sections).toEqual({ total: 1, visited: 1, notVisited: [] });
+        expect(result.passages).toEqual({ total: 0, visited: 0, notVisited: [] });
+
+        const played = await playStory(playable, { start: "shortcuts", choose: ["To the end with a medal"] });
+        expect(played.stopped).toBeUndefined();
+        expect(played.steps[played.steps.length - 1].went[0]).toEqual({ section: "with medal" });
+    });
+
     test("doesn't count a panel's passage as never visited", async () => {
         await fs.writeFile(path.join(dir, "squiffy.json"), JSON.stringify({
             version: 1, main: "story.squiffy", panels: [{ passage: "status", label: "Status" }],

@@ -39,6 +39,8 @@ export interface StartAt {
     section: string;
     // A passage in that section, shown after the section
     passage?: string;
+    // Attributes to set first, as @set would: "score = 5", "has_key", "not seen_intro"
+    set?: string[];
 }
 
 export interface SquiffyApi {
@@ -239,6 +241,8 @@ export interface PlayerSettingOption {
 export type SettingValue = boolean | string | number;
 
 export interface Section {
+    // @test: a section for testing the story, which the Start at menu lists first
+    test?: boolean;
     text?: string;
     clear?: boolean;
     // @music (#444): the file to play, or null to stop it

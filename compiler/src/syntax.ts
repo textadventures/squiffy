@@ -40,6 +40,7 @@ export type DiagnosticCode =
     | "squiffy/project-file"
     | "squiffy/unreachable-section"
     | "squiffy/dead-end"
+    | "squiffy/link-to-test-section"
     | "squiffy/sound-on-first-screen"
     | "squiffy/template-syntax"
     | "squiffy/unknown-name";
@@ -208,6 +209,14 @@ export interface EndNode {
     range: Range;
 }
 
+// @test: the section is for testing the story, such as one that sets attributes and goes to a
+// late scene, so nothing in the story needs to link to it. The published page's Start at menu
+// lists it first.
+export interface TestNode {
+    type: "test";
+    range: Range;
+}
+
 // @music file, @music stop, @sound file or @sound stop (#444)
 export interface SoundNode {
     type: "sound";
@@ -291,6 +300,7 @@ export type StatementNode =
     | ClearNode
     | RepeatNode
     | EndNode
+    | TestNode
     | AttributeNode
     | SoundNode
     | ClassNode

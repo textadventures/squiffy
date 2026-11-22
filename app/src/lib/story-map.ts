@@ -298,6 +298,7 @@ function tooltip(node: StoryMapNode, graph: StoryGraph): string {
     if (g.start) lines.push("The story starts here.");
     if (node.kind == "passage" && runsOnItsOwn(g.name)) lines.push("Runs on its own, without a link.");
     if (g.ending) lines.push("An ending (@end).");
+    if (g.test) lines.push("For testing the story (@test): players can't get here.");
     if (g.deadEnd && g.reachable) lines.push("! A dead end: no way out, and not an ending.");
     if (g.unknownExits) lines.push("? Can go somewhere that isn't known until the story is played: a link or {{goto}} worked out as it's played, or JavaScript.");
     const reach = reachNote(g, graph);

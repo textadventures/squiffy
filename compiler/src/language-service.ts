@@ -197,6 +197,7 @@ const DIRECTIVES: [string, string][] = [
     ["clear", "Clears the screen"],
     ["repeat", "Lets the player click this passage's links again"],
     ["end", "Marks this section as an ending"],
+    ["test", "Marks this section as one for testing the story, which nothing needs to link to"],
     ["music", "Plays music until it's changed, or stops it with @music stop"],
     ["sound", "Plays a sound once, or stops the sounds playing with @sound stop"],
     ["class", "Puts classes on the story while this section is shown, for its stylesheet"],
@@ -207,7 +208,7 @@ const DIRECTIVES: [string, string][] = [
 ];
 
 // The warnings with a quick fix that adds a squiffy-ignore comment
-const IGNORE_ACTION_CODES = new Set<Diagnostic["code"]>(["squiffy/unknown-name", "squiffy/sound-on-first-screen", "squiffy/unreachable-section"]);
+const IGNORE_ACTION_CODES = new Set<Diagnostic["code"]>(["squiffy/unknown-name", "squiffy/sound-on-first-screen", "squiffy/unreachable-section", "squiffy/link-to-test-section"]);
 
 const contains = (range: Range, pos: Position) =>
     comparePositions(range.start, pos) <= 0 && comparePositions(pos, range.end) <= 0;

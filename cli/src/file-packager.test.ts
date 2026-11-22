@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, afterEach } from "vitest";
-import { writeScriptFile, createPackageFiles } from "./file-packager.js";
+import { writeScriptFile, createPackageFiles, createTestingFiles } from "./file-packager.js";
 import { externalFiles } from "./external-files.js";
 import { findStory } from "squiffy-compiler/node";
 import fs from "fs/promises";
@@ -145,6 +145,42 @@ Content for zip test.
         // Verify zip file has content
         const zipStats = await fs.stat(path.join(OUTPUT_DIR, "output.zip"));
         expect(zipStats.size).toBeGreaterThan(0);
+    });
+
+    test("@test sections are left out of the files written, and in the ones --serve shows", async () => {
+        const write = async (project: object) => {
+            await fs.writeFile(path.join(TEST_DIR, "squiffy.json"), JSON.stringify({ version: 1, main: "story.squiffy", ...project }));
+            await fs.writeFile(path.join(TEST_DIR, "story.squiffy"), "[[hall]]:\n@end\nThe hall.\n\n[[shortcut]]:\n@test\n@set key\n{{goto \"hall\"}}\n");
+            return findStory(TEST_DIR);
+        };
+        const read = (file: string) => fs.readFile(path.join(OUTPUT_DIR, file), "utf8");
+
+        const story = await write({});
+        expect(await createPackageFiles(story, OUTPUT_DIR)).toBe(true);
+        expect(await read("story.js")).toContain("\"hall\"");
+        expect(await read("story.js")).not.toContain("shortcut");
+        expect(await read("index.html")).toContain("if (false && ");
+
+        const testing = await createTestingFiles(story);
+        expect(Object.keys(testing!).sort()).toEqual(["index.html", "story.js"]);
+        expect(testing!["story.js"]).toContain("\"shortcut\"");
+        expect(testing!["index.html"]).toContain("if (true && ");
+        // The files on disk are still the published ones
+        expect(await read("story.js")).not.toContain("shortcut");
+
+        // A story that anyone can start anywhere is published with them
+        const open = await write({ startAnywhere: true });
+        expect(await createPackageFiles(open, OUTPUT_DIR, { startAnywhere: open.startAnywhere })).toBe(true);
+        expect(await read("story.js")).toContain("\"shortcut\"");
+        expect(await read("index.html")).toContain("if (true && ");
+    });
+
+    test("a single-file page that --serve shows has the story with its @test sections in it", async () => {
+        const file = path.join(TEST_DIR, "one.squiffy");
+        await fs.writeFile(file, "[[hall]]:\nThe hall.\n\n[[shortcut]]:\n@test\nA shortcut.\n");
+        const testing = await createTestingFiles(file, { inlineHtml: true });
+        expect(Object.keys(testing!)).toEqual(["index.html"]);
+        expect(testing!["index.html"]).toContain("A shortcut.");
     });
 
     test("createPackageFiles handles compilation errors", async () => {

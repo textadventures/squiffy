@@ -23,6 +23,7 @@ async function packageExample(name: string): Promise<boolean> {
     return await createPackageFiles(story, path.join(outputDir, name), {
         backButton: story.backButton,
         saveButton: story.saveButton,
+        startAnywhere: story.startAnywhere,
         strings: story.strings,
     });
 }

@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
-import { compile, convertSetters, findV5Syntax, formatDiagnostic } from "squiffy-compiler";
+import { compile, convertSetters, findV5Syntax, formatDiagnostic, type CompileSuccess } from "squiffy-compiler";
 import type { StoryOnDisk } from "squiffy-compiler/node";
 import { externalFiles } from "./external-files.js";
 import { findAssets, findImportedFiles, findStylesheetAssets, getStoryText } from "./assets.js";
@@ -23,17 +23,23 @@ export const compileSettings = (story: StoryOnDisk, script: string) => ({
     persistent: story.persistent,
 });
 
-async function getCompileResult(story: StoryOnDisk) {
+// A story that's built to be published is compiled without its @test sections, which are for
+// testing it. The story that --serve shows is compiled with them (testing), and without
+// reporting its problems a second time.
+async function getCompileResult(story: StoryOnDisk, testing = false) {
     const inputFilename = story.mainFile;
     const inputFile = fs.readFileSync(inputFilename);
     const inputText = inputFile.toString();
+    if (testing) {
+        return compile({ ...compileSettings(story, inputText), globalJs: true });
+    }
     if (findV5Syntax(inputText).length > 0) {
         console.warn("This story looks like it uses Squiffy 5 text processor syntax. Run with --convert-v5 to convert it to Squiffy 6.");
     }
     else if (!story.expressions && convertSetters(inputText).converted > 0) {
         console.log("This story uses Squiffy 6's rules for @set and link setters. Run with --convert-v6 to convert it to Squiffy 7's.");
     }
-    const result = await compile({ ...compileSettings(story, inputText), globalJs: true });
+    const result = await compile({ ...compileSettings(story, inputText), globalJs: true, omitTestSections: !story.startAnywhere });
     for (const diagnostic of result.diagnostics) {
         if (diagnostic.severity == "error") {
             console.error(formatDiagnostic(diagnostic));
@@ -66,6 +72,31 @@ export const writeScriptFile = async(input: string | StoryOnDisk, outputPath: st
     fs.writeFileSync(path.join(outputPath, outputFilename), await result.getJs());
 };
 
+// Asset files (images etc.) referenced by the story, and its own stylesheets and scripts.
+// Assets the story's stylesheets and scripts refer to, such as fonts, are included too.
+const storyAssets = (inputFilename: string, result: CompileSuccess): Record<string, Uint8Array> => {
+    const imported = findImportedFiles(inputFilename, result);
+    const importedText = Object.values(imported).map(bytes => new TextDecoder().decode(bytes)).join("\n");
+    return {
+        ...findAssets(inputFilename, getStoryText(result) + "\n" + importedText),
+        ...findStylesheetAssets(inputFilename, result, imported),
+        ...imported,
+    };
+};
+
+// The story's page as --serve shows it, for the author to test: with its @test sections, and
+// able to start at any section. These are the files that differ from the ones createPackageFiles
+// writes, which the server sends in their place, so the files on disk stay as they'll be
+// published. Undefined if the story doesn't compile.
+export const createTestingFiles = async (input: string | StoryOnDisk, options: PackageOptions = {}): Promise<Record<string, string> | undefined> => {
+    const story = toStory(input);
+    const result = await getCompileResult(story, true);
+    if (!result.success) return undefined;
+    const assets = options.assets ?? storyAssets(story.mainFile, result);
+    const pkg = await createPackage(result, { ...options, createZip: false, startAnywhere: true, assets });
+    return Object.fromEntries(Object.entries(pkg.files).filter(([name]) => name == "index.html" || name == "story.js"));
+};
+
 export const createPackageFiles = async (input: string | StoryOnDisk, outputPath: string, options: PackageOptions = {}) => {
     const story = toStory(input);
     const inputFilename = story.mainFile;
@@ -78,18 +109,10 @@ export const createPackageFiles = async (input: string | StoryOnDisk, outputPath
         return false;
     }
 
-    // Asset files (images etc.) referenced by the story, and its own stylesheets and scripts. When the
-    // other package files are written to the story's folder, alongside these, they only need to be
-    // passed on for the zip or for inlining. When they're written somewhere else, such as a project's
-    // build folder, they're copied there too.
-    // Assets the story's stylesheets and scripts refer to, such as fonts, are included too.
-    const imported = findImportedFiles(inputFilename, result);
-    const importedText = Object.values(imported).map(bytes => new TextDecoder().decode(bytes)).join("\n");
-    const assets = options.assets ?? {
-        ...findAssets(inputFilename, getStoryText(result) + "\n" + importedText),
-        ...findStylesheetAssets(inputFilename, result, imported),
-        ...imported,
-    };
+    // When the other package files are written to the story's folder, alongside its assets, they
+    // only need to be passed on for the zip or for inlining. When they're written somewhere else,
+    // such as a project's build folder, they're copied there too.
+    const assets = options.assets ?? storyAssets(inputFilename, result);
     const assetPaths = Object.keys(assets);
     if (assetPaths.length > 0 && (options.createZip || options.inlineHtml)) {
         console.log(`Including asset${assetPaths.length == 1 ? "" : "s"}: ${assetPaths.join(", ")}`);

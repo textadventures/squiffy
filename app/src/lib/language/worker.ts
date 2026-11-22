@@ -16,12 +16,12 @@ async function exportStory(kind: ExportKind, assets: Record<string, Uint8Array>)
     if (errors) return { success: false, errors };
     const { projectFile } = await current().getProjectInfo();
     // A published story declares a global, which the packager's page loads with a <script>
-    const result = emit(analysis, { globalJs: true, projectId: projectFile?.id, panels: projectFile?.panels, settings: projectFile?.settings, persistent: projectFile?.persistent });
+    const result = emit(analysis, { globalJs: true, omitTestSections: !projectFile?.startAnywhere, projectId: projectFile?.id, panels: projectFile?.panels, settings: projectFile?.settings, persistent: projectFile?.persistent });
     if (kind === "js") return { success: true, files: { "story.js": await result.getJs() } };
     const { createPackage } = await import("@textadventures/squiffy-packager");
     const pkg = await createPackage(result, {
         createZip: kind === "zip", inlineHtml: kind === "html", assets, backButton: projectFile?.backButton,
-        saveButton: projectFile?.saveButton, strings: projectFile?.strings,
+        saveButton: projectFile?.saveButton, startAnywhere: projectFile?.startAnywhere, strings: projectFile?.strings,
     });
     return { success: true, files: pkg.files, zip: pkg.zip };
 }

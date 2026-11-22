@@ -26,6 +26,12 @@ describe("parseProjectFile", () => {
         });
     });
 
+    test("startAnywhere is kept when it's given", () => {
+        expect(parseProjectFile("{ \"version\": 1, \"main\": \"a.squiffy\", \"startAnywhere\": true }")).toEqual({
+            success: true, project: { version: 1, main: "a.squiffy", exclude: [], startAnywhere: true },
+        });
+    });
+
     test("id and saveButton are kept when they're given", () => {
         expect(parseProjectFile("{ \"version\": 1, \"id\": \" abc \", \"main\": \"a.squiffy\", \"saveButton\": false }")).toEqual({
             success: true, project: { version: 1, id: "abc", main: "a.squiffy", exclude: [], saveButton: false },
@@ -91,6 +97,7 @@ describe("parseProjectFile", () => {
         ["main not a .squiffy file", "{ \"version\": 1, \"main\": \"a.txt\" }", "should be a .squiffy file"],
         ["exclude not a list", "{ \"version\": 1, \"main\": \"a.squiffy\", \"exclude\": \"x\" }", "should be a list"],
         ["backButton not true or false", "{ \"version\": 1, \"main\": \"a.squiffy\", \"backButton\": \"no\" }", "should be true or false"],
+        ["startAnywhere not true or false", "{ \"version\": 1, \"main\": \"a.squiffy\", \"startAnywhere\": \"yes\" }", "should be true or false"],
         ["saveButton not true or false", "{ \"version\": 1, \"main\": \"a.squiffy\", \"saveButton\": 0 }", "should be true or false"],
         ["an id that isn't text", "{ \"version\": 1, \"main\": \"a.squiffy\", \"id\": 5 }", "\"id\" should be text"],
         ["an empty id", "{ \"version\": 1, \"main\": \"a.squiffy\", \"id\": \" \" }", "\"id\" should be text"],

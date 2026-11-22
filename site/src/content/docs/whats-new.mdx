@@ -16,7 +16,7 @@ Your Squiffy 6 stories still work, and the editor converts them for you: see [Co
 - **Works beside other tools.** When another program changes your story's files, such as a text editor, git or an [AI agent](/writing-with-ai/), the editor [picks up the changes](/editor/#changes-made-outside-the-editor).
 - **A [story map](/story-map/)** shows your sections, passages and links as a map you can move around, drawn from your script as you type. Problems show on it too, as does the way you went through the story when you test it. You can add links, sections and passages from the map, and rename or delete them. With the map full screen, you can write each section beside it, as you would in Twine.
 - **An outline** of your sections and passages, with a search box, replaces the section and passage dropdowns.
-- **Run from any section**, so you can test the part you're working on without playing through from the start. As you click through the story, the script follows.
+- **Run from any section**, so you can [test the part you're working on](/testing/#starting-at-a-later-section) without playing through from the start. As you click through the story, the script follows.
 - **Stories in your browser**, without choosing a file, in every browser. Download one as a `.zip` to keep a copy.
 - **Folders.** In Chrome and Edge, the editor can open a story's folder on your computer, and remembers the folders you've opened.
 - **A dark theme**, and a text size setting. The preview follows it, and has its own light/dark button for checking your story's styles in both.
@@ -27,31 +27,48 @@ Your Squiffy 6 stories still work, and the editor converts them for you: see [Co
 
 ## The language
 
+### Values and calculations
+
 - **Calculations.** Work out values with `+`, `-`, `*`, `/` and `%` in conditions, in `{{set}}`, `{{inc}}` and `{{dec}}`, and in the new `{{= ...}}`, which displays the result: `{{set "gold" gold + price * 2}}`, `{{#if gold >= price * 2}}`, or `That costs {{= price * 2}} gold.` There are matching [maths helpers](/helpers-reference/#maths-helpers) too: `add`, `sub`, `mul`, `div` and `mod`. See [Calculating values](/attributes/#calculating-values).
 - **Helpers for numbers and text.** Round numbers with `round`, `floor` and `ceil`, find the smallest or largest with `min` and `max`, and change text with `upper`, `lower` and `capitalise`: `{{= (round (gold / 3))}}` or `{{upper name}}`. `contains` checks what's in an array or some text, as in `{{#if bag contains "key"}}` or `{{#if name contains "Mac"}}`, and `.length` counts the items or letters. See [Maths helpers](/helpers-reference/#maths-helpers) and [Text helpers](/helpers-reference/#text-helpers).
-- **More for arrays.** Write an array as a list with `join`, as in `You have {{join bag ", " " and "}}.`, put it in order with `sort` or a random order with `shuffle`, and take part of it with `slice`, `first` and `last`. `indexof` and `count` find and count items, and `range` makes a list of numbers, so `{{#each (range 1 lives)}}♥{{/each}}` repeats something a number of times. See [Joining, sorting and more](/helpers-reference/#joining-sorting-and-more).
 - **Choosing between two values.** `hp > 0 ? "alive" : "dead"` is one value or the other, so you can use it in `@set` and inside a calculation, where `{{#if}}` can't go: `You have {{= gold}} {{= gold = 1 ? "coin" : "coins"}}.` See [Choosing between two values](/helpers-reference/#choosing-between-two-values).
 - **`@set` and link assignments work like `{{#if}}`.** Text goes in quotes and attributes don't need an `@`, so a value can be a calculation or a comparison: `@set weapon = "sword"`, `@set gold = gold + price * 2`, `@set rich = gold > 100`, or `[[Buy]](shop, gold -= price)`. See [Setting attributes](/attributes/#setting-attributes).
+- **Objects.** An attribute can hold an [object](/attributes/#objects), a set of named values, such as `@set hero = { hp: 10, name: "Ann" }`, with `{{hero.hp}}`, `@set hero.hp += 5` and `{{#if hero.hp > 5}}` for the values inside it. Arrays can hold objects, and you can write arrays in square brackets and pick out an item with another attribute: `{{= party[leader].name}}`.
+- **More for arrays.** Write an array as a list with `join`, as in `You have {{join bag ", " " and "}}.`, put it in order with `sort` or a random order with `shuffle`, and take part of it with `slice`, `first` and `last`. `indexof` and `count` find and count items, and `range` makes a list of numbers, so `{{#each (range 1 lives)}}♥{{/each}}` repeats something a number of times. See [Joining, sorting and more](/helpers-reference/#joining-sorting-and-more).
+- **Loops with links.** Inside [`{{#each}}`](/attributes/#going-through-an-array), you can use the story's attributes, and a link can use the item, so you can make a link for each thing in an array: `{{#each inventory}}[[Drop the {{this}}]](drop, item = "{{this}}"){{/each}}`. A link's text can show attributes anywhere, as in `[[Pay {{price}} gold]](shop)`.
+
+### Sections, passages and links
+
 - **Go to another section from your text.** [`{{goto "section"}}`](/basic-concepts/#go-to-another-section) moves the story on without a link, for example `{{#if health <= 0}}{{goto "death"}}{{/if}}`, and `{{goto "darkness" after=3000}}` does it after a delay, which can be worked out as the story runs: `after=patience * 1000` or `after="3s"`. [`{{#every 1000}}`](/dynamic-text/#repeating-text) shows some text again and again, for a countdown or a clock, until a `{{stop}}`.
 - **Reusable text with parameters.** [`{{embed}}`](/basic-concepts/#parameters) can pass values to the section it shows, so one section can be used all over the story with different words: `{{embed "say" who="Ann" line="Hello!"}}`, which the section shows as `{{who}}` and `{{line}}`. Parameters don't change the story's attributes, and only last while the embed is shown. `{{#embed "speech"}}Halt!{{/embed}}` [wraps some text](/basic-concepts/#wrapping-text), which the section shows with `{{content}}`. When you import a Twine story, its widgets and macros become these.
-- **Visit and turn counts.** [`{{visits "cave"}}`](/attributes/#the-visits-helper) says how many times the player has been to a section or passage, for example `{{#if (visits "cave") > 2}}`, and the [`turns` attribute](/attributes/#counting-turns) counts the links clicked in the whole story.
-- **Text for the first time only.** [`{{#once}}`](/dynamic-text/#the-first-time) shows its text the first time it's shown, and something else, or nothing, after that: `{{#once}}A bat flies out!{{else}}It's quiet now.{{/once}}`.
-- **Where the player came from.** The [`previous_section` and `previous` attributes](/attributes/#where-the-player-came-from) say which section, and which section or passage, the player saw before this one, so a section can begin differently depending on how they got there: `{{#if previous_section = "river"}}`.
 - **Endings.** Mark the sections where your story ends with [`@end`](/basic-concepts/#endings), and the editor won't report them as dead ends.
-- **Listing passages, and tagging them.** [`(passages)`](/basic-concepts/#listing-passages-and-tagging-them) lists a section's passages, so the story can choose among them without writing their names out again, and [`@tag passenger`](/basic-concepts/#listing-passages-and-tagging-them) tags a passage or section, so `(passages tagged="passenger")` lists only those. `(sections)` lists the story's sections, and `(tags "name")` reads a passage's tags. A Twine story's passage tags become `@tag` when you import it.
-- **Restart and save from the story.** [`{{restart}}`](/basic-concepts/#restarting-and-saving-from-the-story) is a link that restarts the story, for "Play again" at an ending, and `{{saves}}` opens the Saved games dialog. Restarting asks the player first in a dialog that matches the page, rather than the browser's own.
-- **Player settings.** List [settings](/buttons-panels-settings/#player-settings) in `squiffy.json`, such as text size or content warnings, and the player can change them at any time from a Settings button or a [`{{settings}}`](/basic-concepts/#restarting-and-saving-from-the-story) link. The story reads them as `settings.warnings`, and they put classes on the story for its stylesheet.
-- **Attributes that last between playthroughs.** List attributes under [`persistent`](/attributes/#attributes-that-last-between-playthroughs) in `squiffy.json`, such as the endings the player has found, and restarting, going back and loading a saved game leave them as they are. `{{forget}}` clears them. A SugarCube story's `memorize()` and `recall()` become these when you import it.
 - **Passages you can click again.** Add [`@repeat`](/basic-concepts/#passages-you-can-click-again) to a passage, and its links stay clickable, for a clue the player might want to read again, or a character who says something different each time.
 - **A passage after every click.** [`[@after]:`](/basic-concepts/#running-a-passage-after-every-click) runs after any passage link in its section is clicked, for something that happens every time, such as time passing. In the master section, it runs after every passage in the story.
 - **Turning off passage links.** [`{{deactivate "name"}}`](/basic-concepts/#turning-off-passage-links) turns off the links to a passage, so one choice can rule out another, and a passage with `@repeat` can turn itself off when it's done.
-- **Loops with links.** Inside [`{{#each}}`](/attributes/#going-through-an-array), you can use the story's attributes, and a link can use the item, so you can make a link for each thing in an array: `{{#each inventory}}[[Drop the {{this}}]](drop, item = "{{this}}"){{/each}}`. A link's text can show attributes anywhere, as in `[[Pay {{price}} gold]](shop)`.
+- **Listing passages, and tagging them.** [`(passages)`](/basic-concepts/#listing-passages-and-tagging-them) lists a section's passages, so the story can choose among them without writing their names out again, and [`@tag passenger`](/basic-concepts/#listing-passages-and-tagging-them) tags a passage or section, so `(passages tagged="passenger")` lists only those. `(sections)` lists the story's sections, and `(tags "name")` reads a passage's tags. A Twine story's passage tags become `@tag` when you import it.
 - **Text boxes that go on when Enter is pressed.** `<input data-attribute="name" data-section="next">` goes to a section when the player presses Enter, and `data-passage` shows a passage. See [Going on when Enter is pressed](/player-input/#going-on-when-enter-is-pressed).
-- **Objects.** An attribute can hold an [object](/attributes/#objects), a set of named values, such as `@set hero = { hp: 10, name: "Ann" }`, with `{{hero.hp}}`, `@set hero.hp += 5` and `{{#if hero.hp > 5}}` for the values inside it. Arrays can hold objects, and you can write arrays in square brackets and pick out an item with another attribute: `{{= party[leader].name}}`.
+
+### Remembering what's happened
+
+- **Visit and turn counts.** [`{{visits "cave"}}`](/attributes/#the-visits-helper) says how many times the player has been to a section or passage, for example `{{#if (visits "cave") > 2}}`, and the [`turns` attribute](/attributes/#counting-turns) counts the links clicked in the whole story.
+- **Where the player came from.** The [`previous_section` and `previous` attributes](/attributes/#where-the-player-came-from) say which section, and which section or passage, the player saw before this one, so a section can begin differently depending on how they got there: `{{#if previous_section = "river"}}`.
+- **Text for the first time only.** [`{{#once}}`](/dynamic-text/#the-first-time) shows its text the first time it's shown, and something else, or nothing, after that: `{{#once}}A bat flies out!{{else}}It's quiet now.{{/once}}`.
+- **Attributes that last between playthroughs.** List attributes under [`persistent`](/attributes/#attributes-that-last-between-playthroughs) in `squiffy.json`, such as the endings the player has found, and restarting, going back and loading a saved game leave them as they are. `{{forget}}` clears them. A SugarCube story's `memorize()` and `recall()` become these when you import it.
+
+### For the player
+
+- **Restart and save from the story.** [`{{restart}}`](/basic-concepts/#restarting-and-saving-from-the-story) is a link that restarts the story, for "Play again" at an ending, and `{{saves}}` opens the Saved games dialog. Restarting asks the player first in a dialog that matches the page, rather than the browser's own.
+- **Player settings.** List [settings](/buttons-panels-settings/#player-settings) in `squiffy.json`, such as text size or content warnings, and the player can change them at any time from a Settings button or a [`{{settings}}`](/basic-concepts/#restarting-and-saving-from-the-story) link. The story reads them as `settings.warnings`, and they put classes on the story for its stylesheet.
+
+### Sound and looks
+
 - **Music and sound.** [`@music`](/images-and-files/#music-and-sound) plays music that keeps playing from one section to the next until it's changed, fading from one track to the next, and `@sound` plays a sound effect, which `@sound stop` stops. The Back button and saved games put the music back as it was, and players get a mute button.
 - **Changing the look for a scene.** [`@class dark`](/styling/#changing-the-look-for-a-scene) puts a class on the story while the player is in a section, so your CSS can make a scene dark, red or anything else, and it changes back when they move on. `{{addclass}}`, `{{removeclass}}` and `{{toggleclass}}` change classes from the text, and `{{#if (hasclass "dark")}}` checks them. The Back button and saved games put them back as they were.
 - **Text effects.** [`{{#style "shudder"}}`](/dynamic-text/#text-effects) makes some text shudder, blur, sway, flicker or fade in and out, and `{{#style "warning"}}` gives it a class for your [CSS](/styling/#styling-some-text).
 - **Transitions.** [`@transition fade`](/dynamic-text/#transitions) makes a section or passage fade in as it appears, and `slide-up`, `zoom`, `blur` and others make it slide, grow or come into focus. With `@clear`, [`@leave fade`](/dynamic-text/#when-the-screen-is-cleared) fades the old text out first. In the master section, they're for the whole story, and your CSS can add your own.
+
+### JavaScript
+
 - **JavaScript after the text.** [`squiffy.ui.afterWrite`](/javascript/#running-javascript-after-the-text) runs some JavaScript once a section or passage's text is on the page, with its `{{...}}` worked out.
 
 ## Published stories
@@ -63,12 +80,20 @@ Your Squiffy 6 stories still work, and the editor converts them for you: see [Co
 - **Buttons in your language.** The buttons above the story are icons, and their tooltips can be [in your story's language](/buttons-panels-settings/#the-pages-text-in-another-language).
 - **A fresher look.** The default style has more space between lines, softer colours, a modern serif font, and text sizes that follow the reader's browser setting. Its colours, fonts and page width are [CSS variables](/styling/#common-changes), so they're easier to change, and a stylesheet you add in the editor starts with the most common changes, ready to uncomment.
 
-## The command-line tool
+## Testing your story
 
-- **Check a story** with [`--check`](/cli/#checking-a-story), which finds the problems the editor shows, such as links to missing sections, sections the player can't reach and dead ends, without building anything.
-- **Play a story as text** with [`--play`](/cli/#playing-a-story-from-the-command-line), clicking links with `--choose` and filling in text boxes with `--input`, and carry on from where you left off with `--save`, or keep playing in one go with `--interactive`.
+See [Testing your story](/testing/) for how these fit together.
+
+- **Problems as you type.** The editor underlines links to missing sections, sections the player can't reach and dead ends, and [`--check`](/cli/#checking-a-story) finds the same problems from the command line, without building anything.
+- **Start at a later section.** Test a late scene without playing up to it: the flag button above the editor's preview [lists your sections](/testing/#starting-at-a-later-section) to start at, as does a story served by the command-line tool's `--serve`, which also takes `?start=` on its address.
+- **Sections that set up a scene.** Mark a section with [`@test`](/testing/#setting-up-a-scene), and it can set the attributes a scene needs and go on to it, without anything in the story linking to it. It's left out when the story is published.
 - **Play at random** with [`--random`](/cli/#playing-at-random), which plays a story many times to find errors and dead ends, and the sections it never got to, with the options that get back to each problem.
 - **Playthrough tests.** Record a way through your story with [`--play --record`](/cli/#testing-a-story), and play it again with `--test` after changing the story, to check it still goes the same way, in a CI workflow too.
+
+## The command-line tool
+
+- **Play a story as text** with [`--play`](/cli/#playing-a-story-from-the-command-line), clicking links with `--choose` and filling in text boxes with `--input`, and carry on from where you left off with `--save`, or keep playing in one go with `--interactive`.
+- **Check and test a story** with `--check`, `--random` and `--test`: see [Testing your story](#testing-your-story) above.
 - **For AI agents.** Add `--json` to any of these for a result that a program or an AI agent, such as Claude Code, can read, so an agent helping you write a story can check it and play it. See [For AI agents](/cli/#for-ai-agents).
 
 ## Coming from an earlier version

@@ -66,6 +66,7 @@ Directives go on a line of their own. Those that change attributes run when thei
 | `@clear` | Clears the screen before showing this section or passage | [Clear the screen](/basic-concepts/#clear-the-screen) |
 | `@repeat` | Lets the player click this passage's links again | [Passages you can click again](/basic-concepts/#passages-you-can-click-again) |
 | `@end` | Marks the section as one of the story's endings | [Endings](/basic-concepts/#endings) |
+| `@test` | Marks the section as one for testing the story, which nothing needs to link to. It's left out of the published story | [Setting up a scene](/testing/#setting-up-a-scene) |
 | `@class dark cave` | Puts classes on the story while this section is the current one, for your CSS | [Changing the look for a scene](/styling/#changing-the-look-for-a-scene) |
 | `@tag passenger settled` | Tags this section or passage, so the story can list them with `(passages tagged="passenger")` | [Listing passages, and tagging them](/basic-concepts/#listing-passages-and-tagging-them) |
 | `@transition fade`, `@transition slide-up 1s` | How this section or passage appears, and how long that takes | [Transitions](/dynamic-text/#transitions) |
@@ -147,6 +148,7 @@ The project file, which makes a folder of `.squiffy` files one story. See [Stori
 | `"id": "…"` | Identifies the story, so a saved game can only be loaded into the story it came from. See [Saved games](/buttons-panels-settings/#saved-games) |
 | `"saveButton": false` | Leaves out the Save button and its Saved games dialog. See [Saved games](/buttons-panels-settings/#saved-games) |
 | `"backButton": false` | Leaves out the Back button for players. See [The Back button](/buttons-panels-settings/#the-back-button) |
+| `"startAnywhere": true` | Lets anyone start the published story at any section, and keeps its `@test` sections, for a build that's for testing. See [When you publish](/testing/#when-you-publish) |
 | `"settings"` | Options the player can change at any time, such as text size or content warnings, from a Settings button. See [Player settings](/buttons-panels-settings/#player-settings) |
 | `"panels"` | Passages that are always to hand, such as the player's stats or inventory: beside the story, or in a dialog from a button in the header. See [Panels](/buttons-panels-settings/#panels) |
 | `"strings"` | The text of the page's buttons, for a story in another language. See [The page's text in another language](/buttons-panels-settings/#the-pages-text-in-another-language) |

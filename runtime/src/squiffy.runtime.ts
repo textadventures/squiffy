@@ -20,6 +20,7 @@ import { createSavesDialog, type SavesDialog } from "./savesDialog.js";
 import { createSettingsDialog, type SettingsDialog } from "./settingsDialog.js";
 import { PlayerSettings } from "./playerSettings.js";
 
+export type { StartAt } from "./types.js";
 export type { SquiffyApi, SquiffyScriptApi, SquiffyScriptEvent, SavedGame, LoadSaveResult, PlayerSetting, PlayerSettingOption, SettingValue } from "./types.js";
 export type { SquiffyEventHandler, SquiffyEventMap } from "./events.js";
 export { createSavesDialog, formatSaveTime, SAVES_STRINGS, SAVE_FILE_EXTENSION } from "./savesDialog.js";
@@ -30,6 +31,8 @@ export type { SettingsDialog, SettingsDialogOptions } from "./settingsDialog.js"
 export type { ConfirmDialogOptions } from "./confirmDialog.js";
 export { indexedDbSaveSlots, memorySaveSlots } from "./saveSlots.js";
 export { createPanels } from "./panels.js";
+export { createStartMenu, startAtFromAddress, addressForStart, START_MENU_STRINGS } from "./startMenu.js";
+export type { StartMenu, StartMenuOptions, AddressStart } from "./startMenu.js";
 export type { Panels, PanelsOptions } from "./panels.js";
 export { PANEL_ICONS } from "./types.js";
 export type { Panel, PanelIcon } from "./types.js";
@@ -188,6 +191,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         if (startAt && startAt.section in story.sections) {
             // Start somewhere else in a fresh story, e.g. from the section being edited
             runUiJs();
+            if (startAt.set) await processAttributes(startAt.set);
             await go(startAt.section);
             if (startAt.passage !== undefined && get("_section") == startAt.section) {
                 await showPassage(startAt.passage);

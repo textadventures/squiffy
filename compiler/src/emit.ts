@@ -31,6 +31,8 @@ interface OutputStory {
 }
 
 interface OutputSection {
+    // @test: a section for testing the story, which the Start at menu lists first
+    test?: boolean;
     text?: string;
     clear?: boolean;
     // @music (#444): the file to play, or null to stop it
@@ -93,6 +95,9 @@ export interface EmitSettings {
     settings?: PlayerSetting[];
     // squiffy.json's "persistent", if it has any: see ProjectFile.persistent
     persistent?: string[];
+    // Leave out the sections marked with @test, which are for testing the story: for a story
+    // that's being published, unless it's one that can be started anywhere
+    omitTestSections?: boolean;
 }
 
 export interface CompileSuccess {
@@ -171,6 +176,8 @@ export function emit(analysis: Analysis, settings: EmitSettings = {}): CompileSu
     const audio = new Set<string>();
     for (const sectionName of Object.keys(story.sections)) {
         const section = story.sections[sectionName];
+        // The start section is always kept, or there'd be no story
+        if (settings.omitTestSections && section.test && sectionName != output.story.start) continue;
         const outputSection: OutputSection = {};
         output.story.sections[sectionName] = outputSection;
 
@@ -178,6 +185,7 @@ export function emit(analysis: Analysis, settings: EmitSettings = {}): CompileSu
             outputSection.clear = true;
         }
 
+        if (section.test) outputSection.test = true;
         outputSection.text = section.output;
         addSounds(outputSection, section, audio);
         if (section.classes.length) outputSection.classes = section.classes;
