@@ -156,6 +156,7 @@ export function print(e: Expr, options: PrintOptions = {}): string {
         case "call":
             // .indexOf() that isn't checking whether something is there (see sugarcube.ts) (#447)
             if (e.fn == "__indexof") return print({ ...e, fn: "indexof" }, options);
+            if (e.fn == "__keys") throw new Unconvertible("Object.keys() and the like, except to count an object's values with .length");
             return `(${e.fn}${e.args.map(a => " " + printArgument(a, options)).join("")})`;
         case "neg": {
             const inner = print(e.e, options);

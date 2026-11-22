@@ -255,6 +255,7 @@ See [Calculations](/helpers-reference/#calculations), [Maths helpers](/helpers-r
 | Change a value in it | `(set: $hero's hp to it + 5)` | `<<set $hero.hp += 5>>` | `@set hero.hp += 5` |
 | Use a name in a variable | `$hero's ($stat)` | `$hero[$stat]` | `hero[stat]` |
 | An array of objects | `$party's 1st's name` | `$party[0].name` | `{{= party[0].name}}` |
+| Count the values in it | `$hero's length` | `Object.keys($hero).length` | `(length "hero")` |
 
 See [Objects](/attributes/#objects).
 

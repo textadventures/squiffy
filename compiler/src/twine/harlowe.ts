@@ -848,11 +848,19 @@ class Writer {
 
     nodes(nodes: Node[], state: EmitState): string {
         let out = "";
+        // The conditions of the last if chain here, while only text, links and comments have
+        // come after it. Harlowe's (else:) goes by the most recent (if:)'s hook, so one can come
+        // after other text, which is shown either way: (if: $a)[A] text (else:)[B].
+        let previous: Expr[] | null = null;
         for (let i = 0; i < nodes.length; i++) {
             const node = nodes[i];
-            if (node.t == "macro" && (node.name == "if" || node.name == "unless")) {
-                // An if chain: (if:)[...](else-if:)[...](else:)[...], with any whitespace between
+            const continues: boolean = !!previous && node.t == "macro" && (node.name == "elseif" || node.name == "else");
+            if (node.t == "macro" && (node.name == "if" || node.name == "unless" || continues)) {
+                // An if chain: (if:)[...](else-if:)[...](else:)[...], with any whitespace or
+                // comments between
+                const prior: Expr[] = continues ? previous! : [];
                 const chain: { cond: Expr | null, hook?: Hook, raw: string }[] = [];
+                const comments: string[] = [];
                 let conditionError: string | null = null;
                 const condition = (m: Macro): Expr | null => {
                     try {
@@ -865,29 +873,45 @@ class Writer {
                         return null;
                     }
                 };
-                chain.push({ cond: condition(node), hook: foldChangers(node), raw: node.raw });
+                chain.push({ cond: node.name == "else" ? null : condition(node), hook: foldChangers(node), raw: node.raw });
                 let j = i + 1;
-                for (;;) {
+                while (node.name != "else") {
                     let k = j;
-                    while (k < nodes.length && nodes[k].t == "text" && (nodes[k] as { s: string }).s.trim() == "") k++;
+                    const between: string[] = [];
+                    while (k < nodes.length && (isBlank(nodes[k]) || isComment(nodes[k]))) {
+                        if (isComment(nodes[k])) between.push((nodes[k] as { s: string }).s);
+                        k++;
+                    }
                     const next = nodes[k];
                     if (next?.t != "macro" || (next.name != "elseif" && next.name != "else")) break;
+                    comments.push(...between);
                     chain.push({ cond: next.name == "else" ? null : condition(next), hook: foldChangers(next), raw: next.raw });
                     j = k + 1;
                     if (next.name == "else") break;
                 }
                 i = j - 1;
                 state.leading = false;
+                out += comments.join("");
+                previous = null;
                 if (conditionError) {
                     out += this.ctx.unconvertible(chain.map(c => c.raw).join(""), `This condition couldn't be converted: ${conditionError}. Its hooks have been left out.`);
                     continue;
+                }
+                // An (else:) is the only branch without a condition, and nothing carries on after it
+                const conds = chain.map(c => c.cond);
+                if (prior.length) {
+                    // Carrying on an earlier chain: only if none of its conditions were true
+                    const none: Expr = { k: "not", e: prior.reduce((l, r) => ({ k: "bin", op: "or", l, r })) };
+                    chain[0].cond = conds[0] ? { k: "bin", op: "and", l: none, r: conds[0] } : none;
                 }
                 out += chain.map((c, n) => {
                     const tag = n == 0 ? `{{#if ${print(c.cond!)}}}` : c.cond ? `{{else if ${print(c.cond)}}}` : "{{else}}";
                     return tag + (c.hook ? this.hookContent(c.hook, state) : "");
                 }).join("") + "{{/if}}";
+                if (!conds.includes(null)) previous = [...prior, ...conds as Expr[]];
                 continue;
             }
+            if (node.t != "text" && node.t != "raw" && node.t != "link") previous = null;
             if (node.t == "macro" && (node.name == "elseif" || node.name == "else")) {
                 // (else:) after a hook that isn't an (if:), e.g. after a (link:)
                 state.leading = false;
@@ -1506,6 +1530,11 @@ class Writer {
             case "newgroup":
                 throw new Unconvertible("audio groups");
             default:
+                if (printedMacros.has(name) && !m.hook) {
+                    // A value on its own in the text is printed: (round: $money)
+                    state.leading = false;
+                    return display(this.expr.macro(name, m.raw));
+                }
                 throw new Unconvertible(`the (${m.raw.substring(1, m.raw.indexOf(":"))}:) macro, which Squiffy has no equivalent for`);
         }
     }
@@ -1992,11 +2021,27 @@ function harloweStorylets(ctx: PassageContext): { section: string, condition: Ex
 }
 
 // (click: ?page) or (click: ?passage), with a hook
+function isBlank(node: Node): boolean {
+    return node.t == "text" && node.s.trim() == "";
+}
+
+// An HTML comment, <!-- ... -->, which the parser keeps as it is
+function isComment(node: Node): boolean {
+    return node.t == "raw" && node.s.startsWith("<!--");
+}
+
 function isPageClick(node: Node | undefined): boolean {
     return node?.t == "macro" && node.name == "click" && !!node.hook && /^\s*\?(page|passage)\s*$/i.test(node.args);
 }
 
 // Macros whose hooks are converted with them, as well as the changers
+// Macros that give a value, which Harlowe prints when one's on its own in the text. Lists and
+// datamaps aren't here, as Harlowe prints those its own way.
+const printedMacros = new Set([
+    "str", "string", "text", "num", "number", "cond", "lowercase", "uppercase", "upperfirst", "round", "floor", "ceil",
+    "abs", "min", "max", "joined", "count", "visited",
+]);
+
 const hookMacros = new Set(["linkreplace", "linkrepeat", "linkrerun", "linkreveal", "linkrevealgoto", "click", "clickreplace", "clickappend", "clickprepend"]);
 
 const clickMacros = new Set(["click", "clickreplace", "clickappend", "clickprepend", "clickgoto", "mouseover", "mouseout", "mouseovergoto"]);

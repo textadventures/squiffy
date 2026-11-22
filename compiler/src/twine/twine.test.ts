@@ -349,6 +349,20 @@ describe("Harlowe", () => {
             "{{#if a = 1 or a = 2}}One or two{{else if b != \"x\"}}Not x{{else}}Else{{/if}} {{#if not (visits \"Start\") > 1}}First time{{/if}}");
     });
 
+    test("comments and text between an (if:)'s hook and (else:)", async () => {
+        const { script, result } = await convert("Harlowe", ":: Start\n(if: $a)[A]\n<!-- b -->\n(else-if: $b)[B] [[Next]] ](else-if: $c)[C](else:)[D] (set: $a to 1)(else:)[E]\n\n:: Next\nNext.");
+        expect(section(script, "Start")).toBe(
+            "<!-- b -->{{#if a}}A{{else if b}}B{{/if}} [[Next]] &#93;{{#if not (a or b) and c}}C{{else}}D{{/if}} {{set \"a\" 1}}" +
+            "{{!-- Twine: (else:) --}}E");
+        expect(result.problems.map(p => p.reason)).toEqual(["(else:) only converts after (if:) or (unless:)."]);
+    });
+
+    test("a value macro on its own in the text is printed", async () => {
+        const { script, result } = await convert("Harlowe", ":: Start\n$(round: $money) (uppercase: $name) (max: $a, 3) (str: $n)");
+        expect(section(script, "Start")).toBe("${{round money}} {{upper name}} {{max a 3}} {{n}}");
+        expect(result.problems).toEqual([]);
+    });
+
     test("printing, either and random", async () => {
         const { script } = await convert("Harlowe", ":: Start\n$name and _temp. (print: $gold * 2) (either: \"a\", \"b\") (random: 1, 3)");
         expect(section(script, "Start")).toBe(
@@ -665,6 +679,15 @@ Setting.addToggle("bad name", { label: "Bad" });`;
         expect(section(script, "Start")).toBe("[[Buy]](Shop, gold -= 5) [[Sell]](Shop, gold += 5) [[Leave]](Shop)");
     });
 
+    test("link text that isn't quoted", async () => {
+        const { script, result } = await convert("SugarCube", ":: Start\n<<linkreplace Hint>>Look up.<</linkreplace>> <<link Go $x>><</link>>");
+        expect(section(script, "Start")).toBe(`{{#label "hint"}}[Hint](Hint){{/label}} {{section x text="Go"}}
+
+[Hint]:
+{{#replace "hint"}}Look up.{{/replace}}`);
+        expect(result.problems).toEqual([]);
+    });
+
     test("<<link>> that stays in the passage, and <<linkreplace>>", async () => {
         const { script } = await convert("SugarCube", ":: Start\nThe box is <span id=\"box\">shut</span>. <<link \"Open\">><<replace \"#box\">>open<</replace>><</link>> <<linkreplace \"Look\">>Nothing.<</linkreplace>>");
         expect(section(script, "Start")).toBe(`The box is {{#label "box"}}shut{{/label}}. [Open](Open) {{#label "look"}}[Look](Look){{/label}}
@@ -846,6 +869,37 @@ Setting.addToggle("bad name", { label: "Bad" });`;
             "This couldn't be converted: <<masteraudio>>, which changes all the story's sound at once, except to stop it.",
             "This couldn't be converted: setup.thing().",
         ]);
+    });
+
+    test("<<do>> and <<redo>>", async () => {
+        const { script, result } = await convert("SugarCube", [
+            ":: Start",
+            "<<set $face to \"Smile\">><<do>><<include $face>><</do>> <<do>>$a $b<</do>>",
+            "[[Next]]",
+            "",
+            ":: Next",
+            "<<set $face to \"Frown\">><<redo>>Oh.",
+            "",
+            ":: Smile",
+            ":)",
+            "",
+            ":: Frown",
+            ":(",
+        ].join("\n"));
+        expect(section(script, "Start")).toBe("@set face = \"Smile\"\n{{live \"face\" section=\"do face\"}} {{a}} {{b}}<br>\n[[Next]]");
+        expect(section(script, "do face")).toBe("{{embed face}}");
+        expect(section(script, "Next")).toBe("@set face = \"Frown\"\nOh.");
+        expect(result.problems.map(p => p.text)).toEqual(["<<do>>$a $b<</do>>"]);
+    });
+
+    test("counting an object's values with Object.keys(x).length", async () => {
+        const { script, result } = await convert("SugarCube", [
+            ":: Start",
+            "<<set _endings to {good: true}>><<print Object.keys(_endings).length>> <<if Object.getOwnPropertyNames($hero.bag).length gt 1>>Full<</if>> <<print Object.keys($a)>>",
+        ].join("\n"));
+        expect(section(script, "Start")).toBe(
+            "@set endings = { good: true }\n{{length \"endings\"}} {{#if (length \"hero.bag\") > 1}}Full{{/if}} {{!-- Twine: <<print Object.keys($a)>> --}}");
+        expect(result.problems.map(p => p.reason)).toEqual(["This couldn't be converted: Object.keys() and the like, except to count an object's values with .length."]);
     });
 
     test("text, numbers, includes, indexOf and ? : (#446)", async () => {
