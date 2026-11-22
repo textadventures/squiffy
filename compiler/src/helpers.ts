@@ -8,7 +8,7 @@ export const BUILT_IN_HELPERS: ReadonlySet<string> = new Set([
     "clear", "cond", "contains", "content", "count", "deactivate", "dec", "div", "embed", "eq", "every", "first",
     "firsttime", "floor", "get", "goto", "gt", "gte", "hasclass", "inc", "indexof", "join", "label", "last",
     "length", "live", "lower", "lt", "lte", "max", "min", "mod", "mul", "music", "ne", "not", "once", "or",
-    "passage", "pop", "prepend", "random", "range", "remove", "removeclass", "replace", "restart", "rotate",
-    "round", "saves", "section", "seen", "sequence", "set", "settings", "shuffle", "slice", "sort",
-    "sound", "stop", "stopmusic", "stopsounds", "style", "sub", "toggleclass", "unset", "upper", "visits",
+    "passage", "passages", "pop", "prepend", "random", "range", "remove", "removeclass", "replace", "restart", "rotate",
+    "round", "saves", "section", "sections", "seen", "sequence", "set", "settings", "shuffle", "slice", "sort",
+    "sound", "stop", "stopmusic", "stopsounds", "style", "sub", "tags", "toggleclass", "unset", "upper", "visits",
 ]);
