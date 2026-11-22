@@ -41,7 +41,8 @@ export type DiagnosticCode =
     | "squiffy/unreachable-section"
     | "squiffy/dead-end"
     | "squiffy/sound-on-first-screen"
-    | "squiffy/template-syntax";
+    | "squiffy/template-syntax"
+    | "squiffy/unknown-name";
 
 export interface Diagnostic {
     // The filename as the compiler was given it (scriptBaseFilename, or the name returned by
@@ -51,6 +52,9 @@ export interface Diagnostic {
     severity: DiagnosticSeverity;
     code: DiagnosticCode;
     message: string;
+    // What the problem is about, for a {{!-- squiffy-ignore --}} comment that names it: for
+    // squiffy/unknown-name, the attribute
+    subject?: string;
 }
 
 // Formats a diagnostic the way the compiler has always reported problems, e.g.

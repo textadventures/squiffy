@@ -5,7 +5,9 @@ import type {
 import { positionMapper, SourceLine, transformText } from "./text.js";
 import { isScriptPath, isSquiffyPath, isStylesheetPath, PROJECT_FILENAME } from "./project.js";
 import { findV5Syntax } from "./v5.js";
-import { findTemplateError } from "./templates.js";
+import { BareName, findTemplateError, findTemplateNames } from "./templates.js";
+import { BUILT_IN_HELPERS } from "./helpers.js";
+import { ignoredDiagnostics } from "./ignore.js";
 import { sectionLabels } from "./section-labels.js";
 import { attributesSetIn, BUILT_IN_ATTRIBUTES, findAtAttributes, findBuiltInAttributeSets, findUnquotedText } from "./setters.js";
 
@@ -200,11 +202,15 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
     // above it has already added sections from other files.
     let mainFirstSection: string | undefined;
 
-    const report = (severity: DiagnosticSeverity, code: DiagnosticCode, filename: string | undefined, range: Range, message: string, legacyLine: number) => {
-        diagnostics.push({ file: filename ?? "", range, severity, code, message });
+    // Each warning's line in legacyWarnings, so that a warning a squiffy-ignore comment turns off can be removed from both
+    const legacyWarningOf = new Map<Diagnostic, string>();
+    const report = (severity: DiagnosticSeverity, code: DiagnosticCode, filename: string | undefined, range: Range, message: string, legacyLine: number, subject?: string) => {
+        const diagnostic: Diagnostic = { file: filename ?? "", range, severity, code, message, ...(subject === undefined ? {} : { subject }) };
+        diagnostics.push(diagnostic);
         if (severity == "hint") return;
         const legacy = `${severity.toUpperCase()}: ${filename} line ${legacyLine}: ${message}`;
         (severity == "error" ? legacyErrors : legacyWarnings).push(legacy);
+        if (severity == "warning") legacyWarningOf.set(diagnostic, legacy);
     };
 
     const storyFiles = settings.storyFiles && new Set(settings.storyFiles);
@@ -567,6 +573,52 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
         }
     }
 
+    // {{name}} on its own shows the attribute called name if there's no helper called that, and
+    // an attribute that hasn't been set shows nothing, so a mistyped or missing helper, or a
+    // mistyped attribute, would otherwise fail without a word (#526). An attribute counts as set
+    // if the story might set it anywhere: see attributesSetIn, which takes anything in quotes,
+    // and the story's JavaScript is read the same way, which covers squiffy.set("name", ...) and
+    // registerHelper("name", ...).
+    async function warnAboutUnknownNames() {
+        const known = new Set<string>([...BUILT_IN_HELPERS, ...BUILT_IN_ATTRIBUTES.keys(), ...embedParameters]);
+        const addKnown = (name: string) => {
+            known.add(name);
+            known.add(name.split(".")[0]);
+        };
+        // Squiffy's own attributes, such as _section, start with "_"
+        const isUnknown = (bare: BareName) => !known.has(bare.root) && !bare.root.startsWith("_");
+        if (!bareNames.some(isUnknown)) return;
+        files.forEach((file, i) => attributesSetIn(file, texts[i]).forEach(addKnown));
+        if (!bareNames.some(isUnknown)) return;
+
+        const scripts = [...story.uiJs];
+        if (settings.externalFiles) {
+            for (const filename of scriptFiles) {
+                try {
+                    scripts.push(await settings.externalFiles.getContent(filename));
+                }
+                catch {
+                    // A script that can't be read can't be checked
+                }
+            }
+        }
+        for (const script of scripts) {
+            for (const match of script.matchAll(/"([^"\\\n]*)"|'([^'\\\n]*)'|`([^`\\]*)`/g)) {
+                addKnown((match[1] ?? match[2] ?? match[3]).trim());
+            }
+        }
+
+        const suggestions = [...known].filter(name => /^[A-Za-z_]\w*$/.test(name) && !name.startsWith("_"));
+        for (const bare of bareNames) {
+            if (!isUnknown(bare)) continue;
+            const close = closestName(bare.root, suggestions);
+            const suggestion = close ? ` Did you mean {{${bare.name.replace(bare.root, close)}}}?` : "";
+            report("warning", "squiffy/unknown-name", bare.filename, bare.range,
+                `${bare.where}, {{${bare.name}}} isn't a helper, and nothing in the story sets an attribute called ${bare.root}, so it shows nothing.${suggestion}`,
+                bare.range.start.line + 1, bare.root);
+        }
+    }
+
     function warnAboutV5Syntax(text: string, lines: string[], filename: string | undefined) {
         const truncate = (s: string) => s.length > 60 ? s.substring(0, 57) + "..." : s;
 
@@ -595,6 +647,10 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
     let sectionIndexes = new Map<string, number>();
     // What warnings call sections without names of their own, e.g. 'the "+++Continue..." after "cave"'
     let labels = new Map<string, string>();
+    // {{name}} on its own in the story's text, and the names of the values passed to embeds, for
+    // warnAboutUnknownNames, which needs every section's text first
+    const bareNames: (BareName & { filename: string | undefined; range: Range; where: string })[] = [];
+    const embedParameters = new Set<string>();
 
     function checkText(container: Section | Passage, section: Section, passage: Passage | null) {
         const getNextSectionName = (): string | null => {
@@ -621,6 +677,14 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
             const range = toRange(result.mapStart(templateError.start), result.mapEnd(templateError.end));
             report("error", "squiffy/template-syntax", section.filename, range, `${where}, ${templateError.message}`,
                 range.start.line + 1);
+        }
+        else {
+            const names = findTemplateNames(result.output);
+            names.embedParameters.forEach(name => embedParameters.add(name));
+            for (const bare of names.bare) {
+                const range = toRange(result.mapStart(bare.start), result.mapEnd(bare.end));
+                bareNames.push({ ...bare, filename: section.filename, range, where });
+            }
         }
 
         for (const missing of result.noNextSection) {
@@ -721,6 +785,7 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
             }
         }
         success &&= !legacyErrors.length;
+        await warnAboutUnknownNames();
     }
 
     if (settings.expressions) {
@@ -757,6 +822,14 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
         }
     }
 
+    // Warnings turned off by {{!-- squiffy-ignore --}} comments
+    const ignored = ignoredDiagnostics(files, diagnostics);
+    if (ignored.size) {
+        diagnostics.splice(0, diagnostics.length, ...diagnostics.filter(d => !ignored.has(d)));
+        const ignoredLines = new Set([...ignored].map(d => legacyWarningOf.get(d)));
+        legacyWarnings.splice(0, legacyWarnings.length, ...legacyWarnings.filter(w => !ignoredLines.has(w)));
+    }
+
     const analysis: Analysis = {
         success,
         files,
@@ -774,6 +847,38 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
     };
     analysisInternals.set(analysis, { story, legacyErrors, legacyWarnings });
     return analysis;
+}
+
+// The name most like name, for a typo: one letter out for a short name, or two for a longer one.
+// A name of one or two letters is too short to guess at.
+function closestName(name: string, names: string[]): string | undefined {
+    if (name.length < 3) return undefined;
+    const limit = name.length <= 5 ? 1 : 2;
+    let best: string | undefined;
+    let bestDistance = limit + 1;
+    for (const candidate of names) {
+        if (candidate == name || Math.abs(candidate.length - name.length) > limit) continue;
+        const distance = editDistance(name.toLowerCase(), candidate.toLowerCase());
+        if (distance < bestDistance) {
+            best = candidate;
+            bestDistance = distance;
+        }
+    }
+    return best;
+}
+
+// Letters added, removed or changed, and two swapped, to turn a into b
+function editDistance(a: string, b: string): number {
+    const d: number[][] = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
+    for (let j = 1; j <= b.length; j++) d[0][j] = j;
+    for (let i = 1; i <= a.length; i++) {
+        for (let j = 1; j <= b.length; j++) {
+            const cost = a[i - 1] == b[j - 1] ? 0 : 1;
+            d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + cost);
+            if (i > 1 && j > 1 && a[i - 1] == b[j - 2] && a[i - 2] == b[j - 1]) d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+        }
+    }
+    return d[a.length][b.length];
 }
 
 function linkDestinationExists(link: string, keys: Record<string, unknown>) {

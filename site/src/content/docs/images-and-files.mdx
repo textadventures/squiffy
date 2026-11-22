@@ -62,7 +62,7 @@ To play music or a sound part of the way through the text, or only sometimes, us
 
 The music playing is part of the story, like its attributes: the **Back** button puts back the music that was playing before, and a saved game plays its music when it's loaded. The `_music` attribute has its file name in it. A sound played with `@sound` or `{{sound}}` doesn't play again when the player goes back.
 
-A story with music or sounds has a mute button above it, and the player's choice is remembered for the story. Browsers don't let a page play sound until the player has clicked something. So music on the story's first screen only starts at their first click, and a sound played once there isn't heard at all. The editor and [`--check`](/cli/#checking-a-story) warn about sound on the first screen. To have music from the start, begin your story with a title screen and a link such as "Begin", and start the music in the section it goes to:
+A story with music or sounds has a mute button above it, and the player's choice is remembered for the story. Browsers don't let a page play sound until the player has clicked something. So music on the story's first screen only starts at their first click, and a sound played once there isn't heard at all. The editor and [`--check`](/cli/#checking-a-story) warn about sound on the first screen. If your story is embedded in a page that always has a click first, you can [turn the warning off](/cli/#turning-off-a-warning). To have music from the start, begin your story with a title screen and a link such as "Begin", and start the music in the section it goes to:
 
 ```squiffy
 @title The Haunted House

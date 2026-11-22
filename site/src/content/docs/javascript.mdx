@@ -107,7 +107,7 @@ You can add your own helpers by calling `squiffy.registerHelper` in a `@ui` bloc
 
 <Sample sandboxed script={shout}></Sample>
 
-`registerHelper` takes the helper's name and a function. Arguments written after the helper name are passed to the function in order. Named `key=value` arguments are passed in `options.hash` (`options` is always the last argument).
+`registerHelper` takes the helper's name and a function. Write the name in quotes, as here: the editor looks for it there, so that it doesn't warn about a `{{name}}` of your helper's as an attribute that's never set. Arguments written after the helper name are passed to the function in order. Named `key=value` arguments are passed in `options.hash` (`options` is always the last argument).
 
 ### Returning HTML
 

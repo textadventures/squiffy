@@ -25,6 +25,7 @@ export type { AnalyseSettings, Analysis, ExternalFiles, SectionSymbol, PassageSy
 export { emit } from "./emit.js";
 export type { EmitSettings, Output, UiInfo, CompileSuccess } from "./emit.js";
 export { formatDiagnostic } from "./syntax.js";
+export { BUILT_IN_HELPERS } from "./helpers.js";
 export { findCssUrls, isRelativeUrl, resolveCssUrl, rewriteCssUrls } from "./css-urls.js";
 export {
     PROJECT_FILENAME, PROJECT_FILE_VERSION, PROJECT_SCHEMA_URL, parseProjectFile, getStoryFiles, isExcluded,

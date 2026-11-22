@@ -96,4 +96,4 @@ In JavaScript: `squiffy.story.go("section")`.
 
 ## Formatting
 
-Text is Markdown: `**bold**`, `_italic_`, lists, headings. Leave a blank line between paragraphs (a single line break is a space). HTML works: `<span style="color: red">`. Images: `![A cat](cat.png)` or `<img src="images/map.png">`; paths are relative to the main file. `{{!-- comment --}}` is a comment.
+Text is Markdown: `**bold**`, `_italic_`, lists, headings. Leave a blank line between paragraphs (a single line break is a space). HTML works: `<span style="color: red">`. Images: `![A cat](cat.png)` or `<img src="images/map.png">`; paths are relative to the main file. `{{!-- comment --}}` is a comment. `{{!-- squiffy-ignore code --}}` turns off a `--check` warning for its section, or the whole story in the master section.

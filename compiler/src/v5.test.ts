@@ -297,7 +297,8 @@ Text from section.`);
         const warnings: string[] = [];
         const result = await compile({ script, onWarning: w => warnings.push(w) });
         expect(result.success).toBe(true);
-        expect(warnings).toEqual([]);
+        // Nothing sets x or a, but that's not what this is about
+        expect(warnings.filter(w => !w.includes("isn't a helper"))).toEqual([]);
     });
 });
 
@@ -320,7 +321,7 @@ describe("compiler warnings", () => {
         const warnings: string[] = [];
         await compile({
             scriptBaseFilename: "story.squiffy",
-            script: "[[a]]:\n    var o = {a: 1};\n{{#if x}}yes{{else}}no{{/if}} {{x}}",
+            script: "[[a]]:\n@set x\n    var o = {a: 1};\n{{#if x}}yes{{else}}no{{/if}} {{x}}",
             onWarning: w => warnings.push(w),
         });
         expect(warnings).toEqual([]);

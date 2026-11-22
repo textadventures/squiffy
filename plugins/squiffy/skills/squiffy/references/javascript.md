@@ -43,7 +43,7 @@ A `@ui` block goes at the top and ends with `---`. `@ui helpers.js` reads a file
 
 ## Custom helpers
 
-`registerHelper(name, fn)`: positional arguments are passed in order, and the last argument is `options`, with named `key=value` arguments in `options.hash`. Returned text is escaped; return `new squiffy.SafeString(html)` for HTML, escaping any player input in it first. Helpers can use `squiffy.get`/`squiffy.set`.
+`registerHelper(name, fn)`: write the name as a quoted string, so `--check` knows the helper exists and doesn't warn about `{{name}}` (`squiffy/unknown-name`). Positional arguments are passed in order, and the last argument is `options`, with named `key=value` arguments in `options.hash`. Returned text is escaped; return `new squiffy.SafeString(html)` for HTML, escaping any player input in it first. Helpers can use `squiffy.get`/`squiffy.set`.
 
 ```squiffy
 @ui

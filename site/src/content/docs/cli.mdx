@@ -100,7 +100,29 @@ The errors include mistakes in `{{...}}` text that would stop a section or passa
 story.squiffy:7:19: error: In section 'start', {{round + 1}} isn't valid Handlebars. To show the result of an expression, start it with "=": {{= round + 1}} [squiffy/template-syntax]
 ```
 
+The build, the editor and `--check` also warn about a `{{name}}` that isn't a helper when nothing in the story sets an attribute called `name`, as it shows nothing. That's usually a typo, such as `{{glod}}` for `{{gold}}`, or a [helper of your own](/javascript/#creating-custom-helpers) that hasn't been added. An attribute counts as set if the story sets it anywhere: with `@set`, `@inc`, a link, `{{set}}`, a [text box](/player-input/), an [embed](/basic-concepts/#parameters), or `squiffy.set("name", ...)` in its JavaScript.
+
 It finishes with an exit code of 1 if there are any errors.
+
+### Turning off a warning
+
+A warning can be wrong about your story, or be something you've chosen to do. If the page your story is [embedded](/embedding/) in always has a click first, music on the first screen will play, and an attribute your JavaScript sets in a way Squiffy can't see, such as `squiffy.set(name, ...)` with a name that's worked out as it runs, is set after all. To turn a warning off, put a comment in the section it's about, naming the warning's code (what comes after `squiffy/` in the brackets):
+
+```squiffy
+[[start]]:
+@music theme.mp3
+{{!-- squiffy-ignore sound-on-first-screen --}}
+Welcome aboard.
+```
+
+That turns the warning off for that section and its passages. A comment in the [master section](/basic-concepts/#master-sections-and-passages) turns it off for the whole story. After the code, you can name which attributes an `unknown-name` warning is turned off for, so others are still reported:
+
+```squiffy
+[[]]:
+{{!-- squiffy-ignore unknown-name board score --}}
+```
+
+Players don't see the comment. It's part of the section's text, so if the section has JavaScript, put it after that. In the editor, the quick fix for these warnings adds it for you. Errors can't be turned off.
 
 ## Playing a story from the command line
 
