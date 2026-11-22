@@ -227,7 +227,7 @@ div.squiffy-output-section:not(:has(~ div.squiffy-output-section div.squiffy-out
 }
 
 /* Text effects for {{#style}} (#453), e.g. {{#style "shudder"}}...{{/style}} */
-span.squiffy-style:is(.shake, .shudder, .rumble, .sway, .buoy, .mirror, .upside-down) {
+span.squiffy-style:is(.shake, .shudder, .rumble, .sway, .buoy, .mirror, .upside-down, .tall, .flat) {
     /* Transforms don't apply to inline elements */
     display: inline-block;
 }
@@ -326,6 +326,53 @@ span.squiffy-style:is(.shake, .shudder, .rumble, .sway, .buoy, .mirror, .upside-
 
 .squiffy-style.upside-down {
     transform: scaleY(-1);
+}
+
+/* The typographic effects, which don't move (#541) */
+.squiffy-style.shadow {
+    text-shadow: 0.08em 0.08em 0.08em color-mix(in srgb, currentColor 50%, transparent);
+}
+
+.squiffy-style.emboss {
+    text-shadow: 0.06em 0.06em 0 color-mix(in srgb, currentColor 35%, transparent);
+}
+
+.squiffy-style.outline {
+    color: var(--squiffy-background);
+    text-shadow: -1px -1px 0 var(--squiffy-text), 1px -1px 0 var(--squiffy-text),
+        -1px 1px 0 var(--squiffy-text), 1px 1px 0 var(--squiffy-text);
+}
+
+.squiffy-style.condense {
+    letter-spacing: -0.08em;
+}
+
+.squiffy-style.expand {
+    letter-spacing: 0.1em;
+}
+
+.squiffy-style.tall {
+    transform: scaleY(1.5);
+}
+
+.squiffy-style.flat {
+    transform: scaleY(0.5);
+}
+
+.squiffy-style.double-underline {
+    text-decoration: underline double;
+}
+
+.squiffy-style.wavy-underline {
+    text-decoration: underline wavy;
+}
+
+.squiffy-style.double-strike {
+    text-decoration: line-through double;
+}
+
+.squiffy-style.wavy-strike {
+    text-decoration: line-through wavy;
 }
 
 /* Transitions for how a section or passage appears (#489), from @transition. The element has

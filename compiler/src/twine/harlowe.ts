@@ -1784,6 +1784,9 @@ class Writer {
                         shudder: "shudder", rumble: "rumble", sway: "sway", buoy: "buoy", fidget: "shake",
                         blink: "blink", fadeinout: "fade-in-out", blur: "blur", blurrier: "blurrier",
                         smear: "smear", mirror: "mirror", upsidedown: "upside-down",
+                        shadow: "shadow", emboss: "emboss", outline: "outline", condense: "condense",
+                        expand: "expand", tall: "tall", flat: "flat", doubleunderline: "double-underline",
+                        wavyunderline: "wavy-underline", doublestrike: "double-strike", wavystrike: "wavy-strike",
                     }[style];
                     if (tag) {
                         open += `<${tag}>`;
