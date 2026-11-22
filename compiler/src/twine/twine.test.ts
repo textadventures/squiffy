@@ -738,9 +738,9 @@ Setting.addToggle("bad name", { label: "Bad" });`;
         expect(section(script, "")).toBe("@clear\n{{#if (at (array \"Start\"))}}Title{{/if}}");
     });
 
-    test("passage tags become @class (#449), except Twine's and the story format's own", async () => {
+    test("passage tags become @class (#449) and @tag (#527), except Twine's and the story format's own", async () => {
         const { script } = await convert("SugarCube", ":: Start [dark forest nobr Twine.image debug-x]\nHi [[Next]]\n\n:: Next\nThere");
-        expect(section(script, "Start")).toBe("@class dark forest\nHi [[Next]]");
+        expect(section(script, "Start")).toBe("@class dark forest\n@tag dark forest\nHi [[Next]]");
         expect(section(script, "Next")).toBe("There");
     });
 

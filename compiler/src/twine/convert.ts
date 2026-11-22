@@ -84,6 +84,7 @@ export const reservedAttributes = new Set([
     "if", "unless", "each", "with", "lookup", "log", "else", "this", "turns", "previous", "previous_section",
     "true", "false", "null", "undefined", "music", "stopmusic", "sound", "stopsounds",
     "addclass", "removeclass", "toggleclass", "hasclass", "content", "restart", "saves", "settings", "style",
+    "passages", "sections", "tags",
 ]);
 
 export class StoryContext {
@@ -580,6 +581,9 @@ export function convertTwineStory(twine: TwineStory, options: TwineConversionOpt
         // Its tags (#449), which Twine puts on the page for the stylesheet
         const classes = footers.includes(p) ? [] : tagClasses(p.tags);
         if (classes.length) directives.push(`@class ${classes.join(" ")}`);
+        // And as @tag, so the story can list its passages by them, as with (passages tagged="x") (#527)
+        const tags = tagClasses(p.tags);
+        if (tags.length) directives.push(`@tag ${tags.join(" ")}`);
         let body = converted.body.trim();
         if (p.name == startPassage && (init.directives.length || init.body)) {
             directives.unshift(...init.directives);

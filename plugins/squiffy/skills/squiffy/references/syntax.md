@@ -59,6 +59,7 @@ One per line, at the start of a section or passage, before its text. Those that 
 | `@repeat` | In a passage: its links can be clicked again. Such clicks don't count towards `@1`/`@last` |
 | `@end` | Marks the section as an ending (in a passage, marks its section). Doesn't change what the player sees |
 | `@class dark cave` | CSS classes on the story while this section is current (see styling.md) |
+| `@tag passenger settled` | Tags on this section or passage, for `(passages tagged="passenger")`, `(sections tagged=...)` and `(tags "name")` (see helpers.md). Doesn't change what the player sees |
 | `@transition fade`, `@transition slide-up 1s` | How this section or passage appears (see dynamic-text.md) |
 | `@leave fade`, `@leave slide-up 1s` | With `@clear`: how the old text goes first (see dynamic-text.md) |
 | `@music theme.mp3`, `@music stop` | Play music (continues across sections), or stop it |

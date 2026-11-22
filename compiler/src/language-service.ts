@@ -199,6 +199,7 @@ const DIRECTIVES: [string, string][] = [
     ["music", "Plays music until it's changed, or stops it with @music stop"],
     ["sound", "Plays a sound once, or stops the sounds playing with @sound stop"],
     ["class", "Puts classes on the story while this section is shown, for its stylesheet"],
+    ["tag", "Tags this section or passage, so the story can list them with (passages tagged=\"...\")"],
     ["transition", "How this section or passage appears, such as @transition fade 1s"],
     ["leave", "How the old text goes when this clears the screen, such as @leave fade 1s"],
     ["ui", "JavaScript for the story's user interface"],
@@ -794,6 +795,13 @@ export function createLanguageService(options: LanguageServiceOptions): Language
             }
             // {{seen "name"}}, (visits "name") etc., which take a section or passage (#377)
             if ((match = /(?:\{\{~?|\()\s*(?:seen|visits)\s+["']([^"']*)$/.exec(prefix))) {
+                return [...passageItems(match[1]), ...sectionItems(match[1])];
+            }
+            // (passages "section") and (tags "name") (#527)
+            if ((match = /(?:\{\{~?|\()\s*passages\s+["']([^"']*)$/.exec(prefix))) {
+                return sectionItems(match[1]);
+            }
+            if ((match = /(?:\{\{~?|\()\s*tags\s+["']([^"']*)$/.exec(prefix))) {
                 return [...passageItems(match[1]), ...sectionItems(match[1])];
             }
             if ((match = /\{\{~?\s*goto\s+["']([^"']*)$/.exec(prefix))) {
