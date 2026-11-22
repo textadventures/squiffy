@@ -1,7 +1,8 @@
 <script lang="ts">
     // The editor's toolbar, laid out like Quest Viva's: home, the story's name and save state on
     // the left; on the right, in groups, as a menu bar would be: File, adding to the story (Add,
-    // images), Undo and Redo, views of the story (problems, map), then Run and the overflow menu.
+    // images), Undo and Redo, problems, what's shown (the script, the map or both), then Run and
+    // the overflow menu.
     // Menus open from their button's left edge, as a menu bar's do, unless that's off the screen.
     import { AppBar } from "@skeletonlabs/skeleton-svelte";
     import { goto } from "$app/navigation";
@@ -33,6 +34,8 @@
     import Ellipsis from "@lucide/svelte/icons/ellipsis";
     import ListTree from "@lucide/svelte/icons/list-tree";
     import MapIcon from "@lucide/svelte/icons/map";
+    import CodeIcon from "@lucide/svelte/icons/code";
+    import Columns2 from "@lucide/svelte/icons/columns-2";
     import SettingsIcon from "@lucide/svelte/icons/settings";
     import BookOpen from "@lucide/svelte/icons/book-open";
     import Play from "@lucide/svelte/icons/play";
@@ -58,13 +61,18 @@
     import CircleCheck from "@lucide/svelte/icons/circle-check";
     import type { ProblemCounts } from "#lib/problems.js";
 
+    export type ViewMode = "code" | "split" | "map";
+
     interface Props {
         // On a narrow screen, whether the outline is showing instead of the editor
         outlineOpen?: boolean;
         ontoggleoutline?: () => void;
-        // Whether the story map is showing
+        // On a narrow screen, whether the story map is showing instead of the editor
         mapOpen?: boolean;
         ontogglemap?: () => void;
+        // Otherwise, whether the script, the map or both are showing
+        view?: ViewMode;
+        onview?: (view: ViewMode) => void;
         // How many problems the story has, and whether the Problems panel is showing
         problemCounts?: ProblemCounts;
         problemsOpen?: boolean;
@@ -94,9 +102,15 @@
         onplaytab?: () => void;
     }
 
-    let { outlineOpen = false, ontoggleoutline, mapOpen = false, ontogglemap, problemCounts = { error: 0, warning: 0, hint: 0 }, problemsOpen = false, ontoggleproblems, onfindinfiles, onrun, onassets, onfonts, ondownloadproject, onexport, oncommand, onadd, onsnippet, snippets = [], onabout, onplaytab }: Props = $props();
+    let { outlineOpen = false, ontoggleoutline, mapOpen = false, ontogglemap, view = "code", onview, problemCounts = { error: 0, warning: 0, hint: 0 }, problemsOpen = false, ontoggleproblems, onfindinfiles, onrun, onassets, onfonts, ondownloadproject, onexport, oncommand, onadd, onsnippet, snippets = [], onabout, onplaytab }: Props = $props();
 
     const mod = isMac ? "⌘" : "Ctrl+";
+
+    const views = [
+        { view: "code", label: "Code", title: "Just the script", icon: CodeIcon },
+        { view: "split", label: "Code + Map", title: "The script and the map side by side", icon: Columns2 },
+        { view: "map", label: "Map", title: "Just the map", icon: MapIcon },
+    ] as const;
 
     let runMenuItems = $derived<DropdownMenuItem[]>([
         { label: `Run from the start (${mod}Enter)`, action: () => onrun?.(false), icon: Play },
@@ -294,14 +308,32 @@
                         <span class="problems-count"><CircleCheck size={14} /></span>
                     {/if}
                 </button>
-                <button
-                    type="button"
-                    class="toolbar-icon-btn"
-                    onclick={ontogglemap}
-                    title="Story map"
-                    aria-label="Story map"
-                    aria-pressed={mapOpen}
-                ><MapIcon size={16} /></button>
+                {#if isNarrow.current}
+                    <button
+                        type="button"
+                        class="toolbar-icon-btn"
+                        onclick={ontogglemap}
+                        title="Story map"
+                        aria-label="Story map"
+                        aria-pressed={mapOpen}
+                    ><MapIcon size={16} /></button>
+                {:else}
+                    <div class="toolbar-divider"></div>
+                    <!-- Labelled where there's room, so the map-only view is easy to find -->
+                    <div class="view-switch" role="group" aria-label="View">
+                        {#each views as v (v.view)}
+                            {@const Icon = v.icon}
+                            <button
+                                type="button"
+                                onclick={() => onview?.(v.view)}
+                                title={v.title}
+                                aria-label={v.label}
+                                aria-pressed={view === v.view}
+                            ><Icon size={14} /><span class="hidden xl:inline">{v.label}</span></button>
+                        {/each}
+                    </div>
+                    <div class="toolbar-divider"></div>
+                {/if}
                 <!-- Run and its options as one split button, with the menu lined up with the whole of it.
                      Stretch both halves to the same height. -->
                 <DropdownMenu items={runMenuItems} align="left">
@@ -352,6 +384,35 @@
     }
     .toolbar-icon-btn:disabled {
         opacity: 0.4;
+    }
+    .view-switch {
+        display: inline-flex;
+        padding: 2px;
+        gap: 2px;
+        border-radius: var(--radius-container);
+        background-color: var(--color-surface-100-900);
+    }
+    .view-switch button {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        height: 1.75rem;
+        min-width: 1.75rem;
+        justify-content: center;
+        padding: 0 0.45rem;
+        border-radius: calc(var(--radius-container) - 2px);
+        color: var(--color-surface-600-400);
+        font-size: 0.75rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+    .view-switch button:hover {
+        color: var(--color-primary-500);
+    }
+    .view-switch button[aria-pressed="true"] {
+        background-color: var(--color-surface-50-950);
+        color: var(--color-primary-500);
+        box-shadow: 0 1px 2px rgb(0 0 0 / 0.12);
     }
     .problems-btn {
         display: inline-flex;

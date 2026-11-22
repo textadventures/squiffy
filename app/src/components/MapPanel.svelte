@@ -30,8 +30,6 @@
     import ZoomIn from "@lucide/svelte/icons/zoom-in";
     import ZoomOut from "@lucide/svelte/icons/zoom-out";
     import Scan from "@lucide/svelte/icons/scan";
-    import Maximize2 from "@lucide/svelte/icons/maximize-2";
-    import Minimize2 from "@lucide/svelte/icons/minimize-2";
     import RefreshCcw from "@lucide/svelte/icons/refresh-ccw";
     import CircleHelp from "@lucide/svelte/icons/circle-help";
     import Plus from "@lucide/svelte/icons/plus";
@@ -87,13 +85,12 @@
         onundo: (redo: boolean) => void;
         // Forget every position the author chose
         onrelayout: () => Promise<boolean>;
-        ontogglemaximized: () => void;
         onclose: () => void;
     }
 
     let {
         graph, positions, query, current, trace, maximized, card, cardWidth = 0, onarea, onedit, width, ongoto, ongotoedge, onmove, onlink, oncreate, onrename,
-        onrun, onaddpassage, ondelete, onstart, onundo, onrelayout, ontogglemaximized, onclose,
+        onrun, onaddpassage, ondelete, onstart, onundo, onrelayout, onclose,
     }: Props = $props();
 
     // Above this, the map is slow to lay out, so it asks first. Of about 12,000 stories on
@@ -221,7 +218,10 @@
         map?.relayout(new Map());
     }
 
-    export function focusNode(id: string, announce = true) {
+    // With follow false, a section being written beside the map stays where it is, for going to a
+    // place in it (a problem, say) rather than to its start
+    export function focusNode(id: string, announce = true, follow = true) {
+        if (!follow) followed = id;
         map?.select(id, announce);
     }
 
@@ -439,7 +439,7 @@
         menu = { ...screen, keyboard, items };
     }
 
-    const instructions = "Arrow keys move between sections and passages. Enter goes to one in the editor, or with the map full screen, shows it beside the map to write there. F2 renames it and Delete deletes it. The menu key, or Shift and F10, opens a menu for it. Control or Command and Z undoes the last change. Plus and minus zoom, and 0 fits the whole story in view. Drag the background to pan, a box to move it, or the dot under the selected box to add a link. Shift and drag the background to select several boxes, or Shift and click one, then drag one of them to move them all.";
+    const instructions = "Arrow keys move between sections and passages. Enter goes to one in the editor, or with just the map showing, shows it beside the map to write there. F2 renames it and Delete deletes it. The menu key, or Shift and F10, opens a menu for it. Control or Command and Z undoes the last change. Plus and minus zoom, and 0 fits the whole story in view. Drag the background to pan, a box to move it, or the dot under the selected box to add a link. Shift and drag the background to select several boxes, or Shift and click one, then drag one of them to move them all.";
 </script>
 
 <section
@@ -455,15 +455,11 @@
         <button type="button" class="btn-icon btn-icon-sm" title="Show the whole story (0)" aria-label="Show the whole story" onclick={() => map?.fit()}><Scan size={14} /></button>
         <button type="button" class="btn-icon btn-icon-sm" title="Lay out again" aria-label="Lay out again" onclick={handleRelayout}><RefreshCcw size={14} /></button>
         <button type="button" class="btn-icon btn-icon-sm" title="Key" aria-label="Key" aria-expanded={keyOpen} onclick={() => { keyOpen = !keyOpen; }}><CircleHelp size={14} /></button>
-        <button
-            type="button"
-            class="btn-icon btn-icon-sm"
-            title={maximized ? "Show the editor" : "Full screen"}
-            aria-label={maximized ? "Show the editor" : "Full screen"}
-            aria-pressed={maximized}
-            onclick={ontogglemaximized}
-        >{#if maximized}<Minimize2 size={14} />{:else}<Maximize2 size={14} />{/if}</button>
-        <button type="button" class="btn-icon btn-icon-sm" title="Close map" aria-label="Close map" onclick={onclose}><X size={14} /></button>
+        <!-- The toolbar's Code, Code + Map and Map switch between the script and the map. Beside
+             the script, the map can be closed from here too. -->
+        {#if !maximized}
+            <button type="button" class="btn-icon btn-icon-sm" title="Close map" aria-label="Close map" onclick={onclose}><X size={14} /></button>
+        {/if}
     </header>
     {#if keyOpen}
         <div class="map-key border-b border-surface-200-800 px-3 py-2 text-xs grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 items-center">

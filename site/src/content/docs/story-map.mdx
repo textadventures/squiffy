@@ -3,12 +3,12 @@ title: The story map
 description: Seeing your story as a map of sections and links, and editing it from there
 ---
 
-The map button in the toolbar shows your story as a map: each section is a box, its passages hang underneath it, and links are arrows. The map reads from the top, where the story starts, down towards its endings. A long story folds into columns side by side, like a newspaper's, so that the whole story fits on the screen: each column carries on from the bottom of the one before. The script is still your story: the map is drawn from it, updates as you type, and anything you do on the map changes the script.
+**Code**, **Code + Map** and **Map** in the toolbar choose what the editor shows: just the script, the script with the map beside it, or just the map. The map shows your story with each section is a box, its passages hang underneath it, and links are arrows. The map reads from the top, where the story starts, down towards its endings. A long story folds into columns side by side, like a newspaper's, so that the whole story fits on the screen: each column carries on from the bottom of the one before. The script is still your story: the map is drawn from it, updates as you type, and anything you do on the map changes the script.
 
 ![The story map, between the script and the preview, showing the way the player went through the story in green](../../assets/editor-story-map.png)
 
 - **Click** a section or passage to go to it in the script. Moving the cursor in the script highlights the section it's in on the map.
-- **Drag** the background to move around, and scroll or pinch to zoom. The buttons above the map zoom in and out, and fit the whole story in view. **Full screen** gives the map the whole window. The editor remembers whether you left a story's map open, and full screen, so if you like to work on the map, that's where the story opens next time.
+- **Drag** the background to move around, and scroll or pinch to zoom. The buttons above the map zoom in and out, and fit the whole story in view. The editor remembers which of **Code**, **Code + Map** and **Map** you left a story on, so if you like to work on the map, that's where the story opens next time.
 - **Drag a box** to move it. It stays where you put it. Its passages come with it, and so does any box that's linked only to it, while everything else stays put.
 - To move several boxes at once, hold Shift and drag across empty space to select them, or Shift+click boxes to add them, then drag any one of them. Click empty space, or press Escape, to let them go.
 - Where you've put things is saved in `squiffy.json`, so it's the same next time you open the story, and a section keeps its place if you rename it or move it to another file. A section without a name of its own, started with `+++` or `---`, is saved under what the map calls it, such as `+++Day Two`. If you edit `squiffy.json` while the map's open, it follows: take a position out and that box is laid out again. A story from an earlier version of Squiffy may not have a `squiffy.json`, so the editor adds one, leaving out any `.squiffy` files in the folder that aren't part of the story, so the story stays the same. **Lay out again** forgets where you've put things.
@@ -57,12 +57,13 @@ Nothing that's already in the script is moved.
 
 ## Writing on the map
 
-You can write your story without leaving the map. Make the map **full screen**, then double-click a section (or select it and press Enter). Its text opens in a panel over the right of the map, on its own, without the rest of the script around it. The map stays where it is, moving only if the section's box would be hidden under the panel. The map carries on updating as you type.
+You can write your story without leaving the map. Choose **Map** in the toolbar, then double-click a section (or select it and press Enter). Its text opens in a panel over the right of the map, on its own, without the rest of the script around it. The map stays where it is, moving only if the section's box would be hidden under the panel. The map carries on updating as you type.
 
 - A section is shown with its passages, as passage links only work inside their section. Open a passage and its section is shown, with the cursor at that passage.
 - The section's name is above its text. Use the pencil there to rename it, which changes every link to it too.
 - While a section is open, clicking another box, or moving to it with the arrow keys, shows that one instead. So does going to a link's section or passage, with F12 or from the right-click menu.
 - It's the script you're editing, shown a section at a time, so completion, problems, and undo work as they do in the script. The line numbers are the script's.
+- The problems list, and Find in Files, open under the map. Choose a problem or a search result to open its section, with the cursor on it.
 - Press Escape to go back to the map with the keyboard, leaving the text open. The buttons above the text show it in the whole script (**Show in the whole script**) or close it (**Close**).
 
 Find and Replace search only the section that's open, and count and replace only what's in it. **Add** in the toolbar works here too: select some text, and it becomes a link to a new section or passage with that name. With nothing selected, you type the new one's name on the map.
@@ -73,4 +74,4 @@ When you run your story, the sections and passages the player visits, and the li
 
 ## Using the keyboard
 
-Click the map, or tab to it, then use the arrow keys to move between sections and passages. Enter goes to the selected one in the script (or, with the map full screen, opens it to [write beside the map](#writing-on-the-map)), F2 renames it, Delete deletes it, and the menu key (or Shift+F10) opens its menu. **+** and **-** zoom, and **0** fits the whole story in view. A screen reader reads out each section's links in and out as you move to it.
+Click the map, or tab to it, then use the arrow keys to move between sections and passages. Enter goes to the selected one in the script (or, with just the map showing, opens it to [write beside the map](#writing-on-the-map)), F2 renames it, Delete deletes it, and the menu key (or Shift+F10) opens its menu. **+** and **-** zoom, and **0** fits the whole story in view. A screen reader reads out each section's links in and out as you move to it.
