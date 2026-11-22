@@ -69,6 +69,12 @@ describe("parseProjectFile", () => {
         });
     });
 
+    test("persistent attributes are kept, once each (#539)", () => {
+        expect(parseProjectFile("{ \"version\": 1, \"main\": \"a.squiffy\", \"persistent\": [\" endings \", \"finished\", \"endings\"] }")).toEqual({
+            success: true, project: { version: 1, main: "a.squiffy", exclude: [], persistent: ["endings", "finished"] },
+        });
+    });
+
     test("exclude is optional, other properties are ignored, and main is normalised", () => {
         expect(parseProjectFile("{ \"$schema\": \"x\", \"version\": 1, \"main\": \"./src\\\\story.squiffy\" }")).toEqual({
             success: true, project: { version: 1, main: "src/story.squiffy", exclude: [] },
@@ -96,6 +102,10 @@ describe("parseProjectFile", () => {
         ["a panel with no label", "{ \"version\": 1, \"main\": \"a.squiffy\", \"panels\": [{ \"passage\": \"x\" }] }", "panel 1 needs a \"label\""],
         ["a panel in the wrong place", "{ \"version\": 1, \"main\": \"a.squiffy\", \"panels\": [{ \"passage\": \"x\", \"label\": \"x\", \"position\": \"top\" }] }", "should be \"side\" or \"button\""],
         ["a panel with an unknown icon", "{ \"version\": 1, \"main\": \"a.squiffy\", \"panels\": [{ \"passage\": \"x\", \"label\": \"x\", \"icon\": \"cat\" }] }", "\"icon\" should be one of \"bag\""],
+        ["persistent not a list", "{ \"version\": 1, \"main\": \"a.squiffy\", \"persistent\": \"endings\" }", "\"persistent\" should be a list"],
+        ["a persistent attribute that isn't a name", "{ \"version\": 1, \"main\": \"a.squiffy\", \"persistent\": [\"my endings\"] }", "\"persistent\" should be a list of attribute names"],
+        ["an internal persistent attribute", "{ \"version\": 1, \"main\": \"a.squiffy\", \"persistent\": [\"_section\"] }", "\"persistent\" should be a list of attribute names"],
+        ["settings as a persistent attribute", "{ \"version\": 1, \"main\": \"a.squiffy\", \"persistent\": [\"settings\"] }", "can't have \"settings\""],
         ...([
             ["settings not a list", "{}", "\"settings\" should be a list"],
             ["a setting that isn't an object", "[1]", "setting 1 should be an object"],

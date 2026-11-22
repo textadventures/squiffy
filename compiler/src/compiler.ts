@@ -53,6 +53,8 @@ interface CompilerSettings {
     panels?: Panel[];
     // squiffy.json's "settings": see EmitSettings.settings
     settings?: PlayerSetting[];
+    // squiffy.json's "persistent": see EmitSettings.persistent
+    persistent?: string[];
 }
 
 export interface CompileError {
@@ -81,5 +83,5 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         };
     }
 
-    return emit(analysis, { globalJs: settings.globalJs, projectId: settings.projectId, panels: settings.panels, settings: settings.settings });
+    return emit(analysis, { globalJs: settings.globalJs, projectId: settings.projectId, panels: settings.panels, settings: settings.settings, persistent: settings.persistent });
 }

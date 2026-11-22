@@ -46,7 +46,7 @@ export async function loadPlayableStory(story: StoryOnDisk): Promise<LoadResult>
     if (!analysis.success) {
         return { success: false, errors: analysis.diagnostics.filter(d => d.severity == "error").map(formatDiagnostic) };
     }
-    const compiled = emit(analysis, { projectId: story.projectId, panels: story.panels, settings: story.settings });
+    const compiled = emit(analysis, { projectId: story.projectId, panels: story.panels, settings: story.settings, persistent: story.persistent });
     const js = compiled.output.js.map(lines => new Function("squiffy", "get", "set", lines.join("\n")));
 
     // Sections and passages that are only shown inside others, with {{embed}} or {{live}},
@@ -496,7 +496,7 @@ export interface PlayOptions {
     // Text to put in the text boxes, by attribute, when they're on the screen
     inputs?: Record<string, string>;
     // A saved game to carry on from
-    save?: SavedGame;
+    save?: PlaySave;
     // Makes the story's randomness the same every time
     seed?: number;
     // Gives each step the story's attributes after it, for playthrough tests (--record, --test)
@@ -531,10 +531,14 @@ export interface PlayResult {
     stopped?: string;
     notes: string[];
     // The game as it is at the end, to carry on from
-    save: SavedGame;
+    save: PlaySave;
     // What to call the sections in the result without names of their own, by name
     sectionLabels?: SectionLabels;
 }
+
+// A saved game, as --save keeps it, with the story's persistent attributes (#539), which aren't
+// part of a saved game, so the next run starts with them as they were
+export type PlaySave = SavedGame & { persistent?: Record<string, unknown> };
 
 // A story being played, and what's been shown of it so far
 class Session {
@@ -556,11 +560,12 @@ class Session {
         });
     }
 
-    static async create(playable: PlayableStory, env: Environment) {
+    // Persistent attributes start empty, unless they're given, e.g. from --save
+    static async create(playable: PlayableStory, env: Environment, persistent?: Record<string, unknown>) {
         const { init } = await import("squiffy-runtime");
         const element = document.createElement("div");
         document.body.replaceChildren(element);
-        const api = await init({ element, story: playable.story, persist: false, scroll: "element" });
+        const api = await init({ element, story: playable.story, persist: false, scroll: "element", persistent });
         return new Session(api, element, env, new Set(Object.keys(playable.story.sections)));
     }
 
@@ -689,15 +694,16 @@ class Session {
         return undefined;
     }
 
-    // Puts text in the text boxes on the screen. With fill, any left empty get something that
-    // satisfies their validation, if possible, for --random.
-    fillInputs(inputs: Record<string, string>, random?: () => number): { attribute: string; value: string }[] {
+    // Puts text in the text boxes on the screen. With random, any left empty get something that
+    // satisfies their validation, if possible, for --random. With again, those already filled in
+    // are filled in again, if the inputs have something for them (--play --interactive's :input).
+    fillInputs(inputs: Record<string, string>, random?: () => number, again = false): { attribute: string; value: string }[] {
         const section = this.currentSection();
         if (!section) return [];
         const result: { attribute: string; value: string }[] = [];
         for (const input of section.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>("input:not([disabled]), textarea:not([disabled]), select:not([disabled])")) {
-            if (this.filled.has(input)) continue;
             const attribute = input.getAttribute("data-attribute") || input.id;
+            if (this.filled.has(input) && !(again && attribute && attribute in inputs)) continue;
             let value: string | undefined = attribute ? inputs[attribute] : undefined;
             if (value === undefined && random) value = makeUpValue(input, random);
             if (value === undefined) continue;
@@ -715,9 +721,15 @@ class Session {
         return result;
     }
 
+    // The attributes include persistent ones (#539)
     attributes(): Record<string, unknown> {
-        const state = this.api.getSave().state;
+        const state = { ...this.api.getSave().state, ...this.api.getPersistent() };
         return Object.fromEntries(Object.entries(state).filter(([name]) => !name.startsWith("_")));
+    }
+
+    save(): PlaySave {
+        const persistent = this.api.getPersistent();
+        return { ...this.api.getSave(), ...(Object.keys(persistent).length ? { persistent } : {}) };
     }
 
     dispose() {
@@ -745,95 +757,197 @@ function makeUpValue(input: HTMLInputElement | HTMLTextAreaElement | HTMLSelectE
 
 const sectionExists = (playable: PlayableStory, section: string) => section in playable.story.sections;
 
-export async function playStory(playable: PlayableStory, options: PlayOptions = {}): Promise<PlayResult> {
-    const env = await createEnvironment();
-    env.seed(options.seed);
-    const notes: string[] = [];
-    if (playable.scripts.length) {
-        notes.push(`The story's script files (${playable.scripts.join(", ")}) aren't run when playing from the command line.`);
-    }
-    let session: Session | undefined;
-    try {
-        session = await Session.create(playable, env);
-        const s = session;
-        const steps: PlayStep[] = [];
-        // Attributes are taken once a step has finished. Text boxes are filled in just before
-        // the next link is clicked, so what they set is in the next step.
-        const push = (step: PlayStep) => {
-            if (options.stepAttributes) step.attributes = structuredClone(s.attributes());
-            steps.push(step);
-        };
-        let stopped: string | undefined;
-        const inputs = options.inputs ?? {};
+// What the player can do at a point in the story, and what they've done so far
+export interface PlayState {
+    // The section the player is in
+    section: string;
+    // Whether that section is marked @end
+    ending: boolean;
+    // What the player can click now
+    choices: PlayChoice[];
+    // The story's attributes, apart from internal ones starting with "_"
+    attributes: Record<string, unknown>;
+    // The game as it is, to carry on from
+    save: PlaySave;
+}
 
-        if (options.start !== undefined && !sectionExists(playable, options.start)) {
-            stopped = `There's no section called "${options.start}".`;
-            await env.settle(s.api.begin());
+export interface PlayerOptions extends Omit<PlayOptions, "choose"> {
+    // How to tell the player to fill in a text box: "--input", or ":input" for --interactive
+    inputHint?: string;
+}
+
+// A story being played a step at a time, in one jsdom environment: what --play uses to click
+// its links in order, and --play --interactive to click each link as it's read (#530)
+export class StoryPlayer {
+    readonly notes: string[] = [];
+    private readonly inputs: Record<string, string>;
+
+    private constructor(
+        private readonly playable: PlayableStory,
+        private readonly env: Environment,
+        private readonly session: Session,
+        private readonly options: PlayerOptions,
+    ) {
+        this.inputs = { ...options.inputs };
+        if (playable.scripts.length) {
+            this.notes.push(`The story's script files (${playable.scripts.join(", ")}) aren't run when playing from the command line.`);
         }
-        else if (options.start !== undefined) {
-            push(await s.step(undefined, () => s.api.begin({ section: options.start! })));
+    }
+
+    // Starts the story, at options.start or from options.save if given, and returns what it
+    // showed first, or why it couldn't start. The player must be closed afterwards.
+    static async open(playable: PlayableStory, options: PlayerOptions = {}): Promise<{ player: StoryPlayer; step?: PlayStep; stopped?: string }> {
+        const env = await createEnvironment();
+        env.seed(options.seed);
+        let session: Session;
+        try {
+            session = await Session.create(playable, env, options.save?.persistent);
         }
-        else if (options.save) {
-            const loaded = await s.api.loadSave(options.save);
-            if (!loaded.success) {
-                stopped = loaded.error == "wrongStory"
-                    ? "The saved game is from a different story."
-                    : "The saved game couldn't be loaded.";
+        catch (e) {
+            env.close();
+            throw e;
+        }
+        const player = new StoryPlayer(playable, env, session, options);
+        const s = session;
+        let step: PlayStep | undefined;
+        let stopped: string | undefined;
+        try {
+            if (options.start !== undefined && !sectionExists(playable, options.start)) {
+                stopped = `There's no section called "${options.start}".`;
+                await env.settle(s.api.begin());
+            }
+            else if (options.start !== undefined) {
+                step = player.withAttributes(await s.step(undefined, () => s.api.begin({ section: options.start! })));
+            }
+            else if (options.save) {
+                const loaded = await s.api.loadSave(options.save);
+                if (!loaded.success) {
+                    stopped = loaded.error == "wrongStory"
+                        ? "The saved game is from a different story."
+                        : "The saved game couldn't be loaded.";
+                }
+                else {
+                    await s.settle();
+                    const errors = env.takeMessages();
+                    step = player.withAttributes({
+                        went: [{ section: s.api.get("_section") }], cleared: false, text: s.currentText(),
+                        errors: errors.errors, console: errors.console,
+                    });
+                }
             }
             else {
-                await s.settle();
-                const errors = env.takeMessages();
-                push({
-                    went: [{ section: s.api.get("_section") }], cleared: false, text: s.currentText(),
-                    errors: errors.errors, console: errors.console,
-                });
+                step = player.withAttributes(await s.step(undefined, () => s.api.begin()));
             }
+            await player.fillInputs();
         }
-        else {
-            push(await s.step(undefined, () => s.api.begin()));
+        catch (e) {
+            player.close();
+            throw e;
         }
+        return { player, ...(step ? { step } : {}), ...(stopped ? { stopped } : {}) };
+    }
 
-        for (const choice of stopped ? [] : options.choose ?? []) {
-            s.fillInputs(inputs);
-            await s.settle();
-            const link = s.findLink(choice);
-            if (!link) {
-                const choices = s.choices();
-                stopped = choices.length
+    // Attributes are taken once a step has finished. Text boxes are filled in after that, just
+    // before the next link is clicked, so what they set is in the next step.
+    private withAttributes(step: PlayStep): PlayStep {
+        if (this.options.stepAttributes) step.attributes = structuredClone(this.session.attributes());
+        return step;
+    }
+
+    private async fillInputs(inputs = this.inputs, again = false) {
+        this.session.fillInputs(inputs, undefined, again);
+        await this.session.settle();
+    }
+
+    // Clicks a link, by its text or its number in the list of choices, and returns what it
+    // showed, or why it couldn't be clicked
+    async choose(choice: string): Promise<{ step?: PlayStep; stopped?: string }> {
+        const s = this.session;
+        const link = s.findLink(choice);
+        if (!link) {
+            const choices = s.choices();
+            return {
+                stopped: choices.length
                     ? `There's no link "${choice}" to click. The links are: ${choices.map(c => `"${c.text}"`).join(", ")}.`
-                    : `There's no link "${choice}" to click, as there are no links to click.`;
-                break;
-            }
-            if (needsInput(link)) {
-                stopped = `The link "${choice}" can't be clicked until the text boxes are filled in properly. Use --input to fill them in.`;
-                break;
-            }
-            const text = linkText(link);
-            push(await s.step(text, () => s.click(link), link));
+                    : `There's no link "${choice}" to click, as there are no links to click.`,
+            };
         }
-        s.fillInputs(inputs);
-        await s.settle();
+        if (needsInput(link)) {
+            return { stopped: `The link "${choice}" can't be clicked until the text boxes are filled in properly. Use ${this.options.inputHint ?? "--input"} to fill them in.` };
+        }
+        const text = linkText(link);
+        const step = this.withAttributes(await s.step(text, () => s.click(link), link));
+        await this.fillInputs();
+        return { step };
+    }
 
-        const section = s.api.get("_section") ?? "";
-        const hasErrors = steps.some(step => step.errors.length);
-        const choices = s.choices();
-        const mentioned = [section, ...steps.flatMap(step => step.went.map(w => w.section)), ...choices.flatMap(c => c.section ? [c.section] : [])];
+    // Puts text in text boxes, by attribute: those on the screen now, even if they've been
+    // filled in already, and any shown later
+    async setInputs(inputs: Record<string, string>) {
+        Object.assign(this.inputs, inputs);
+        await this.fillInputs(inputs, true);
+    }
+
+    get currentInputs(): Record<string, string> {
+        return { ...this.inputs };
+    }
+
+    state(): PlayState {
+        const section = this.session.api.get("_section") ?? "";
         return {
-            success: !stopped && !hasErrors,
-            steps,
             section,
-            ending: playable.endings.has(section),
-            choices,
-            attributes: s.attributes(),
+            ending: this.playable.endings.has(section),
+            choices: this.session.choices(),
+            attributes: this.session.attributes(),
+            save: this.session.save(),
+        };
+    }
+
+    // What to call the sections without names of their own, in these steps and the state
+    labels(steps: PlayStep[], state: PlayState) {
+        return labelsFor(this.playable, [
+            state.section, ...steps.flatMap(step => step.went.map(w => w.section)),
+            ...state.choices.flatMap(c => c.section ? [c.section] : []),
+        ]);
+    }
+
+    close() {
+        this.session.dispose();
+        this.env.close();
+    }
+}
+
+export async function playStory(playable: PlayableStory, options: PlayOptions = {}): Promise<PlayResult> {
+    const { choose = [], ...rest } = options;
+    const opened = await StoryPlayer.open(playable, rest);
+    const player = opened.player;
+    try {
+        const steps: PlayStep[] = opened.step ? [opened.step] : [];
+        let stopped = opened.stopped;
+        for (const choice of stopped ? [] : choose) {
+            const chosen = await player.choose(choice);
+            if (chosen.step) steps.push(chosen.step);
+            if (chosen.stopped) {
+                stopped = chosen.stopped;
+                break;
+            }
+        }
+        const state = player.state();
+        return {
+            success: !stopped && !steps.some(step => step.errors.length),
+            steps,
+            section: state.section,
+            ending: state.ending,
+            choices: state.choices,
+            attributes: state.attributes,
             ...(stopped ? { stopped } : {}),
-            notes,
-            save: s.api.getSave(),
-            ...labelsFor(playable, mentioned),
+            notes: player.notes,
+            save: state.save,
+            ...player.labels(steps, state),
         };
     }
     finally {
-        session?.dispose();
-        env.close();
+        player.close();
     }
 }
 
@@ -1073,7 +1187,7 @@ function describePlaces(places: { section: string; passage?: string }[], labels?
     return runs.map(r => r.count > 1 ? `${r.place} ${r.count} times` : r.place).join(", then ");
 }
 
-export function formatPlayResult(result: PlayResult, showAttributes: boolean): string {
+export function formatPlayResult(result: PlayResult, showAttributes: boolean, inputHint = "--input"): string {
     const labels = result.sectionLabels;
     const lines: string[] = [];
     for (const note of result.notes) lines.push(`(${note})`);
@@ -1099,7 +1213,7 @@ export function formatPlayResult(result: PlayResult, showAttributes: boolean): s
         lines.push(`Choices (in ${describeSection(result.section, labels)}):`);
         for (const choice of result.choices) {
             const where = choice.section ? ` -> ${describeSection(choice.section, labels)}` : choice.passage ? ` -> passage "${choice.passage}"` : choice.continue ? " (continue)" : "";
-            lines.push(`  ${choice.number}. ${choice.text}${where}${choice.needsInput ? " (needs the text boxes filling in: use --input)" : ""}`);
+            lines.push(`  ${choice.number}. ${choice.text}${where}${choice.needsInput ? ` (needs the text boxes filling in: use ${inputHint})` : ""}`);
         }
     }
     else if (result.ending) {

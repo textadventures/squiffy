@@ -159,6 +159,7 @@ See [Attributes](/attributes/) for detailed documentation and examples.
 | `{{unset}}` | `"attribute"` | Set attribute to false | `{{unset "has_key"}}` |
 | `{{inc}}` | `"attribute" [amount]` | Increment by 1 or specified amount | `{{inc "score"}}` or `{{inc "score" bonus * 10}}` |
 | `{{dec}}` | `"attribute" [amount]` | Decrement by 1 or specified amount | `{{dec "health"}}` or `{{dec "health" damage - armour}}` |
+| `{{forget}}` | `["attribute" ...]` | Clear the [attributes that last between playthroughs](/attributes/#attributes-that-last-between-playthroughs): all of them, or the ones named | `{{forget}}` or `{{forget "endings"}}` |
 
 <Aside>
 These helpers execute at render time and respect `{{#if}}` conditions, unlike `@set`, `@inc`, `@dec`, and `@unset` directives which always execute when a section/passage loads.
@@ -340,7 +341,7 @@ The `"attribute"` parameter is the **name** of an attribute that stores an array
 | `{{contains}}` | `"attribute" value` or `(array ...) value` | Check if array contains value | `{{#if (contains "inventory" "key")}}...{{/if}}` |
 | `{{length}}` | `"attribute"` or `(array ...)` | Get number of elements in array | `{{length "inventory"}}` |
 
-In a condition or calculation, you can also write `inventory contains "key"`, with the array itself rather than its name in quotes, and `inventory.length`. `contains` works on [objects](/attributes/#objects) too, where it's whether the object has a value with that name: `hero contains "hp"`.
+In a condition or calculation, you can also write `inventory contains "key"`, with the array itself rather than its name in quotes, and `inventory.length`. `contains` works on [objects](/attributes/#objects) too, where it's whether the object has a value with that name: `hero contains "hp"`, and so does `{{length}}`, which counts the values in it: `(length "hero")`.
 
 ### Joining, sorting and more
 
@@ -469,7 +470,7 @@ Example:
 |--------|------------|-------------|
 | `{{#style}}...{{/style}}` | `"class" ...` | Give the text inside one or more classes, for your [CSS](/styling/#styling-some-text) or Squiffy's [text effects](/dynamic-text/#text-effects) |
 
-The effects are `shake`, `shudder`, `rumble`, `sway`, `buoy`, `pulse`, `fade-in-out`, `blink`, `flicker`, `blur`, `blurrier`, `smear`, `mirror` and `upside-down`.
+The effects are `shake`, `shudder`, `rumble`, `sway`, `buoy`, `pulse`, `fade-in-out`, `blink`, `flicker`, `blur`, `blurrier`, `smear`, `mirror`, `upside-down`, `shadow`, `emboss`, `outline`, `condense`, `expand`, `tall`, `flat`, `double-underline`, `wavy-underline`, `double-strike` and `wavy-strike`.
 
 Example:
 ```squiffy

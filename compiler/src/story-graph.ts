@@ -5,6 +5,7 @@
 
 import type { Location } from "./language-service.js";
 import { capitalise, sectionDetail, sectionLabels } from "./section-labels.js";
+import { attributeValues } from "./setters.js";
 import type {
     DeactivateNode, Diagnostic, EmbedNode, GotoNode, LinkNode, PassageNode, Position, Range, SectionNode, SquiffyFile,
 } from "./syntax.js";
@@ -12,6 +13,10 @@ import type {
 export interface StoryGraph {
     nodes: GraphNode[];
     edges: GraphEdge[];
+    // Whether a section that isn't reachable really can't be reached. Not if the story starts at
+    // a section that doesn't exist, or if anything that can be reached navigates somewhere that
+    // can't be known, when any section might be reachable.
+    reachabilityKnown: boolean;
 }
 
 export interface GraphNode {
@@ -52,7 +57,9 @@ export interface GraphNode {
     ending?: boolean;
     // A section (or anything in it) navigates somewhere that can't be known before the story is
     // run: a link whose target is a Handlebars expression, a {{section}} helper written by hand,
-    // or squiffy.story.go() in JavaScript without a literal section name.
+    // {{goto}} with an expression, or with an attribute the story sets to something other than
+    // a section's name in quotes, or squiffy.story.go() in JavaScript without a literal section
+    // name.
     unknownExits?: boolean;
 }
 
@@ -79,6 +86,9 @@ export interface GraphEdge {
     conditional: boolean;
     // Its target is a Handlebars expression, so it can't be followed
     dynamic?: boolean;
+    // For {{goto name}}, the attribute that says where it goes: there's an edge to each section
+    // the story sets that attribute to
+    via?: string;
     // The link, embed or script in the source
     location: Location;
     // The link text
@@ -169,6 +179,8 @@ export function buildStoryGraph(source: GraphSource): StoryGraph {
     const unknown = new Set<string>();
     const endings = new Set<string>();
     // {{live}} helpers that show a section or passage
+    // {{goto name}}, where the attribute name says where to go
+    const attributeGotos: { from: string; file: string; attribute: string; range: Range }[] = [];
     const liveEmbeds: { container: SectionNode | PassageNode; from: string; file: string; sectionName: string; kind: "section" | "passage"; target: string; range: Range }[] = [];
 
     const addNode = (node: GraphNode) => {
@@ -211,8 +223,20 @@ export function buildStoryGraph(source: GraphSource): StoryGraph {
                 }
                 else if (statement.type == "text") {
                     if (/\{\{~?\s*section\s/.test(statement.text)) unknown.add(from);
-                    // {{goto}} with an expression, e.g. {{goto (random (array "a" "b"))}}
-                    if (/\{\{~?\s*goto\s+[^\s"'}]/.test(statement.text)) unknown.add(from);
+                    // {{goto name}}, which goes to the section an attribute names, or {{goto}} with
+                    // an expression, e.g. {{goto (random (array "a" "b"))}}
+                    for (const match of statement.text.matchAll(/\{\{~?\s*goto\s+([^\s"'}~]+)/g)) {
+                        const attribute = /^[A-Za-z_][\w.]*$/.test(match[1]) ? match[1] : undefined;
+                        if (!attribute) {
+                            unknown.add(from);
+                            continue;
+                        }
+                        const line = statement.range.start.line;
+                        attributeGotos.push({
+                            from, file: section.file, attribute,
+                            range: { start: { line, character: match.index }, end: { line, character: match.index + match[0].length } },
+                        });
+                    }
                     // {{live "x" section="name"}} and passage="name" show that section's or
                     // passage's text, and so its links, as {{embed}} does
                     for (const match of statement.text.matchAll(/\{\{~?\s*live\s[^}]*?\b(section|passage)\s*=\s*(["'])([^"']*)\2[^}]*\}\}/g)) {
@@ -335,6 +359,23 @@ export function buildStoryGraph(source: GraphSource): StoryGraph {
         });
     }
 
+    // {{goto name}} goes to whichever section the story sets name to. Where every value it's set
+    // to is a section's name, those are all the places it can go; otherwise it's somewhere that
+    // can't be known, as well as any sections it's set to.
+    const values = attributeGotos.length ? attributeValues(source.files.values()) : undefined;
+    for (const goto of attributeGotos) {
+        const found = values!.get(goto.attribute);
+        const targets = [...found?.values ?? []];
+        const sections = targets.filter(name => source.sections.has(name));
+        if (!found || found.unknown || sections.length < targets.length || !sections.length) unknown.add(goto.from);
+        for (const name of sections) {
+            edges.push({
+                from: goto.from, to: sectionId(name), kind: "goto", conditional: true, via: goto.attribute,
+                location: { file: goto.file, range: goto.range },
+            });
+        }
+    }
+
     // In the order they're written
     const fileOrder = new Map([...source.files.keys()].map((file, i) => [file, i]));
     edges.sort((a, b) => (fileOrder.get(a.location.file) ?? -1) - (fileOrder.get(b.location.file) ?? -1)
@@ -429,21 +470,20 @@ export function buildStoryGraph(source: GraphSource): StoryGraph {
         node.deadEnd = hasContent && node.name != "" && !ending && !wayOut && !unknownExits;
     }
 
-    return { nodes, edges };
+    const sections = nodes.filter(n => n.kind == "section");
+    const reachabilityKnown = sections.some(n => n.start) && !sections.some(n => n.reachable && n.unknownExits);
+    return { nodes, edges, reachabilityKnown };
 }
 
 // "Unreachable section" and "dead end" warnings, for the language service's diagnostics
 export function storyGraphDiagnostics(graph: StoryGraph): Diagnostic[] {
     const diagnostics: Diagnostic[] = [];
     const sections = graph.nodes.filter(n => n.kind == "section");
-    // If the story starts at a section that doesn't exist, or anything that can be reached
-    // navigates somewhere that can't be known, any section might be reachable
-    const checkReachable = sections.some(n => n.start) && !sections.some(n => n.reachable && n.unknownExits);
     for (const node of sections) {
         // The master section, which is part of every section
         if (node.name == "") continue;
         if (!node.reachable) {
-            if (!checkReachable || node.embedded) continue;
+            if (!graph.reachabilityKnown || node.embedded) continue;
             diagnostics.push({
                 file: node.location.file,
                 range: node.location.range,

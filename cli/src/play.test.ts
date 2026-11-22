@@ -125,6 +125,28 @@ describe("playStory", () => {
         expect(second.ending).toBe(true);
     });
 
+    test("persistent attributes start empty, and a save carries them on (#539)", async () => {
+        await fs.writeFile(path.join(dir, "squiffy.json"), JSON.stringify({ version: 1, main: "story.squiffy", persistent: ["finished"] }));
+        await fs.writeFile(path.join(dir, "story.squiffy"), "{{#if finished}}Welcome back.{{else}}Hello.{{/if}} [[Finish]](end)\n\n[[end]]:\n@set finished\nThe end.");
+        const loaded = await loadPlayableStory(await findStory(dir));
+        if (!loaded.success) throw new Error(loaded.errors.join("\n"));
+        const playable = loaded.playable;
+
+        const first = await playStory(playable, { choose: ["Finish"] });
+        expect(first.steps[0].text).toContain("Hello.");
+        expect(first.attributes).toHaveProperty("finished", true);
+        expect(first.save.persistent).toEqual({ finished: true });
+        expect(first.save.state).not.toHaveProperty("finished");
+
+        // A new run starts without them
+        expect((await playStory(playable, {})).steps[0].text).toContain("Hello.");
+
+        // Carrying on from the save keeps them
+        const second = await playStory(playable, { save: first.save });
+        expect(second.attributes).toHaveProperty("finished", true);
+        expect(second.save.persistent).toEqual({ finished: true });
+    });
+
     test("starts at another section", async () => {
         const result = await playStory(await load(SHOP), { start: "shop" });
         expect(result.steps[0].text).toBe("\"Welcome!\" You have -3 gold left. [Leave]");

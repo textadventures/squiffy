@@ -328,6 +328,43 @@ With both the key and the map, you're ready for adventure!
 
 Each of these operators has an equivalent helper (`eq`, `ne`, `gt`, `gte`, `lt`, `lte`, `and`, `or`, `not`), which you can use anywhere, not just in conditions. For example, `{{#if has_key and door_locked}}` is the same as `{{#if (and has_key door_locked)}}`. See the [Helpers reference](/helpers-reference/) for details.
 
+## Attributes that last between playthroughs
+
+Some attributes belong to the player rather than to one playthrough: the endings they've found, achievements, or a chapter that opens up once they've finished the story. Normally, restarting the story clears every attribute, going back undoes them, and loading a saved game puts them back as they were when it was saved. To keep some attributes through all of that, list them under `persistent` in your story's [`squiffy.json`](/multiple-files/):
+
+```json
+{
+  "version": 1,
+  "main": "story.squiffy",
+  "persistent": ["endings", "finished"]
+}
+```
+
+Your story then sets and reads them like any other attribute:
+
+```squiffy
+[[start]]:
+{{#if finished}}Welcome back. You've found {{length endings}} of the 5 endings.{{/if}}
+
+[[pebbles]]:
+@set endings.pebbles = true
+@set finished
+You end your days as a pile of pebbles on the beach.
+```
+
+They're kept for your story in the player's browser, like their [settings](/buttons-panels-settings/#player-settings), and they aren't part of a [saved game](/buttons-panels-settings/#saved-games). Restarting leaves them as they are, going back doesn't undo them, and loading a saved game doesn't change them.
+
+`{{forget}}` clears them all, and `{{forget "finished"}}` just the ones you name, so you can give the player a way to start afresh:
+
+```squiffy
+[Forget everything]: the endings you've found, and that you've finished the story.
+
+[Forget everything]:
+{{forget}}It's all forgotten.
+```
+
+When you play a story with the [command-line tool](/cli/), they start out empty each time, so a playthrough test always plays the same way. `--save` keeps them with the saved game, so playing a step at a time carries them on, and `--start` with `--save` starts a new game that keeps them, to try a second playthrough.
+
 ## Tracking sections and passages
 
 ### The `{{seen}}` helper

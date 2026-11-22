@@ -11,12 +11,14 @@ import { convertQuestFile } from "./convert-quest.js";
 import { checkStory, formatCheckResult } from "./check.js";
 import {
     formatChoicesFile, formatPlayResult, formatRandomResult, loadPlayableStory, MAX_INLINE_CHOICES, parseChoicesFile, playRandom,
-    playStory, problemComments, type RandomProblem, type SectionLabels,
+    playStory, problemComments, type PlayResult, type RandomProblem, type SectionLabels,
 } from "./play.js";
 import {
     findTestFiles, formatTest, formatTestResults, parseTest, runTest, testFromResult, TestFileError, TEST_EXTENSION,
     type TestFileResult,
 } from "./playtest.js";
+import { parseInput, playInteractive } from "./interactive.js";
+import readline from "readline";
 import fs from "fs";
 import { findStory, StoryNotFoundError, type StoryOnDisk } from "squiffy-compiler/node";
 import { BUILD_FOLDER } from "squiffy-compiler";
@@ -62,10 +64,15 @@ const argv = yargs(hideBin(process.argv))
     .string("start")
     .describe("save", "With --play, a file to carry on from, if it exists, and to save the game to afterwards")
     .string("save")
+    .describe("interactive", "With --play, keep playing, reading a link to click from each line of standard input, until it ends")
+    .boolean("interactive")
     .describe("attributes", "With --play, show the story's attributes at the end")
     .boolean("attributes")
     .describe("record", "With --play, record the playthrough as a test, to a .squiffy-test file, for --test")
     .string("record")
+    .describe("ignore", "With --record, attributes for the test not to record or compare, where * matches any characters. Repeat it for several")
+    .array("ignore")
+    .string("ignore")
     .describe("test", "Play the story the way each .squiffy-test file in its folder says (or the file or folder given), and report where it does something different")
     .describe("update", "With --test, record the tests that fail again, as the story plays now")
     .boolean("update")
@@ -213,12 +220,12 @@ async function play(): Promise<boolean> {
 
     const inputs: Record<string, string> = {};
     for (const input of argv.input ?? []) {
-        const equals = input.indexOf("=");
-        if (equals < 1) {
+        const parsed = parseInput(input);
+        if (!parsed) {
             console.error(`--input should be attribute=value, not "${input}".`);
             return false;
         }
-        inputs[input.substring(0, equals)] = input.substring(equals + 1);
+        inputs[parsed.attribute] = parsed.value;
     }
 
     const choose: string[] = [];
@@ -233,8 +240,9 @@ async function play(): Promise<boolean> {
     }
     choose.push(...argv.choose ?? []);
 
+    // With --start, it starts a new game, but the saved game's persistent attributes (#539) carry on
     let save;
-    if (argv.save && argv.start === undefined && fs.existsSync(argv.save)) {
+    if (argv.save && fs.existsSync(argv.save)) {
         try {
             save = JSON.parse(fs.readFileSync(argv.save, "utf8"));
         }
@@ -255,8 +263,47 @@ async function play(): Promise<boolean> {
             return false;
         }
     }
+    const ignore = (argv.ignore ?? []).flatMap(names => names.split(/[\s,]+/)).filter(name => name);
+    if (ignore.length && !record) {
+        console.error("--ignore goes with --play --record. To ignore attributes in a test, add an ignore line to the test file.");
+        return false;
+    }
     // A test needs a seed, so the story's randomness is the same each time it's played
     const seed = argv.seed ?? (record ? Math.floor(Math.random() * 1000000) : undefined);
+
+    const writeTest = (result: PlayResult, testInputs: Record<string, string>) => {
+        const test = testFromResult(result, { seed: seed!, start: argv.start, inputs: testInputs, ignore });
+        fs.mkdirSync(path.dirname(path.resolve(record!)), { recursive: true });
+        fs.writeFileSync(record!, formatTest(test));
+    };
+
+    if (argv.interactive) {
+        // Output goes straight to stdout, as console.log is the story's while it's being played
+        const write = (text: string) => process.stdout.write(text);
+        const reader = readline.createInterface({ input: process.stdin, crlfDelay: Infinity, terminal: false });
+        // Lines are only kept from when the iterator is made, and they may come in while the
+        // story's being set up
+        const iterator = reader[Symbol.asyncIterator]();
+        const lines = { [Symbol.asyncIterator]: () => iterator };
+        const result = await playInteractive(loaded.playable, {
+            start: argv.start, choose, inputs, save, seed, stepAttributes: !!record, json: argv.json, showAttributes: !!argv.attributes,
+        }, lines, write, line => {
+            if (argv.save) fs.writeFileSync(argv.save, JSON.stringify(line.save));
+        });
+        reader.close();
+        if (record) {
+            // Links that weren't there aren't in the steps, so the test can still be played
+            if (result.hasErrors) {
+                const message = "The test wasn't recorded, as the story had errors.";
+                write(argv.json ? JSON.stringify({ notRecorded: message }) + "\n" : message + "\n");
+            }
+            else {
+                writeTest({ steps: result.steps } as PlayResult, result.inputs);
+                write(argv.json ? JSON.stringify({ recorded: record, seed }) + "\n" : `Recorded the test to ${record} (--seed ${seed}).\n`);
+            }
+        }
+        return result.success;
+    }
 
     const result = await playStory(loaded.playable, {
         start: argv.start, choose, inputs, save, seed, stepAttributes: !!record,
@@ -266,9 +313,7 @@ async function play(): Promise<boolean> {
     let notRecorded: string | undefined;
     if (record) {
         if (result.success) {
-            const test = testFromResult(result, { seed: seed!, start: argv.start, inputs });
-            fs.mkdirSync(path.dirname(path.resolve(record)), { recursive: true });
-            fs.writeFileSync(record, formatTest(test));
+            writeTest(result, inputs);
             recorded = record;
         }
         else {
@@ -300,6 +345,7 @@ async function test(): Promise<boolean> {
         else console.error(message);
         return false;
     };
+    if (argv.ignore?.length) return fail("--ignore goes with --play --record. To ignore attributes in a test, add an ignore line to the test file.");
     const target = typeof argv.test == "string" && argv.test ? argv.test : root;
     if (!fs.existsSync(target)) return fail(`There's no file or folder called ${target}.`);
     const files = findTestFiles(target, root);

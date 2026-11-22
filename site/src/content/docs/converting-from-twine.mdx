@@ -63,7 +63,7 @@ Play the story through after converting it. Twine and Squiffy work differently i
 | `(if: $gold > 5)[...](else-if: ...)[...](else:)[...]` | `{{#if gold > 5}}...{{else if ...}}...{{else}}...{{/if}}` |
 | `$a is 1 or 2`, `$bag contains "key"`, `$bag's length`, `visits` | `a = 1 or a = 2`, `bag contains "key"`, `bag.length`, `(visits "This passage")` |
 | `(uppercase:)`, `(lowercase:)`, `(upperfirst:)` | `(upper ...)`, `(lower ...)`, `(capitalise ...)` |
-| `(round:)`, `(floor:)`, `(ceil:)`, `(abs:)`, `(min:)`, `(max:)` | `(round ...)`, `(floor ...)` and so on |
+| `(round:)`, `(floor:)`, `(ceil:)`, `(abs:)`, `(min:)`, `(max:)` | `(round ...)`, `(floor ...)` and so on. On its own in the text, `(round: $money)` shows its value: `{{round money}}` |
 | `(cond: $hp > 0, "alive", "dead")` | `hp > 0 ? "alive" : "dead"` |
 | `(display: "Map")` | `{{embed "Map"}}` |
 | A custom macro: `(set: $say to (macro: str-type _who, [...]))`, `($say: "Ann")` | A section for the macro, `[[macro say]]:`, and `{{embed "macro say" who="Ann"}}`. Its parameters become the embed's [parameters](/basic-concepts/#parameters), and what it outputs with `(output:)` or `(output-data:)` is its text. A macro that takes any number of values (`...`), one kept in a temporary variable, and a call to a macro inside an expression, aren't converted |
@@ -104,12 +104,14 @@ Play the story through after converting it. Twine and Squiffy work differently i
 | `$name.indexOf("x") != -1` (or `=== -1`) | `name contains "x"` (or `not name contains "x"`) |
 | `Math.round()`, `Math.floor()`, `Math.ceil()`, `Math.abs()`, `Math.min()`, `Math.max()` | `(round ...)`, `(floor ...)` and so on |
 | `$hp > 0 ? "alive" : "dead"` | `hp > 0 ? "alive" : "dead"` |
+| `Object.keys($hero).length` | `(length "hero")` |
 | `<<include "Map">>` | `{{embed "Map"}}` |
 | `<<goto "End">>`, `<<timed 2s>><<goto "End">><</timed>>` | `{{goto "End"}}`, `{{goto "End" after=2000}}` |
 | `<<timed $textSpeed>>...<<next>>...<</timed>>` | `{{#animate "fadeIn" start=textSpeed}}`, for each part. A delay like `"3s"` in a variable works as it is |
 | `<<repeat 1s>>...<</repeat>>`, `<<stop>>` | [`{{#every 1000 append=true}}...{{/every}}`](/dynamic-text/#repeating-text), `{{stop}}` |
 | `<<link "Buy" "Shop">><<set $gold -= 5>><</link>>` | `[[Buy]](Shop, gold -= 5)` |
 | `<<linkreplace "Open">>It's empty.<</linkreplace>>` | A passage link that replaces the link with the text |
+| `<<do tag "map">>...<</do>>`, and `<<redo "map">>` | `{{live "redo_map" passage="do"}}`, with what was in the `<<do>>` in the passage `[do]`, which `{{inc "redo_map"}}` shows again. `<<redo>>` with no tags shows every `<<do>>` again. One in a widget that uses `_args`, or in a loop, is shown once |
 | `<span id="box">`, `<<replace "#box">>` | `{{#label "box"}}`, `{{#replace "box"}}` |
 | `either("a", "b")`, `random(1, 6)` | `(random (array "a" "b"))`, `(random (array 1 2 3 4 5 6))` |
 | `<<cycle "$size">>`, `<<textbox "$name">>`, `<<listbox>>` | `{{rotate ... set="size"}}`, `<input data-attribute="name">`, `<select>` |
@@ -127,6 +129,7 @@ Play the story through after converting it. Twine and Squiffy work differently i
 | `StoryInit`, `PassageHeader`, `PassageFooter` | The start section, the master section, an `{{embed}}` at the end of each section |
 | `StoryCaption`, `StoryBanner` | A [panel](/buttons-panels-settings/#panels) beside the story, rendered again after each section and passage. Links in it don't work |
 | `Setting.addToggle()`, `Setting.addList()`, `Setting.addRange()` in the story's JavaScript, and `settings.fontSize` | [Player settings](/buttons-panels-settings/#player-settings) in `squiffy.json`, and `settings.fontSize`: see [JavaScript](#javascript) |
+| `memorize("endings", ...)`, `recall("endings")`, `forget("endings")` | [Attributes that last between playthroughs](/attributes/#attributes-that-last-between-playthroughs), listed under `persistent` in `squiffy.json`: `@set endings = ...`, `endings`, `{{forget "endings"}}`. `memorize(key, Object.assign(recall(key, {}), { pebbles: true }))` is `@set endings.pebbles = true`. A `recall()` with a default value other than nothing isn't converted |
 | `<<link "Options">><<run UI.settings()>><</link>>`, and the same with `UI.restart()` and `UI.saves()` | `{{settings text="Options"}}`, `{{restart text="..."}}`, `{{saves text="..."}}` |
 | `<<audio "theme" loop play>>`, `<<audio "theme" stop>>` | `@music theme.mp3`, `@music stop`, or `{{music "theme.mp3"}}` and `{{stopmusic}}` later on: see [Sound](#sound) |
 | `<<audio "door" play>>`, `<<audio "door" volume 0.5 play>>` | `@sound door.mp3`, `{{sound "door.mp3" volume=0.5}}` |
@@ -154,7 +157,7 @@ These are left as comments, and listed in `twine-import.txt`:
 - **Harlowe's datasets**, and JavaScript's object methods, such as `Object.keys()`.
 - **Harlowe's more unusual hooks and changers**, such as `(enchant:)` on anything but how text looks, and `(append:)` on a hook in another passage.
 
-Harlowe's `(text-style:)` effects that Squiffy also has, such as `"shudder"`, `"blur"` and `"fade-in-out"`, become [`{{#style}}`](/dynamic-text/#text-effects). A `(transition:)` around a whole passage, as in `(t8n: "dissolve")+(t8n-time: 2s)[...]`, becomes [`@transition`](/dynamic-text/#transitions) in its section, as `@transition fade 2s`. Other changers and text styles that only change how something looks, such as `(link-style:)`, `(box:)`, `"condense"`, transitions for part of a passage, and `(transition-arrive:)` and `(transition-depart:)` on links, are left out, and the text they changed is kept.
+Harlowe's `(text-style:)` styles become HTML tags (`"bold"` is `<b>`) or [`{{#style}}`](/dynamic-text/#text-effects) effects, such as `"shudder"`, `"emboss"` and `"double-underline"`. A `(transition:)` around a whole passage, as in `(t8n: "dissolve")+(t8n-time: 2s)[...]`, becomes [`@transition`](/dynamic-text/#transitions) in its section, as `@transition fade 2s`. Other changers that only change how something looks, such as `(link-style:)`, `(box:)`, transitions for part of a passage, and `(transition-arrive:)` and `(transition-depart:)` on links, are left out, and the text they changed is kept.
 
 ### JavaScript
 

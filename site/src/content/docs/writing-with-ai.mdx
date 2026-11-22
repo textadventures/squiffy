@@ -57,7 +57,7 @@ The plugin is for Claude Code. Other agents can use the command-line tool in the
 The plugin tells Claude to use these command-line options. Any agent can use them, and so can you.
 
 1. **Check the story** with `--check --json`, which lists every problem, with its file and line: errors, broken links, sections that can't be reached, and dead ends. See [Checking a story](/cli/#checking-a-story).
-2. **Play the story** a link at a time, with `--play --save game.json`, adding `--choose` with the link to click each time, reading what happens before deciding what to click next. See [Playing a few links at a time](/cli/#playing-a-few-links-at-a-time).
+2. **Play the story** a link at a time, with `--play --save game.json`, adding `--choose` with the link to click each time, reading what happens before deciding what to click next. See [Playing a few links at a time](/cli/#playing-a-few-links-at-a-time). For a long story, it can write a script that plays it with [`--play --interactive`](/cli/#playing-in-one-go), in one go.
 3. **Play at random** with `--random`, to find errors and dead ends in places it wouldn't have gone itself, and the sections it never got to. Each problem comes with the options that play the story to it again. See [Playing at random](/cli/#playing-at-random).
 4. **Build the story**, when you ask it to, with no options.
 

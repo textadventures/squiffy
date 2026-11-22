@@ -409,7 +409,26 @@ export class SugarCubeExpressions {
 export type Statement =
     | { kind: "set" | "inc" | "dec", name: string, value: Expr, op?: "*=" | "/=" }
     | { kind: "append" | "remove", name: string, value: Expr }
-    | { kind: "unset", name: string };
+    | { kind: "unset", name: string }
+    // forget() (#539): the persistent attributes to clear, or all of them
+    | { kind: "forget", names: string[] };
+
+// memorize(key, value) (#539): sets the key's persistent attribute. Adding to what's there, as
+// memorize(key, Object.assign(recall(key, {}), { name: value })), sets the values inside it.
+function memorizeStatements(args: Expr[]): Statement[] {
+    const [name, value] = args as [{ k: "str", v: string }, Expr];
+    if (value.k == "call" && value.fn == "__assign") {
+        const [target, added] = value.args;
+        if (target.k == "var" && target.name == name.v && added.k == "object") {
+            return added.entries.map(([key, v]) => {
+                const inside = targetName(memberOf({ k: "var", name: name.v }, { k: "str", v: key }));
+                if (inside === null) throw new Unconvertible("Object.assign() with a name Squiffy can't use");
+                return { kind: "set", name: inside, value: v };
+            });
+        }
+    }
+    return [{ kind: "set", name: name.v, value }];
+}
 
 // A comparison, where x.indexOf(y) compared with -1 or 0 to see whether y is there is x contains y
 // (#446). Anything else .indexOf() is for can't be converted: see print().
@@ -497,6 +516,10 @@ class ExpressionParser {
     statement(): Statement[] {
         const target = this.postfixValue();
         if (target.v == "expr" && target.e.k == "loop") throw new Unconvertible("changing a loop's variable inside the loop");
+        if (target.v == "expr" && target.e.k == "call" && target.e.fn == "__memorize") return memorizeStatements(target.e.args);
+        if (target.v == "expr" && target.e.k == "call" && target.e.fn == "__forget") {
+            return [{ kind: "forget", names: target.e.args.map(a => (a as { k: "str", v: string }).v) }];
+        }
         return [this.singleStatement(target, this.tokens.peek())];
     }
 
@@ -652,7 +675,15 @@ class ExpressionParser {
         if (v.v == "object") return { k: "object", entries: v.entries.map(([key, value]) => [key, this.toExpr(value)]) };
         if (v.v == "member") {
             // A list's or text's length (#446)
-            if (v.property == "length") return lengthOf(this.toExpr(v.object));
+            if (v.property == "length") {
+                const object = this.toExpr(v.object);
+                if (object.k == "call" && object.fn == "__keys") {
+                    // Object.keys(x).length: the number of values in x, which {{length}} counts
+                    const x = object.args[0];
+                    return { k: "call", fn: "length", args: [x.k == "var" ? { k: "str", v: x.name } : x] };
+                }
+                return lengthOf(object);
+            }
             throw new Unconvertible(`properties of variables (.${v.property})`);
         }
         throw new Unconvertible(`"${v.name}"`);
@@ -729,9 +760,9 @@ class ExpressionParser {
     }
 
     private call(callee: Value, args: Expr[]): Expr {
-        const str = (e: Expr | undefined, what: string): string => {
+        const str = (e: Expr | undefined, what: string, expected = "a passage name"): string => {
             if (e?.k == "str") return e.v;
-            throw new Unconvertible(`${what} with something other than a passage name`);
+            throw new Unconvertible(`${what} with something other than ${expected}`);
         };
         if (callee.v == "global") {
             switch (callee.name) {
@@ -751,6 +782,26 @@ class ExpressionParser {
                 }
                 case "turns":
                     return { k: "var", name: "turns" };
+                // Values that last across playthroughs (#539): squiffy.json's "persistent"
+                case "recall": {
+                    if (args.length < 1 || args.length > 2) throw new Unconvertible("recall() with no key");
+                    const name = this.s.ctx.story.persistentAttribute(str(args[0], "recall()", "a key"));
+                    const fallback = args[1];
+                    // A value that's never been memorized is null, which is like nothing, false or an empty list or object
+                    if (fallback && !(fallback.k == "null" || (fallback.k == "bool" && !fallback.v)
+                        || (fallback.k == "object" && !fallback.entries.length) || (fallback.k == "array" && !fallback.items.length))) {
+                        throw new Unconvertible("recall() with a default value");
+                    }
+                    return { k: "var", name };
+                }
+                case "memorize":
+                    if (args.length != 2) throw new Unconvertible("memorize() without a key and a value");
+                    return { k: "call", fn: "__memorize", args: [{ k: "str", v: this.s.ctx.story.persistentAttribute(str(args[0], "memorize()", "a key")) }, args[1]] };
+                case "forget":
+                    return { k: "call", fn: "__forget", args: args.map(a => ({ k: "str" as const, v: this.s.ctx.story.persistentAttribute(str(a, "forget()", "a key")) })) };
+                case "Object.assign":
+                    if (args.length != 2) throw new Unconvertible("Object.assign()");
+                    return { k: "call", fn: "__assign", args };
                 case "random":
                     if (args.length == 1) return randomInteger({ k: "num", v: 0 }, args[0]);
                     return randomInteger(args[0], args[1]);
@@ -776,6 +827,13 @@ class ExpressionParser {
                 case "Math.clamp":
                     if (args.length != 3) throw new Unconvertible("Math.clamp() without a value, a minimum and a maximum");
                     return clamp(args[0], args[1], args[2]);
+                // Only to count an object's values, as Object.keys(x).length
+                case "Object.keys":
+                case "Object.values":
+                case "Object.entries":
+                case "Object.getOwnPropertyNames":
+                    if (args.length != 1) throw new Unconvertible(`${callee.name}()`);
+                    return { k: "call", fn: "__keys", args };
                 case "Number":
                 case "String":
                 case "parseInt":
@@ -1129,6 +1187,7 @@ class Writer {
                 case "set": return setter(s.name, s.op ?? "=", s.value, inLink);
                 case "inc": return setter(s.name, "+=", s.value, inLink);
                 case "dec": return setter(s.name, "-=", s.value, inLink);
+                case "forget": throw new Unconvertible("forget() in a link");
                 default: throw new Unconvertible("changing an array in a link");
             }
         });
@@ -1727,6 +1786,12 @@ class Writer {
             const node = parseLink(arg.slice(2, -2), arg) as { text: string };
             return { plain: node.text, squiffy: this.inlineText(node.text) };
         }
+        // SugarCube reads a bare word that isn't a variable, a number or true, false, null,
+        // undefined or NaN, or in setup or settings, as text: <<linkreplace Hint>>
+        const bare = arg.trim();
+        if (/^[^"'`$_[(\s\d-][^\s()]*$/.test(bare) && !/^(true|false|null|undefined|NaN|setup\..*|settings\..*)$/.test(bare)) {
+            return { plain: bare, squiffy: this.inlineText(bare) };
+        }
         const e = this.expr.parse(arg);
         if (e.k == "str") return { plain: e.v, squiffy: this.inlineText(e.v) };
         // Text worked out as the story runs, e.g. a loop's item: named after the expression
@@ -1880,6 +1945,10 @@ class Writer {
                 }
             }
             state.leading = false;
+            if (s.kind == "forget") {
+                out += `{{forget${s.names.map(n => " " + print({ k: "str", v: n })).join("")}}}`;
+                continue;
+            }
             if (isDynamicTarget(s.name)) throw new Unconvertible("setting a value inside an object or list, by a variable's value, after the start of the passage");
             const name = print({ k: "str", v: s.name });
             switch (s.kind) {

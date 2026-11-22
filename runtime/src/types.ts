@@ -20,6 +20,12 @@ export interface SquiffyInitOptions {
      * open when the page doesn't handle them itself. Anything left out is in English.
      */
     strings?: Partial<Record<string, string>>,
+    /**
+     * The values of the story's persistent attributes (squiffy.json's "persistent", #539) to start
+     * with, in place of those kept in the browser: e.g. the CLI's --play carrying them from one run
+     * to the next. getPersistent() gives them back.
+     */
+    persistent?: Record<string, unknown>,
 }
 
 export interface SquiffySettings {
@@ -74,6 +80,11 @@ export interface SquiffyApi {
     setSetting: (name: string, value: SettingValue) => void;
     // Puts every setting back to its default
     resetSettings: () => void;
+    // The values of the story's persistent attributes (squiffy.json's "persistent", #539), by
+    // name: those the story has set. They aren't in getSave(), as loading a game leaves them alone.
+    getPersistent: () => Record<string, unknown>;
+    // Clears persistent attributes, as {{forget}} does: the ones named, or all of them
+    forget: (names?: string[]) => void;
     // Stops the story's music and sounds for good, when it's being replaced, e.g. in the editor's preview
     dispose: () => void;
 
@@ -180,6 +191,9 @@ export interface Story {
     panels?: Panel[];
     // squiffy.json's "settings": options the player can change, which the story reads as settings.name
     settings?: PlayerSetting[];
+    // squiffy.json's "persistent": attributes that belong to the player rather than the
+    // playthrough (#539). Restarting, going back and loading a saved game leave them as they are.
+    persistent?: string[];
     sections: Record<string, Section>;
 }
 

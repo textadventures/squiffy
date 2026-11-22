@@ -27,6 +27,7 @@ Every `{{helper}}` in Squiffy's Handlebars text processor. Docs: https://squiffy
 | `unset` | `"attr"` | Set to false |
 | `inc` | `"attr" [amount]` | Add 1 or amount: `{{inc "score" bonus * 10}}` |
 | `dec` | `"attr" [amount]` | Take away 1 or amount |
+| `forget` | `["attr" ...]` | Clear squiffy.json's `persistent` attributes: all, or those named (project.md) |
 | `=` | expression | Show a calculation: `{{= price * 2}}` |
 
 ## Comparison and logic
@@ -131,7 +132,7 @@ These take the attribute's **name in quotes** and change or read the array in it
 | `pop` | Removes and returns the first item: `{{set "next" (pop "queue")}}` |
 | `remove` | Removes the first matching item |
 | `contains` | `(contains "inventory" "key")`, or `(contains (array ...) value)`. In conditions, `inventory contains "key"` |
-| `length` | `(length "inventory")`. In conditions, `inventory.length` |
+| `length` | `(length "inventory")`. In conditions, `inventory.length`. On an object, `(length "hero")` counts its values |
 
 These take the **array itself** (no quotes) and return a new value, without changing the attribute; to keep the result, set it: `@set bag = (sort bag)`:
 
@@ -154,7 +155,7 @@ See dynamic-text.md for details.
 |---|---|---|
 | `random` | `(array ...) [set="attr"]` | Pick one at random, optionally storing it. Also `(random bag)` |
 | `#animate` | `"typewriter"`/`"toast"`/`"fadeIn"`/`"continue"`, options | Animate the text inside |
-| `#style` | `"class" ...` | Give the text inside classes (span, or div if it has blank lines), for CSS or a built-in effect: `shake`, `shudder`, `rumble`, `sway`, `buoy`, `pulse`, `fade-in-out`, `blink`, `flicker`, `blur`, `blurrier`, `smear`, `mirror`, `upside-down` |
+| `#style` | `"class" ...` | Give the text inside classes (span, or div if it has blank lines), for CSS or a built-in effect: `shake`, `shudder`, `rumble`, `sway`, `buoy`, `pulse`, `fade-in-out`, `blink`, `flicker`, `blur`, `blurrier`, `smear`, `mirror`, `upside-down`, `shadow`, `emboss`, `outline`, `condense`, `expand`, `tall`, `flat`, `double-underline`, `wavy-underline`, `double-strike`, `wavy-strike` |
 | `#label` | `"name"` | Mark some text to replace later |
 | `#replace` | `"name"` | Replace a label's text |
 | `rotate` | `(array ...) [set="attr"] [show="next"]` | A link that cycles through options |

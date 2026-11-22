@@ -13,6 +13,8 @@ import { listPassages, listSections, tagsOf } from "./storyLists.js";
 const styleEffects = new Set([
     "shake", "shudder", "rumble", "sway", "buoy", "pulse", "fade-in-out", "blink", "flicker",
     "blur", "blurrier", "smear", "mirror", "upside-down",
+    "shadow", "emboss", "outline", "condense", "expand", "tall", "flat",
+    "double-underline", "wavy-underline", "double-strike", "wavy-strike",
 ]);
 
 // An embed being shown (#450): its parameters, and the text it wraps, if any
@@ -222,6 +224,15 @@ export class TextProcessor {
 
         this.handlebars.registerHelper("unset", (attribute: string) => {
             this.setAttribute(attribute, false);
+            return "";
+        });
+
+        // {{forget}} clears the story's persistent attributes (squiffy.json's "persistent", #539),
+        // and {{forget "endings" "finished"}} just those
+        this.handlebars.registerHelper("forget", (...args: any[]) => {
+            args.pop();
+            const names = args.map(name => String(unwrapValue(name)));
+            this.state.forget(names.length ? names : undefined);
             return "";
         });
 
@@ -493,17 +504,15 @@ export class TextProcessor {
             return arr.some(item => unwrapValue(item) === unwrappedValue);
         });
 
-        this.handlebars.registerHelper("length", (listOrVar: any) => {
-            let arr: any[];
-            if (typeof listOrVar === "string") {
-                const stored = this.getAttribute(listOrVar);
-                arr = Array.isArray(stored) ? stored : [];
-            } else if (Array.isArray(listOrVar)) {
-                arr = listOrVar;
-            } else {
-                return 0;
-            }
-            return arr.length;
+        // The number of items in an array, or of values in an object
+        this.handlebars.registerHelper("length", (...args: any[]) => {
+            // The last argument is Handlebars' options
+            if (args.length < 2) return 0;
+            const listOrVar = args[0];
+            const value = typeof listOrVar === "string" ? this.getAttribute(listOrVar) : listOrVar;
+            if (Array.isArray(value)) return value.length;
+            if (value && typeof value === "object" && !(value instanceof this.handlebars.SafeString)) return Object.keys(value).length;
+            return 0;
         });
 
         // More helpers for lists (#447). These take the list itself, (join bag), not its name in
