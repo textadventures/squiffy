@@ -36,3 +36,6 @@ site/public/tutorial/*.zip
 # Desktop app: the editor copied in for packaging, and the packages
 desktop/resources/
 desktop/release/
+
+# The in-app browser's launch config for Claude Code, local to each checkout
+.claude/launch.json

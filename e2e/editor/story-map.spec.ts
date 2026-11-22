@@ -39,8 +39,7 @@ async function openStory(page: Page, text = story) {
     await page.keyboard.insertText(text.trimEnd());
     const last = text.trimEnd().split("\n").pop()!;
     await expect(editor(page)).toContainText(last);
-    await page.getByRole("button", { name: "Story map" }).click();
-    await page.getByRole("button", { name: "Full screen" }).click();
+    await page.getByRole("group", { name: "View" }).getByRole("button", { name: "Map", exact: true }).click();
     await expect(page.locator("[data-node]").first()).toBeVisible();
 }
 
@@ -154,14 +153,26 @@ test.describe("writing on the map", () => {
         expect(await lines(page)).toEqual(["@end", "The end. [[empty]]"]);
     });
 
-    test("closing the card, or leaving full screen, shows the whole script again", async ({ page }) => {
+    test("closing the card, or leaving the map-only view, shows the whole script again", async ({ page }) => {
         await openStory(page);
         await write(page, "section:cave");
         await page.locator("#editor header").getByRole("button", { name: "Close" }).click();
         await expect(page.locator("#editor")).toBeHidden();
         await write(page, "section:cave");
-        await page.getByRole("button", { name: "Show the editor" }).click();
+        await page.getByRole("button", { name: "Code + Map", exact: true }).click();
         expect((await lines(page)).join("\n")).toBe(story.trimEnd());
+    });
+
+    test("the problems list shows under the map, and a problem opens beside it", async ({ page }) => {
+        await openStory(page, story.replace("Damp.", "Damp. Back to [[nowhere]]."));
+        await page.getByRole("button", { name: /^Problems:/ }).click();
+        const problem = page.getByRole("region", { name: "Problems" }).locator("button.problem", { hasText: "nowhere" });
+        await expect(problem).toBeVisible();
+        await problem.click();
+        // The section the problem's in, with the cursor on it
+        await expect(cardTitle(page)).toHaveText("cave");
+        await expect(editor(page)).toBeFocused();
+        await expect(page.locator("#editor .cm-activeLine")).toContainText("Back to [[nowhere]].");
     });
 
     test("Find and Replace only search the section being written", async ({ page }) => {
@@ -260,9 +271,9 @@ test.describe("editing from the map", () => {
     test("a section dragged out from another, then deleted, leaves nothing behind", async ({ page }) => {
         await openStory(page);
         const script = async () => {
-            await page.getByRole("button", { name: "Show the editor" }).click();
+            await page.getByRole("button", { name: "Code + Map", exact: true }).click();
             const text = (await lines(page)).join("\n");
-            await page.getByRole("button", { name: "Full screen" }).click();
+            await page.getByRole("button", { name: "Map", exact: true }).click();
             return text;
         };
         await box(page, "section:hill").click();
@@ -293,7 +304,7 @@ test.describe("editing from the map", () => {
         await page.keyboard.type("floor");
         await page.keyboard.press("Enter");
         await expect(box(page, "passage:cave/floor")).toBeVisible();
-        await page.getByRole("button", { name: "Show the editor" }).click();
+        await page.getByRole("button", { name: "Code + Map", exact: true }).click();
         expect((await lines(page)).join("\n")).toContain("go to the [[hill]].\n\n[floor]\n\n[wall]:\nDamp.\n\n[floor]:\n\n[[empty]]:");
     });
 
@@ -339,7 +350,7 @@ test.describe("editing from the map", () => {
         await page.locator('[data-node$="link:sky"]').dblclick();
         await expect(box(page, "passage:start/sky")).toBeVisible();
         await expect(page.locator('[data-node^="missing:"]')).toHaveCount(0);
-        await page.getByRole("button", { name: "Show the editor" }).click();
+        await page.getByRole("button", { name: "Code + Map", exact: true }).click();
         // No second link, and each goes where it belongs in the script
         expect((await lines(page)).join("\n")).toBe("[[start]]:\nGo [[nowhere]], or look at the [sky].\n\n[sky]:\n\n[[nowhere]]:\n\n[[end]]:\n@end\nDone. [[start]]");
     });
@@ -348,10 +359,10 @@ test.describe("editing from the map", () => {
 test("a story opens with its map as it was left", async ({ page }) => {
     await openStory(page);
     await page.reload();
-    await expect(page.getByRole("button", { name: "Show the editor" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Map", exact: true })).toHaveAttribute("aria-pressed", "true");
     // Whichever sections it has: the text typed just before reloading may not have been saved
     await expect(page.locator("[data-node]").first()).toBeVisible();
-    await page.getByRole("button", { name: "Close map" }).click();
+    await page.getByRole("button", { name: "Code", exact: true }).click();
     await page.reload();
     await expect(editor(page)).toBeVisible();
     await expect(map(page)).toHaveCount(0);

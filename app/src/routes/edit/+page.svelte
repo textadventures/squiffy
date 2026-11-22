@@ -572,10 +572,16 @@
         problems = collectProblems(found, current.mainFile);
     }
 
+    // Back to the script after closing a panel, or to the map if it's full screen and hiding it
+    function focusWork() {
+        if (mapOpen && mapMaximized && !cardShown && !isNarrow.current) mapPanel?.focus();
+        else activeView()?.focus();
+    }
+
     async function toggleProblems() {
         if (problemsOpen) {
             problemsOpen = false;
-            activeView()?.focus();
+            focusWork();
             return;
         }
         problemsOpen = true;
@@ -598,7 +604,7 @@
 
     function closeFindInFiles() {
         findOpen = false;
-        activeView()?.focus();
+        focusWork();
     }
 
     // Searches again a moment after the search, the list of files or the text of an open file
@@ -899,10 +905,10 @@
         if (card && !(mapOpen && mapMaximized && !isNarrow.current)) untrack(closeCard);
     });
 
-    // While a section's being written on the map, going somewhere in the story (a link's
-    // definition, a problem, a search result) shows that section in the card. Says whether it did.
+    // With the map full screen, going somewhere in the story (a link's definition, a problem, a
+    // search result) shows that section in the card, as the script's hidden. Says whether it did.
     async function goToInCard(location: Location, focus: boolean): Promise<boolean> {
-        if (!cardShown || !storyGraph) return false;
+        if (!(mapOpen && mapMaximized && !isNarrow.current) || !storyGraph) return false;
         const node = isSquiffyFile(location.file) ? nodeAtLine(storyGraph, location.file, location.range.start.line) : undefined;
         if (!node) {
             // Not in a section that can be shown on its own, so back to the script
@@ -911,10 +917,17 @@
             return false;
         }
         await openCard(node, focus, location.range.start);
-        mapPanel?.focusNode(node.id, false);
+        mapPanel?.focusNode(node.id, false, false);
         return true;
     }
 
+    // The toolbar's Code, Code + Map and Map
+    function setView(view: "code" | "split" | "map") {
+        mapOpen = view !== "code";
+        mapMaximized = view === "map";
+    }
+
+    // On a narrow screen, the map in place of the script, or back
     function toggleMap() {
         if (mapOpen && (!isNarrow.current || narrowPane === "map")) {
             mapOpen = false;
@@ -1566,6 +1579,8 @@
             ontoggleproblems={() => void toggleProblems()}
             onfindinfiles={() => void openFindInFiles()}
             ontogglemap={toggleMap}
+            view={!mapOpen ? "code" : mapMaximized ? "map" : "split"}
+            onview={setView}
             onrun={fromCursor => runPreview(fromCursor)}
             onassets={() => { assetsOpen = true; }}
             onfonts={() => { fontsOpen = true; }}
@@ -1618,6 +1633,10 @@
                     onpointerdown={e => handleSplitterPointerDown(e, "sidebar")}
                 ></div>
             {/if}
+            <!-- The script and the map, with the Problems, Find in Files and References panels
+                 below both, so they're there with the map full screen too -->
+            <div class="flex-1 min-w-0 flex flex-col {isNarrow.current && narrowPane !== "editor" && narrowPane !== "map" ? "hidden" : ""}">
+            <div class="flex-1 min-h-0 flex">
             <!-- Kept mounted (hidden, not removed) on a narrow screen so the cursor and undo
                  history survive opening the sidebar or the preview -->
             <div
@@ -1658,41 +1677,6 @@
                 {:else}
                     <p class="flex-1 p-6 text-sm text-surface-600-400">Open a file from the list on the left.</p>
                 {/each}
-                {#if problemsOpen}
-                    <ProblemsPanel
-                        bind:this={problemsPanel}
-                        bind:height={problemsHeight}
-                        {problems}
-                        counts={problemCounts}
-                        onselect={goToProblem}
-                        onfix={fix => void applyFix(fix)}
-                        onclose={() => { problemsOpen = false; activeView()?.focus(); }}
-                    />
-                {/if}
-                {#if findOpen}
-                    <FindInFilesPanel
-                        bind:this={findPanel}
-                        bind:spec={findSpec}
-                        bind:height={findHeight}
-                        bind:replace={findReplace}
-                        bind:replaceOpen={findReplaceOpen}
-                        onreplace={(file, match) => void replaceMatch(file, match)}
-                        onreplaceall={() => void replaceAllInFiles()}
-                        results={findResults}
-                        invalid={findInvalid}
-                        onselect={goToMatch}
-                        onclose={closeFindInFiles}
-                    />
-                {/if}
-                {#if references}
-                    <ReferencesPanel
-                        name={references.name}
-                        locations={references.locations}
-                        textOf={file => p.fileAt(file)?.text}
-                        onselect={goToLocation}
-                        onclose={() => { references = null; activeView()?.focus(); }}
-                    />
-                {/if}
             </div>
             {#if mapOpen && (!isNarrow.current || narrowPane === "map")}
                 {#if !isNarrow.current && !mapMaximized}
@@ -1731,10 +1715,46 @@
                     onundo={undoFromMap}
                     onrun={node => void runPreview(false, node.kind === "section" ? { section: node.name } : { section: node.section!, passage: node.name })}
                     onrelayout={relayoutMap}
-                    ontogglemaximized={() => { mapMaximized = !mapMaximized; }}
                     onclose={() => { mapOpen = false; mapMaximized = false; narrowPane = "editor"; }}
                 />
             {/if}
+            </div>
+                {#if problemsOpen}
+                    <ProblemsPanel
+                        bind:this={problemsPanel}
+                        bind:height={problemsHeight}
+                        {problems}
+                        counts={problemCounts}
+                        onselect={goToProblem}
+                        onfix={fix => void applyFix(fix)}
+                        onclose={() => { problemsOpen = false; focusWork(); }}
+                    />
+                {/if}
+                {#if findOpen}
+                    <FindInFilesPanel
+                        bind:this={findPanel}
+                        bind:spec={findSpec}
+                        bind:height={findHeight}
+                        bind:replace={findReplace}
+                        bind:replaceOpen={findReplaceOpen}
+                        onreplace={(file, match) => void replaceMatch(file, match)}
+                        onreplaceall={() => void replaceAllInFiles()}
+                        results={findResults}
+                        invalid={findInvalid}
+                        onselect={goToMatch}
+                        onclose={closeFindInFiles}
+                    />
+                {/if}
+                {#if references}
+                    <ReferencesPanel
+                        name={references.name}
+                        locations={references.locations}
+                        textOf={file => p.fileAt(file)?.text}
+                        onselect={goToLocation}
+                        onclose={() => { references = null; focusWork(); }}
+                    />
+                {/if}
+            </div>
             {#if previewOpen}
                 {#if !isNarrow.current}
                     <div
