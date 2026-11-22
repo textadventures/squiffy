@@ -156,8 +156,9 @@ export class State {
         }
     }
 
-    // Records a visit to a section or passage: adds it to _seen_sections, and counts it in
-    // _visits (#377). Both are attributes, so going back undoes them.
+    // Records a visit to a section or passage: adds it to _seen_sections, counts it in _visits
+    // (#377), and keeps the turn it was on in _lastvisit (#540). They're all attributes, so going
+    // back undoes them.
     setSeen(sectionName: string) {
         let seenSections = this.get("_seen_sections");
         if (!seenSections) seenSections = [];
@@ -165,6 +166,9 @@ export class State {
         // A save from before _visits has the name in _seen_sections with no count: that's one visit
         visits[sectionName] = this.getVisitsFrom(visits, seenSections, sectionName) + 1;
         this.set("_visits", visits);
+        const lastVisit = this.get("_lastvisit") || {};
+        lastVisit[sectionName] = this.get("turns") || 0;
+        this.set("_lastvisit", lastVisit);
         if (seenSections.indexOf(sectionName) == -1) {
             seenSections.push(sectionName);
             this.set("_seen_sections", seenSections);
@@ -180,6 +184,16 @@ export class State {
     // How many times a section or passage has been visited, or 0 if it hasn't
     getVisits(sectionName: string): number {
         return this.getVisitsFrom(this.get("_visits") || {}, this.get("_seen_sections") || [], sectionName);
+    }
+
+    // How many turns ago a section or passage was last visited: 0 if the player is there now, and
+    // -1 if they've never been there (#540)
+    getLastVisited(sectionName: string): number {
+        const lastVisit = this.get("_lastvisit") || {};
+        const turns = this.get("turns") || 0;
+        if (Object.prototype.hasOwnProperty.call(lastVisit, sectionName)) return turns - lastVisit[sectionName];
+        // A save from before _lastvisit only says whether it's been visited: as if it was at the start
+        return this.getSeen(sectionName) ? turns : -1;
     }
 
     private getVisitsFrom(visits: Record<string, number>, seenSections: string[], sectionName: string): number {

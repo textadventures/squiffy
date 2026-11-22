@@ -114,4 +114,4 @@ Score: {{live "score"}}
 {{live "colour" section="colourDescription"}}
 ```
 
-`{{live}}` updates text already on screen when the attribute changes, unlike `{{score}}`. With `section=` or `passage=`, it shows that section's or passage's text, run again when the attribute changes. It takes object paths: `{{live "hero.hp"}}`.
+`{{live}}` updates text already on screen when the attribute changes, unlike `{{score}}`. With `section=` or `passage=`, it shows that section's or passage's text, run again when the attribute changes, but only while the player is in the section it's in. It takes object paths: `{{live "hero.hp"}}`.

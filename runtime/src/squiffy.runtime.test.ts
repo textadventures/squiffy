@@ -4495,6 +4495,28 @@ Cave visit {{visits "cave"}}. Start {{visits "start"}}, nowhere {{visits "nowher
     expect(visibleText(element)).toContain("Cave visit 2. Start 2, nowhere 0.");
 });
 
+test("{{lastvisited}} says how many turns ago a section or passage was visited (#540)", async () => {
+    const script = `
+[[start]]:
+Start. [look] [[cave]]
+
+[look]:
+You look.
+
+[[cave]]:
+Cave {{lastvisited "cave"}}, start {{lastvisited "start"}}, look {{lastvisited "look"}}, lake {{lastvisited "lake"}}. [[lake]]
+
+[[lake]]:
+Lake. Cave {{lastvisited "cave"}}. [[start]]
+`;
+    const { squiffyApi, element } = await initScript(script);
+    await squiffyApi.clickLink(findLink(element, "passage", "look"));
+    await squiffyApi.clickLink(findLink(element, "section", "cave"));
+    expect(visibleText(element)).toContain("Cave 0, start 2, look 1, lake -1.");
+    await squiffyApi.clickLink(findLink(element, "section", "lake"));
+    expect(visibleText(element)).toContain("Lake. Cave 1.");
+});
+
 for (const expressions of [false, true]) {
     test(`{{visits}} works in conditions${expressions ? " in a story with a squiffy.json" : ""}`, async () => {
         const script = `
@@ -5377,5 +5399,72 @@ B: {{#once}}new{{else}}old{{/once}}
         expect(lastSection(element)).toBe("A bat flies out. again");
         await squiffyApi.clickLink(findLink(element, "section", "again", true));
         expect(lastSection(element)).toBe("The cave is quiet. again");
+    });
+});
+
+test("{{#animate}} around only a {{#label}}", async () => {
+    const { element } = await initScript("{{#animate \"fadeIn\"}}{{#label \"x\"}}Hello{{/label}}{{/animate}}", true);
+    expect(element.querySelector(".squiffy-error")).toBeNull();
+    expect(element.querySelector(".squiffy-label-x")?.textContent).toBe("Hello");
+});
+
+test("{{#animate}} inside a {{#replace}} is shown", async () => {
+    const script = `
+[[start]]:
+{{#label "x"}}[Go](p){{/label}}
+
+[p]:
+{{#replace "x"}}Replaced. {{#animate "fadeIn"}}Animated{{/animate}}{{/replace}}
+`;
+    const { squiffyApi, element } = await initScript(script, true);
+    await squiffyApi.clickLink(findLink(element, "passage", "Go"));
+    const animate = element.querySelector<HTMLElement>(".squiffy-label-x [data-name]")!;
+    expect(animate.textContent).toBe("Animated");
+}, 10000);
+
+test("{{live}} with a section shows it again in the current section, and not in one the player has left", async () => {
+    const script = `
+[[start]]:
+{{live "redo" section="shown"}} [Again] [[next]]
+
+[Again]:
+{{inc "redo"}}
+
+[[shown]]:
+Shown {{inc "count"}}{{count}}.
+
+[[next]]:
+Next. [More]
+
+[More]:
+{{inc "redo"}}
+`;
+    const { squiffyApi, element } = await initScript(script, true);
+    const live = () => element.querySelector<HTMLElement>(".squiffy-live")!;
+    expect(live().textContent).toContain("Shown 1.");
+    await squiffyApi.clickLink(findLink(element, "passage", "Again"));
+    await new Promise(resolve => setTimeout(resolve, 2500));
+    expect(live().textContent).toContain("Shown 2.");
+    await squiffyApi.clickLink(findLink(element, "section", "next"));
+    await squiffyApi.clickLink(findLink(element, "passage", "More"));
+    await new Promise(resolve => setTimeout(resolve, 2500));
+    // Left as it was, without running its helpers again
+    expect(live().textContent).toContain("Shown 2.");
+    expect(squiffyApi.get("count")).toBe(2);
+}, 15000);
+
+describe("{{#animate}} times", () => {
+    test.each([
+        ["\"1.5s\"", 1500],
+        ["(nothing + \"s\")", undefined],
+        ["\"soon\"", undefined],
+    ])("start=%s", async (start, expected) => {
+        const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+        const { element } = await initScript(`{{#animate "fadeIn" start=${start}}}Hi{{/animate}}`, true);
+        const animate = element.querySelector<HTMLElement>("[data-name]")!;
+        // One that isn't a time is left out, so the text still appears, at once
+        expect(animate.dataset.start).toBe(expected === undefined ? undefined : String(expected));
+        expect(warn).toHaveBeenCalledTimes(expected === undefined ? 1 : 0);
+        warn.mockRestore();
     });
 });

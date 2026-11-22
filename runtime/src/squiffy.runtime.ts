@@ -519,6 +519,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
                 },
                 seen: (sectionOrPassage: string) => state.getSeen(sectionOrPassage),
                 visits: (sectionOrPassage: string) => state.getVisits(sectionOrPassage),
+                lastVisited: (sectionOrPassage: string) => state.getLastVisited(sectionOrPassage),
                 // As the passages, sections and tags helpers (#527)
                 passages: (section?: string, filter?: TagFilter) => listPassages(story, section, get("_section"), filter),
                 sections: (filter?: TagFilter) => listSections(story, filter),
@@ -1755,7 +1756,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     const getPassageText = (name: string) => {
         if (currentSection.passages && name in currentSection.passages) {
             return currentSection.passages[name].text || null;
-        } else if ("passages" in story.sections[""] && story.sections[""].passages && name in story.sections[""].passages) {
+        } else if (story.sections[""]?.passages && name in story.sections[""].passages) {
             return story.sections[""].passages![name].text || null;
         }
         return null;
@@ -1831,6 +1832,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             go: (sectionName: string) => go(sectionName),
             seen: (sectionOrPassage: string) => state.getSeen(sectionOrPassage),
             visits: (sectionOrPassage: string) => state.getVisits(sectionOrPassage),
+            lastVisited: (sectionOrPassage: string) => state.getLastVisited(sectionOrPassage),
             passages: (section?: string, filter?: TagFilter) => listPassages(story, section, get("_section"), filter),
             sections: (filter?: TagFilter) => listSections(story, filter),
             tags: (name?: string) => name === undefined

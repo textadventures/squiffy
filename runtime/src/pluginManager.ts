@@ -59,6 +59,7 @@ export class PluginManager {
             processText: this.processText,
             resolveAssetsInHtml: this.resolveAssetsInHtml,
             addTransition: this.addTransition,
+            written: (el) => this.onWrite(el),
             animation: this.animation,
             on: (e, h) => this.emitter.on(e, h),
             off: (e, h) => this.emitter.off(e, h),

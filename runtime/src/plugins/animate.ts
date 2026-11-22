@@ -130,7 +130,8 @@ export function AnimatePlugin(): SquiffyPlugin {
             squiffy = sq;
 
             squiffy.registerHelper("animate", function(this: any, name: string, options) {
-                const content = options.fn(this);
+                // A block that's only another helper, such as {{#label}}, gives that helper's SafeString
+                const content = String(options.fn(this));
                 const dataset: Record<string, any> = {
                     name,
                     content,
@@ -138,8 +139,18 @@ export function AnimatePlugin(): SquiffyPlugin {
                 };
                 // Times can be written like "1.5s" as well as in milliseconds (#451)
                 for (const key of timeParameters) {
+                    if (dataset[key] === undefined) continue;
                     const delay = parseDelay(dataset[key]);
-                    if (delay !== null) dataset[key] = delay;
+                    if (delay !== null) {
+                        dataset[key] = delay;
+                    }
+                    else {
+                        // Something that isn't a time, such as an attribute that was never set,
+                        // would stop the animation from ever finishing, and its links would never
+                        // work, so it's left out
+                        console.warn(`Squiffy: {{#animate}}'s ${key} isn't a time: ${JSON.stringify(dataset[key])}`);
+                        delete dataset[key];
+                    }
                 }
 
                 const attrs = Object.entries(dataset)

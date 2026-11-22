@@ -1,11 +1,13 @@
 // {{#replace}}: fades the label's text out, replaces it, and fades it in. The section's links wait
-// for it, so it always finishes: see transitionEnd.
-export async function fadeReplace(element: HTMLElement, text: string): Promise<void> {
+// for it, so it always finishes: see transitionEnd. written is called with the element once the
+// new text is in it.
+export async function fadeReplace(element: HTMLElement, text: string, written?: (el: HTMLElement) => void): Promise<void> {
     const fadedOut = transitionEnd(element);
     element.classList.add("fade-out");
     await fadedOut;
 
     element.innerHTML = text;
+    written?.(element);
     const fadedIn = transitionEnd(element);
     element.classList.remove("fade-out");
     element.classList.add("fade-in");

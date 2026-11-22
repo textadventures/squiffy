@@ -422,6 +422,66 @@ function indexOfCheck(left: Expr, op: BinaryOp, right: Expr): Expr {
     return { k: "bin", op, l: left, r: right };
 }
 
+// Comments and helpers that show nothing, e.g. {{set}}
+const silent = String.raw`\{\{!--[\s\S]*?--\}\}|\{\{(?:set|unset|inc|dec) [^{}]*\}\}`;
+const spaceAfterSilent = new RegExp(String.raw`(?<=^|[ \t]|${silent})(${silent})[ \t]+`, "gm");
+
+// Takes out the spaces after things that show nothing, at the start of a line or after another
+// space. In SugarCube's HTML they make no difference, but in Squiffy's Markdown, a line that
+// starts with four of them, once what's between them shows nothing, would be a code block.
+function withoutSilentSpaces(body: string): string {
+    for (;;) {
+        const tidied = body.replace(spaceAfterSilent, "$1");
+        if (tidied == body) return body;
+        body = tidied;
+    }
+}
+
+// A <<do>>'s tags, from its tag "a b" argument
+function doTags(args: string): string[] {
+    const parts = splitMacroArgs(args);
+    const i = parts.indexOf("tag");
+    if (i == -1 || !parts[i + 1] || !/^["']/.test(parts[i + 1])) return [];
+    return unescapeString(parts[i + 1]).split(/\s+/).filter(t => t);
+}
+
+// The attribute that a <<do>> with these tags is shown again when it changes
+function redoAttribute(tags: string[]): string {
+    if (!tags.length) return "redo";
+    return "redo_" + [...tags].sort().join("_").replace(/\W/g, "_");
+}
+
+// The tags of every <<do>> in the story, so a <<redo>> anywhere knows what it shows again
+function storyDoTags(story: PassageContext["story"]): string[][] {
+    return story.cached("sugarcube-do-tags", () => {
+        const sets = new Map<string, string[]>();
+        for (const p of story.twine.passages) {
+            for (const m of p.text.matchAll(/<<\s*do\b((?:[^>]|>(?!>))*)>>/g)) {
+                const tags = doTags(m[1]);
+                sets.set(redoAttribute(tags), tags);
+            }
+        }
+        return [...sets.values()];
+    });
+}
+
+// Whether an expression is sure to be a number, so += can add it with inc
+function isNumber(e: Expr): boolean {
+    switch (e.k) {
+        case "num": return true;
+        case "neg": return isNumber(e.e);
+        case "loop": return e.kind == "index" || !!e.numbers;
+        case "bin": return ["-", "*", "/", "%"].includes(e.op) || (e.op == "+" && isNumber(e.l) && isNumber(e.r));
+        case "cond": return isNumber(e.then) && isNumber(e.otherwise);
+        case "call": return ["round", "floor", "ceil", "abs", "min", "max", "length", "visits", "lastvisited", "count"].includes(e.fn);
+    }
+    return false;
+}
+
+function clamp(value: Expr, min: Expr, max: Expr): Expr {
+    return { k: "call", fn: "max", args: [min, { k: "call", fn: "min", args: [max, value] }] };
+}
+
 class ExpressionParser {
     constructor(private readonly s: SugarCubeExpressions, private readonly tokens: Tokens<Token>) {}
 
@@ -460,6 +520,8 @@ class ExpressionParser {
                 switch (t.text) {
                     case "+=":
                         if (value.k == "array") return this.arrayChange("append", name, value);
+                        // += adds text to text too, which inc can't
+                        if (!isNumber(value)) return { kind: "set", name, value: { k: "bin", op: "+", l: (target as Extract<Value, { v: "expr" }>).e, r: value } };
                         return { kind: "inc", name, value };
                     case "-=": return { kind: "dec", name, value };
                     case "*=": case "/=": return { kind: "set", name, value, op: t.text };
@@ -477,6 +539,7 @@ class ExpressionParser {
             const [kind, name, value] = target.e.args as [{ k: "str", v: string }, { k: "str", v: string }, Expr];
             return { kind: kind.v as "append" | "remove", name: name.v, value };
         }
+        if (target.v == "global") throw new Unconvertible(`setting ${target.name}, which isn't a variable`);
         throw new Unconvertible("a statement Squiffy can't convert");
     }
 
@@ -656,6 +719,10 @@ class ExpressionParser {
             if (object.name == "State.temporary" || object.name == "temporary") return { v: "expr", e: this.s.variable(property, true) };
             // The player's settings (#452), which Squiffy reads the same way
             if (object.name == "settings") return { v: "expr", e: memberOf({ k: "var", name: "settings" }, { k: "str", v: property }) };
+            // setup.x, where passages set it: a property of the setup attribute
+            if (object.name == "setup" && this.s.ctx.story.setupValues.has(property)) {
+                return { v: "expr", e: memberOf({ k: "var", name: this.s.attribute("setup", false) }, { k: "str", v: property }) };
+            }
             return { v: "global", name: path };
         }
         return { v: "member", object, property };
@@ -674,6 +741,13 @@ class ExpressionParser {
                     if (args.length > 1) throw new Unconvertible(`${callee.name}() with more than one passage`);
                     const section = this.s.ctx.story.sectionForUnknown(str(args[0], `${callee.name}()`));
                     return callee.name == "visited" ? { k: "call", fn: "visits", args: [{ k: "str", v: section }] } : { k: "call", fn: "seen", args: [{ k: "str", v: section }] };
+                }
+                // How many turns ago (#540)
+                case "lastVisited": {
+                    if (args.length == 0) return { k: "num", v: 0 };
+                    if (args.length > 1) throw new Unconvertible("lastVisited() with more than one passage");
+                    const section = this.s.ctx.story.sectionForUnknown(str(args[0], "lastVisited()"));
+                    return { k: "call", fn: "lastvisited", args: [{ k: "str", v: section }] };
                 }
                 case "turns":
                     return { k: "var", name: "turns" };
@@ -698,6 +772,10 @@ class ExpressionParser {
                 case "Math.max":
                     if (!args.length) throw new Unconvertible(`${callee.name}() with no values`);
                     return { k: "call", fn: callee.name.substring(5), args };
+                // SugarCube's Math.clamp(value, min, max)
+                case "Math.clamp":
+                    if (args.length != 3) throw new Unconvertible("Math.clamp() without a value, a minimum and a maximum");
+                    return clamp(args[0], args[1], args[2]);
                 case "Number":
                 case "String":
                 case "parseInt":
@@ -731,6 +809,10 @@ class ExpressionParser {
                 case "contains":
                     if (args.length != 1) throw new Unconvertible(`.${callee.property}() with more than one value`);
                     return { k: "bin", op: "contains", l: value(), r: args[0] };
+                // SugarCube's number.clamp(min, max)
+                case "clamp":
+                    if (args.length != 2) throw new Unconvertible(".clamp() without a minimum and a maximum");
+                    return clamp(value(), args[0], args[1]);
                 // Only to check whether something is there, e.g. .indexOf(x) != -1: see indexOfCheck
                 case "indexOf":
                     if (args.length != 1) throw new Unconvertible(`.${callee.property}() with more than one value`);
@@ -958,7 +1040,7 @@ class Writer {
         let body = this.nodes(nodes, state);
         for (const tag of [...this.open].reverse()) body += `</${tag}>`;
         body = body.replace(/\uE000label ([\w-]+)\uE001/g, "{{#label \"$1\"}}").replace(/\uE000\/label\uE001/g, "{{/label}}");
-        return { directives: state.directives, body };
+        return { directives: state.directives, body: withoutSilentSpaces(body) };
     }
 
     nodes(nodes: Node[], state: EmitState): string {
@@ -1091,8 +1173,14 @@ class Writer {
                 }
             }
             const c = s[i];
+            if (c == "\n" && state.nobr) {
+                // SugarCube's nobr makes a run of line breaks one space
+                while (i < s.length && /\s/.test(s[i])) i++;
+                out += " ";
+                continue;
+            }
             if (c == "\n") {
-                out += state.nobr ? " " : "\n";
+                out += "\n";
                 this.atLineStart = !state.nobr;
                 i++;
                 continue;
@@ -1141,10 +1229,20 @@ class Writer {
 
     // An HTML tag, with SugarCube's data-passage links turned into Squiffy links
     private htmlTag(tag: string): string {
-        if (/\s@[\w-]+=/.test(tag)) {
-            this.ctx.approximate(tag, "SugarCube's attribute directives (@attribute=\"...\") aren't converted.");
-        }
-        return tag.replace(/\{\{/g, "&#123;{").replace(/\[/g, "&#91;").replace(/\]/g, "&#93;");
+        tag = tag.replace(/\{\{/g, "&#123;{").replace(/\[/g, "&#91;").replace(/\]/g, "&#93;");
+        // SugarCube's attribute directives, e.g. @class="_name", whose value is an expression
+        return tag.replace(/(\s)@([\w-]+)=(?:"([^"]*)"|'([^']*)')/g, (whole, space: string, name: string, double?: string, single?: string) => {
+            const source = (double ?? single ?? "").replace(/&#91;/g, "[").replace(/&#93;/g, "]").replace(/&#123;\{/g, "{{");
+            try {
+                return `${space}${name}="${display(this.expr.parse(source))}"`;
+            }
+            catch (e) {
+                if (!(e instanceof Unconvertible)) throw e;
+                // Left in, it would stop the tag being HTML at all
+                this.ctx.approximate(whole.trim(), `This attribute was left out, as its value couldn't be converted: ${e.message}.`);
+                return "";
+            }
+        });
     }
 
     private toggle(s: string, i: number): { text: string, length: number } | null {
@@ -1339,9 +1437,12 @@ class Writer {
                 // Only the helpers, which write nothing
                 return (content.match(/\{\{(?:[^{}]|\{\{[^{}]*\}\})*\}\}/g) ?? []).join("");
             }
+            case "do":
+                return this.doMacro(m, state);
+            case "redo":
+                return this.redo(m);
             case "capture":
             case "done":
-            case "do":
                 if (m.name == "done") this.ctx.approximate(m.raw, "<<done>> has been converted to its contents, which are shown straight away.");
                 return this.nodes(m.clauses![0].nodes, state);
             case "timed": {
@@ -1517,6 +1618,49 @@ class Writer {
                 if (!knownMacros.has(m.name)) throw new Unconvertible(`the <<${m.name}>> macro, which isn't one of SugarCube's own: it's probably added by the story's JavaScript`);
                 throw new Unconvertible(`the <<${m.name}>> macro, which Squiffy has no equivalent for`);
         }
+    }
+
+    // <<do>> (SugarCube 2.37): its contents, which <<redo>> shows again. They go in a section of
+    // their own, which {{live}} shows, and shows again when the attribute for its tags changes.
+    private doMacro(m: Macro, state: EmitState): string {
+        // A section of its own wouldn't have what's only there in this one, such as a loop's item
+        if (this.ctx.story.inAnyLoop) return this.doInline(m, state, "it's in a loop");
+        const directives: string[] = [];
+        const body = this.nodes(m.clauses![0].nodes, { ...state, leading: false, directives });
+        const reason = /\bargs\b(?!=)|\{\{content\}\}|\(content\)/.test(body) ? "it uses the widget's _args or _contents"
+            : directives.length ? "it has something that has to go at the start of a section"
+            : null;
+        state.leading = false;
+        if (reason) {
+            state.directives.push(...directives);
+            return this.doInline(m, state, reason, body);
+        }
+        // A panel is shown again whenever an attribute changes anyway
+        if (this.ctx.kind == "panel") return body;
+        const attribute = quote(redoAttribute(doTags(m.clauses![0].args)));
+        // A passage of this section, so the links in it go to this section's passages. One shown
+        // inside other sections (a footer, a widget, or StoryInit's text) is a section of its own.
+        if (this.ctx.kind == "story" || this.ctx.kind == "header") {
+            return `{{live ${attribute} passage=${quote(this.ctx.addPassage("do", body.trim()))}}}`;
+        }
+        const section = this.ctx.addSection(`${this.ctx.section || this.ctx.passage.name}: do`, { directives: [], body: body.trim() });
+        return `{{live ${attribute} section=${quote(section)}}}`;
+    }
+
+    private doInline(m: Macro, state: EmitState, reason: string, body?: string): string {
+        this.ctx.approximate(m.raw, `<<do>> has been converted to its contents, which <<redo>> doesn't show again, as ${reason}.`);
+        return body ?? this.nodes(m.clauses![0].nodes, state);
+    }
+
+    // <<redo>>: shows the <<do>>s with any of its tags again, or with none, all of them
+    private redo(m: Macro): string {
+        const tags = splitMacroArgs(m.args).flatMap(a => /^["']/.test(a) ? unescapeString(a).split(/\s+/) : [a]).filter(t => t);
+        if (tags.some(t => /[$_(]/.test(t))) throw new Unconvertible("<<redo>> with tags that aren't fixed");
+        const attributes = new Set<string>();
+        for (const tagSet of storyDoTags(this.ctx.story)) {
+            if (!tags.length || tagSet.some(t => tags.includes(t))) attributes.add(redoAttribute(tagSet));
+        }
+        return [...attributes].map(a => `{{inc ${quote(a)}}}`).join("");
     }
 
     // What a <<for>> goes through, as {{#each}} does, and the variables (with their $ or _) that

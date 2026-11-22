@@ -55,6 +55,7 @@ Your JavaScript can use these functions:
 | `squiffy.story.go("section")` | Go to a section |
 | `squiffy.story.seen("name")` | Returns `true` if the player has seen a section or passage |
 | `squiffy.story.visits("name")` | Returns the number of times the player has visited a section or passage, or 0 |
+| `squiffy.story.lastVisited("name")` | Returns how many turns ago the player was last at a section or passage: 0 if they're there now, -1 if never |
 | `squiffy.story.passages("section", { tagged, untagged })` | Returns the names of a section's passages, as the [`passages` helper](/basic-concepts/#listing-passages-and-tagging-them) does. Both are optional: with no section, this section's and the master section's. `tagged` and `untagged` are tags separated by spaces, or an array |
 | `squiffy.story.sections({ tagged, untagged })` | Returns the names of the story's sections, apart from the master section |
 | `squiffy.story.tags("name")` | Returns a passage's or section's `@tag` tags, or this section's with no name |

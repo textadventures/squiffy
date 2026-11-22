@@ -32,8 +32,15 @@ export function LivePlugin(): SquiffyPlugin {
                 const promises: Promise<void>[] = [];
                 // The "set" event names the attribute that changed, so {{live "hero.hp"}} is
                 // updated when hero is set (#442)
+                // Text from a section or passage is only shown again in the current section: in
+                // one the player has left, or a screen that's been cleared (kept, hidden, for
+                // going back), it would run its helpers again
+                const sections = [...squiffy.outputElement.querySelectorAll<HTMLElement>(".squiffy-output-section")]
+                    .filter(el => !el.closest(".squiffy-clear-stack"));
+                const current = sections[sections.length - 1];
                 const elements = [...squiffy.outputElement.querySelectorAll<HTMLElement>(".squiffy-live[data-attribute]")]
-                    .filter(el => parsePath(el.dataset.attribute!)[0] === e.attribute);
+                    .filter(el => parsePath(el.dataset.attribute!)[0] === e.attribute)
+                    .filter(el => !(el.dataset.section || el.dataset.passage) || el.closest(".squiffy-output-section") === current);
                 for (const el of elements) {
                     const oldContent = el.innerHTML;
                     let newContent = "";
@@ -53,7 +60,7 @@ export function LivePlugin(): SquiffyPlugin {
                     // A value that's a number is the same as the text on screen, e.g. when another
                     // part of the same attribute changes, such as another setting
                     if (oldContent !== String(newContent)) {
-                        promises.push(fadeReplace(el, newContent));
+                        promises.push(fadeReplace(el, newContent, squiffy.written));
                     }
                 }
                 await Promise.all(promises);
