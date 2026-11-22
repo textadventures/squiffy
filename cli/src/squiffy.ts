@@ -240,8 +240,9 @@ async function play(): Promise<boolean> {
     }
     choose.push(...argv.choose ?? []);
 
+    // With --start, it starts a new game, but the saved game's persistent attributes (#539) carry on
     let save;
-    if (argv.save && argv.start === undefined && fs.existsSync(argv.save)) {
+    if (argv.save && fs.existsSync(argv.save)) {
         try {
             save = JSON.parse(fs.readFileSync(argv.save, "utf8"));
         }

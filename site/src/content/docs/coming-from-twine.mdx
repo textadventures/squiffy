@@ -285,6 +285,7 @@ Squiffy fades from one track to the next by itself, and players get a mute butto
 | Check a passage's tags | `(passage:)'s tags contains "dark"` | `tags().includes("dark")` | `{{#if (hasclass "dark")}}` |
 | Write a comment | `<!-- ... -->` | `/* ... */` | `{{!-- ... --}}` |
 | A link that restarts, or opens the saved games | | `<<link "Play again">><<run UI.restart()>><</link>>`, `UI.saves()` | `{{restart text="Play again"}}`, `{{saves}}`: see [Restarting and saving from the story](/basic-concepts/#restarting-and-saving-from-the-story) |
+| Remember something across playthroughs | | `memorize("endings", ...)`, `recall("endings")`, `forget()` | `"persistent"` in `squiffy.json`, then set and read the attribute as usual, and `{{forget}}`: see [Attributes that last between playthroughs](/attributes/#attributes-that-last-between-playthroughs) |
 | Player settings | | `Setting.addToggle("warnings", {...})`, `addList`, `addRange`, then `settings.warnings` | `"settings"` in `squiffy.json`, then `settings.warnings`: see [Player settings](/buttons-panels-settings/#player-settings) |
 | A link that opens the settings | | `<<link "Options">><<run UI.settings()>><</link>>` | `{{settings text="Options"}}` |
 

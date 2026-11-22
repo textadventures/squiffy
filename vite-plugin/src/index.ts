@@ -112,6 +112,7 @@ export default function squiffyPlugin(options: SquiffyPluginOptions = {}): Plugi
                 projectId: story.projectId,
                 panels: story.panels,
                 settings: story.settings,
+                persistent: story.persistent,
             });
 
             for (const file of readFiles.slice(1)) {

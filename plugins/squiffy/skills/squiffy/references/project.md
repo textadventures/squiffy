@@ -23,6 +23,7 @@ Docs: https://squiffystory.com/multiple-files/, https://squiffystory.com/buttons
 | `backButton` | `false` leaves out the Back button, so choices are final |
 | `panels` | Passages always to hand (below) |
 | `settings` | Options the player can change, read as `settings.name` (below) |
+| `persistent` | Attributes that last between playthroughs (below) |
 | `strings` | The page's button text, for a story in another language (below) |
 | `map` | Positions on the editor's story map. Written by the editor; leave it alone |
 
@@ -89,6 +90,18 @@ You're carrying nothing.
 - The story reads them: `{{#if settings.warnings}}`, `{{settings.textSize}}`, `@set fast = settings.speed > 3`. It can't change them.
 - They're the player's: kept in the browser for the story, not undone by Back, kept on Restart, not in saved games. A change affects text shown afterwards, panels and `{{live "settings.speed"}}`, not text already shown.
 - Each puts a class on `div#squiffy`: `setting-warnings` while a toggle is on, `setting-textSize-Large` and `setting-speed-3` for lists and ranges (characters other than letters, digits, `-`, `_` become `-`). Style with them: `div#squiffy.setting-textSize-Large { --squiffy-font-size: 1.375rem; }`.
+
+## Persistent attributes
+
+```json
+"persistent": ["endings", "finished"]
+```
+
+- Attributes that belong to the player, not the playthrough: endings found, achievements, "finished once". Set and read as usual: `@set endings.pebbles = true`, `{{#if finished}}`, `{{length endings}}`.
+- Kept in the browser for the story. Restart keeps them, Back doesn't undo them, they aren't in saved games and loading one doesn't change them.
+- `{{forget}}` clears them all, `{{forget "finished"}}` just those named: put it in a passage the player chooses, e.g. `[Forget everything]`.
+- Names are letters, digits and `_`, starting with a letter; not `settings`.
+- CLI `--play`/`--random`/`--test` start with them empty each run; `--save` carries them in the save file, and `--start` with `--save` starts a new game that keeps them (a second playthrough).
 
 ## Page text in another language
 

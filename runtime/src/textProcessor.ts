@@ -224,6 +224,15 @@ export class TextProcessor {
             return "";
         });
 
+        // {{forget}} clears the story's persistent attributes (squiffy.json's "persistent", #539),
+        // and {{forget "endings" "finished"}} just those
+        this.handlebars.registerHelper("forget", (...args: any[]) => {
+            args.pop();
+            const names = args.map(name => String(unwrapValue(name)));
+            this.state.forget(names.length ? names : undefined);
+            return "";
+        });
+
         // {{inc "x"}} adds 1, and {{inc "x" amount}} adds the amount. Handlebars passes its options
         // object last, so the amount is there if there's anything before it.
         const incDecHelper = (name: string, sign: 1 | -1) => {

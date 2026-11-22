@@ -16,7 +16,7 @@ async function exportStory(kind: ExportKind, assets: Record<string, Uint8Array>)
     if (errors) return { success: false, errors };
     const { projectFile } = await current().getProjectInfo();
     // A published story declares a global, which the packager's page loads with a <script>
-    const result = emit(analysis, { globalJs: true, projectId: projectFile?.id, panels: projectFile?.panels, settings: projectFile?.settings });
+    const result = emit(analysis, { globalJs: true, projectId: projectFile?.id, panels: projectFile?.panels, settings: projectFile?.settings, persistent: projectFile?.persistent });
     if (kind === "js") return { success: true, files: { "story.js": await result.getJs() } };
     const { createPackage } = await import("@textadventures/squiffy-packager");
     const pkg = await createPackage(result, {
@@ -58,7 +58,7 @@ async function compile(): Promise<CompiledStory> {
     if (errors) return { success: false, errors };
     // With the panels and settings, which the preview shows as the published page would
     const { projectFile } = await current().getProjectInfo();
-    const result = emit(analysis, { panels: projectFile?.panels, settings: projectFile?.settings });
+    const result = emit(analysis, { panels: projectFile?.panels, settings: projectFile?.settings, persistent: projectFile?.persistent });
     const info = result.getUiInfo();
     const [css, scripts] = await Promise.all([readAll(info.externalStylesheets, true), readAll(info.externalScripts)]);
     return { success: true, js: await result.getJs(true), css, scripts };

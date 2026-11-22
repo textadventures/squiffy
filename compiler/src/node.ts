@@ -37,6 +37,8 @@ export interface StoryOnDisk {
     panels?: Panel[];
     // squiffy.json's "settings", in folder mode
     settings?: PlayerSetting[];
+    // squiffy.json's "persistent", in folder mode
+    persistent?: string[];
 }
 
 // A problem finding the story, with a message to show the author as is
@@ -129,6 +131,7 @@ async function folderStory(projectFile: string, options: FindStoryOptions): Prom
         ...(project.id !== undefined ? { projectId: project.id } : {}),
         ...(project.panels !== undefined ? { panels: project.panels } : {}),
         ...(project.settings !== undefined ? { settings: project.settings } : {}),
+        ...(project.persistent !== undefined ? { persistent: project.persistent } : {}),
     };
 }
 

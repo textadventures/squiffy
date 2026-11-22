@@ -23,7 +23,7 @@ Every `.squiffy` file in the folder and its subfolders is then part of the story
 
 A `squiffy.json` also means the story uses Squiffy 7's rules for [setting attributes](/attributes/#setting-attributes), where text goes in quotes: `@set weapon = "sword"`. A story without one keeps the Squiffy 6 rules. See [Coming from Squiffy 6](/coming-from-squiffy-6/).
 
-`squiffy.json` is also where you change the buttons above a published story, turn off saved games, and add panels and player settings: see [Buttons, panels and settings](/buttons-panels-settings/).
+`squiffy.json` is also where you change the buttons above a published story, turn off saved games, and add panels and player settings: see [Buttons, panels and settings](/buttons-panels-settings/). Its `persistent` list names [attributes that last between playthroughs](/attributes/#attributes-that-last-between-playthroughs).
 
 - The main file comes first, then the other files in order of their paths. That order decides how `+++` sections are numbered and, if two sections have the same name, which one wins (you'll get a warning).
 - The story starts in the main file, at its first section or its [`@start`](/basic-concepts/#set-the-start-section) section, and the main file's `@title` is the story's title. `@title` and `@start` in other files are ignored, with a warning.

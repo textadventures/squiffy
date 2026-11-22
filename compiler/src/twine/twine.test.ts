@@ -606,6 +606,30 @@ Setting.addToggle("bad name", { label: "Bad" });`;
         expect(parseProjectFile(result.files["squiffy.json"]).success).toBe(true);
     });
 
+    test("memorize(), recall() and forget() are persistent attributes (#539)", async () => {
+        const { script, result } = await convert("SugarCube", `:: Start
+<<set _endings to recall('rockstaleendings', {})>>You've found <<= Object.keys(_endings).length>> endings.
+<<if recall("finished")>>Welcome back.<</if>>
+[[Pebbles]] [[Forget]]
+
+:: Pebbles
+<<run memorize('rockstaleendings', Object.assign(recall('rockstaleendings', {}), { pebbles : true }))>><<run memorize("finished", true)>>The end.
+
+:: Forget
+<<run forget("rockstaleendings"); forget("finished")>>Forgotten.`);
+        expect(section(script, "Start")).toContain("{{#if finished}}Welcome back.{{/if}}");
+        expect(section(script, "Pebbles")).toBe("@set rockstaleendings.pebbles = true\n@set finished = true\nThe end.");
+        expect(section(script, "Forget")).toBe("{{forget \"rockstaleendings\"}}{{forget \"finished\"}}Forgotten.");
+        expect(JSON.parse(result.files["squiffy.json"]).persistent).toEqual(["rockstaleendings", "finished"]);
+        expect(parseProjectFile(result.files["squiffy.json"]).success).toBe(true);
+        expect(result.problems.filter(p => /recall|memorize|forget/.test(p.text))).toEqual([]);
+    });
+
+    test("recall() with a default value can't be converted (#539)", async () => {
+        const { result } = await convert("SugarCube", ":: Start\n<<print recall(\"lives\", 3)>>");
+        expect(result.problems.map(p => p.reason).join("\n")).toContain("recall() with a default value");
+    });
+
     test("a story variable called settings isn't mistaken for the player's settings (#452)", async () => {
         const { script } = await convert("SugarCube", ":: Start\n<<set $settings to 1>><<print $settings>>");
         expect(section(script, "Start")).not.toContain("{{settings}}");

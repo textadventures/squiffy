@@ -100,6 +100,9 @@ export class StoryContext {
     // <style>s and <script>s from passages, for the story's CSS and JavaScript files (#455)
     readonly passageStyles: { passage: string, css: string }[] = [];
     readonly passageScripts: { passage: string, js: string }[] = [];
+    // The attributes for the keys SugarCube's memorize(), recall() and forget() use, which are
+    // squiffy.json's "persistent" (#539)
+    readonly persistent = new Set<string>();
 
     constructor(readonly twine: TwineStory, passages: TwinePassage[]) {
         for (const p of passages) {
@@ -271,6 +274,14 @@ export class StoryContext {
     attribute(name: string, temporary: boolean): string {
         if (this.loopVariable(name, temporary)) throw new Unconvertible("changing a loop's variable inside the loop");
         return this.attributeName(name, temporary);
+    }
+
+    // The persistent attribute for a key given to memorize(), recall() or forget()
+    persistentAttribute(key: string): string {
+        if (!/^[A-Za-z][A-Za-z0-9_]*$/.test(key)) throw new Unconvertible(`memorize(), recall() or forget() with a key that isn't a name ("${key}")`);
+        const name = this.attributeName(key, false);
+        this.persistent.add(name);
+        return name;
     }
 
     private attributeName(name: string, temporary: boolean): string {
@@ -663,7 +674,7 @@ export function convertTwineStory(twine: TwineStory, options: TwineConversionOpt
 
     files[`${name}.squiffy`] = script;
     const map = mapPositions(sectionPassages, story);
-    files["squiffy.json"] = formatProjectFile({ main: `${name}.squiffy`, exclude, panels, settings: settings.settings, ...(map ? { map } : {}) });
+    files["squiffy.json"] = formatProjectFile({ main: `${name}.squiffy`, exclude, panels, settings: settings.settings, persistent: [...story.persistent], ...(map ? { map } : {}) });
 
     return {
         title: twine.title,
