@@ -196,6 +196,17 @@ test.describe("writing on the map", () => {
         await expect(page.locator("#editor .cm-activeLine")).toContainText("Back to [[nowhere]].");
     });
 
+    test("clicking a link's line shows the link beside the map", async ({ page }) => {
+        await openStory(page, "[[start]]:\nGo to the [[cave]].\n\n[[cave]]:\nIt's dark.");
+        const from = (await box(page, "section:start").boundingBox())!;
+        const to = (await box(page, "section:cave").boundingBox())!;
+        await page.mouse.click((from.x + from.width / 2 + to.x + to.width / 2) / 2, (from.y + from.height / 2 + to.y + to.height / 2) / 2);
+        await expect(cardTitle(page)).toHaveText("start");
+        await expect(page.locator("#editor .cm-activeLine")).toContainText("Go to the [[cave]].");
+        // Still the map, not the whole script
+        await expect(map(page)).toBeVisible();
+    });
+
     test("Find and Replace only search the section being written", async ({ page }) => {
         await openStory(page);
         await write(page, "section:cave");

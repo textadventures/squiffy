@@ -1031,6 +1031,14 @@
         }
     }
 
+    // A link's line on the map shows where the link is: with the map full screen, in the card,
+    // which keeps the map on screen (showLocation falls back to the script if the link isn't in a
+    // section the card can show)
+    function goFromEdge(location: Location) {
+        if (mapMaximized && !isNarrow.current) void showLocation(location);
+        else goFromMap(location, false);
+    }
+
     // Where a new link from a section or passage goes: at the cursor, if it's in there, or else
     // after the last thing in it
     function linkEdit(from: GraphNode, text: string): WorkspaceEdit {
@@ -1721,7 +1729,7 @@
                     onedit={(node, focus) => void openCard(node, focus)}
                     width={isNarrow.current || mapMaximized ? undefined : mapWidth}
                     ongoto={(node, focus) => { const location = node.graphNode?.location; if (location) goFromMap(location, focus); }}
-                    ongotoedge={(edge: StoryMapEdge) => { const location = edge.edges[0]?.location ?? edge.location; if (location) goFromMap(location, false); }}
+                    ongotoedge={(edge: StoryMapEdge) => { const location = edge.edges[0]?.location ?? edge.location; if (location) goFromEdge(location); }}
                     onmove={moves => {
                         const keys = storyGraph ? sectionKeys(storyGraph) : new Map<string, string>();
                         moveOnMap(moves.reduce((positions, { node, at }) => withPosition(positions, keys, node, at), mapPositions ?? emptyPositions()));
