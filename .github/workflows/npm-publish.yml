@@ -64,14 +64,22 @@ jobs:
             echo "DIST_TAG=beta" >> $GITHUB_ENV
           fi
 
-      # Retried because provenance signing is flaky: when Sigstore's
-      # transparency log (Rekor) is slow, npm's client times out and retries
-      # an upload that actually went through, gets a 409 "an equivalent entry
-      # already exists" (TLOG_CREATE_ENTRY_ERROR), and fails. npm doesn't let
-      # that be turned off. `from-package` skips versions that are already on
-      # npm, so each try only publishes what's left. The pause gives the
-      # registry time to show what the last try published, so it isn't
-      # published again: that has taken around 4 minutes.
+      # Provenance signing uploads an attestation to Sigstore's transparency
+      # log (Rekor) before the package goes to npm. The Sigstore client gives
+      # each request 5 seconds by default, and when Rekor is slower than that
+      # it retries an upload that actually went through, gets a 409 "an
+      # equivalent entry already exists" (TLOG_CREATE_ENTRY_ERROR), and the
+      # package isn't published. Each try signs afresh, so while Rekor stays
+      # slow every try fails the same way (as all three did for
+      # 7.0.0-beta.9, with Rekor taking about 6 seconds). So the client gets
+      # a minute instead: lerna passes npm_config_* settings through to npm's
+      # libnpmpublish, which passes its options on to Sigstore. It's also the
+      # timeout for the registry requests, which is only more patient.
+      #
+      # The retries are a fallback. `from-package` skips versions that are
+      # already on npm, so each try only publishes what's left. The pause
+      # gives the registry time to show what the last try published, so it
+      # isn't published again: that has taken around 4 minutes.
       #
       # lerna writes a gitHead field into each package.json while publishing
       # and only takes it out again when it succeeds. A failed try leaves the
@@ -79,6 +87,8 @@ jobs:
       # so the tracked files are reset before each retry. The build output
       # isn't tracked, so it's kept.
       - name: Publish to npm
+        env:
+          npm_config_timeout: 60000
         run: |
           for attempt in 1 2 3 4; do
             if npx lerna publish from-package --no-private --dist-tag "$DIST_TAG" --yes; then
