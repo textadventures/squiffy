@@ -1,5 +1,19 @@
 # Changelog
 
+## [7.0.0-beta.13](https://github.com/textadventures/squiffy/compare/v7.0.0-beta.12...v7.0.0-beta.13) (2026-11-22)
+
+
+### Features
+
+* Code, Code + Map and Map views in the editor's toolbar ([#577](https://github.com/textadventures/squiffy/issues/577)) ([97934ca](https://github.com/textadventures/squiffy/commit/97934ca4b30026616c3028fe58fd1a99784516d5))
+* the section panel beside the map can be resized ([#578](https://github.com/textadventures/squiffy/issues/578)) ([e442523](https://github.com/textadventures/squiffy/commit/e4425234bdf54e4c652fdbe724c11d0ba6a367ea))
+* with the map full screen, clicking a link's line shows it in the section beside the map ([#579](https://github.com/textadventures/squiffy/issues/579)) ([0401429](https://github.com/textadventures/squiffy/commit/0401429c077a1e71339fcede64ca11c5bd0ccc09))
+
+
+### Bug Fixes
+
+* going back past a [@clear](https://github.com/clear) no longer gets stuck on a title that goes on by itself ([#575](https://github.com/textadventures/squiffy/issues/575)) ([3fd97dd](https://github.com/textadventures/squiffy/commit/3fd97dd69228b2b2741f2f120fc0d98c0fab6619))
+
 ## [7.0.0-beta.12](https://github.com/textadventures/squiffy/compare/v7.0.0-beta.11...v7.0.0-beta.12) (2026-11-22)
 
 
