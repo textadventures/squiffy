@@ -7,7 +7,8 @@
     "directory": "packager"
   },
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "timeout": 60000
   },
   "main": "dist/packager.js",
   "types": "dist/packager.d.ts",

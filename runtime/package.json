@@ -58,5 +58,8 @@
     "animejs": "^4.5.0",
     "handlebars": "^4.7.10",
     "marked": "^18.2.0"
+  },
+  "publishConfig": {
+    "timeout": 60000
   }
 }
