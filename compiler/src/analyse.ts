@@ -145,6 +145,8 @@ class TextContainer {
 
 export class Section extends TextContainer {
     passages: Record<string, Passage> = {};
+    // @test: a section for testing the story, which the Start at menu lists first
+    test = false;
 
     constructor(public name: string, public filename: string | undefined, public line: number, public node: SectionNode | undefined) {
         super();
@@ -523,6 +525,13 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
                     else {
                         passage.addText(node.text, source(node));
                     }
+                    return true;
+                case "test":
+                    if (!passage) {
+                        section = ensureSectionExists(lineCount);
+                        if (!section) return sectionRequired(node);
+                    }
+                    if (section) section.test = true;
                     return true;
             }
         };

@@ -31,6 +31,8 @@ interface OutputStory {
 }
 
 interface OutputSection {
+    // @test: a section for testing the story, which the Start at menu lists first
+    test?: boolean;
     text?: string;
     clear?: boolean;
     // @music (#444): the file to play, or null to stop it
@@ -178,6 +180,7 @@ export function emit(analysis: Analysis, settings: EmitSettings = {}): CompileSu
             outputSection.clear = true;
         }
 
+        if (section.test) outputSection.test = true;
         outputSection.text = section.output;
         addSounds(outputSection, section, audio);
         if (section.classes.length) outputSection.classes = section.classes;

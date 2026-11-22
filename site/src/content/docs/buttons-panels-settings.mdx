@@ -150,7 +150,12 @@ A published story's buttons are icons, with a tooltip that says what each one do
 | `cantSave` | The game couldn't be saved. Try Save to file instead. |
 | `settings` | Settings |
 | `resetSettings` | Reset to defaults |
+| `startAt` | Start at a section |
+| `findSection` | Find a section |
+| `testSections` | Test sections |
+| `allSections` | All sections |
+| `noSection` | There's no section called "[name]". |
 
-`[name]` is replaced with the name of the save, and `[time]` with the time it was saved.
+`[name]` is replaced with the name of the save, or of the section, and `[time]` with the time it was saved. The last five are for the list of sections that a story with [`startAnywhere`](/cli/#starting-at-a-later-section) has.
 
 Anything you leave out stays in English. A story without a `squiffy.json` is always in English.

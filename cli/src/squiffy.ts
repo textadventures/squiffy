@@ -176,6 +176,7 @@ else {
         inlineHtml: !!options.inline,
         backButton: story.backButton,
         saveButton: story.saveButton,
+        startAnywhere: story.startAnywhere,
         strings: story.strings,
     });
 

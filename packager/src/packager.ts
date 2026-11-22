@@ -39,6 +39,12 @@ export interface PackageOptions {
      */
     saveButton?: boolean;
     /**
+     * Whether the page lets anyone start at any section, for testing the story: "?start=section" on
+     * its address, and the Start at menu. Off unless this is true: the story's squiffy.json turns it
+     * on with "startAnywhere": true. A page served by the CLI's --serve has it either way.
+     */
+    startAnywhere?: boolean;
+    /**
      * The page's own text, such as the Restart button's tooltip, from the story's squiffy.json's
      * "strings". Anything left out is in English.
      */
@@ -210,6 +216,7 @@ export const createPackage = async (input: CompileSuccess, createZipOrOptions: b
         Object.prototype.hasOwnProperty.call(strings, name) ? escapeAttribute(strings[name]) : match);
     // The page's text, which its script gives to the Saved games dialog and the panels
     htmlData = htmlData.replace("/* PAGE_STRINGS */", () => scriptSafeJson(strings));
+    htmlData = htmlData.replace("/* START_ANYWHERE */", () => options.startAnywhere === true ? "true" : "false");
     htmlData = htmlData.replace("<!-- INFO -->", () => infoComment);
     htmlData = htmlData.replace("<!-- TITLE -->", () => uiInfo.title);
     htmlData = htmlData.replace("<!-- SCRIPTS -->", () => scriptData);

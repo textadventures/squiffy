@@ -182,6 +182,10 @@ export function parse(text: string, filename?: string): SquiffyFile {
             if (!passage) haveSection = true;
             add({ type: "end", range });
         }
+        else if (stripLine == "@test") {
+            if (!passage) haveSection = true;
+            add({ type: "test", range });
+        }
         else if (match.title) {
             add({ type: "title", value: match.title[1], valueRange: valueRange(i, match.title[1]), range });
         }

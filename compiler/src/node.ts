@@ -31,6 +31,8 @@ export interface StoryOnDisk {
     strings?: PageStrings;
     // squiffy.json's "saveButton", in folder mode
     saveButton?: boolean;
+    // squiffy.json's "startAnywhere", in folder mode
+    startAnywhere?: boolean;
     // squiffy.json's "id", in folder mode
     projectId?: string;
     // squiffy.json's "panels", in folder mode
@@ -128,6 +130,7 @@ async function folderStory(projectFile: string, options: FindStoryOptions): Prom
         ...(project.backButton !== undefined ? { backButton: project.backButton } : {}),
         ...(project.strings !== undefined ? { strings: project.strings } : {}),
         ...(project.saveButton !== undefined ? { saveButton: project.saveButton } : {}),
+        ...(project.startAnywhere !== undefined ? { startAnywhere: project.startAnywhere } : {}),
         ...(project.id !== undefined ? { projectId: project.id } : {}),
         ...(project.panels !== undefined ? { panels: project.panels } : {}),
         ...(project.settings !== undefined ? { settings: project.settings } : {}),

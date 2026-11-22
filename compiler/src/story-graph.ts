@@ -55,6 +55,10 @@ export interface GraphNode {
     deadEnd: boolean;
     // A section marked with @end as one of the story's endings
     ending?: boolean;
+    // For testing the story, not part of what players see: a section marked with @test, or
+    // anything that isn't reachable from the start but is from one of those (or is shown inside
+    // one), such as the sections a list of shortcuts links to
+    test?: boolean;
     // A section (or anything in it) navigates somewhere that can't be known before the story is
     // run: a link whose target is a Handlebars expression, a {{section}} helper written by hand,
     // {{goto}} with an expression, or with an attribute the story sets to something other than
@@ -178,6 +182,8 @@ export function buildStoryGraph(source: GraphSource): StoryGraph {
     // Containers with navigation that can't be followed
     const unknown = new Set<string>();
     const endings = new Set<string>();
+    // Sections marked with @test
+    const tests = new Set<string>();
     // {{live}} helpers that show a section or passage
     // {{goto name}}, where the attribute name says where to go
     const attributeGotos: { from: string; file: string; attribute: string; range: Range }[] = [];
@@ -220,6 +226,9 @@ export function buildStoryGraph(source: GraphSource): StoryGraph {
             for (const statement of container.body) {
                 if (statement.type == "end") {
                     endings.add(name);
+                }
+                else if (statement.type == "test") {
+                    tests.add(name);
                 }
                 else if (statement.type == "text") {
                     if (/\{\{~?\s*section\s/.test(statement.text)) unknown.add(from);
@@ -428,17 +437,35 @@ export function buildStoryGraph(source: GraphSource): StoryGraph {
         // The master section's content is part of every section
         reach(sectionId(""));
     }
-    while (toShow.length) {
-        const id = toShow.pop()!;
-        for (const edge of outgoing.get(id) ?? []) {
-            if (edge.to === undefined) continue;
-            if (edge.kind == "embed") show(edge.to);
-            else reach(edge.to);
+    const follow = () => {
+        while (toShow.length) {
+            const id = toShow.pop()!;
+            for (const edge of outgoing.get(id) ?? []) {
+                if (edge.to === undefined) continue;
+                if (edge.kind == "embed") show(edge.to);
+                else reach(edge.to);
+            }
         }
-    }
+    };
+    follow();
     // Shown inside something that can be reached, though not reached itself
     for (const node of nodes) {
         if (!node.reachable && shown.has(node.id)) node.embedded = true;
+    }
+
+    // ---- Test sections ----
+    // What @test sections lead to that the story doesn't is for testing too. It's found the same
+    // way, and then isn't counted as reachable, as a player can't get there.
+    const inStory = new Set(shown);
+    const reachable = new Set(nodes.filter(n => n.reachable));
+    for (const name of tests) {
+        nodeById.get(sectionId(name))!.test = true;
+        reach(sectionId(name));
+    }
+    follow();
+    for (const node of nodes) {
+        if (!reachable.has(node)) node.reachable = false;
+        if (!inStory.has(node.id) && shown.has(node.id)) node.test = true;
     }
 
     // ---- Dead ends ----
@@ -483,7 +510,7 @@ export function storyGraphDiagnostics(graph: StoryGraph): Diagnostic[] {
         // The master section, which is part of every section
         if (node.name == "") continue;
         if (!node.reachable) {
-            if (!graph.reachabilityKnown || node.embedded) continue;
+            if (!graph.reachabilityKnown || node.embedded || node.test) continue;
             diagnostics.push({
                 file: node.location.file,
                 range: node.location.range,

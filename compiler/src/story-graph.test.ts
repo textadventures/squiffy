@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, test, vi } from "vitest";
 
 import { createLanguageService, ProjectFiles, WorkspaceEdit } from "./language-service.js";
+import { compile } from "./compiler.js";
 import { parse } from "./parse.js";
 import type { GraphEdge, StoryGraph } from "./story-graph.js";
 
@@ -361,6 +362,35 @@ describe("@end", () => {
         expect(items.find(i => i.label == "@end")).toMatchObject({
             kind: "directive", range: { start: { line: 1, character: 0 }, end: { line: 1, character: 2 } },
         });
+    });
+});
+
+describe("@test", () => {
+    const story = "[[a]]:\n[[b]]\n\n[[b]]:\n@end\n\n[[shortcuts]]:\n@test\n[[late]] [[b]] {{embed \"note\"}}\n\n[[late]]:\n@set score = 5\n{{goto \"b\"}}\n\n[[note]]:\nA note.\n\n[[lost]]:\n@end";
+
+    test("marks a section, and what only it leads to, as for testing, without making them reachable", async () => {
+        const graph = await one(story);
+        expect(graph.nodes.filter(n => n.test).map(n => n.id)).toEqual(["section:shortcuts", "section:late", "section:note"]);
+        expect(reachable(graph)).toEqual(["section:a", "section:b"]);
+    });
+
+    test("stops the unreachable section warning, for them only", async () => {
+        const diagnostics = await service({ "story.squiffy": story }).getDiagnostics("story.squiffy");
+        expect(diagnostics.map(d => [d.code, d.message])).toEqual([
+            ["squiffy/unreachable-section", expect.stringContaining("\"lost\"")],
+        ]);
+    });
+
+    test("is in the compiled story, for the Start at menu", async () => {
+        const analysis = await service({ "story.squiffy": story }).getAnalysis();
+        expect(analysis.success).toBe(true);
+        const result = await compile({ scriptBaseFilename: "story.squiffy", script: story });
+        expect(result.success && Object.entries(result.output.story.sections).filter(([, s]) => s.test).map(([name]) => name)).toEqual(["shortcuts"]);
+    });
+
+    test("in a passage, marks its section", async () => {
+        const graph = await one("[[a]]:\n@end\n\n[[t]]:\n[p]\n\n[p]:\n@test\n[[a]]");
+        expect(nodeOf(graph, "section:t").test).toBe(true);
     });
 });
 

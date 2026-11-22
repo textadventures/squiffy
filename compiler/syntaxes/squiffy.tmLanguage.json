@@ -302,7 +302,7 @@
           }
         },
         {
-          "match": "^\\s*(@)(clear|repeat|end)\\s*$",
+          "match": "^\\s*(@)(clear|repeat|end|test)\\s*$",
           "captures": {
             "1": {
               "name": "punctuation.definition.directive.squiffy keyword.control.directive.squiffy"

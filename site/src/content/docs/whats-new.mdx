@@ -69,6 +69,7 @@ Your Squiffy 6 stories still work, and the editor converts them for you: see [Co
 - **Play a story as text** with [`--play`](/cli/#playing-a-story-from-the-command-line), clicking links with `--choose` and filling in text boxes with `--input`, and carry on from where you left off with `--save`, or keep playing in one go with `--interactive`.
 - **Play at random** with [`--random`](/cli/#playing-at-random), which plays a story many times to find errors and dead ends, and the sections it never got to, with the options that get back to each problem.
 - **Playthrough tests.** Record a way through your story with [`--play --record`](/cli/#testing-a-story), and play it again with `--test` after changing the story, to check it still goes the same way, in a CI workflow too.
+- **Start at a later section.** A story served with `--serve` can [start at any section](/cli/#starting-at-a-later-section), from a list above the story or `?start=` on its address, to test a late scene without playing up to it. Sections marked with `@test` set up the attributes a scene needs.
 - **For AI agents.** Add `--json` to any of these for a result that a program or an AI agent, such as Claude Code, can read, so an agent helping you write a story can check it and play it. See [For AI agents](/cli/#for-ai-agents).
 
 ## Coming from an earlier version

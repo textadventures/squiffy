@@ -116,7 +116,19 @@
             squiffyApi.on('sound', updateMute);
             updateMute();
 
-            await squiffyApi.begin();
+            // For testing the story: "?start=section" on the address starts there, and the Start at
+            // menu lists the sections. Only when the story is served by the CLI's --serve, which
+            // sets squiffyStartAnywhere, or its squiffy.json has "startAnywhere": true.
+            let startAt;
+            if (/* START_ANYWHERE */ || window.squiffyStartAnywhere === true) {
+                startAt = squiffyRuntime.createStartMenu({
+                    story: story,
+                    buttons: document.getElementById('squiffy-header'),
+                    strings: pageStrings,
+                }).startAt;
+            }
+
+            await squiffyApi.begin(startAt);
             // A saved game may have somewhere to go back to
             if (backButton) backButton.disabled = !squiffyApi.canGoBack();
         });

@@ -53,9 +53,11 @@ export async function loadPlayableStory(story: StoryOnDisk): Promise<LoadResult>
     // are never visited, so they're left out, as are the master section's passages that are
     // squiffy.json's panels
     const graph = await storyService(story).service.getStoryGraph();
-    const sectionNodes = graph.nodes.filter(n => n.kind == "section" && n.name != "");
+    // Sections for testing the story (@test, and what only they lead to) aren't part of what a
+    // player sees, so random play isn't expected to visit them. --start can still start at one.
+    const sectionNodes = graph.nodes.filter(n => n.kind == "section" && n.name != "" && !n.test);
     const panels = new Set((story.panels ?? []).map(panel => panel.passage));
-    const passageNodes = graph.nodes.filter(n => n.kind == "passage" && !n.embedded && !n.name.startsWith("@")
+    const passageNodes = graph.nodes.filter(n => n.kind == "passage" && !n.embedded && !n.test && !n.name.startsWith("@")
         && !(n.section == "" && panels.has(n.name)));
 
     return {

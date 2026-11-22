@@ -34,6 +34,9 @@ export interface ProjectFile {
     // Whether the published story has a Save button, which opens the Saved games dialog.
     // Undefined means it does.
     saveButton?: boolean;
+    // Whether the published story lets anyone start at any section, with "?start=section" on its
+    // address and the Start at menu, for a build that's for testing. Undefined means it doesn't.
+    startAnywhere?: boolean;
     // The published page's own text, such as the Restart button's tooltip, for a story in another
     // language. Anything left out is in English.
     strings?: PageStrings;
@@ -129,6 +132,12 @@ export const PAGE_STRINGS = {
     // The Settings dialog, for a story with "settings"
     settings: "Settings",
     resetSettings: "Reset to defaults",
+    // The Start at menu, for testing a story: see "startAnywhere". [name] is filled in.
+    startAt: "Start at a section",
+    findSection: "Find a section",
+    testSections: "Test sections",
+    allSections: "All sections",
+    noSection: "There's no section called \"[name]\".",
 } satisfies Record<string, string>;
 
 // Positions on the story map, by section name, and passages by section and passage name. Only
@@ -203,6 +212,11 @@ export function parseProjectFile(text: string): ParsedProjectFile {
         return fail(`${PROJECT_FILENAME}'s "saveButton" should be true or false.`);
     }
 
+    const startAnywhere = data.startAnywhere;
+    if (startAnywhere !== undefined && typeof startAnywhere != "boolean") {
+        return fail(`${PROJECT_FILENAME}'s "startAnywhere" should be true or false.`);
+    }
+
     const strings = data.strings;
     if (strings !== undefined && (!isObject(strings) || Object.values(strings).some(value => typeof value != "string"))) {
         return fail(`${PROJECT_FILENAME}'s "strings" should be an object of text, such as { "restart": "Recommencer" }.`);
@@ -226,6 +240,7 @@ export function parseProjectFile(text: string): ParsedProjectFile {
             ...(map ? { map } : {}),
             ...(backButton !== undefined ? { backButton } : {}),
             ...(saveButton !== undefined ? { saveButton } : {}),
+            ...(startAnywhere !== undefined ? { startAnywhere } : {}),
             ...(strings !== undefined ? { strings: pickPageStrings(strings as Record<string, string>) } : {}),
             ...(panels !== undefined ? { panels } : {}),
             ...(settings !== undefined ? { settings } : {}),

@@ -21,6 +21,7 @@ Docs: https://squiffystory.com/multiple-files/, https://squiffystory.com/buttons
 | `exclude` | Files that aren't part of the story: `["notes.squiffy", "drafts/**", "lib/demo.js"]` (`*`, `?`, `**`) |
 | `saveButton` | `false` leaves out the Save button. A `{{saves}}` link still opens the Saved games dialog |
 | `backButton` | `false` leaves out the Back button, so choices are final |
+| `startAnywhere` | `true` lets anyone start the published story at any section, for a test build (below). Take it out before publishing for players |
 | `panels` | Passages always to hand (below) |
 | `settings` | Options the player can change, read as `settings.name` (below) |
 | `persistent` | Attributes that last between playthroughs (below) |
@@ -109,7 +110,31 @@ You're carrying nothing.
 "strings": { "back": "Retour", "restart": "Recommencer", "restartConfirm": "Voulez-vous vraiment recommencer ?" }
 ```
 
-Keys: `back`, `restart`, `restartConfirm`, `switchToDark`, `switchToLight`, `saves`, `saveName`, `save`, `noSaves`, `savedGame`, `savedToday`, `savedYesterday`, `load`, `loadConfirm`, `saveOptions`, `overwrite`, `overwriteConfirm`, `rename`, `newName`, `saveToFile`, `loadFromFile`, `delete`, `deleteConfirm`, `cancel`, `close`, `wrongStory`, `notASave`, `cantSave`, `settings`, `resetSettings`. `[name]` and `[time]` are filled in. Missing keys stay English.
+Keys: `back`, `restart`, `restartConfirm`, `switchToDark`, `switchToLight`, `saves`, `saveName`, `save`, `noSaves`, `savedGame`, `savedToday`, `savedYesterday`, `load`, `loadConfirm`, `saveOptions`, `overwrite`, `overwriteConfirm`, `rename`, `newName`, `saveToFile`, `loadFromFile`, `delete`, `deleteConfirm`, `cancel`, `close`, `wrongStory`, `notASave`, `cantSave`, `settings`, `resetSettings`, and for the Start at list, `startAt`, `findSection`, `testSections`, `allSections`, `noSection`. `[name]` and `[time]` are filled in. Missing keys stay English.
+
+## Starting at a later section
+
+For the author testing a late scene in a browser without playing up to it. A story served with the CLI's `--serve` can start at any section:
+
+- `http://localhost:8282/?start=the vault` starts at that section. Restart starts there again.
+- `&set=` sets an attribute first, once for each, written as after `@set`: `?start=the vault&set=has_key&set=score=5`.
+- The flag button above the story lists the sections, `@test` ones first.
+
+When a scene needs more than an attribute or two, write a section that sets them and goes on to it, marked `@test`, and start there:
+
+```squiffy
+[[vault with the key]]:
+@test
+@set has_key
+@set score = 5
+{{goto "the vault"}}
+```
+
+`@test` means nothing needs to link to the section: it, and sections only it links to (so one `@test` section can list links to several setups), aren't reported by `--check` as unreachable, and `--random` doesn't count them as never visited. Don't use `squiffy-ignore unreachable-section` or JavaScript for this.
+
+The built files are the same with or without `--serve`, so a published story can't do this, unless `squiffy.json` has `"startAnywhere": true`, for a build other people test. `@test` sections are still in the published files, with nothing linking to them.
+
+With `--play`, use `--start section` instead (a `@test` section works there too). The editor has Run from this section.
 
 ## Images, video and fonts
 
