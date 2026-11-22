@@ -529,6 +529,23 @@ export function storyGraphDiagnostics(graph: StoryGraph): Diagnostic[] {
             });
         }
     }
+    // A @test section is left out of the published story, so anything in the story itself that
+    // links to one, embeds it or goes to it won't work there
+    const byId = new Map(graph.nodes.map(n => [n.id, n]));
+    const forTesting = (node: GraphNode) => !!node.test
+        || (node.kind == "passage" && !!byId.get(sectionId(node.section!))?.test);
+    for (const edge of graph.edges) {
+        const to = edge.to === undefined ? undefined : byId.get(edge.to);
+        const from = byId.get(edge.from);
+        if (!to || !from || to.kind != "section" || to.test != "marked" || forTesting(from)) continue;
+        diagnostics.push({
+            file: edge.location.file,
+            range: edge.location.range,
+            severity: "warning",
+            code: "squiffy/link-to-test-section",
+            message: `The section "${to.name}" is marked with @test, so it's left out of the published story, and this won't work there. Only sections that are for testing too should lead to it.`,
+        });
+    }
     return diagnostics;
 }
 

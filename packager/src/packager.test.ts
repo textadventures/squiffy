@@ -74,17 +74,17 @@ test("Exported page has a Back button, unless it's turned off", async () => {
     expect(without).toContain('id="restart"');
 });
 
-test("Exported page only lets anyone start at any section when it's asked to, or the server says so", async () => {
+test("Exported page only lets anyone start at any section when it's asked to", async () => {
     const compileResult = await compile({ script: "Hello world!" });
     if (!compileResult.success) throw new Error("Compile failed");
 
     const html = (await createPackage(compileResult, {})).files["index.html"];
     expect(html).not.toContain("START_ANYWHERE");
-    expect(html).toContain("if ((false || window.squiffyStartAnywhere === true) && window.location.protocol !== 'blob:') {");
+    expect(html).toContain("if (false && window.location.protocol !== 'blob:') {");
     expect(html).toContain("await squiffyApi.begin(startAt);");
 
     const testing = (await createPackage(compileResult, { startAnywhere: true })).files["index.html"];
-    expect(testing).toContain("if ((true || window.squiffyStartAnywhere === true) && ");
+    expect(testing).toContain("if (true && window.location.protocol !== 'blob:') {");
 });
 
 test("Exported page has a Save button, which opens the Saved games dialog, unless it's turned off", async () => {

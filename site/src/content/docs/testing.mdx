@@ -45,7 +45,9 @@ Most late sections need some attributes to be set, such as the key the player pi
 
 Start at that section, and you're in the vault with the key.
 
-`@test` says the section is for testing, so nothing in the story needs to link to it. The editor and `--check` don't warn that it [can't be reached](/cli/#checking-a-story), and [`--random`](/cli/#playing-at-random) doesn't expect to visit it. The same goes for sections that only a `@test` section links to, so one `@test` section can be a list of links to others:
+`@test` says the section is for testing, so nothing in the story needs to link to it. The editor and `--check` don't warn that it [can't be reached](/cli/#checking-a-story), and [`--random`](/cli/#playing-at-random) doesn't expect to visit it. The flag button lists `@test` sections first.
+
+A `@test` section can link to others, so one can be a list of shortcuts:
 
 ```squiffy
 [[shortcuts]]:
@@ -55,7 +57,7 @@ Start at that section, and you're in the vault with the key.
 - [[The last scene]](rooftop at night)
 ```
 
-The flag button lists `@test` sections first. Like `@end`, `@test` doesn't change what the player sees.
+Sections marked with `@test` are [left out of the story when it's published](#when-you-publish), so players never see them. That means the story itself mustn't lead to one. If a section that isn't for testing links to a `@test` section, embeds it or goes to it, the editor and `--check` warn you, as that won't work in the published story.
 
 In a browser, you can also set an attribute or two on the address, without writing a section. Add `&set=` for each, written as you'd write it after [`@set`](/attributes/#using-directives):
 
@@ -65,7 +67,9 @@ http://localhost:8282/?start=the vault&set=has_key&set=score=5
 
 ### When you publish
 
-Only the story as the editor's preview and `--serve` show it can start anywhere. The published story can't, so players can't skip ahead. Its `@test` sections are still in its files, with nothing linking to them, so don't put anything in one that a curious player mustn't find.
+Only the story as the editor's preview and `--serve` show it can start anywhere. The published story can't, so players can't skip ahead, and it's published without its `@test` sections. That goes for the files `--serve` writes to the `build` folder too: it shows you the story for testing, but the files are the story for players.
+
+Only the sections marked with `@test` are left out. A section that a `@test` section links to is still published unless it's marked too, so give each section that sets up a scene its own `@test`.
 
 To publish a story that anyone can start anywhere, for other people to test, set `startAnywhere` in its [`squiffy.json`](/syntax/#squiffyjson):
 
@@ -77,7 +81,7 @@ To publish a story that anyone can start anywhere, for other people to test, set
 }
 ```
 
-The published story then has the flag button, and takes `?start=` on its address. Take it out again before you publish the story for players.
+The published story then has the flag button, takes `?start=` on its address, and keeps its `@test` sections. Take it out again before you publish the story for players.
 
 ## Finding problems
 

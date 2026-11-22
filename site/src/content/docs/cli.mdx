@@ -85,7 +85,7 @@ Use `--check` to look for problems without building anything:
 npx @textadventures/squiffy-cli --check
 ```
 
-As well as the errors and warnings a build shows, this finds the problems the [editor](/editor/) shows: sections that can't be reached from the start of the story (unless they're [for testing](/testing/#setting-up-a-scene)), dead ends, which are sections with no way out that aren't marked with `@end`, and [sound on the story's first screen](/images-and-files/#music-and-sound), which browsers won't play until the player clicks something. Each problem is shown with its file, line and column:
+As well as the errors and warnings a build shows, this finds the problems the [editor](/editor/) shows: sections that can't be reached from the start of the story (unless they're [for testing](/testing/#setting-up-a-scene)), dead ends, which are sections with no way out that aren't marked with `@end`, links from the story to a [`@test` section](/testing/#setting-up-a-scene), which is left out of the published story, and [sound on the story's first screen](/images-and-files/#music-and-sound), which browsers won't play until the player clicks something. Each problem is shown with its file, line and column:
 
 ```text
 story.squiffy:12:5: warning: The section "cellar" has no way out, as it has no links to another section. If it's one of the story's endings, add @end to say so. [squiffy/dead-end]
@@ -363,7 +363,7 @@ npx @textadventures/squiffy-cli --serve --port 3000
 
 The default port is 8282.
 
-A story served this way can [start at any section](/testing/#starting-at-a-later-section), to test a late scene without playing up to it: click the flag button above the story, or add `?start=` and a section's name to the address, such as `http://localhost:8282/?start=the vault`. The files in the `build` folder don't have this, unless the story's `squiffy.json` sets `startAnywhere`.
+A story served this way can [start at any section](/testing/#starting-at-a-later-section), to test a late scene without playing up to it: click the flag button above the story, or add `?start=` and a section's name to the address, such as `http://localhost:8282/?start=the vault`. The files in the `build` folder are the story [as it's published](/testing/#when-you-publish), which can't do this and doesn't have the story's `@test` sections, unless its `squiffy.json` sets `startAnywhere`.
 
 ### Script only
 

@@ -45,7 +45,7 @@
       "default": true
     },
     "startAnywhere": {
-      "description": "Whether the published story lets anyone start at any section, for a build that's for testing: \"?start=section\" on its address, and a Start at menu that lists the sections. A story served by the command-line tool's --serve has both without this.",
+      "description": "Whether the published story lets anyone start at any section, for a build that's for testing: \"?start=section\" on its address, and a Start at menu that lists the sections. It's also published with its @test sections, which are otherwise left out. A story served by the command-line tool's --serve has all this without it.",
       "type": "boolean",
       "default": false
     },

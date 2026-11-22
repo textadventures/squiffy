@@ -390,6 +390,32 @@ describe("@test", () => {
         expect(result.success && Object.entries(result.output.story.sections).filter(([, s]) => s.test).map(([name]) => name)).toEqual(["shortcuts"]);
     });
 
+    test("warns about a link, embed or goto to one from the story itself, as it won't be published", async () => {
+        const main = "[[a]]:\n[[debug]] {{embed \"debug\"}}\n[p]\n\n[p]:\n{{goto \"debug\"}}\n\n[[debug]]:\n@test\n[[more]] [[a]]\n[q]\n\n[q]:\n[[debug]]\n\n[[more]]:\n@test\n[[debug]]";
+        const diagnostics = await service({ "story.squiffy": main }).getDiagnostics("story.squiffy");
+        expect(diagnostics.filter(d => d.code != "squiffy/dead-end").map(d => [d.code, d.range.start.line, d.range.start.character])).toEqual([
+            ["squiffy/link-to-test-section", 1, 0],
+            ["squiffy/link-to-test-section", 1, 10],
+            ["squiffy/link-to-test-section", 5, 0],
+        ]);
+        expect(diagnostics[0].message).toContain("left out of the published story");
+    });
+
+    test("is left out of a story compiled for publishing, with its JavaScript", async () => {
+        const script = "[[a]]:\n    set(\"x\", 1);\n[[b]]\n\n[[t]]:\n@test\n    set(\"y\", 2);\n[[b]]\n\n[[b]]:\n    set(\"z\", 3);\n@end";
+        const result = await compile({ scriptBaseFilename: "story.squiffy", script, omitTestSections: true });
+        if (!result.success) throw new Error("Compile failed");
+        expect(Object.keys(result.output.story.sections)).toEqual(["a", "b"]);
+        expect(result.output.js.map(lines => lines.join(""))).toEqual([expect.stringContaining("\"x\""), expect.stringContaining("\"z\"")]);
+        expect(result.output.story.sections.b.jsIndex).toBe(1);
+        expect(await result.getJs()).not.toContain("\"y\"");
+    });
+
+    test("is kept when it's where the story starts", async () => {
+        const result = await compile({ scriptBaseFilename: "story.squiffy", script: "[[t]]:\n@test\n@end", omitTestSections: true });
+        expect(result.success && Object.keys(result.output.story.sections)).toEqual(["t"]);
+    });
+
     test("in a passage, marks its section", async () => {
         const graph = await one("[[a]]:\n@end\n\n[[t]]:\n[p]\n\n[p]:\n@test\n[[a]]");
         expect(nodeOf(graph, "section:t").test).toBe("marked");

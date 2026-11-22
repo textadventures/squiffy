@@ -1,25 +1,30 @@
 import finalhandler from "finalhandler";
-import * as fs from "fs";
 import * as http from "http";
-import * as path from "path";
 import serveStatic from "serve-static";
 
-// Turns on starting at any section in a story's page, for the author testing it: "?start=section"
-// on the address, and the Start at menu. Only the page as it's served is changed, not the file,
-// so the story that's published doesn't have them (unless its squiffy.json asks for them).
-export const withStartAnywhere = (html: string) =>
-    html.replace(/<head>/i, match => match + "\n    <script>window.squiffyStartAnywhere = true;</script>");
+const TYPES: Record<string, string> = { html: "text/html", js: "text/javascript", css: "text/css" };
 
-export function createServer(dir: string) {
+// Serves a built story's folder. The files in testingFiles (by name, at the top of the folder) are
+// sent in place of the ones on disk: the story's page as its author tests it, which can start at
+// any section and has its @test sections, where the files on disk are the story as it'll be
+// published, without either.
+export function createServer(dir: string, testingFiles: Record<string, string> = {}) {
     const serve = serveStatic(dir, { index: ["index.html"] });
-    const indexFile = path.join(dir, "index.html");
 
     return http.createServer(function (req: any, res: any) {
-        const pathname = new URL(req.url ?? "/", "http://localhost").pathname;
-        if ((req.method == "GET" || req.method == "HEAD") && (pathname == "/" || pathname == "/index.html") && fs.existsSync(indexFile)) {
-            const html = Buffer.from(withStartAnywhere(fs.readFileSync(indexFile, "utf8")));
-            res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Content-Length": html.length, "Cache-Control": "no-cache" });
-            res.end(req.method == "HEAD" ? undefined : html);
+        let pathname = "";
+        try {
+            pathname = decodeURIComponent(new URL(req.url ?? "/", "http://localhost").pathname);
+        }
+        catch {
+            // Left to serve-static, which answers a bad address
+        }
+        const name = pathname == "/" ? "index.html" : pathname.slice(1);
+        if ((req.method == "GET" || req.method == "HEAD") && Object.prototype.hasOwnProperty.call(testingFiles, name)) {
+            const body = Buffer.from(testingFiles[name]);
+            const type = TYPES[name.split(".").pop() ?? ""] ?? "text/plain";
+            res.writeHead(200, { "Content-Type": `${type}; charset=utf-8`, "Content-Length": body.length, "Cache-Control": "no-cache" });
+            res.end(req.method == "HEAD" ? undefined : body);
             return;
         }
         const done = finalhandler(req, res);
@@ -27,8 +32,8 @@ export function createServer(dir: string) {
     });
 }
 
-export const serve = (directory: string, port: number) => {
-    createServer(directory).listen(port);
+export const serve = (directory: string, port: number, testingFiles: Record<string, string> = {}) => {
+    createServer(directory, testingFiles).listen(port);
     console.log("Started http://localhost:" + port + "/");
     console.log("To start at a section, use the flag button on the page, or add ?start=section to the address.");
 };

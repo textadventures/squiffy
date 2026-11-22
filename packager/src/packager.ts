@@ -41,7 +41,7 @@ export interface PackageOptions {
     /**
      * Whether the page lets anyone start at any section, for testing the story: "?start=section" on
      * its address, and the Start at menu. Off unless this is true: the story's squiffy.json turns it
-     * on with "startAnywhere": true. A page served by the CLI's --serve has it either way.
+     * on with "startAnywhere": true, and the CLI's --serve builds the page it shows with it.
      */
     startAnywhere?: boolean;
     /**

@@ -86,7 +86,7 @@ See [Testing your story](/testing/) for how these fit together.
 
 - **Problems as you type.** The editor underlines links to missing sections, sections the player can't reach and dead ends, and [`--check`](/cli/#checking-a-story) finds the same problems from the command line, without building anything.
 - **Start at a later section.** Test a late scene without playing up to it: the flag button above the editor's preview [lists your sections](/testing/#starting-at-a-later-section) to start at, as does a story served by the command-line tool's `--serve`, which also takes `?start=` on its address.
-- **Sections that set up a scene.** Mark a section with [`@test`](/testing/#setting-up-a-scene), and it can set the attributes a scene needs and go on to it, without anything in the story linking to it.
+- **Sections that set up a scene.** Mark a section with [`@test`](/testing/#setting-up-a-scene), and it can set the attributes a scene needs and go on to it, without anything in the story linking to it. It's left out when the story is published.
 - **Play at random** with [`--random`](/cli/#playing-at-random), which plays a story many times to find errors and dead ends, and the sections it never got to, with the options that get back to each problem.
 - **Playthrough tests.** Record a way through your story with [`--play --record`](/cli/#testing-a-story), and play it again with `--test` after changing the story, to check it still goes the same way, in a CI workflow too.
 

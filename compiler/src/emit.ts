@@ -95,6 +95,9 @@ export interface EmitSettings {
     settings?: PlayerSetting[];
     // squiffy.json's "persistent", if it has any: see ProjectFile.persistent
     persistent?: string[];
+    // Leave out the sections marked with @test, which are for testing the story: for a story
+    // that's being published, unless it's one that can be started anywhere
+    omitTestSections?: boolean;
 }
 
 export interface CompileSuccess {
@@ -173,6 +176,8 @@ export function emit(analysis: Analysis, settings: EmitSettings = {}): CompileSu
     const audio = new Set<string>();
     for (const sectionName of Object.keys(story.sections)) {
         const section = story.sections[sectionName];
+        // The start section is always kept, or there'd be no story
+        if (settings.omitTestSections && section.test && sectionName != output.story.start) continue;
         const outputSection: OutputSection = {};
         output.story.sections[sectionName] = outputSection;
 
