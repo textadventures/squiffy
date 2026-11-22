@@ -104,13 +104,16 @@ The **T** button in the toolbar opens **Fonts**, where you choose the font for y
 
 **Run** (Ctrl+Enter, or Cmd+Enter on Mac) plays your story next to the script. It updates as you type, so you can see changes straight away without restarting. That includes your [stylesheets](/styling/), but a change to a [script](/javascript/) shows when you press **Restart**. When you follow a link in the story, the script moves to that section.
 
-- **Run from this section** (Ctrl+Shift+Enter, or Cmd+Shift+Enter on Mac) starts the story from the section the cursor is in. If a scene needs some attributes set first, write a section that sets them and goes on to it, mark it with [`@test`](/cli/#starting-at-a-later-section) so the editor doesn't warn that nothing links to it, and run from that.
+- **Run from this section** (Ctrl+Shift+Enter, or Cmd+Shift+Enter on Mac) starts the story from the section the cursor is in.
+- **The flag button** lists your story's sections, to start the story at any of them. Sections marked with `@test`, which [set up a scene](/testing/#setting-up-a-scene) by setting the attributes it needs, come first.
 - **Back** steps backwards through your story, one section or passage at a time. Use it to try a different choice without playing through from the start.
 - **Restart** starts your story again.
 - **The sun or moon button** shows the story in light or dark mode, so you can check your [styles](/styling/) in both without changing the editor's own theme. Changing the theme in **Settings** puts the preview back to following it.
 - **Play in a new tab** opens your story as players will see it.
 
 Below the story, **Attributes** shows the values your story has set. This is useful for checking that your `@set` directives and `{{set}}` helpers are doing what you expect.
+
+See [Testing your story](/testing/) for more ways to test, such as playing at random and playthrough tests.
 
 On a phone, the editor shows the script, the outline, the map or the story, with buttons in the toolbar to switch between them.
 

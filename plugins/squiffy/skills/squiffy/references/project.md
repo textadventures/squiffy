@@ -132,9 +132,9 @@ When a scene needs more than an attribute or two, write a section that sets them
 
 `@test` means nothing needs to link to the section: it, and sections only it links to (so one `@test` section can list links to several setups), aren't reported by `--check` as unreachable, and `--random` doesn't count them as never visited. Don't use `squiffy-ignore unreachable-section` or JavaScript for this.
 
-The built files are the same with or without `--serve`, so a published story can't do this, unless `squiffy.json` has `"startAnywhere": true`, for a build other people test. `@test` sections are still in the published files, with nothing linking to them.
+The built files are the same with or without `--serve`, so a published story can't do this (nor can the editor's Play in a new tab), unless `squiffy.json` has `"startAnywhere": true`, for a build other people test. `@test` sections are still in the published files, with nothing linking to them.
 
-With `--play`, use `--start section` instead (a `@test` section works there too). The editor has Run from this section.
+With `--play`, use `--start section` instead (a `@test` section works there too). The editor's preview has the same flag button, and Run from this section.
 
 ## Images, video and fonts
 

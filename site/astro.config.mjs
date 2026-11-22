@@ -63,6 +63,7 @@ export default defineConfig({
                         "buttons-panels-settings",
                         "styling",
                         "javascript",
+                        "testing",
                         "cookbook",
                     ],
                 },

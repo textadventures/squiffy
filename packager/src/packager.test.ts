@@ -80,11 +80,11 @@ test("Exported page only lets anyone start at any section when it's asked to, or
 
     const html = (await createPackage(compileResult, {})).files["index.html"];
     expect(html).not.toContain("START_ANYWHERE");
-    expect(html).toContain("if (false || window.squiffyStartAnywhere === true) {");
+    expect(html).toContain("if ((false || window.squiffyStartAnywhere === true) && window.location.protocol !== 'blob:') {");
     expect(html).toContain("await squiffyApi.begin(startAt);");
 
     const testing = (await createPackage(compileResult, { startAnywhere: true })).files["index.html"];
-    expect(testing).toContain("if (true || window.squiffyStartAnywhere === true) {");
+    expect(testing).toContain("if ((true || window.squiffyStartAnywhere === true) && ");
 });
 
 test("Exported page has a Save button, which opens the Saved games dialog, unless it's turned off", async () => {

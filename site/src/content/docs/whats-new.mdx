@@ -16,7 +16,7 @@ Your Squiffy 6 stories still work, and the editor converts them for you: see [Co
 - **Works beside other tools.** When another program changes your story's files, such as a text editor, git or an [AI agent](/writing-with-ai/), the editor [picks up the changes](/editor/#changes-made-outside-the-editor).
 - **A [story map](/story-map/)** shows your sections, passages and links as a map you can move around, drawn from your script as you type. Problems show on it too, as does the way you went through the story when you test it. You can add links, sections and passages from the map, and rename or delete them. With the map full screen, you can write each section beside it, as you would in Twine.
 - **An outline** of your sections and passages, with a search box, replaces the section and passage dropdowns.
-- **Run from any section**, so you can test the part you're working on without playing through from the start. As you click through the story, the script follows.
+- **Run from any section**, so you can [test the part you're working on](/testing/#starting-at-a-later-section) without playing through from the start. As you click through the story, the script follows.
 - **Stories in your browser**, without choosing a file, in every browser. Download one as a `.zip` to keep a copy.
 - **Folders.** In Chrome and Edge, the editor can open a story's folder on your computer, and remembers the folders you've opened.
 - **A dark theme**, and a text size setting. The preview follows it, and has its own light/dark button for checking your story's styles in both.
@@ -63,13 +63,20 @@ Your Squiffy 6 stories still work, and the editor converts them for you: see [Co
 - **Buttons in your language.** The buttons above the story are icons, and their tooltips can be [in your story's language](/buttons-panels-settings/#the-pages-text-in-another-language).
 - **A fresher look.** The default style has more space between lines, softer colours, a modern serif font, and text sizes that follow the reader's browser setting. Its colours, fonts and page width are [CSS variables](/styling/#common-changes), so they're easier to change, and a stylesheet you add in the editor starts with the most common changes, ready to uncomment.
 
-## The command-line tool
+## Testing your story
 
-- **Check a story** with [`--check`](/cli/#checking-a-story), which finds the problems the editor shows, such as links to missing sections, sections the player can't reach and dead ends, without building anything.
-- **Play a story as text** with [`--play`](/cli/#playing-a-story-from-the-command-line), clicking links with `--choose` and filling in text boxes with `--input`, and carry on from where you left off with `--save`, or keep playing in one go with `--interactive`.
+See [Testing your story](/testing/) for how these fit together.
+
+- **Problems as you type.** The editor underlines links to missing sections, sections the player can't reach and dead ends, and [`--check`](/cli/#checking-a-story) finds the same problems from the command line, without building anything.
+- **Start at a later section.** Test a late scene without playing up to it: the flag button above the editor's preview [lists your sections](/testing/#starting-at-a-later-section) to start at, as does a story served by the command-line tool's `--serve`, which also takes `?start=` on its address.
+- **Sections that set up a scene.** Mark a section with [`@test`](/testing/#setting-up-a-scene), and it can set the attributes a scene needs and go on to it, without anything in the story linking to it.
 - **Play at random** with [`--random`](/cli/#playing-at-random), which plays a story many times to find errors and dead ends, and the sections it never got to, with the options that get back to each problem.
 - **Playthrough tests.** Record a way through your story with [`--play --record`](/cli/#testing-a-story), and play it again with `--test` after changing the story, to check it still goes the same way, in a CI workflow too.
-- **Start at a later section.** A story served with `--serve` can [start at any section](/cli/#starting-at-a-later-section), from a list above the story or `?start=` on its address, to test a late scene without playing up to it. Sections marked with `@test` set up the attributes a scene needs.
+
+## The command-line tool
+
+- **Play a story as text** with [`--play`](/cli/#playing-a-story-from-the-command-line), clicking links with `--choose` and filling in text boxes with `--input`, and carry on from where you left off with `--save`, or keep playing in one go with `--interactive`.
+- **Check and test a story** with `--check`, `--random` and `--test`: see [Testing your story](#testing-your-story) above.
 - **For AI agents.** Add `--json` to any of these for a result that a program or an AI agent, such as Claude Code, can read, so an agent helping you write a story can check it and play it. See [For AI agents](/cli/#for-ai-agents).
 
 ## Coming from an earlier version

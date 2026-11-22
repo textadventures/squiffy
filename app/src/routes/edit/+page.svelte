@@ -479,6 +479,14 @@
         return Object.fromEntries(entries.flat());
     }
 
+    // The sections the preview's Start at menu lists, as the story is now
+    async function previewSections() {
+        if (!client) return [];
+        await syncOpenFiles();
+        const { startSections } = await import("#lib/start-sections.js");
+        return startSections(await client.call("getStoryGraph"));
+    }
+
     // Runs the story in the preview: from the start, or from the section (and passage) the
     // cursor is in (#175)
     async function runPreview(fromCursor = false, at?: { section: string; passage?: string }) {
@@ -1742,6 +1750,7 @@
                         bind:this={preview}
                         compile={compileStory}
                         assets={previewAssets}
+                        sections={previewSections}
                         {assetsVersion}
                         onNavigated={(section, passage) => void followPreview(section, passage)}
                         onStarted={() => { trace = []; }}

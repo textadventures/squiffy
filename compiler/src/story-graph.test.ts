@@ -370,7 +370,9 @@ describe("@test", () => {
 
     test("marks a section, and what only it leads to, as for testing, without making them reachable", async () => {
         const graph = await one(story);
-        expect(graph.nodes.filter(n => n.test).map(n => n.id)).toEqual(["section:shortcuts", "section:late", "section:note"]);
+        expect(graph.nodes.filter(n => n.test).map(n => [n.id, n.test])).toEqual([
+            ["section:shortcuts", "marked"], ["section:late", "reached"], ["section:note", "reached"],
+        ]);
         expect(reachable(graph)).toEqual(["section:a", "section:b"]);
     });
 
@@ -390,7 +392,7 @@ describe("@test", () => {
 
     test("in a passage, marks its section", async () => {
         const graph = await one("[[a]]:\n@end\n\n[[t]]:\n[p]\n\n[p]:\n@test\n[[a]]");
-        expect(nodeOf(graph, "section:t").test).toBe(true);
+        expect(nodeOf(graph, "section:t").test).toBe("marked");
     });
 });
 

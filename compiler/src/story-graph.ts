@@ -55,10 +55,10 @@ export interface GraphNode {
     deadEnd: boolean;
     // A section marked with @end as one of the story's endings
     ending?: boolean;
-    // For testing the story, not part of what players see: a section marked with @test, or
-    // anything that isn't reachable from the start but is from one of those (or is shown inside
-    // one), such as the sections a list of shortcuts links to
-    test?: boolean;
+    // For testing the story, not part of what players see: "marked" for a section marked with
+    // @test, and "reached" for anything that isn't reachable from the start but is from one of
+    // those (or is shown inside one), such as the sections a list of shortcuts links to
+    test?: "marked" | "reached";
     // A section (or anything in it) navigates somewhere that can't be known before the story is
     // run: a link whose target is a Handlebars expression, a {{section}} helper written by hand,
     // {{goto}} with an expression, or with an attribute the story sets to something other than
@@ -459,13 +459,13 @@ export function buildStoryGraph(source: GraphSource): StoryGraph {
     const inStory = new Set(shown);
     const reachable = new Set(nodes.filter(n => n.reachable));
     for (const name of tests) {
-        nodeById.get(sectionId(name))!.test = true;
+        nodeById.get(sectionId(name))!.test = "marked";
         reach(sectionId(name));
     }
     follow();
     for (const node of nodes) {
         if (!reachable.has(node)) node.reachable = false;
-        if (!inStory.has(node.id) && shown.has(node.id)) node.test = true;
+        if (!inStory.has(node.id) && shown.has(node.id)) node.test ??= "reached";
     }
 
     // ---- Dead ends ----

@@ -4,7 +4,7 @@
     // squiffy-runtime/preview-host. Edits hot-update the running story, keeping its state;
     // Restart starts it again from where it was last run from. The story's images and other assets
     // are sent as Blobs, since a sandboxed frame can't load the editor's own blob: URLs (#307).
-    import { onMount } from "svelte";
+    import { onMount, tick } from "svelte";
     import type { PreviewHost, StartAt } from "squiffy-runtime/preview-host";
     import type { CompiledStory } from "#lib/language/protocol.js";
     import { get } from "svelte/store";
@@ -18,6 +18,8 @@
     import Moon from "@lucide/svelte/icons/moon";
     import Volume2 from "@lucide/svelte/icons/volume-2";
     import VolumeX from "@lucide/svelte/icons/volume-x";
+    import Flag from "@lucide/svelte/icons/flag";
+    import { findSections, type StartSection } from "#lib/start-sections.js";
 
     interface Props {
         // Compiles the story as it is in the editor now
@@ -26,6 +28,8 @@
         assets: () => Promise<Record<string, Blob>>;
         // Changes when assets are added, replaced or deleted, to send them again
         assetsVersion?: number;
+        // The sections the Start at menu lists, as the story is in the editor now
+        sections?: () => Promise<StartSection[]>;
         // A section or passage was shown because the player clicked a link (not on starting)
         onNavigated?: (section: string, passage?: string) => void;
         // Every section or passage the story shows, from the start, for the story map's trace
@@ -36,12 +40,48 @@
         width?: number;
     }
 
-    let { compile, assets, assetsVersion = 0, onNavigated, onVisited, onStarted, onclose, width }: Props = $props();
+    let { compile, assets, sections, assetsVersion = 0, onNavigated, onVisited, onStarted, onclose, width }: Props = $props();
 
     let iframe = $state<HTMLIFrameElement>();
     let host: PreviewHost | null = null;
     // Where the story was last run from, for Restart
-    let startAt: StartAt | undefined;
+    let startAt = $state<StartAt | undefined>();
+    // The Start at menu: the story's sections, to run it from one of them, as on a story's page
+    // served by the command-line tool. Sections marked @test, which set up a scene, come first.
+    let startMenuOpen = $state(false);
+    let startSectionList = $state<StartSection[]>([]);
+    let startFind = $state("");
+    let startFindInput = $state<HTMLInputElement>();
+    let startFound = $derived(findSections(startSectionList, startFind));
+    let startTests = $derived(startFound.filter(s => s.test));
+    let startOthers = $derived(startFound.filter(s => !s.test));
+
+    async function toggleStartMenu() {
+        if (startMenuOpen) {
+            startMenuOpen = false;
+            return;
+        }
+        startSectionList = await sections?.() ?? [];
+        startFind = "";
+        startMenuOpen = true;
+        await tick();
+        startFindInput?.focus();
+    }
+
+    function startFrom(section: string) {
+        startMenuOpen = false;
+        void run({ section });
+    }
+
+    function startMenuKeydown(e: KeyboardEvent) {
+        if (e.key === "Escape") {
+            e.stopPropagation();
+            startMenuOpen = false;
+        } else if (e.key === "Enter" && e.target === startFindInput && startFound.length) {
+            // Enter in the search box runs from the first section listed
+            startFrom((startTests[0] ?? startOthers[0]).name);
+        }
+    }
     let running = $state(false);
     let canGoBack = $state(false);
     let compileErrors = $state<string[] | null>(null);
@@ -213,8 +253,58 @@
     class="flex flex-col shrink-0 overflow-hidden border-l border-surface-200-800 bg-surface-50-950 {width === undefined ? "flex-1" : ""}"
     style={width === undefined ? undefined : `width: ${width}px`}
 >
-    <header class="flex items-center gap-1 px-2 py-1 border-b border-surface-200-800">
+    <header class="relative flex items-center gap-1 px-2 py-1 border-b border-surface-200-800">
         <h2 class="text-[11px] font-semibold text-surface-600-400 uppercase tracking-wide flex-1 pl-1">Preview</h2>
+        {#if sections}
+            <button type="button" class="btn-icon btn-icon-sm" title="Start at a section" aria-label="Start at a section" aria-haspopup="dialog" aria-expanded={startMenuOpen} onclick={toggleStartMenu}><Flag size={14} /></button>
+            {#if startMenuOpen}
+                <!-- Catches a click anywhere else, including over the story's frame -->
+                <div class="fixed inset-0 z-20" role="presentation" onclick={() => { startMenuOpen = false; }}></div>
+                <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+                <div
+                    role="dialog"
+                    aria-label="Start at a section"
+                    tabindex="-1"
+                    class="absolute right-2 top-full mt-1 z-30 w-64 max-w-[calc(100%-1rem)] flex flex-col max-h-[min(24rem,70vh)] p-2 rounded-md border border-surface-200-800 bg-surface-50-950 shadow-lg text-sm"
+                    onkeydown={startMenuKeydown}
+                >
+                    <input
+                        bind:this={startFindInput}
+                        bind:value={startFind}
+                        type="search"
+                        class="input text-sm px-2 py-1"
+                        placeholder="Find a section"
+                        aria-label="Find a section"
+                    />
+                    <div class="mt-1 overflow-y-auto min-h-0">
+                        {#snippet group(heading: string, list: StartSection[])}
+                            {#if list.length}
+                                {#if startSectionList.some(s => s.test)}
+                                    <h3 class="px-2 pt-2 pb-0.5 text-[11px] font-semibold text-surface-600-400">{heading}</h3>
+                                {/if}
+                                <ul>
+                                    {#each list as s (s.name)}
+                                        <li>
+                                            <button
+                                                type="button"
+                                                class="w-full text-left px-2 py-1 rounded hover:bg-surface-200-800 focus-visible:bg-surface-200-800 break-words {s.name === startAt?.section ? "font-semibold text-primary-600-400" : ""}"
+                                                aria-current={s.name === startAt?.section ? "true" : undefined}
+                                                onclick={() => startFrom(s.name)}
+                                            >{s.name}</button>
+                                        </li>
+                                    {/each}
+                                </ul>
+                            {/if}
+                        {/snippet}
+                        {@render group("Test sections", startTests)}
+                        {@render group("All sections", startOthers)}
+                        {#if !startFound.length}
+                            <p class="px-2 py-1 text-surface-600-400">No sections found.</p>
+                        {/if}
+                    </div>
+                </div>
+            {/if}
+        {/if}
         <button type="button" class="btn-icon btn-icon-sm" title="Back" aria-label="Back" disabled={!canGoBack} onclick={() => host?.back()}><ArrowLeft size={14} /></button>
         <button type="button" class="btn-icon btn-icon-sm" title="Restart" aria-label="Restart" onclick={() => run(startAt)}><RotateCcw size={14} /></button>
         {#if usesSound}

@@ -113,7 +113,7 @@ npx @textadventures/squiffy-cli -s
 ```
 
 CLI options:
-- `-s, --serve`: Start HTTP server after compiling. The page it serves can start at any section, for testing a late scene: `?start=section` on the address (`&set=score=5` sets an attribute first), and a Start at menu in the header (`runtime/src/startMenu.ts`). The server turns this on by adding a flag to `index.html` as it serves it (`cli/src/server.ts`), so the built files don't have it unless `squiffy.json` has `"startAnywhere": true`. A section marked `@test` is for setting up a scene: it's listed first, and it and what only it leads to aren't reported as unreachable (`compiler/src/story-graph.ts`)
+- `-s, --serve`: Start HTTP server after compiling. The page it serves can start at any section, for testing a late scene: `?start=section` on the address (`&set=score=5` sets an attribute first), and a Start at menu in the header (`runtime/src/startMenu.ts`). The server turns this on by adding a flag to `index.html` as it serves it (`cli/src/server.ts`), so the built files don't have it unless `squiffy.json` has `"startAnywhere": true`. A section marked `@test` is for setting up a scene: it's listed first, and it and what only it leads to aren't reported as unreachable (`compiler/src/story-graph.ts`). The editor's preview has its own Start at menu (`app/src/lib/start-sections.ts`), and all this is documented on the docs' Testing page (`site/src/content/docs/testing.mdx`)
 - `-p, --port`: Port for HTTP server (default: 8282)
 - `--scriptonly [filename]`: Only generate JavaScript file
 - `--zip`: Create zip file
