@@ -43,7 +43,7 @@ Its `squiffy` has `get`, `set`, `story.go`/`seen`/`visits`/`passages`/`sections`
 |---|---|
 | `squiffy.get("name")`, `squiffy.set("name", value)` | Read and set attributes, including paths like `"hero.hp"` or `"party.0.name"`. Also plain `get`/`set` |
 | `squiffy.story.go("section")` | Go to a section |
-| `squiffy.story.seen("name")`, `squiffy.story.visits("name")` | Seen, and visit count |
+| `squiffy.story.seen("name")`, `squiffy.story.visits("name")`, `squiffy.story.lastVisited("name")` | Seen, visit count, and how many turns ago (-1 if never) |
 | `squiffy.story.passages(section?, { tagged, untagged }?)`, `squiffy.story.sections({ tagged, untagged }?)`, `squiffy.story.tags(name?)` | As the `passages`, `sections` and `tags` helpers (helpers.md). Tags are space-separated text or an array |
 | `squiffy.ui.write("text")` | Write text, with Markdown and `{{...}}` |
 | `squiffy.ui.afterWrite(fn)` | Run once the text is on the page |

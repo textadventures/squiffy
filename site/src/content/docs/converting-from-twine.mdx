@@ -111,7 +111,7 @@ Play the story through after converting it. Twine and Squiffy work differently i
 | `<<repeat 1s>>...<</repeat>>`, `<<stop>>` | [`{{#every 1000 append=true}}...{{/every}}`](/dynamic-text/#repeating-text), `{{stop}}` |
 | `<<link "Buy" "Shop">><<set $gold -= 5>><</link>>` | `[[Buy]](Shop, gold -= 5)` |
 | `<<linkreplace "Open">>It's empty.<</linkreplace>>` | A passage link that replaces the link with the text |
-| `<<do>><<include $face>><</do>>`, and `<<set $face to "Frown">><<redo>>` | `{{live "face" section="do face"}}`, which shows the section `[[do face]]` again whenever `face` is set, so `<<redo>>` is left out. Only a `<<do>>` that uses one story variable, and no temporary ones, is converted like this |
+| `<<do tag "map">>...<</do>>`, and `<<redo "map">>` | `{{live "redo_map" passage="do"}}`, with what was in the `<<do>>` in the passage `[do]`, which `{{inc "redo_map"}}` shows again. `<<redo>>` with no tags shows every `<<do>>` again. One in a widget that uses `_args`, or in a loop, is shown once |
 | `<span id="box">`, `<<replace "#box">>` | `{{#label "box"}}`, `{{#replace "box"}}` |
 | `either("a", "b")`, `random(1, 6)` | `(random (array "a" "b"))`, `(random (array 1 2 3 4 5 6))` |
 | `<<cycle "$size">>`, `<<textbox "$name">>`, `<<listbox>>` | `{{rotate ... set="size"}}`, `<input data-attribute="name">`, `<select>` |

@@ -42,9 +42,15 @@ export interface TwineConversionOptions {
 }
 
 // What a format's converter gets for each passage
+// What a passage becomes: a section the player visits ("story"), text shown at the start of every
+// one ("header", in the master section), one embedded at the end of every one ("footer"), a panel
+// beside the story, text run at the start ("startup"), or widgets
+export type PassageKind = "story" | "header" | "footer" | "panel" | "startup" | "widget";
+
 export interface PassageContext {
     readonly story: StoryContext;
     readonly passage: TwinePassage;
+    readonly kind: PassageKind;
     // The Squiffy section this passage is converted into
     readonly section: string;
     // Records a problem, and returns a comment to put in the story in place of the Twine code
@@ -84,7 +90,7 @@ export const reservedAttributes = new Set([
     "if", "unless", "each", "with", "lookup", "log", "else", "this", "turns", "previous", "previous_section",
     "true", "false", "null", "undefined", "music", "stopmusic", "sound", "stopsounds",
     "addclass", "removeclass", "toggleclass", "hasclass", "content", "restart", "saves", "settings", "style",
-    "passages", "sections", "tags",
+    "passages", "sections", "tags", "lastvisited",
 ]);
 
 export class StoryContext {
@@ -142,6 +148,19 @@ export class StoryContext {
 
     notePermanentVar(name: string) {
         this.permanentVars.add(name);
+    }
+
+    // SugarCube's setup.x values that passages set, e.g. in StoryInit, which become properties of
+    // a setup attribute. Those the story's JavaScript sets stay as they are, since an attribute
+    // wouldn't have them.
+    readonly setupValues = new Set<string>();
+
+    noteSetupValues(text: string) {
+        for (const set of text.matchAll(/<<set\s([\s\S]*?)>>/g)) {
+            for (const m of set[1].matchAll(/(?<![\w.$])setup\.([A-Za-z_]\w*)\s*(?:to\b|=(?!=))/g)) {
+                if (!new RegExp(`(?<![\\w.$])setup\\.${m[1]}\\s*=(?!=)`).test(this.twine.script)) this.setupValues.add(m[1]);
+            }
+        }
     }
 
     // The Squiffy section for a Twine passage, or undefined if there's no such passage
@@ -221,6 +240,11 @@ export class StoryContext {
         finally {
             this.loops.pop();
         }
+    }
+
+    // Whether a loop is being converted, or a link's body inside one
+    get inAnyLoop(): boolean {
+        return this.loops.length > 0;
     }
 
     // Converts the body of a link, which runs when it's clicked, after its loop has finished. In
@@ -476,6 +500,7 @@ export function convertTwineStory(twine: TwineStory, options: TwineConversionOpt
     const story = new StoryContext(twine, sectionPassages);
     for (const p of twine.passages) {
         for (const m of p.text.matchAll(/\$([A-Za-z_]\w*)/g)) story.notePermanentVar(m[1]);
+        if (!harlowe) story.noteSetupValues(p.text);
     }
 
     // Widgets become sections, which calls to them embed. They're named before anything's
@@ -492,9 +517,10 @@ export function convertTwineStory(twine: TwineStory, options: TwineConversionOpt
         });
     }
 
-    const context = (passage: TwinePassage, section: string, extraPassages: string[]): PassageContext => ({
+    const context = (passage: TwinePassage, section: string, extraPassages: string[], kind: PassageKind): PassageContext => ({
             story,
             passage,
+            kind,
             section,
             unconvertible(text, reason) {
                 story.addProblem({ passage: passage.name, text: oneLine(text), reason });
@@ -533,8 +559,8 @@ export function convertTwineStory(twine: TwineStory, options: TwineConversionOpt
             },
             newLabel: hint => story.newLabel(hint),
     });
-    const convert = (passage: TwinePassage, section: string, extraPassages: string[]): ConvertedPassage => {
-        const ctx = context(passage, section, extraPassages);
+    const convert = (passage: TwinePassage, section: string, extraPassages: string[], kind: PassageKind): ConvertedPassage => {
+        const ctx = context(passage, section, extraPassages, kind);
         try {
             return harlowe ? convertHarlowePassage(passage.text, ctx) : convertSugarCubePassage(passage.text, ctx);
         }
@@ -551,7 +577,7 @@ export function convertTwineStory(twine: TwineStory, options: TwineConversionOpt
     const masterPassages: string[] = [];
     const master: ConvertedPassage = { directives: ["@clear"], body: "" };
     for (const p of headers) {
-        const converted = convert(p, "", masterPassages);
+        const converted = convert(p, "", masterPassages, "header");
         master.directives.push(...converted.directives);
         if (converted.body.trim()) master.body += converted.body.trim() + "\n";
     }
@@ -560,7 +586,7 @@ export function convertTwineStory(twine: TwineStory, options: TwineConversionOpt
     sortPanelPassages(panelPassages);
     const panels: Panel[] = [];
     for (const p of panelPassages) {
-        const converted = convert(p, "", masterPassages);
+        const converted = convert(p, "", masterPassages, "panel");
         let passageName = p.name;
         for (let n = 2; masterPassages.some(text => text.startsWith(`[${passageName}]:\n`)); n++) passageName = `${p.name} ${n}`;
         const body = converted.body.trim();
@@ -577,7 +603,7 @@ export function convertTwineStory(twine: TwineStory, options: TwineConversionOpt
     // Passages that run once at the start
     const init: ConvertedPassage = { directives: [], body: "" };
     for (const p of startup) {
-        const converted = convert(p, startSection ?? "", []);
+        const converted = convert(p, startSection ?? "", [], "startup");
         init.directives.push(...converted.directives);
         if (converted.body.trim()) init.body += converted.body.trim() + "\n";
     }
@@ -587,7 +613,7 @@ export function convertTwineStory(twine: TwineStory, options: TwineConversionOpt
     for (const p of sectionPassages) {
         const section = story.sectionFor(p.name)!;
         const extraPassages: string[] = [];
-        const converted = convert(p, section, extraPassages);
+        const converted = convert(p, section, extraPassages, footers.includes(p) ? "footer" : "story");
         const directives = [...converted.directives];
         // Its tags (#449), which Twine puts on the page for the stylesheet
         const classes = footers.includes(p) ? [] : tagClasses(p.tags);
@@ -610,7 +636,7 @@ export function convertTwineStory(twine: TwineStory, options: TwineConversionOpt
         const extraPassages: string[] = [];
         let converted: { section: string, converted: ConvertedPassage }[];
         try {
-            converted = convertSugarCubeWidgets(p.text, context(p, "", extraPassages));
+            converted = convertSugarCubeWidgets(p.text, context(p, "", extraPassages, "widget"));
         }
         catch (e) {
             if (!(e instanceof Unconvertible)) throw e;

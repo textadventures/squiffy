@@ -63,6 +63,7 @@ A calculation inside a helper goes in its own parentheses: `{{= (round (gold / 3
 |---|---|---|
 | `seen` | `"name"` | Has the player seen this section or passage: `{{#if (seen "intro")}}` |
 | `visits` | `"name"` | How many times, or 0 |
+| `lastvisited` | `"name"` | How many turns ago the player was last there: 0 if there now, -1 if never |
 | `at` | `"name"` or `(array ...)` | Is the player in this section now |
 | `goto` | `"section" [after=ms]` | Go to a section once this one is shown, or after a delay (ms, `"3s"`, or an expression) |
 | `deactivate` | `"passage" ...`, or nothing | Turn off links to passages in this section, or to this passage |

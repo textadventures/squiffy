@@ -124,6 +124,8 @@ export interface SquiffyScriptApi {
         go: (section: string) => Promise<void>;
         seen: (sectionOrPassage: string) => boolean;
         visits: (sectionOrPassage: string) => number;
+        // How many turns ago it was last visited: 0 if the player is there now, -1 if never (#540)
+        lastVisited: (sectionOrPassage: string) => number;
         passages: (section?: string, filter?: TagFilter) => string[];
         sections: (filter?: TagFilter) => string[];
         tags: (name?: string) => string[];
@@ -149,6 +151,8 @@ interface SquiffyJsFunctionApi {
         go: (section: string) => void;
         seen: (sectionOrPassage: string) => boolean;
         visits: (sectionOrPassage: string) => number;
+        // How many turns ago it was last visited: 0 if the player is there now, -1 if never (#540)
+        lastVisited: (sectionOrPassage: string) => number;
         // The passages of a section ("" for the master section), or with no section, the
         // current section's and the master section's, leaving out @1, @last and @after (#527)
         passages: (section?: string, filter?: TagFilter) => string[];

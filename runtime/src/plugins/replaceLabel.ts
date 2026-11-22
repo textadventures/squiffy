@@ -22,7 +22,7 @@ export function ReplaceLabel() : SquiffyPlugin {
                     const html = isBlock
                         ? marked.parse(result, { async: false }).trim()
                         : marked.parseInline(result, { async: false }).trim();
-                    squiffy.addTransition(() => fadeReplace(element, html as string));
+                    squiffy.addTransition(() => fadeReplace(element, html as string, squiffy.written));
                 }
                 return "";
             });

@@ -27,6 +27,9 @@ export interface PluginHost {
     // processText. Returns the HTML unchanged if no resolveAssetUrl was given.
     resolveAssetsInHtml: (html: string) => string;
     addTransition: (fn: () => Promise<void>) => void;
+    // Runs the plugins' onWrite on HTML a plugin has put in the output itself, so that what's in
+    // it works as it would in any other text, e.g. an {{#animate}} starts
+    written: (el: HTMLElement) => void;
     animation: Animation;
     on<E extends keyof SquiffyEventMap>(
         event: E,

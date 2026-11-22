@@ -435,6 +435,23 @@ Following a [`{{goto}}`](/basic-concepts/#go-to-another-section) isn't a turn, a
 
 Squiffy sets `turns` itself, so don't set it in your story: the editor underlines it if you do.
 
+### How long ago
+
+`{{lastvisited}}` says how many turns ago the player was last at a section or passage: 0 if they're there now, and -1 if they've never been there. Use it for things that wear off, or that only happen if the player has just been somewhere:
+
+<Sample script="[[start]]:
+You're in the hall. [[Go to the kitchen]](kitchen) or [[the garden]](garden).
+
+[[kitchen]]:
+{{#if (lastvisited &quot;garden&quot;) = 1}}You track mud across the clean floor.{{else}}The kitchen smells of bread.{{/if}} [[Back to the hall]](start)
+
+[[garden]]:
+It's been raining. [[Back inside]](kitchen)"></Sample>
+
+Like `turns`, it only counts links the player clicked, so a section reached with [`{{goto}}`](/basic-concepts/#go-to-another-section) is the same turn as the one before it.
+
+In JavaScript, use `squiffy.story.lastVisited("garden")`.
+
 This is different from [turn counting within a section](/basic-concepts/#running-a-passage-after-some-clicks), which counts passage clicks in the current section only, and starts again in each new section.
 
 ### Where the player came from

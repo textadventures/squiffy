@@ -830,7 +830,7 @@ Setting.addToggle("bad name", { label: "Bad" });`;
         const { script, result } = await convert("SugarCube",
             ":: Start\n<<for _x range $bag>><<if _x>><<break>><</if>><</for>> <<for _c < 4>>x<</for>> <<for _x range $bag>><<set _x to 1>><</for>>");
         expect(section(script, "Start")).toBe(
-            "{{!-- Twine: <<for _x range $bag>><<if _x>><<break>><</if>><</for>> --}} {{!-- Twine: <<for _c < 4>>x<</for>> --}} {{#each bag}}{{!-- Twine: <<set _x to 1>> --}}{{/each}}");
+            "{{!-- Twine: <<for _x range $bag>><<if _x>><<break>><</if>><</for>> --}}{{!-- Twine: <<for _c < 4>>x<</for>> --}}{{#each bag}}{{!-- Twine: <<set _x to 1>> --}}{{/each}}");
         expect(result.problems.map(p => p.reason)).toEqual([
             "This couldn't be converted: <<break>> and <<continue>>.",
             "This couldn't be converted: <<for>> loops, except ones that go through an array (with range), or count up or down by 1.",
@@ -888,14 +888,99 @@ Setting.addToggle("bad name", { label: "Bad" });`;
 
     test("what can't be converted is left as a comment", async () => {
         const { script, result } = await convert("SugarCube", ":: Start\nHi <<masteraudio mute>> <<set $x to setup.thing()>>");
-        expect(section(script, "Start")).toBe("Hi {{!-- Twine: <<masteraudio mute>> --}} {{!-- Twine: <<set $x to setup.thing()>> --}}");
+        expect(section(script, "Start")).toBe("Hi {{!-- Twine: <<masteraudio mute>> --}}{{!-- Twine: <<set $x to setup.thing()>> --}}");
         expect(result.problems.map(p => p.reason)).toEqual([
             "This couldn't be converted: <<masteraudio>>, which changes all the story's sound at once, except to stop it.",
             "This couldn't be converted: setup.thing().",
         ]);
     });
 
+    test("setup values that passages set are a setup attribute", async () => {
+        const { script, result } = await convert("SugarCube", [
+            ":: StoryInit",
+            "<<set setup.ratio = 1.85, setup.ouch to [\"Ow\", \"Ouch\"]>><<set setup.fromScript to 2>>",
+            ":: Start",
+            "<<print setup.ratio * 2>> <<print either(setup.ouch)>> <<print setup.fromScript>>",
+            ":: UserScript [script]",
+            "setup.fromScript = 1;",
+        ].join("\n"));
+        expect(script).toContain("@set setup.ratio = 1.85");
+        expect(script).toContain("{{= setup.ratio * 2}}");
+        expect(result.problems.map(p => p.reason).filter(r => !r.includes("story.js"))).toEqual([
+            "This couldn't be converted: setting setup.fromScript, which isn't a variable.",
+            "This couldn't be converted: \"setup.fromScript\".",
+        ]);
+    });
+
+    test("+= adds text to text", async () => {
+        const { script, result } = await convert("SugarCube", [
+            ":: Start",
+            "<<set $msg to \"Hi\">><<set $more to \" there\">><<set $n to 1>>",
+            "<<set $msg += \"!\">><<set $msg += $more>><<set $n += 2>><<link \"Go\" \"End\">><<set $msg += $more>><</link>>",
+            ":: End",
+            "$msg $n",
+        ].join("\n"));
+        expect(script).toContain("@set msg = msg + \"!\"");
+        expect(script).toContain("@set msg = msg + more");
+        expect(script).toContain("@inc n 2");
+        expect(section(script, "Start")).toContain("[[Go]](End, msg = msg + more)");
+        expect(result.problems).toEqual([]);
+    });
+
+    test("a nobr passage's line breaks don't add up to a Markdown code block", async () => {
+        const { script } = await convert("SugarCube", [
+            ":: Start [nobr]",
+            "<<set $a to 1>>",
+            "<<set $b to 2>>",
+            "",
+            "<<masteraudio mute>>",
+            "",
+            "<div>Hi there</div>",
+            "",
+            "Words <<set $c to 3>> go on",
+        ].join("\n"));
+        expect(section(script, "Start")).toBe("@set a = 1\n@set b = 2\n{{!-- Twine: <<masteraudio mute>> --}}<div>Hi there</div> Words {{set \"c\" 3}}go on");
+    });
+
+    test("attribute directives", async () => {
+        const { script, result } = await convert("SugarCube",
+            ":: Start\n<<set _namex to \"blue\">><span @class=\"_namex\" @title='\"Hi \" + $name'>Hi</span> <span @id=\"setup.thing()\">x</span>");
+        expect(section(script, "Start")).toContain("<span class=\"{{namex}}\" title=\"{{= \"Hi \" + name}}\">Hi</span> <span>x</span>");
+        expect(result.problems.map(p => p.reason)).toEqual(["This attribute was left out, as its value couldn't be converted: setup.thing()."]);
+    });
+
+    test("lastVisited() (#540)", async () => {
+        const { script, result } = await convert("SugarCube",
+            ":: Start\n<<if lastVisited(\"Cave\") is 1>>Just left.<</if>> <<print lastVisited()>> [[Cave]]\n\n:: Cave\nCave.");
+        expect(section(script, "Start")).toBe("{{#if (lastvisited \"Cave\") = 1}}Just left.{{/if}} 0 [[Cave]]");
+        expect(result.problems).toEqual([]);
+    });
+
     test("<<do>> and <<redo>>", async () => {
+        const { script, result } = await convert("SugarCube", [
+            ":: Start",
+            "Gold: <<do tag \"money\">>$gold <<new \"y\">><</do>>. <<do>>Always<</do>> <<link \"Earn\">><<set $gold += 1>><<redo \"money\">><</link>> <<link \"All\">><<redo>><</link>> <<new \"x\">>",
+            ":: Widgets [widget]",
+            "<<widget \"new\">><<do tag \"money\">>[NEW _args[0]]<</do>><</widget>>",
+        ].join("\n"));
+        const start = section(script, "Start");
+        expect(start).toContain("Gold: {{live \"redo_money\" passage=\"do\"}}. {{live \"redo\" passage=\"do 2\"}}");
+        expect(start).toContain("[do]:\n{{gold}} {{embed \"widget new\" args=(array \"y\")}}\n\n[do 2]:\nAlways");
+        expect(script).toContain("{{inc \"redo_money\"}}");
+        expect(script).toMatch(/\{\{inc "redo(?:_money)?"\}\}\{\{inc "redo(?:_money)?"\}\}/);
+        expect(result.problems.map(p => p.reason)).toEqual([
+            "<<do>> has been converted to its contents, which <<redo>> doesn't show again, as it uses the widget's _args or _contents.",
+        ]);
+    });
+
+    test("Math.clamp and .clamp", async () => {
+        const { script, result } = await convert("SugarCube", ":: Start\n<<set $x to Math.clamp($x, 5, 96)>><<set $y to $y.clamp(0, 10)>>");
+        expect(section(script, "Start")).toContain("@set x = (max 5 (min 96 x))");
+        expect(section(script, "Start")).toContain("@set y = (max 0 (min 10 y))");
+        expect(result.problems).toEqual([]);
+    });
+
+    test("<<do>> with an <<include>>, and <<redo>> in another passage", async () => {
         const { script, result } = await convert("SugarCube", [
             ":: Start",
             "<<set $face to \"Smile\">><<do>><<include $face>><</do>> <<do>>$a $b<</do>>",
@@ -910,10 +995,9 @@ Setting.addToggle("bad name", { label: "Bad" });`;
             ":: Frown",
             ":(",
         ].join("\n"));
-        expect(section(script, "Start")).toBe("@set face = \"Smile\"\n{{live \"face\" section=\"do face\"}} {{a}} {{b}}<br>\n[[Next]]");
-        expect(section(script, "do face")).toBe("{{embed face}}");
-        expect(section(script, "Next")).toBe("@set face = \"Frown\"\nOh.");
-        expect(result.problems.map(p => p.text)).toEqual(["<<do>>$a $b<</do>>"]);
+        expect(section(script, "Start")).toBe("@set face = \"Smile\"\n{{live \"redo\" passage=\"do\"}} {{live \"redo\" passage=\"do 2\"}}<br>\n[[Next]]\n\n[do]:\n{{embed face}}\n\n[do 2]:\n{{a}} {{b}}");
+        expect(section(script, "Next")).toBe("@set face = \"Frown\"\n{{inc \"redo\"}}Oh.");
+        expect(result.problems).toEqual([]);
     });
 
     test("counting an object's values with Object.keys(x).length", async () => {
