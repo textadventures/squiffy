@@ -1284,16 +1284,10 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         currentPassageElement = currentSectionElement.querySelector(".squiffy-output-passage:last-child");
     }
 
+    // The sections and passages shown, including those cleared from the screen, which are kept in
+    // the clear-stack
     function getHistoryCount() {
-        const clearStack = getClearStack();
-        const sectionPassageCount = outputElement.querySelectorAll(".squiffy-output-section").length
-            + outputElement.querySelectorAll(".squiffy-output-passage").length;
-
-        if (!clearStack) {
-            return sectionPassageCount;
-        }
-
-        return sectionPassageCount + clearStack.children.length;
+        return outputElement.querySelectorAll(".squiffy-output-section, .squiffy-output-passage").length;
     }
 
     function enableInputs(sectionElement: Element) {
