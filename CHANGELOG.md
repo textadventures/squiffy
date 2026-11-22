@@ -1,5 +1,38 @@
 # Changelog
 
+## [7.0.0-beta.9](https://github.com/textadventures/squiffy/compare/v7.0.0-beta.8...v7.0.0-beta.9) (2026-11-22)
+
+
+### Features
+
+* --play --interactive, to play a long story in one process ([#557](https://github.com/textadventures/squiffy/issues/557)) ([2117f98](https://github.com/textadventures/squiffy/commit/2117f98090e794697fc38f59ec195cf7e61417c1))
+* [[@after](https://github.com/after)], a passage that runs after every passage link in its section ([#548](https://github.com/textadventures/squiffy/issues/548)) ([26cf8db](https://github.com/textadventures/squiffy/commit/26cf8dbb58bcd84e2acbbc8c8884c779a45dee4f))
+* [@tag](https://github.com/tag), and passages, sections and tags helpers, to list a story's passages ([#551](https://github.com/textadventures/squiffy/issues/551)) ([ed2036b](https://github.com/textadventures/squiffy/commit/ed2036b259a0ecc962d237f422b175581056ae9d))
+* a {{clear}} helper, to clear the screen only some of the time ([#549](https://github.com/textadventures/squiffy/issues/549)) ([a703c1d](https://github.com/textadventures/squiffy/commit/a703c1d29e089cbd3006fd32327224198ed09e74))
+* a block form of join, for lists with links in them ([#547](https://github.com/textadventures/squiffy/issues/547)) ([e3d723e](https://github.com/textadventures/squiffy/commit/e3d723e70276db4e1c8993743b2d28366df4d9a9))
+* a new Find and Replace panel and Go to line bar in the editor ([#533](https://github.com/textadventures/squiffy/issues/533)) ([7586979](https://github.com/textadventures/squiffy/commit/75869797114ebdeeda4cf4eb960426b9281db634))
+* a squiffy:ready event, so a story's own scripts can talk to the story ([#554](https://github.com/textadventures/squiffy/issues/554)) ([d1c9e59](https://github.com/textadventures/squiffy/commit/d1c9e591cdcc7cd9a926302285f64d1438a25b6d))
+* a story map that stays put, with names typed on it and red boxes that add what's missing ([#545](https://github.com/textadventures/squiffy/issues/545)) ([ebe0673](https://github.com/textadventures/squiffy/commit/ebe0673c4899c35ef0f30274ae227b7871cf4319))
+* attributes that last across playthroughs, like SugarCube's memorize() and recall() ([#561](https://github.com/textadventures/squiffy/issues/561)) ([d453934](https://github.com/textadventures/squiffy/commit/d4539343b029cfc137aae3db3b5d9b8ad4e04e8a))
+* collapsible folders in the editor's files list, with the build folder collapsed ([#531](https://github.com/textadventures/squiffy/issues/531)) ([3a9a9a5](https://github.com/textadventures/squiffy/commit/3a9a9a53c6cd377f1f848c272ebc769993af5dc1))
+* delete, add passages and undo from the story map, with new sections placed after their parent ([#543](https://github.com/textadventures/squiffy/issues/543)) ([95a3e65](https://github.com/textadventures/squiffy/commit/95a3e65ed3600b887da1d3825722a1734aa73173))
+* Find in Files in the editor ([#534](https://github.com/textadventures/squiffy/issues/534)) ([36a4ef9](https://github.com/textadventures/squiffy/commit/36a4ef9615083d905183d82e7f1d6d3c5ad91455))
+* ignore lines in .squiffy-test files, and --ignore with --record ([#556](https://github.com/textadventures/squiffy/issues/556)) ([d73a2f6](https://github.com/textadventures/squiffy/commit/d73a2f62da2e01d78d2e211f19e4405561cc9e4b))
+* lastvisited helper, and the Twine converter handles setup values, &lt;&lt;do&gt;&gt;/&lt;&lt;redo&gt;&gt;, Math.clamp and more ([#562](https://github.com/textadventures/squiffy/issues/562)) ([5fa5cc1](https://github.com/textadventures/squiffy/commit/5fa5cc135b55e9ce7d495cef2f310e63fd813f5f))
+* more Twine conversions found in the IFComp games, and length on objects ([#559](https://github.com/textadventures/squiffy/issues/559)) ([cdd6c44](https://github.com/textadventures/squiffy/commit/cdd6c44e63075a5532ce5ce8e3c3fd645ba9b96c))
+* Replace in Files in the editor ([#536](https://github.com/textadventures/squiffy/issues/536)) ([4045959](https://github.com/textadventures/squiffy/commit/4045959fd9a1f602a4a510f6ad814a088265889d))
+* the rest of Harlowe's text styles as {{#style}} effects, such as emboss, outline and double-underline ([#560](https://github.com/textadventures/squiffy/issues/560)) ([c240ae3](https://github.com/textadventures/squiffy/commit/c240ae3fcb2094a5776a0c7eb4b26f576a256d98))
+* warn about {{name}} when it's neither a helper nor an attribute the story sets, and squiffy-ignore comments to turn warnings off ([#553](https://github.com/textadventures/squiffy/issues/553)) ([d70465a](https://github.com/textadventures/squiffy/commit/d70465ac58ff4a6289e60adcd46d2b7ea8ea103d))
+* write a section beside the full-screen story map ([#544](https://github.com/textadventures/squiffy/issues/544)) ([fa362b7](https://github.com/textadventures/squiffy/commit/fa362b7a8487abb787cb3595b7699d160d969e01))
+
+
+### Bug Fixes
+
+* _blank in Twine HTML attributes, and {player.alias} in Quest imports ([#555](https://github.com/textadventures/squiffy/issues/555)) ([f06a79d](https://github.com/textadventures/squiffy/commit/f06a79d489680bcc7ca97b50a9cf55b11bbec23a))
+* Find and Replace, and Add, while a section is being written from the story map ([#546](https://github.com/textadventures/squiffy/issues/546)) ([91e8ae0](https://github.com/textadventures/squiffy/commit/91e8ae055803153379eb757c2f77b819dd01cf9a))
+* links to the master section's passages aren't broken on the story map ([#552](https://github.com/textadventures/squiffy/issues/552)) ([acbeb4f](https://github.com/textadventures/squiffy/commit/acbeb4f5ad0b6c69e7b03b4316a4aa4675a7f7d1))
+* the story map follows {{goto name}} to the sections name is set to, and doesn't fade sections it can't be sure are unreachable ([#558](https://github.com/textadventures/squiffy/issues/558)) ([661178d](https://github.com/textadventures/squiffy/commit/661178d3b3752f7c7aac26022eac8c486622f984))
+
 ## [7.0.0-beta.8](https://github.com/textadventures/squiffy/compare/v7.0.0-beta.7...v7.0.0-beta.8) (2026-11-21)
 
 
