@@ -37,6 +37,8 @@ interface OutputSection {
     sounds?: string[];
     // @class (#449): classes on the story's element while this is the current section
     classes?: string[];
+    // @tag (#527): tags the story can list sections by
+    tags?: string[];
     // @transition (#489): how it appears, or "none", and how long that takes in milliseconds
     transition?: string;
     transitionTime?: number;
@@ -58,6 +60,8 @@ interface OutputPassage {
     sounds?: string[];
     // @class (#449): classes added to the section's when this passage is shown
     classes?: string[];
+    // @tag (#527): tags the story can list passages by
+    tags?: string[];
     // @transition (#489): how it appears, or "none", and how long that takes in milliseconds
     transition?: string;
     transitionTime?: number;
@@ -169,6 +173,7 @@ export function emit(analysis: Analysis, settings: EmitSettings = {}): CompileSu
         outputSection.text = section.output;
         addSounds(outputSection, section, audio);
         if (section.classes.length) outputSection.classes = section.classes;
+        if (section.tags.length) outputSection.tags = section.tags;
         addTransition(outputSection, section);
 
         if (section.attributes.length > 0) {
@@ -208,6 +213,7 @@ export function emit(analysis: Analysis, settings: EmitSettings = {}): CompileSu
             outputPassage.text = passage.output;
             addSounds(outputPassage, passage, audio);
             if (passage.classes.length) outputPassage.classes = passage.classes;
+            if (passage.tags.length) outputPassage.tags = passage.tags;
             addTransition(outputPassage, passage);
 
             if (passage.attributes.length > 0) {

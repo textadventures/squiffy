@@ -1,4 +1,5 @@
-import { SquiffyApi, SquiffyInitOptions, SquiffyScriptApi, SquiffyScriptEvent, Story, Section, Passage, StartAt, SavedGame, LoadSaveResult } from "./types.js";
+import { SquiffyApi, SquiffyInitOptions, SquiffyScriptApi, SquiffyScriptEvent, Story, Section, Passage, StartAt, SavedGame, LoadSaveResult, TagFilter } from "./types.js";
+import { listPassages, listSections, tagsOf } from "./storyLists.js";
 import { TextProcessor, afterClear, errorHtml } from "./textProcessor.js";
 import { toNumber } from "./numbers.js";
 import { Emitter, SquiffyEventMap } from "./events.js";
@@ -518,6 +519,12 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
                 },
                 seen: (sectionOrPassage: string) => state.getSeen(sectionOrPassage),
                 visits: (sectionOrPassage: string) => state.getVisits(sectionOrPassage),
+                // As the passages, sections and tags helpers (#527)
+                passages: (section?: string, filter?: TagFilter) => listPassages(story, section, get("_section"), filter),
+                sections: (filter?: TagFilter) => listSections(story, filter),
+                tags: (name?: string) => name === undefined
+                    ? [...(story.sections[get("_section")]?.tags ?? [])]
+                    : tagsOf(story, name, get("_section")),
             },
             element: outputElementContainer,
             import: imports,
@@ -1824,6 +1831,11 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             go: (sectionName: string) => go(sectionName),
             seen: (sectionOrPassage: string) => state.getSeen(sectionOrPassage),
             visits: (sectionOrPassage: string) => state.getVisits(sectionOrPassage),
+            passages: (section?: string, filter?: TagFilter) => listPassages(story, section, get("_section"), filter),
+            sections: (filter?: TagFilter) => listSections(story, filter),
+            tags: (name?: string) => name === undefined
+                ? [...(story.sections[get("_section")]?.tags ?? [])]
+                : tagsOf(story, name, get("_section")),
         },
         getSetting: (name: string) => playerSettings.get(name),
         element: outputElementContainer,

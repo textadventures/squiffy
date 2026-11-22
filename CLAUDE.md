@@ -29,7 +29,9 @@ cd cli && npm run build
 cd app && npm run build
 cd site && npm run build
 
-# Run the editor locally
+# Run the editor locally (builds the packages it uses first; --skip-build, --port <n>)
+./dev.sh
+# or, if they're already built
 cd app && npm run dev
 
 # Run the site locally

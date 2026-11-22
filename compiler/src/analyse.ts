@@ -122,6 +122,8 @@ class TextContainer {
     sounds: string[] = [];
     // @class (#449): classes on the story's element while the section is the current one
     classes: string[] = [];
+    // @tag (#527): tags the story can list sections and passages by
+    tags: string[] = [];
     // @transition (#489): how it appears, and how long that takes in milliseconds
     transition?: string;
     transitionTime?: number;
@@ -433,6 +435,14 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
                     if (!target) return sectionRequired(node);
                     for (const name of node.value.split(/\s+/)) {
                         if (name && !target.classes.includes(name)) target.classes.push(name);
+                    }
+                    return true;
+                }
+                case "tag": {
+                    const target = passage ?? (section = ensureSectionExists(lineCount));
+                    if (!target) return sectionRequired(node);
+                    for (const name of node.value.split(/\s+/)) {
+                        if (name && !target.tags.includes(name)) target.tags.push(name);
                     }
                     return true;
                 }

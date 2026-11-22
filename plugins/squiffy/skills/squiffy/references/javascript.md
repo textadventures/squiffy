@@ -35,7 +35,7 @@ document.addEventListener("squiffy:ready", ({ detail: squiffy }) => {
 });
 ```
 
-Its `squiffy` has `get`, `set`, `story.go`/`seen`/`visits`, `getSetting(name)`, `element`, and `on`/`once`/`off` (each `on` returns a function that stops it) for three events: `navigated` (`{ section, passage }`, also after Back, restart and loading a saved game), `set` (`{ attribute, value }`, including `_` attributes) and `settingChanged` (`{ name, value }`). Use `navigated` to start and stop an effect for a section, rather than watching for a `@class`: section JavaScript doesn't run again when a saved game is loaded, but `navigated` happens.
+Its `squiffy` has `get`, `set`, `story.go`/`seen`/`visits`/`passages`/`sections`/`tags`, `getSetting(name)`, `element`, and `on`/`once`/`off` (each `on` returns a function that stops it) for three events: `navigated` (`{ section, passage }`, also after Back, restart and loading a saved game), `set` (`{ attribute, value }`, including `_` attributes) and `settingChanged` (`{ name, value }`). Use `navigated` to start and stop an effect for a section, rather than watching for a `@class`: section JavaScript doesn't run again when a saved game is loaded, but `navigated` happens.
 
 ## The squiffy API
 
@@ -44,6 +44,7 @@ Its `squiffy` has `get`, `set`, `story.go`/`seen`/`visits`, `getSetting(name)`, 
 | `squiffy.get("name")`, `squiffy.set("name", value)` | Read and set attributes, including paths like `"hero.hp"` or `"party.0.name"`. Also plain `get`/`set` |
 | `squiffy.story.go("section")` | Go to a section |
 | `squiffy.story.seen("name")`, `squiffy.story.visits("name")` | Seen, and visit count |
+| `squiffy.story.passages(section?, { tagged, untagged }?)`, `squiffy.story.sections({ tagged, untagged }?)`, `squiffy.story.tags(name?)` | As the `passages`, `sections` and `tags` helpers (helpers.md). Tags are space-separated text or an array |
 | `squiffy.ui.write("text")` | Write text, with Markdown and `{{...}}` |
 | `squiffy.ui.afterWrite(fn)` | Run once the text is on the page |
 | `squiffy.ui.transition(fn)` | Run an effect; `fn` returns a Promise, and links are blocked until it resolves |

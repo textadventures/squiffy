@@ -67,6 +67,18 @@ A calculation inside a helper goes in its own parentheses: `{{= (round (gold / 3
 | `deactivate` | `"passage" ...`, or nothing | Turn off links to passages in this section, or to this passage |
 | `clear` | | Clear the screen like `@clear`, but only if the text reaches it: `{{#if previous_section != "change"}}{{clear}}{{/if}}`. Text before it in this section or passage (and the master section's) goes too; `@leave` and `@transition` apply as with `@clear` |
 
+## Listing sections and passages
+
+Lists, for `{{#each}}`, `join`, `random` and the other array helpers. Saves listing passage names a second time.
+
+| Helper | Parameters | Description |
+|---|---|---|
+| `passages` | `["section"] [tagged="..."] [untagged="..."]` | A section's passage names in written order: with no section, this section's then the master section's (`""` for the master's alone). Leaves out the master passage, `@1`, `@last`, `@after`. `tagged`: has all these `@tag` tags (space-separated); `untagged`: has none of them. `{{#each (passages tagged="passenger")}}{{passage this}} {{/each}}` |
+| `sections` | `[tagged="..."] [untagged="..."]` | Section names, apart from the master section |
+| `tags` | `["name"]` | A passage's (this section's, then the master's) or section's `@tag` tags, or this section's: `{{#if (tags "a busker") contains "settled"}}` |
+
+With no arguments, `{{passages}}`, `{{sections}}` and `{{tags}}` still show an attribute of that name if there is one. An unknown section or name is an error.
+
 ## Links
 
 | Helper | Parameters | Description |

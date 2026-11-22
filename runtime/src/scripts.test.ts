@@ -100,6 +100,8 @@ test("a script can read and set attributes, go to a section, and see what's been
     await api.clickLink(link("look"));
     expect(squiffy.story.seen("look")).toBe(true);
     expect(squiffy.story.visits("kitchen")).toBe(0);
+    expect(squiffy.story.passages()).toEqual(["look"]);
+    expect(squiffy.story.sections()).toEqual(["start", "kitchen"]);
     await squiffy.story.go("kitchen");
     expect(api.get("_section")).toBe("kitchen");
     expect(squiffy.get("score")).toBe(2);

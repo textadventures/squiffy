@@ -111,6 +111,34 @@ You can name more than one passage, as in `{{deactivate "b" "c"}}`. In a passage
 
 It turns off the links that are on the screen when the passage is shown: a link to the passage that appears later is a new link, which the player can click. Going back with the Back button turns the links on again.
 
+### Listing passages, and tagging them
+
+`(passages)` is a list of the passages in this section, in the order they're written, so the story can choose among them without listing their names again. Put `@tag` on a line in a passage to give it tags, separated by spaces, and `(passages tagged="passenger")` lists only the passages with that tag. `untagged="asleep"` leaves out the ones with that tag:
+
+<Sample script="The train pulls in. In the carriage there's {{#join (passages tagged=&quot;passenger&quot;) &quot;, &quot; &quot; and &quot;}}{{passage this}}{{/join}}.
+
+As you sit down, {{random (passages tagged=&quot;passenger&quot; untagged=&quot;asleep&quot;)}} looks up.
+
+[a man in a hat]:
+@tag passenger
+He tips his hat to you.
+
+[a woman with a dog]:
+@tag passenger
+The dog wags its tail.
+
+[a sleeping student]:
+@tag passenger asleep
+He snores gently."></Sample>
+
+- `(passages)` lists this section's passages, then the [master section's](#master-sections-and-passages), as the links in this section can reach both. `(passages "carriage")` lists the carriage section's passages, and `(passages "")` the master section's.
+- The master passage and the [`@1`, `@last` and `@after`](#running-a-passage-after-some-clicks) passages aren't listed, as they aren't for linking to.
+- `tagged` and `untagged` can each have more than one tag, separated by spaces: `tagged="passenger awake"` lists the passages with both.
+- Sections can have tags too, with `@tag` in the section, and `(sections)` lists the story's sections, with `tagged=` and `untagged=` as for passages.
+- `(tags "a man in a hat")` is a passage's or section's tags, as a list, so `{{#if (tags "a sleeping student") contains "asleep"}}` checks for one. `(tags)` on its own is this section's tags.
+
+These are lists, so they work with the [array helpers](/helpers-reference/#array-management-helpers), such as `{{#each}}`, `join`, `random`, `shuffle` and `length`. In JavaScript, they're `squiffy.story.passages()`, `squiffy.story.sections()` and `squiffy.story.tags()`: see [JavaScript](/javascript/).
+
 ## Continue links
 
 When you want a simple link that moves to the next part of your story, use `+++` followed by the link text. This creates both the link and a new section in one step.
