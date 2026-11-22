@@ -154,6 +154,47 @@ describe("story graph", () => {
         expect(deadEnds(graph)).toEqual([]);
     });
 
+    test("{{goto name}} goes to each section the story sets name to", async () => {
+        const graph = await one([
+            "[[a]]:", "[[Smoke]](wait, vision = \"smoke\") [[Wait]](wait)", "{{set \"vision\" \"\"}}", "",
+            "[[wait]]:", "{{#if vision}}{{goto vision}}{{/if}} [[Wait]](wait)", "",
+            "[[later]]:", "{{set \"vision\" 'blind'}}", "",
+            "[[smoke]]:", "@end", "",
+            "[[blind]]:", "@end", "",
+            "[[elsewhere]]:", "    squiffy.set(\"vision\", \"later\");",
+        ].join("\n"));
+        expect(edgeSummary(graph.edges.filter(e => e.kind == "goto"))).toEqual([
+            "section:wait -> section:smoke (goto, conditional)",
+            "section:wait -> section:blind (goto, conditional)",
+            "section:wait -> section:later (goto, conditional)",
+        ]);
+        expect(graph.edges.find(e => e.kind == "goto")!.via).toBe("vision");
+        expect(reachable(graph)).toEqual(["section:a", "section:wait", "section:later", "section:smoke", "section:blind"]);
+        expect(graph.nodes.filter(n => n.unknownExits)).toEqual([]);
+        expect(graph.reachabilityKnown).toBe(true);
+    });
+
+    test("{{goto name}} is an unknown exit when name is set to something that isn't a section", async () => {
+        const known = async (...lines: string[]) => {
+            const graph = await one(["[[a]]:", "{{goto where}}", "", "[[b]]:", "@end", "", ...lines].join("\n"));
+            return { edges: edgeSummary(graph.edges), unknown: nodeOf(graph, "section:a").unknownExits ?? false, reachabilityKnown: graph.reachabilityKnown };
+        };
+        // Never set
+        expect(await known()).toEqual({ edges: [], unknown: true, reachabilityKnown: false });
+        // Set to an expression, as well as to a section
+        expect(await known("[[c]]:", "{{set \"where\" \"b\"}}{{set \"where\" other}}")).toEqual({
+            edges: ["section:a -> section:b (goto, conditional)"], unknown: true, reachabilityKnown: false,
+        });
+        // Set to text that isn't a section's name
+        expect(await known("[[c]]:", "@set where = \"b\"", "@set where = \"nowhere\"")).toEqual({
+            edges: ["section:a -> section:b (goto, conditional)"], unknown: true, reachabilityKnown: false,
+        });
+        // Only to sections, and cleared
+        expect(await known("[[c]]:", "@set where = \"b\"", "@set not where", "{{set \"where\" false}}")).toEqual({
+            edges: ["section:a -> section:b (goto, conditional)"], unknown: false, reachabilityKnown: true,
+        });
+    });
+
     test("{{goto}} inside {{#every}} is conditional (#451)", async () => {
         const graph = await one([
             "[[a]]:", "{{#every 1000}}{{goto \"b\"}}{{/every}} [[Stay]](a)", "",

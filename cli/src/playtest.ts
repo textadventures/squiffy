@@ -16,6 +16,11 @@
 //   set gold = 12
 //
 // The first step, before any "> " line, is the start of the story.
+//
+// An "ignore" line before it lists attributes the test doesn't record or compare (#529), such as
+// ones a story only uses for its own bookkeeping, with * matching any characters:
+//
+//   ignore told seen_*
 
 import fs from "fs";
 import path from "path";
@@ -44,6 +49,8 @@ export interface PlaythroughTest {
     seed: number;
     start?: string;
     inputs: Record<string, string>;
+    // Attributes the test doesn't record or compare, where * matches any characters
+    ignore?: string[];
     steps: TestStep[];
 }
 
@@ -56,20 +63,32 @@ export const DEFAULT_COMMENTS = [
 // say nothing the test doesn't already
 const IGNORED_ATTRIBUTES = new Set(["turns", "previous", "previous_section"]);
 
+// Whether an attribute is one of a test's ignored ones
+export function ignoredBy(patterns: string[] | undefined): (name: string) => boolean {
+    if (!patterns?.length) return () => false;
+    const escape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const pattern = new RegExp(`^(?:${patterns.map(p => p.split("*").map(escape).join(".*")).join("|")})$`);
+    return name => pattern.test(name);
+}
+
 // ---- From a playthrough ----
 
 // The test that a playthrough would make. The result needs attributes for each step, so
 // playStory's stepAttributes option.
-export function testFromResult(result: PlayResult, options: { seed: number; start?: string; inputs?: Record<string, string>; comments?: string[] }): PlaythroughTest {
+export function testFromResult(result: PlayResult, options: {
+    seed: number; start?: string; inputs?: Record<string, string>; ignore?: string[]; comments?: string[];
+}): PlaythroughTest {
+    const ignored = ignoredBy(options.ignore);
+    const skip = (name: string) => IGNORED_ATTRIBUTES.has(name) || ignored(name);
     let before: Record<string, unknown> = {};
     const steps = result.steps.map(step => {
         const after = step.attributes ?? {};
         const set: Record<string, unknown> = {};
         for (const [name, value] of Object.entries(after)) {
-            if (IGNORED_ATTRIBUTES.has(name)) continue;
+            if (skip(name)) continue;
             if (!(name in before) || JSON.stringify(before[name]) !== JSON.stringify(value)) set[name] = value;
         }
-        const unset = Object.keys(before).filter(name => !(name in after) && !IGNORED_ATTRIBUTES.has(name));
+        const unset = Object.keys(before).filter(name => !(name in after) && !skip(name));
         before = after;
         return {
             ...(step.choice !== undefined ? { choice: step.choice } : {}),
@@ -83,6 +102,7 @@ export function testFromResult(result: PlayResult, options: { seed: number; star
         seed: options.seed,
         ...(options.start !== undefined ? { start: options.start } : {}),
         inputs: options.inputs ?? {},
+        ...(options.ignore?.length ? { ignore: options.ignore } : {}),
         steps,
     };
 }
@@ -101,7 +121,7 @@ export async function replay(playable: PlayableStory, test: PlaythroughTest): Pr
 
 // ---- The file ----
 
-const SIMPLE_NAME = /^[A-Za-z_$][\w$.]*$/;
+const SIMPLE_NAME = /^[A-Za-z_$*][\w$.*]*$/;
 const formatName = (name: string) => SIMPLE_NAME.test(name) ? name : JSON.stringify(name);
 const formatPlace = (place: Place) =>
     place.passage !== undefined ? `${JSON.stringify(place.section)} ${JSON.stringify(place.passage)}` : JSON.stringify(place.section);
@@ -111,6 +131,7 @@ export function formatTest(test: PlaythroughTest): string {
     lines.push(`seed ${test.seed}`);
     if (test.start !== undefined) lines.push(`start ${JSON.stringify(test.start)}`);
     for (const [attribute, value] of Object.entries(test.inputs)) lines.push(`input ${attribute}=${value}`);
+    if (test.ignore?.length) lines.push(`ignore ${test.ignore.map(formatName).join(" ")}`);
     for (const step of test.steps) {
         lines.push("");
         if (step.choice !== undefined) lines.push(`> ${step.choice}`);
@@ -146,6 +167,7 @@ export function parseTest(text: string): PlaythroughTest {
     let seed: number | undefined;
     let start: string | undefined;
     const inputs: Record<string, string> = {};
+    const ignore: string[] = [];
     const steps: TestStep[] = [{ went: [], set: {}, unset: [] }];
     for (; i < lines.length; i++) {
         const number = i + 1;
@@ -200,12 +222,21 @@ export function parseTest(text: string): PlaythroughTest {
             if (equals < 1) throw new TestFileError(`Line ${number}: an input should be attribute=value.`);
             inputs[rest.substring(0, equals)] = rest.substring(equals + 1);
         }
+        else if (keyword == "ignore") {
+            if (!rest) throw new TestFileError(`Line ${number}: expected the attributes to ignore, such as ignore told seen_*.`);
+            for (let names = rest; names;) {
+                const [name, after] = readName(names, number);
+                if (after.startsWith("=")) throw new TestFileError(`Line ${number}: expected attribute names, not ${after}.`);
+                ignore.push(name);
+                names = after;
+            }
+        }
         else {
-            throw new TestFileError(`Line ${number}: expected "seed", "start", "input", "went", "set", "unset" or "> ", not "${keyword}".`);
+            throw new TestFileError(`Line ${number}: expected "seed", "start", "input", "ignore", "went", "set", "unset" or "> ", not "${keyword}".`);
         }
     }
     if (seed === undefined) throw new TestFileError("There's no seed line.");
-    return { comments, seed, ...(start !== undefined ? { start } : {}), inputs, steps };
+    return { comments, seed, ...(start !== undefined ? { start } : {}), inputs, ...(ignore.length ? { ignore } : {}), steps };
 }
 
 // ---- Comparing ----
@@ -229,6 +260,9 @@ const describeChange = (step: TestStep, name: string) =>
     name in step.set ? `set to ${JSON.stringify(step.set[name])}` : step.unset.includes(name) ? "removed" : "not changed";
 
 export function compare(expected: PlaythroughTest, result: PlayResult, actual: PlaythroughTest): TestOutcome {
+    // An ignore line added by hand leaves the attributes it ignores in the steps until the test
+    // is recorded again, so they're skipped here too
+    const ignored = ignoredBy(expected.ignore);
     for (const [i, want] of expected.steps.entries()) {
         const got = actual.steps[i];
         const where = { step: i + 1, ...(want.choice !== undefined ? { choice: want.choice } : {}) };
@@ -242,6 +276,7 @@ export function compare(expected: PlaythroughTest, result: PlayResult, actual: P
         }
         const names = new Set([...Object.keys(want.set), ...want.unset, ...Object.keys(got.set), ...got.unset]);
         for (const name of names) {
+            if (ignored(name)) continue;
             const wanted = describeChange(want, name);
             const happened = describeChange(got, name);
             if (wanted != happened) differences.push(`${formatName(name)} was ${happened}, but expected ${wanted}.`);

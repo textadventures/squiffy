@@ -26,7 +26,7 @@
     import type { NodeState } from "@textadventures/graph-map/GraphMap.svelte";
     import ContextMenu, { type ContextMenuItem } from "#components/ContextMenu.svelte";
     import { checkPassageName } from "#lib/map-edits.js";
-    import { buildStoryMap, checkSectionName, linkTo, pinnedPositions, storyMapLayout, type Point, type StoryMapEdge, type StoryMapNode } from "#lib/story-map.js";
+    import { buildStoryMap, checkSectionName, linkTo, pinnedPositions, reachNote, storyMapLayout, type Point, type StoryMapEdge, type StoryMapNode } from "#lib/story-map.js";
     import ZoomIn from "@lucide/svelte/icons/zoom-in";
     import ZoomOut from "@lucide/svelte/icons/zoom-out";
     import Scan from "@lucide/svelte/icons/scan";
@@ -539,9 +539,9 @@
                         <button type="button" class="btn-icon btn-icon-sm" title="Delete (Del)" aria-label="Delete" onclick={() => ondelete([g])}><Trash2 size={13} /></button>
                     {/if}
                 </div>
-                {#if g.start || g.ending || (g.deadEnd && g.reachable) || !g.reachable}
+                {#if graph && (g.start || g.ending || (g.deadEnd && g.reachable) || !g.reachable)}
                     <p class="text-surface-600-400">
-                        {[g.start ? "The story starts here." : "", g.ending ? "An ending." : "", g.deadEnd && g.reachable ? "A dead end: there's no way out. If it's an ending, add @end." : "", g.embedded ? "Shown inside other sections, with {{embed}} or {{live}}." : !g.reachable ? "Can't be reached from the start." : ""].filter(Boolean).join(" ")}
+                        {[g.start ? "The story starts here." : "", g.ending ? "An ending." : "", g.deadEnd && g.reachable ? "A dead end: there's no way out. If it's an ending, add @end." : "", g.embedded ? "Shown inside other sections, with {{embed}} or {{live}}." : reachNote(g, graph)].filter(Boolean).join(" ")}
                     </p>
                 {/if}
                 {#if links.out.length}

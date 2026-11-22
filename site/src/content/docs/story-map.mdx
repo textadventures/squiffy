@@ -18,6 +18,8 @@ The map button in the toolbar shows your story as a map: each section is a box, 
 
 Links to sections or passages that don't exist end in a red box with the missing name. Sections the player can't reach are faded, with a dashed outline. Dead ends, sections with no way out that aren't marked as an [ending](/basic-concepts/#endings), have an orange outline and a **!**. The start has a ▶, and endings a double outline.
 
+A section that goes somewhere that can't be known until the story is played, such as a link whose target is an expression or JavaScript that works out where to go, has a **?**. Where that's anything the player can reach, the map can't tell which sections are unreachable, so it doesn't fade any. `{{goto}}` with an attribute, as in `{{goto vision}}`, is drawn as a link to each section the story sets that attribute to with the section's name in quotes, such as `{{set "vision" "smoke"}}` or `@set vision = "smoke"`. If the attribute is ever set to anything else, the section has a **?** too.
+
 Different kinds of link look different: links to passages are lighter, [embeds](/basic-concepts/#embed-text) are dotted, [`{{goto}}`](/basic-concepts/#go-to-another-section) and `squiffy.story.go` in JavaScript are a different colour, and links that only appear inside `{{#if}}` or `{{#unless}}` are dashed. Passages that run on their own, such as [`@last`](/basic-concepts/#running-a-passage-after-some-clicks), are tied to their section with a fine dotted line. Long links, such as those to a section much further on or back to the start, are faint, so that they don't hide the links between sections close together: hover over one, or select a section, to see its links clearly. The **?** button above the map shows the key.
 
 ## Editing from the map
