@@ -14,7 +14,7 @@ import { ScriptParser } from "./script.js";
 import type { QStmt } from "./script.js";
 import { convertScript, linkChanges } from "./scripts.js";
 import type { ScriptContext } from "./scripts.js";
-import { convertQuestText, escapeLineStarts } from "./text.js";
+import { convertQuestText, escapeLineStarts, objectAttribute } from "./text.js";
 import type { TextContext } from "./text.js";
 
 export interface QuestConversionProblem {
@@ -105,6 +105,17 @@ function convertGame(game: QuestGame, options: QuestConversionOptions): QuestCon
     };
     const assets = new Set<string>();
     const gameSetting = (setting: string) => game.game.attributes.get(setting) ?? game.gameDefaults.get(setting);
+
+    // The player's attributes that the game sets, on the player object or in a script, such as
+    // player.alias = result after asking for the player's name
+    const playerAttributes = new Set(game.player?.attributes.keys());
+    for (const o of [game.game, ...game.pages]) {
+        for (const value of o.attributes.values()) {
+            if (value.type != "script") continue;
+            for (const m of value.value.matchAll(/\bplayer\.(\w+)\s*=(?!=)|\bSetAttribute\s*\(\s*player\s*,\s*"(\w+)"/g)) playerAttributes.add(m[1] ?? m[2]);
+        }
+    }
+    const playerHas = (attribute: string) => playerAttributes.has(attribute);
 
     // Link pages go to a web page, rather than being pages of the story
     const isLinkPage = (p: QuestObject) => p.inherits.includes("link");
@@ -247,6 +258,7 @@ function convertGame(game: QuestGame, options: QuestConversionOptions): QuestCon
             section,
             target,
             attribute,
+            playerHas,
             unconvertible(text, reason) {
                 addProblem({ page: page.name, text: oneLine(text), reason });
                 return comment(text);
@@ -271,6 +283,13 @@ function convertGame(game: QuestGame, options: QuestConversionOptions): QuestCon
         if (page.name == startPage) {
             const initial = [...dynamicLinks.values()].filter(l => l.initial !== undefined);
             const parts: string[] = [];
+            // The player object's own attributes, such as an alias given in the editor
+            for (const [name, value] of game.player?.attributes ?? []) {
+                if (value.type == "string" || value.type == "number" || value.type == "boolean") {
+                    const v: Expr = value.type == "string" ? { k: "str", v: value.value } : value.type == "number" ? { k: "num", v: value.value } : { k: "bool", v: value.value };
+                    parts.push(`{{set ${quote(attribute(objectAttribute("player", name)))} ${print(v)}}}`);
+                }
+            }
             if (showTitle && title) {
                 const subtitle = stringAttribute(game.game, "subtitle").trim();
                 const author = stringAttribute(game.game, "author").trim();
@@ -403,6 +422,7 @@ function convertGame(game: QuestGame, options: QuestConversionOptions): QuestCon
             section: "",
             target,
             attribute,
+            playerHas,
             unconvertible(text, reason) {
                 addProblem({ text: oneLine(text), reason: `${reason} It's in the script that runs on every page, in the master section, [[]].` });
                 return comment(text);

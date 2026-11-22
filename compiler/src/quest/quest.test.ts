@@ -310,6 +310,24 @@ describe("the text processor", () => {
             .toBe("<img src=\"map.png\" alt=\"\"> You have {{= gold + 0}} gold. {{name}}, {{player_strength}}");
     });
 
+    test("an attribute of the player that nothing sets, such as {player.alias}, is listed", async () => {
+        const { text: t, problems } = await text("Hello {player.alias}.");
+        expect(t).toBe("Hello {{player_alias}}.");
+        expect(problems.map(p => [p.page, p.text])).toEqual([["Start", "{player.alias}"]]);
+        expect(problems[0].reason).toContain("Nothing in the game sets player.alias");
+        // Asked for with GetInput on another page
+        const asked = await text("Hello {player.alias}.", page("Name", "", [], "<inherit name=\"scripttext\" /><script type=\"script\"><![CDATA[GetInput () {\n  player.alias = result\n}]]></script>"));
+        expect(asked.problems).toEqual([]);
+    });
+
+    test("the player object's attributes are set at the start", async () => {
+        const source = gamebook(page("Start", "Hello {player.alias}, {player.strength}.", [["Other", "On"]]) + page("Other", "Other page."), "", noTitle)
+            .replace("<object name=\"player\"><inherit name=\"defaultplayer\" />", "<object name=\"player\"><inherit name=\"defaultplayer\" /><alias>Bob</alias><strength type=\"int\">5</strength>");
+        const { script, result } = await convert(source);
+        expect(section(script, "Start")).toContain("{{#once}}\n{{set \"player_alias\" \"Bob\"}}\n{{set \"player_strength\" 5}}\n{{/once}}");
+        expect(result.problems).toEqual([]);
+    });
+
     test("random text", async () => {
         expect((await text("{random:red:green:{b:blue}}")).text).toBe("{{random (array \"red\" \"green\" \"**blue**\")}}");
     });

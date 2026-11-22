@@ -21,6 +21,9 @@ export interface TextContext {
     addPassage?(nameHint: string, content: string): string;
     // Records a file the story uses, such as an image
     asset(file: string): void;
+    // Whether the game gives the player this attribute, such as alias: on the player object, or
+    // in a script
+    playerHas?(attribute: string): boolean;
 }
 
 // "block" is a page's text, where line breaks become lines; "inline" is text that has to stay
@@ -146,6 +149,7 @@ function convertOther(section: string, ctx: TextContext, mode: TextMode): string
             return display({ k: "var", name: ctx.attribute(attribute) });
         }
         if (/^[\w ]+$/.test(object) && /^\w+$/.test(attribute) && (object == "player" || ctx.target(object))) {
+            if (object == "player") checkPlayerAttribute(attribute, `{${section}}`, ctx);
             return display({ k: "var", name: ctx.attribute(objectAttribute(object, attribute)) });
         }
     }
@@ -164,6 +168,12 @@ export function objectAttribute(object: string, attribute: string): string {
     return object == "game" ? attribute : `${object}_${attribute}`;
 }
 
+// Reports an attribute of the player that nothing in the game sets, such as player.alias in a
+// game that never asks for the player's name, as it shows nothing in Squiffy
+function checkPlayerAttribute(attribute: string, text: string, ctx: TextContext) {
+    if (ctx.playerHas?.(attribute) !== false) return;
+    ctx.approximate(text, `Nothing in the game sets player.${attribute}, so this shows nothing. Set it at the start of the story, or ask the player for it with a text input.`);
+}
 
 // {if flag:text}, {if not flag:text}, {if counter>5:text}, {if game.flag:text}, {if Page3.visited:text}
 function convertIf(section: string, ctx: TextContext, mode: TextMode): string {
