@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.0.0-beta.12](https://github.com/textadventures/squiffy/compare/v7.0.0-beta.11...v7.0.0-beta.12) (2026-11-22)
+
+
+### Features
+
+* start a served story at any section, to test a late scene ([#572](https://github.com/textadventures/squiffy/issues/572)) ([eb1f6a3](https://github.com/textadventures/squiffy/commit/eb1f6a35ab94ee4333f88a67e22873e993c04f1b))
+
 ## [7.0.0-beta.11](https://github.com/textadventures/squiffy/compare/v7.0.0-beta.10...v7.0.0-beta.11) (2026-11-22)
 
 
