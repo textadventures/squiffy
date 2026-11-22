@@ -129,6 +129,7 @@ Play the story through after converting it. Twine and Squiffy work differently i
 | `StoryInit`, `PassageHeader`, `PassageFooter` | The start section, the master section, an `{{embed}}` at the end of each section |
 | `StoryCaption`, `StoryBanner` | A [panel](/buttons-panels-settings/#panels) beside the story, rendered again after each section and passage. Links in it don't work |
 | `Setting.addToggle()`, `Setting.addList()`, `Setting.addRange()` in the story's JavaScript, and `settings.fontSize` | [Player settings](/buttons-panels-settings/#player-settings) in `squiffy.json`, and `settings.fontSize`: see [JavaScript](#javascript) |
+| `memorize("endings", ...)`, `recall("endings")`, `forget("endings")` | [Attributes that last between playthroughs](/attributes/#attributes-that-last-between-playthroughs), listed under `persistent` in `squiffy.json`: `@set endings = ...`, `endings`, `{{forget "endings"}}`. `memorize(key, Object.assign(recall(key, {}), { pebbles: true }))` is `@set endings.pebbles = true`. A `recall()` with a default value other than nothing isn't converted |
 | `<<link "Options">><<run UI.settings()>><</link>>`, and the same with `UI.restart()` and `UI.saves()` | `{{settings text="Options"}}`, `{{restart text="..."}}`, `{{saves text="..."}}` |
 | `<<audio "theme" loop play>>`, `<<audio "theme" stop>>` | `@music theme.mp3`, `@music stop`, or `{{music "theme.mp3"}}` and `{{stopmusic}}` later on: see [Sound](#sound) |
 | `<<audio "door" play>>`, `<<audio "door" volume 0.5 play>>` | `@sound door.mp3`, `{{sound "door.mp3" volume=0.5}}` |

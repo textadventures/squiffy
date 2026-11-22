@@ -159,6 +159,7 @@ See [Attributes](/attributes/) for detailed documentation and examples.
 | `{{unset}}` | `"attribute"` | Set attribute to false | `{{unset "has_key"}}` |
 | `{{inc}}` | `"attribute" [amount]` | Increment by 1 or specified amount | `{{inc "score"}}` or `{{inc "score" bonus * 10}}` |
 | `{{dec}}` | `"attribute" [amount]` | Decrement by 1 or specified amount | `{{dec "health"}}` or `{{dec "health" damage - armour}}` |
+| `{{forget}}` | `["attribute" ...]` | Clear the [attributes that last between playthroughs](/attributes/#attributes-that-last-between-playthroughs): all of them, or the ones named | `{{forget}}` or `{{forget "endings"}}` |
 
 <Aside>
 These helpers execute at render time and respect `{{#if}}` conditions, unlike `@set`, `@inc`, `@dec`, and `@unset` directives which always execute when a section/passage loads.

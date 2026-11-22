@@ -792,7 +792,8 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             passage: get("_passage"),
             summary: getSummary(),
             savedAt: new Date().toISOString(),
-            state: structuredClone(state.store),
+            // Persistent attributes aren't part of the game (#539)
+            state: Object.fromEntries(Object.entries(structuredClone(state.store)).filter(([name]) => !state.isPersistent(name))),
         };
     }
 
@@ -1558,6 +1559,9 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     const state = new State(settings.persist, storageKey, settings.onSet, emitter, onSet);
     const get = state.get.bind(state);
     const set = state.set.bind(state);
+    // Persistent attributes (#539), kept for the story apart from the rest, like the player's settings
+    state.persistentNames = () => story.persistent ?? [];
+    state.initPersistent(settings.persist ? "squiffy-persistent:" + storageKey : undefined, options.persistent);
 
     // The player's settings (#452), which the story reads as settings.name
     const playerSettings = new PlayerSettings(() => story.settings ?? [], settings.persist ? "squiffy-settings:" + storageKey : undefined);
@@ -1802,6 +1806,8 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
                 if (value !== before[name]) settingChanged(name, value);
             }
         },
+        getPersistent: () => state.getPersistent(),
+        forget: (names?: string[]) => state.forget(names),
         dispose: () => {
             cancelGoto();
             everyTimers.stopAll();

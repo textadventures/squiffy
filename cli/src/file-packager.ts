@@ -20,6 +20,7 @@ export const compileSettings = (story: StoryOnDisk, script: string) => ({
     projectId: story.projectId,
     panels: story.panels,
     settings: story.settings,
+    persistent: story.persistent,
 });
 
 async function getCompileResult(story: StoryOnDisk) {

@@ -22,6 +22,8 @@ interface OutputStory {
     panels?: Panel[];
     // squiffy.json's "settings"
     settings?: PlayerSetting[];
+    // squiffy.json's "persistent": attributes that last across playthroughs (#539)
+    persistent?: string[];
     sections: Record<string, OutputSection>;
     // The sound files the story names (#444), from @music, @sound and {{music}} and {{sound}}
     // with a file in quotes, so the runtime can load them before they're needed
@@ -89,6 +91,8 @@ export interface EmitSettings {
     panels?: Panel[];
     // squiffy.json's "settings", if it has any: see ProjectFile.settings
     settings?: PlayerSetting[];
+    // squiffy.json's "persistent", if it has any: see ProjectFile.persistent
+    persistent?: string[];
 }
 
 export interface CompileSuccess {
@@ -153,6 +157,10 @@ export function emit(analysis: Analysis, settings: EmitSettings = {}): CompileSu
 
     if (settings.settings?.length) {
         output.story.settings = settings.settings;
+    }
+
+    if (settings.persistent?.length) {
+        output.story.persistent = settings.persistent;
     }
 
     if (story.uiJs.length > 0) {
@@ -257,6 +265,9 @@ export function emit(analysis: Analysis, settings: EmitSettings = {}): CompileSu
         }
         if (output.story.settings) {
             outputJs.push(`story.settings = ${JSON.stringify(output.story.settings, null, 4)};`);
+        }
+        if (output.story.persistent) {
+            outputJs.push(`story.persistent = ${JSON.stringify(output.story.persistent)};`);
         }
         if (output.story.audio) {
             outputJs.push(`story.audio = ${JSON.stringify(output.story.audio, null, 4)};`);

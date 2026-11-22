@@ -43,6 +43,9 @@ export interface ProjectFile {
     // Options the player can change at any time, in the Settings dialog, which the story reads as
     // settings.name (#452)
     settings?: PlayerSetting[];
+    // Attributes that belong to the player rather than the playthrough (#539), such as the endings
+    // they've found: restarting, going back and loading a saved game leave them as they are
+    persistent?: string[];
 }
 
 // A player setting, from squiffy.json's "settings". The runtime's PlayerSetting is the same.
@@ -211,6 +214,9 @@ export function parseProjectFile(text: string): ParsedProjectFile {
     const settings = parseSettings(data.settings);
     if (typeof settings == "string") return fail(settings);
 
+    const persistent = parsePersistent(data.persistent);
+    if (typeof persistent == "string") return fail(persistent);
+
     const map = parseMapPositions(data.map);
     return {
         success: true,
@@ -223,6 +229,7 @@ export function parseProjectFile(text: string): ParsedProjectFile {
             ...(strings !== undefined ? { strings: pickPageStrings(strings as Record<string, string>) } : {}),
             ...(panels !== undefined ? { panels } : {}),
             ...(settings !== undefined ? { settings } : {}),
+            ...(persistent !== undefined ? { persistent } : {}),
         },
     };
 }
@@ -262,6 +269,23 @@ function parsePanels(value: unknown): Panel[] | string | undefined {
         });
     }
     return panels;
+}
+
+// squiffy.json's "persistent", or an error to show the author
+function parsePersistent(value: unknown): string[] | string | undefined {
+    if (value === undefined) return undefined;
+    const example = "[\"endings\", \"found_pebbles\"]";
+    if (!Array.isArray(value)) return `${PROJECT_FILENAME}'s "persistent" should be a list of attribute names, such as ${example}.`;
+    const names: string[] = [];
+    for (const item of value) {
+        const name = typeof item == "string" ? item.trim() : "";
+        if (!/^[A-Za-z][A-Za-z0-9_]*$/.test(name)) {
+            return `${PROJECT_FILENAME}'s "persistent" should be a list of attribute names, of letters, digits and underscores, such as ${example}.`;
+        }
+        if (name == "settings") return `${PROJECT_FILENAME}'s "persistent" can't have "settings", which is the player's settings.`;
+        if (!names.includes(name)) names.push(name);
+    }
+    return names;
 }
 
 // squiffy.json's "settings", or an error to show the author
@@ -506,7 +530,7 @@ export function getStoryFiles(project: ProjectFile, paths: Iterable<string>, ski
 export const storyFileList = (story: StoryFiles) => [...story.included, ...story.stylesheets, ...story.scripts];
 
 // The text of a new project file. It's given a new random id, unless one is passed in.
-export function formatProjectFile(project: { main: string; exclude?: string[]; map?: MapPositions; id?: string; panels?: Panel[]; settings?: PlayerSetting[] }): string {
+export function formatProjectFile(project: { main: string; exclude?: string[]; map?: MapPositions; id?: string; panels?: Panel[]; settings?: PlayerSetting[]; persistent?: string[] }): string {
     const json: Record<string, unknown> = {
         $schema: PROJECT_SCHEMA_URL,
         version: PROJECT_FILE_VERSION,
@@ -516,6 +540,7 @@ export function formatProjectFile(project: { main: string; exclude?: string[]; m
     if (project.exclude?.length) json.exclude = project.exclude;
     if (project.panels?.length) json.panels = project.panels;
     if (project.settings?.length) json.settings = project.settings;
+    if (project.persistent?.length) json.persistent = project.persistent;
     const text = JSON.stringify(json, null, 2) + "\n";
     return project.map ? updateProjectFile(text, { map: project.map })! : text;
 }

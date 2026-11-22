@@ -127,6 +127,13 @@
         ]
       ]
     },
+    "persistent": {
+      "description": "Attributes that belong to the player rather than the playthrough, such as the endings they've found. They're kept for the story in the player's browser, and restarting, going back and loading a saved game leave them as they are. {{forget}} clears them.",
+      "type": "array",
+      "items": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_]*$", "not": { "const": "settings" } },
+      "uniqueItems": true,
+      "examples": [["endings", "finished"]]
+    },
     "strings": {
       "description": "The text on the published page around the story, for a story in another language. Anything left out is in English.",
       "type": "object",

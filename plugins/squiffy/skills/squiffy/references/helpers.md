@@ -27,6 +27,7 @@ Every `{{helper}}` in Squiffy's Handlebars text processor. Docs: https://squiffy
 | `unset` | `"attr"` | Set to false |
 | `inc` | `"attr" [amount]` | Add 1 or amount: `{{inc "score" bonus * 10}}` |
 | `dec` | `"attr" [amount]` | Take away 1 or amount |
+| `forget` | `["attr" ...]` | Clear squiffy.json's `persistent` attributes: all, or those named (project.md) |
 | `=` | expression | Show a calculation: `{{= price * 2}}` |
 
 ## Comparison and logic

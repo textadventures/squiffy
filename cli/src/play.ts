@@ -46,7 +46,7 @@ export async function loadPlayableStory(story: StoryOnDisk): Promise<LoadResult>
     if (!analysis.success) {
         return { success: false, errors: analysis.diagnostics.filter(d => d.severity == "error").map(formatDiagnostic) };
     }
-    const compiled = emit(analysis, { projectId: story.projectId, panels: story.panels, settings: story.settings });
+    const compiled = emit(analysis, { projectId: story.projectId, panels: story.panels, settings: story.settings, persistent: story.persistent });
     const js = compiled.output.js.map(lines => new Function("squiffy", "get", "set", lines.join("\n")));
 
     // Sections and passages that are only shown inside others, with {{embed}} or {{live}},
@@ -496,7 +496,7 @@ export interface PlayOptions {
     // Text to put in the text boxes, by attribute, when they're on the screen
     inputs?: Record<string, string>;
     // A saved game to carry on from
-    save?: SavedGame;
+    save?: PlaySave;
     // Makes the story's randomness the same every time
     seed?: number;
     // Gives each step the story's attributes after it, for playthrough tests (--record, --test)
@@ -531,10 +531,14 @@ export interface PlayResult {
     stopped?: string;
     notes: string[];
     // The game as it is at the end, to carry on from
-    save: SavedGame;
+    save: PlaySave;
     // What to call the sections in the result without names of their own, by name
     sectionLabels?: SectionLabels;
 }
+
+// A saved game, as --save keeps it, with the story's persistent attributes (#539), which aren't
+// part of a saved game, so the next run starts with them as they were
+export type PlaySave = SavedGame & { persistent?: Record<string, unknown> };
 
 // A story being played, and what's been shown of it so far
 class Session {
@@ -556,11 +560,12 @@ class Session {
         });
     }
 
-    static async create(playable: PlayableStory, env: Environment) {
+    // Persistent attributes start empty, unless they're given, e.g. from --save
+    static async create(playable: PlayableStory, env: Environment, persistent?: Record<string, unknown>) {
         const { init } = await import("squiffy-runtime");
         const element = document.createElement("div");
         document.body.replaceChildren(element);
-        const api = await init({ element, story: playable.story, persist: false, scroll: "element" });
+        const api = await init({ element, story: playable.story, persist: false, scroll: "element", persistent });
         return new Session(api, element, env, new Set(Object.keys(playable.story.sections)));
     }
 
@@ -716,9 +721,15 @@ class Session {
         return result;
     }
 
+    // The attributes include persistent ones (#539)
     attributes(): Record<string, unknown> {
-        const state = this.api.getSave().state;
+        const state = { ...this.api.getSave().state, ...this.api.getPersistent() };
         return Object.fromEntries(Object.entries(state).filter(([name]) => !name.startsWith("_")));
+    }
+
+    save(): PlaySave {
+        const persistent = this.api.getPersistent();
+        return { ...this.api.getSave(), ...(Object.keys(persistent).length ? { persistent } : {}) };
     }
 
     dispose() {
@@ -757,7 +768,7 @@ export interface PlayState {
     // The story's attributes, apart from internal ones starting with "_"
     attributes: Record<string, unknown>;
     // The game as it is, to carry on from
-    save: SavedGame;
+    save: PlaySave;
 }
 
 export interface PlayerOptions extends Omit<PlayOptions, "choose"> {
@@ -790,7 +801,7 @@ export class StoryPlayer {
         env.seed(options.seed);
         let session: Session;
         try {
-            session = await Session.create(playable, env);
+            session = await Session.create(playable, env, options.save?.persistent);
         }
         catch (e) {
             env.close();
@@ -888,7 +899,7 @@ export class StoryPlayer {
             ending: this.playable.endings.has(section),
             choices: this.session.choices(),
             attributes: this.session.attributes(),
-            save: this.session.api.getSave(),
+            save: this.session.save(),
         };
     }
 
