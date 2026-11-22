@@ -371,6 +371,14 @@ describe("completion", () => {
         expect(items.map(i => i.label)).toEqual(["p1", "a"]);
     });
 
+    test("section names for passages, and section and passage names for tags (#527)", async () => {
+        expect((await complete("{{#each (passages \"", "")).map(i => i.label)).toEqual(["cellar", "start", "outside"]);
+        const files = memoryFiles({ "s.squiffy": "[[a]]:\n{{tags \"\n[p1]:\n[@last]:" });
+        const ls = createLanguageService({ files, mainFile: "s.squiffy" });
+        const items = await ls.getCompletions("s.squiffy", { line: 1, character: 8 });
+        expect(items.map(i => i.label)).toEqual(["p1", "a"]);
+    });
+
     test("passage names for deactivate", async () => {
         const files = memoryFiles({ "s.squiffy": "[[a]]:\n{{deactivate \"\n[p1]:\n[@last]:" });
         const ls = createLanguageService({ files, mainFile: "s.squiffy" });

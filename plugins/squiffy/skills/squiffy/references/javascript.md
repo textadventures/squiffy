@@ -32,6 +32,7 @@ A `@ui` block goes at the top and ends with `---`. `@ui helpers.js` reads a file
 | `squiffy.get("name")`, `squiffy.set("name", value)` | Read and set attributes, including paths like `"hero.hp"` or `"party.0.name"`. Also plain `get`/`set` |
 | `squiffy.story.go("section")` | Go to a section |
 | `squiffy.story.seen("name")`, `squiffy.story.visits("name")` | Seen, and visit count |
+| `squiffy.story.passages(section?, { tagged, untagged }?)`, `squiffy.story.sections({ tagged, untagged }?)`, `squiffy.story.tags(name?)` | As the `passages`, `sections` and `tags` helpers (helpers.md). Tags are space-separated text or an array |
 | `squiffy.ui.write("text")` | Write text, with Markdown and `{{...}}` |
 | `squiffy.ui.afterWrite(fn)` | Run once the text is on the page |
 | `squiffy.ui.transition(fn)` | Run an effect; `fn` returns a Promise, and links are blocked until it resolves |

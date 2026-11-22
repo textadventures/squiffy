@@ -105,7 +105,22 @@ interface SquiffyJsFunctionApi {
         go: (section: string) => void;
         seen: (sectionOrPassage: string) => boolean;
         visits: (sectionOrPassage: string) => number;
+        // The passages of a section ("" for the master section), or with no section, the
+        // current section's and the master section's, leaving out @1, @last and @after (#527)
+        passages: (section?: string, filter?: TagFilter) => string[];
+        // The story's sections, apart from the master section
+        sections: (filter?: TagFilter) => string[];
+        // A passage's or section's @tag tags, or the current section's
+        tags: (name?: string) => string[];
     };
+}
+
+// Which sections or passages squiffy.story.passages() and sections() list, by their @tag tags (#527)
+export interface TagFilter {
+    // Only those with all of these tags (separated by spaces, or a list)
+    tagged?: string | string[];
+    // Only those with none of these tags
+    untagged?: string | string[];
 }
 
 export interface Story {
@@ -181,6 +196,8 @@ export interface Section {
     sounds?: string[];
     // @class (#449): classes on the story's element while this is the current section
     classes?: string[];
+    // @tag (#527): tags the story can list sections by
+    tags?: string[];
     // @transition (#489): how it appears, or "none", and how long that takes in milliseconds
     transition?: string;
     transitionTime?: number;
@@ -202,6 +219,8 @@ export interface Passage {
     sounds?: string[];
     // @class (#449): classes added to the section's when this passage is shown
     classes?: string[];
+    // @tag (#527): tags the story can list passages by
+    tags?: string[];
     // @transition (#489): how it appears, or "none", and how long that takes in milliseconds
     transition?: string;
     transitionTime?: number;

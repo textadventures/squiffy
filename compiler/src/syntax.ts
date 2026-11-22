@@ -224,6 +224,16 @@ export interface ClassNode {
     range: Range;
 }
 
+// @tag passenger settled (#527): tags on a section or passage, which the story can list them by,
+// with (passages tagged="passenger") or (sections tagged=...), and read with (tags "name")
+export interface TagNode {
+    type: "tag";
+    // The tags, separated by spaces
+    value: string;
+    valueRange: Range;
+    range: Range;
+}
+
 // @transition fade 1s (#489): how the section or passage appears. "none" turns off one
 // that the master section sets. @leave fade 1s: how the old text goes when it clears the screen.
 export interface TransitionNode {
@@ -280,6 +290,7 @@ export type StatementNode =
     | AttributeNode
     | SoundNode
     | ClassNode
+    | TagNode
     | TransitionNode
     | JsNode
     | TextNode;

@@ -20,6 +20,7 @@ export const lineRegexes = {
     music: /^@music (.*)$/,
     sound: /^@sound (.*)$/,
     class: /^@class (.*)$/,
+    tag: /^@tag (.*)$/,
     transition: /^@(transition|leave) (\S+)(?: (\S+))?$/,
 };
 
@@ -198,6 +199,10 @@ export function parse(text: string, filename?: string): SquiffyFile {
         else if (match.class) {
             if (!passage) haveSection = true;
             add({ type: "class", value: match.class[1], valueRange: valueRange(i, match.class[1]), range });
+        }
+        else if (match.tag) {
+            if (!passage) haveSection = true;
+            add({ type: "tag", value: match.tag[1], valueRange: valueRange(i, match.tag[1]), range });
         }
         else if (match.transition) {
             if (!passage) haveSection = true;

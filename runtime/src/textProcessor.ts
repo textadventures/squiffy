@@ -1,12 +1,13 @@
 import * as marked from "marked";
 import Handlebars from "handlebars";
-import { Section, Story } from "./types.js";
+import { Section, Story, TagFilter } from "./types.js";
 import { State } from "./state.js";
 import { rewriteInfixExpressions, rewriteValueExpression, splitSetters } from "squiffy-compiler/infix-expressions";
 import { isNumeric, isBlank, toNumber } from "./numbers.js";
 import { checkSegment, parsePath, valueAt, withValueAt } from "./paths.js";
 import { parseDelay } from "./utils.js";
 import { captureEveryBodies } from "./every.js";
+import { listPassages, listSections, tagsOf } from "./storyLists.js";
 
 // The built-in effects for {{#style}} (#453), in squiffy.runtime.css
 const styleEffects = new Set([
@@ -622,6 +623,34 @@ export class TextProcessor {
             const result: number[] = [];
             for (let n = start; n !== end + step; n += step) result.push(n);
             return result;
+        });
+
+        // (passages) lists the current section's passages and the master section's, (passages
+        // "carriage") a section's ("" for the master section's), and (sections) the story's
+        // sections, leaving out @1, @last and @after. tagged="passenger" lists only those with
+        // that @tag, and untagged="settled" leaves out those with it. (tags "name") is a
+        // passage's or section's tags (#527). Like the list helpers, with nothing given, they're
+        // the attribute with the same name if there is one.
+        const filterOf = (options: any): TagFilter => ({
+            tagged: unwrapValue(options.hash?.tagged), untagged: unwrapValue(options.hash?.untagged),
+        });
+        const storyListHelper = (name: string, max: number, fn: (values: unknown[], options: any) => unknown) => {
+            this.handlebars.registerHelper(name, (...args) => {
+                const options = args.pop();
+                const values = args.map(unwrapValue);
+                if (!values.length && !Object.keys(options.hash ?? {}).length && this.hasAttribute(name)) return this.getAttribute(name);
+                if (values.length > max) {
+                    throw new Error(`"${name}" needs ${max ? `at most ${max} value` : "no values"}, but was given ${values.length}`);
+                }
+                return fn(values, options);
+            });
+        };
+        storyListHelper("passages", 1, ([section], options) =>
+            listPassages(this.getStory(), section === undefined ? undefined : String(section), this.getAttribute("_section"), filterOf(options)));
+        storyListHelper("sections", 0, (_, options) => listSections(this.getStory(), filterOf(options)));
+        storyListHelper("tags", 1, ([name]) => {
+            const current = this.getAttribute("_section");
+            return name === undefined ? [...(this.getStory().sections[current]?.tags ?? [])] : tagsOf(this.getStory(), String(name), current);
         });
 
         const escapeAttr = (s: unknown) => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;");

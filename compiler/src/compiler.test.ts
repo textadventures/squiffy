@@ -893,6 +893,28 @@ Nothing.`;
     expect(sections.start.text).not.toContain("@class");
 });
 
+test("@tag puts tags in the output, for a section or a passage (#527)", async () => {
+    const script = `[[start]]:
+@tag carriage  busy
+@tag busy
+Hello. [a man]
+
+[a man]:
+@tag passenger settled
+A man.
+
+[[plain]]:
+Nothing.`;
+    const result = await compile({ scriptBaseFilename: "test.squiffy", script });
+
+    assertSuccess(result);
+    const { sections } = result.output.story;
+    expect(sections.start.tags).toEqual(["carriage", "busy"]);
+    expect(sections.start.passages!["a man"].tags).toEqual(["passenger", "settled"]);
+    expect(sections.plain).not.toHaveProperty("tags");
+    expect(sections.start.text).not.toContain("@tag");
+});
+
 test("@transition puts how a section or passage appears in the output, with its time (#489)", async () => {
     const script = `[[]]:
 @transition fade
