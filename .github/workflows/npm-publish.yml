@@ -69,39 +69,20 @@ jobs:
       # each request 5 seconds by default, and when Rekor is slower than that
       # it retries an upload that actually went through, gets a 409 "an
       # equivalent entry already exists" (TLOG_CREATE_ENTRY_ERROR), and the
-      # package isn't published. Each try signs afresh, so while Rekor stays
-      # slow every try fails the same way (as all three did for
-      # 7.0.0-beta.9, with Rekor taking about 6 seconds). So the client gets
-      # a minute instead, with "timeout": 60000 in each public package's
-      # publishConfig: lerna merges publishConfig into the options it passes
-      # to npm's libnpmpublish, which passes them on to Sigstore. It has to
-      # be there, as a JSON number: an npm_config_timeout env var or .npmrc
-      # setting reaches it as a string, which fails with ERR_INVALID_ARG_TYPE
-      # (as 7.0.0-beta.10 did). It's also the timeout for the registry
-      # requests, which is only more patient.
+      # package isn't published (as happened to 7.0.0-beta.9, with Rekor
+      # taking about 6 seconds). So the client gets a minute instead, with
+      # "timeout": 60000 in each public package's publishConfig: lerna merges
+      # publishConfig into the options it passes to npm's libnpmpublish,
+      # which passes them on to Sigstore. It has to be there, as a JSON
+      # number: an npm_config_timeout env var or .npmrc setting reaches it as
+      # a string, which fails with ERR_INVALID_ARG_TYPE (as 7.0.0-beta.10
+      # did). It's also the timeout for the registry requests, which is only
+      # more patient.
       #
-      # The retries are a fallback. `from-package` skips versions that are
-      # already on npm, so each try only publishes what's left. The pause
-      # gives the registry time to show what the last try published, so it
-      # isn't published again: that has taken around 4 minutes.
-      #
-      # lerna writes a gitHead field into each package.json while publishing
-      # and only takes it out again when it succeeds. A failed try leaves the
-      # tree dirty, and lerna then refuses to start the next one (EUNCOMMIT),
-      # so the tracked files are reset before each retry. The build output
-      # isn't tracked, so it's kept.
+      # If a publish fails anyway, re-run the job (`gh run rerun <run id>
+      # --failed`). `from-package` skips versions already on npm, so it only
+      # publishes what's left, but give it about 5 minutes first: the
+      # registry has taken around 4 to show newly published versions, and
+      # lerna would fail trying to publish one again.
       - name: Publish to npm
-        run: |
-          for attempt in 1 2 3 4; do
-            if npx lerna publish from-package --no-private --dist-tag "$DIST_TAG" --yes; then
-              exit 0
-            fi
-            if [ "$attempt" -lt 4 ]; then
-              echo "::warning::Publish attempt $attempt failed, retrying in 5 minutes"
-              git status --short
-              git checkout -- .
-              sleep 300
-            fi
-          done
-          echo "::error::Publish failed after 4 attempts"
-          exit 1
+        run: npx lerna publish from-package --no-private --dist-tag "$DIST_TAG" --yes
