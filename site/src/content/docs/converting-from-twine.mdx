@@ -63,7 +63,7 @@ Play the story through after converting it. Twine and Squiffy work differently i
 | `(if: $gold > 5)[...](else-if: ...)[...](else:)[...]` | `{{#if gold > 5}}...{{else if ...}}...{{else}}...{{/if}}` |
 | `$a is 1 or 2`, `$bag contains "key"`, `$bag's length`, `visits` | `a = 1 or a = 2`, `bag contains "key"`, `bag.length`, `(visits "This passage")` |
 | `(uppercase:)`, `(lowercase:)`, `(upperfirst:)` | `(upper ...)`, `(lower ...)`, `(capitalise ...)` |
-| `(round:)`, `(floor:)`, `(ceil:)`, `(abs:)`, `(min:)`, `(max:)` | `(round ...)`, `(floor ...)` and so on |
+| `(round:)`, `(floor:)`, `(ceil:)`, `(abs:)`, `(min:)`, `(max:)` | `(round ...)`, `(floor ...)` and so on. On its own in the text, `(round: $money)` shows its value: `{{round money}}` |
 | `(cond: $hp > 0, "alive", "dead")` | `hp > 0 ? "alive" : "dead"` |
 | `(display: "Map")` | `{{embed "Map"}}` |
 | A custom macro: `(set: $say to (macro: str-type _who, [...]))`, `($say: "Ann")` | A section for the macro, `[[macro say]]:`, and `{{embed "macro say" who="Ann"}}`. Its parameters become the embed's [parameters](/basic-concepts/#parameters), and what it outputs with `(output:)` or `(output-data:)` is its text. A macro that takes any number of values (`...`), one kept in a temporary variable, and a call to a macro inside an expression, aren't converted |
@@ -104,12 +104,14 @@ Play the story through after converting it. Twine and Squiffy work differently i
 | `$name.indexOf("x") != -1` (or `=== -1`) | `name contains "x"` (or `not name contains "x"`) |
 | `Math.round()`, `Math.floor()`, `Math.ceil()`, `Math.abs()`, `Math.min()`, `Math.max()` | `(round ...)`, `(floor ...)` and so on |
 | `$hp > 0 ? "alive" : "dead"` | `hp > 0 ? "alive" : "dead"` |
+| `Object.keys($hero).length` | `(length "hero")` |
 | `<<include "Map">>` | `{{embed "Map"}}` |
 | `<<goto "End">>`, `<<timed 2s>><<goto "End">><</timed>>` | `{{goto "End"}}`, `{{goto "End" after=2000}}` |
 | `<<timed $textSpeed>>...<<next>>...<</timed>>` | `{{#animate "fadeIn" start=textSpeed}}`, for each part. A delay like `"3s"` in a variable works as it is |
 | `<<repeat 1s>>...<</repeat>>`, `<<stop>>` | [`{{#every 1000 append=true}}...{{/every}}`](/dynamic-text/#repeating-text), `{{stop}}` |
 | `<<link "Buy" "Shop">><<set $gold -= 5>><</link>>` | `[[Buy]](Shop, gold -= 5)` |
 | `<<linkreplace "Open">>It's empty.<</linkreplace>>` | A passage link that replaces the link with the text |
+| `<<do>><<include $face>><</do>>`, and `<<set $face to "Frown">><<redo>>` | `{{live "face" section="do face"}}`, which shows the section `[[do face]]` again whenever `face` is set, so `<<redo>>` is left out. Only a `<<do>>` that uses one story variable, and no temporary ones, is converted like this |
 | `<span id="box">`, `<<replace "#box">>` | `{{#label "box"}}`, `{{#replace "box"}}` |
 | `either("a", "b")`, `random(1, 6)` | `(random (array "a" "b"))`, `(random (array 1 2 3 4 5 6))` |
 | `<<cycle "$size">>`, `<<textbox "$name">>`, `<<listbox>>` | `{{rotate ... set="size"}}`, `<input data-attribute="name">`, `<select>` |

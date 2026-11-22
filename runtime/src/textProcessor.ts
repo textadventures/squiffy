@@ -492,17 +492,15 @@ export class TextProcessor {
             return arr.some(item => unwrapValue(item) === unwrappedValue);
         });
 
-        this.handlebars.registerHelper("length", (listOrVar: any) => {
-            let arr: any[];
-            if (typeof listOrVar === "string") {
-                const stored = this.getAttribute(listOrVar);
-                arr = Array.isArray(stored) ? stored : [];
-            } else if (Array.isArray(listOrVar)) {
-                arr = listOrVar;
-            } else {
-                return 0;
-            }
-            return arr.length;
+        // The number of items in an array, or of values in an object
+        this.handlebars.registerHelper("length", (...args: any[]) => {
+            // The last argument is Handlebars' options
+            if (args.length < 2) return 0;
+            const listOrVar = args[0];
+            const value = typeof listOrVar === "string" ? this.getAttribute(listOrVar) : listOrVar;
+            if (Array.isArray(value)) return value.length;
+            if (value && typeof value === "object" && !(value instanceof this.handlebars.SafeString)) return Object.keys(value).length;
+            return 0;
         });
 
         // More helpers for lists (#447). These take the list itself, (join bag), not its name in

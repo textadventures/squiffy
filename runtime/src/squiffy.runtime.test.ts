@@ -3854,6 +3854,17 @@ Length is {{length "items"}}.
     expect(element.textContent).toContain("Length is 0.");
 });
 
+test("{{length}} helper counts the values in an object", async () => {
+    const script = `
+[[start]]:
+@set endings = { good: true, bad: true }
+Found {{length "endings"}}, {{length endings}}{{#if (length "endings") = 2}}, all{{/if}}.
+`;
+
+    const { element } = await initScript(script, true);
+    expect(element.textContent).toContain("Found 2, 2, all.");
+});
+
 test("{{length}} helper returns 0 for non-existent variable", async () => {
     const script = `
 [[start]]:

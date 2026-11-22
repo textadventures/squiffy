@@ -130,7 +130,7 @@ These take the attribute's **name in quotes** and change or read the array in it
 | `pop` | Removes and returns the first item: `{{set "next" (pop "queue")}}` |
 | `remove` | Removes the first matching item |
 | `contains` | `(contains "inventory" "key")`, or `(contains (array ...) value)`. In conditions, `inventory contains "key"` |
-| `length` | `(length "inventory")`. In conditions, `inventory.length` |
+| `length` | `(length "inventory")`. In conditions, `inventory.length`. On an object, `(length "hero")` counts its values |
 
 These take the **array itself** (no quotes) and return a new value, without changing the attribute; to keep the result, set it: `@set bag = (sort bag)`:
 

@@ -589,7 +589,15 @@ class ExpressionParser {
         if (v.v == "object") return { k: "object", entries: v.entries.map(([key, value]) => [key, this.toExpr(value)]) };
         if (v.v == "member") {
             // A list's or text's length (#446)
-            if (v.property == "length") return lengthOf(this.toExpr(v.object));
+            if (v.property == "length") {
+                const object = this.toExpr(v.object);
+                if (object.k == "call" && object.fn == "__keys") {
+                    // Object.keys(x).length: the number of values in x, which {{length}} counts
+                    const x = object.args[0];
+                    return { k: "call", fn: "length", args: [x.k == "var" ? { k: "str", v: x.name } : x] };
+                }
+                return lengthOf(object);
+            }
             throw new Unconvertible(`properties of variables (.${v.property})`);
         }
         throw new Unconvertible(`"${v.name}"`);
@@ -698,6 +706,13 @@ class ExpressionParser {
                 case "Math.max":
                     if (!args.length) throw new Unconvertible(`${callee.name}() with no values`);
                     return { k: "call", fn: callee.name.substring(5), args };
+                // Only to count an object's values, as Object.keys(x).length
+                case "Object.keys":
+                case "Object.values":
+                case "Object.entries":
+                case "Object.getOwnPropertyNames":
+                    if (args.length != 1) throw new Unconvertible(`${callee.name}()`);
+                    return { k: "call", fn: "__keys", args };
                 case "Number":
                 case "String":
                 case "parseInt":
@@ -1339,9 +1354,13 @@ class Writer {
                 // Only the helpers, which write nothing
                 return (content.match(/\{\{(?:[^{}]|\{\{[^{}]*\}\})*\}\}/g) ?? []).join("");
             }
+            case "do":
+                return this.doMacro(m, state);
+            case "redo":
+                // Each <<do>> that <<redo>> can show again is live, so it's shown again by itself
+                return "";
             case "capture":
             case "done":
-            case "do":
                 if (m.name == "done") this.ctx.approximate(m.raw, "<<done>> has been converted to its contents, which are shown straight away.");
                 return this.nodes(m.clauses![0].nodes, state);
             case "timed": {
@@ -1578,10 +1597,33 @@ class Writer {
         return e.name;
     }
 
+    // <<do>>...<</do>>, which <<redo>> shows again after something changes. Where it uses one
+    // variable, it becomes a section that {{live}} shows again whenever that variable is set.
+    private doMacro(m: Macro, state: EmitState): string {
+        const body = m.raw.substring(m.raw.indexOf(">>") + 2, m.raw.lastIndexOf("<</"));
+        const story = new Set([...body.matchAll(/(?<![\w$])\$([A-Za-z_]\w*)/g)].map(v => v[1]));
+        const temporary = /(?<![\w$])_[A-Za-z]\w*/.test(body.replace(/"[^"]*"|'[^']*'/g, ""));
+        const redone = this.ctx.story.twine.passages.some(p => p.text.includes("<<redo"));
+        if (story.size == 1 && !temporary && redone) {
+            state.leading = false;
+            const [name] = story;
+            const section = this.ctx.addSection(`do ${name}`, this.nodes(m.clauses![0].nodes, { ...state, leading: false }));
+            return `{{live ${quote(this.expr.attribute(name, false))} section=${quote(section)}}}`;
+        }
+        if (redone) this.ctx.approximate(m.raw, "<<do>> has been converted to its contents, which <<redo>> doesn't show again: only a <<do>> that uses one story variable, and no temporary ones, can be.");
+        return this.nodes(m.clauses![0].nodes, state);
+    }
+
     private linkText(arg: string): { plain: string, squiffy: string } {
         if (arg.startsWith("[[")) {
             const node = parseLink(arg.slice(2, -2), arg) as { text: string };
             return { plain: node.text, squiffy: this.inlineText(node.text) };
+        }
+        // SugarCube reads a bare word that isn't a variable, a number or true, false, null,
+        // undefined or NaN, or in setup or settings, as text: <<linkreplace Hint>>
+        const bare = arg.trim();
+        if (/^[^"'`$_[(\s\d-][^\s()]*$/.test(bare) && !/^(true|false|null|undefined|NaN|setup\..*|settings\..*)$/.test(bare)) {
+            return { plain: bare, squiffy: this.inlineText(bare) };
         }
         const e = this.expr.parse(arg);
         if (e.k == "str") return { plain: e.v, squiffy: this.inlineText(e.v) };

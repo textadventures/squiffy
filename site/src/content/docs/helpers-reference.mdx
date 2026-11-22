@@ -339,7 +339,7 @@ The `"attribute"` parameter is the **name** of an attribute that stores an array
 | `{{contains}}` | `"attribute" value` or `(array ...) value` | Check if array contains value | `{{#if (contains "inventory" "key")}}...{{/if}}` |
 | `{{length}}` | `"attribute"` or `(array ...)` | Get number of elements in array | `{{length "inventory"}}` |
 
-In a condition or calculation, you can also write `inventory contains "key"`, with the array itself rather than its name in quotes, and `inventory.length`. `contains` works on [objects](/attributes/#objects) too, where it's whether the object has a value with that name: `hero contains "hp"`.
+In a condition or calculation, you can also write `inventory contains "key"`, with the array itself rather than its name in quotes, and `inventory.length`. `contains` works on [objects](/attributes/#objects) too, where it's whether the object has a value with that name: `hero contains "hp"`, and so does `{{length}}`, which counts the values in it: `(length "hero")`.
 
 ### Joining, sorting and more
 
