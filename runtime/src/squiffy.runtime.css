@@ -333,8 +333,11 @@ span.squiffy-style:is(.shake, .shudder, .rumble, .sway, .buoy, .mirror, .upside-
     text-shadow: 0.08em 0.08em 0.08em color-mix(in srgb, currentColor 50%, transparent);
 }
 
+/* A dimmed face, lit from the top left and shadowed at the bottom right */
 .squiffy-style.emboss {
-    text-shadow: 0.06em 0.06em 0 color-mix(in srgb, currentColor 35%, transparent);
+    color: color-mix(in srgb, currentColor 35%, var(--squiffy-background));
+    text-shadow: -1px -1px 0 color-mix(in srgb, var(--squiffy-text) 80%, white),
+        1px 1px 0 color-mix(in srgb, var(--squiffy-background) 40%, black);
 }
 
 .squiffy-style.outline {
