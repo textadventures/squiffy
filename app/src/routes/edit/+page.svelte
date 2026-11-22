@@ -123,6 +123,9 @@
     const SIDEBAR_LIMITS = [160, 500] as const;
     const PREVIEW_LIMITS = [280, 900] as const;
     const MAP_LIMITS = [280, 1400] as const;
+    const CARD_LIMITS = [280, Infinity] as const;
+    // How much of the map the card always leaves showing on its left
+    const CARD_MAP_LEFT = 160;
 
     // On a narrow screen one pane shows at a time: the editor, the sidebar or the preview
     let narrowPane = $state<"editor" | "outline" | "preview" | "map">("editor");
@@ -794,7 +797,13 @@
     // The card floats over the right of the map, so opening it doesn't move the map. Where the
     // map is in the window:
     let mapArea = $state<{ top: number; right: number; width: number; height: number }>({ top: 0, right: 0, width: 0, height: 0 });
-    const cardWidth = $derived(Math.round(Math.min(544, mapArea.width * 0.45)));
+    // Its width can be dragged from its left edge, for the rest of the session. Until it has been,
+    // it's under half the map. Either way it leaves some of the map showing.
+    let cardWidthChosen = $state<number | null>(null);
+    const cardWidth = $derived(Math.round(Math.max(CARD_LIMITS[0], Math.min(cardWidthChosen ?? Math.min(544, mapArea.width * 0.45), cardMaxWidth()))));
+    function cardMaxWidth() {
+        return Math.max(CARD_LIMITS[0], mapArea.width - CARD_MAP_LEFT);
+    }
 
     // Shows a section in the card, or the section a passage is in, with the cursor at the passage
     // (or at `at`). If it's the section already shown, the cursor stays where it is.
@@ -1526,13 +1535,13 @@
     // splitter captures the pointer, and iframes stop taking pointer events while it's
     // dragged, as otherwise the preview's iframe swallows the moves whenever the pointer
     // crosses into it, and the resize stutters.
-    function handleSplitterPointerDown(e: PointerEvent, panel: "sidebar" | "preview" | "map") {
+    function handleSplitterPointerDown(e: PointerEvent, panel: "sidebar" | "preview" | "map" | "card") {
         if (e.button !== 0) return;
         e.preventDefault();
         const splitter = e.currentTarget as HTMLElement;
         const startX = e.clientX;
-        const startWidth = panel === "sidebar" ? sidebarWidth : panel === "map" ? mapWidth : previewWidth;
-        const [min, max] = panel === "sidebar" ? SIDEBAR_LIMITS : panel === "map" ? MAP_LIMITS : PREVIEW_LIMITS;
+        const startWidth = panel === "sidebar" ? sidebarWidth : panel === "map" ? mapWidth : panel === "card" ? cardWidth : previewWidth;
+        const [min, max] = panel === "sidebar" ? SIDEBAR_LIMITS : panel === "map" ? MAP_LIMITS : panel === "card" ? [CARD_LIMITS[0], cardMaxWidth()] : PREVIEW_LIMITS;
         splitter.setPointerCapture(e.pointerId);
         document.body.classList.add("splitter-dragging");
 
@@ -1541,6 +1550,7 @@
             const next = Math.min(max, Math.max(min, startWidth + (panel === "sidebar" ? delta : -delta)));
             if (panel === "sidebar") sidebarWidth = next;
             else if (panel === "map") mapWidth = next;
+            else if (panel === "card") cardWidthChosen = next;
             else previewWidth = next;
         }
         function onUp() {
@@ -1644,6 +1654,16 @@
                 style={cardShown ? `position: fixed; top: ${mapArea.top + 8}px; left: ${mapArea.right - cardWidth - 8}px; width: ${cardWidth}px; height: ${Math.max(mapArea.height - 16, 0)}px;` : undefined}
                 class="min-w-0 flex flex-col {cardShown ? "z-10 overflow-hidden rounded-md border border-surface-200-800 bg-surface-50-950 shadow-xl" : "flex-1"} {(isNarrow.current && narrowPane !== "editor") || (!isNarrow.current && mapOpen && mapMaximized && !cardShown) ? "hidden" : ""}"
             >
+                {#if cardShown}
+                    <!-- Its left edge, dragged to make it wider or narrower -->
+                    <div
+                        role="separator"
+                        aria-orientation="vertical"
+                        aria-label="Resize the section"
+                        class="splitter card-splitter"
+                        onpointerdown={e => handleSplitterPointerDown(e, "card")}
+                    ></div>
+                {/if}
                 {#if cardShown && cardNode}
                     <!-- The section being written from the map, in place of the tabs -->
                     <header class="flex items-center gap-0.5 px-2 py-1 border-b border-surface-200-800 bg-surface-50-950">
@@ -1824,6 +1844,13 @@
     }
     .splitter:active {
         background-color: color-mix(in srgb, var(--color-primary-500) 70%, transparent);
+    }
+    .card-splitter {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 1;
     }
     :global(body.splitter-dragging) {
         cursor: col-resize;

@@ -66,6 +66,27 @@ test.describe("writing on the map", () => {
         await expect(editor(page)).toBeFocused();
     });
 
+    test("the card's left edge can be dragged to make it wider or narrower", async ({ page }) => {
+        await openStory(page);
+        await write(page, "section:cave");
+        const card = page.locator("#editor");
+        const before = (await card.boundingBox())!;
+        const edge = page.getByRole("separator", { name: "Resize the section" });
+        const e = (await edge.boundingBox())!;
+        await page.mouse.move(e.x + e.width / 2, e.y + e.height / 2);
+        await page.mouse.down();
+        await page.mouse.move(e.x + e.width / 2 - 100, e.y + e.height / 2, { steps: 5 });
+        await page.mouse.up();
+        const wider = (await card.boundingBox())!;
+        expect(Math.round(wider.width - before.width)).toBe(100);
+        expect(Math.round(wider.x + wider.width)).toBe(Math.round(before.x + before.width));
+        // It stays that width for the next section
+        await page.getByRole("button", { name: "Close", exact: true }).click();
+        await write(page, "section:hill");
+        await expect(cardTitle(page)).toHaveText("hill");
+        expect(Math.round((await card.boundingBox())!.width)).toBe(Math.round(wider.width));
+    });
+
     test("double-clicking a box opens it too", async ({ page }) => {
         await openStory(page);
         await box(page, "section:hill").dblclick();
