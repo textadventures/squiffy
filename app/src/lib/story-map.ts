@@ -252,6 +252,7 @@ export function buildStoryMap(graph: StoryGraph): StoryMap {
     }
     for (const node of nodes) {
         node.description = describe(node, outgoing.get(node.id) ?? [], incoming.get(node.id) ?? [], byId);
+        node.title = tooltip(node);
     }
     return { nodes, edges };
 }
@@ -276,6 +277,21 @@ function edgeTitle(edge: StoryMapEdge, byId: Map<string, StoryMapNode>): string 
     const texts = [...new Set(edge.edges.map(e => e.text).filter(Boolean))];
     const target = edge.broken ? `${to.label} (doesn't exist)` : to.label;
     return `${KIND_NAMES[edge.kind]}${edge.conditional ? " (conditional)" : ""} to ${target}${texts.length ? `: "${texts.join("\", \"")}"` : ""}`;
+}
+
+// The tooltip: the whole name, which may be cut short on the map, and what its marks mean
+function tooltip(node: StoryMapNode): string {
+    if (node.kind == "missing") return `${node.label}\n! Missing: nothing in the story is called that. Double-click to add it.`;
+    const g = node.graphNode!;
+    const lines = [node.label];
+    if (g.start) lines.push("The story starts here.");
+    if (node.kind == "passage" && runsOnItsOwn(g.name)) lines.push("Runs on its own, without a link.");
+    if (g.ending) lines.push("An ending (@end).");
+    if (g.deadEnd && g.reachable) lines.push("! A dead end: no way out, and not an ending.");
+    if (g.unknownExits) lines.push("? Can go somewhere that isn't known until the story is played: a link worked out as it's played, or JavaScript.");
+    if (g.embedded) lines.push("Shown inside other sections.");
+    else if (!g.reachable) lines.push("Can't be reached from the start.");
+    return lines.join("\n");
 }
 
 function describe(node: StoryMapNode, out: StoryMapEdge[], into: StoryMapEdge[], byId: Map<string, StoryMapNode>): string {

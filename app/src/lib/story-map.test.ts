@@ -52,6 +52,25 @@ describe("story map", () => {
         expect(map.edges.find(e => e.to == missing.id)).toMatchObject({ from: "section:left", broken: true });
     });
 
+    test("tooltips give the whole name and say what the marks on the map mean", async () => {
+        const map = buildStoryMap(await graphOf(story + "\n[[stuck]]:\nNo way out.\n\n[[unsure]]:\n[[Somewhere]]({{place}})\n"));
+        const title = (id: string) => map.nodes.find(n => n.id == id)!.title;
+        expect(title("section:start")).toBe("start\nThe story starts here.");
+        expect(title("section:lost")).toBe("lost\nAn ending (@end).\nCan't be reached from the start.");
+        expect(title("section:stuck")).toBe("stuck\nCan't be reached from the start.");
+        expect(title("section:unsure")).toMatch(/^unsure\n\? Can go somewhere that isn't known until the story is played/);
+        expect(map.nodes.find(n => n.kind == "missing")!.title)
+            .toBe("nowhere\n! Missing: nothing in the story is called that. Double-click to add it.");
+        const deadEnd = buildStoryMap(await graphOf("[[a]]:\n[[b]]\n\n[[b]]:\nNo way out."));
+        expect(deadEnd.nodes.find(n => n.id == "section:b")!.title).toBe("b\n! A dead end: no way out, and not an ending.");
+    });
+
+    test("a link to one of the master section's passages isn't broken", async () => {
+        const map = buildStoryMap(await graphOf("[[a]]:\n[Wait](stare) {{embed \"stare\"}}\n@end\n\n[[]]:\n\n[stare]:\nYou stare."));
+        expect(map.nodes.filter(n => n.kind == "missing")).toEqual([]);
+        expect(map.edges.filter(e => e.broken)).toEqual([]);
+    });
+
     test("links between the same places are drawn once, conditional only if they all are", async () => {
         const map = buildStoryMap(await graphOf(story));
         const edge = map.edges.find(e => e.from == "section:right" && e.to == "section:left")!;

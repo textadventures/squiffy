@@ -895,7 +895,7 @@
                         data-node={n.id}
                         use:placeNode={n.id}
                     >
-                        <title>{n.label}</title>
+                        <title>{n.title ?? n.label}</title>
                         {#if drawNode}
                             {@render drawNode(n, state)}
                         {:else}

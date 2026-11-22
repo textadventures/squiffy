@@ -21,6 +21,8 @@ export interface MapNode {
     height: number;
     // Shown in the default drawing
     label: string;
+    // Shown as a tooltip, e.g. what the host's marks on the node mean. The label if not given.
+    title?: string;
     // Classes for the node's <g>, for the host's styles
     class?: string;
     // Read out by screen readers when the node is selected, e.g. its links in and out
