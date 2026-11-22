@@ -285,6 +285,12 @@ describe("story graph", () => {
         expect(diagnostics.map(d => [d.code, d.message])).toEqual([
             ["squiffy/unknown-passage-link", "In section 'a' there is a link to a passage called [nothing], which doesn't exist"],
         ]);
+        // The graph (and so the story map) agrees: only [nothing] is broken
+        const graph = await one(main);
+        expect(graph.edges.filter(e => e.from == "section:a").map(e => e.to ?? `? ${e.target}`)).toEqual([
+            "passage:/stare", "passage:/stare", "passage:/stare", "? nothing",
+        ]);
+        expect(nodeOf(graph, "passage:/stare").reachable).toBe(true);
     });
 
     test("@start sets where reachability starts from", async () => {

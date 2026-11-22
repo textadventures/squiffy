@@ -511,6 +511,8 @@ export function createLanguageService(options: LanguageServiceOptions): Language
             const passages = passagesOf(index, usage.sectionNode);
             if (sectionName !== undefined && passages?.has(name)) return { kind: "passage", section: sectionName, name };
             if (index.sections.has(name)) return { kind: "section", name };
+            // Like the runtime, the master section's passages can be embedded from any section
+            if (index.sections.get("")?.passages.has(name)) return { kind: "passage", section: "", name };
             return undefined;
         }
         if (usage.goto) {
@@ -535,7 +537,11 @@ export function createLanguageService(options: LanguageServiceOptions): Language
         const passages = passagesOf(index, usage.sectionNode);
         if (sectionName === undefined || !passages) return undefined;
         const name = resolveName(link.target, n => passages.has(n));
-        return name === undefined ? undefined : { kind: "passage", section: sectionName, name };
+        if (name !== undefined) return { kind: "passage", section: sectionName, name };
+        // Like the runtime, a passage link can go to one of the master section's passages
+        const masterPassages = index.sections.get("")?.passages;
+        const masterName = masterPassages && resolveName(link.target, n => masterPassages.has(n));
+        return masterName === undefined ? undefined : { kind: "passage", section: "", name: masterName };
     }
 
     // Where a symbol is defined: the name in its header.
