@@ -51,7 +51,7 @@ While a `@transition` (dynamic-text.md) plays, the element has classes `squiffy-
 
 ## Styling some text
 
-`{{#style "warning"}}KEEP OUT{{/style}}` puts the text in `<span class="squiffy-style warning">` (a `<div>` if it has blank lines), so `.warning { color: red; }` styles it. Several classes, or an attribute, work: `{{#style "warning big"}}`, `{{#style mood}}`. Built-in effects use the same helper: `shake`, `shudder`, `rumble`, `sway`, `buoy`, `pulse`, `fade-in-out`, `blink`, `flicker`, `blur`, `blurrier`, `smear`, `mirror`, `upside-down` (styled as `.squiffy-style.shudder`; moving ones stop under reduced motion). Effects combine: each after the first goes on a nested element of its own. Don't use those names for your own classes.
+`{{#style "warning"}}KEEP OUT{{/style}}` puts the text in `<span class="squiffy-style warning">` (a `<div>` if it has blank lines), so `.warning { color: red; }` styles it. Several classes, or an attribute, work: `{{#style "warning big"}}`, `{{#style mood}}`. Built-in effects use the same helper: `shake`, `shudder`, `rumble`, `sway`, `buoy`, `pulse`, `fade-in-out`, `blink`, `flicker`, `blur`, `blurrier`, `smear`, `mirror`, `upside-down`, `shadow`, `emboss`, `outline`, `condense`, `expand`, `tall`, `flat`, `double-underline`, `wavy-underline`, `double-strike`, `wavy-strike` (styled as `.squiffy-style.shudder`; moving ones stop under reduced motion). Effects combine: each after the first goes on a nested element of its own. Don't use those names for your own classes.
 
 ## Useful selectors
 

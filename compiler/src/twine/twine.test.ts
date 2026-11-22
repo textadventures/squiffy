@@ -460,9 +460,9 @@ describe("Harlowe", () => {
     });
 
     test("styling changers", async () => {
-        const { script, result } = await convert("Harlowe", ":: Start\n(text-colour: red)[Red] (colour: #f00)[Hex] (text-style: \"italic\", \"shudder\", \"fade-in-out\", \"condense\")[Wobbly] (link-style: (text-colour: red))[(link: \"x\")[y]]");
-        expect(section(script, "Start")).toMatch(/^<span style="color: red">Red<\/span> <span style="color: #f00">Hex<\/span> \{\{#style "shudder fade-in-out"\}\}_Wobbly_\{\{\/style\}\} \{\{#label "x"\}\}/);
-        expect(result.problems.map(p => p.text)).toEqual(["\"condense\"", "(link-style:)"]);
+        const { script, result } = await convert("Harlowe", ":: Start\n(text-colour: red)[Red] (colour: #f00)[Hex] (text-style: \"italic\", \"shudder\", \"fade-in-out\", \"condense\", \"double-underline\", \"glow\")[Wobbly] (link-style: (text-colour: red))[(link: \"x\")[y]]");
+        expect(section(script, "Start")).toMatch(/^<span style="color: red">Red<\/span> <span style="color: #f00">Hex<\/span> \{\{#style "shudder fade-in-out condense double-underline"\}\}_Wobbly_\{\{\/style\}\} \{\{#label "x"\}\}/);
+        expect(result.problems.map(p => p.text)).toEqual(["\"glow\"", "(link-style:)"]);
     });
 
     test("header and footer passages, and startup passages", async () => {

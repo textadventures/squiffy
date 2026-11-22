@@ -13,6 +13,8 @@ import { listPassages, listSections, tagsOf } from "./storyLists.js";
 const styleEffects = new Set([
     "shake", "shudder", "rumble", "sway", "buoy", "pulse", "fade-in-out", "blink", "flicker",
     "blur", "blurrier", "smear", "mirror", "upside-down",
+    "shadow", "emboss", "outline", "condense", "expand", "tall", "flat",
+    "double-underline", "wavy-underline", "double-strike", "wavy-strike",
 ]);
 
 // An embed being shown (#450): its parameters, and the text it wraps, if any
