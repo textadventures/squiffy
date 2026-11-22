@@ -218,7 +218,6 @@ Hank stares at you. A vein throbs in his forehead.
 @clear
 @leave zoom
 @transition zoom 0.8s
-@class confetti
 @music sounds/theme.mp3
 @end
 @set counted = 0

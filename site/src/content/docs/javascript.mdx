@@ -98,6 +98,41 @@ You can also put the JavaScript in a separate file with `@ui filename.js`. Here,
 
 To add a script file to the page instead, as a `<script>` tag, put it in your story's folder. In a story with a `squiffy.json`, every `.js` file in the folder is added this way, except one you read with `@ui`: see [Stylesheets and scripts](/multiple-files/#stylesheets-and-scripts). Without one, use `@import my_script.js`. See [Importing files](/multiple-files/#importing-files).
 
+## Scripts on the page
+
+A script added to the page runs before the story has started, so it doesn't get `squiffy` as a section's JavaScript does. Instead, it waits for the `squiffy:ready` event, which comes with the story's `squiffy` once the story is set up, just before it starts:
+
+```javascript
+document.addEventListener("squiffy:ready", ({ detail: squiffy }) => {
+    squiffy.on("navigated", ({ section }) => {
+        if (section == "The storm") startRain();
+        else stopRain();
+    });
+});
+```
+
+`navigated` happens whenever a section or passage is shown, including when the player goes back, restarts, or carries on from a saved game, so it's the place to start and stop an effect that belongs to a section. A section's JavaScript doesn't run again when the player comes back to a saved game, but this does.
+
+| | |
+|---|---|
+| `squiffy.on(event, fn)` | Call `fn` each time `event` happens. Returns a function that stops it |
+| `squiffy.once(event, fn)` | Call `fn` the next time `event` happens |
+| `squiffy.off(event, fn)` | Stop calling `fn` |
+| `squiffy.get`, `squiffy.set` | Read and change attributes, as [in a section](#reading-and-setting-attributes) |
+| `squiffy.story.go`, `squiffy.story.seen`, `squiffy.story.visits` | As [in a section](#functions-you-can-use) |
+| `squiffy.getSetting(name)` | A [player setting](/buttons-panels-settings/#player-settings)'s value, as the story reads it with `settings.name` |
+| `squiffy.element` | The HTML element that contains the story |
+
+The events are:
+
+| Event | When | What `fn` gets |
+|---|---|---|
+| `navigated` | A section or passage is shown, or the player goes back to one | `{ section, passage }`, where `passage` is left out for a section |
+| `set` | An attribute is set, including Squiffy's own, whose names start with `_` | `{ attribute, value }` |
+| `settingChanged` | The player changes a setting | `{ name, value }` |
+
+The [game show](/featured-examples/#the-wheel-of-dubious-fortune) on the Examples page uses this for the confetti at the end, in `confetti.js`.
+
 ## Creating custom helpers
 
 You can add your own helpers by calling `squiffy.registerHelper` in a `@ui` block:

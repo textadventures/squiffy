@@ -1,10 +1,9 @@
 // Confetti for the ending. With squiffy.json, a .js file in the story's folder is added to the
 // published page, like this one.
 //
-// The ending's @class confetti puts the "confetti" class on the story while it's on the screen.
-// When it appears, a burst of confetti falls down the page, behind the text: pieces of paper, each
-// its own colour, size, speed, sway and spin. Going back or restarting stops it. It doesn't run for
-// a player who has asked for reduced motion.
+// When the player reaches the Ending, a burst of confetti falls down the page, behind the text:
+// pieces of paper, each its own colour, size, speed, sway and spin. Going back or restarting stops
+// it. It doesn't run for a player who has asked for reduced motion.
 
 (() => {
     const COLOURS = ["#ffd23f", "#ff5d5d", "#3ff2ff", "#ff8adf", "#7dff9b", "#ffffff"];
@@ -96,15 +95,17 @@
         canvas = null;
     }
 
-    // Starts when something on the page gets the confetti class, and stops when it's gone. Once
-    // the last piece has fallen, it doesn't start again until the class goes and comes back.
+    // The story tells its scripts when the player goes somewhere, including going back,
+    // restarting and carrying on from a saved game. Confetti starts at the Ending, and stops
+    // anywhere else. Once the last piece has fallen, it doesn't start again until the player
+    // leaves the Ending and comes back.
     let showing = false;
-    const check = () => {
-        const now = !!document.querySelector(".confetti");
-        if (now && !showing) start();
-        if (!now && showing) stop();
-        showing = now;
-    };
-    new MutationObserver(check).observe(document.documentElement, { attributes: true, attributeFilter: ["class"], subtree: true });
-    check();
+    document.addEventListener("squiffy:ready", ({ detail: squiffy }) => {
+        squiffy.on("navigated", ({ section }) => {
+            const now = section == "Ending";
+            if (now && !showing) start();
+            if (!now && showing) stop();
+            showing = now;
+        });
+    });
 })();

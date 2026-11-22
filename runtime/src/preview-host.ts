@@ -86,6 +86,13 @@ export function createPreviewHost(channel: PreviewChannel, handlers: PreviewHand
     let queue: HostMessage[] = [];
     let theme: PreviewTheme | undefined;
     let muted = false;
+    // The assets last sent, to send again after the host has reloaded the page
+    let assets: PreviewAssets | undefined;
+    // Whether the story last loaded had scripts of its own, so the page needs reloading before
+    // the next one: what they did, such as listening for squiffy:ready, can't be undone (#528)
+    let hadScripts = false;
+    // Whether the host is waiting for the page to reload, which it asked for
+    let reloading = false;
     let resolveReady: () => void;
     const ready = new Promise<void>(resolve => { resolveReady = resolve; });
 
@@ -100,15 +107,24 @@ export function createPreviewHost(channel: PreviewChannel, handlers: PreviewHand
         switch (message.type) {
             case "ready": {
                 // Sent again if the page reloads, which loses its story, so onReady is
-                // where a host can load it again
+                // where a host can load it again. A reload the host asked for, to load a
+                // story, already has the story to send, with the assets that the page lost.
+                const requested = reloading;
+                reloading = false;
                 isReady = true;
                 if (theme) send({ type: "theme", theme });
                 if (muted) send({ type: "muted", muted });
-                const queued = queue;
+                let queued = queue;
                 queue = [];
+                if (requested && assets) {
+                    queued = queued.filter(m => m.type != "assets");
+                    send({ type: "assets", assets });
+                }
+                // The page is new, so only a story about to be loaded can have left anything behind
+                hadScripts = queued.some(m => m.type == "load" && !!m.story.scripts?.length);
                 for (const m of queued) send(m);
                 resolveReady();
-                handlers.onReady?.();
+                if (!requested) handlers.onReady?.();
                 break;
             }
             case "loaded":
@@ -137,11 +153,26 @@ export function createPreviewHost(channel: PreviewChannel, handlers: PreviewHand
 
     return {
         ready,
-        load: (story, options = {}) => send({ type: "load", story, ...(options.startAt ? { startAt: options.startAt } : {}) }),
+        load: (story, options = {}) => {
+            if (!isReady) {
+                // A load that hasn't been sent yet is replaced by this one, and the page it goes to is new
+                queue = queue.filter(m => m.type != "load");
+            }
+            else if (hadScripts) {
+                channel.send({ channel: PREVIEW_CHANNEL, type: "reload" });
+                isReady = false;
+                reloading = true;
+            }
+            hadScripts = !!story.scripts?.length;
+            send({ type: "load", story, ...(options.startAt ? { startAt: options.startAt } : {}) });
+        },
         update: (js, css) => send({ type: "update", js, ...(css ? { css } : {}) }),
         restart: () => send({ type: "restart" }),
         back: () => send({ type: "back" }),
-        setAssets: assets => send({ type: "assets", assets }),
+        setAssets: value => {
+            assets = value;
+            send({ type: "assets", assets });
+        },
         setTheme: value => {
             theme = value;
             // Sent when the page is ready, and again if it reloads

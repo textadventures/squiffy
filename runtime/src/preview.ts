@@ -14,6 +14,8 @@ export interface PreviewOptions {
     // Loads a compiled story module. By default it's imported from a blob URL, so story
     // JavaScript runs without new Function (and so without unsafe-eval in a CSP).
     loadModule?(js: string): Promise<{ story: Story }>;
+    // Reloads the page, for a "reload" message
+    reload?(): void;
 }
 
 const mimeTypes: Record<string, string> = {
@@ -309,6 +311,9 @@ export function createPreview(options: PreviewOptions) {
                 case "muted":
                     muted = message.muted;
                     api?.setMuted(muted);
+                    break;
+                case "reload":
+                    options.reload?.();
                     break;
                 case "theme":
                     themeStyle.textContent = message.theme == "system" ? "" : `:root { color-scheme: ${message.theme}; }`;
