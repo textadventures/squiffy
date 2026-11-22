@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.0.0-beta.10](https://github.com/textadventures/squiffy/compare/v7.0.0-beta.9...v7.0.0-beta.10) (2026-11-22)
+
+
+### Miscellaneous Chores
+
+* release 7.0.0-beta.10 ([#565](https://github.com/textadventures/squiffy/issues/565)) ([324dc07](https://github.com/textadventures/squiffy/commit/324dc07afb5594cb5e1c324c30cdf084f2af2fa8))
+
 ## [7.0.0-beta.9](https://github.com/textadventures/squiffy/compare/v7.0.0-beta.8...v7.0.0-beta.9) (2026-11-22)
 
 
