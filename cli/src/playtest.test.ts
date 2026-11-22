@@ -42,11 +42,11 @@ There's a sign on the door.
 @end
 You walk off down the street.`;
 
-async function record(playable: PlayableStory, choose: string[], options: { seed?: number; inputs?: Record<string, string> } = {}) {
+async function record(playable: PlayableStory, choose: string[], options: { seed?: number; inputs?: Record<string, string>; ignore?: string[] } = {}) {
     const seed = options.seed ?? 1;
     const result = await playStory(playable, { choose, seed, inputs: options.inputs, stepAttributes: true });
     expect(result.success).toBe(true);
-    return testFromResult(result, { seed, inputs: options.inputs });
+    return testFromResult(result, { seed, inputs: options.inputs, ignore: options.ignore });
 }
 
 describe("recording", () => {
@@ -86,6 +86,7 @@ went "street"
             seed: -5,
             start: "a \"quoted\" section",
             inputs: { name: "Sam = me" },
+            ignore: ["told", "seen_*", "odd *name"],
             steps: [
                 { went: [{ section: "a \"quoted\" section" }], set: { "odd name": [1, { x: "y" }], plain: null }, unset: [] },
                 { choice: "Next >", went: [{ section: "b", passage: "c d" }], set: {}, unset: ["plain", "odd name"] },
@@ -100,6 +101,18 @@ went "street"
         expect(() => parseTest("seed 1\nset gold = ten")).toThrow(/Line 2: the value of gold should be JSON/);
         expect(() => parseTest("seed 1\n\n> Go\nseed 2")).toThrow(/Line 4: expected "> ", "went", "set" or "unset", not "seed"/);
         expect(() => parseTest("seed 1\nfoo")).toThrow(/Line 2: expected "seed"/);
+        expect(() => parseTest("seed 1\nignore")).toThrow(/Line 2: expected the attributes to ignore/);
+        expect(() => parseTest("seed 1\nignore gold = 1")).toThrow(/Line 2: expected attribute names/);
+        expect(() => parseTest("seed 1\n\n> Go\nignore gold")).toThrow(/Line 4: expected "> ", "went", "set" or "unset", not "ignore"/);
+    });
+
+    test("leaves out the attributes it ignores", async () => {
+        const recorded = await record(await load(SHOP), ["look around", "Go in"], { ignore: ["gold", "lo*ed"] });
+
+        expect(recorded.steps.map(step => step.set)).toEqual([{ name: "nobody" }, {}, {}]);
+        expect(formatTest(recorded)).toContain("seed 1\nignore gold lo*ed\n");
+        expect(parseTest(formatTest(recorded))).toEqual(recorded);
+
     });
 });
 
@@ -168,6 +181,22 @@ Hello {{name}}.`);
 
         expect((await runTest(playable, recorded)).passed).toBe(true);
         expect((await runTest(playable, { ...recorded, seed: 43 })).differences[0]).toMatch(/^roll was set to/);
+    });
+
+    test("doesn't compare the attributes it ignores", async () => {
+        const changed = await load(SHOP.replace("@set gold -= 3", "@set gold -= 4\n@set name = \"Sam\""));
+
+        // Recorded with the ignore line, so the attributes aren't in the test, and --update keeps it
+        const ignoring = await record(await load(SHOP), ["Go in"], { ignore: ["gold"] });
+        const outcome = await runTest(changed, ignoring);
+        expect(outcome).toMatchObject({ passed: false, step: 2, differences: ["name was set to \"Sam\", but expected not changed."] });
+        expect(outcome.actual!.ignore).toEqual(["gold"]);
+        expect(outcome.actual!.steps.flatMap(step => Object.keys(step.set))).not.toContain("gold");
+
+        // An ignore line added by hand to a test recorded without it
+        const recorded = await record(await load(SHOP), ["Go in"]);
+        expect((await runTest(changed, { ...recorded, ignore: ["gold"] })).differences).toEqual(["name was set to \"Sam\", but expected not changed."]);
+        expect((await runTest(changed, { ...recorded, ignore: ["*"] })).passed).toBe(true);
     });
 
     test("leaves out attributes the runtime sets on every click", async () => {
