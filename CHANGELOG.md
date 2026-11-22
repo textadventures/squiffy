@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.0.0-beta.11](https://github.com/textadventures/squiffy/compare/v7.0.0-beta.10...v7.0.0-beta.11) (2026-11-22)
+
+
+### Continuous Integration
+
+* pass Sigstore's timeout as a number, in publishConfig ([#568](https://github.com/textadventures/squiffy/issues/568)) ([3703ca9](https://github.com/textadventures/squiffy/commit/3703ca9192aef04727319a2aca9b3a326f56f049))
+
 ## [7.0.0-beta.10](https://github.com/textadventures/squiffy/compare/v7.0.0-beta.9...v7.0.0-beta.10) (2026-11-22)
 
 
