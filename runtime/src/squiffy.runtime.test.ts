@@ -4323,6 +4323,44 @@ Next.`);
     expect(canGoBack).toBe(true); // unchanged: no event
 });
 
+test("Can't go back to a title that went on with {{goto ... after=}}, past a @clear", async () => {
+    vi.useFakeTimers();
+    try {
+        const script = `
+[[title]]:
+The title.{{goto "first" after=3000}}
+
+[[first]]:
+@clear
+First. [[second]]
+
+[[second]]:
+Second.
+`;
+        const { squiffyApi, element } = await initScript(script);
+        let canGoBack: boolean | undefined;
+        squiffyApi.on("canGoBackChanged", e => canGoBack = e.canGoBack);
+        await vi.advanceTimersByTimeAsync(3000);
+        expect(squiffyApi.get("_section")).toBe("first");
+        expect(squiffyApi.canGoBack()).toBe(false);
+
+        await squiffyApi.clickLink(findLink(element, "section", "second"));
+        expect(squiffyApi.canGoBack()).toBe(true);
+        squiffyApi.goBack();
+        expect(squiffyApi.get("_section")).toBe("first");
+        expect(squiffyApi.canGoBack()).toBe(false);
+        expect(canGoBack).toBe(false);
+
+        // Going back anyway stays where it is, rather than showing the title for good
+        squiffyApi.goBack();
+        expect(squiffyApi.get("_section")).toBe("first");
+        expect(visibleText(element)).toBe("First. second");
+    }
+    finally {
+        vi.useRealTimers();
+    }
+});
+
 test("{{goto ... after=}} waits", async () => {
     vi.useFakeTimers();
     try {
