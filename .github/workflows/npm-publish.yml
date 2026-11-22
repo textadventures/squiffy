@@ -72,6 +72,12 @@ jobs:
       # npm, so each try only publishes what's left. The pause gives the
       # registry time to show what the last try published, so it isn't
       # published again: that has taken around 4 minutes.
+      #
+      # lerna writes a gitHead field into each package.json while publishing
+      # and only takes it out again when it succeeds. A failed try leaves the
+      # tree dirty, and lerna then refuses to start the next one (EUNCOMMIT),
+      # so the tracked files are reset before each retry. The build output
+      # isn't tracked, so it's kept.
       - name: Publish to npm
         run: |
           for attempt in 1 2 3 4; do
@@ -80,6 +86,8 @@ jobs:
             fi
             if [ "$attempt" -lt 4 ]; then
               echo "::warning::Publish attempt $attempt failed, retrying in 5 minutes"
+              git status --short
+              git checkout -- .
               sleep 300
             fi
           done
