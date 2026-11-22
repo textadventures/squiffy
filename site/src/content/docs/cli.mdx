@@ -164,6 +164,23 @@ npx @textadventures/squiffy-cli --play --save game.json --choose 2
 
 The saved game keeps the text that's on the screen, so if you change the story, that text stays as it was, though what comes next is from your changes. Delete the file, or use `--start`, to start again.
 
+### Playing in one go
+
+Each `--play` loads the story and gets it ready to play, which takes a second or so. That's fine for a few links, but slow for a story that takes a hundred clicks to finish. Add `--interactive` to keep playing in one go instead: Squiffy shows the start, then reads a link to click from each line you type (or that a program writes to it), shows what happens, and waits for the next, until the input ends (Ctrl+D in a terminal).
+
+```bash
+npx @textadventures/squiffy-cli --play --interactive
+```
+
+Each line is a link's text or number, like `--choose`, or one of these:
+
+- `:input attribute=value` puts text in a [text box](/player-input/), like `--input`: the one on the screen now, even if it's been filled in already, and any shown later.
+- `:attributes` shows the story's [attributes](/attributes/).
+
+A link that isn't there doesn't stop play: Squiffy says what the links are, and reads the next line. `--choose` and `--choices` links are clicked first, before any lines are read, and with `--save`, the game is saved after every line. With `--record`, the test is recorded when the input ends, without any links that weren't there.
+
+With `--json`, the output for each line is the same JSON as `--play --json`, all on one line, so a program, such as a script an AI agent writes to play a long story, can write a line and read a line back. Its `steps` are the steps that line took: none for a link that isn't there, or a `:input`.
+
 ### Other options
 
 - `--input attribute=value` puts text in a [text box](/player-input/), when there is one for that attribute on the screen. Add it once for each text box.
@@ -275,7 +292,7 @@ If you changed the story on purpose, add `--update` to record the tests that fai
 
 ### For AI agents
 
-These options let an AI agent, such as Claude Code, check a story it's helping you write, and play through it, without a browser. Add `--json` to `--check`, `--play`, `--random` or `--test` to print the result as JSON, for the agent, or any other program, to read. See [Writing with an AI agent](/writing-with-ai/), which also covers the Squiffy plugin for Claude Code.
+These options let an AI agent, such as Claude Code, check a story it's helping you write, and play through it, without a browser. Add `--json` to `--check`, `--play`, `--random` or `--test` to print the result as JSON, for the agent, or any other program, to read. To play a long story, a script can use [`--play --interactive --json`](#playing-in-one-go), which is much quicker than running `--play` again for every link. See [Writing with an AI agent](/writing-with-ai/), which also covers the Squiffy plugin for Claude Code.
 
 To learn how to write a Squiffy story, an agent can read these docs as Markdown: [llms.txt](/llms.txt) introduces Squiffy and these options, [llms-full.txt](/llms-full.txt) has every page in one file, and [llms-small.txt](/llms-small.txt) leaves out the editor's pages and the long examples.
 
