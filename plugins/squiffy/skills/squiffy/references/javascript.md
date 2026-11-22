@@ -25,6 +25,18 @@ Welcome. {{shout "hello"}}
 
 A `@ui` block goes at the top and ends with `---`. `@ui helpers.js` reads a file instead. Other `.js` files in a `squiffy.json` story's folder are added to the page as `<script>` tags (without `squiffy.json`, `@import script.js`). The CLI's `--play` and `--random` don't run those page scripts, but do run `@ui` and section JavaScript.
 
+A page script runs before the story starts, so it gets the story from the `squiffy:ready` event, which bubbles to `document` once the story is set up, just before it begins:
+
+```js
+document.addEventListener("squiffy:ready", ({ detail: squiffy }) => {
+    squiffy.on("navigated", ({ section, passage }) => {
+        if (section == "The storm") startRain(); else stopRain();
+    });
+});
+```
+
+Its `squiffy` has `get`, `set`, `story.go`/`seen`/`visits`/`passages`/`sections`/`tags`, `getSetting(name)`, `element`, and `on`/`once`/`off` (each `on` returns a function that stops it) for three events: `navigated` (`{ section, passage }`, also after Back, restart and loading a saved game), `set` (`{ attribute, value }`, including `_` attributes) and `settingChanged` (`{ name, value }`). Use `navigated` to start and stop an effect for a section, rather than watching for a `@class`: section JavaScript doesn't run again when a saved game is loaded, but `navigated` happens.
+
 ## The squiffy API
 
 | Function | Description |

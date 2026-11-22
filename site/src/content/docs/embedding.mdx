@@ -463,6 +463,10 @@ squiffyApi.on('settingChanged', (event) => {
 });
 ```
 
+### squiffy:ready
+
+When `init()` has set the story up, the story's element sends a `squiffy:ready` DOM event, which bubbles up to `document`. It's how the story's [own scripts](/javascript/#scripts-on-the-page) get the story, so they work on your page too, as long as the element is in the page when you call `init()`. They get a smaller API than `init()` returns, without `begin()`, `restart()` and the like, which are your page's to call.
+
 ### Unsubscribing
 
 The `on()` method returns an unsubscribe function:

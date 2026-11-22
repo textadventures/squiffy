@@ -1,4 +1,4 @@
-import { SquiffyApi, SquiffyInitOptions, Story, Section, Passage, StartAt, SavedGame, LoadSaveResult, TagFilter } from "./types.js";
+import { SquiffyApi, SquiffyInitOptions, SquiffyScriptApi, SquiffyScriptEvent, Story, Section, Passage, StartAt, SavedGame, LoadSaveResult, TagFilter } from "./types.js";
 import { listPassages, listSections, tagsOf } from "./storyLists.js";
 import { TextProcessor, afterClear, errorHtml } from "./textProcessor.js";
 import { toNumber } from "./numbers.js";
@@ -20,7 +20,7 @@ import { createSavesDialog, type SavesDialog } from "./savesDialog.js";
 import { createSettingsDialog, type SettingsDialog } from "./settingsDialog.js";
 import { PlayerSettings } from "./playerSettings.js";
 
-export type { SquiffyApi, SavedGame, LoadSaveResult, PlayerSetting, PlayerSettingOption, SettingValue } from "./types.js";
+export type { SquiffyApi, SquiffyScriptApi, SquiffyScriptEvent, SavedGame, LoadSaveResult, PlayerSetting, PlayerSettingOption, SettingValue } from "./types.js";
 export type { SquiffyEventHandler, SquiffyEventMap } from "./events.js";
 export { createSavesDialog, formatSaveTime, SAVES_STRINGS, SAVE_FILE_EXTENSION } from "./savesDialog.js";
 export type { SavesDialog, SavesDialogOptions, SavesStringName } from "./savesDialog.js";
@@ -1814,5 +1814,42 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         off: (e, h) => emitter.off(e, h),
         once: (e, h) => emitter.once(e, h),
     };
+
+    // For the story's own scripts (#528): the events that are about the story, and what a
+    // section's JavaScript can do
+    // Checked as well as typed, as the story's scripts aren't TypeScript
+    const scriptEvent = <E extends SquiffyScriptEvent>(event: E): E => {
+        if (!SCRIPT_EVENTS.includes(event)) {
+            throw new Error(`A story's script can't listen for "${event}": it can listen for ${SCRIPT_EVENTS.map(e => `"${e}"`).join(", ")}`);
+        }
+        return event;
+    };
+    const scriptApi: SquiffyScriptApi = {
+        get: get,
+        set: set,
+        story: {
+            go: (sectionName: string) => go(sectionName),
+            seen: (sectionOrPassage: string) => state.getSeen(sectionOrPassage),
+            visits: (sectionOrPassage: string) => state.getVisits(sectionOrPassage),
+            passages: (section?: string, filter?: TagFilter) => listPassages(story, section, get("_section"), filter),
+            sections: (filter?: TagFilter) => listSections(story, filter),
+            tags: (name?: string) => name === undefined
+                ? [...(story.sections[get("_section")]?.tags ?? [])]
+                : tagsOf(story, name, get("_section")),
+        },
+        getSetting: (name: string) => playerSettings.get(name),
+        element: outputElementContainer,
+        on: (e, h) => emitter.on(scriptEvent(e), h),
+        off: (e, h) => emitter.off(scriptEvent(e), h),
+        once: (e, h) => emitter.once(scriptEvent(e), h),
+    };
+    // Before begin(), so a script hears about the first section. It bubbles, so a script can
+    // listen on document, as it runs before the story's element is there.
+    const view = outputElementContainer.ownerDocument.defaultView;
+    if (view) {
+        outputElementContainer.dispatchEvent(new view.CustomEvent("squiffy:ready", { bubbles: true, detail: scriptApi }));
+    }
     return api;
 };
+
+const SCRIPT_EVENTS: SquiffyScriptEvent[] = ["navigated", "set", "settingChanged"];

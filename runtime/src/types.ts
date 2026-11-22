@@ -93,6 +93,39 @@ export interface SquiffyApi {
     ): () => void;
 }
 
+// The events a story's own scripts can listen for (#528). The others are for the page around the
+// story: a handler for restartRequested, say, would stop the page asking before restarting.
+export type SquiffyScriptEvent = "navigated" | "set" | "settingChanged";
+
+// What a story's own scripts (.js files added to the page, or @import-ed) get with the
+// squiffy:ready event, which the story's element sends, bubbling up to document, when the story
+// has been set up and before it starts (#528):
+//
+//     document.addEventListener("squiffy:ready", ({ detail: squiffy }) => {
+//         squiffy.on("navigated", ({ section }) => { ... });
+//     });
+//
+// Its get, set and story are the same as a section's JavaScript gets.
+export interface SquiffyScriptApi {
+    get: (attribute: string) => any;
+    set: (attribute: string, value: any) => void;
+    story: {
+        go: (section: string) => Promise<void>;
+        seen: (sectionOrPassage: string) => boolean;
+        visits: (sectionOrPassage: string) => number;
+        passages: (section?: string, filter?: TagFilter) => string[];
+        sections: (filter?: TagFilter) => string[];
+        tags: (name?: string) => string[];
+    };
+    // A player setting's value (squiffy.json's "settings"), as the story reads it with settings.name
+    getSetting: (name: string) => SettingValue | null;
+    // The story's element
+    element: HTMLElement;
+    on<E extends SquiffyScriptEvent>(event: E, handler: SquiffyEventHandler<E>): () => void;
+    off<E extends SquiffyScriptEvent>(event: E, handler: SquiffyEventHandler<E>): void;
+    once<E extends SquiffyScriptEvent>(event: E, handler: SquiffyEventHandler<E>): () => void;
+}
+
 // Previous versions of Squiffy had "squiffy", "get" and "set" as globals - we now pass these directly into JS functions.
 // We may tidy up this API at some point, though that would be a breaking change.
 interface SquiffyJsFunctionApi {

@@ -350,6 +350,13 @@ body { background: url("blob:preview/1"), url(https://example.com/x.png); }`);
         expect(messages).toMatchObject([{ type: "runtimeError", message: "Bad story" }]);
     });
 
+    test("reloads the page when the host asks, as it does before the next story after one with scripts (#528)", async () => {
+        const reload = vi.fn();
+        const preview = createPreview({ element: document.getElementById("squiffy")!, send: () => {}, loadModule, reload });
+        await preview.receive({ type: "reload" });
+        expect(reload).toHaveBeenCalledOnce();
+    });
+
     test("ignores messages for a story that hasn't loaded", async () => {
         const { preview, messages } = setUp();
         await preview.receive({ type: "restart" });

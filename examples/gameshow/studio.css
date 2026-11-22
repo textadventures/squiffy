@@ -1,7 +1,7 @@
 /* The studio. With squiffy.json, every .css file in the story's folder is part of the story.
 
    The story changes the look with classes:
-   - @class in a section: "lab", "advert", "final", "lights-out", and "confetti" for confetti.js
+   - @class in a section: "lab", "advert", "final" and "lights-out"
    - the "Studio lights" setting in squiffy.json, which puts "setting-lights-Budget" (or
      "setting-lights-Dazzling") on the story
    - {{#style "..."}} for some of the text: "wheel", "countdown", "cue-card", "advert-card" */

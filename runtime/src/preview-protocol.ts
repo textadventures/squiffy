@@ -47,7 +47,11 @@ export type HostMessage =
     // CSS can still override it, e.g. with ":root { color-scheme: light; }".
     | { type: "theme"; theme: PreviewTheme }
     // Mutes or unmutes the story's music and sounds (#444)
-    | { type: "muted"; muted: boolean };
+    | { type: "muted"; muted: boolean }
+    // Reloads the page, which then sends "ready" again. The host sends this before loading a story
+    // after one that had scripts, which can leave things behind, such as a squiffy:ready listener
+    // that would hear about the next story too (#528).
+    | { type: "reload" };
 
 export type PreviewMessage =
     // The page has loaded and is listening

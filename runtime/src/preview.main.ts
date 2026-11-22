@@ -18,6 +18,7 @@ const post = (message: PreviewMessage) => {
 const preview = createPreview({
     element: document.getElementById("squiffy")!,
     send: post,
+    reload: () => location.reload(),
 });
 
 window.addEventListener("message", event => {

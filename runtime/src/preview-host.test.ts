@@ -81,6 +81,59 @@ describe("preview host", () => {
         expect(onUsesSound).toHaveBeenCalledWith(true);
     });
 
+    test("reloads the page before loading a story after one with scripts, sending the assets again (#528)", () => {
+        const { channel, sent, receive } = fakeChannel();
+        const onReady = vi.fn();
+        const host = createPreviewHost(channel, { onReady });
+        receive({ channel: PREVIEW_CHANNEL, type: "ready" });
+        expect(onReady).toHaveBeenCalledOnce();
+        const assets = { urls: { "a.png": "https://example.com/a.png" } };
+        host.setAssets(assets);
+        host.load({ js: "one", scripts: ["document.addEventListener('squiffy:ready', () => {});"] });
+        sent.length = 0;
+
+        // Its scripts could have left things behind, so the page reloads first
+        host.setAssets(assets);
+        host.load({ js: "two" });
+        expect(sent).toEqual([
+            { channel: PREVIEW_CHANNEL, type: "assets", assets },
+            { channel: PREVIEW_CHANNEL, type: "reload" },
+        ]);
+        sent.length = 0;
+        receive({ channel: PREVIEW_CHANNEL, type: "ready" });
+        expect(sent).toEqual([
+            { channel: PREVIEW_CHANNEL, type: "assets", assets },
+            { channel: PREVIEW_CHANNEL, type: "load", story: { js: "two" } },
+        ]);
+        // The host asked for it, so it isn't a reload that lost the story
+        expect(onReady).toHaveBeenCalledOnce();
+
+        // That story had no scripts, so the next one loads without a reload
+        sent.length = 0;
+        host.load({ js: "three" });
+        expect(sent).toEqual([{ channel: PREVIEW_CHANNEL, type: "load", story: { js: "three" } }]);
+    });
+
+    test("a page that reloads by itself is new, so the next story doesn't reload it (#528)", () => {
+        const { channel, sent, receive } = fakeChannel();
+        const host = createPreviewHost(channel);
+        receive({ channel: PREVIEW_CHANNEL, type: "ready" });
+        host.load({ js: "one", scripts: ["x"] });
+        receive({ channel: PREVIEW_CHANNEL, type: "ready" });
+        sent.length = 0;
+        host.load({ js: "two" });
+        expect(sent).toEqual([{ channel: PREVIEW_CHANNEL, type: "load", story: { js: "two" } }]);
+    });
+
+    test("only the last of the loads sent before the page is ready is sent", () => {
+        const { channel, sent, receive } = fakeChannel();
+        const host = createPreviewHost(channel);
+        host.load({ js: "one", scripts: ["x"] });
+        host.load({ js: "two" });
+        receive({ channel: PREVIEW_CHANNEL, type: "ready" });
+        expect(sent).toEqual([{ channel: PREVIEW_CHANNEL, type: "load", story: { js: "two" } }]);
+    });
+
     test("passes messages from the page to handlers, ignoring anything else", () => {
         const { channel, receive } = fakeChannel();
         const handlers = {

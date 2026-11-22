@@ -545,9 +545,6 @@ story.sections = {
         "clear": true,
         "text": "# Final score: {{#every 60}}{{set \\"counted\\" (min (counted + step) score)}}{{counted}}{{#if counted >= score}}{{stop}}{{/if}}{{/every}}\\n\\n{{#if score >= 600}}\\n{{sound \\"sounds/fanfare.mp3\\"}}\\n{{#animate \\"toast\\"}}GRAND CHAMPION!{{/animate}}\\n\\nBalloons fall from the ceiling. Confetti explodes. Professor Boom bursts out of the trapdoor to set off celebratory fireworks (indoors, against regulations).\\n\\nHank hands you an oversized novelty cheque. It bounces.\\n\\n\\"{{player_name}}, you're our GRAND CHAMPION! You've won fame, glory, and whatever prizes we can legally give you once the lawyers have watched the tape!\\"\\n\\nThe audience carries you out on their shoulders. The cardboard cutout leads the parade.\\n\\n**THE END: Grand Champion**\\n{{else if score >= 250}}\\n{{sound \\"sounds/applause.mp3\\"}}\\n{{#animate \\"toast\\"}}WINNER!{{/animate}}\\n\\n\\"That's... actually pretty good!\\" Hank shakes your hand, then checks it's still got all its rings.\\n\\nA stagehand gives you a gift basket: one (1) cheese, a voucher for 10% off at a shop that closed in 2019, and a sincere thank-you note from Hank.\\n\\n\\"Come back any time! Assuming we're not cancelled!\\"\\n\\n**THE END: Winner**\\n{{else}}\\nHank looks at his cards. He looks at you. He looks at the audience.\\n\\n\\"You know what? You showed up. You tried. And isn't that what really matters?\\"\\n\\n{{embed \\"motto\\"}}\\n\\n\\"No, actually, points are what matter. But good effort!\\"\\n\\nHe gives you a single balloon. It's already deflating.\\n\\n**THE END: Participant**\\n{{/if}}\\n\\n{{#if prizes.length}}You take home: {{join prizes \\", \\" \\" and \\"}}.{{/if}}\\n\\n{{restart text=\\"Play again\\"}}\\n",
         "music": "sounds/theme.mp3",
-        "classes": [
-            "confetti"
-        ],
         "transition": "zoom",
         "transitionTime": 800,
         "leave": "zoom",
