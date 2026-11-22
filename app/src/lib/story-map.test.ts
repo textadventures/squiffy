@@ -45,6 +45,21 @@ describe("story map", () => {
         expect(byId["section:start"].class).toContain("start");
     });
 
+    test("nothing is greyed out as unreachable when something reachable goes somewhere only known as it's played", async () => {
+        const map = buildStoryMap(await graphOf("[[start]]:\n[[Go]]({{place}})\n\n[[lost]]:\n@end\n"));
+        const lost = map.nodes.find(n => n.id == "section:lost")!;
+        expect(lost.class).not.toContain("unreachable");
+        expect(lost.title).toBe("lost\nAn ending (@end).\nNothing reachable from the start links here, but it may be reached in a way only known as the story is played.");
+    });
+
+    test("{{goto name}} is drawn to each section the story sets name to", async () => {
+        const map = buildStoryMap(await graphOf("[[start]]:\n{{set \"vision\" \"smoke\"}}{{goto vision}}\n\n[[smoke]]:\n@end\n"));
+        const edge = map.edges.find(e => e.kind == "goto")!;
+        expect(edge).toMatchObject({ from: "section:start", to: "section:smoke" });
+        expect(edge.title).toBe("Go to (conditional) to smoke, when vision is set to it");
+        expect(map.nodes.find(n => n.id == "section:smoke")!.class).not.toContain("unreachable");
+    });
+
     test("a broken link gets a marker under its section", async () => {
         const map = buildStoryMap(await graphOf(story));
         const missing = map.nodes.find(n => n.kind == "missing")!;
