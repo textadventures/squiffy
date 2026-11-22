@@ -58,6 +58,8 @@ The editor understands your story as you write:
 - The problems button in the toolbar shows how many problems the story has. Click it, or press Ctrl+Shift+M (Cmd+Shift+M on Mac), to list every problem in every file of the story. Choose one to go to it, or use its quick fix from the list.
 - It warns about a section the player can't reach, because nothing that can be reached from the start of the story links to it (a section that's only shown inside others, with `{{embed}}` or `{{live ... section=...}}`, is fine), and about a "dead end": a section with no links to another section. If a dead end is one of your story's endings, the quick fix marks it with [`@end`](/basic-concepts/#endings).
 - It warns about [music or sound on the story's first screen](/images-and-files/#music-and-sound), which browsers won't play until the player has clicked something.
+- It warns about a `{{name}}` that's neither a helper nor an attribute the story sets, as it shows nothing: usually a typo, such as `{{glod}}` for `{{gold}}`, and the warning suggests the name you may have meant.
+- If one of these warnings is something you meant, its quick fix [turns it off](/cli/#turning-off-a-warning) with a `{{!-- squiffy-ignore --}}` comment, for the section or, for a `{{name}}`, everywhere.
 - As you type a link, it suggests the names of your sections and passages.
 - Hover over a link to see the start of the section or passage it goes to.
 - Right-click a link, or a section or passage name, to go to it (**Go to definition**), list every link to it (**Find references**), or rename it everywhere (**Rename**). Or put the cursor on it and press F12, Shift+F12 or F2. Ctrl+click (Cmd+click on Mac) on a link also goes to it.

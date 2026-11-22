@@ -13,6 +13,7 @@ import type {
 import { getStoryFiles, globToRegExp, parseProjectFile, PROJECT_FILENAME, ProjectFile, storyFileList } from "./project.js";
 import { convertV5Syntax, findV5Syntax } from "./v5.js";
 import { findUnquotedText, splitWithOffsets } from "./setters.js";
+import { ignoredDiagnostics } from "./ignore.js";
 import { buildStoryGraph, firstScreenSoundDiagnostics, GraphUsage, StoryGraph, storyGraphDiagnostics } from "./story-graph.js";
 
 export type { Diagnostic, Position, Range } from "./syntax.js";
@@ -203,6 +204,9 @@ const DIRECTIVES: [string, string][] = [
     ["leave", "How the old text goes when this clears the screen, such as @leave fade 1s"],
     ["ui", "JavaScript for the story's user interface"],
 ];
+
+// The warnings with a quick fix that adds a squiffy-ignore comment
+const IGNORE_ACTION_CODES = new Set<Diagnostic["code"]>(["squiffy/unknown-name", "squiffy/sound-on-first-screen", "squiffy/unreachable-section"]);
 
 const contains = (range: Range, pos: Position) =>
     comparePositions(range.start, pos) <= 0 && comparePositions(pos, range.end) <= 0;
@@ -487,7 +491,9 @@ export function createLanguageService(options: LanguageServiceOptions): Language
                 resolve: (usage: GraphUsage) => resolveUsage(index, usage as Usage),
             };
             const graph = buildStoryGraph(source);
-            index.graph = { graph, diagnostics: [...storyGraphDiagnostics(graph), ...firstScreenSoundDiagnostics(source)] };
+            const diagnostics = [...storyGraphDiagnostics(graph), ...firstScreenSoundDiagnostics(source)];
+            const ignored = ignoredDiagnostics(index.analysis.files, diagnostics);
+            index.graph = { graph, diagnostics: diagnostics.filter(d => !ignored.has(d)) };
         }
         return index.graph;
     }
@@ -629,6 +635,26 @@ export function createLanguageService(options: LanguageServiceOptions): Language
             if (p.range.start.line <= position.line) passage = p;
         }
         return { section: current, passage };
+    }
+
+    // The master section, [[]]:, if the story has one
+    function masterSection(index: Index): { file: string; node: SectionNode } | undefined {
+        for (const [file, tree] of index.files) {
+            for (const node of tree.sections) {
+                if (node.type == "section" && node.header?.type == "section-header" && node.header.name == "") return { file, node };
+            }
+        }
+        return undefined;
+    }
+
+    // Adds a squiffy-ignore comment to a section: before its text, as a line of text before
+    // @set and JavaScript would stop them being read as such, or after them if it has no text
+    function ignoreCommentEdit(section: SectionNode, lines: string[], comment: string): TextEdit {
+        const text = section.body.find(n => n.type == "text");
+        if (text) return { range: lineRange(text.range.start.line, 0, 0), newText: `${comment}\n` };
+        const last = section.body[section.body.length - 1] ?? section.header!;
+        const line = last.range.end.line;
+        return { range: lineRange(line, lines[line].length, lines[line].length), newText: `\n${comment}` };
     }
 
     function firstLines(node: SectionNode | PassageNode, count: number) {
@@ -960,6 +986,30 @@ export function createLanguageService(options: LanguageServiceOptions): Language
                 const edit: WorkspaceEdit = {};
                 addEdit(edit, path, { range: { start, end }, newText: "" });
                 actions.push({ title: "Remove this @import", kind: "quickfix", diagnostic, edit });
+            }
+
+            // A warning that may be what the author meant can be turned off with a squiffy-ignore
+            // comment, in the section it's in, and an unknown name in the master section too,
+            // which turns it off everywhere. (Any warning can, but for the others there's a fix.)
+            for (const diagnostic of diagnostics) {
+                if (!IGNORE_ACTION_CODES.has(diagnostic.code)) continue;
+                const { section } = containerAt(tree.file, diagnostic.range.start);
+                const code = diagnostic.code.replace(/^squiffy\//, "");
+                const comment = `{{!-- squiffy-ignore ${code}${diagnostic.subject ? ` ${diagnostic.subject}` : ""} --}}`;
+                const what = diagnostic.code == "squiffy/unknown-name" ? `{{${diagnostic.subject}}}` : "this warning";
+                if (section?.header && !(section.header.type == "section-header" && section.header.name == "")) {
+                    const edit: WorkspaceEdit = {};
+                    addEdit(edit, path, ignoreCommentEdit(section, lines, comment));
+                    actions.push({ title: `Ignore ${what} in this section`, kind: "quickfix", diagnostic, edit });
+                }
+                if (diagnostic.code == "squiffy/unknown-name") {
+                    const master = masterSection(index);
+                    const masterText = master && index.texts.get(master.file);
+                    if (!master || masterText === undefined) continue;
+                    const edit: WorkspaceEdit = {};
+                    addEdit(edit, master.file, ignoreCommentEdit(master.node, masterText.replace(/\r/g, "").split("\n"), comment));
+                    actions.push({ title: `Ignore ${what} everywhere`, kind: "quickfix", diagnostic, edit });
+                }
             }
 
             if (diagnostics.some(d => d.code == "squiffy/v5-syntax")) {

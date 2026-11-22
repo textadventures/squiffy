@@ -92,8 +92,9 @@ async function run(compiler: typeof compile | typeof legacyCompile, settings: Se
 async function expectSameResult(settings: Settings) {
     const expected = await run(legacyCompile, settings);
     const actual = await run(compile, settings);
-    // The old compiler didn't warn about duplicate sections and passages (tested in compiler.test.ts)
-    actual.warnings = actual.warnings.filter(w => !/There's already a (section|passage) called/.test(w));
+    // The old compiler didn't warn about duplicate sections and passages (tested in compiler.test.ts),
+    // or about {{name}} when nothing sets name (#526)
+    actual.warnings = actual.warnings.filter(w => !/There's already a (section|passage) called|isn't a helper, and nothing in the story sets/.test(w));
     // The old compiler called a section without a name of its own by the name it gave it, e.g.
     // "In section '_continue1'", where the new one says 'In the "+++Continue..." after "cave"'
     const whichSection = (w: string) => w.replace(/: In .*?(, passage '[^']*')?,? there is/, ": In (section)$1 there is");

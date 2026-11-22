@@ -142,3 +142,82 @@ function describeTag(tagText: string) {
     const oneLine = tagText.replace(/\s*\n\s*/g, " ");
     return oneLine.length > 60 ? oneLine.substring(0, 57) + "..." : oneLine;
 }
+
+export interface BareName {
+    // The {{...}} tag's range in the text
+    start: number;
+    end: number;
+    // The name as written, e.g. hero.hp, and the attribute it's in, hero
+    name: string;
+    root: string;
+}
+
+export interface TemplateNames {
+    // {{name}} on its own, with nothing after the name: a helper if there's one called that, or
+    // else an attribute. Names in a block that changes what names refer to, such as {{#each}},
+    // aren't included.
+    bare: BareName[];
+    // The names of the values passed to embeds, as in {{embed "say" who="Ann"}}, which the text
+    // it shows uses as attributes
+    embedParameters: Set<string>;
+}
+
+// Helpers whose blocks show their text with the same names as the text around them. In any other
+// block, such as {{#each}} or one of the story's own helpers, a name can refer to something else.
+const SAME_CONTEXT_BLOCKS = new Set(["if", "unless", "every", "once", "firsttime", "embed", "style", "label", "replace", "animate"]);
+
+interface HbsNode {
+    type: string;
+    loc?: { start: { line: number; column: number }; end: { line: number; column: number } };
+    path?: { type: string; original: string; parts: string[]; data: boolean; depth: number };
+    params?: HbsNode[];
+    hash?: { pairs: { key: string; value: HbsNode }[] };
+    body?: HbsNode[];
+    program?: HbsNode;
+    inverse?: HbsNode;
+}
+
+// The names used in a section's or passage's text, which it reads the way findTemplateError does.
+// Text with a syntax error has none.
+export function findTemplateNames(text: string): TemplateNames {
+    const result: TemplateNames = { bare: [], embedParameters: new Set() };
+    if (!text.includes("{{")) return result;
+    const edits: InfixEdit[] = [];
+    let ast: HbsNode;
+    let rewritten: string;
+    try {
+        rewritten = rewriteInfixExpressions(text, edits);
+        ast = Handlebars.parse(rewritten) as unknown as HbsNode;
+    } catch {
+        return result;
+    }
+    const lineStarts = [0];
+    for (let i = 0; i < rewritten.length; i++) {
+        if (rewritten[i] == "\n") lineStarts.push(i + 1);
+    }
+    const offset = (pos: { line: number; column: number }) =>
+        mapRewrittenPosition(edits, Math.min((lineStarts[pos.line - 1] ?? rewritten.length) + pos.column, rewritten.length));
+
+    const visit = (node: HbsNode | undefined, sameContext: boolean) => {
+        if (!node) return;
+        if (node.path?.type == "PathExpression" && node.path.original == "embed") {
+            for (const pair of node.hash?.pairs ?? []) result.embedParameters.add(pair.key);
+        }
+        if (node.type == "MustacheStatement" && sameContext && node.loc) {
+            const path = node.path!;
+            if (path.type == "PathExpression" && !path.data && path.depth == 0 && !/^this\b/.test(path.original)
+                && path.parts.length && !node.params?.length && !node.hash?.pairs.length) {
+                result.bare.push({ start: offset(node.loc.start), end: offset(node.loc.end), name: path.original, root: path.parts[0] });
+            }
+        }
+        for (const child of [...node.params ?? [], ...(node.hash?.pairs ?? []).map(p => p.value)]) visit(child, sameContext);
+        if (node.type == "BlockStatement") {
+            const same = sameContext && node.path?.type == "PathExpression" && SAME_CONTEXT_BLOCKS.has(node.path.original);
+            visit(node.program, same);
+            visit(node.inverse, same);
+        }
+        for (const child of node.body ?? []) visit(child, sameContext);
+    };
+    visit(ast, true);
+    return result;
+}
