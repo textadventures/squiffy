@@ -79,6 +79,11 @@
         },
         {
           "type": "json",
+          "path": "vscode/package.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
           "path": "desktop/package.json",
           "jsonpath": "$.version"
         },
@@ -134,18 +139,23 @@
         },
         {
           "type": "json",
+          "path": "vscode/package.json",
+          "jsonpath": "$[dependencies,devDependencies][?(@property.startsWith('squiffy-') || @property.startsWith('@textadventures/squiffy-'))]"
+        },
+        {
+          "type": "json",
           "path": "examples/vite-app/package.json",
           "jsonpath": "$[dependencies,devDependencies][?(@property.startsWith('squiffy-') || @property.startsWith('@textadventures/squiffy-') || @property == '@textadventures/vite-plugin-squiffy')]"
         },
         {
           "type": "json",
           "path": "package-lock.json",
-          "jsonpath": "$.packages[compiler,codemirror-lang,project-fs,graph-map,editor-search,runtime,packager,cli,app,site,types,vite-plugin,examples/vite-app].version"
+          "jsonpath": "$.packages[compiler,codemirror-lang,project-fs,graph-map,editor-search,runtime,packager,cli,app,site,types,vite-plugin,vscode,examples/vite-app].version"
         },
         {
           "type": "json",
           "path": "package-lock.json",
-          "jsonpath": "$.packages[compiler,codemirror-lang,project-fs,graph-map,editor-search,runtime,packager,cli,app,site,types,vite-plugin,examples/vite-app][dependencies,devDependencies][?(@property.startsWith('squiffy-') || @property.startsWith('@textadventures/squiffy-') || @property == '@textadventures/vite-plugin-squiffy' || @property == '@textadventures/project-fs' || @property == '@textadventures/graph-map' || @property == '@textadventures/editor-search')]"
+          "jsonpath": "$.packages[compiler,codemirror-lang,project-fs,graph-map,editor-search,runtime,packager,cli,app,site,types,vite-plugin,vscode,examples/vite-app][dependencies,devDependencies][?(@property.startsWith('squiffy-') || @property.startsWith('@textadventures/squiffy-') || @property == '@textadventures/vite-plugin-squiffy' || @property == '@textadventures/project-fs' || @property == '@textadventures/graph-map' || @property == '@textadventures/editor-search')]"
         }
       ]
     }
