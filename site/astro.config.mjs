@@ -70,7 +70,7 @@ export default defineConfig({
                 },
                 {
                     label: "The editor",
-                    items: ["editor", "story-map", "snippets", "desktop-app"],
+                    items: ["editor", "story-map", "snippets", "desktop-app", "vscode"],
                 },
                 {
                     label: "Command line and AI",

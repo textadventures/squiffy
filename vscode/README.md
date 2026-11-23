@@ -23,6 +23,8 @@ Write [Squiffy](https://squiffystory.com) interactive stories in VS Code, with a
 
 It works in VS Code on the desktop, and on [vscode.dev](https://vscode.dev) and github.dev.
 
+There's more about it in [Squiffy's documentation](https://squiffystory.com/vscode/).
+
 ## Stories and their files
 
 A folder with a `squiffy.json` is a story, made of every `.squiffy`, `.css` and `.js` file in it,
