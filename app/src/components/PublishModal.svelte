@@ -166,7 +166,7 @@
                 </div>
                 {#if details?.author}<p class="text-xs text-surface-600-400">by {details.author}</p>{/if}
                 <p class="text-xs text-surface-600-400 line-clamp-2">
-                    {details?.description || "No description yet. Players see it in search results and link previews, and on textadventures.co.uk."}
+                    {details?.description || "Tell players what your story is about. Add a description and a cover, for its page on textadventures.co.uk, search results and link previews."}
                 </p>
                 {#if details?.cover}<p class="text-xs text-surface-600-400">Cover: {details.cover}</p>{/if}
             </section>
