@@ -8,7 +8,9 @@
 # Each major version's player is built from its latest stable release tag,
 # or, until it has one, from its latest prerelease (so /v7/ is there for the
 # 7.0 betas). Once a major version has a stable release, its prereleases
-# don't change its player. Every deploy builds them all, since a Cloudflare
+# don't change its player. A player built from a prerelease sends "Open in
+# editor" to the beta editor, as the stable one may be an earlier major
+# version, which can't open the link. Every deploy builds them all, since a Cloudflare
 # Pages upload replaces the whole site. The home page and _headers at the top
 # come from the newest version.
 #
@@ -24,8 +26,8 @@ out="$(cd "$out" && pwd)"
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 
-major_of() {
-  git show "$1:package.json" | node -p 'JSON.parse(require("fs").readFileSync(0, "utf8")).version.split(".")[0]'
+version_of() {
+  git show "$1:package.json" | node -p 'JSON.parse(require("fs").readFileSync(0, "utf8")).version'
 }
 
 if [ "$#" -gt 0 ]; then
@@ -47,14 +49,20 @@ for ref in $refs; do
   if ! git cat-file -e "$ref:player/package.json" 2>/dev/null; then
     continue
   fi
-  major="$(major_of "$ref")"
-  echo "::group::Building /v$major/ from $ref"
+  version="$(version_of "$ref")"
+  major="${version%%.*}"
+  # Where the player's "Open in editor" goes: see release-channel.sh
+  case "$version" in
+    *-*) editor="https://app-beta.squiffystory.com" ;;
+    *) editor="https://app.squiffystory.com" ;;
+  esac
+  echo "::group::Building /v$major/ from $ref ($version), for the editor at $editor"
   # A copy of the release's files, rather than a git worktree, which Lerna
   # builds the main checkout's packages from
   src="$work/$major"
   mkdir -p "$src"
   git archive "$ref" | tar -x -C "$src"
-  (cd "$src" && npm ci --no-audit --no-fund && npx lerna run build --scope @textadventures/squiffy-player --include-dependencies)
+  (cd "$src" && npm ci --no-audit --no-fund && VITE_EDITOR_URL="$editor" npx lerna run build --scope @textadventures/squiffy-player --include-dependencies)
   rm -rf "$out/v$major"
   cp -R "$src/player/build/v$major" "$out/v$major"
   if [ "$major" -ge "$newest" ]; then

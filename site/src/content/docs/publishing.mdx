@@ -11,6 +11,8 @@ Squiffy creates HTML, CSS and JavaScript files, which you can upload anywhere th
 
 - **textadventures.co.uk** - Puts your story on textadventures.co.uk, or updates it there: see [Publishing to textadventures.co.uk](#publishing-to-textadventurescouk).
 
+- **A link** - Makes a link with your whole story in it, with nothing to upload: see [Sharing a link](#sharing-a-link). It's for a small story, or a sample of one.
+
 - **Zip for a website** - Creates a ZIP file containing `index.html`, `style.css`, `story.js` and `squiffy.runtime.global.js`, along with your story's images and other files. Upload these files to any web server.
 
 - **One HTML file** - Creates a single self-contained HTML file with all the CSS, JavaScript and images embedded. This is ideal for easy sharing, uploading to platforms that only accept one file, or offline distribution.
@@ -37,6 +39,35 @@ The editor says when your story is published, with a link to its page.
 Nothing is published until you finish on textadventures.co.uk, and an upload you don't finish is deleted after an hour. A story can be up to 50 MB.
 
 textadventures.co.uk knows a story by the `id` in its [`squiffy.json`](/project-file/), so a story without one is given one first. Keep that file with your story: a copy of the story with a different `id`, or none, would be published as a new game.
+
+## Sharing a link
+
+In the Publish dialog, **A link** turns your story into a web address, which you copy and send to anyone. Opening it plays the story:
+
+```
+https://squiffystories.com/v7/#story=1bY9Na4QwEIbv-RVDepX4LSIqCz0Vtj31Jh6s...
+```
+
+The story is in the link itself. Nothing is uploaded, so there's no account to make and nothing to host. That makes it a quick way to show someone a short story, a scene you'd like an opinion on, or an example of a problem you're asking for help with.
+
+The player has a **Back** button (unless your story [turns it off](/buttons-panels-settings/#the-back-button)), a **Restart** button, and **Open in editor**, which gives whoever is playing their own copy of the story to read or change. Their copy is a new story, so nothing they do changes yours, or your link.
+
+A link only has room for a small story:
+
+- **Its text**: the story's `.squiffy`, `.css` and `.js` files, and its `squiffy.json`.
+- **Small images**, of up to 4 KB each. An image takes up more of the link than the same amount of text does, so there's room for a few icons or small drawings, and SVG images take the least. The dialog lists any files it left out. A bigger image, or a sound, still works if your story uses its web address rather than a file.
+- **Up to 32,000 characters** in all, which is about 60 KB of story text. The dialog won't make a longer link.
+
+The dialog says how long the link is. Up to 2,000 characters, it can be pasted anywhere. Longer than that, it works in an email or as a link on a web page, but some chat apps cut a long message short, which breaks the link.
+
+A few things are different from a story published the other ways:
+
+- **The link is the story as it was when you made it.** If you change the story, make a new link. The old one goes on playing the old version.
+- **A player's progress isn't saved.** Closing the page starts the story again, and there are no [saved games](/buttons-panels-settings/#saved-games).
+- **Every link looks the same** when it's pasted into a chat or a social media post: its preview can't show the story's title or cover, because the site never sees which story it is.
+- **The link says which version of Squiffy plays it** (the `v7`), so a story goes on working as it does now when later versions of Squiffy change things.
+
+For a story that's finished, or one with pictures and sound, publish it [to textadventures.co.uk](#publishing-to-textadventurescouk) or [somewhere else](#where-to-put-it).
 
 ## Publishing from the command line
 
