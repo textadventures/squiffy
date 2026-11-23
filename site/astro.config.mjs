@@ -60,6 +60,7 @@ export default defineConfig({
                         "player-input",
                         "images-and-files",
                         "multiple-files",
+                        "project-file",
                         "buttons-panels-settings",
                         "styling",
                         "javascript",
