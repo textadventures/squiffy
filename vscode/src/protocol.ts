@@ -14,6 +14,15 @@ export type PreviewStoryResult = PreviewStory & {
     root: string;
 };
 
+// The story a file is part of, built to be published: the packager's text files (index.html,
+// story.js and the page's stylesheets), and the folder its assets are found from. The client
+// copies the assets in, or zips the lot, as binary files are better read there than sent here.
+export const EXPORT_STORY = "squiffy/exportStory";
+export interface ExportStoryParams { uri: string }
+export type ExportStoryResult =
+    | { success: true; files: Record<string, string>; root: string; title?: string }
+    | { success: false; errors: string[] };
+
 // The section (and passage) at a position, to start the preview there
 export const SECTION_AT = "squiffy/sectionAt";
 export interface SectionAtParams { uri: string; position: { line: number; character: number } }
