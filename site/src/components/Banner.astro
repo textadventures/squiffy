@@ -1,0 +1,30 @@
+---
+import Default from '@astrojs/starlight/components/Banner.astro';
+
+// Starlight's page banner, with an announcement of the Squiffy 7 beta above it. This is only on the
+// 6.0.1 docs branch (site-v6.0.1), deployed to squiffystory.com by deploy-site.yml: main has its own
+// Banner.astro, which shows a notice on beta.squiffystory.com instead.
+---
+
+<div class="beta-announcement" data-pagefind-ignore>
+	<strong>Squiffy 7 is in beta</strong>, with a new editor, a story map, a desktop app and much more.{' '}
+	<a href="https://beta.squiffystory.com/whats-new/">See what's new</a> or{' '}
+	<a href="https://app-beta.squiffystory.com">try the beta editor</a>
+</div>
+<Default />
+
+<style>
+	.beta-announcement {
+		padding: var(--sl-nav-pad-y) var(--sl-nav-pad-x);
+		background-color: var(--sl-color-accent-low);
+		border-bottom: 1px solid var(--sl-color-accent);
+		color: var(--sl-color-accent-high);
+		line-height: var(--sl-line-height-headings);
+		text-align: center;
+		text-wrap: balance;
+	}
+	.beta-announcement a {
+		color: inherit;
+		font-weight: 600;
+	}
+</style>

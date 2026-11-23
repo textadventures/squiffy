@@ -22,6 +22,7 @@ export default defineConfig({
             components: {
                 Header: "./src/components/Header.astro",
                 PageFrame: "./src/components/PageFrame.astro",
+                Banner: "./src/components/Banner.astro",
             },
             social: [
                 { icon: "github", label: "GitHub", href: "https://github.com/textadventures/squiffy" },
