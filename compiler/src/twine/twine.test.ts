@@ -68,6 +68,7 @@ setup.x = 1;
 [[Other]]</tw-passagedata>
 </tw-storydata></body></html>`);
         expect(story.title).toBe("Café & Bar");
+        expect(story.language).toBeUndefined();
         expect(story.format).toBe("harlowe");
         expect(story.start).toBe("First");
         expect(story.passages).toEqual([
@@ -93,6 +94,32 @@ setup.x = 1;
 
     test("something that isn't a Twine story", () => {
         expect(() => parseTwine("<html><body>Hello</body></html>")).toThrow(TwineParseError);
+    });
+});
+
+describe("the converted story's language", () => {
+    const passages = Array.from({ length: 12 }, (_, i) =>
+        `:: Room ${i}\nYou are in a cold room with no windows, and there is a door to the north. [[Room ${i + 1}]]`).join("\n\n");
+
+    test("is the published story's <html lang>", () => {
+        const html = `<!DOCTYPE html><html lang="en-gb" data-init="no-js"><body><tw-storydata name="T" startnode="1" format="SugarCube" format-version="2.37.3">
+<tw-passagedata pid="1" name="Start">Bonjour.</tw-passagedata></tw-storydata></body></html>`;
+        const result = convertTwine(html);
+        expect(JSON.parse(result.files["squiffy.json"]).language).toBe("en-GB");
+        expect(result.languageGuessed).toBeUndefined();
+        expect(formatTwineProblems(result)).not.toContain("guessed");
+    });
+
+    test("is guessed from its text, if it doesn't say, which the problems file says", () => {
+        const result = convertTwine(`:: StoryData\n{"format": "SugarCube", "format-version": "2.37.3"}\n\n:: Start\n<<set $x to 1>>[[Room 0]]\n\n${passages}`);
+        expect(JSON.parse(result.files["squiffy.json"]).language).toBe("en");
+        expect(result.languageGuessed).toBe(true);
+        expect(formatTwineProblems(result)).toContain("The story's language, \"en\", was guessed from its text.");
+    });
+
+    test("is left out if it can't be guessed", () => {
+        const result = convertTwine(":: Start\nHello.");
+        expect(JSON.parse(result.files["squiffy.json"]).language).toBeUndefined();
     });
 });
 

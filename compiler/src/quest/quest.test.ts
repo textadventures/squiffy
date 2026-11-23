@@ -351,6 +351,14 @@ describe("the text processor", () => {
     });
 });
 
+test("the story's language is guessed from its pages' text", () => {
+    const text = "Te despiertas en una habitación fría y sin ventanas. Hay una puerta al norte y una mesa en el centro de la sala. En la mesa hay una nota que dice que tienes una hora para salir antes de que vuelvan por ti.";
+    const result = convertQuestGamebook(gamebook(page("Start", text, [["Two", "Sigue"]]) + page("Two", text) + page("Three", text)));
+    expect(JSON.parse(result.files["squiffy.json"]).language).toBe("es");
+    expect(formatQuestProblems(result)).toContain("The story's language, \"es\", was guessed from its text.");
+    expect(JSON.parse(convertQuestGamebook(gamebook(page("Start", "Hello."))).files["squiffy.json"]).language).toBeUndefined();
+});
+
 test("the list of problems", () => {
     const result = convertQuestGamebook(gamebook(
         page("Start", "{either x:a}", [["Gone", "Lost"]]),

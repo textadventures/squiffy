@@ -5,7 +5,8 @@
 // problem, so the author can deal with it by hand.
 
 import { formatProjectFile } from "../project.js";
-import { finishText, reservedAttributes, sanitiseName, sectionLink, urlLink } from "../twine/convert.js";
+import { guessLanguage } from "../guess-language.js";
+import { finishText, languageNote, reservedAttributes, sanitiseName, sectionLink, urlLink } from "../twine/convert.js";
 import { attributeRef, print, quote } from "../twine/expression.js";
 import type { Expr } from "../twine/expression.js";
 import { parseQuestGame, QuestParseError } from "./aslx.js";
@@ -39,6 +40,8 @@ export interface QuestConversionResult {
     // The files the story uses, such as images and sounds, which should be copied next to it
     assets: string[];
     problems: QuestConversionProblem[];
+    // The story's language, guessed from its pages' text, as a gamebook doesn't say
+    language?: string;
 }
 
 export interface QuestConversionOptions {
@@ -477,7 +480,8 @@ function convertGame(game: QuestGame, options: QuestConversionOptions): QuestCon
         ...sections,
     ].filter(s => s.length).join("\n\n") + "\n";
     files[`${name}.squiffy`] = script;
-    files["squiffy.json"] = formatProjectFile({ main: `${name}.squiffy`, exclude });
+    const language = guessLanguage(storyPages.map(page => stringAttribute(page, "description").replace(/<[^>]*>|\{[^{}]*\}/g, " ")).join("\n"));
+    files["squiffy.json"] = formatProjectFile({ main: `${name}.squiffy`, exclude, language });
 
     return {
         title,
@@ -487,6 +491,7 @@ function convertGame(game: QuestGame, options: QuestConversionOptions): QuestCon
         pages: storyPages.length,
         assets: [...assets],
         problems,
+        ...(language ? { language } : {}),
     };
 }
 
@@ -573,6 +578,7 @@ export function formatQuestProblems(result: QuestConversionResult, sourceName?: 
     const lines = [
         `Converted ${sourceName ?? "a Quest gamebook"} (${result.format}) to Squiffy: ${result.pages} page${result.pages == 1 ? "" : "s"}.`,
         "",
+        ...languageNote(result.language, true),
     ];
     if (result.problems.length == 0) {
         lines.push("Everything was converted.");

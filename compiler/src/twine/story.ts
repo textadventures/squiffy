@@ -1,6 +1,7 @@
 // Reads a Twine story from Twee (Twee 3, and the older Twee 1/2 that Twine 1 and Tweego read)
 // or from Twine's HTML (Twine 2's published or archive HTML, and Twine 1's), into one shape for
 // the converters.
+import { languageTag } from "../project.js";
 
 export interface TwinePassage {
     name: string;
@@ -26,6 +27,9 @@ export interface TwineStory {
     // The story stylesheet and JavaScript, including passages tagged stylesheet or script
     stylesheet: string;
     script: string;
+    // The language the story is in, if it says: a published story's <html lang>, such as "en-GB".
+    // Twee and Twine's archives have nowhere to say.
+    language?: string;
 }
 
 export class TwineParseError extends Error {}
@@ -44,10 +48,18 @@ export function isTwineSource(text: string): boolean {
 }
 
 export function parseTwine(text: string): TwineStory {
-    if (/<tw-storydata[\s>]/i.test(text)) return parseTwine2Html(text);
-    if (/<div[^>]*\bid=["']storeArea["']/i.test(text)) return parseTwine1Html(text);
+    if (/<tw-storydata[\s>]/i.test(text)) return withLanguage(parseTwine2Html(text), text);
+    if (/<div[^>]*\bid=["']storeArea["']/i.test(text)) return withLanguage(parseTwine1Html(text), text);
     if (/^::/m.test(text)) return parseTwee(text);
     throw new TwineParseError("This doesn't look like a Twine story: there's no story data in it.");
+}
+
+// A published story's <html lang>. SugarCube's page has none, so one there is the author's own.
+function withLanguage(story: TwineStory, html: string): TwineStory {
+    const tag = /^[\s\S]*?<html\b([^>]*)>/i.exec(html.substring(0, 10000));
+    const lang = tag ? attributes(tag[1]).lang : undefined;
+    const language = lang ? languageTag(lang) : null;
+    return language ? { ...story, language } : story;
 }
 
 const entities: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: "\"", apos: "'", nbsp: " " };
