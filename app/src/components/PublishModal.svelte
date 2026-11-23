@@ -1,6 +1,7 @@
 <script lang="ts">
     // Publish: every way of getting a story out to players, with what each is for. Three of them
-    // save files for the author to put somewhere. The other sends the story to textadventures.co.uk:
+    // save files for the author to put somewhere. One makes a link with the whole story in it, for
+    // a small story (#lib/share-link.ts). The other sends the story to textadventures.co.uk:
     // the editor has no login there, so it uploads the published story and then sends the author to
     // a page on textadventures.co.uk, where they're signed in, to finish (the game's details for a
     // new story, or one button for an update), and this dialog says when that's done. See
@@ -9,6 +10,8 @@
     import ExternalLink from "@lucide/svelte/icons/external-link";
     import CircleCheck from "@lucide/svelte/icons/circle-check";
     import TriangleAlert from "@lucide/svelte/icons/triangle-alert";
+    import Copy from "@lucide/svelte/icons/copy";
+    import { MAX_ASSET_BYTES, SHORT_LINK_LENGTH, type StoryLink } from "#lib/share-link.js";
     import type { ExportKind } from "#lib/language/protocol.js";
     import type { OpenProject } from "#lib/project.svelte.js";
     import type { ProblemCounts } from "#lib/problems.js";
@@ -24,19 +27,22 @@
         onexport: (kind: ExportKind) => Promise<string | null>;
         // Builds the published story to upload, or says why it can't be
         prepare: () => Promise<{ zip: Uint8Array; filename: string } | { error: string }>;
+        // Makes a link with the story in it, or says why it can't be
+        preparelink: () => Promise<StoryLink | { error: string }>;
         // Opens Story details, in place of this dialog
         ondetails: () => void;
         // Shows the Problems panel, in place of this dialog
         onproblems: () => void;
         onclose: () => void;
     }
-    const { project, problemCounts, onexport, prepare, ondetails, onproblems, onclose }: Props = $props();
+    const { project, problemCounts, onexport, prepare, preparelink, ondetails, onproblems, onclose }: Props = $props();
 
     // How often to ask textadventures.co.uk whether the author has finished there
     const POLL_INTERVAL = 3000;
 
     const options: { value: PublishTarget; title: string; detail: string }[] = [
         { value: "online", title: "textadventures.co.uk", detail: "Put your story online for free, where players can find it, or update it there." },
+        { value: "link", title: "A link", detail: "The whole story in a web address, with nothing to upload. For a small story: its text, and a few small images." },
         { value: "zip", title: "Zip for a website", detail: "HTML, JavaScript and your story's files, to upload to itch.io or your own site." },
         { value: "html", title: "One HTML file", detail: "Everything in a single page, for sharing, or for sites that take one file." },
         { value: "js", title: "JavaScript only", detail: "Just story.js, for embedding the story in a page of your own." },
@@ -49,6 +55,8 @@
         | { name: "choose"; error?: string }
         // Saving a file
         | { name: "saving" }
+        // A link with the story in it, to copy
+        | { name: "link"; link: StoryLink; copied: boolean }
         | { name: "preparing" }
         | { name: "uploading"; progress: number }
         // Uploaded: the author goes to textadventures.co.uk to finish
@@ -78,6 +86,12 @@
             return;
         }
         stage = { name: "saving" };
+        if (target === "link") {
+            const link = await preparelink();
+            if (abort.signal.aborted) return;
+            stage = "error" in link ? { name: "choose", error: link.error } : { name: "link", link, copied: false };
+            return;
+        }
         const error = await onexport(target);
         if (abort.signal.aborted) return;
         if (error) stage = { name: "choose", error };
@@ -108,6 +122,25 @@
             if (abort.signal.aborted) return;
             stage = { name: "error", message: err instanceof UploadError ? err.message : "Couldn't publish the story. Try again later." };
         }
+    }
+
+    async function copyLink() {
+        if (stage.name !== "link") return;
+        const link = stage.link;
+        try {
+            await navigator.clipboard.writeText(link.url);
+        } catch {
+            // No clipboard access: the link is selected, to copy by hand
+            dialogEl?.querySelector<HTMLInputElement>("#publish-link")?.select();
+            return;
+        }
+        stage = { name: "link", link, copied: true };
+    }
+
+    // The files a link leaves out, in a sentence: the first few, and how many more
+    function fileList(files: string[]) {
+        const shown = files.slice(0, 3).join(", ");
+        return files.length > 3 ? `${shown} and ${files.length - 3} more` : shown;
     }
 
     async function check() {
@@ -154,7 +187,7 @@
         onsubmit={e => { e.preventDefault(); if (stage.name === "choose") void publish(); }}
     >
         <h2 id="publish-title" class="text-base font-semibold">
-            {stage.name === "choose" || stage.name === "saving" ? "Publish" : "Publish to textadventures.co.uk"}
+            {stage.name === "choose" || stage.name === "saving" ? "Publish" : stage.name === "link" ? "Share a link" : "Publish to textadventures.co.uk"}
         </h2>
 
         {#if stage.name === "choose" || stage.name === "saving"}
@@ -206,6 +239,57 @@
             {/if}
 
             {#if stage.name === "choose" && stage.error}<p class="text-sm text-error-500" role="alert">{stage.error}</p>{/if}
+        {:else if stage.name === "link"}
+            {@const length = stage.link.url.length}
+            <div class="publish-link flex flex-col gap-3 text-sm">
+                <p>This link is your story. Anyone who opens it can play it, and nothing has been uploaded.</p>
+                <div class="flex gap-2">
+                    <input
+                        id="publish-link"
+                        class="input text-xs flex-1 min-w-0 font-mono"
+                        type="text"
+                        readonly
+                        value={stage.link.url}
+                        aria-label="Link to the story"
+                        onfocus={e => e.currentTarget.select()}
+                    />
+                    <button type="button" class="btn btn-sm preset-filled-primary-500 shrink-0" onclick={() => void copyLink()} data-primary>
+                        {#if stage.copied}<CircleCheck class="size-4" /> Copied{:else}<Copy class="size-4" /> Copy{/if}
+                    </button>
+                </div>
+                <span class="sr-only" aria-live="polite">{stage.copied ? "Link copied" : ""}</span>
+                {#if length > SHORT_LINK_LENGTH}
+                    <p class="flex items-start gap-2 text-warning-700-300">
+                        <TriangleAlert class="size-4 shrink-0 mt-0.5" />
+                        <span>
+                            At {length.toLocaleString()} characters, it's too long for some chat apps, which cut a long
+                            message short. It'll work in an email, or as a link on a web page.
+                        </span>
+                    </p>
+                {:else}
+                    <p class="text-xs text-surface-600-400">It's {length.toLocaleString()} characters long, which is short enough to paste anywhere.</p>
+                {/if}
+                {#if stage.link.assets.length}
+                    <p class="text-xs text-surface-600-400">It has {fileList(stage.link.assets)} in it, as well as the story's text.</p>
+                {/if}
+                {#if stage.link.leftOut.length}
+                    <p class="flex items-start gap-2 text-warning-700-300">
+                        <TriangleAlert class="size-4 shrink-0 mt-0.5" />
+                        <span>
+                            Not in the link: {fileList(stage.link.leftOut)}. A link has room for the story's text and
+                            for images of up to {MAX_ASSET_BYTES / 1024} KB each. A bigger image, or a sound, has to
+                            be a web address to work.
+                        </span>
+                    </p>
+                {/if}
+                <p class="text-xs text-surface-600-400">
+                    The link plays the story as it is now. If you change the story, make a new link. Players can
+                    also open the story in the editor, to make a version of their own.
+                </p>
+                <a class="anchor self-start flex items-center gap-1" href={stage.link.url} target="_blank" rel="noopener">
+                    <ExternalLink class="size-4" /> Play it
+                </a>
+            </div>
         {:else}
             <div class="flex flex-col gap-3 text-sm" aria-live="polite">
                 {#if stage.name === "preparing"}
@@ -253,7 +337,7 @@
                 <button type="button" class="btn btn-sm preset-tonal" onclick={() => void upload()} data-primary>Try again</button>
             {/if}
             <button type="button" class="btn btn-sm preset-tonal" onclick={onclose} data-primary={stage.name === "published" && !stage.gameUrl ? "" : undefined}>
-                {stage.name === "published" || stage.name === "error" ? "Close" : "Cancel"}
+                {stage.name === "published" || stage.name === "error" || stage.name === "link" ? "Close" : "Cancel"}
             </button>
             {#if stage.name === "choose" || stage.name === "saving"}
                 <button type="submit" class="btn btn-sm preset-filled-primary-500" disabled={busy}>

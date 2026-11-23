@@ -34,6 +34,7 @@
     "@textadventures/project-fs": "^7.0.0-beta.13",
     "@textadventures/squiffy-codemirror": "^7.0.0-beta.13",
     "@textadventures/squiffy-packager": "^7.0.0-beta.13",
+    "@textadventures/squiffy-player": "^7.0.0-beta.13",
     "fflate": "^0.8.3",
     "idb-keyval": "^6.3.0",
     "squiffy-compiler": "^7.0.0-beta.13",

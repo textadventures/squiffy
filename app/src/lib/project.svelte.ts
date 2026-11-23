@@ -710,6 +710,14 @@ export async function browserStoryFromText(fileName: string | undefined, text: s
     return createBrowserStory(name, text);
 }
 
+// A new story in the browser from one shared as a link (share-link.ts): the reader's own copy
+export async function browserStoryFromLink(files: Map<string, string | Uint8Array>, mainFile: string): Promise<string> {
+    const id = crypto.randomUUID();
+    const fs = await browserStories.create(id, { title: "", mainFile, lastOpened: Date.now() });
+    for (const [path, content] of files) await fs.write(path, content);
+    return id;
+}
+
 // Imports a .squiffy file, a project zip (from Download project), or a Twine story or Quest
 // gamebook, on its own or in a zip (converted, if the author says to), into a new story in the browser. Returns its id,
 // or null if they cancel.

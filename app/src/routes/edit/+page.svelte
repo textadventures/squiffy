@@ -43,6 +43,7 @@
     import FontsModal from "#components/FontsModal.svelte";
     import StoryDetailsModal from "#components/StoryDetailsModal.svelte";
     import PublishModal from "#components/PublishModal.svelte";
+    import type { StoryLink } from "#lib/share-link.js";
     import AboutModal from "#components/AboutModal.svelte";
     import ContextMenu, { type ContextMenuItem } from "#components/ContextMenu.svelte";
     import Pencil from "@lucide/svelte/icons/pencil";
@@ -1381,6 +1382,24 @@
         }
     }
 
+    // The story as a link, which has the story in it (#lib/share-link.ts), or why it can't be one
+    async function prepareStoryLink(): Promise<StoryLink | { error: string }> {
+        const current = p;
+        const c = client;
+        if (!current || !c) return { error: "The story isn't open." };
+        try {
+            await syncOpenFiles();
+            // A story that doesn't compile can't be played from its link either
+            const compiled = await c.call("exportStory", "js", {});
+            if (!compiled.success) return { error: `The story can't be shared until this is fixed: ${compiled.errors[0]}` };
+            const { projectContents } = await import("#lib/export.js");
+            const { createStoryLink } = await import("#lib/share-link.js");
+            return createStoryLink(await projectContents(current), current.mainFile, __APP_VERSION__);
+        } catch (err) {
+            return { error: `Couldn't make the link: ${errorText(err)}` };
+        }
+    }
+
     // The published story, in a tab of its own, as players will see it (the 6.x editor's Preview).
     // The tab is opened straight away, during the click, so a popup blocker lets it through.
     async function handlePlayInTab() {
@@ -1874,6 +1893,7 @@
             {problemCounts}
             onexport={handleExport}
             prepare={preparePublishOnline}
+            preparelink={prepareStoryLink}
             ondetails={() => { publishOpen = false; detailsFromPublish = true; detailsOpen = true; }}
             onproblems={() => { publishOpen = false; if (!problemsOpen) void toggleProblems(); }}
             onclose={() => { publishOpen = false; }}

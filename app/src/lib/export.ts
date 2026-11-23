@@ -1,10 +1,10 @@
 // Getting stories out of the editor, and back in: publishing (with the packager, in the language
 // worker), and the whole project as a zip, which Open file reads back as a new story. A zip is how
 // to keep a copy of a story kept in the browser, which lives only there.
-import { strToU8, unzipSync, zipSync } from "fflate";
+import { strFromU8, strToU8, unzipSync, zipSync } from "fflate";
 import { isJunkFile, isSkippedDirectory, parsePath } from "@textadventures/project-fs";
 import { parseProjectFile, PROJECT_FILENAME } from "squiffy-compiler";
-import { isSquiffyFile } from "./file-types.js";
+import { isSquiffyFile, isTextFile } from "./file-types.js";
 import { storyPath } from "./paths.js";
 import type { OpenProject } from "./project.svelte.js";
 
@@ -31,6 +31,14 @@ async function projectFiles(project: OpenProject): Promise<Map<string, Uint8Arra
         const open = project.fileAt(path);
         files.set(path, open ? strToU8(open.text) : await project.fs.read(path));
     }
+    return files;
+}
+
+// Every file in the project, with its text files as text: what a link to the story is made from
+// (share-link.ts)
+export async function projectContents(project: OpenProject): Promise<Map<string, string | Uint8Array>> {
+    const files = new Map<string, string | Uint8Array>();
+    for (const [path, data] of await projectFiles(project)) files.set(path, isTextFile(path) ? strFromU8(data) : data);
     return files;
 }
 
