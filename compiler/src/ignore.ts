@@ -1,7 +1,8 @@
 // {{!-- squiffy-ignore code --}} turns off a warning the author knows is wrong, or doesn't mind:
 // for the section it's in (and its passages), or in the master section, for the whole story. After
 // the code, names say which of its warnings: {{!-- squiffy-ignore unknown-name board score --}}.
-// The code can leave out "squiffy/". Errors can't be turned off.
+// The code can leave out "squiffy/". Errors can't be turned off. squiffy.json's "ignore" does the
+// same for the whole story, with the comment's text: "ignore": ["dead-end", "unknown-name board"].
 import type { Diagnostic, Range, SectionNode, SquiffyFile } from "./syntax.js";
 
 export interface IgnoreComment {
@@ -20,19 +21,22 @@ export function findIgnoreComments(section: SectionNode): IgnoreComment[] {
         for (const statement of container.body) {
             if (statement.type != "text") continue;
             for (const match of statement.text.matchAll(IGNORE_COMMENT)) {
-                const [code, ...subjects] = match[1].split(/[\s,]+/).filter(Boolean);
-                if (!code) continue;
                 const line = statement.range.start.line;
                 const character = statement.range.start.character + match.index!;
-                result.push({
-                    code: code.startsWith("squiffy/") ? code : `squiffy/${code}`,
-                    subjects,
-                    range: { start: { line, character }, end: { line, character: character + match[0].length } },
-                });
+                const ignore = parseIgnore(match[1], { start: { line, character }, end: { line, character: character + match[0].length } });
+                if (ignore) result.push(ignore);
             }
         }
     }
     return result;
+}
+
+// What to ignore, from a squiffy-ignore comment's text after "squiffy-ignore", or an entry in
+// squiffy.json's "ignore": a code, then the names it's about, if only some
+export function parseIgnore(text: string, range: Range = { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } }): IgnoreComment | undefined {
+    const [code, ...subjects] = text.split(/[\s,]+/).filter(Boolean);
+    if (!code) return undefined;
+    return { code: code.startsWith("squiffy/") ? code : `squiffy/${code}`, subjects, range };
 }
 
 const isMaster = (section: SectionNode) => section.header?.type == "section-header" && section.header.name == "";
@@ -50,11 +54,11 @@ function sectionAt(file: SquiffyFile, line: number): SectionNode | undefined {
     return current.type == "section" ? current : undefined;
 }
 
-// The warnings and hints that squiffy-ignore comments turn off
-export function ignoredDiagnostics(files: SquiffyFile[], diagnostics: Diagnostic[]): Set<Diagnostic> {
+// The warnings and hints that squiffy-ignore comments turn off, and squiffy.json's "ignore"
+export function ignoredDiagnostics(files: SquiffyFile[], diagnostics: Diagnostic[], projectIgnore: string[] = []): Set<Diagnostic> {
     const ignored = new Set<Diagnostic>();
     const bySection = new Map<SectionNode, IgnoreComment[]>();
-    const everywhere: IgnoreComment[] = [];
+    const everywhere: IgnoreComment[] = projectIgnore.map(text => parseIgnore(text)).filter(i => i !== undefined);
     for (const file of files) {
         for (const section of [file.preamble, ...file.sections]) {
             if (section.type != "section") continue;

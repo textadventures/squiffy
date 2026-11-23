@@ -37,6 +37,9 @@ export interface AnalyseSettings {
     // Whether @set and link setters take expressions, with the same rules as {{#if}} (#373).
     // True for a story with a squiffy.json.
     expressions?: boolean;
+    // squiffy.json's "ignore": warnings turned off for the whole story, as a squiffy-ignore
+    // comment in the master section would
+    ignore?: string[];
 }
 
 // Caches the syntax tree of each file by filename, reparsing a file only when its text changes.
@@ -831,8 +834,8 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
         }
     }
 
-    // Warnings turned off by {{!-- squiffy-ignore --}} comments
-    const ignored = ignoredDiagnostics(files, diagnostics);
+    // Warnings turned off by {{!-- squiffy-ignore --}} comments, and squiffy.json's "ignore"
+    const ignored = ignoredDiagnostics(files, diagnostics, settings.ignore);
     if (ignored.size) {
         diagnostics.splice(0, diagnostics.length, ...diagnostics.filter(d => !ignored.has(d)));
         const ignoredLines = new Set([...ignored].map(d => legacyWarningOf.get(d)));

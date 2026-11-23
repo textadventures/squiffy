@@ -158,6 +158,13 @@
       "uniqueItems": true,
       "examples": [["endings", "finished"]]
     },
+    "ignore": {
+      "description": "Warnings to turn off for the whole story, each as a {{!-- squiffy-ignore --}} comment has it: a warning's code, such as \"dead-end\", then the names it's about, if only some, such as \"unknown-name board score\".",
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true,
+      "examples": [["dead-end"], ["unknown-name board score"]]
+    },
     "strings": {
       "description": "The text on the published page around the story, for a story in another language. Anything left out is in English.",
       "type": "object",

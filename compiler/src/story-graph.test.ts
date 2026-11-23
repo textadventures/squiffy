@@ -301,9 +301,10 @@ describe("story graph", () => {
             "[[b]]:", "    squiffy.story.go(squiffy.get(\"next\"));", "",
             "[[c]]:", "{{section \"d\" text=\"Go\"}}", "",
             "[[d]]:", "    squiffy.story.go(\"e\");", "",
-            "[[e]]:", "@end",
+            "[[e]]:", "{{sequence (array \"Wait\" (section \"f\" text=\"Go\"))}}", "",
+            "[[f]]:", "@end",
         ].join("\n"));
-        expect(graph.nodes.filter(n => n.unknownExits).map(n => n.id)).toEqual(["section:a", "section:b", "section:c"]);
+        expect(graph.nodes.filter(n => n.unknownExits).map(n => n.id)).toEqual(["section:a", "section:b", "section:c", "section:e"]);
         expect(graph.edges[0]).toMatchObject({ from: "section:a", dynamic: true });
         expect(graph.edges[0].to).toBeUndefined();
         expect(edgeSummary(graph.edges.slice(1))).toEqual(["section:d -> section:e (script)"]);

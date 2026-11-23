@@ -21,6 +21,7 @@ export const compileSettings = (story: StoryOnDisk, script: string) => ({
     panels: story.panels,
     settings: story.settings,
     persistent: story.persistent,
+    ignore: story.ignore,
 });
 
 // A story that's built to be published is compiled without its @test sections, which are for

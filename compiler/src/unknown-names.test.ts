@@ -169,6 +169,22 @@ describe("squiffy-ignore comments", () => {
         expect(result.success).toBe(false);
     });
 
+    test("squiffy.json's \"ignore\" turns warnings off for the whole story", async () => {
+        const files = {
+            "squiffy.json": JSON.stringify({ version: 1, main: "s.squiffy", ignore: ["dead-end", "unknown-name board"] }),
+            "s.squiffy": "[[a]]:\n{{board}} {{other}} [[b]] [[c]]\n\n[[b]]:\nNo way out.\n\n[[c]]:\nNor here.",
+        };
+        const diagnostics = await service(files).getAllDiagnostics();
+        expect(diagnostics.map(d => [d.code, d.subject])).toEqual([["squiffy/unknown-name", "other"]]);
+    });
+
+    test("squiffy.json's \"ignore\" turns warnings off when the story is built", async () => {
+        const warnings: string[] = [];
+        await compile({ scriptBaseFilename: "s.squiffy", script: "{{board}} {{other}}", ignore: ["unknown-name board"], onWarning: w => warnings.push(w) });
+        expect(warnings).toHaveLength(1);
+        expect(warnings[0]).toContain("{{other}}");
+    });
+
     test("are added by a quick fix", async () => {
         const text = "[[a]]:\n@set gold = 1\n    var x = 1;\n{{board}} [[b]]\n\n[[b]]:\n@end\n\n[[]]:\n@set y = 1";
         const ls = service({ "s.squiffy": text });

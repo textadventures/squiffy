@@ -124,6 +124,12 @@ That turns the warning off for that section and its passages. A comment in the [
 
 Players don't see the comment. It's part of the section's text, so if the section has JavaScript, put it after that. In the editor, the quick fix for these warnings adds it for you. Errors can't be turned off.
 
+To turn a warning off for the whole story without a comment, list it in your [project file](/project-file/)'s `ignore`, in the same way as in a comment. For a short story where you don't mind sections having no way out, or for the stories you make from this site's samples, which are often only part of a story:
+
+```json
+"ignore": ["dead-end"]
+```
+
 ## Playing a story from the command line
 
 Use `--play` to play a story as text, without a browser. Squiffy shows the text the player would see, with the links they can click in `[brackets]`, and lists the links, with where each one goes:

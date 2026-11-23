@@ -57,6 +57,8 @@ interface CompilerSettings {
     settings?: PlayerSetting[];
     // squiffy.json's "persistent": see EmitSettings.persistent
     persistent?: string[];
+    // squiffy.json's "ignore": see AnalyseSettings.ignore
+    ignore?: string[];
 }
 
 export interface CompileError {

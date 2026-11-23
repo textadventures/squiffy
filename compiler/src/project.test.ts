@@ -81,6 +81,12 @@ describe("parseProjectFile", () => {
         });
     });
 
+    test("warnings to ignore are kept, trimmed", () => {
+        expect(parseProjectFile("{ \"version\": 1, \"main\": \"a.squiffy\", \"ignore\": [\" dead-end \", \"unknown-name board\"] }")).toEqual({
+            success: true, project: { version: 1, main: "a.squiffy", exclude: [], ignore: ["dead-end", "unknown-name board"] },
+        });
+    });
+
     test("the story's details are trimmed, the cover's path is normalised, and empty ones are left out", () => {
         expect(parseProjectFile("{ \"version\": 1, \"main\": \"a.squiffy\", \"description\": \" A cave. \", \"author\": \"Ann\", \"cover\": \"./images\\\\cover.png\", \"language\": \" pt-br \" }")).toEqual({
             success: true, project: { version: 1, main: "a.squiffy", exclude: [], description: "A cave.", author: "Ann", cover: "images/cover.png", language: "pt-BR" },
@@ -125,6 +131,8 @@ describe("parseProjectFile", () => {
         ["a language that isn't a language tag", "{ \"version\": 1, \"main\": \"a.squiffy\", \"language\": \"English\" }", "\"language\" should be a language tag"],
         ["persistent not a list", "{ \"version\": 1, \"main\": \"a.squiffy\", \"persistent\": \"endings\" }", "\"persistent\" should be a list"],
         ["a persistent attribute that isn't a name", "{ \"version\": 1, \"main\": \"a.squiffy\", \"persistent\": [\"my endings\"] }", "\"persistent\" should be a list of attribute names"],
+        ["ignore not a list", "{ \"version\": 1, \"main\": \"a.squiffy\", \"ignore\": \"dead-end\" }", "\"ignore\" should be a list"],
+        ["an empty warning to ignore", "{ \"version\": 1, \"main\": \"a.squiffy\", \"ignore\": [\" \"] }", "\"ignore\" should be a list"],
         ["an internal persistent attribute", "{ \"version\": 1, \"main\": \"a.squiffy\", \"persistent\": [\"_section\"] }", "\"persistent\" should be a list of attribute names"],
         ["settings as a persistent attribute", "{ \"version\": 1, \"main\": \"a.squiffy\", \"persistent\": [\"settings\"] }", "can't have \"settings\""],
         ...([

@@ -395,6 +395,7 @@ export function createLanguageService(options: LanguageServiceOptions): Language
             recover: true,
             ...(project.projectFile ? { storyFiles: project.storyFiles } : {}),
             expressions: !!project.projectFile,
+            ...(project.projectFile?.ignore ? { ignore: project.projectFile.ignore } : {}),
         });
         if (project.error) {
             // A broken squiffy.json stops the story building, as it does in the CLI
@@ -516,7 +517,7 @@ export function createLanguageService(options: LanguageServiceOptions): Language
             };
             const graph = buildStoryGraph(source);
             const diagnostics = [...storyGraphDiagnostics(graph), ...firstScreenSoundDiagnostics(source)];
-            const ignored = ignoredDiagnostics(index.analysis.files, diagnostics);
+            const ignored = ignoredDiagnostics(index.analysis.files, diagnostics, index.project.projectFile?.ignore);
             index.graph = { graph, diagnostics: diagnostics.filter(d => !ignored.has(d)) };
         }
         return index.graph;
