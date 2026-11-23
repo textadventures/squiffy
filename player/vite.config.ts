@@ -26,6 +26,20 @@ body { font-family: system-ui, sans-serif; max-width: 32rem; margin: 20vh auto 0
 </html>
 `;
 
+// For Cloudflare Pages. There's no Content-Security-Policy: the story's frame is a srcdoc one,
+// which takes its policy from this page, so one strict enough to mean anything here would stop
+// stories loading their own images, fonts and scripts. The frame's sandbox is what keeps a story
+// away from this page. The player page itself only ever puts text into the document.
+const headers = `/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  X-Robots-Tag: noindex
+
+# Each version's page is checked for a new build on every load. Its files have a hash in their names.
+/:version/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+`;
+
 export default defineConfig({
     base: `/${folder}/`,
     build: {
@@ -44,6 +58,7 @@ export default defineConfig({
             closeBundle() {
                 mkdirSync("build", { recursive: true });
                 writeFileSync("build/index.html", home);
+                writeFileSync("build/_headers", headers);
             },
         },
     ],

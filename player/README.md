@@ -32,11 +32,15 @@ arrives. The first character of the payload (`1`) is the encoding's own version.
 is one compressed stream of every file, rather than a zip, which makes a longer link (see the
 top of `src/link.ts`).
 
+`deploy-player.yml` deploys it to the `squiffy-player` Cloudflare Pages project on every release
+tag. An upload replaces the whole site, so `.github/scripts/build-player-site.sh` builds every
+major version's player each time: from its latest stable release, or its latest prerelease until
+it has one. To try that: `.github/scripts/build-player-site.sh /tmp/site HEAD`.
+
 ## Not done yet
 
-- Nothing deploys this. A deploy has to put every major version's folder in one upload.
 - The story's progress isn't saved: the sandboxed frame has no storage, so it would need to go
   through this page, keyed by a hash of the story.
 - There's no Save button (squiffy.json's `saveButton`), as nothing is saved.
-- A beta build's links go to `/v7/`, the same as a stable one's.
-- The page has no Content-Security-Policy.
+- A beta build's links go to `/v7/`, the same as a stable one's, so once 7.0.0 is out, a story
+  that uses something new in a 7.1 beta won't play from its link until 7.1.0.
