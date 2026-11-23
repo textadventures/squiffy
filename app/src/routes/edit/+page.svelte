@@ -41,6 +41,7 @@
     import { checkSectionName, emptyPositions, linkTo, movedNodes, nodeAtLine, renamePositions, revertPositions, sectionKeys, withPosition, type Point, type StoryMapEdge, type StoryMapNode } from "#lib/story-map.js";
     import AssetManagerModal from "#components/AssetManagerModal.svelte";
     import FontsModal from "#components/FontsModal.svelte";
+    import StoryDetailsModal from "#components/StoryDetailsModal.svelte";
     import AboutModal from "#components/AboutModal.svelte";
     import ContextMenu, { type ContextMenuItem } from "#components/ContextMenu.svelte";
     import Pencil from "@lucide/svelte/icons/pencil";
@@ -85,6 +86,7 @@
     let problemTexts = new Map<string, string>();
     let assetsOpen = $state(false);
     let fontsOpen = $state(false);
+    let detailsOpen = $state(false);
     let aboutOpen = $state(false);
     // The code editor's right-click menu
     let editorMenu = $state<{ view: EditorView; x: number; y: number; keyboard: boolean; items: ContextMenuItem[] } | null>(null);
@@ -967,7 +969,7 @@
         if (!current.projectFile) sessionPositions = next;
         positionsQueue = positionsQueue.then(async () => {
             try {
-                if (!current.projectFile && !(await addProjectFileForMap(current))) {
+                if (!current.projectFile && !(await addProjectFile(current, "to save where you put things on the map"))) {
                     declinedProjectFile = true;
                     showToast("Where you put things on the map is saved in squiffy.json, so without one it'll be forgotten when you close the story.", "info", 8000);
                     return;
@@ -991,7 +993,8 @@
         return (await c.call("getStoryFiles")).pageFiles;
     }
 
-    async function addProjectFileForMap(current: NonNullable<typeof p>): Promise<boolean> {
+    // Adds squiffy.json, for something only it can keep (`why`, as "to save ..."), and says so
+    async function addProjectFile(current: NonNullable<typeof p>, why: string): Promise<boolean> {
         const c = client;
         if (!c) return false;
         await syncOpenFiles();
@@ -1001,7 +1004,7 @@
         const exclude = current.files.map(f => f.path).filter(path => isSquiffyFile(path) && path !== current.mainFile && !inStory.has(path));
         const conversion = await current.createProjectFile(current.mainFile, exclude, pageFiles);
         const converted = setterConversionMessage(conversion);
-        showToast(`Added ${PROJECT_FILENAME}, to save where you put things on the map.${exclude.length ? ` It leaves out the .squiffy files that aren't part of this story.` : ""}${converted ? ` ${converted}` : ""}`, "info", converted ? 12000 : 8000);
+        showToast(`Added ${PROJECT_FILENAME}, ${why}.${exclude.length ? ` It leaves out the .squiffy files that aren't part of this story.` : ""}${converted ? ` ${converted}` : ""}`, "info", converted ? 12000 : 8000);
         return true;
     }
 
@@ -1602,6 +1605,7 @@
             onrun={fromCursor => runPreview(fromCursor)}
             onassets={() => { assetsOpen = true; }}
             onfonts={() => { fontsOpen = true; }}
+            ondetails={() => { detailsOpen = true; }}
             ondownloadproject={handleDownloadProject}
             onexport={handleExport}
             oncommand={command => { const v = activeView(); if (v) runCommand(v, command); }}
@@ -1827,6 +1831,14 @@
 
     {#if assetsOpen}
         <AssetManagerModal project={p} oninsert={insertAsset} oncancel={() => { assetsOpen = false; }} />
+    {/if}
+
+    {#if detailsOpen}
+        <StoryDetailsModal
+            project={p}
+            onaddprojectfile={() => p ? addProjectFile(p, "to save the story's details") : Promise.resolve(false)}
+            onclose={() => { detailsOpen = false; }}
+        />
     {/if}
 
     {#if fontsOpen}

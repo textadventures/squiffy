@@ -20,6 +20,20 @@
       "minLength": 1,
       "examples": ["0b7c6d9e-3f1a-4e2b-9c5d-8a7f6e5d4c3b"]
     },
+    "description": {
+      "description": "What the story is about, in a sentence or two. The published page's description, which search results and link previews show, and what sites that list stories show.",
+      "type": "string",
+      "examples": ["A short story about a cave."]
+    },
+    "author": {
+      "description": "Who wrote the story. The published page's author.",
+      "type": "string"
+    },
+    "cover": {
+      "description": "The story's cover image, by its path from the main file's folder, as the story would refer to it. The image a link to the published story shows. It's published with the story.",
+      "type": "string",
+      "examples": ["cover.png"]
+    },
     "main": {
       "description": "The story's main file, relative to this file's folder. The story starts there, and its @title is the story's title.",
       "type": "string",

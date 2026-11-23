@@ -81,6 +81,15 @@ describe("parseProjectFile", () => {
         });
     });
 
+    test("the story's details are trimmed, the cover's path is normalised, and empty ones are left out", () => {
+        expect(parseProjectFile("{ \"version\": 1, \"main\": \"a.squiffy\", \"description\": \" A cave. \", \"author\": \"Ann\", \"cover\": \"./images\\\\cover.png\" }")).toEqual({
+            success: true, project: { version: 1, main: "a.squiffy", exclude: [], description: "A cave.", author: "Ann", cover: "images/cover.png" },
+        });
+        expect(parseProjectFile("{ \"version\": 1, \"main\": \"a.squiffy\", \"description\": \"\", \"author\": \" \" }")).toEqual({
+            success: true, project: { version: 1, main: "a.squiffy", exclude: [] },
+        });
+    });
+
     test("exclude is optional, other properties are ignored, and main is normalised", () => {
         expect(parseProjectFile("{ \"$schema\": \"x\", \"version\": 1, \"main\": \"./src\\\\story.squiffy\" }")).toEqual({
             success: true, project: { version: 1, main: "src/story.squiffy", exclude: [] },
@@ -109,6 +118,9 @@ describe("parseProjectFile", () => {
         ["a panel with no label", "{ \"version\": 1, \"main\": \"a.squiffy\", \"panels\": [{ \"passage\": \"x\" }] }", "panel 1 needs a \"label\""],
         ["a panel in the wrong place", "{ \"version\": 1, \"main\": \"a.squiffy\", \"panels\": [{ \"passage\": \"x\", \"label\": \"x\", \"position\": \"top\" }] }", "should be \"side\" or \"button\""],
         ["a panel with an unknown icon", "{ \"version\": 1, \"main\": \"a.squiffy\", \"panels\": [{ \"passage\": \"x\", \"label\": \"x\", \"icon\": \"cat\" }] }", "\"icon\" should be one of \"bag\""],
+        ["a description that isn't text", "{ \"version\": 1, \"main\": \"a.squiffy\", \"description\": [\"x\"] }", "\"description\" should be text"],
+        ["an author that isn't text", "{ \"version\": 1, \"main\": \"a.squiffy\", \"author\": 1 }", "\"author\" should be text"],
+        ["a cover outside the folder", "{ \"version\": 1, \"main\": \"a.squiffy\", \"cover\": \"../cover.png\" }", "\"cover\" should be the path of an image"],
         ["persistent not a list", "{ \"version\": 1, \"main\": \"a.squiffy\", \"persistent\": \"endings\" }", "\"persistent\" should be a list"],
         ["a persistent attribute that isn't a name", "{ \"version\": 1, \"main\": \"a.squiffy\", \"persistent\": [\"my endings\"] }", "\"persistent\" should be a list of attribute names"],
         ["an internal persistent attribute", "{ \"version\": 1, \"main\": \"a.squiffy\", \"persistent\": [\"_section\"] }", "\"persistent\" should be a list of attribute names"],
@@ -236,6 +248,14 @@ describe("writing project files", () => {
         expect(JSON.parse(updateProjectFile("{ \"version\": 1, \"main\": \"a.squiffy\", \"exclude\": [\"x\"] }", { exclude: [] })!))
             .toEqual({ version: 1, main: "a.squiffy" });
         expect(updateProjectFile("{", { main: "x" })).toBeUndefined();
+    });
+
+    test("the story's details are set, trimmed, and removed when empty", () => {
+        const text = "{\n  \"version\": 1,\n  \"main\": \"a.squiffy\"\n}\n";
+        const updated = updateProjectFile(text, { description: " A cave. ", author: "Ann", cover: "cover.png" })!;
+        expect(JSON.parse(updated)).toEqual({ version: 1, main: "a.squiffy", description: "A cave.", author: "Ann", cover: "cover.png" });
+        expect(updateProjectFile(updated, { description: "", author: " ", cover: "" })).toBe(text);
+        expect(JSON.parse(updateProjectFile(updated, { author: "Bo" })!).description).toBe("A cave.");
     });
 
     test("story map positions, one to a line, and removed when there are none", () => {

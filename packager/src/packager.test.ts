@@ -548,3 +548,65 @@ test("A zip links to a stylesheet, whose url()s find the files beside it", async
     const zip = unzipSync(pkg.zip!);
     expect(Object.keys(zip)).toEqual(expect.arrayContaining(["fonts/story/story.css", "fonts/story/a.woff2"]));
 });
+
+// The <head> part of a page
+const headOf = (html: string) => html.substring(0, html.indexOf("</head>"));
+
+test("Exported page's <head> says what the story is: its IFID, description, author and cover", async () => {
+    const compileResult = await compile({ script: "@title The Cave\n\nHello" });
+    if (!compileResult.success) throw new Error("Compile failed");
+    const options = { id: "0b7c6d9e-3f1a-4e2b-9c5d-8a7f6e5d4c3b", description: "A short story about a cave.", author: "Ann Author", cover: "images/cover.png" };
+    const pkg = await createPackage(compileResult, { ...options, createZip: true, assets: { "images/cover.png": new Uint8Array([1]) } });
+    const head = headOf(pkg.files["index.html"]);
+    expect(head).toContain("<head prefix=\"ifiction: http://babel.ifarchive.org/protocol/iFiction/\">");
+    expect(head).toContain("<meta property=\"ifiction:ifid\" content=\"0B7C6D9E-3F1A-4E2B-9C5D-8A7F6E5D4C3B\">");
+    expect(head).toContain("<title>The Cave</title>");
+    expect(head).toContain("<meta name=\"description\" content=\"A short story about a cave.\">");
+    expect(head).toContain("<meta name=\"author\" content=\"Ann Author\">");
+    expect(head).toContain("<meta property=\"og:type\" content=\"website\">");
+    expect(head).toContain("<meta property=\"og:title\" content=\"The Cave\">");
+    expect(head).toContain("<meta property=\"og:description\" content=\"A short story about a cave.\">");
+    expect(head).toContain("<meta property=\"og:image\" content=\"images/cover.png\">");
+    expect(head).toContain("<meta name=\"twitter:card\" content=\"summary\">");
+    // The zip's index.html is the same page, and has the cover beside it
+    const zip = unzipSync(pkg.zip!);
+    expect(strFromU8(zip["index.html"])).toBe(pkg.files["index.html"]);
+    expect(zip["images/cover.png"]).toBeDefined();
+    // So does a single HTML file, except for the cover, which it has nowhere to put
+    const single = headOf((await createPackage(compileResult, { ...options, inlineHtml: true })).files["index.html"]);
+    expect(single).toContain("<meta property=\"ifiction:ifid\" content=\"0B7C6D9E-3F1A-4E2B-9C5D-8A7F6E5D4C3B\">");
+    expect(single).toContain("<meta name=\"author\" content=\"Ann Author\">");
+    expect(single).not.toContain("og:image");
+    expect(single).not.toContain("twitter:card");
+});
+
+test("Exported page leaves out the tags for details the story doesn't have", async () => {
+    const compileResult = await compile({ script: "@title The Cave\n\nHello" });
+    if (!compileResult.success) throw new Error("Compile failed");
+    for (const options of [{}, { id: " ", description: "", author: "  ", cover: "" }]) {
+        const head = headOf((await createPackage(compileResult, options)).files["index.html"]);
+        expect(head).toContain("<head>");
+        expect(head).not.toContain("prefix=");
+        expect(head).not.toContain("ifiction:ifid");
+        expect(head).not.toContain("name=\"description\"");
+        expect(head).not.toContain("name=\"author\"");
+        expect(head).not.toContain("og:description");
+        expect(head).not.toContain("og:image");
+        expect(head).not.toContain("twitter:card");
+        // What it does have is its title
+        expect(head).toContain("<meta property=\"og:title\" content=\"The Cave\">");
+        expect(head).not.toContain("<!-- META -->");
+    }
+});
+
+test("Exported page's story details are escaped", async () => {
+    const compileResult = await compile({ script: "@title Tom & \"Jerry\"\n\nHello" });
+    if (!compileResult.success) throw new Error("Compile failed");
+    const head = headOf((await createPackage(compileResult, {
+        description: "<b>Bold</b> & \"quoted\" {{close}} $&", author: "O'Brien", cover: "a\"b.png",
+    })).files["index.html"]);
+    expect(head).toContain("<meta name=\"description\" content=\"&#60;b&#62;Bold&#60;/b&#62; &#38; &#34;quoted&#34; {{close}} $&#38;\">");
+    expect(head).toContain("<meta name=\"author\" content=\"O&#39;Brien\">");
+    expect(head).toContain("<meta property=\"og:title\" content=\"Tom &#38; &#34;Jerry&#34;\">");
+    expect(head).toContain("<meta property=\"og:image\" content=\"a&#34;b.png\">");
+});

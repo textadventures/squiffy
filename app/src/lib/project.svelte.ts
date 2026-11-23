@@ -19,7 +19,7 @@ import {
 } from "@textadventures/project-fs";
 import {
     convertSetters, formatProjectFile, getStoryFiles, isExcluded, parseProjectFile, PROJECT_FILENAME, updateProjectFile,
-    type MapPositions, type ProjectFile, type StoryFiles,
+    type MapPositions, type ProjectFile, type StoryDetail, type StoryFiles,
 } from "squiffy-compiler";
 import { checklistDialog, chooseDialog, confirmDialog } from "./confirm.js";
 import { showToast } from "./toast.js";
@@ -309,7 +309,7 @@ class OpenProject {
     }
 
     // Changes squiffy.json, keeping anything else in it. Returns false if it isn't a JSON object.
-    private async updateProject(changes: { main?: string; exclude?: string[]; map?: MapPositions }): Promise<boolean> {
+    private async updateProject(changes: { main?: string; exclude?: string[]; map?: MapPositions } & Partial<Record<StoryDetail, string>>): Promise<boolean> {
         if (this.projectText === null) return false;
         const text = updateProjectFile(this.projectText, changes);
         if (text === undefined) return false;
@@ -347,6 +347,14 @@ class OpenProject {
         await this.writeText(PROJECT_FILENAME, formatProjectFile({ main, exclude }));
         this.setStoredMainFile(main);
         return conversion;
+    }
+
+    // Saves what the story is, for the published page's <head>, in squiffy.json: its description,
+    // author and cover. An empty one is removed. Returns false if there's no squiffy.json, or it
+    // can't be read.
+    async setStoryDetails(details: Record<StoryDetail, string>): Promise<boolean> {
+        if (!this.projectFile) return false;
+        return this.updateProject(details);
     }
 
     // Saves where the author has put sections and passages on the story map, in squiffy.json.

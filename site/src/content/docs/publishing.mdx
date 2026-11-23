@@ -9,6 +9,8 @@ Squiffy creates HTML, CSS and JavaScript files, which you can upload anywhere th
 
 The editor's **File** menu has these options, under **Publish**:
 
+- **Story details** - What your story is: see [Story details](#story-details).
+
 - **HTML and JavaScript (.zip)** - Creates a ZIP file containing `index.html`, `style.css`, `story.js` and `squiffy.runtime.global.js`, along with your story's images and other files. Upload these files to any web server.
 
 - **HTML (one file)** - Creates a single self-contained HTML file with all the CSS, JavaScript and images embedded. This is ideal for easy sharing, uploading to platforms that only accept one file, or offline distribution.
@@ -20,6 +22,30 @@ The editor's **File** menu has these options, under **Publish**:
 ## Publishing from the command line
 
 The [command-line tool](/cli/) writes the same files, and `--inline` and `--zip` make a single HTML file or a zip. See [Output formats](/cli/#output-formats).
+
+## Story details
+
+A published story's page says what the story is, for search results, for the preview a link to it shows on social media and in chat apps, and for sites that list stories, such as [textadventures.co.uk](https://textadventures.co.uk/). Its title is the main file's `@title`. Set the rest in the editor with **File > Story details**, or in your story's [`squiffy.json`](/project-file/):
+
+```json
+{
+  "$schema": "https://squiffystory.com/schema/squiffy.json",
+  "version": 1,
+  "id": "0b7c6d9e-3f1a-4e2b-9c5d-8a7f6e5d4c3b",
+  "main": "story.squiffy",
+  "description": "A short story about a cave.",
+  "author": "Ann Author",
+  "cover": "cover.png"
+}
+```
+
+- `description` - What the story is about, in a sentence or two.
+- `author` - Who wrote it.
+- `cover` - An image for the story, by its path from the main file's folder, as the story would refer to it. It's published with the story, even if the story doesn't show it. A single HTML file leaves it out, as it has no files beside it.
+
+The page also gives the story's `id` as its [IFID](https://babel.ifarchive.org/), the number that identifies a piece of interactive fiction, which sites and tools that list stories use to tell which story it is, whatever it's called. So keep the `id` the same when you publish a new version.
+
+All of these are optional. A story without a `squiffy.json` only has its title. In the editor, saving its details adds one.
 
 ## Where to put it
 
