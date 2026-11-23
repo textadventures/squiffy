@@ -1,5 +1,13 @@
 # Changelog
 
+## [7.0.0-beta.15](https://github.com/textadventures/squiffy/compare/v7.0.0-beta.14...v7.0.0-beta.15) (2026-11-23)
+
+
+### Features
+
+* a story's language in squiffy.json, for the published page's &lt;html lang&gt; and textadventures.co.uk ([#595](https://github.com/textadventures/squiffy/issues/595)) ([25388a8](https://github.com/textadventures/squiffy/commit/25388a80f1162b8470139fe82e79731e237a5706))
+* share a story as a link, played at squiffystories.com ([#593](https://github.com/textadventures/squiffy/issues/593)) ([e458ade](https://github.com/textadventures/squiffy/commit/e458adebd7139eb6c4db73a62afb915b49568098))
+
 ## [7.0.0-beta.14](https://github.com/textadventures/squiffy/compare/v7.0.0-beta.13...v7.0.0-beta.14) (2026-11-23)
 
 
