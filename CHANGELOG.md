@@ -1,5 +1,20 @@
 # Changelog
 
+## [7.0.0-beta.14](https://github.com/textadventures/squiffy/compare/v7.0.0-beta.13...v7.0.0-beta.14) (2026-11-23)
+
+
+### Features
+
+* a published story's page says what the story is, with its IFID, description, author and cover ([#584](https://github.com/textadventures/squiffy/issues/584)) ([34d59e1](https://github.com/textadventures/squiffy/commit/34d59e11dd45f8ddb85cac74db9d77a4379f5820))
+* one Publish dialog in the editor, for every way of sharing a story ([#591](https://github.com/textadventures/squiffy/issues/591)) ([4e7ab48](https://github.com/textadventures/squiffy/commit/4e7ab48eeb72b57c07449d7bcdce4d506d28f58f))
+* publish a story to textadventures.co.uk from the editor ([#590](https://github.com/textadventures/squiffy/issues/590)) ([cd9d6a0](https://github.com/textadventures/squiffy/commit/cd9d6a0c2f3fd5ab7816d0b057f4512fb600c4f3))
+
+
+### Bug Fixes
+
+* the editor's error page shows what went wrong, and saves the open story ([#580](https://github.com/textadventures/squiffy/issues/580)) ([16a336e](https://github.com/textadventures/squiffy/commit/16a336eafee9cdbe2e2dd52de465934cf2d34e10))
+* the Publish dialog's textadventures.co.uk option no longer reads as if players update the story ([#592](https://github.com/textadventures/squiffy/issues/592)) ([3285331](https://github.com/textadventures/squiffy/commit/32853311c2f85e9acb33067705234d31e69e3fc5))
+
 ## [7.0.0-beta.13](https://github.com/textadventures/squiffy/compare/v7.0.0-beta.12...v7.0.0-beta.13) (2026-11-22)
 
 
