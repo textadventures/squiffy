@@ -56,9 +56,10 @@ npm run package    # build squiffy-vscode-<version>.vsix
 
 Build the compiler and runtime first, as the extension bundles them from their `dist/` folders.
 
-The extension has the same version as the rest of Squiffy, which release-please sets. The
-Marketplace doesn't take prerelease versions such as `7.0.0-beta.14`, so only stable releases can
-be published there, though `npm run package` builds a `.vsix` of any version.
+The extension has the same version as the rest of Squiffy, which release-please sets. Each
+release's `.vsix` is attached to its GitHub Release by `.github/workflows/vscode-publish.yml`, and
+a stable release is published to the VS Code Marketplace. The Marketplace doesn't take prerelease
+versions such as `7.0.0-beta.14`, so a beta is only on the GitHub Release.
 
 To try it in VS Code on the desktop, run `code --extensionDevelopmentPath=$PWD ../examples/gameshow`
 from this folder, or install the `.vsix` with **Extensions: Install from VSIX...**. To try the web
