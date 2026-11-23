@@ -91,6 +91,31 @@
         "command": "squiffy.convertV5",
         "title": "Convert from Squiffy 5",
         "category": "Squiffy"
+      },
+      {
+        "command": "squiffy.export",
+        "title": "Export",
+        "category": "Squiffy",
+        "icon": "$(export)"
+      },
+      {
+        "command": "squiffy.newStory",
+        "title": "New Story",
+        "category": "Squiffy"
+      },
+      {
+        "command": "squiffy.newStoryInFolder",
+        "title": "New Squiffy Story Here"
+      },
+      {
+        "command": "squiffy.addSection",
+        "title": "Add Section",
+        "category": "Squiffy"
+      },
+      {
+        "command": "squiffy.addPassage",
+        "title": "Add Passage",
+        "category": "Squiffy"
       }
     ],
     "menus": {
@@ -116,6 +141,16 @@
           "command": "squiffy.previewFromHere",
           "when": "editorLangId == squiffy",
           "group": "navigation"
+        },
+        {
+          "command": "squiffy.addSection",
+          "when": "editorLangId == squiffy && !editorReadonly",
+          "group": "1_squiffy@1"
+        },
+        {
+          "command": "squiffy.addPassage",
+          "when": "editorLangId == squiffy && !editorReadonly",
+          "group": "1_squiffy@2"
         }
       ],
       "commandPalette": [
@@ -142,6 +177,29 @@
         {
           "command": "squiffy.previewBack",
           "when": "squiffyPreviewOpen"
+        },
+        {
+          "command": "squiffy.export",
+          "when": "editorLangId == squiffy"
+        },
+        {
+          "command": "squiffy.newStoryInFolder",
+          "when": "false"
+        },
+        {
+          "command": "squiffy.addSection",
+          "when": "editorLangId == squiffy && !editorReadonly"
+        },
+        {
+          "command": "squiffy.addPassage",
+          "when": "editorLangId == squiffy && !editorReadonly"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "squiffy.newStoryInFolder",
+          "when": "explorerResourceIsFolder",
+          "group": "navigation@10"
         }
       ]
     }
@@ -155,11 +213,13 @@
     "open-web": "vscode-test-web --extensionDevelopmentPath=. ../examples"
   },
   "devDependencies": {
+    "@textadventures/squiffy-packager": "^7.0.0-beta.13",
     "@types/node": "^26.6.6",
     "@types/vscode": "~1.91.0",
     "@vscode/test-web": "^0.0.81",
     "@vscode/vsce": "^4.1.1",
     "esbuild": "^0.28.2",
+    "fflate": "^0.8.3",
     "squiffy-compiler": "^7.0.0-beta.13",
     "squiffy-runtime": "^7.0.0-beta.13",
     "typescript": "^6.0.3",

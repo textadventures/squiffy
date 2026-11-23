@@ -10,6 +10,10 @@ const isSkippedFolder = (name: string) => name == "node_modules" || name.startsW
 // which could be a big folder, such as Downloads.
 const MAX_FILES = 5000;
 
+// The story's own files, which are never assets for the preview or an export: its .squiffy files,
+// squiffy.json, playthrough tests and backups
+export const isStoryFile = (path: string) => /\.(squiffy|squiffy-test)$/.test(path) || path == "squiffy.json" || path.endsWith(".bak");
+
 export async function findProjectFiles(): Promise<string[]> {
     const uris = await vscode.workspace.findFiles("**/squiffy.json", "**/{node_modules,.*}/**");
     return uris.map(uri => uri.toString());

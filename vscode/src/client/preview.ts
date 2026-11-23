@@ -6,13 +6,10 @@ import type { BaseLanguageClient } from "vscode-languageclient";
 import { previewHtml } from "squiffy-runtime/preview-html";
 import { createPreviewHost, type PreviewChannel, type PreviewHost, type StartAt } from "squiffy-runtime/preview-host";
 import { PREVIEW_STORY, type PreviewStoryParams, type PreviewStoryResult } from "../protocol.js";
-import { listFiles } from "./files.js";
+import { isStoryFile, listFiles } from "./files.js";
 
 // How long to wait after typing before updating the preview
 const UPDATE_DELAY = 300;
-
-// Files the preview never needs as assets
-const isStoryFile = (path: string) => /\.(squiffy|squiffy-test)$/.test(path) || path == "squiffy.json" || path.endsWith(".bak");
 
 const previewTheme = (kind: vscode.ColorThemeKind) =>
     kind == vscode.ColorThemeKind.Light || kind == vscode.ColorThemeKind.HighContrastLight ? "light" : "dark";

@@ -1,0 +1,127 @@
+// Squiffy: Export: the story built to be published (index.html, story.js, the page's stylesheets
+// and the story's assets) into a folder, or a zip, as the editor and the CLI build it. Files are
+// written with workspace.fs, so it works on the web too.
+
+import * as vscode from "vscode";
+import type { BaseLanguageClient } from "vscode-languageclient";
+import { strToU8, zipSync } from "fflate";
+import { EXPORT_STORY, type ExportStoryParams, type ExportStoryResult } from "../protocol.js";
+import { isStoryFile, listFiles } from "./files.js";
+
+// A file name from a story's title, e.g. "The Cave" -> "The Cave.zip", as the editor names it
+// (app/src/lib/export.ts)
+export function fileName(title: string | undefined, extension: string) {
+    const name = [...(title ?? "")].filter(c => c >= " " && !'\\/:*?"<>|'.includes(c)).join("").trim() || "story";
+    return `${name}${extension}`;
+}
+
+// Whether a URI is the folder, or in it
+const isIn = (uri: vscode.Uri, folder: vscode.Uri) => {
+    const path = folder.toString().replace(/\/$/, "");
+    return uri.toString() == path || uri.toString().startsWith(path + "/");
+};
+
+const sameFolder = (a: vscode.Uri, b: vscode.Uri) => a.toString().replace(/\/$/, "") == b.toString().replace(/\/$/, "");
+
+// A file or folder's name for a message: its path in the workspace
+const describe = (uri: vscode.Uri) => {
+    const folder = vscode.workspace.getWorkspaceFolder(uri);
+    if (folder && sameFolder(folder.uri, uri)) return folder.name;
+    return vscode.workspace.asRelativePath(uri);
+};
+
+const exists = async (uri: vscode.Uri) => {
+    try {
+        await vscode.workspace.fs.stat(uri);
+        return true;
+    }
+    catch {
+        return false;
+    }
+};
+
+// What the published story needs besides its own code: every file other than the story's own
+// (.squiffy files, squiffy.json, tests and backups) in the main file's folder, by its path from
+// there. Where the story's being exported to is left out when that's in the story's folder (a
+// build folder, or the zip), so an earlier export isn't copied in.
+async function storyAssets(root: vscode.Uri, target: vscode.Uri): Promise<Record<string, Uint8Array>> {
+    const skip = isIn(target, root) && !sameFolder(target, root) ? target : undefined;
+    const assets: Record<string, Uint8Array> = {};
+    for (const path of await listFiles(root)) {
+        const uri = vscode.Uri.joinPath(root, path);
+        if (isStoryFile(path) || (skip && isIn(uri, skip))) continue;
+        assets[path] = await vscode.workspace.fs.readFile(uri);
+    }
+    return assets;
+}
+
+export async function exportStory(client: BaseLanguageClient, storyUri: vscode.Uri) {
+    const result = await client.sendRequest<ExportStoryResult>(EXPORT_STORY, { uri: storyUri.toString() } satisfies ExportStoryParams);
+    if (!result.success) {
+        void vscode.window.showErrorMessage(`The story can't be exported until its errors are fixed: ${result.errors[0]}${result.errors.length > 1 ? ` (and ${result.errors.length - 1} more)` : ""}`);
+        return;
+    }
+    const root = vscode.Uri.parse(result.root);
+
+    const choice = await vscode.window.showQuickPick([
+        { label: "To a folder", description: "index.html, story.js and the story's files", to: "folder" as const },
+        { label: "As a zip", description: "The same files in a zip, to upload to a website", to: "zip" as const },
+    ], { title: "Export the story" });
+    if (!choice) return;
+
+    if (choice.to == "zip") {
+        const target = await vscode.window.showSaveDialog({
+            title: "Export the story as a zip",
+            defaultUri: vscode.Uri.joinPath(root, fileName(result.title, ".zip")),
+            filters: { "Zip files": ["zip"] },
+            saveLabel: "Export",
+        });
+        if (!target) return;
+        const assets = await storyAssets(root, target);
+        const zip = zipSync({
+            ...assets,
+            // The packager's files take precedence over any asset with the same name, as in its zip
+            ...Object.fromEntries(Object.entries(result.files).map(([name, text]) => [name, strToU8(text)])),
+        });
+        await vscode.workspace.fs.writeFile(target, zip);
+        void vscode.window.showInformationMessage(`Exported the story to ${describe(target)}.`);
+        return;
+    }
+
+    const picked = await vscode.window.showOpenDialog({
+        title: "Export the story to a folder",
+        defaultUri: root,
+        canSelectFiles: false,
+        canSelectFolders: true,
+        openLabel: "Export Here",
+    });
+    const folder = picked?.[0];
+    if (!folder) return;
+    const intoRoot = sameFolder(folder, root);
+    // Its assets are already in the story's own folder
+    const assets = intoRoot ? {} : await storyAssets(root, folder);
+    const clashes = [];
+    for (const name of new Set([...Object.keys(result.files), ...Object.keys(assets)])) {
+        if (await exists(vscode.Uri.joinPath(folder, name))) clashes.push(name);
+    }
+    // Replacing an asset in the story's folder with itself is no change, but its index.html could
+    // be the author's own
+    if (clashes.length) {
+        const replace = await vscode.window.showWarningMessage(
+            `${describe(folder)} already has ${clashes.length == 1 ? clashes[0] : `${clashes.length} of the exported files`}. Replace ${clashes.length == 1 ? "it" : "them"}?`,
+            { modal: true }, "Replace");
+        if (replace != "Replace") return;
+    }
+    for (const [name, bytes] of Object.entries(assets)) {
+        if (name in result.files) continue;
+        await vscode.workspace.fs.writeFile(vscode.Uri.joinPath(folder, name), bytes);
+    }
+    for (const [name, text] of Object.entries(result.files)) {
+        await vscode.workspace.fs.writeFile(vscode.Uri.joinPath(folder, name), strToU8(text));
+    }
+    const index = vscode.Uri.joinPath(folder, "index.html");
+    // A browser can open the page from disk, on the desktop
+    const canOpen = index.scheme == "file" && vscode.env.uiKind == vscode.UIKind.Desktop;
+    const action = await vscode.window.showInformationMessage(`Exported the story to ${describe(folder)}.`, ...(canOpen ? ["Open in Browser"] : []));
+    if (action) void vscode.env.openExternal(index);
+}

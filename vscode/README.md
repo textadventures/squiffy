@@ -11,6 +11,13 @@ Write [Squiffy](https://squiffystory.com) interactive stories in VS Code, with a
 - **Squiffy: Show Preview** runs the story beside the editor, updating as you type.
   **Start Preview at This Section** (in the editor's context menu) starts it at the section the
   cursor is in. The attributes the story sets are logged in the Squiffy Preview output.
+- **Squiffy: Export** builds the playable story (`index.html`, `story.js`, the page's stylesheets
+  and the story's images, sounds and other files) into a folder, or a zip to upload to a website,
+  as the Squiffy editor and command line tool build it
+- **Squiffy: New Story** makes a new story in a folder: a `squiffy.json` and a `story.squiffy` to
+  start from. **New Squiffy Story Here** in the Explorer's context menu makes one in that folder.
+- **Squiffy: Add Section** and **Add Passage** (also in the editor's context menu) add a section
+  or passage header at the cursor, to type its name into
 - **Squiffy: Convert from Squiffy 5** converts a Squiffy 5 file's text processor syntax
 
 It works in VS Code on the desktop, and on [vscode.dev](https://vscode.dev) and github.dev.
@@ -33,7 +40,10 @@ This is the `vscode/` workspace in the [Squiffy repository](https://github.com/t
   `workspace.fs`, so it works the same in both.
 - `src/client/` is the extension: it starts the server and adds the commands, and the preview
   (`preview.ts`), which runs squiffy-runtime's preview page in a webview with
-  `squiffy-runtime/preview-host`.
+  `squiffy-runtime/preview-host`. Export (`export.ts`) asks the server for the story built by
+  squiffy-packager's `createPackage()`, and adds the story's assets, read and written with
+  `workspace.fs`, zipping them with fflate for a zip. New Story (`new-story.ts`) uses the editor's
+  starter story (`src/client/new-story.test.ts` checks it matches `app/src/lib/project.svelte.ts`).
 - The grammar is the compiler's (`compiler/syntaxes/squiffy.tmLanguage.json`), copied into `dist/`
   by the build. The snippets are the editor's, with tab stops (`src/snippets.test.ts` checks they
   match `app/src/lib/snippets.ts`).

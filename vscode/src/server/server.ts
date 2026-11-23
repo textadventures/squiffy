@@ -6,9 +6,11 @@ import {
     type Connection, DidChangeWatchedFilesNotification, FileChangeType, ResponseError, TextDocuments, TextDocumentSyncKind,
 } from "vscode-languageserver";
 import { TextDocument } from "vscode-languageserver-textdocument";
+import { emit, formatDiagnostic } from "squiffy-compiler";
+import { createPackage } from "@textadventures/squiffy-packager";
 import {
-    FIND_PROJECT_FILES, LIST_FILES, PREVIEW_STORY, READ_TEXT, SECTION_AT, SET_MAIN_FILE,
-    type FindProjectFilesResult, type ListFilesParams, type ListFilesResult, type PreviewStoryParams, type PreviewStoryResult,
+    EXPORT_STORY, FIND_PROJECT_FILES, LIST_FILES, PREVIEW_STORY, READ_TEXT, SECTION_AT, SET_MAIN_FILE,
+    type ExportStoryParams, type ExportStoryResult, type FindProjectFilesResult, type ListFilesParams, type ListFilesResult, type PreviewStoryParams, type PreviewStoryResult,
     type ReadTextParams, type ReadTextResult, type SectionAtParams, type SectionAtResult, type SetMainFileParams,
 } from "../protocol.js";
 import { groupDiagnostics, markdown, toLspCodeAction, toLspCompletion, toLspSymbol, toLspWorkspaceEdit } from "./convert.js";
@@ -189,6 +191,25 @@ export function startServer(connection: Connection) {
         const story = await stories.storyFor(uri);
         const [compiled, info] = await Promise.all([story.service.getPreviewStory(), story.service.getProjectInfo()]);
         return { ...compiled, root: folderOf(toUri(story.root, info.mainFile)) };
+    });
+
+    // As the editor exports it (app/src/lib/language/worker.ts), and the CLI builds it: without
+    // its @test sections, unless squiffy.json's startAnywhere keeps them for testers
+    connection.onRequest(EXPORT_STORY, async ({ uri }: ExportStoryParams): Promise<ExportStoryResult> => {
+        const story = await stories.storyFor(uri);
+        const [analysis, { projectFile, mainFile }] = await Promise.all([story.service.getAnalysis(), story.service.getProjectInfo()]);
+        if (!analysis.success) {
+            return { success: false, errors: analysis.diagnostics.filter(d => d.severity == "error").map(formatDiagnostic) };
+        }
+        const result = emit(analysis, {
+            globalJs: true, omitTestSections: !projectFile?.startAnywhere, projectId: projectFile?.id,
+            panels: projectFile?.panels, settings: projectFile?.settings, persistent: projectFile?.persistent,
+        });
+        const pkg = await createPackage(result, {
+            backButton: projectFile?.backButton, saveButton: projectFile?.saveButton,
+            startAnywhere: projectFile?.startAnywhere, strings: projectFile?.strings,
+        });
+        return { success: true, files: pkg.files, root: folderOf(toUri(story.root, mainFile)), title: result.getUiInfo().title || undefined };
     });
 
     connection.onRequest(SECTION_AT, async ({ uri, position }: SectionAtParams): Promise<SectionAtResult> => {

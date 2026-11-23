@@ -9,6 +9,8 @@ import {
     type ListFilesParams, type ReadTextParams, type SectionAtParams, type SectionAtResult, type SetMainFileParams,
 } from "../protocol.js";
 import { findProjectFiles, listFiles, readText } from "./files.js";
+import { exportStory } from "./export.js";
+import { insertHeader, newStory } from "./new-story.js";
 import { Preview } from "./preview.js";
 
 export type CreateClient = (options: LanguageClientOptions) => BaseLanguageClient;
@@ -63,6 +65,25 @@ export async function activate(context: vscode.ExtensionContext, createClient: C
         catch (e) {
             void vscode.window.showInformationMessage(e instanceof Error ? e.message : String(e));
         }
+    });
+
+    command("squiffy.export", (uri?: unknown) => {
+        const target = uri instanceof vscode.Uri ? uri : activeSquiffyEditor()?.document.uri;
+        if (target) return exportStory(client!, target);
+        void vscode.window.showInformationMessage("Open a .squiffy file to export its story.");
+    });
+
+    command("squiffy.newStory", () => newStory());
+    // From the Explorer's context menu, in that folder
+    command("squiffy.newStoryInFolder", (uri?: unknown) => newStory(uri instanceof vscode.Uri ? uri : undefined));
+
+    command("squiffy.addSection", () => {
+        const editor = activeSquiffyEditor();
+        if (editor) return insertHeader(editor, "section");
+    });
+    command("squiffy.addPassage", () => {
+        const editor = activeSquiffyEditor();
+        if (editor) return insertHeader(editor, "passage");
     });
 
     command("squiffy.convertV5", async () => {
