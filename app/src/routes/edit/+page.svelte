@@ -463,7 +463,7 @@
         if (!client || !current) return { success: false as const, errors: ["The story isn't open."] };
         await Promise.all(current.openFiles.filter(f => f.dirty && !isSquiffyFile(f.path)).map(f => f.save()));
         await syncOpenFiles();
-        return client.call("compile");
+        return client.call("getPreviewStory");
     }
 
     // The story's assets for the preview, by their path from the main file's folder

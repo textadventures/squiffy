@@ -322,6 +322,18 @@ describe("rename", () => {
         expect(apply(cellar, startResult.edit["chapters/cellar.squiffy"])).toContain("[[Go back up]](top)");
     });
 
+    test("the name to rename, from a link or a header", async () => {
+        const { ls } = project();
+        const at = positionOf(cellar, "[[Go back up]](start)", 3);
+        const fromLink = await ls.getRenameTarget("chapters/cellar.squiffy", at);
+        expect(fromLink?.name).toBe("start");
+        const start = positionOf(cellar, "[[Go back up]](start)", "[[Go back up]](".length);
+        expect(fromLink?.range).toEqual({ start, end: { line: start.line, character: start.character + 5 } });
+        const fromHeader = await ls.getRenameTarget("story.squiffy", positionOf(main, "[[outside]]:", 3));
+        expect(fromHeader?.name).toBe("outside");
+        expect(await ls.getRenameTarget("story.squiffy", { line: 0, character: 0 })).toBeUndefined();
+    });
+
     test("refuses bad names and clashes", async () => {
         const { ls } = project();
         const at = positionOf(main, "[[outside]]:", 3);
@@ -660,5 +672,36 @@ describe("folder mode, with a squiffy.json", () => {
         const ls = createLanguageService({ files: memoryFiles({ "s.squiffy": "[[s]]:\n", "t.squiffy": "[[t]]:\n" }), mainFile: "s.squiffy" });
         expect(await ls.getProjectInfo()).toEqual({ mainFile: "s.squiffy", storyFiles: [], excludedFiles: [] });
         expect((await ls.getAnalysis()).sections.map(s => s.name)).toEqual(["s"]);
+    });
+});
+
+describe("preview story", () => {
+    test("compiles the story with its stylesheets and scripts, using open files' text", async () => {
+        const service = createLanguageService({
+            mainFile: "story/main.squiffy",
+            files: memoryFiles({
+                "story/main.squiffy": "@import style/look.css\n@import code.js\nHello.",
+                "story/style/look.css": "body { background: url(cat.png); }",
+                "story/code.js": "console.log(1);",
+            }),
+        });
+        service.updateFile("story/main.squiffy", "@import style/look.css\n@import code.js\n@import missing.js\nHello from the editor.");
+        const story = await service.getPreviewStory();
+        if (!story.success) throw new Error(story.errors.join());
+        expect(story.js).toContain("Hello from the editor.");
+        expect(story.js).toMatch(/^export const story/m);
+        // The url() is made a path from the main file's folder
+        expect(story.css).toEqual(["body { background: url(\"style/cat.png\"); }"]);
+        expect(story.scripts).toEqual(["console.log(1);"]);
+    });
+
+    test("gives the story's errors", async () => {
+        const service = createLanguageService({
+            mainFile: "main.squiffy",
+            files: memoryFiles({ "main.squiffy": "[[a]]:\n{{#if x}}\n" }),
+        });
+        const story = await service.getPreviewStory();
+        expect(story.success).toBe(false);
+        if (!story.success) expect(story.errors.length).toBeGreaterThan(0);
     });
 });

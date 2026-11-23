@@ -1,11 +1,10 @@
 // The language service, in a Web Worker so analysing a large story never blocks typing. It reads
 // project files by calling back to the app (HostApi), and the app sends it the text of the file
 // being edited with updateFile() as it changes.
-import { convertV5Syntax, emit, findV5Syntax, formatDiagnostic, resolveCssUrl, rewriteCssUrls } from "squiffy-compiler";
+import { convertV5Syntax, emit, findV5Syntax, formatDiagnostic } from "squiffy-compiler";
 import { createLanguageService, type LanguageService } from "squiffy-compiler/language-service";
-import { dirname, resolvePath } from "@textadventures/project-fs";
 import { connect, type Handlers, type Port } from "../rpc.js";
-import type { CompiledStory, ExportKind, ExportResult, HostApi, WorkerApi } from "./protocol.js";
+import type { ExportKind, ExportResult, HostApi, WorkerApi } from "./protocol.js";
 
 let service: LanguageService | undefined;
 
@@ -26,42 +25,10 @@ async function exportStory(kind: ExportKind, assets: Record<string, Uint8Array>)
     return { success: true, files: pkg.files, zip: pkg.zip };
 }
 
-// The story's own stylesheets and scripts (@import of .css and .js files), which are named
-// relative to the main file. One that can't be read is left out, as the compiler does.
-async function readAll(names: string[], stylesheets = false): Promise<string[]> {
-    // squiffy.json's main file, if the project has one
-    const main = (await current().getProjectInfo()).mainFile;
-    const texts = await Promise.all(names.map(async name => {
-        const path = resolvePath(dirname(main), name);
-        if (path === null) return undefined;
-        try {
-            const text = await host.call("readText", path);
-            // The preview finds a stylesheet's fonts and images by their path from the story's folder
-            return stylesheets ? rewriteCssUrls(text, url => resolveCssUrl(name, url) ?? undefined) : text;
-        } catch {
-            return undefined;
-        }
-    }));
-    return texts.filter((t): t is string => t !== undefined);
-}
-
 // The story's errors, if the analysis has any
 function errorsIn(analysis: Awaited<ReturnType<LanguageService["getAnalysis"]>>): string[] | null {
     if (analysis.success) return null;
     return analysis.diagnostics.filter(d => d.severity === "error").map(formatDiagnostic);
-}
-
-// Emits the analysis the language service already has, so the story isn't parsed again
-async function compile(): Promise<CompiledStory> {
-    const analysis = await current().getAnalysis();
-    const errors = errorsIn(analysis);
-    if (errors) return { success: false, errors };
-    // With the panels and settings, which the preview shows as the published page would
-    const { projectFile } = await current().getProjectInfo();
-    const result = emit(analysis, { panels: projectFile?.panels, settings: projectFile?.settings, persistent: projectFile?.persistent });
-    const info = result.getUiInfo();
-    const [css, scripts] = await Promise.all([readAll(info.externalStylesheets, true), readAll(info.externalScripts)]);
-    return { success: true, js: await result.getJs(true), css, scripts };
 }
 
 function current(): LanguageService {
@@ -83,7 +50,7 @@ const handlers: WorkerApi = {
     fileChanged: path => current().fileChanged(path),
     setMainFile: path => current().setMainFile(path),
     getProjectInfo: () => current().getProjectInfo(),
-    compile,
+    getPreviewStory: () => current().getPreviewStory(),
     exportStory,
     countV5Syntax: text => findV5Syntax(text).length,
     convertV5Syntax: text => convertV5Syntax(text),
@@ -123,6 +90,7 @@ const handlers: WorkerApi = {
     getDocumentSymbols: path => current().getDocumentSymbols(path),
     getDefinition: (path, position) => current().getDefinition(path, position),
     getReferences: (path, position, includeDeclaration) => current().getReferences(path, position, includeDeclaration),
+    getRenameTarget: (path, position) => current().getRenameTarget(path, position),
     getRenameEdits: (path, position, newName) => current().getRenameEdits(path, position, newName),
     getCompletions: (path, position) => current().getCompletions(path, position),
     getHover: (path, position) => current().getHover(path, position),
