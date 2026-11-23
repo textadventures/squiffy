@@ -9,6 +9,7 @@
     "project-fs",
     "graph-map",
     "editor-search",
+    "player",
     "app",
     "cli",
     "packager",
