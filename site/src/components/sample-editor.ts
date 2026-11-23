@@ -92,12 +92,33 @@ export const SAMPLE_PROJECT_FILE = "squiffy.json";
 // changes the reader has made, as a new story in the editor (in a new tab, so the docs stay
 // open). It's the editor's way in for a link from the player (app/src/routes/+page.svelte), with
 // the story in the part after the "#", so nothing is sent anywhere.
+//
+// A sample is often only part of a story, showing one thing, so its sections end without being
+// the story's endings. In the editor, that would be a "dead end" warning on most of them, so the
+// story's squiffy.json turns that warning off, where the author can see it and take it out.
 export function setUpOpenInEditor(sample: HTMLElement, getStory: () => LinkedStory) {
     const button = sample.querySelector(".copy .open-in-editor");
     const appUrl = sample.dataset.appUrl;
     if (!button || !appUrl) return;
     button.addEventListener("click", () => {
-        const url = `${appUrl}/${storyFragment(encodeStory(getStory()))}`;
+        const url = `${appUrl}/${storyFragment(encodeStory(ignoringDeadEnds(getStory())))}`;
         window.open(url, "_blank", "noopener");
     });
+}
+
+// The story, with "dead-end" in its squiffy.json's "ignore"
+export function ignoringDeadEnds(story: LinkedStory): LinkedStory {
+    const text = story.files[SAMPLE_PROJECT_FILE];
+    if (text === undefined) return story;
+    let project: unknown;
+    try {
+        project = JSON.parse(text);
+    } catch {
+        return story;
+    }
+    if (typeof project !== "object" || project === null || Array.isArray(project)) return story;
+    const ignore = (project as { ignore?: unknown }).ignore ?? [];
+    if (!Array.isArray(ignore) || ignore.includes("dead-end")) return story;
+    const files = { ...story.files, [SAMPLE_PROJECT_FILE]: JSON.stringify({ ...project, ignore: [...ignore, "dead-end"] }) };
+    return { ...story, files };
 }

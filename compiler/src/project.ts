@@ -61,6 +61,9 @@ export interface ProjectFile {
     // published page's <html lang>, which screen readers, browsers' translation and spelling, and
     // sites that list stories go by
     language?: string;
+    // Warnings that are turned off for the whole story, each as a squiffy-ignore comment has it:
+    // a code, such as "dead-end", and the names it's about, if only some ("unknown-name board")
+    ignore?: string[];
 }
 
 // A player setting, from squiffy.json's "settings". The runtime's PlayerSetting is the same.
@@ -243,6 +246,11 @@ export function parseProjectFile(text: string): ParsedProjectFile {
     const persistent = parsePersistent(data.persistent);
     if (typeof persistent == "string") return fail(persistent);
 
+    const ignore = data.ignore;
+    if (ignore !== undefined && (!Array.isArray(ignore) || ignore.some(item => typeof item != "string" || !item.trim()))) {
+        return fail(`${PROJECT_FILENAME}'s "ignore" should be a list of the warnings to turn off, such as ["dead-end"].`);
+    }
+
     const details: Partial<Record<StoryDetail, string>> = {};
     for (const name of STORY_DETAILS) {
         const value = data[name];
@@ -279,6 +287,7 @@ export function parseProjectFile(text: string): ParsedProjectFile {
             ...(panels !== undefined ? { panels } : {}),
             ...(settings !== undefined ? { settings } : {}),
             ...(persistent !== undefined ? { persistent } : {}),
+            ...(ignore !== undefined ? { ignore: (ignore as string[]).map(item => item.trim()) } : {}),
             ...details,
         },
     };

@@ -41,6 +41,8 @@ export interface StoryOnDisk {
     settings?: PlayerSetting[];
     // squiffy.json's "persistent", in folder mode
     persistent?: string[];
+    // squiffy.json's "ignore", in folder mode
+    ignore?: string[];
     // squiffy.json's "description", "author", "cover" and "language", in folder mode
     description?: string;
     author?: string;
@@ -140,6 +142,7 @@ async function folderStory(projectFile: string, options: FindStoryOptions): Prom
         ...(project.panels !== undefined ? { panels: project.panels } : {}),
         ...(project.settings !== undefined ? { settings: project.settings } : {}),
         ...(project.persistent !== undefined ? { persistent: project.persistent } : {}),
+        ...(project.ignore !== undefined ? { ignore: project.ignore } : {}),
         ...(project.description !== undefined ? { description: project.description } : {}),
         ...(project.author !== undefined ? { author: project.author } : {}),
         ...(project.cover !== undefined ? { cover: project.cover } : {}),

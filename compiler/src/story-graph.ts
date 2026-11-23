@@ -231,7 +231,9 @@ export function buildStoryGraph(source: GraphSource): StoryGraph {
                     tests.add(name);
                 }
                 else if (statement.type == "text") {
-                    if (/\{\{~?\s*section\s/.test(statement.text)) unknown.add(from);
+                    // {{section "name"}} written out, or as an option in {{rotate}} or
+                    // {{sequence}}: (section "name" text="...")
+                    if (/(\{\{~?|\()\s*section\s/.test(statement.text)) unknown.add(from);
                     // {{goto name}}, which goes to the section an attribute names, or {{goto}} with
                     // an expression, e.g. {{goto (random (array "a" "b"))}}
                     for (const match of statement.text.matchAll(/\{\{~?\s*goto\s+([^\s"'}~]+)/g)) {
