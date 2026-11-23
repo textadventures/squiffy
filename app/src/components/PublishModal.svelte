@@ -63,6 +63,7 @@
 
     // What the published page will say the story is
     let details = $derived(project.projectFile);
+    let hasDetails = $derived(!!(details?.description || details?.author || details?.cover));
     let problems = $derived(problemCounts.error + problemCounts.warning);
     let problemsText = $derived.by(() => {
         const { error, warning } = problemCounts;
@@ -158,18 +159,24 @@
 
         {#if stage.name === "choose" || stage.name === "saving"}
             <section class="publish-details rounded-lg bg-surface-100-900 p-3 text-sm flex flex-col gap-1" aria-label="Story details">
-                <div class="flex items-baseline justify-between gap-2">
+                {#if hasDetails}
+                    <div class="flex items-baseline justify-between gap-2">
+                        <p class="font-medium truncate">{project.displayName}</p>
+                        <button type="button" class="anchor shrink-0 text-xs" disabled={busy} onclick={ondetails}>Edit details</button>
+                    </div>
+                    {#if details?.author}<p class="text-xs text-surface-600-400">by {details.author}</p>{/if}
+                    <!-- A long description is cut short here -->
+                    <p class="text-xs text-surface-600-400 line-clamp-2">{details?.description || "No description yet."}</p>
+                    {#if details?.cover}<p class="text-xs text-surface-600-400">Cover: {details.cover}</p>{/if}
+                {:else}
+                    <!-- Nothing to show yet, so this asks for it, with the button right under the reason -->
                     <p class="font-medium truncate">{project.displayName}</p>
-                    <button type="button" class="anchor shrink-0 text-xs" disabled={busy} onclick={ondetails}>
-                        {details?.description || details?.author || details?.cover ? "Edit details" : "Add details"}
-                    </button>
-                </div>
-                {#if details?.author}<p class="text-xs text-surface-600-400">by {details.author}</p>{/if}
-                <!-- A long description is cut short here. The prompt to add one isn't. -->
-                <p class="text-xs text-surface-600-400" class:line-clamp-2={!!details?.description}>
-                    {details?.description || "Tell players what your story is about. Add a description and a cover, for its page on textadventures.co.uk, search results and link previews."}
-                </p>
-                {#if details?.cover}<p class="text-xs text-surface-600-400">Cover: {details.cover}</p>{/if}
+                    <p class="text-xs text-surface-600-400">
+                        Your story has no description or cover yet. Players see them on its textadventures.co.uk page,
+                        in search results and in link previews.
+                    </p>
+                    <button type="button" class="btn btn-sm preset-tonal self-start mt-1" disabled={busy} onclick={ondetails}>Add story details</button>
+                {/if}
             </section>
 
             <fieldset class="flex flex-col gap-3" disabled={busy}>
