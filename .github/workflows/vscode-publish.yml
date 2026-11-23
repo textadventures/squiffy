@@ -1,0 +1,97 @@
+name: Publish VS Code extension
+
+# Packages the VS Code extension (vscode/, #309) when a release tag is pushed (release-please
+# merging its release PR), and attaches the .vsix to the GitHub Release that release-please has
+# already created, so a beta can be installed by hand with "Extensions: Install from VSIX...".
+#
+# A stable release is also published to the VS Code Marketplace. The Marketplace doesn't take
+# prerelease versions such as 7.0.0-beta.14, so betas only go to the GitHub Release. It
+# authenticates with Marketplace Trusted Publishing, not a token: the textadventures publisher
+# trusts this workflow file in textadventures/squiffy (its Trusted Publishing tab at
+# marketplace.visualstudio.com/manage), and vsce exchanges the job's GitHub OIDC token for a
+# short-lived one. Renaming this file means changing that policy too.
+#
+# Open VSX (for VSCodium, Cursor and the like) isn't published to yet. It would be another step
+# after the Marketplace one, with `npx ovsx publish <vsix> -p "$OVSX_PAT"`.
+on:
+  push:
+    tags: ['v*']
+  # Manual escape hatch, e.g. to retry a failed publish. Dispatch against the existing tag itself
+  # (`gh workflow run vscode-publish.yml --ref vX.Y.Z`) so GITHUB_REF_NAME still resolves to it.
+  workflow_dispatch:
+
+permissions:
+  # To attach the .vsix to the release
+  contents: write
+  # For Marketplace Trusted Publishing
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Check it's a tag, matching the version
+        run: |
+          if [ "$GITHUB_REF_TYPE" != "tag" ]; then
+            echo "::error::Run this against a release tag, e.g. gh workflow run vscode-publish.yml --ref vX.Y.Z"
+            exit 1
+          fi
+          VERSION="$(node -p "require('./vscode/package.json').version")"
+          if [ "${GITHUB_REF_NAME#v}" != "$VERSION" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME doesn't match vscode/package.json's version ($VERSION)"
+            exit 1
+          fi
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "VSIX=squiffy-$VERSION.vsix" >> "$GITHUB_ENV"
+          echo "RELEASE_CHANNEL=$(.github/scripts/release-channel.sh "$GITHUB_REF_NAME")" >> "$GITHUB_ENV"
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Build the packages the extension bundles
+        run: |
+          npm ci
+          npx lerna run build --scope squiffy --include-dependencies
+
+      - name: Test the extension
+        working-directory: vscode
+        run: npm test
+
+      - name: Package the extension
+        working-directory: vscode
+        run: |
+          npm run package
+          test -f "$VSIX"
+
+      - name: Keep the .vsix as the run's artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: vscode-extension
+          path: vscode/${{ env.VSIX }}
+          if-no-files-found: error
+
+      - name: Attach the .vsix to the GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "$GITHUB_REF_NAME" "vscode/$VSIX" --clobber
+
+      # The Marketplace refuses a version it already has, so a re-run skips it
+      - name: Publish to the VS Code Marketplace
+        if: env.RELEASE_CHANNEL == 'stable'
+        working-directory: vscode
+        run: |
+          ID="$(node -p "const p = require('./package.json'); p.publisher + '.' + p.name")"
+          PUBLISHED="$(npx vsce show "$ID" --json 2>/dev/null \
+            | node -e "let s = ''; process.stdin.on('data', d => s += d).on('end', () => {
+                try { console.log((JSON.parse(s).versions ?? []).some(v => v.version == process.env.VERSION)); }
+                catch { console.log(false); }
+              })")"
+          if [ "$PUBLISHED" == "true" ]; then
+            echo "$ID $VERSION is already on the Marketplace"
+          else
+            npx vsce publish --oidc --packagePath "$VSIX"
+          fi
