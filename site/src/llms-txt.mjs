@@ -47,6 +47,6 @@ Important notes for writing Squiffy stories:
     ],
     // The editor's own pages, the home page and the long example stories are of little use to an agent
     // working with a story's files, so they go last in llms-full.txt and are left out of llms-small.txt
-    demote: ["index", "editor", "story-map", "snippets", "desktop-app", "featured-examples"],
-    exclude: ["index", "editor", "story-map", "snippets", "desktop-app", "featured-examples"],
+    demote: ["index", "editor", "story-map", "snippets", "desktop-app", "vscode", "featured-examples"],
+    exclude: ["index", "editor", "story-map", "snippets", "desktop-app", "vscode", "featured-examples"],
 };

@@ -1,0 +1,37 @@
+---
+// How to install the VS Code extension's beta, at the top of the VS Code page on
+// beta.squiffystory.com only. The Marketplace doesn't take prerelease versions, so a beta's .vsix is
+// only on its GitHub Release (vscode-publish.yml). squiffystory.com documents the stable release,
+// which is on the Marketplace, so it doesn't show this. See "Deployments" in CLAUDE.md.
+import { Aside } from "@astrojs/starlight/components";
+import { betaSite } from "../channel.mjs";
+---
+
+{
+	betaSite && (
+		<Aside type="tip" title="Trying the beta">
+			<p>
+				These docs are for the next version of Squiffy. The VS Code Marketplace only has stable
+				releases, so to try the beta of the extension, install it from a file:
+			</p>
+			<ol>
+				<li>
+					Go to the <a href="https://github.com/textadventures/squiffy/releases">releases on GitHub</a>,
+					find the newest one marked "Pre-release", and download the <code>.vsix</code> file under{" "}
+					<strong>Assets</strong>, named <code>squiffy-</code> and the version.
+				</li>
+				<li>
+					In VS Code, open the Command Palette (<kbd>Ctrl+Shift+P</kbd>, or <kbd>Cmd+Shift+P</kbd> on
+					a Mac), choose <strong>Extensions: Install from VSIX...</strong>, and pick the file. Or drag
+					the file onto the Extensions view.
+				</li>
+			</ol>
+			<p>
+				A beta doesn't update itself. To get the next one, install its <code>.vsix</code> the same
+				way, and it replaces the one you have. Use VS Code on the desktop to try a beta.
+				Please <a href="https://github.com/textadventures/squiffy/issues">report any problems</a> on
+				GitHub, with your VS Code version (<strong>Help &gt; About</strong>) and the extension's.
+			</p>
+		</Aside>
+	)
+}
