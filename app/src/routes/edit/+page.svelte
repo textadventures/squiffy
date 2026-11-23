@@ -42,6 +42,7 @@
     import AssetManagerModal from "#components/AssetManagerModal.svelte";
     import FontsModal from "#components/FontsModal.svelte";
     import StoryDetailsModal from "#components/StoryDetailsModal.svelte";
+    import PublishOnlineModal from "#components/PublishOnlineModal.svelte";
     import AboutModal from "#components/AboutModal.svelte";
     import ContextMenu, { type ContextMenuItem } from "#components/ContextMenu.svelte";
     import Pencil from "@lucide/svelte/icons/pencil";
@@ -87,6 +88,7 @@
     let assetsOpen = $state(false);
     let fontsOpen = $state(false);
     let detailsOpen = $state(false);
+    let publishOnlineOpen = $state(false);
     let aboutOpen = $state(false);
     // The code editor's right-click menu
     let editorMenu = $state<{ view: EditorView; x: number; y: number; keyboard: boolean; items: ContextMenuItem[] } | null>(null);
@@ -1353,6 +1355,31 @@
         }
     }
 
+    // The published story as a zip, to upload to textadventures.co.uk, or why it can't be made.
+    // The story needs a squiffy.json first: its ID is how textadventures.co.uk knows, next time,
+    // that this is an update to the same story.
+    async function preparePublishOnline(): Promise<{ zip: Uint8Array; filename: string } | { error: string }> {
+        const current = p;
+        const c = client;
+        if (!current || !c) return { error: "The story isn't open." };
+        try {
+            if (current.projectText !== null && !current.projectFile) {
+                return { error: `${PROJECT_FILENAME} couldn't be read. Fix it, then try again.` };
+            }
+            if (!current.projectFile && !(await addProjectFile(current, "so textadventures.co.uk knows which story this is"))) {
+                return { error: `The story needs a ${PROJECT_FILENAME} project file to be published this way.` };
+            }
+            await syncOpenFiles();
+            const { fileName, storyAssets } = await import("#lib/export.js");
+            const result = await c.call("exportStory", "zip", await storyAssets(current));
+            if (!result.success) return { error: `The story can't be published until this is fixed: ${result.errors[0]}` };
+            if (!result.zip) return { error: "Couldn't publish the story." };
+            return { zip: result.zip, filename: fileName(current.displayName, ".zip") };
+        } catch (err) {
+            return { error: `Couldn't publish the story: ${errorText(err)}` };
+        }
+    }
+
     // The published story, in a tab of its own, as players will see it (the 6.x editor's Preview).
     // The tab is opened straight away, during the click, so a popup blocker lets it through.
     async function handlePlayInTab() {
@@ -1606,6 +1633,7 @@
             onassets={() => { assetsOpen = true; }}
             onfonts={() => { fontsOpen = true; }}
             ondetails={() => { detailsOpen = true; }}
+            onpublishonline={() => { publishOnlineOpen = true; }}
             ondownloadproject={handleDownloadProject}
             onexport={handleExport}
             oncommand={command => { const v = activeView(); if (v) runCommand(v, command); }}
@@ -1839,6 +1867,10 @@
             onaddprojectfile={() => p ? addProjectFile(p, "to save the story's details") : Promise.resolve(false)}
             onclose={() => { detailsOpen = false; }}
         />
+    {/if}
+
+    {#if publishOnlineOpen}
+        <PublishOnlineModal prepare={preparePublishOnline} onclose={() => { publishOnlineOpen = false; }} />
     {/if}
 
     {#if fontsOpen}

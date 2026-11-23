@@ -11,6 +11,8 @@ The editor's **File** menu has these options, under **Publish**:
 
 - **Story details** - What your story is: see [Story details](#story-details).
 
+- **Publish to textadventures.co.uk** - Puts your story on textadventures.co.uk, or updates it there: see [Publishing to textadventures.co.uk](#publishing-to-textadventurescouk).
+
 - **HTML and JavaScript (.zip)** - Creates a ZIP file containing `index.html`, `style.css`, `story.js` and `squiffy.runtime.global.js`, along with your story's images and other files. Upload these files to any web server.
 
 - **HTML (one file)** - Creates a single self-contained HTML file with all the CSS, JavaScript and images embedded. This is ideal for easy sharing, uploading to platforms that only accept one file, or offline distribution.
@@ -18,6 +20,21 @@ The editor's **File** menu has these options, under **Publish**:
 - **JavaScript only** - Creates just the `story.js` file, useful if you want to [embed your story in your own page](/embedding/).
 
 **File > Download project (.zip)** is different: it downloads your story's own files, for a backup or for editing elsewhere.
+
+## Publishing to textadventures.co.uk
+
+[textadventures.co.uk](https://textadventures.co.uk/) hosts games for free, and lists them for players to find. **File > Publish to textadventures.co.uk** sends your story there:
+
+1. The editor uploads your story, as the files in **HTML and JavaScript (.zip)**.
+2. It gives you a link to continue on textadventures.co.uk, and opens it for you if your browser lets it. Log in there, or create an account.
+3. The first time, fill in what players will see on your story's page. Its name, description and cover start as your [story details](#story-details), so it's worth setting those first.
+4. After that, textadventures.co.uk knows the story, and shows one button to update it. Its page, reviews and link stay the same.
+
+The editor says when your story is published, with a link to its page.
+
+Nothing is published until you finish on textadventures.co.uk, and an upload you don't finish is deleted after an hour. A story can be up to 50 MB.
+
+textadventures.co.uk knows a story by the `id` in its [`squiffy.json`](/project-file/), so a story without one is given one first. Keep that file with your story: a copy of the story with a different `id`, or none, would be published as a new game.
 
 ## Publishing from the command line
 
@@ -49,7 +66,7 @@ All of these are optional. A story without a `squiffy.json` only has its title. 
 
 ## Where to put it
 
-- **[textadventures.co.uk](https://textadventures.co.uk/)** lists games made with any system. See the [catalogue of Squiffy games](https://textadventures.co.uk/games/platform/squiffy) for what other people have made.
+- **[textadventures.co.uk](https://textadventures.co.uk/)** lists games made with any system, and the editor can [publish straight to it](#publishing-to-textadventurescouk). See the [catalogue of Squiffy games](https://textadventures.co.uk/games/platform/squiffy) for what other people have made.
 - **[itch.io](https://itch.io/)** can host HTML games: upload the **HTML and JavaScript (.zip)** and mark it to be played in the browser.
 - **Your own website**: upload the files from the zip, or the single HTML file.
 

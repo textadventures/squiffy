@@ -59,6 +59,7 @@
     import Bug from "@lucide/svelte/icons/bug";
     import DiscordIcon from "#components/DiscordIcon.svelte";
     import CircleX from "@lucide/svelte/icons/circle-x";
+    import CloudUpload from "@lucide/svelte/icons/cloud-upload";
     import CircleCheck from "@lucide/svelte/icons/circle-check";
     import type { ProblemCounts } from "#lib/problems.js";
 
@@ -90,6 +91,8 @@
         ondownloadproject?: () => void;
         // Publishes the story: HTML, JavaScript and assets as a zip, one HTML file, or the JavaScript
         onexport?: (kind: ExportKind) => void;
+        // Publishes the story to textadventures.co.uk
+        onpublishonline?: () => void;
         // Undo, redo, find, fold all and unfold all, in the editor
         oncommand?: (command: EditorCommand) => void;
         // Opens Find in Files
@@ -105,7 +108,7 @@
         onplaytab?: () => void;
     }
 
-    let { outlineOpen = false, ontoggleoutline, mapOpen = false, ontogglemap, view = "code", onview, problemCounts = { error: 0, warning: 0, hint: 0 }, problemsOpen = false, ontoggleproblems, onfindinfiles, onrun, onassets, onfonts, ondetails, ondownloadproject, onexport, oncommand, onadd, onsnippet, snippets = [], onabout, onplaytab }: Props = $props();
+    let { outlineOpen = false, ontoggleoutline, mapOpen = false, ontogglemap, view = "code", onview, problemCounts = { error: 0, warning: 0, hint: 0 }, problemsOpen = false, ontoggleproblems, onfindinfiles, onrun, onassets, onfonts, ondetails, ondownloadproject, onexport, onpublishonline, oncommand, onadd, onsnippet, snippets = [], onabout, onplaytab }: Props = $props();
 
     const mod = isMac ? "⌘" : "Ctrl+";
 
@@ -148,6 +151,7 @@
         { label: "Download project (.zip)", action: () => ondownloadproject?.(), icon: FolderDown },
         { label: `Download ${p?.activePath ?? ""}`, action: () => { if (p?.activePath) void downloadFile(p.activePath); }, icon: Download, disabled: !p?.activePath },
         { label: "Story details", action: () => ondetails?.(), icon: BookOpenText, divider: true, heading: "Publish" },
+        { label: "Publish to textadventures.co.uk", action: () => onpublishonline?.(), icon: CloudUpload },
         { label: "HTML and JavaScript (.zip)", action: () => onexport?.("zip"), icon: Globe },
         { label: "HTML (one file)", action: () => onexport?.("html"), icon: Globe },
         { label: "JavaScript only", action: () => onexport?.("js"), icon: FileCode },
