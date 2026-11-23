@@ -7,25 +7,27 @@ Squiffy creates HTML, CSS and JavaScript files, which you can upload anywhere th
 
 ## Publishing from the editor
 
-The editor's **File** menu has these options, under **Publish**:
+**File > Publish…** opens the Publish dialog, which has these ways to share your story:
 
-- **Story details** - What your story is: see [Story details](#story-details).
+- **textadventures.co.uk** - Puts your story on textadventures.co.uk, or updates it there: see [Publishing to textadventures.co.uk](#publishing-to-textadventurescouk).
 
-- **Publish to textadventures.co.uk** - Puts your story on textadventures.co.uk, or updates it there: see [Publishing to textadventures.co.uk](#publishing-to-textadventurescouk).
+- **Zip for a website** - Creates a ZIP file containing `index.html`, `style.css`, `story.js` and `squiffy.runtime.global.js`, along with your story's images and other files. Upload these files to any web server.
 
-- **HTML and JavaScript (.zip)** - Creates a ZIP file containing `index.html`, `style.css`, `story.js` and `squiffy.runtime.global.js`, along with your story's images and other files. Upload these files to any web server.
-
-- **HTML (one file)** - Creates a single self-contained HTML file with all the CSS, JavaScript and images embedded. This is ideal for easy sharing, uploading to platforms that only accept one file, or offline distribution.
+- **One HTML file** - Creates a single self-contained HTML file with all the CSS, JavaScript and images embedded. This is ideal for easy sharing, uploading to platforms that only accept one file, or offline distribution.
 
 - **JavaScript only** - Creates just the `story.js` file, useful if you want to [embed your story in your own page](/embedding/).
+
+Choose one and click **Publish**. The dialog opens on the one you chose last time.
+
+At the top of the dialog is what your story's page will say it is, with a link to change it: see [Story details](#story-details). If your story has errors or warnings, the dialog says so, with a link to show them.
 
 **File > Download project (.zip)** is different: it downloads your story's own files, for a backup or for editing elsewhere.
 
 ## Publishing to textadventures.co.uk
 
-[textadventures.co.uk](https://textadventures.co.uk/) hosts games for free, and lists them for players to find. **File > Publish to textadventures.co.uk** sends your story there:
+[textadventures.co.uk](https://textadventures.co.uk/) hosts games for free, and lists them for players to find. In the Publish dialog, **textadventures.co.uk** sends your story there:
 
-1. The editor uploads your story, as the files in **HTML and JavaScript (.zip)**.
+1. The editor uploads your story, as the files in **Zip for a website**.
 2. It gives you a link to continue on textadventures.co.uk, and opens it for you if your browser lets it. Log in there, or create an account.
 3. The first time, fill in what players will see on your story's page. Its name, description and cover start as your [story details](#story-details), so it's worth setting those first.
 4. After that, textadventures.co.uk knows the story, and shows one button to update it. Its page, reviews and link stay the same.
@@ -42,7 +44,7 @@ The [command-line tool](/cli/) writes the same files, and `--inline` and `--zip`
 
 ## Story details
 
-A published story's page says what the story is, for search results, for the preview a link to it shows on social media and in chat apps, and for sites that list stories, such as [textadventures.co.uk](https://textadventures.co.uk/). Its title is the main file's `@title`. Set the rest in the editor with **File > Story details**, or in your story's [`squiffy.json`](/project-file/):
+A published story's page says what the story is, for search results, for the preview a link to it shows on social media and in chat apps, and for sites that list stories, such as [textadventures.co.uk](https://textadventures.co.uk/). Its title is the main file's `@title`. Set the rest in the editor, with **Edit details** in the Publish dialog, or in your story's [`squiffy.json`](/project-file/):
 
 ```json
 {
@@ -67,7 +69,7 @@ All of these are optional. A story without a `squiffy.json` only has its title. 
 ## Where to put it
 
 - **[textadventures.co.uk](https://textadventures.co.uk/)** lists games made with any system, and the editor can [publish straight to it](#publishing-to-textadventurescouk). See the [catalogue of Squiffy games](https://textadventures.co.uk/games/platform/squiffy) for what other people have made.
-- **[itch.io](https://itch.io/)** can host HTML games: upload the **HTML and JavaScript (.zip)** and mark it to be played in the browser.
+- **[itch.io](https://itch.io/)** can host HTML games: upload the **Zip for a website** and mark it to be played in the browser.
 - **Your own website**: upload the files from the zip, or the single HTML file.
 
 ## What players get
