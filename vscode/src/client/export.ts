@@ -1,11 +1,12 @@
-// Squiffy: Export: the story built to be published (index.html, story.js, the page's stylesheets
-// and the story's assets) into a folder, or a zip, as the editor and the CLI build it. Files are
+// Squiffy: Export: the story built to be published, as the editor and the CLI build it: into a
+// folder or a zip (index.html, story.js, the page's stylesheets and the story's assets), as one
+// HTML file with everything in it, or only its story.js, for a page of the author's own. Files are
 // written with workspace.fs, so it works on the web too.
 
 import * as vscode from "vscode";
 import type { BaseLanguageClient } from "vscode-languageclient";
 import { strToU8, zipSync } from "fflate";
-import { EXPORT_STORY, type ExportStoryParams, type ExportStoryResult } from "../protocol.js";
+import { EXPORT_STORY, type ExportStoryParams, type ExportStoryResult, toBase64 } from "../protocol.js";
 import { isStoryFile, listFiles } from "./files.js";
 
 // A file name from a story's title, e.g. "The Cave" -> "The Cave.zip", as the editor names it
@@ -55,10 +56,21 @@ async function storyAssets(root: vscode.Uri, target: vscode.Uri): Promise<Record
     return assets;
 }
 
+const request = (client: BaseLanguageClient, params: ExportStoryParams) => client.sendRequest<ExportStoryResult>(EXPORT_STORY, params);
+
+function showErrors(errors: string[]) {
+    void vscode.window.showErrorMessage(`The story can't be exported until its errors are fixed: ${errors[0]}${errors.length > 1 ? ` (and ${errors.length - 1} more)` : ""}`);
+}
+
+// Asks where to save a single file, beside the story by default
+async function saveDialog(root: vscode.Uri, title: string, name: string, filters: Record<string, string[]>) {
+    return vscode.window.showSaveDialog({ title, defaultUri: vscode.Uri.joinPath(root, name), filters, saveLabel: "Export" });
+}
+
 export async function exportStory(client: BaseLanguageClient, storyUri: vscode.Uri) {
-    const result = await client.sendRequest<ExportStoryResult>(EXPORT_STORY, { uri: storyUri.toString() } satisfies ExportStoryParams);
+    const result = await request(client, { uri: storyUri.toString() });
     if (!result.success) {
-        void vscode.window.showErrorMessage(`The story can't be exported until its errors are fixed: ${result.errors[0]}${result.errors.length > 1 ? ` (and ${result.errors.length - 1} more)` : ""}`);
+        showErrors(result.errors);
         return;
     }
     const root = vscode.Uri.parse(result.root);
@@ -66,16 +78,41 @@ export async function exportStory(client: BaseLanguageClient, storyUri: vscode.U
     const choice = await vscode.window.showQuickPick([
         { label: "To a folder", description: "index.html, story.js and the story's files", to: "folder" as const },
         { label: "As a zip", description: "The same files in a zip, to upload to a website", to: "zip" as const },
+        { label: "As a single HTML file", description: "One page with everything in it, to share or open in a browser", to: "html" as const },
+        { label: "Only story.js", description: "The story's code, for a page of your own", to: "js" as const },
     ], { title: "Export the story" });
     if (!choice) return;
 
-    if (choice.to == "zip") {
-        const target = await vscode.window.showSaveDialog({
-            title: "Export the story as a zip",
-            defaultUri: vscode.Uri.joinPath(root, fileName(result.title, ".zip")),
-            filters: { "Zip files": ["zip"] },
-            saveLabel: "Export",
+    if (choice.to == "js") {
+        const target = await saveDialog(root, "Export the story's script", "story.js", { "JavaScript files": ["js"] });
+        if (!target) return;
+        await vscode.workspace.fs.writeFile(target, strToU8(result.files["story.js"]));
+        void vscode.window.showInformationMessage(`Exported the story's script to ${describe(target)}.`);
+        return;
+    }
+
+    if (choice.to == "html") {
+        const target = await saveDialog(root, "Export the story as a single HTML file", fileName(result.title, ".html"), { "HTML files": ["html"] });
+        if (!target) return;
+        const assets = await storyAssets(root, target);
+        const single = await request(client, {
+            uri: storyUri.toString(),
+            inlineAssets: Object.fromEntries(Object.entries(assets).map(([path, bytes]) => [path, toBase64(bytes)])),
         });
+        if (!single.success) {
+            showErrors(single.errors);
+            return;
+        }
+        await vscode.workspace.fs.writeFile(target, strToU8(single.files["index.html"]));
+        // A browser can open the page from disk, on the desktop
+        const canOpen = target.scheme == "file" && vscode.env.uiKind == vscode.UIKind.Desktop;
+        const action = await vscode.window.showInformationMessage(`Exported the story to ${describe(target)}.`, ...(canOpen ? ["Open in Browser"] : []));
+        if (action) void vscode.env.openExternal(target);
+        return;
+    }
+
+    if (choice.to == "zip") {
+        const target = await saveDialog(root, "Export the story as a zip", fileName(result.title, ".zip"), { "Zip files": ["zip"] });
         if (!target) return;
         const assets = await storyAssets(root, target);
         const zip = zipSync({

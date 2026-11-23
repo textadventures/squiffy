@@ -13,7 +13,8 @@ Write [Squiffy](https://squiffystory.com) interactive stories in VS Code, with a
   cursor is in. The attributes the story sets are logged in the Squiffy Preview output.
 - **Squiffy: Export** builds the playable story (`index.html`, `story.js`, the page's stylesheets
   and the story's images, sounds and other files) into a folder, or a zip to upload to a website,
-  as the Squiffy editor and command line tool build it
+  as the Squiffy editor and command line tool build it. It can also make a single HTML file with
+  everything in it, or only `story.js`, for a page of your own
 - **Squiffy: New Story** makes a new story in a folder: a `squiffy.json` and a `story.squiffy` to
   start from. **New Squiffy Story Here** in the Explorer's context menu makes one in that folder.
 - **Squiffy: Add Section** and **Add Passage** (also in the editor's context menu) add a section
@@ -42,7 +43,8 @@ This is the `vscode/` workspace in the [Squiffy repository](https://github.com/t
   (`preview.ts`), which runs squiffy-runtime's preview page in a webview with
   `squiffy-runtime/preview-host`. Export (`export.ts`) asks the server for the story built by
   squiffy-packager's `createPackage()`, and adds the story's assets, read and written with
-  `workspace.fs`, zipping them with fflate for a zip. New Story (`new-story.ts`) uses the editor's
+  `workspace.fs`, zipping them with fflate for a zip. For a single HTML file, it sends the assets
+  to the server (in base64), which puts them in the page. New Story (`new-story.ts`) uses the editor's
   starter story (`src/client/new-story.test.ts` checks it matches `app/src/lib/project.svelte.ts`).
 - The grammar is the compiler's (`compiler/syntaxes/squiffy.tmLanguage.json`), copied into `dist/`
   by the build. The snippets are the editor's, with tab stops (`src/snippets.test.ts` checks they

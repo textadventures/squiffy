@@ -18,7 +18,13 @@ export type PreviewStoryResult = PreviewStory & {
 // story.js and the page's stylesheets), and the folder its assets are found from. The client
 // copies the assets in, or zips the lot, as binary files are better read there than sent here.
 export const EXPORT_STORY = "squiffy/exportStory";
-export interface ExportStoryParams { uri: string }
+export interface ExportStoryParams {
+    uri: string;
+    // For a single-file export: the story's assets, in base64, by their path from the main file's
+    // folder, which go in the page. Without them, the files are the page and story.js, to go
+    // beside the story's assets.
+    inlineAssets?: Record<string, string>;
+}
 export type ExportStoryResult =
     | { success: true; files: Record<string, string>; root: string; title?: string }
     | { success: false; errors: string[] };
@@ -48,3 +54,17 @@ export type ListFilesResult = string[];
 export const READ_TEXT = "squiffy/readText";
 export interface ReadTextParams { uri: string }
 export type ReadTextResult = string;
+
+// Bytes as base64, to send in a request, which is JSON
+export function toBase64(bytes: Uint8Array): string {
+    let binary = "";
+    for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+    return btoa(binary);
+}
+
+export function fromBase64(text: string): Uint8Array {
+    const binary = atob(text);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return bytes;
+}
