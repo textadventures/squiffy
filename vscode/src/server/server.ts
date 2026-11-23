@@ -9,7 +9,7 @@ import { TextDocument } from "vscode-languageserver-textdocument";
 import { emit, formatDiagnostic } from "squiffy-compiler";
 import { createPackage } from "@textadventures/squiffy-packager";
 import {
-    EXPORT_STORY, FIND_PROJECT_FILES, LIST_FILES, PREVIEW_STORY, READ_TEXT, SECTION_AT, SET_MAIN_FILE,
+    EXPORT_STORY, FIND_PROJECT_FILES, fromBase64, LIST_FILES, PREVIEW_STORY, READ_TEXT, SECTION_AT, SET_MAIN_FILE,
     type ExportStoryParams, type ExportStoryResult, type FindProjectFilesResult, type ListFilesParams, type ListFilesResult, type PreviewStoryParams, type PreviewStoryResult,
     type ReadTextParams, type ReadTextResult, type SectionAtParams, type SectionAtResult, type SetMainFileParams,
 } from "../protocol.js";
@@ -195,7 +195,7 @@ export function startServer(connection: Connection) {
 
     // As the editor exports it (app/src/lib/language/worker.ts), and the CLI builds it: without
     // its @test sections, unless squiffy.json's startAnywhere keeps them for testers
-    connection.onRequest(EXPORT_STORY, async ({ uri }: ExportStoryParams): Promise<ExportStoryResult> => {
+    connection.onRequest(EXPORT_STORY, async ({ uri, inlineAssets }: ExportStoryParams): Promise<ExportStoryResult> => {
         const story = await stories.storyFor(uri);
         const [analysis, { projectFile, mainFile }] = await Promise.all([story.service.getAnalysis(), story.service.getProjectInfo()]);
         if (!analysis.success) {
@@ -205,11 +205,21 @@ export function startServer(connection: Connection) {
             globalJs: true, omitTestSections: !projectFile?.startAnywhere, projectId: projectFile?.id,
             panels: projectFile?.panels, settings: projectFile?.settings, persistent: projectFile?.persistent,
         });
+        const root = folderOf(toUri(story.root, mainFile));
+        // The cover is left out if it isn't there. A single-file export leaves it out anyway.
+        const cover = projectFile?.cover;
+        const hasCover = !inlineAssets && cover !== undefined
+            && (await connection.sendRequest<ListFilesResult>(LIST_FILES, { root } satisfies ListFilesParams)).includes(cover);
         const pkg = await createPackage(result, {
+            inlineHtml: !!inlineAssets,
+            assets: inlineAssets && Object.fromEntries(Object.entries(inlineAssets).map(([path, text]) => [path, fromBase64(text)])),
             backButton: projectFile?.backButton, saveButton: projectFile?.saveButton,
             startAnywhere: projectFile?.startAnywhere, strings: projectFile?.strings,
+            // What the story is, for the page's <head>
+            id: projectFile?.id, description: projectFile?.description, author: projectFile?.author,
+            cover: hasCover ? cover : undefined,
         });
-        return { success: true, files: pkg.files, root: folderOf(toUri(story.root, mainFile)), title: result.getUiInfo().title || undefined };
+        return { success: true, files: pkg.files, root, title: result.getUiInfo().title || undefined };
     });
 
     connection.onRequest(SECTION_AT, async ({ uri, position }: SectionAtParams): Promise<SectionAtResult> => {
