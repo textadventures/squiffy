@@ -175,6 +175,30 @@ Content for zip test.
         expect(await read("index.html")).toContain("if (true && ");
     });
 
+    test("the page's <head> has squiffy.json's id, description, author and cover, which is copied with the story", async () => {
+        await fs.writeFile(path.join(TEST_DIR, "squiffy.json"), JSON.stringify({
+            version: 1, id: "0b7c6d9e-3f1a-4e2b-9c5d-8a7f6e5d4c3b", main: "story.squiffy",
+            description: "A cave.", author: "Ann", cover: "images/cover.png",
+        }));
+        await fs.writeFile(path.join(TEST_DIR, "story.squiffy"), "@title The Cave\n\nHello\n");
+        await fs.mkdir(path.join(TEST_DIR, "images"));
+        await fs.writeFile(path.join(TEST_DIR, "images", "cover.png"), "png");
+        const story = await findStory(TEST_DIR);
+        expect(await createPackageFiles(story, OUTPUT_DIR)).toBe(true);
+        const html = await fs.readFile(path.join(OUTPUT_DIR, "index.html"), "utf8");
+        expect(html).toContain("<meta property=\"ifiction:ifid\" content=\"0B7C6D9E-3F1A-4E2B-9C5D-8A7F6E5D4C3B\">");
+        expect(html).toContain("<meta name=\"description\" content=\"A cave.\">");
+        expect(html).toContain("<meta name=\"author\" content=\"Ann\">");
+        expect(html).toContain("<meta property=\"og:image\" content=\"images/cover.png\">");
+        expect(await fs.readFile(path.join(OUTPUT_DIR, "images", "cover.png"), "utf8")).toBe("png");
+        expect((await createTestingFiles(story))!["index.html"]).toContain("ifiction:ifid");
+
+        // A cover that isn't there is left out
+        await fs.rm(path.join(TEST_DIR, "images", "cover.png"));
+        expect(await createPackageFiles(story, OUTPUT_DIR)).toBe(true);
+        expect(await fs.readFile(path.join(OUTPUT_DIR, "index.html"), "utf8")).not.toContain("og:image");
+    });
+
     test("a single-file page that --serve shows has the story with its @test sections in it", async () => {
         const file = path.join(TEST_DIR, "one.squiffy");
         await fs.writeFile(file, "[[hall]]:\nThe hall.\n\n[[shortcut]]:\n@test\nA shortcut.\n");

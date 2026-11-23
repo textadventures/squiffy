@@ -49,6 +49,22 @@ export interface PackageOptions {
      * "strings". Anything left out is in English.
      */
     strings?: PageStrings;
+    /**
+     * The story's IFID, from its squiffy.json's "id", which the page's <head> gives in uppercase as
+     * the Treaty of Babel says an HTML story file should, so sites and tools can tell which story
+     * it is whatever it's called.
+     */
+    id?: string;
+    /** What the story is about, from squiffy.json's "description", for the page's description. */
+    description?: string;
+    /** Who wrote the story, from squiffy.json's "author". */
+    author?: string;
+    /**
+     * The story's cover image, from squiffy.json's "cover": its path from the main file's folder,
+     * which should be one of the assets, so it's published with the story. A single-file export
+     * leaves it out, as it has no files beside it.
+     */
+    cover?: string;
 }
 
 const mimeTypes: Record<string, string> = {
@@ -109,6 +125,31 @@ const toBase64 = (bytes: Uint8Array) => {
 
 // Escapes text so that it's safe inside a quoted HTML attribute.
 const escapeAttribute = (text: string) => text.replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
+
+// The <meta> tags that say what the story is, as Quest Viva's HTML exports have: its IFID, for sites
+// and tools that list stories (the Treaty of Babel's way for an HTML file to carry one), and a
+// description, author and cover for search results and link previews. Each is left out if it has
+// no value. Returns the tags, and whether <head> needs the prefix the IFID tag's property uses.
+const metaTags = (title: string, options: PackageOptions): { tags: string[]; ifid: boolean } => {
+    const tags: string[] = [];
+    const property = (name: string, value: string | undefined) => {
+        if (value?.trim()) tags.push(`<meta property="${name}" content="${escapeAttribute(value.trim())}">`);
+    };
+    const named = (name: string, value: string | undefined) => {
+        if (value?.trim()) tags.push(`<meta name="${name}" content="${escapeAttribute(value.trim())}">`);
+    };
+    const ifid = options.id?.trim().toUpperCase();
+    property("ifiction:ifid", ifid);
+    named("description", options.description);
+    named("author", options.author);
+    property("og:type", "website");
+    property("og:title", title);
+    property("og:description", options.description);
+    const cover = options.inlineHtml ? undefined : options.cover?.trim();
+    property("og:image", cover);
+    if (cover) named("twitter:card", "summary");
+    return { tags, ifid: !!ifid };
+};
 
 // Escapes JSON so that it's safe inside a <script> element.
 const scriptSafeJson = (value: unknown) => JSON.stringify(value).replace(/</g, "\\u003c");
@@ -219,6 +260,9 @@ export const createPackage = async (input: CompileSuccess, createZipOrOptions: b
     htmlData = htmlData.replace("/* START_ANYWHERE */", () => options.startAnywhere === true ? "true" : "false");
     htmlData = htmlData.replace("<!-- INFO -->", () => infoComment);
     htmlData = htmlData.replace("<!-- TITLE -->", () => uiInfo.title);
+    const meta = metaTags(uiInfo.title, options);
+    htmlData = htmlData.replace(/\n([ \t]*)<!-- META -->/, (_, indent: string) => meta.tags.map(tag => "\n" + indent + tag).join(""));
+    if (meta.ifid) htmlData = htmlData.replace("<head>", () => "<head prefix=\"ifiction: http://babel.ifarchive.org/protocol/iFiction/\">");
     htmlData = htmlData.replace("<!-- SCRIPTS -->", () => scriptData);
     htmlData = htmlData.replace("<!-- STYLESHEETS -->", () => stylesheetData);
     htmlData = htmlData.replace("<!-- STYLE_CONTENT -->", () => styleContent);

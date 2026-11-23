@@ -74,15 +74,34 @@ export const writeScriptFile = async(input: string | StoryOnDisk, outputPath: st
 
 // Asset files (images etc.) referenced by the story, and its own stylesheets and scripts.
 // Assets the story's stylesheets and scripts refer to, such as fonts, are included too.
-const storyAssets = (inputFilename: string, result: CompileSuccess): Record<string, Uint8Array> => {
+// The cover image in squiffy.json is published too, though the story itself needn't show it.
+const storyAssets = (inputFilename: string, result: CompileSuccess, cover?: string): Record<string, Uint8Array> => {
     const imported = findImportedFiles(inputFilename, result);
     const importedText = Object.values(imported).map(bytes => new TextDecoder().decode(bytes)).join("\n");
     return {
         ...findAssets(inputFilename, getStoryText(result) + "\n" + importedText),
         ...findStylesheetAssets(inputFilename, result, imported),
         ...imported,
+        ...coverAsset(inputFilename, cover),
     };
 };
+
+const coverAsset = (inputFilename: string, cover?: string): Record<string, Uint8Array> => {
+    if (!cover) return {};
+    const filename = path.join(path.dirname(inputFilename), cover);
+    if (!fs.existsSync(filename) || !fs.statSync(filename).isFile()) {
+        console.warn(`The cover image in squiffy.json, ${cover}, doesn't exist.`);
+        return {};
+    }
+    return { [cover]: fs.readFileSync(filename) };
+};
+
+// What squiffy.json says about the story, for the page's <head>. The cover is left out if it
+// isn't one of the files published with the story.
+const storyDetails = (story: StoryOnDisk, assets: Record<string, Uint8Array>): PackageOptions => ({
+    id: story.projectId, description: story.description, author: story.author,
+    cover: story.cover !== undefined && story.cover in assets ? story.cover : undefined,
+});
 
 // The story's page as --serve shows it, for the author to test: with its @test sections, and
 // able to start at any section. These are the files that differ from the ones createPackageFiles
@@ -92,8 +111,8 @@ export const createTestingFiles = async (input: string | StoryOnDisk, options: P
     const story = toStory(input);
     const result = await getCompileResult(story, true);
     if (!result.success) return undefined;
-    const assets = options.assets ?? storyAssets(story.mainFile, result);
-    const pkg = await createPackage(result, { ...options, createZip: false, startAnywhere: true, assets });
+    const assets = options.assets ?? storyAssets(story.mainFile, result, story.cover);
+    const pkg = await createPackage(result, { ...storyDetails(story, assets), ...options, createZip: false, startAnywhere: true, assets });
     return Object.fromEntries(Object.entries(pkg.files).filter(([name]) => name == "index.html" || name == "story.js"));
 };
 
@@ -112,13 +131,13 @@ export const createPackageFiles = async (input: string | StoryOnDisk, outputPath
     // When the other package files are written to the story's folder, alongside its assets, they
     // only need to be passed on for the zip or for inlining. When they're written somewhere else,
     // such as a project's build folder, they're copied there too.
-    const assets = options.assets ?? storyAssets(inputFilename, result);
+    const assets = options.assets ?? storyAssets(inputFilename, result, story.cover);
     const assetPaths = Object.keys(assets);
     if (assetPaths.length > 0 && (options.createZip || options.inlineHtml)) {
         console.log(`Including asset${assetPaths.length == 1 ? "" : "s"}: ${assetPaths.join(", ")}`);
     }
 
-    const pkg = await createPackage(result, { ...options, assets });
+    const pkg = await createPackage(result, { ...storyDetails(story, assets), ...options, assets });
     const files = pkg.files;
 
     fs.mkdirSync(outputPath, { recursive: true });
