@@ -1,5 +1,5 @@
 {
-  "name": "squiffy-vscode",
+  "name": "squiffy",
   "displayName": "Squiffy",
   "description": "Write Squiffy interactive stories in VS Code, with a live preview",
   "version": "7.0.0-beta.13",

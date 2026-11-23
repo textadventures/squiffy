@@ -51,7 +51,7 @@ This is the `vscode/` workspace in the [Squiffy repository](https://github.com/t
 ```bash
 npm run build      # type-check, then bundle into dist/ with esbuild
 npm test
-npm run package    # build squiffy-vscode-<version>.vsix
+npm run package    # build squiffy-<version>.vsix
 ```
 
 Build the compiler and runtime first, as the extension bundles them from their `dist/` folders.

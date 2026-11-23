@@ -44,7 +44,7 @@ jobs:
             exit 1
           fi
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
-          echo "VSIX=squiffy-vscode-$VERSION.vsix" >> "$GITHUB_ENV"
+          echo "VSIX=squiffy-$VERSION.vsix" >> "$GITHUB_ENV"
           echo "RELEASE_CHANNEL=$(.github/scripts/release-channel.sh "$GITHUB_REF_NAME")" >> "$GITHUB_ENV"
 
       - uses: actions/setup-node@v7
@@ -55,7 +55,7 @@ jobs:
       - name: Build the packages the extension bundles
         run: |
           npm ci
-          npx lerna run build --scope squiffy-vscode --include-dependencies
+          npx lerna run build --scope squiffy --include-dependencies
 
       - name: Test the extension
         working-directory: vscode
