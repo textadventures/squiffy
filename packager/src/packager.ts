@@ -65,6 +65,11 @@ export interface PackageOptions {
      * leaves it out, as it has no files beside it.
      */
     cover?: string;
+    /**
+     * The language the story is written in, from squiffy.json's "language", as a BCP 47 tag such as
+     * "en" or "pt-BR": the page's <html lang>.
+     */
+    language?: string;
 }
 
 const mimeTypes: Record<string, string> = {
@@ -262,6 +267,8 @@ export const createPackage = async (input: CompileSuccess, createZipOrOptions: b
     htmlData = htmlData.replace("<!-- TITLE -->", () => uiInfo.title);
     const meta = metaTags(uiInfo.title, options);
     htmlData = htmlData.replace(/\n([ \t]*)<!-- META -->/, (_, indent: string) => meta.tags.map(tag => "\n" + indent + tag).join(""));
+    const language = options.language?.trim();
+    if (language) htmlData = htmlData.replace("<html>", () => `<html lang="${escapeAttribute(language)}">`);
     if (meta.ifid) htmlData = htmlData.replace("<head>", () => "<head prefix=\"ifiction: http://babel.ifarchive.org/protocol/iFiction/\">");
     htmlData = htmlData.replace("<!-- SCRIPTS -->", () => scriptData);
     htmlData = htmlData.replace("<!-- STYLESHEETS -->", () => stylesheetData);

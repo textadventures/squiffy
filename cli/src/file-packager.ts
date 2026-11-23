@@ -99,7 +99,7 @@ const coverAsset = (inputFilename: string, cover?: string): Record<string, Uint8
 // What squiffy.json says about the story, for the page's <head>. The cover is left out if it
 // isn't one of the files published with the story.
 const storyDetails = (story: StoryOnDisk, assets: Record<string, Uint8Array>): PackageOptions => ({
-    id: story.projectId, description: story.description, author: story.author,
+    id: story.projectId, description: story.description, author: story.author, language: story.language,
     cover: story.cover !== undefined && story.cover in assets ? story.cover : undefined,
 });
 

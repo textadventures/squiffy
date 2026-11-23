@@ -19,6 +19,12 @@ test("a new story has its title and a squiffy.json naming its main file", () => 
     expect(files[MAIN_FILE]).toMatch(/^@title The Cave\n/);
     const project = parseProjectFile(files["squiffy.json"]);
     expect(project.success && project.project).toMatchObject({ version: 1, main: MAIN_FILE });
+    expect(project.success && project.project.language).toBeUndefined();
+});
+
+test("a new story has VS Code's language", () => {
+    const project = parseProjectFile(newStoryFiles("The Cave", "pt-br")["squiffy.json"]);
+    expect(project.success && project.project.language).toBe("pt-BR");
 });
 
 test("a title with $ in it is kept as it is", () => {

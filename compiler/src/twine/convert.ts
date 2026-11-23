@@ -12,6 +12,7 @@ import { parseTwine } from "./story.js";
 import { sugarCubeSettings } from "./settings.js";
 import type { TwinePassage, TwineStory } from "./story.js";
 import { formatProjectFile } from "../project.js";
+import { guessLanguage } from "../guess-language.js";
 import type { MapPositions, Panel } from "../project.js";
 
 export interface TwineConversionProblem {
@@ -34,6 +35,10 @@ export interface TwineConversionResult {
     // The number of passages converted
     passages: number;
     problems: TwineConversionProblem[];
+    // The story's language, as squiffy.json has it: its <html lang>, or guessed from its text
+    language?: string;
+    // Whether the language was guessed, which the problems file says, as it could be wrong
+    languageGuessed?: boolean;
 }
 
 export interface TwineConversionOptions {
@@ -417,6 +422,7 @@ export function formatTwineProblems(result: TwineConversionResult, sourceName?: 
     const lines = [
         `Converted ${sourceName ?? "a Twine story"}${result.format ? ` (${result.format})` : ""} to Squiffy: ${result.passages} passage${result.passages == 1 ? "" : "s"}.`,
         "",
+        ...languageNote(result.language, result.languageGuessed),
     ];
     if (result.problems.length == 0) {
         lines.push("Everything was converted.");
@@ -436,6 +442,15 @@ export function formatTwineProblems(result: TwineConversionResult, sourceName?: 
         lines.push(`  ${p.text}`, `    ${p.reason}`);
     }
     return lines.join("\n") + "\n";
+}
+
+// Says what language a story was given, when it was guessed from its text
+export function languageNote(language: string | undefined, guessed: boolean | undefined): string[] {
+    if (!guessed || !language) return [];
+    return [
+        `The story's language, "${language}", was guessed from its text. If that's wrong, change it in Story details, or as "language" in squiffy.json.`,
+        "",
+    ];
 }
 
 export function convertTwine(source: string, options: TwineConversionOptions = {}): TwineConversionResult {
@@ -700,7 +715,9 @@ export function convertTwineStory(twine: TwineStory, options: TwineConversionOpt
 
     files[`${name}.squiffy`] = script;
     const map = mapPositions(sectionPassages, story);
-    files["squiffy.json"] = formatProjectFile({ main: `${name}.squiffy`, exclude, panels, settings: settings.settings, persistent: [...story.persistent], ...(map ? { map } : {}) });
+    const guessed = twine.language ? undefined : guessLanguage(storyText(twine.passages.map(p => p.text)));
+    const language = twine.language ?? guessed;
+    files["squiffy.json"] = formatProjectFile({ main: `${name}.squiffy`, exclude, panels, settings: settings.settings, persistent: [...story.persistent], language, ...(map ? { map } : {}) });
 
     return {
         title: twine.title,
@@ -709,7 +726,19 @@ export function convertTwineStory(twine: TwineStory, options: TwineConversionOpt
         main: `${name}.squiffy`,
         passages: sectionPassages.length,
         problems: [...problems, ...story.noteProblems(), ...story.problems],
+        ...(language ? { language } : {}),
+        ...(guessed ? { languageGuessed: true } : {}),
     };
+}
+
+// The prose in passages, for guessing their language: without macros, HTML tags and variables
+function storyText(texts: string[]): string {
+    return texts.map(t => t
+        .replace(/<<[\s\S]*?>>/g, " ")
+        .replace(/\(\w[\w-]*:[^)]*\)/g, " ")
+        .replace(/<[^>]*>/g, " ")
+        .replace(/[$_]\w+/g, " ")
+        .replace(/->[^\]]*\]\]|\|[^\]]*\]\]/g, "]]")).join("\n");
 }
 
 // SugarCube's sidebar passages in the order SugarCube shows them

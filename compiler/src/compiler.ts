@@ -29,7 +29,7 @@ export { BUILT_IN_HELPERS } from "./helpers.js";
 export { findCssUrls, isRelativeUrl, resolveCssUrl, rewriteCssUrls } from "./css-urls.js";
 export {
     PROJECT_FILENAME, PROJECT_FILE_VERSION, PROJECT_SCHEMA_URL, parseProjectFile, getStoryFiles, isExcluded,
-    isAlwaysSkipped, formatProjectFile, updateProjectFile, PAGE_STRINGS, PANEL_ICONS, PLAYER_SETTING_TYPES, storyFileList, BUILD_FOLDER, STORY_DETAILS,
+    isAlwaysSkipped, formatProjectFile, updateProjectFile, PAGE_STRINGS, PANEL_ICONS, PLAYER_SETTING_TYPES, storyFileList, BUILD_FOLDER, STORY_DETAILS, languageTag,
 } from "./project.js";
 export type { MapPositions, PageStringName, PageStrings, Panel, PanelIcon, PlayerSetting, PlayerSettingOption, ProjectFile, ParsedProjectFile, StoryDetail, StoryFiles } from "./project.js";
 export type * from "./syntax.js";

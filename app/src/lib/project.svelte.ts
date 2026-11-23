@@ -30,6 +30,7 @@ import { needsBackup } from "./backup.js";
 import { changedPaths, readDisk, reconcile } from "./disk-changes.js";
 import { convertTwineFile, TWINE_FILE_PATTERN, twineImportMessage } from "./twine-import.js";
 import { openNextStoryOnMap } from "./map-layout.js";
+import { suggestedLanguage } from "./languages.js";
 import { convertQuestFile, findQuestGame, QUEST_FILE_PATTERN, questImportMessage } from "./quest-import.js";
 
 export const SQUIFFY_FILES: FileTypeFilter[] = [
@@ -667,9 +668,14 @@ export function setterConversionMessage(conversion: SetterConversion): string {
     return message;
 }
 
+// A new story's language: the browser's, which the author is most likely writing in, as one of
+// those Story details offers. Imported and converted stories aren't given one, as theirs could be
+// anything.
+const newStoryLanguage = () => suggestedLanguage(navigator.languages);
+
 // A new story in the browser with one .squiffy file, and a squiffy.json naming it. It's a copy,
 // and has a squiffy.json, so its setters are converted to Squiffy 7's rules (#373).
-async function createBrowserStory(mainFile: string, text: string): Promise<string> {
+async function createBrowserStory(mainFile: string, text: string, language?: string): Promise<string> {
     const id = crypto.randomUUID();
     const fs = await browserStories.create(id, { title: "", mainFile, lastOpened: Date.now() });
     const conversion = convertSetters(text);
@@ -677,12 +683,12 @@ async function createBrowserStory(mainFile: string, text: string): Promise<strin
     const message = setterConversionMessage({ converted: conversion.converted, problems: conversion.problems.map(p => `line ${p.line}`) });
     if (message) showToast(message, "info", 12000);
     await fs.write(mainFile, text);
-    await fs.write(PROJECT_FILENAME, formatProjectFile({ main: mainFile }));
+    await fs.write(PROJECT_FILENAME, formatProjectFile({ main: mainFile, language }));
     return id;
 }
 
 export async function newBrowserStory(): Promise<string> {
-    return createBrowserStory(DEFAULT_MAIN_FILE, NEW_STORY);
+    return createBrowserStory(DEFAULT_MAIN_FILE, NEW_STORY, newStoryLanguage());
 }
 
 export async function openBrowserStory(id: string): Promise<void> {
@@ -946,7 +952,7 @@ export async function pickDesktopNewStory(): Promise<PickedFolder | null> {
     if (!created) return null;
     const fs = new ElectronFileSystem(projectFs, created.root);
     await fs.write(DEFAULT_MAIN_FILE, newStoryText(NEW_STORY, created.title));
-    await fs.write(PROJECT_FILENAME, formatProjectFile({ main: DEFAULT_MAIN_FILE }));
+    await fs.write(PROJECT_FILENAME, formatProjectFile({ main: DEFAULT_MAIN_FILE, language: newStoryLanguage() }));
     return { fs, mainFile: DEFAULT_MAIN_FILE };
 }
 
@@ -988,7 +994,7 @@ async function chooseMainFile(fs: ProjectFileSystem): Promise<string | null> {
         ]);
         if (!create) return null;
         await fs.write(DEFAULT_MAIN_FILE, NEW_STORY);
-        if (!(await fs.exists(PROJECT_FILENAME))) await fs.write(PROJECT_FILENAME, formatProjectFile({ main: DEFAULT_MAIN_FILE }));
+        if (!(await fs.exists(PROJECT_FILENAME))) await fs.write(PROJECT_FILENAME, formatProjectFile({ main: DEFAULT_MAIN_FILE, language: newStoryLanguage() }));
         mainFile = DEFAULT_MAIN_FILE;
     } else if (files.length === 1) {
         mainFile = files[0];

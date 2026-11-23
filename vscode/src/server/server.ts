@@ -216,7 +216,7 @@ export function startServer(connection: Connection) {
             backButton: projectFile?.backButton, saveButton: projectFile?.saveButton,
             startAnywhere: projectFile?.startAnywhere, strings: projectFile?.strings,
             // What the story is, for the page's <head>
-            id: projectFile?.id, description: projectFile?.description, author: projectFile?.author,
+            id: projectFile?.id, description: projectFile?.description, author: projectFile?.author, language: projectFile?.language,
             cover: hasCover ? cover : undefined,
         });
         return { success: true, files: pkg.files, root, title: result.getUiInfo().title || undefined };

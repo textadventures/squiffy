@@ -17,6 +17,7 @@
     import type { ProblemCounts } from "#lib/problems.js";
     import { checkStatus, publishClient, uploadStory, UploadError, type Upload } from "#lib/publish-online.js";
     import { loadPublishTarget, savePublishTarget, type PublishTarget } from "#lib/publish-target.js";
+    import { languageName } from "#lib/languages.js";
     import { DOCS_URL } from "#lib/links.js";
     import { trapFocus } from "#lib/actions/trapFocus.js";
 
@@ -71,7 +72,7 @@
 
     // What the published page will say the story is
     let details = $derived(project.projectFile);
-    let hasDetails = $derived(!!(details?.description || details?.author || details?.cover));
+    let hasDetails = $derived(!!(details?.description || details?.author || details?.cover || details?.language));
     let problems = $derived(problemCounts.error + problemCounts.warning);
     let problemsText = $derived.by(() => {
         const { error, warning } = problemCounts;
@@ -201,6 +202,7 @@
                     <!-- A long description is cut short here -->
                     <p class="text-xs text-surface-600-400 line-clamp-2">{details?.description || "No description yet."}</p>
                     {#if details?.cover}<p class="text-xs text-surface-600-400">Cover: {details.cover}</p>{/if}
+                    {#if details?.language}<p class="text-xs text-surface-600-400">Language: {languageName(details.language)}</p>{/if}
                 {:else}
                     <!-- Nothing to show yet, so this asks for it, with the button right under the reason -->
                     <p class="font-medium truncate">{project.displayName}</p>
