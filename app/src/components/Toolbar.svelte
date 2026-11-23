@@ -15,13 +15,9 @@
     import type { EditorCommand } from "#lib/editor-commands.js";
     import { isNarrow } from "#lib/layout.svelte.js";
     import { DISCORD_URL, DOCS_URL, GAMES_URL, GITHUB_URL, ISSUES_URL } from "#lib/links.js";
-    import type { ExportKind } from "#lib/language/protocol.js";
     import FolderDown from "@lucide/svelte/icons/folder-down";
     import FolderOpen from "@lucide/svelte/icons/folder-open";
     import { folderReveal } from "#lib/desktop.js";
-    import Globe from "@lucide/svelte/icons/globe";
-    import FileCode from "@lucide/svelte/icons/file-code";
-    import BookOpenText from "@lucide/svelte/icons/book-open-text";
     import DropdownMenu from "#components/DropdownMenu.svelte";
     import type { DropdownMenuItem } from "#components/DropdownMenu.svelte";
     import Home from "@lucide/svelte/icons/home";
@@ -85,14 +81,10 @@
         onassets?: () => void;
         // Opens the Fonts dialog
         onfonts?: () => void;
-        // Opens the Story details dialog: the description, author and cover the published page has
-        ondetails?: () => void;
         // Downloads the whole project as a zip, which Open file can read back
         ondownloadproject?: () => void;
-        // Publishes the story: HTML, JavaScript and assets as a zip, one HTML file, or the JavaScript
-        onexport?: (kind: ExportKind) => void;
-        // Publishes the story to textadventures.co.uk
-        onpublishonline?: () => void;
+        // Opens the Publish dialog
+        onpublish?: () => void;
         // Undo, redo, find, fold all and unfold all, in the editor
         oncommand?: (command: EditorCommand) => void;
         // Opens Find in Files
@@ -108,7 +100,7 @@
         onplaytab?: () => void;
     }
 
-    let { outlineOpen = false, ontoggleoutline, mapOpen = false, ontogglemap, view = "code", onview, problemCounts = { error: 0, warning: 0, hint: 0 }, problemsOpen = false, ontoggleproblems, onfindinfiles, onrun, onassets, onfonts, ondetails, ondownloadproject, onexport, onpublishonline, oncommand, onadd, onsnippet, snippets = [], onabout, onplaytab }: Props = $props();
+    let { outlineOpen = false, ontoggleoutline, mapOpen = false, ontogglemap, view = "code", onview, problemCounts = { error: 0, warning: 0, hint: 0 }, problemsOpen = false, ontoggleproblems, onfindinfiles, onrun, onassets, onfonts, ondownloadproject, onpublish, oncommand, onadd, onsnippet, snippets = [], onabout, onplaytab }: Props = $props();
 
     const mod = isMac ? "⌘" : "Ctrl+";
 
@@ -150,11 +142,7 @@
         ...(reveal ? [{ label: reveal.label, action: () => reveal.show(""), icon: FolderOpen }] : []),
         { label: "Download project (.zip)", action: () => ondownloadproject?.(), icon: FolderDown },
         { label: `Download ${p?.activePath ?? ""}`, action: () => { if (p?.activePath) void downloadFile(p.activePath); }, icon: Download, disabled: !p?.activePath },
-        { label: "Story details", action: () => ondetails?.(), icon: BookOpenText, divider: true, heading: "Publish" },
-        { label: "Publish to textadventures.co.uk", action: () => onpublishonline?.(), icon: CloudUpload },
-        { label: "HTML and JavaScript (.zip)", action: () => onexport?.("zip"), icon: Globe },
-        { label: "HTML (one file)", action: () => onexport?.("html"), icon: Globe },
-        { label: "JavaScript only", action: () => onexport?.("js"), icon: FileCode },
+        { label: "Publish…", action: () => onpublish?.(), icon: CloudUpload, divider: true },
     ]);
 
     // Add: a section or passage, or a snippet, as the 6.x editor's Add and Snippets menus

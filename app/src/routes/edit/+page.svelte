@@ -42,7 +42,7 @@
     import AssetManagerModal from "#components/AssetManagerModal.svelte";
     import FontsModal from "#components/FontsModal.svelte";
     import StoryDetailsModal from "#components/StoryDetailsModal.svelte";
-    import PublishOnlineModal from "#components/PublishOnlineModal.svelte";
+    import PublishModal from "#components/PublishModal.svelte";
     import AboutModal from "#components/AboutModal.svelte";
     import ContextMenu, { type ContextMenuItem } from "#components/ContextMenu.svelte";
     import Pencil from "@lucide/svelte/icons/pencil";
@@ -88,7 +88,9 @@
     let assetsOpen = $state(false);
     let fontsOpen = $state(false);
     let detailsOpen = $state(false);
-    let publishOnlineOpen = $state(false);
+    let publishOpen = $state(false);
+    // Story details was opened from the Publish dialog, which closing it goes back to
+    let detailsFromPublish = false;
     let aboutOpen = $state(false);
     // The code editor's right-click menu
     let editorMenu = $state<{ view: EditorView; x: number; y: number; keyboard: boolean; items: ContextMenuItem[] } | null>(null);
@@ -1330,19 +1332,17 @@
 
     // ---- Export ----
 
-    // Publishes the story, as it is in the editor now
-    async function handleExport(kind: ExportKind) {
+    // Saves the published story as a file, as it is in the editor now. Resolves to what went
+    // wrong, if anything did.
+    async function handleExport(kind: ExportKind): Promise<string | null> {
         const current = p;
         const c = client;
-        if (!current || !c) return;
+        if (!current || !c) return "The story isn't open.";
         try {
             await syncOpenFiles();
             const { fileName, saveBlob, storyAssets } = await import("#lib/export.js");
             const result = await c.call("exportStory", kind, kind === "js" ? {} : await storyAssets(current));
-            if (!result.success) {
-                showToast(`The story can't be published until this is fixed: ${result.errors[0]}`);
-                return;
-            }
+            if (!result.success) return `The story can't be published until this is fixed: ${result.errors[0]}`;
             if (kind === "zip" && result.zip) {
                 saveBlob(new Blob([result.zip as BlobPart], { type: "application/zip" }), fileName(current.displayName, " (web).zip"));
             } else if (kind === "html") {
@@ -1350,8 +1350,9 @@
             } else if (kind === "js") {
                 saveBlob(new Blob([result.files["story.js"]], { type: "text/javascript" }), "story.js");
             }
+            return null;
         } catch (err) {
-            showToast(`Couldn't publish the story: ${errorText(err)}`);
+            return `Couldn't publish the story: ${errorText(err)}`;
         }
     }
 
@@ -1632,10 +1633,8 @@
             onrun={fromCursor => runPreview(fromCursor)}
             onassets={() => { assetsOpen = true; }}
             onfonts={() => { fontsOpen = true; }}
-            ondetails={() => { detailsOpen = true; }}
-            onpublishonline={() => { publishOnlineOpen = true; }}
+            onpublish={() => { publishOpen = true; }}
             ondownloadproject={handleDownloadProject}
-            onexport={handleExport}
             oncommand={command => { const v = activeView(); if (v) runCommand(v, command); }}
             onadd={kind => {
                 const v = activeView();
@@ -1865,12 +1864,20 @@
         <StoryDetailsModal
             project={p}
             onaddprojectfile={() => p ? addProjectFile(p, "to save the story's details") : Promise.resolve(false)}
-            onclose={() => { detailsOpen = false; }}
+            onclose={() => { detailsOpen = false; publishOpen = detailsFromPublish; detailsFromPublish = false; }}
         />
     {/if}
 
-    {#if publishOnlineOpen}
-        <PublishOnlineModal prepare={preparePublishOnline} onclose={() => { publishOnlineOpen = false; }} />
+    {#if publishOpen}
+        <PublishModal
+            project={p}
+            {problemCounts}
+            onexport={handleExport}
+            prepare={preparePublishOnline}
+            ondetails={() => { publishOpen = false; detailsFromPublish = true; detailsOpen = true; }}
+            onproblems={() => { publishOpen = false; if (!problemsOpen) void toggleProblems(); }}
+            onclose={() => { publishOpen = false; }}
+        />
     {/if}
 
     {#if fontsOpen}
