@@ -6,7 +6,7 @@
     import { base } from "#lib/base-path.js";
     import {
         canOpenFolders, deleteBrowserStory, forgetFolder, importFile, isDesktop, listBrowserStories, listRecentFolders, newBrowserStory, openFolder,
-        openRecentFolder, browserStoryFromText, pickDesktopFile, pickDesktopFolder, pickDesktopNewStory, pickDesktopRecent,
+        openRecentFolder, browserStoryFromLink, browserStoryFromText, pickDesktopFile, pickDesktopFolder, pickDesktopNewStory, pickDesktopRecent,
         type BrowserStoryMeta, type RecentFolder,
     } from "#lib/project.svelte.js";
     import { openInEditor } from "#lib/desktop-shell.js";
@@ -63,7 +63,30 @@
         void loadFeaturedGames();
         if (isDesktop) return desktopApi()?.desktop.recent.onChanged(() => void refresh());
         void getLegacyAutoSave().then(saved => { legacy = saved; });
+        void openLinkedStory();
     });
+
+    // A story shared as a link, sent here by the player's "Open in editor": it becomes a new
+    // story in this browser, which is the reader's own to change
+    async function openLinkedStory() {
+        const { payloadFromFragment, decodeStory, mainFile } = await import("@textadventures/squiffy-player/link");
+        const payload = payloadFromFragment(location.hash);
+        if (!payload) return;
+        // So coming back to this page doesn't make another copy
+        history.replaceState(history.state, "", location.pathname + location.search);
+        const story = decodeStory(payload);
+        const main = story && mainFile(story);
+        if (!story || !main) {
+            showToast("The story in that link can't be read. Part of the link may have been cut off.");
+            return;
+        }
+        await run(async () => {
+            const { linkedStoryFiles } = await import("#lib/share-link.js");
+            const id = await browserStoryFromLink(linkedStoryFiles(story), main);
+            showToast("This is your own copy of the story, kept in this browser.", "info");
+            await editBrowserStory(id);
+        });
+    }
 
     const handleOpenLegacy = () => run(async () => {
         if (!legacy) return;

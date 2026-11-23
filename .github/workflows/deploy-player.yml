@@ -1,0 +1,55 @@
+name: Deploy squiffystories.com
+
+# Deploys the player (player/) to the squiffy-player Cloudflare Pages project,
+# which is squiffystories.com: the page that plays a story from a link with the
+# story in it (squiffystories.com/v7/#story=...). Runs when release-please tags
+# a release, alongside deploy-app.yml off the same tag.
+#
+# The site has a folder for each major version of Squiffy, and an upload
+# replaces the whole site, so every run builds them all, each from its latest
+# release: see .github/scripts/build-player-site.sh. A prerelease only changes
+# its major version's folder until that version has a stable release, so the
+# links stable users share are only ever played by a stable release.
+#
+# squiffy-player isn't connected to GitHub: it's only deployed by this
+# workflow's upload to --branch=main, its production branch.
+on:
+  push:
+    tags: ['v*']
+  # Manual escape hatch, e.g. to retry a failed deploy
+  # (`gh workflow run deploy-player.yml`). It builds from the release tags
+  # whatever it's run against, so it can't deploy anything unreleased.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-player
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # Full history and tags, which is where the players are built from
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Use Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Build every major version's player
+        run: .github/scripts/build-player-site.sh "$RUNNER_TEMP/player-site"
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy ${{ runner.temp }}/player-site --project-name=squiffy-player --branch=main

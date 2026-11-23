@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Every story is at this one address, as far as a search engine can see -->
+<meta name="robots" content="noindex">
+<meta name="referrer" content="no-referrer">
+<title>A Squiffy story</title>
+<link rel="stylesheet" href="/src/player.css">
+</head>
+<body>
+<header>
+    <h1 id="title"></h1>
+    <nav>
+        <button type="button" id="back" hidden disabled>Back</button>
+        <button type="button" id="restart" hidden>Restart</button>
+        <a id="edit" hidden title="Open your own copy of this story in the Squiffy editor">Open in editor</a>
+    </nav>
+</header>
+<main>
+    <iframe id="story" title="Story" hidden></iframe>
+    <div id="message" hidden></div>
+</main>
+<script type="module" src="/src/main.ts"></script>
+</body>
+</html>

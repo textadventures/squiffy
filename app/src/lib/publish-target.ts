@@ -1,7 +1,7 @@
 // Where the Publish dialog last sent each story, so it opens on the same choice next time: most
 // authors publish a story the same way every time. Kept in this browser, by the story's ID in
 // squiffy.json. A story without one opens on whatever was last chosen for any story.
-export const PUBLISH_TARGETS = ["online", "zip", "html", "js"] as const;
+export const PUBLISH_TARGETS = ["online", "link", "zip", "html", "js"] as const;
 export type PublishTarget = typeof PUBLISH_TARGETS[number];
 
 // The first choice for a story that hasn't been published from here: textadventures.co.uk
