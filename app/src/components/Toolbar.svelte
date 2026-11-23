@@ -21,6 +21,7 @@
     import { folderReveal } from "#lib/desktop.js";
     import Globe from "@lucide/svelte/icons/globe";
     import FileCode from "@lucide/svelte/icons/file-code";
+    import BookOpenText from "@lucide/svelte/icons/book-open-text";
     import DropdownMenu from "#components/DropdownMenu.svelte";
     import type { DropdownMenuItem } from "#components/DropdownMenu.svelte";
     import Home from "@lucide/svelte/icons/home";
@@ -83,6 +84,8 @@
         onassets?: () => void;
         // Opens the Fonts dialog
         onfonts?: () => void;
+        // Opens the Story details dialog: the description, author and cover the published page has
+        ondetails?: () => void;
         // Downloads the whole project as a zip, which Open file can read back
         ondownloadproject?: () => void;
         // Publishes the story: HTML, JavaScript and assets as a zip, one HTML file, or the JavaScript
@@ -102,7 +105,7 @@
         onplaytab?: () => void;
     }
 
-    let { outlineOpen = false, ontoggleoutline, mapOpen = false, ontogglemap, view = "code", onview, problemCounts = { error: 0, warning: 0, hint: 0 }, problemsOpen = false, ontoggleproblems, onfindinfiles, onrun, onassets, onfonts, ondownloadproject, onexport, oncommand, onadd, onsnippet, snippets = [], onabout, onplaytab }: Props = $props();
+    let { outlineOpen = false, ontoggleoutline, mapOpen = false, ontogglemap, view = "code", onview, problemCounts = { error: 0, warning: 0, hint: 0 }, problemsOpen = false, ontoggleproblems, onfindinfiles, onrun, onassets, onfonts, ondetails, ondownloadproject, onexport, oncommand, onadd, onsnippet, snippets = [], onabout, onplaytab }: Props = $props();
 
     const mod = isMac ? "⌘" : "Ctrl+";
 
@@ -144,7 +147,8 @@
         ...(reveal ? [{ label: reveal.label, action: () => reveal.show(""), icon: FolderOpen }] : []),
         { label: "Download project (.zip)", action: () => ondownloadproject?.(), icon: FolderDown },
         { label: `Download ${p?.activePath ?? ""}`, action: () => { if (p?.activePath) void downloadFile(p.activePath); }, icon: Download, disabled: !p?.activePath },
-        { label: "HTML and JavaScript (.zip)", action: () => onexport?.("zip"), icon: Globe, divider: true, heading: "Publish" },
+        { label: "Story details", action: () => ondetails?.(), icon: BookOpenText, divider: true, heading: "Publish" },
+        { label: "HTML and JavaScript (.zip)", action: () => onexport?.("zip"), icon: Globe },
         { label: "HTML (one file)", action: () => onexport?.("html"), icon: Globe },
         { label: "JavaScript only", action: () => onexport?.("js"), icon: FileCode },
     ]);

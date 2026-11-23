@@ -23,14 +23,14 @@ Every `.squiffy` file in the folder and its subfolders is then part of the story
 
 A `squiffy.json` also means the story uses Squiffy 7's rules for [setting attributes](/attributes/#setting-attributes), where text goes in quotes: `@set weapon = "sword"`. A story without one keeps the Squiffy 6 rules. See [Coming from Squiffy 6](/coming-from-squiffy-6/).
 
-`squiffy.json` is also where you change the buttons above a published story, turn off saved games, and add panels and player settings: see [Buttons, panels and settings](/buttons-panels-settings/). Its `persistent` list names [attributes that last between playthroughs](/attributes/#attributes-that-last-between-playthroughs).
+`squiffy.json` is also where you change the buttons above a published story, turn off saved games, and add panels and player settings: see [Buttons, panels and settings](/buttons-panels-settings/). Its `persistent` list names [attributes that last between playthroughs](/attributes/#attributes-that-last-between-playthroughs). Its `description`, `author` and `cover` say what the story is, on the published page: see [Story details](/publishing/#story-details).
 
 - The main file comes first, then the other files in order of their paths. That order decides how `+++` sections are numbered and, if two sections have the same name, which one wins (you'll get a warning).
 - The story starts in the main file, at its first section or its [`@start`](/basic-concepts/#set-the-start-section) section, and the main file's `@title` is the story's title. `@title` and `@start` in other files are ignored, with a warning.
 - A section in one file can link to a section in any other.
 - Paths to images and other files, and in `@import`, are relative to the main file's folder, whichever file they're in. So you can move a file into a subfolder without changing it.
 - `version` is the version of the project file format, which is 1. A version of Squiffy that doesn't know the version refuses to build the story, saying you need a newer Squiffy.
-- `id` identifies your story, so a player's [saved game](/buttons-panels-settings/#saved-games) can only be loaded into the story it came from. The editor and the command-line tool give a new `squiffy.json` a random one. Keep it the same when you publish a new version of your story, and don't copy it into another story.
+- `id` identifies your story, so a player's [saved game](/buttons-panels-settings/#saved-games) can only be loaded into the story it came from. The editor and the command-line tool give a new `squiffy.json` a random one. The published page gives it as the story's IFID, which sites that list stories use to recognise it: see [Story details](/publishing/#story-details). Keep it the same when you publish a new version of your story, and don't copy it into another story.
 
 The `$schema` line is optional. It lets text editors such as VS Code check the file and suggest what can go in it.
 

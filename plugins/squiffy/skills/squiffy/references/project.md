@@ -17,7 +17,10 @@ Docs: https://squiffystory.com/multiple-files/, https://squiffystory.com/buttons
 |---|---|
 | `version` | Format version, `1`. Required |
 | `main` | The main file, where the story starts. Required |
-| `id` | Identifies the story for saved games. Keep it when publishing a new version; never copy it to another story. Any unique text |
+| `id` | Identifies the story for saved games, and is the published page's IFID (uppercased), which sites that list stories match it by. Keep it when publishing a new version; never copy it to another story. Any unique text |
+| `description` | What the story is about, in a sentence or two, for the published page's `<meta name="description">` and link previews |
+| `author` | Who wrote it, for the published page's `<meta name="author">` |
+| `cover` | An image's path from the main file's folder, for link previews (`og:image`). Published with the story even if the story doesn't show it; left out of a single HTML file |
 | `exclude` | Files that aren't part of the story: `["notes.squiffy", "drafts/**", "lib/demo.js"]` (`*`, `?`, `**`) |
 | `saveButton` | `false` leaves out the Save button. A `{{saves}}` link still opens the Saved games dialog |
 | `backButton` | `false` leaves out the Back button, so choices are final |

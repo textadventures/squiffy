@@ -49,6 +49,14 @@ export interface ProjectFile {
     // Attributes that belong to the player rather than the playthrough (#539), such as the endings
     // they've found: restarting, going back and loading a saved game leave them as they are
     persistent?: string[];
+    // What the story is about, in a sentence or two, for the published page's description (which
+    // search results and link previews show) and for sites that list stories
+    description?: string;
+    // Who wrote the story, for the published page's author
+    author?: string;
+    // The story's cover image, by its path from the main file's folder, as the story would refer to
+    // it: the image a link to the published story shows
+    cover?: string;
 }
 
 // A player setting, from squiffy.json's "settings". The runtime's PlayerSetting is the same.
@@ -231,6 +239,21 @@ export function parseProjectFile(text: string): ParsedProjectFile {
     const persistent = parsePersistent(data.persistent);
     if (typeof persistent == "string") return fail(persistent);
 
+    const details: Partial<Record<StoryDetail, string>> = {};
+    for (const name of STORY_DETAILS) {
+        const value = data[name];
+        if (value === undefined) continue;
+        if (typeof value != "string") return fail(`${PROJECT_FILENAME}'s "${name}" should be text.`);
+        if (value.trim()) details[name] = value.trim();
+    }
+    if (details.cover !== undefined) {
+        const cover = normalisePath(details.cover);
+        if (cover === null) {
+            return fail(`${PROJECT_FILENAME}'s "cover" should be the path of an image in the story's folder, such as "cover.png", not "${details.cover}".`);
+        }
+        details.cover = cover;
+    }
+
     const map = parseMapPositions(data.map);
     return {
         success: true,
@@ -245,9 +268,16 @@ export function parseProjectFile(text: string): ParsedProjectFile {
             ...(panels !== undefined ? { panels } : {}),
             ...(settings !== undefined ? { settings } : {}),
             ...(persistent !== undefined ? { persistent } : {}),
+            ...details,
         },
     };
 }
+
+// The squiffy.json properties that say what the story is, which the published page's <head> has
+// for search engines, link previews and sites that list stories. The editor's Story details
+// dialog sets them.
+export const STORY_DETAILS = ["description", "author", "cover"] as const;
+export type StoryDetail = typeof STORY_DETAILS[number];
 
 // The page strings Squiffy knows about. Others are left out, so a story written for a newer Squiffy,
 // with strings this one doesn't have, still builds.
@@ -561,8 +591,8 @@ export function formatProjectFile(project: { main: string; exclude?: string[]; m
 }
 
 // Changes a project file's text, keeping any other properties it has. Returns undefined if the
-// text isn't a JSON object. A `map` with no positions removes it.
-export function updateProjectFile(text: string, changes: { main?: string; exclude?: string[]; map?: MapPositions }): string | undefined {
+// text isn't a JSON object. A `map` with no positions removes it, as does an empty story detail.
+export function updateProjectFile(text: string, changes: { main?: string; exclude?: string[]; map?: MapPositions } & Partial<Record<StoryDetail, string>>): string | undefined {
     let json: unknown;
     try {
         json = JSON.parse(text);
@@ -576,6 +606,12 @@ export function updateProjectFile(text: string, changes: { main?: string; exclud
     if (changes.exclude !== undefined) {
         if (changes.exclude.length) data.exclude = changes.exclude;
         else delete data.exclude;
+    }
+    for (const name of STORY_DETAILS) {
+        const value = changes[name];
+        if (value === undefined) continue;
+        if (value.trim()) data[name] = value.trim();
+        else delete data[name];
     }
     if (changes.map !== undefined) {
         const { sections, passages } = changes.map;
