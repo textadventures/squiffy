@@ -165,7 +165,8 @@
                     </button>
                 </div>
                 {#if details?.author}<p class="text-xs text-surface-600-400">by {details.author}</p>{/if}
-                <p class="text-xs text-surface-600-400 line-clamp-2">
+                <!-- A long description is cut short here. The prompt to add one isn't. -->
+                <p class="text-xs text-surface-600-400" class:line-clamp-2={!!details?.description}>
                     {details?.description || "Tell players what your story is about. Add a description and a cover, for its page on textadventures.co.uk, search results and link previews."}
                 </p>
                 {#if details?.cover}<p class="text-xs text-surface-600-400">Cover: {details.cover}</p>{/if}
