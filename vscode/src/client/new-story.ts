@@ -37,11 +37,11 @@ export function newStoryText(title: string): string {
     return NEW_STORY.replace(/^@title .*$/m, () => `@title ${tidyTitle(title) || "New Story"}`);
 }
 
-/** The new story's files, by name */
-export function newStoryFiles(title: string): Record<string, string> {
+/** The new story's files, by name. Its language is VS Code's, which the author is most likely writing in. */
+export function newStoryFiles(title: string, language?: string): Record<string, string> {
     return {
         [MAIN_FILE]: newStoryText(title),
-        [PROJECT_FILENAME]: formatProjectFile({ main: MAIN_FILE }),
+        [PROJECT_FILENAME]: formatProjectFile({ main: MAIN_FILE, language }),
     };
 }
 
@@ -79,7 +79,7 @@ export async function newStory(folder?: vscode.Uri) {
         const replace = await vscode.window.showWarningMessage(`${vscode.workspace.asRelativePath(main)} already exists. Replace it?`, { modal: true }, "Replace");
         if (replace != "Replace") return;
     }
-    for (const [name, text] of Object.entries(newStoryFiles(title))) {
+    for (const [name, text] of Object.entries(newStoryFiles(title, vscode.env.language))) {
         await vscode.workspace.fs.writeFile(vscode.Uri.joinPath(folder, name), new TextEncoder().encode(text));
     }
     await vscode.window.showTextDocument(main);

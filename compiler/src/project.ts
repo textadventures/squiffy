@@ -598,13 +598,15 @@ export function getStoryFiles(project: ProjectFile, paths: Iterable<string>, ski
 export const storyFileList = (story: StoryFiles) => [...story.included, ...story.stylesheets, ...story.scripts];
 
 // The text of a new project file. It's given a new random id, unless one is passed in.
-export function formatProjectFile(project: { main: string; exclude?: string[]; map?: MapPositions; id?: string; panels?: Panel[]; settings?: PlayerSetting[]; persistent?: string[] }): string {
+export function formatProjectFile(project: { main: string; exclude?: string[]; map?: MapPositions; id?: string; panels?: Panel[]; settings?: PlayerSetting[]; persistent?: string[]; language?: string }): string {
     const json: Record<string, unknown> = {
         $schema: PROJECT_SCHEMA_URL,
         version: PROJECT_FILE_VERSION,
         id: project.id ?? crypto.randomUUID(),
         main: project.main,
     };
+    const language = project.language ? languageTag(project.language) : null;
+    if (language) json.language = language;
     if (project.exclude?.length) json.exclude = project.exclude;
     if (project.panels?.length) json.panels = project.panels;
     if (project.settings?.length) json.settings = project.settings;

@@ -234,6 +234,12 @@ describe("writing project files", () => {
         expect(JSON.parse(formatProjectFile({ main: "story.squiffy" })).exclude).toBeUndefined();
     });
 
+    test("a new file has its language, if it's a language tag", () => {
+        expect(JSON.parse(formatProjectFile({ main: "story.squiffy", language: "pt-br" })).language).toBe("pt-BR");
+        expect(JSON.parse(formatProjectFile({ main: "story.squiffy", language: "English" })).language).toBeUndefined();
+        expect(JSON.parse(formatProjectFile({ main: "story.squiffy" })).language).toBeUndefined();
+    });
+
     test("a new file gets a new random id", () => {
         const randomUUID = vi.spyOn(crypto, "randomUUID")
             .mockReturnValueOnce("1-1-1-1-1")
