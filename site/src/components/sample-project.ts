@@ -12,9 +12,7 @@ import { createLanguageService } from "squiffy-compiler/language-service";
 import { previewHtml } from "squiffy-runtime/preview-html";
 import { createPreviewHost, iframeChannel, type PreviewTheme } from "squiffy-runtime/preview-host";
 import debounce from "debounce";
-import { sampleEditorExtensions, setUpCopyButton } from "./sample-editor";
-
-const PROJECT_FILE = "squiffy.json";
+import { sampleEditorExtensions, setUpCopyButton, setUpOpenInEditor, SAMPLE_PROJECT_FILE as PROJECT_FILE } from "./sample-editor";
 
 function languageFor(path: string) {
     if (path.endsWith(".squiffy")) return squiffyLanguage;
@@ -114,6 +112,7 @@ export async function setUpProjectSample(sample: HTMLElement) {
     }
     show(main);
     setUpCopyButton(sample, () => views.get(current)!.state.doc.toString());
+    setUpOpenInEditor(sample, () => ({ main, files: Object.fromEntries(texts) }));
 
     // The story, compiled as the editor's preview compiles it (app/src/lib/language/worker.ts)
     const compile = async () => {

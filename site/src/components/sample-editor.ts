@@ -1,7 +1,8 @@
 // What the docs' editable samples (Sample.astro) share, whether they run a single script in the
 // page or a story with files in the sandboxed preview (sample-project.ts): the code editor's
-// look, and the copy button.
+// look, the copy button, and Open in editor.
 import { EditorView } from "codemirror";
+import { encodeStory, storyFragment, type LinkedStory } from "@textadventures/squiffy-player/link";
 import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
 import { tags as t } from "@lezer/highlight";
 
@@ -54,7 +55,7 @@ export const sampleEditorExtensions = [
 // Makes the sample's copy button copy getText(): the text as it is now, with any changes the
 // reader has made
 export function setUpCopyButton(sample: HTMLElement, getText: () => string) {
-    const copyButton = sample.querySelector(".copy button") as HTMLButtonElement;
+    const copyButton = sample.querySelector(".copy .copy-button") as HTMLButtonElement;
     const copyFeedback = sample.querySelector(".copy .feedback") as HTMLElement;
     let hideFeedback: ReturnType<typeof setTimeout> | undefined;
     copyButton.addEventListener("click", async () => {
@@ -82,5 +83,21 @@ export function setUpCopyButton(sample: HTMLElement, getText: () => string) {
             copyFeedback.classList.remove("show");
             copyFeedback.textContent = "";
         }, 1500);
+    });
+}
+
+export const SAMPLE_PROJECT_FILE = "squiffy.json";
+
+// Makes the sample's Open in editor button, if it has one, open the story as it is now, with any
+// changes the reader has made, as a new story in the editor (in a new tab, so the docs stay
+// open). It's the editor's way in for a link from the player (app/src/routes/+page.svelte), with
+// the story in the part after the "#", so nothing is sent anywhere.
+export function setUpOpenInEditor(sample: HTMLElement, getStory: () => LinkedStory) {
+    const button = sample.querySelector(".copy .open-in-editor");
+    const appUrl = sample.dataset.appUrl;
+    if (!button || !appUrl) return;
+    button.addEventListener("click", () => {
+        const url = `${appUrl}/${storyFragment(encodeStory(getStory()))}`;
+        window.open(url, "_blank", "noopener");
     });
 }
