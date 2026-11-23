@@ -23,6 +23,7 @@ interface Props {
 }
 
 import Split from "./Split.astro";
+import { appUrl } from "../channel.mjs";
 import "squiffy-runtime/squiffy.runtime.css";
 
 const { script, alwaysShowRestart, files, assets, main = "story.squiffy", sandboxed } = Astro.props;
@@ -35,6 +36,11 @@ const languageOf = (path: string) => path.endsWith(".css") ? "css" : path.endsWi
 
 // A sample with files always shows its buttons: a hot update can't tell when they're needed
 const buttonsClass = "sample-buttons" + (!alwaysShowRestart && !project ? " hidden" : "");
+
+// "Open in editor" makes a new story in the editor from the sample as it is now, from a link with
+// the story in it, as the player at squiffystories.com does. A sample's sounds are on the site,
+// and a link only has room for small images, so a sample with assets doesn't have one.
+const openInEditor = !assets;
 ---
 
 <style is:global>
@@ -199,8 +205,14 @@ const buttonsClass = "sample-buttons" + (!alwaysShowRestart && !project ? " hidd
         right: 0.25rem;
         z-index: 10;
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         gap: 0.4rem;
+    }
+    /* Copy, and Open in editor below it, so the text only has to keep clear of one button's width */
+    .sample .copy .copy-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
     }
     /* Keep the text clear of the copy button. The lines wrap, so it's every line, not just the first. */
     .sample .editor .cm-line {
@@ -254,11 +266,13 @@ const buttonsClass = "sample-buttons" + (!alwaysShowRestart && !project ? " hidd
         }
         .sample .editor:hover .copy button:not(:hover),
         .sample .editor:focus-within .copy button:not(:hover),
-        .sample .copy .feedback.show ~ button:not(:hover) {
+        .sample .copy .feedback.show ~ .copy-buttons button:not(:hover) {
             opacity: 0.75;
         }
     }
     .sample .copy .feedback {
+        /* Beside the copy button, the top one */
+        margin-top: 0.4rem;
         padding: 0.125rem 0.75rem;
         border-radius: 0.2rem;
         font-size: 0.8rem;
@@ -280,7 +294,8 @@ const buttonsClass = "sample-buttons" + (!alwaysShowRestart && !project ? " hidd
     class:list={["sample", "not-content", { "fixed-height": height, "project": project }]}
     style={height ? `--sample-height: ${height}` : undefined}
     data-always-show-restart={alwaysShowRestart}
-    data-assets={project ? JSON.stringify(assets ?? {}) : undefined}>
+    data-assets={project ? JSON.stringify(assets ?? {}) : undefined}
+    data-app-url={openInEditor ? appUrl : undefined}>
     <Split gap="0.75rem" min="200px">
         <div slot="left" class="editor">
             <!-- The script, which the editor replaces. Without JavaScript it's shown as it is, and it's
@@ -300,12 +315,21 @@ const buttonsClass = "sample-buttons" + (!alwaysShowRestart && !project ? " hidd
             )}
             <div class="copy">
                 <div class="feedback" aria-live="polite"></div>
-                <button type="button" title="Copy to clipboard" aria-label="Copy to clipboard">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
-                        <path d="M3 19a2 2 0 0 1-1-2V2a2 2 0 0 1 1-1h13a2 2 0 0 1 2 1"/>
-                        <rect x="6" y="5" width="16" height="18" rx="1.5" ry="1.5"/>
-                    </svg>
-                </button>
+                <div class="copy-buttons">
+                    <button type="button" class="copy-button" title="Copy to clipboard" aria-label="Copy to clipboard">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+                            <path d="M3 19a2 2 0 0 1-1-2V2a2 2 0 0 1 1-1h13a2 2 0 0 1 2 1"/>
+                            <rect x="6" y="5" width="16" height="18" rx="1.5" ry="1.5"/>
+                        </svg>
+                    </button>
+                    {openInEditor && (
+                        <button type="button" class="open-in-editor" title="Open in the editor" aria-label="Open in the editor">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                            </svg>
+                        </button>
+                    )}
+                </div>
             </div>
         </div>
         <div slot="right" class="viewer-container">
@@ -335,7 +359,7 @@ const buttonsClass = "sample-buttons" + (!alwaysShowRestart && !project ? " hidd
     import {init as runtimeInit} from 'squiffy-runtime';
     import type { SquiffyApi } from 'squiffy-runtime';
     import debounce from 'debounce';
-    import { sampleEditorExtensions, setUpCopyButton } from './sample-editor';
+    import { sampleEditorExtensions, setUpCopyButton, setUpOpenInEditor, SAMPLE_PROJECT_FILE } from './sample-editor';
 
     class Sample extends HTMLElement {
         connectedCallback() {
@@ -392,6 +416,14 @@ const buttonsClass = "sample-buttons" + (!alwaysShowRestart && !project ? " hidd
             });
 
             setUpCopyButton(this, () => editorView.state.doc.toString());
+            // As a story with a squiffy.json, which is how this sample is compiled (expressions: true)
+            setUpOpenInEditor(this, () => ({
+                main: 'story.squiffy',
+                files: {
+                    'story.squiffy': editorView.state.doc.toString(),
+                    [SAMPLE_PROJECT_FILE]: JSON.stringify({ version: 1, main: 'story.squiffy' }),
+                },
+            }));
 
             const alwaysShowRestart = this.dataset.alwaysShowRestart === 'true';
             const fixedHeight = this.classList.contains('fixed-height');
