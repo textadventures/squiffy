@@ -29,7 +29,7 @@ At the top of the dialog is what your story's page will say it is, with a link t
 
 1. The editor uploads your story, as the files in **Zip for a website**.
 2. It gives you a link to continue on textadventures.co.uk, and opens it for you if your browser lets it. Log in there, or create an account.
-3. The first time, fill in what players will see on your story's page. Its name, description and cover start as your [story details](#story-details), so it's worth setting those first.
+3. The first time, fill in what players will see on your story's page. Its name, description, cover and language start as your [story details](#story-details), so it's worth setting those first.
 4. After that, textadventures.co.uk knows the story, and shows one button to update it. Its page, reviews and link stay the same.
 
 The editor says when your story is published, with a link to its page.
@@ -54,13 +54,15 @@ A published story's page says what the story is, for search results, for the pre
   "main": "story.squiffy",
   "description": "A short story about a cave.",
   "author": "Ann Author",
-  "cover": "cover.png"
+  "cover": "cover.png",
+  "language": "en"
 }
 ```
 
 - `description` - What the story is about, in a sentence or two.
 - `author` - Who wrote it.
 - `cover` - An image for the story, by its path from the main file's folder, as the story would refer to it. It's published with the story, even if the story doesn't show it. A single HTML file leaves it out, as it has no files beside it.
+- `language` - The language the story is written in, as a [language tag](https://www.w3.org/International/articles/language-tags/): `en` for English, `fr` for French, `pt-BR` for Brazilian Portuguese. Screen readers use it to pronounce the story's text, and browsers to offer translation and to hyphenate. The editor offers the language your browser is in, for a story that hasn't set one.
 
 The page also gives the story's `id` as its [IFID](https://babel.ifarchive.org/), the number that identifies a piece of interactive fiction, which sites and tools that list stories use to tell which story it is, whatever it's called. So keep the `id` the same when you publish a new version.
 

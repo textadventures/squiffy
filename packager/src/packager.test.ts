@@ -599,12 +599,24 @@ test("Exported page leaves out the tags for details the story doesn't have", asy
     }
 });
 
+test("Exported page's <html> has the story's language", async () => {
+    const compileResult = await compile({ script: "@title La Grotte\n\nBonjour" });
+    if (!compileResult.success) throw new Error("Compile failed");
+    for (const options of [{ language: "fr" }, { language: "fr", inlineHtml: true }]) {
+        expect((await createPackage(compileResult, options)).files["index.html"]).toContain("<html lang=\"fr\">");
+    }
+    for (const options of [{}, { language: " " }]) {
+        expect((await createPackage(compileResult, options)).files["index.html"]).toContain("<html>");
+    }
+});
+
 test("Exported page's story details are escaped", async () => {
     const compileResult = await compile({ script: "@title Tom & \"Jerry\"\n\nHello" });
     if (!compileResult.success) throw new Error("Compile failed");
     const head = headOf((await createPackage(compileResult, {
-        description: "<b>Bold</b> & \"quoted\" {{close}} $&", author: "O'Brien", cover: "a\"b.png",
+        description: "<b>Bold</b> & \"quoted\" {{close}} $&", author: "O'Brien", cover: "a\"b.png", language: "x\"y",
     })).files["index.html"]);
+    expect(head).toContain("<html lang=\"x&#34;y\">");
     expect(head).toContain("<meta name=\"description\" content=\"&#60;b&#62;Bold&#60;/b&#62; &#38; &#34;quoted&#34; {{close}} $&#38;\">");
     expect(head).toContain("<meta name=\"author\" content=\"O&#39;Brien\">");
     expect(head).toContain("<meta property=\"og:title\" content=\"Tom &#38; &#34;Jerry&#34;\">");

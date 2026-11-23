@@ -22,7 +22,7 @@ async function exportStory(kind: ExportKind, assets: Record<string, Uint8Array>)
         createZip: kind === "zip", inlineHtml: kind === "html", assets, backButton: projectFile?.backButton,
         saveButton: projectFile?.saveButton, startAnywhere: projectFile?.startAnywhere, strings: projectFile?.strings,
         // What the story is, for the page's <head>. The cover is left out if it isn't there.
-        id: projectFile?.id, description: projectFile?.description, author: projectFile?.author,
+        id: projectFile?.id, description: projectFile?.description, author: projectFile?.author, language: projectFile?.language,
         cover: projectFile?.cover !== undefined && projectFile.cover in assets ? projectFile.cover : undefined,
     });
     return { success: true, files: pkg.files, zip: pkg.zip };

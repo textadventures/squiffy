@@ -102,12 +102,13 @@ See [Styling](/styling/) for the classes and variables you can use.
 
 ## The page's text in another language
 
-A published story's buttons are icons, with a tooltip that says what each one does, which screen readers read out too. Clicking Restart asks the player whether they're sure. This text, and the text of the [Saved games](#saved-games) and [Settings](#player-settings) dialogs, the [panels'](#panels) Close button, and the [`{{restart}}`, `{{saves}}` and `{{settings}}` links](/basic-concepts/#restarting-and-saving-from-the-story), is in English unless you give your own under `strings`:
+A published story's buttons are icons, with a tooltip that says what each one does, which screen readers read out too. Clicking Restart asks the player whether they're sure. This text, and the text of the [Saved games](#saved-games) and [Settings](#player-settings) dialogs, the [panels'](#panels) Close button, and the [`{{restart}}`, `{{saves}}` and `{{settings}}` links](/basic-concepts/#restarting-and-saving-from-the-story), is in English unless you give your own under `strings`. Set `language` too, so the page says what language it's in, for screen readers and browsers (see [Story details](/publishing/#story-details)):
 
 ```json
 {
   "version": 1,
   "main": "story.squiffy",
+  "language": "fr",
   "strings": {
     "back": "Retour",
     "restart": "Recommencer",

@@ -175,10 +175,10 @@ Content for zip test.
         expect(await read("index.html")).toContain("if (true && ");
     });
 
-    test("the page's <head> has squiffy.json's id, description, author and cover, which is copied with the story", async () => {
+    test("the page has squiffy.json's id, description, author, cover and language, and the cover is copied with the story", async () => {
         await fs.writeFile(path.join(TEST_DIR, "squiffy.json"), JSON.stringify({
             version: 1, id: "0b7c6d9e-3f1a-4e2b-9c5d-8a7f6e5d4c3b", main: "story.squiffy",
-            description: "A cave.", author: "Ann", cover: "images/cover.png",
+            description: "A cave.", author: "Ann", cover: "images/cover.png", language: "en-GB",
         }));
         await fs.writeFile(path.join(TEST_DIR, "story.squiffy"), "@title The Cave\n\nHello\n");
         await fs.mkdir(path.join(TEST_DIR, "images"));
@@ -189,6 +189,7 @@ Content for zip test.
         expect(html).toContain("<meta property=\"ifiction:ifid\" content=\"0B7C6D9E-3F1A-4E2B-9C5D-8A7F6E5D4C3B\">");
         expect(html).toContain("<meta name=\"description\" content=\"A cave.\">");
         expect(html).toContain("<meta name=\"author\" content=\"Ann\">");
+        expect(html).toContain("<html lang=\"en-GB\">");
         expect(html).toContain("<meta property=\"og:image\" content=\"images/cover.png\">");
         expect(await fs.readFile(path.join(OUTPUT_DIR, "images", "cover.png"), "utf8")).toBe("png");
         expect((await createTestingFiles(story))!["index.html"]).toContain("ifiction:ifid");

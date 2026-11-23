@@ -34,6 +34,11 @@
       "type": "string",
       "examples": ["cover.png"]
     },
+    "language": {
+      "description": "The language the story is written in, as a language tag: \"en\" for English, \"fr\" for French, \"pt-BR\" for Brazilian Portuguese. The published page's <html lang>, which screen readers and browsers go by, and what sites that list stories list it under.",
+      "type": "string",
+      "examples": ["en", "fr", "pt-BR"]
+    },
     "main": {
       "description": "The story's main file, relative to this file's folder. The story starts there, and its @title is the story's title.",
       "type": "string",

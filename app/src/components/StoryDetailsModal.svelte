@@ -1,10 +1,11 @@
 <script lang="ts">
-    // Story details: squiffy.json's description, author and cover, which the published page's
-    // <head> has, for search results, link previews and sites that list stories, as Quest Viva's
+    // Story details: squiffy.json's description, author, cover and language, which the published
+    // page has, for search results, link previews and sites that list stories, as Quest Viva's
     // HTML exports do. The title is the main file's @title, so it's shown but not set here.
     import { onMount, untrack } from "svelte";
     import type { FileUrl } from "@textadventures/project-fs";
-    import { PROJECT_FILENAME } from "squiffy-compiler";
+    import { languageTag, PROJECT_FILENAME } from "squiffy-compiler";
+    import { LANGUAGES, languageOptions, suggestedLanguage } from "#lib/languages.js";
     import { storyPath, type OpenProject } from "#lib/project.svelte.js";
     import { isImage } from "#lib/file-types.js";
     import { isBuildPath } from "#lib/file-tree.js";
@@ -28,6 +29,17 @@
     let description = $state(initial?.description ?? "");
     let author = $state(initial?.author ?? "");
     let cover = $state(initial?.cover ?? "");
+
+    // The language: one of those offered, or another typed in. A story with none is offered the
+    // browser's, which the author is most likely writing in.
+    const OTHER = "other";
+    const languages = languageOptions();
+    const initialLanguage = initial?.language ?? suggestedLanguage(navigator.languages);
+    const offered = (LANGUAGES as readonly string[]).includes(initialLanguage ?? "");
+    let languageChoice = $state(!initialLanguage ? "" : offered ? initialLanguage : OTHER);
+    let otherLanguage = $state(!initialLanguage || offered ? "" : initialLanguage);
+    let language = $derived(languageChoice === OTHER ? otherLanguage.trim() : languageChoice);
+    let languageInvalid = $derived(languageChoice === OTHER && language !== "" && languageTag(language) === null);
 
     // A squiffy.json that's there but can't be read, which the details can't be saved in
     let unreadable = $derived(project.projectText !== null && !project.projectFile);
@@ -73,7 +85,9 @@
         error = "";
         try {
             if (!project.projectFile && !(await onaddprojectfile())) return;
-            if (!(await project.setStoryDetails({ description, author, cover }))) {
+            if (languageInvalid) return;
+            const tag = language ? languageTag(language) ?? "" : "";
+            if (!(await project.setStoryDetails({ description, author, cover, language: tag }))) {
                 error = `${PROJECT_FILENAME} couldn't be read. Fix it, then try again.`;
                 return;
             }
@@ -106,7 +120,8 @@
         <div class="flex-1 min-h-0 overflow-y-auto flex flex-col gap-4">
             <p class="text-sm text-surface-600-400">
                 What your story is, for search results, link previews and sites that list stories,
-                such as textadventures.co.uk. The title is the main file's <code>@title</code>.
+                such as textadventures.co.uk. The language also tells screen readers and browsers how
+                to read it. The title is the main file's <code>@title</code>.
             </p>
 
             <label class="flex flex-col gap-1">
@@ -141,6 +156,27 @@
                 {/if}
             </div>
 
+            <div class="flex flex-col gap-1">
+                <label class="flex flex-col gap-1">
+                    <span class="text-sm font-medium">Language</span>
+                    <select class="select text-sm bg-surface-50-950 px-2 py-1" bind:value={languageChoice} disabled={saving || unreadable}>
+                        <option value="">Not set</option>
+                        {#each languages as option (option.tag)}
+                            <option value={option.tag}>{option.name}</option>
+                        {/each}
+                        <option value={OTHER}>Another language…</option>
+                    </select>
+                </label>
+                {#if languageChoice === OTHER}
+                    <label class="flex flex-col gap-1">
+                        <span class="text-xs text-surface-600-400">Its language tag, such as <code>cy</code> for Welsh or <code>en-GB</code> for British English</span>
+                        <input class="input text-sm" type="text" bind:value={otherLanguage} disabled={saving || unreadable}
+                            aria-invalid={languageInvalid} spellcheck="false" autocapitalize="off" />
+                    </label>
+                    {#if languageInvalid}<p class="text-xs text-error-500">That isn't a language tag.</p>{/if}
+                {/if}
+            </div>
+
             {#if unreadable}
                 <p class="text-xs text-error-500">{PROJECT_FILENAME} couldn't be read, so these can't be changed. Fix it, then try again.</p>
             {:else if !project.projectFile}
@@ -154,7 +190,7 @@
         <div class="flex items-center gap-2">
             <a class="anchor text-xs flex-1" href={`${DOCS_URL}/publishing/#story-details`} target="_blank" rel="noopener">More about story details</a>
             <button type="button" class="btn btn-sm preset-tonal" onclick={onclose}>Cancel</button>
-            <button type="submit" class="btn btn-sm preset-filled-primary-500" disabled={saving || unreadable}>Save</button>
+            <button type="submit" class="btn btn-sm preset-filled-primary-500" disabled={saving || unreadable || languageInvalid}>Save</button>
         </div>
     </form>
 </div>

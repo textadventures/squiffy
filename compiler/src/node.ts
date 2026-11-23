@@ -41,10 +41,11 @@ export interface StoryOnDisk {
     settings?: PlayerSetting[];
     // squiffy.json's "persistent", in folder mode
     persistent?: string[];
-    // squiffy.json's "description", "author" and "cover", in folder mode
+    // squiffy.json's "description", "author", "cover" and "language", in folder mode
     description?: string;
     author?: string;
     cover?: string;
+    language?: string;
 }
 
 // A problem finding the story, with a message to show the author as is
@@ -142,6 +143,7 @@ async function folderStory(projectFile: string, options: FindStoryOptions): Prom
         ...(project.description !== undefined ? { description: project.description } : {}),
         ...(project.author !== undefined ? { author: project.author } : {}),
         ...(project.cover !== undefined ? { cover: project.cover } : {}),
+        ...(project.language !== undefined ? { language: project.language } : {}),
     };
 }
 

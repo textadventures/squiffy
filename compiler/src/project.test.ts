@@ -82,8 +82,8 @@ describe("parseProjectFile", () => {
     });
 
     test("the story's details are trimmed, the cover's path is normalised, and empty ones are left out", () => {
-        expect(parseProjectFile("{ \"version\": 1, \"main\": \"a.squiffy\", \"description\": \" A cave. \", \"author\": \"Ann\", \"cover\": \"./images\\\\cover.png\" }")).toEqual({
-            success: true, project: { version: 1, main: "a.squiffy", exclude: [], description: "A cave.", author: "Ann", cover: "images/cover.png" },
+        expect(parseProjectFile("{ \"version\": 1, \"main\": \"a.squiffy\", \"description\": \" A cave. \", \"author\": \"Ann\", \"cover\": \"./images\\\\cover.png\", \"language\": \" pt-br \" }")).toEqual({
+            success: true, project: { version: 1, main: "a.squiffy", exclude: [], description: "A cave.", author: "Ann", cover: "images/cover.png", language: "pt-BR" },
         });
         expect(parseProjectFile("{ \"version\": 1, \"main\": \"a.squiffy\", \"description\": \"\", \"author\": \" \" }")).toEqual({
             success: true, project: { version: 1, main: "a.squiffy", exclude: [] },
@@ -121,6 +121,8 @@ describe("parseProjectFile", () => {
         ["a description that isn't text", "{ \"version\": 1, \"main\": \"a.squiffy\", \"description\": [\"x\"] }", "\"description\" should be text"],
         ["an author that isn't text", "{ \"version\": 1, \"main\": \"a.squiffy\", \"author\": 1 }", "\"author\" should be text"],
         ["a cover outside the folder", "{ \"version\": 1, \"main\": \"a.squiffy\", \"cover\": \"../cover.png\" }", "\"cover\" should be the path of an image"],
+        ["a language that isn't text", "{ \"version\": 1, \"main\": \"a.squiffy\", \"language\": 1 }", "\"language\" should be text"],
+        ["a language that isn't a language tag", "{ \"version\": 1, \"main\": \"a.squiffy\", \"language\": \"English\" }", "\"language\" should be a language tag"],
         ["persistent not a list", "{ \"version\": 1, \"main\": \"a.squiffy\", \"persistent\": \"endings\" }", "\"persistent\" should be a list"],
         ["a persistent attribute that isn't a name", "{ \"version\": 1, \"main\": \"a.squiffy\", \"persistent\": [\"my endings\"] }", "\"persistent\" should be a list of attribute names"],
         ["an internal persistent attribute", "{ \"version\": 1, \"main\": \"a.squiffy\", \"persistent\": [\"_section\"] }", "\"persistent\" should be a list of attribute names"],

@@ -57,6 +57,10 @@ export interface ProjectFile {
     // The story's cover image, by its path from the main file's folder, as the story would refer to
     // it: the image a link to the published story shows
     cover?: string;
+    // The language the story is written in, as a BCP 47 tag such as "en", "fr" or "pt-BR": the
+    // published page's <html lang>, which screen readers, browsers' translation and spelling, and
+    // sites that list stories go by
+    language?: string;
 }
 
 // A player setting, from squiffy.json's "settings". The runtime's PlayerSetting is the same.
@@ -253,6 +257,13 @@ export function parseProjectFile(text: string): ParsedProjectFile {
         }
         details.cover = cover;
     }
+    if (details.language !== undefined) {
+        const language = languageTag(details.language);
+        if (language === null) {
+            return fail(`${PROJECT_FILENAME}'s "language" should be a language tag, such as "en", "fr" or "pt-BR", not "${details.language}".`);
+        }
+        details.language = language;
+    }
 
     const map = parseMapPositions(data.map);
     return {
@@ -276,8 +287,20 @@ export function parseProjectFile(text: string): ParsedProjectFile {
 // The squiffy.json properties that say what the story is, which the published page's <head> has
 // for search engines, link previews and sites that list stories. The editor's Story details
 // dialog sets them.
-export const STORY_DETAILS = ["description", "author", "cover"] as const;
+export const STORY_DETAILS = ["description", "author", "cover", "language"] as const;
 export type StoryDetail = typeof STORY_DETAILS[number];
+
+// A BCP 47 language tag in its usual form ("pt-br" is "pt-BR"), or null if it isn't one. Every
+// language has a two or three letter code, so a name such as "English", which the standard's
+// syntax allows, isn't taken for one.
+export function languageTag(text: string): string | null {
+    try {
+        const [tag] = Intl.getCanonicalLocales(text.trim());
+        return tag && /^[a-z]{2,3}(-|$)/.test(tag) ? tag : null;
+    } catch {
+        return null;
+    }
+}
 
 // The page strings Squiffy knows about. Others are left out, so a story written for a newer Squiffy,
 // with strings this one doesn't have, still builds.
