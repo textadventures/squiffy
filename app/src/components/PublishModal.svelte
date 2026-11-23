@@ -36,7 +36,7 @@
     const POLL_INTERVAL = 3000;
 
     const options: { value: PublishTarget; title: string; detail: string }[] = [
-        { value: "online", title: "textadventures.co.uk", detail: "Put your story online for free, where players can find it, or update it there." },
+        { value: "online", title: "textadventures.co.uk", detail: "Put your story online for free, where players can find it. Publishing again updates it." },
         { value: "zip", title: "Zip for a website", detail: "HTML, JavaScript and your story's files, to upload to itch.io or your own site." },
         { value: "html", title: "One HTML file", detail: "Everything in a single page, for sharing, or for sites that take one file." },
         { value: "js", title: "JavaScript only", detail: "Just story.js, for embedding the story in a page of your own." },
