@@ -7,9 +7,7 @@ import type { FileProblems } from "../problems.js";
 export type ServiceQueries = Omit<LanguageService, "updateFile" | "fileChanged" | "setMainFile" | "getAnalysis">;
 
 // A story compiled for the preview (squiffy-runtime's PreviewStory), or why it can't be
-export type CompiledStory =
-    | { success: true; js: string; css: string[]; scripts: string[] }
-    | { success: false; errors: string[] };
+export type { PreviewStory as CompiledStory } from "squiffy-compiler/language-service";
 
 export type ExportKind = "zip" | "html" | "js";
 
@@ -22,8 +20,6 @@ export interface WorkerApi extends ServiceQueries {
     // Packages the story for publishing, with its assets (by their path from the main file's
     // folder): a zip of HTML, JavaScript and assets; one HTML file; or the story's JavaScript
     exportStory(kind: ExportKind, assets: Record<string, Uint8Array>): Promise<ExportResult>;
-    // Compiles the story from the language service's latest analysis, for the preview
-    compile(): Promise<CompiledStory>;
     // Squiffy 5 text processor syntax in a file: how much there is, and the file converted to
     // Squiffy 6's, as the 6.x editor offers when it opens one
     countV5Syntax(text: string): number;

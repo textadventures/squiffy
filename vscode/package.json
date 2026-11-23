@@ -1,0 +1,171 @@
+{
+  "name": "squiffy-vscode",
+  "displayName": "Squiffy",
+  "description": "Write Squiffy interactive stories in VS Code, with a live preview",
+  "version": "0.0.1",
+  "private": true,
+  "publisher": "textadventures",
+  "license": "MIT",
+  "icon": "images/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/textadventures/squiffy.git",
+    "directory": "vscode"
+  },
+  "homepage": "https://squiffystory.com",
+  "engines": {
+    "vscode": "^1.91.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "keywords": [
+    "squiffy",
+    "interactive fiction",
+    "gamebook"
+  ],
+  "main": "./dist/node/extension.js",
+  "browser": "./dist/web/extension.js",
+  "activationEvents": [
+    "workspaceContains:**/*.squiffy"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "squiffy",
+        "aliases": [
+          "Squiffy"
+        ],
+        "extensions": [
+          ".squiffy"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "squiffy",
+        "scopeName": "source.squiffy",
+        "path": "./dist/squiffy.tmLanguage.json",
+        "embeddedLanguages": {
+          "source.js": "javascript"
+        }
+      }
+    ],
+    "snippets": [
+      {
+        "language": "squiffy",
+        "path": "./snippets/squiffy.code-snippets"
+      }
+    ],
+    "commands": [
+      {
+        "command": "squiffy.showPreview",
+        "title": "Show Preview",
+        "category": "Squiffy",
+        "icon": "$(open-preview)"
+      },
+      {
+        "command": "squiffy.restartPreview",
+        "title": "Restart Preview",
+        "category": "Squiffy",
+        "icon": "$(debug-restart)"
+      },
+      {
+        "command": "squiffy.previewBack",
+        "title": "Back in Preview",
+        "category": "Squiffy",
+        "icon": "$(arrow-left)"
+      },
+      {
+        "command": "squiffy.previewFromHere",
+        "title": "Start Preview at This Section",
+        "category": "Squiffy"
+      },
+      {
+        "command": "squiffy.setMainFile",
+        "title": "Use as Main File",
+        "category": "Squiffy"
+      },
+      {
+        "command": "squiffy.convertV5",
+        "title": "Convert from Squiffy 5",
+        "category": "Squiffy"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "squiffy.showPreview",
+          "when": "editorLangId == squiffy",
+          "group": "navigation"
+        },
+        {
+          "command": "squiffy.previewBack",
+          "when": "activeWebviewPanelId == squiffy.preview && squiffyPreviewCanGoBack",
+          "group": "navigation@1"
+        },
+        {
+          "command": "squiffy.restartPreview",
+          "when": "activeWebviewPanelId == squiffy.preview",
+          "group": "navigation@2"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "squiffy.previewFromHere",
+          "when": "editorLangId == squiffy",
+          "group": "navigation"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "squiffy.showPreview",
+          "when": "editorLangId == squiffy"
+        },
+        {
+          "command": "squiffy.previewFromHere",
+          "when": "editorLangId == squiffy"
+        },
+        {
+          "command": "squiffy.setMainFile",
+          "when": "editorLangId == squiffy"
+        },
+        {
+          "command": "squiffy.convertV5",
+          "when": "editorLangId == squiffy"
+        },
+        {
+          "command": "squiffy.restartPreview",
+          "when": "squiffyPreviewOpen"
+        },
+        {
+          "command": "squiffy.previewBack",
+          "when": "squiffyPreviewOpen"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "build": "tsc --noEmit && node esbuild.mjs",
+    "watch": "node esbuild.mjs --watch",
+    "test": "vitest --run",
+    "dev": "vitest",
+    "package": "npm run build && cp ../LICENSE LICENSE && vsce package --no-dependencies",
+    "open-web": "vscode-test-web --extensionDevelopmentPath=. ../examples"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "@types/vscode": "~1.91.0",
+    "@vscode/test-web": "^0.0.81",
+    "@vscode/vsce": "^4.1.1",
+    "esbuild": "^0.28.2",
+    "squiffy-compiler": "^7.0.0-beta.13",
+    "squiffy-runtime": "^7.0.0-beta.13",
+    "typescript": "^6.0.3",
+    "vitest": "^5.1.0",
+    "vscode-languageclient": "^11.0.1",
+    "vscode-languageserver": "^11.0.1",
+    "vscode-languageserver-textdocument": "^1.0.16"
+  }
+}

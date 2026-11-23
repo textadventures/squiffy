@@ -1,0 +1,52 @@
+{
+  "If block": {
+    "prefix": "if",
+    "body": ["{{#if ${1:condition}}}", "$0", "{{/if}}"],
+    "description": "Shows text if a condition is true"
+  },
+  "If/else block": {
+    "prefix": "ifelse",
+    "body": ["{{#if ${1:condition}}}", "$2", "{{else}}", "$0", "{{/if}}"],
+    "description": "Shows one text or another"
+  },
+  "If (check variable)": {
+    "prefix": "ifvar",
+    "body": ["{{#if ${1:variable} = \"${2:value}\"}}", "$0", "{{/if}}"],
+    "description": "Shows text if an attribute has a value"
+  },
+  "If (seen section)": {
+    "prefix": "ifseen",
+    "body": ["{{#if (seen \"${1:section}\")}}", "$0", "{{/if}}"],
+    "description": "Shows text if the player has seen a section"
+  },
+  "Set variable": {
+    "prefix": "set",
+    "body": ["{{set \"${1:variable}\" \"${2:value}\"}}"],
+    "description": "Sets an attribute"
+  },
+  "Increment": {
+    "prefix": "inc",
+    "body": ["{{inc \"${1:variable}\"}}"],
+    "description": "Adds 1 to an attribute"
+  },
+  "Decrement": {
+    "prefix": "dec",
+    "body": ["{{dec \"${1:variable}\"}}"],
+    "description": "Subtracts 1 from an attribute"
+  },
+  "Section link": {
+    "prefix": "section",
+    "body": ["{{section \"${1:name}\" text=\"${2:label}\"}}"],
+    "description": "A link to a section"
+  },
+  "Passage link": {
+    "prefix": "passage",
+    "body": ["{{passage \"${1:name}\" text=\"${2:label}\"}}"],
+    "description": "A link to a passage"
+  },
+  "Embed": {
+    "prefix": "embed",
+    "body": ["{{embed \"${1:name}\"}}"],
+    "description": "Embeds a section or passage's text"
+  }
+}

@@ -14,6 +14,9 @@ import { getStoryFiles, globToRegExp, parseProjectFile, PROJECT_FILENAME, Projec
 import { convertV5Syntax, findV5Syntax } from "./v5.js";
 import { findUnquotedText, splitWithOffsets } from "./setters.js";
 import { ignoredDiagnostics } from "./ignore.js";
+import { emit } from "./emit.js";
+import { formatDiagnostic } from "./syntax.js";
+import { resolveCssUrl, rewriteCssUrls } from "./css-urls.js";
 import { buildStoryGraph, firstScreenSoundDiagnostics, GraphUsage, StoryGraph, storyGraphDiagnostics } from "./story-graph.js";
 
 export type { Diagnostic, Position, Range } from "./syntax.js";
@@ -111,7 +114,22 @@ export interface SectionAt {
     passage?: string;
 }
 
+// The story compiled for a preview (squiffy-runtime's preview page), or its errors
+export type PreviewStory =
+    // js is the story module, without the global a published story declares. css and scripts are
+    // the contents of the story's own stylesheets and scripts, with the stylesheets' url()s made
+    // paths from the main file's folder, which is where the preview looks for assets.
+    | { success: true; js: string; css: string[]; scripts: string[] }
+    | { success: false; errors: string[] };
+
 export type RenameResult = { edit: WorkspaceEdit } | { error: string };
+
+// What a rename at a position renames: the section or passage's name, and where it is at that
+// position (in a link, just the name in its target)
+export interface RenameTarget {
+    name: string;
+    range: Range;
+}
 
 export interface LanguageService {
     // Sets the text of a file that's open in an editor, which takes precedence over what's in
@@ -133,6 +151,7 @@ export interface LanguageService {
     getDocumentSymbols(path: string): Promise<DocumentSymbol[]>;
     getDefinition(path: string, position: Position): Promise<Location | undefined>;
     getReferences(path: string, position: Position, includeDeclaration?: boolean): Promise<Location[]>;
+    getRenameTarget(path: string, position: Position): Promise<RenameTarget | undefined>;
     getRenameEdits(path: string, position: Position, newName: string): Promise<RenameResult | undefined>;
     getCompletions(path: string, position: Position): Promise<CompletionItem[]>;
     getHover(path: string, position: Position): Promise<Hover | undefined>;
@@ -141,6 +160,9 @@ export interface LanguageService {
     getSectionAt(path: string, position: Position): Promise<SectionAt | undefined>;
     // The whole story's sections and passages, and the links between them
     getStoryGraph(): Promise<StoryGraph>;
+    // The story compiled for the preview, with the project's panels and settings, from the
+    // analysis the service already has, so the story isn't parsed again
+    getPreviewStory(): Promise<PreviewStory>;
 }
 
 // ---- What a position refers to ----
@@ -694,6 +716,34 @@ export function createLanguageService(options: LanguageServiceOptions): Language
             return (await getIndex()).analysis;
         },
 
+        async getPreviewStory() {
+            const { analysis, project } = await getIndex();
+            if (!analysis.success) {
+                return { success: false, errors: analysis.diagnostics.filter(d => d.severity == "error").map(formatDiagnostic) };
+            }
+            const { projectFile } = project;
+            const result = emit(analysis, { panels: projectFile?.panels, settings: projectFile?.settings, persistent: projectFile?.persistent });
+            const info = result.getUiInfo();
+            // The story's own stylesheets and scripts are named relative to the main file. One that
+            // can't be read is left out, as the compiler does.
+            const readAll = async (names: string[], stylesheets: boolean) => {
+                const texts = await Promise.all(names.map(async name => {
+                    const path = resolvePath(dirname(project.mainFile), name);
+                    if (path === null) return undefined;
+                    try {
+                        const text = await readFile(path);
+                        return stylesheets ? rewriteCssUrls(text, url => resolveCssUrl(name, url) ?? undefined) : text;
+                    }
+                    catch {
+                        return undefined;
+                    }
+                }));
+                return texts.filter((t): t is string => t !== undefined);
+            };
+            const [css, scripts] = await Promise.all([readAll(info.externalStylesheets, true), readAll(info.externalScripts, false)]);
+            return { success: true, js: await result.getJs(true), css, scripts };
+        },
+
         async getDiagnostics(path) {
             const index = await getIndex();
             return allDiagnostics(index).filter(d => d.file == path);
@@ -762,6 +812,15 @@ export function createLanguageService(options: LanguageServiceOptions): Language
             const index = await getIndex();
             const found = await symbolAt(index, path, position);
             return found ? referencesTo(index, found.symbol, includeDeclaration) : [];
+        },
+
+        async getRenameTarget(path, position) {
+            const index = await getIndex();
+            const found = await symbolAt(index, path, position);
+            if (!found) return undefined;
+            const name = found.symbol.name;
+            const range = found.usage ? nameRangeInLink(index, found.usage, name) ?? found.range : found.range;
+            return { name, range };
         },
 
         async getRenameEdits(path, position, newName) {

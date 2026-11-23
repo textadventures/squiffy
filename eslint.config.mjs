@@ -26,8 +26,8 @@ export default defineConfig([
         },
     },
     {
-        // The desktop app's build scripts run in Node
-        files: ["desktop/scripts/**"],
+        // The desktop app's and VS Code extension's build scripts run in Node
+        files: ["desktop/scripts/**", "vscode/esbuild.mjs"],
         languageOptions: {
             globals: {
                 URL: "readonly",

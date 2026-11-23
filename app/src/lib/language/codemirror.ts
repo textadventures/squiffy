@@ -209,14 +209,12 @@ export function languageFeatures(options: LanguageFeatureOptions): Extension[] {
             const doc = view.state.doc;
             const position = toPosition(doc, view.state.selection.main.head);
             await sync(doc);
-            const definition = await client.call("getDefinition", path, position);
-            if (!definition) {
+            const target = await client.call("getRenameTarget", path, position);
+            if (!target) {
                 options.notify("Put the cursor on a section or passage name, or a link to one, to rename it.");
                 return;
             }
-            const current = definition.file === path
-                ? doc.sliceString(toOffset(doc, definition.range.start), toOffset(doc, definition.range.end))
-                : "";
+            const current = target.name;
             const newName = await options.prompt("Rename to:", current);
             if (newName === null || newName === current) return;
             if (view.state.doc !== doc) {

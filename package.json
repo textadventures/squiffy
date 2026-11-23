@@ -16,6 +16,7 @@
     "site",
     "types",
     "vite-plugin",
+    "vscode",
     "examples/vite-app"
   ],
   "scripts": {

@@ -1,0 +1,9 @@
+**
+!dist/**
+!snippets/**
+!images/icon.png
+!language-configuration.json
+!package.json
+!README.md
+!CHANGELOG.md
+!LICENSE
