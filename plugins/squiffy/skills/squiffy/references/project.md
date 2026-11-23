@@ -1,6 +1,6 @@
 # squiffy.json, several files, images and sound
 
-Docs: https://squiffystory.com/multiple-files/, https://squiffystory.com/buttons-panels-settings/ and https://squiffystory.com/images-and-files/
+Docs: https://squiffystory.com/project-file/, https://squiffystory.com/multiple-files/, https://squiffystory.com/buttons-panels-settings/ and https://squiffystory.com/images-and-files/
 
 ## squiffy.json
 

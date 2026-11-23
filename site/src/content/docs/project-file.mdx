@@ -1,0 +1,70 @@
+---
+title: The project file (squiffy.json)
+description: What a story's squiffy.json project file is, how to add one, and every property it can have
+---
+
+A story's project file, `squiffy.json`, sits in the story's folder. It makes the folder one story, names the file the story starts in, and is where you set up the parts of a published story that aren't written in the story itself, such as its buttons, panels and settings.
+
+```json
+{
+  "$schema": "https://squiffystory.com/schema/squiffy.json",
+  "version": 1,
+  "id": "0b7c6d9e-3f1a-4e2b-9c5d-8a7f6e5d4c3b",
+  "main": "story.squiffy"
+}
+```
+
+## Adding a project file
+
+Every story made in the [editor](/editor/) has a `squiffy.json`, and so does every story the command-line tool [converts](/converting-from-twine/). The editor also offers to add one to a story without one when you add a second `.squiffy` file, and adds one when you move something on the [story map](/story-map/), to save where you put it.
+
+To add one by hand, create a file called `squiffy.json` next to your story's main `.squiffy` file, and copy in the example above, changing `main` to your main file's name and `id` to some text of your own (see [`id`](#id)). The [command-line tool](/cli/#usage) then builds the folder as one story, into a `build` folder next to `squiffy.json`.
+
+A story doesn't need a `squiffy.json`: a single `.squiffy` file is a story too. But without one, a story in several files needs an [`@import`](/multiple-files/#importing-files) for each of them, and has none of the properties below.
+
+## Squiffy 7's rules for setting attributes
+
+Having a `squiffy.json` also means the story uses Squiffy 7's rules for [setting attributes](/attributes/#setting-attributes), where text goes in quotes: `@set weapon = "sword"`. A story without one keeps the Squiffy 6 rules. See [Coming from Squiffy 6](/coming-from-squiffy-6/), which also explains how the command-line tool converts a Squiffy 6 story and adds a `squiffy.json` to it.
+
+## The basics
+
+Only `version` and `main` are required.
+
+### `$schema`
+
+The `$schema` line is optional. It lets text editors such as VS Code check the file and suggest what can go in it, with a description of each property.
+
+### `version`
+
+The version of the project file format, which is `1`. A version of Squiffy that doesn't know the version refuses to build the story, saying you need a newer Squiffy.
+
+### `id`
+
+Identifies your story, so a player's [saved game](/buttons-panels-settings/#saved-games) can only be loaded into the story it came from. The published page also gives it as the story's IFID, which sites that list stories use to recognise it: see [Story details](/publishing/#story-details).
+
+The editor and the command-line tool give a new `squiffy.json` a random one. Any text will do, as long as no other story has it. Keep it the same when you publish a new version of your story, and don't copy it into another story.
+
+### `main`
+
+The story's main file, relative to the folder `squiffy.json` is in. The story starts there, at its first section or its [`@start`](/basic-concepts/#set-the-start-section) section, and its `@title` is the story's title. Every other `.squiffy`, `.css` and `.js` file in the folder is part of the story too: see [Stories in several files](/multiple-files/).
+
+## Every property
+
+| Property | What it does | See |
+|---|---|---|
+| `$schema` | Lets text editors check the file | [`$schema`](#schema) |
+| `version` | The project file format's version, `1`. Required | [`version`](#version) |
+| `id` | Identifies the story, for saved games and sites that list stories | [`id`](#id) |
+| `main` | The file the story starts in. Required | [`main`](#main) |
+| `exclude` | Files in the folder that aren't part of the story | [Leaving files out](/multiple-files/#leaving-files-out) |
+| `description` | What the story is about, for search results and link previews | [Story details](/publishing/#story-details) |
+| `author` | Who wrote the story | [Story details](/publishing/#story-details) |
+| `cover` | An image for link previews | [Story details](/publishing/#story-details) |
+| `backButton` | `false` leaves out the Back button | [The Back button](/buttons-panels-settings/#the-back-button) |
+| `saveButton` | `false` leaves out the Save button | [Saved games](/buttons-panels-settings/#saved-games) |
+| `panels` | Passages that are always to hand, beside the story or behind a button | [Panels](/buttons-panels-settings/#panels) |
+| `settings` | Options the player can change | [Player settings](/buttons-panels-settings/#player-settings) |
+| `strings` | The page's text, for a story in another language | [The page's text in another language](/buttons-panels-settings/#the-pages-text-in-another-language) |
+| `persistent` | Attributes that last between playthroughs | [Attributes that last between playthroughs](/attributes/#attributes-that-last-between-playthroughs) |
+| `startAnywhere` | `true` lets anyone start the published story at any section, for a build that's for testing | [When you publish](/testing/#when-you-publish) |
+| `map` | Where you've put sections and passages on the editor's story map. The editor writes it, and only the editor uses it | [Story map](/story-map/) |

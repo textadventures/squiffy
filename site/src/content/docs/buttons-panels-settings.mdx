@@ -10,7 +10,7 @@ import settings from "../../samples/panels/settings.squiffy?raw";
 import settingsJson from "../../samples/panels/settings.json?raw";
 import settingsCss from "../../samples/panels/settings.css?raw";
 
-A published story has buttons above it for going back, saving, restarting and switching between light and dark. You can change what's there, add [panels](#panels) that are always to hand, give the player [settings](#player-settings) to choose, and put the page's text into another language. All of these are set in the story's project file, `squiffy.json`: see [Stories in several files](/multiple-files/) for what it is and how to add one.
+A published story has buttons above it for going back, saving, restarting and switching between light and dark. You can change what's there, add [panels](#panels) that are always to hand, give the player [settings](#player-settings) to choose, and put the page's text into another language. All of these are set in the story's project file, `squiffy.json`: see [The project file](/project-file/) for what it is and how to add one.
 
 ## The Back button
 
@@ -30,7 +30,7 @@ A published story has a **Save** button, which opens the player's list of saved 
 
 Saved games are kept in the player's browser, separately for each story. They're as well as the automatic save, which lets the player close the page and carry on where they left off: loading a saved game replaces it.
 
-A saved game from a different story isn't loaded: the player is told it's for a different story. Squiffy tells them apart by their [`id`](/multiple-files/). A story without an `id` loads any saved game, so give yours one if it hasn't got one: any text will do, as long as no other story has it.
+A saved game from a different story isn't loaded: the player is told it's for a different story. Squiffy tells them apart by their [`id`](/project-file/#id). A story without an `id` loads any saved game, so give yours one if it hasn't got one: any text will do, as long as no other story has it.
 
 If you publish a new version of your story, players can still load their saved games, carrying on with the new version from where they were. If the section they were in has gone, the story starts again from the beginning, keeping their attributes.
 
