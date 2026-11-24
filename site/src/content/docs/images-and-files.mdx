@@ -4,6 +4,7 @@ description: Adding pictures, sound, video and fonts to a story
 ---
 
 import Sample from "@components/Sample.astro";
+import Screenshot from "@components/Screenshot.astro";
 import sea from "../../samples/sound/sea.squiffy?raw";
 
 export const sounds = { "sea.mp3": "/tutorial/sounds/sea.mp3", "snuffle.mp3": "/tutorial/sounds/snuffle.mp3" };
@@ -14,6 +15,8 @@ A story can show images, play sound and video, and use its own fonts. The files 
 
 - **In the editor:** the image button in the toolbar opens **Images and other files**, where you can add images, sounds and fonts. **Insert** puts an image into your story at the cursor, as an `<img>` tag.
 - **With the command-line tool:** put the files in your story's folder, or a folder below it. See [Images and other files](/cli/#images-and-other-files) for how each output format includes them.
+
+<Screenshot name="files" alt="The Images and other files dialog, listing a story's sounds, each with Insert and Delete buttons" />
 
 ## Using files in your story
 

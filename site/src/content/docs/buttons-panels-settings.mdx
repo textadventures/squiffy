@@ -4,6 +4,7 @@ description: The title in the header, the Back and Save buttons, saved games, pa
 ---
 
 import Sample from "@components/Sample.astro";
+import Screenshot from "@components/Screenshot.astro";
 import panels from "../../samples/panels/panels.squiffy?raw";
 import panelsJson from "../../samples/panels/panels.json?raw";
 import settings from "../../samples/panels/settings.squiffy?raw";
@@ -34,6 +35,8 @@ The story can change the title at any point with `{{headertitle}}`, for example 
 `{{headertitle ""}}` hides the title, and `{{headertitle}}` on its own goes back to the story's `@title`, or to no title if `headerTitle` isn't on. The Back button and saved games put the title back as it was. A title too long for the space the buttons leave, as on a phone, is cut short with "…".
 
 The editor's preview shows the title too, as does a story shared as a link, which shows the story's `@title` there even without `headerTitle`.
+
+<Screenshot name="player" alt="The game show from the Examples, as players see it: the story, a scoreboard panel beside it, and buttons above it for the prizes, help, going back, saving, restarting, settings and sound" caption="The game show from the Examples has a scoreboard panel beside the story, and buttons for its prizes, help and settings." />
 
 ## The Back button
 
@@ -92,6 +95,8 @@ Settings are options the player can change at any time, such as the size of the 
 <Sample script={settings} files={{ "squiffy.json": settingsJson }}></Sample>
 
 The published story then has a Settings button in the header, which opens a dialog where the player changes them. In the sample, it's the cog at the top: turn off content warnings, or turn up the text speed, and then set sail. You can also put a link to the dialog in your story with [`{{settings}}`](/basic-concepts/#restarting-and-saving-from-the-story), for example on the first screen.
+
+<Screenshot name="player-settings" alt="The game show's Settings dialog, with a switch for timed rounds and a list to choose the studio lights" />
 
 Each setting has a `name`, which your story uses to read it, and a `label`, which the dialog shows, with an optional `description` under it. Its `type` is one of:
 

@@ -3,6 +3,8 @@ title: Testing your story
 description: Play your story as you write it, start at a later section to test one scene, and find problems by checking, playing at random and recording playthrough tests
 ---
 
+import Screenshot from "@components/Screenshot.astro";
+
 A story with choices has many ways through it, and it's easy to break one of them while working on another. Squiffy has several ways to test a story, from playing it as you write to tests that check every route still works.
 
 | To | Use |
@@ -20,6 +22,8 @@ An [AI agent](/writing-with-ai/) can do all of these for you, too.
 To test a scene late in your story, you don't have to play up to it.
 
 **In the editor**, the flag button above the preview lists your story's sections. Type to find one, and click it to run the story from there. **Run from this section** (Ctrl+Shift+Enter, or Cmd+Shift+Enter on Mac) does the same for the section the cursor is in. **Restart** starts at that section again, so you can try a scene as many times as you like.
+
+<Screenshot name="start-at" alt="The preview's Start at menu, listing the story's sections, with a box to find one" />
 
 **In a browser**, a story served by the command-line tool's [`--serve`](/cli/#http-server) has the same flag button above the story. You can also add `?start=` and the section's name to the address, which you can bookmark:
 
