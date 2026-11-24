@@ -426,10 +426,12 @@ This converts the main file and every `.squiffy` file it `@import`s, keeping eac
 
 ### Converting from Squiffy 5
 
-Squiffy 6 replaced the Squiffy 5 text processor syntax, such as `{if x:...}` and `{x}`, with [Handlebars](/dynamic-text/). When the CLI sees Squiffy 5 syntax in a story, it warns about it. Use `--convert-v5` to convert it to the Squiffy 6 equivalent:
+Squiffy 6 replaced the Squiffy 5 text processor syntax, such as `{if x:...}` and `{x}`, with [Handlebars](/dynamic-text/). When the CLI sees Squiffy 5 syntax in a story, it warns about it. Use `--convert-v5` to convert a Squiffy 5 story:
 
 ```bash
 npx @textadventures/squiffy-cli mygame.squiffy --convert-v5
 ```
 
-This updates `mygame.squiffy`, keeping the original as `mygame.squiffy.bak`. Anything that can't be converted reliably is left as it is, and listed with its line number so you can update it by hand. Files included with `@import` aren't converted, so run the CLI on each of them too.
+This converts the text processor syntax in `mygame.squiffy`, then converts its setters to Squiffy 7's rules and adds a `squiffy.json`, as [`--convert-v6`](#converting-from-squiffy-6) does, keeping the original as `mygame.squiffy.bak`. Anything that can't be converted reliably is left as it is, and listed with its line number so you can update it by hand. If some of the text processor syntax is left, the setters aren't converted yet: fix what's listed, then run `--convert-v6`, having moved `mygame.squiffy.bak` somewhere else first.
+
+Files included with `@import` only have their setters converted, so convert the main file first, then run the CLI with `--convert-v5` on each of them too.

@@ -9,7 +9,9 @@ import { externalFiles } from "./external-files.js";
 // @imports. Then adds a squiffy.json, which is what turns the new rules on, leaving out any other
 // .squiffy, .css and .js files in the folder so the story is made of the same files as before. Each changed
 // file is kept with a .bak extension. Returns false if the story couldn't be converted.
-export const convertV6Story = async (inputFilename: string): Promise<boolean> => {
+// backedUp: files this command has already backed up, as --convert-v5 does before calling this,
+// so their .bak, which has the original, is kept as it is.
+export const convertV6Story = async (inputFilename: string, backedUp: ReadonlySet<string> = new Set()): Promise<boolean> => {
     const mainFile = path.resolve(inputFilename);
     const root = path.dirname(mainFile);
     console.log("Loading " + mainFile);
@@ -43,7 +45,7 @@ export const convertV6Story = async (inputFilename: string): Promise<boolean> =>
     for (const filename of storyFiles) {
         const result = convertSetters(fs.readFileSync(filename).toString());
         if (result.converted > 0) {
-            if (fs.existsSync(filename + ".bak")) {
+            if (!backedUp.has(filename) && fs.existsSync(filename + ".bak")) {
                 console.error(`${filename}.bak already exists. Move or delete it, then try again.`);
                 return false;
             }
@@ -60,9 +62,11 @@ export const convertV6Story = async (inputFilename: string): Promise<boolean> =>
     }
 
     for (const change of changes) {
-        fs.copyFileSync(change.filename, change.filename + ".bak");
+        const backUp = !backedUp.has(change.filename);
+        if (backUp) fs.copyFileSync(change.filename, change.filename + ".bak");
         fs.writeFileSync(change.filename, change.script);
-        console.log(`Converted ${change.converted} setter${change.converted == 1 ? "" : "s"} in ${path.relative(root, change.filename)}. The original file has been saved as ${path.basename(change.filename)}.bak`);
+        console.log(`Converted ${change.converted} setter${change.converted == 1 ? "" : "s"} in ${path.relative(root, change.filename)}.`
+            + (backUp ? ` The original file has been saved as ${path.basename(change.filename)}.bak` : ""));
     }
     if (changes.length == 0) {
         console.log("No setters needed converting.");

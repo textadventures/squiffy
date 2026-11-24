@@ -40,7 +40,7 @@ const argv = yargs(hideBin(process.argv))
     .describe("scriptonly", "Only generate JavaScript file (and optionally specify a name)")
     .describe("zip", "Create zip file")
     .describe("inline", "Create single HTML file with everything inlined")
-    .describe("convert-v5", "Convert Squiffy 5 text processor syntax to Squiffy 6, keeping a backup of the original file")
+    .describe("convert-v5", "Convert a Squiffy 5 story to Squiffy 7: its text processor syntax, then its setters, as --convert-v6 does, keeping a backup of the original file")
     .boolean("convert-v5")
     .describe("convert-v6", "Convert a Squiffy 6 story's @set and link setters to Squiffy 7's rules and add a squiffy.json, keeping a backup of each file changed")
     .boolean("convert-v6")
@@ -130,7 +130,7 @@ if (argv.convertV5) {
         console.error("Give the .squiffy file to convert.");
         process.exitCode = 1;
     }
-    else if (!convertV5File(input)) {
+    else if (!await convertV5File(input)) {
         process.exitCode = 1;
     }
 }
