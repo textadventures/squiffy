@@ -68,9 +68,10 @@ export function decodeEntities(s: string): string {
     return s.replace(/&(#x[0-9a-f]+|#\d+|\w+);/gi, (match, entity: string) => {
         if (entity[0] == "#") {
             const code = entity[1] == "x" || entity[1] == "X" ? parseInt(entity.substring(2), 16) : parseInt(entity.substring(1), 10);
-            return Number.isFinite(code) ? String.fromCodePoint(code) : match;
+            // Not a character, such as &#x110000;, which String.fromCodePoint would throw on (#644)
+            return Number.isFinite(code) && code <= 0x10ffff ? String.fromCodePoint(code) : match;
         }
-        return entities[entity.toLowerCase()] ?? match;
+        return Object.prototype.hasOwnProperty.call(entities, entity.toLowerCase()) ? entities[entity.toLowerCase()] : match;
     });
 }
 

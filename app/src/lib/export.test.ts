@@ -73,3 +73,21 @@ describe("a zip's Twine story", () => {
         expect(zipTwineFile(files(["a.twee", "b.twee", "c.html"]))).toBeUndefined();
     });
 });
+
+// A zip whose directory says its one file unpacks to nearly 4 GB, which it doesn't (#644)
+function zipThatSaysItsHuge(): Uint8Array {
+    const zip = zipSync({ "story.squiffy": strToU8("Hello") });
+    const view = new DataView(zip.buffer, zip.byteOffset, zip.byteLength);
+    for (let i = zip.length - 22; i >= 0; i--) {
+        // The central directory's entry, whose uncompressed size is what unzipSync reads
+        if (view.getUint32(i, true) === 0x02014b50) {
+            view.setUint32(i + 24, 0xfffffff0, true);
+            break;
+        }
+    }
+    return zip;
+}
+
+test("a zip that would unpack to too much isn't opened", () => {
+    expect(() => readProjectZip(zipThatSaysItsHuge())).toThrow("This zip is too big to open");
+});

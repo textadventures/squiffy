@@ -3,7 +3,7 @@
 // to keep a copy of a story kept in the browser, which lives only there.
 import { strFromU8, strToU8, unzipSync, zipSync } from "fflate";
 import { isJunkFile, isSkippedDirectory, parsePath } from "@textadventures/project-fs";
-import { parseProjectFile, PROJECT_FILENAME } from "squiffy-compiler";
+import { parseProjectFile, PROJECT_FILENAME, unzipSizeLimit, ZipTooBigError } from "squiffy-compiler";
 import { isSquiffyFile, isTextFile } from "./file-types.js";
 import { storyPath } from "./paths.js";
 import type { OpenProject } from "./project.svelte.js";
@@ -60,8 +60,16 @@ export async function zipProject(project: OpenProject): Promise<Uint8Array> {
 // The files in a project zip, by project path. A zip of a folder (one top-level folder holding
 // everything) is unwrapped, and OS junk and anything that isn't a valid project path is skipped.
 export function readProjectZip(data: Uint8Array): Map<string, Uint8Array> {
+    let unzipped: Record<string, Uint8Array>;
+    try {
+        // Capped, as a zip from someone else can say it holds gigabytes (#644)
+        unzipped = unzipSync(data, { filter: unzipSizeLimit() });
+    } catch (e) {
+        if (e instanceof ZipTooBigError) throw new Error(`This zip is too big to open. ${e.message}`, { cause: e });
+        throw e;
+    }
     // Folders, and the resource forks a Mac adds to a zip it makes
-    const entries = Object.entries(unzipSync(data))
+    const entries = Object.entries(unzipped)
         .filter(([path]) => !path.endsWith("/") && !path.startsWith("__MACOSX/"));
     const tops = new Set(entries.map(([path]) => path.split("/")[0]));
     const unwrap = tops.size === 1 && entries.every(([path]) => path.includes("/"));

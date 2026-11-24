@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { analyse } from "../analyse.js";
 import { convertTwine, formatTwineProblems, sanitiseName } from "./convert.js";
-import { parseTwine, TwineParseError } from "./story.js";
+import { decodeEntities, parseTwine, TwineParseError } from "./story.js";
 import { parseProjectFile } from "../project.js";
 
 // A Twee story in the given format, from passages written as ":: Name" and their text
@@ -95,6 +95,10 @@ setup.x = 1;
     test("something that isn't a Twine story", () => {
         expect(() => parseTwine("<html><body>Hello</body></html>")).toThrow(TwineParseError);
     });
+});
+
+test("a reference to something that isn't a character, or an object's own property, is left as it is", () => {
+    expect(decodeEntities("&#x41;&#66; &#x110000; &#99999999999; &constructor; &AMP;")).toBe("AB &#x110000; &#99999999999; &constructor; &");
 });
 
 describe("the converted story's language", () => {

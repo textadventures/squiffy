@@ -79,11 +79,15 @@ function endOf(source: string, terminator: string, from: number): number {
 
 const namedEntities: Record<string, string> = { lt: "<", gt: ">", amp: "&", quot: "\"", apos: "'" };
 
+// A character reference to something that isn't a character, such as &#x110000;, is left as it is
+// rather than throwing a RangeError that isn't a QuestParseError (#644)
+const character = (code: number, match: string) => code <= 0x10ffff ? String.fromCodePoint(code) : match;
+
 function decodeEntities(text: string): string {
     return text.replace(/&(#x[0-9a-fA-F]+|#\d+|\w+);/g, (match, entity: string) => {
-        if (entity.startsWith("#x")) return String.fromCodePoint(parseInt(entity.substring(2), 16));
-        if (entity.startsWith("#")) return String.fromCodePoint(parseInt(entity.substring(1), 10));
-        return namedEntities[entity] ?? match;
+        if (entity.startsWith("#x")) return character(parseInt(entity.substring(2), 16), match);
+        if (entity.startsWith("#")) return character(parseInt(entity.substring(1), 10), match);
+        return Object.prototype.hasOwnProperty.call(namedEntities, entity) ? namedEntities[entity] : match;
     });
 }
 

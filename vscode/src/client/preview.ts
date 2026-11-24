@@ -125,7 +125,7 @@ export class Preview implements vscode.Disposable {
             onAttributeSet: (name, value) => this.log.appendLine(`${name} = ${JSON.stringify(value)}`),
             onRuntimeError: (message, stack) => {
                 this.log.appendLine(`Error: ${stack ?? message}`);
-                void vscode.window.showErrorMessage(`The story stopped with an error: ${message}`);
+                void vscode.window.showErrorMessage(`The story stopped with an error: ${notificationText(message)}`);
             },
         });
         this.host.setTheme(previewTheme(vscode.window.activeColorTheme.kind));
@@ -208,6 +208,11 @@ export class Preview implements vscode.Disposable {
         for (const d of this.disposables) d.dispose();
     }
 }
+
+// Text from the story, for a notification, which makes [text](target) a link, including to a
+// command: a story's error message could be one, for the author to click (#644). A space between
+// the two halves stops that, and the output channel has the text as it was.
+export const notificationText = (text: string) => text.replace(/\]\(/g, "] (");
 
 const isReload = (message: unknown) =>
     typeof message == "object" && message !== null && (message as { type?: unknown }).type == "reload";
