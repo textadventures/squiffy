@@ -36,8 +36,9 @@ export { expect };
 
 // A story's folder as a project .zip, as File > Download project makes one, leaving out its
 // playthrough tests and anything that isn't part of the story
-function zipFolder(folder: string): Buffer {
+function zipFolder(folder: string, extraFiles: Record<string, string> = {}): Buffer {
     const files: Record<string, Uint8Array> = {};
+    for (const [path, from] of Object.entries(extraFiles)) files[path] = readFileSync(join(repoRoot, from));
     const walk = (dir: string) => {
         for (const name of readdirSync(dir)) {
             const path = join(dir, name);
@@ -53,19 +54,40 @@ function zipFolder(folder: string): Buffer {
 }
 
 // Opens a story folder (relative to the repo, such as "examples/gameshow") in the editor, through
-// the home page's Open file, which copies a project .zip into the browser as a new story
-export async function openStory(page: Page, folder: string) {
+// the home page's Open file, which copies a project .zip into the browser as a new story.
+// extraFiles adds files from elsewhere in the repo, as { "path in the story": "path in the repo" }.
+export async function openStory(page: Page, folder: string, extraFiles: Record<string, string> = {}) {
     await page.goto("/");
     const name = folder.split("/").pop()!;
     await page.locator("input[type=file]").setInputFiles({
         name: `${name}.zip`,
         mimeType: "application/zip",
-        buffer: zipFolder(join(repoRoot, folder)),
+        buffer: zipFolder(join(repoRoot, folder), extraFiles),
     });
     await page.waitForURL(/\/edit\?/);
     await expect(editor(page)).toBeVisible();
     await expect(page.getByText("Saved", { exact: true })).toBeVisible();
 }
+
+// Starts a new story from the home page, and replaces its starter text with this, as the
+// tutorial has the reader do
+export async function newStory(page: Page, text?: string) {
+    await page.goto("/");
+    await page.getByRole("button", { name: /^New story/ }).click();
+    await page.waitForURL(/\/edit\?/);
+    await expect(editor(page)).toBeVisible();
+    if (text === undefined) return;
+    await editor(page).click();
+    await page.keyboard.press("ControlOrMeta+A");
+    await page.keyboard.insertText(text.trimEnd());
+    await expect(editor(page)).toContainText(text.trimEnd().split("\n").pop()!);
+    await expect(page.getByText("Saved", { exact: true })).toBeVisible();
+    // A story kept in the browser shows a reminder to download a copy, once it's been changed
+    await page.getByRole("button", { name: "Dismiss", exact: true }).click({ timeout: 5000 }).catch(() => {});
+}
+
+// A file in the repo, as text
+export const repoFile = (path: string) => readFileSync(join(repoRoot, path), "utf8");
 
 export const editor = (page: Page) => page.locator("#editor .cm-content:visible");
 
@@ -87,8 +109,23 @@ export async function reseed(target: Page | FrameLocator) {
     await target.locator("body").evaluate(() => (window as unknown as { reseedRandom?: () => void }).reseedRandom?.());
 }
 
-// Clicks a link in the preview, by its text, and waits for it to take effect
-export async function choose(frame: FrameLocator, text: string) {
+// The story open in the editor, published, in a tab of its own: the preview's Run options, Play in
+// a new tab. Returns the tab, as wide as the editor's window.
+export async function playInNewTab(page: Page): Promise<Page> {
+    const [tab] = await Promise.all([
+        page.context().waitForEvent("page"),
+        page.getByRole("button", { name: "Run options" }).click().then(() =>
+            page.getByRole("menuitem", { name: "Play in a new tab" }).click()),
+    ]);
+    await tab.waitForURL(/^blob:/);
+    await tab.setViewportSize(page.viewportSize()!);
+    await expect(tab.locator("a.squiffy-link").first()).toBeVisible();
+    return tab;
+}
+
+// Clicks a link in the preview's frame, or in a published story's page, by its text, and waits
+// for it to take effect
+export async function choose(frame: FrameLocator | Page, text: string) {
     const link = frame.getByRole("link", { name: text, exact: true }).last();
     const blocks = frame.locator(".squiffy-output-block");
     const before = await blocks.count();

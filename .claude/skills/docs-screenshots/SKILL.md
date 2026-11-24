@@ -41,6 +41,13 @@ first time. Both servers are reused if they're already running.
   - `setView`, `run` (returns the preview's frame), `choose` (clicks a link in the preview, and
     clicks again if the preview wasn't ready for it), `goToLine` (scrolls the script to a line),
     `resizePane` (drags the preview's or map's splitter), `menu(page, "File", "Publish…")`.
+  - `newStory(page, text)` starts a new story and types this in place of the starter story, as
+    the tutorial has the reader do, with `repoFile()` to read a step from `site/src/tutorial/`.
+    It dismisses the reminder to download a copy. `openStory(page, folder, extraFiles)` can add
+    files from elsewhere in the repo, such as the tutorial's sounds.
+  - `playInNewTab(page)` publishes the story open in the editor into a tab of its own, for a
+    shot of what players see. A side panel needs the story to be at least 1024 pixels wide,
+    which the preview isn't, beside the script.
   - `dialog(page)` is the open dialog's panel, and puts a plain background behind it in place of
     the dimmed editor. `around(locator, padding)` is a rectangle around an element, for `clip`.
   - `capture(page, name, options)` saves `site/src/assets/screenshots/<name>.png` and
@@ -52,10 +59,13 @@ first time. Both servers are reused if they're already running.
     story with a typewriter intro takes a few seconds.
 - One `*.capture.ts` file per area: `editor.capture.ts` (the editor and the story map),
   `editor-tools.capture.ts` (the home page, problems, Start at menu and dialogs),
-  `player.capture.ts` (the published game show, from **Play in a new tab**) and
-  `vscode.capture.ts`. They aren't tests, aren't run by `npm run test:e2e`, and aren't run in CI.
+  `player.capture.ts` (the published game show, from **Play in a new tab**),
+  `tutorial.capture.ts` (both parts of the tutorial), `twine.capture.ts` (converting a Twine
+  story) and `vscode.capture.ts`. They aren't tests, aren't run by `npm run test:e2e`, and aren't run in CI.
 - `e2e/screenshots/stories/` has stories made for a screenshot, such as `cave/`, which has a
-  missing link, a dead end and an unreachable section for the map to show. Its `squiffy.json` has
+  missing link, a dead end and an unreachable section for the map to show, and
+  `twine/the-lighthouse.twee`, a small Harlowe story with Twine map positions and one thing the
+  converter notes in `twine-import.txt`. Its `squiffy.json` has
   the map's positions (`map`), so the map's layout is the same each time. Use `examples/` when a
   real story suits.
 - `site/src/components/Screenshot.astro` shows one in a page: `<Screenshot name="editor"

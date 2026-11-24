@@ -7,6 +7,7 @@ sidebar:
 
 import { Aside } from "@astrojs/starlight/components";
 import Sample from "@components/Sample.astro";
+import Screenshot from "@components/Screenshot.astro";
 import step1 from "../../tutorial/1-sections.squiffy?raw";
 import step2 from "../../tutorial/2-passages.squiffy?raw";
 import step3 from "../../tutorial/3-attributes.squiffy?raw";
@@ -25,6 +26,8 @@ Open the editor at [app.squiffystory.com](https://app.squiffystory.com/), or the
 The new story has some text in it already, to get you started. Select all of it (Ctrl+A, or Cmd+A on Mac) and delete it: you're going to write your own.
 
 You'll see three columns: the files and outline of your story on the left, the script you write in the middle, and the story itself on the right, which updates as you type. If you can't see the story, press **Run** (Ctrl+Enter, or Cmd+Enter on Mac).
+
+<Screenshot name="tutorial-new-story" alt="A new story in the editor: the files and outline on the left, the starter story's script in the middle, and the story running on the right" />
 
 <Aside type="tip">
 Every step of this tutorial has the story so far, which you can play on the right and edit on the left. You can copy it into the editor, but you'll learn more by typing in the changes yourself.
@@ -77,6 +80,8 @@ Play it twice: once taking the lantern, and once without.
 
 Below the story in the editor, **Attributes** shows the values your story has set, which is useful for checking that things are working.
 
+<Screenshot name="tutorial-attributes" alt="The story after taking the lantern, with Attributes open below it, showing has_lantern set to true" />
+
 ## Make choices matter
 
 Now give the player somewhere to use the lantern. Add a cave, where what happens depends on whether they have it:
@@ -89,6 +94,8 @@ Now give the player somewhere to use the lantern. Add a cave, where what happens
 
 Look at the sections for the endings in the editor. Each one is underlined: the editor warns that the player has no way out. That's because nothing tells it these are endings, rather than sections you haven't finished yet.
 
+<Screenshot name="tutorial-dead-ends" alt="The endings underlined in the script, and a warning that run back to the boat has no way out, with a quick fix to mark it as an ending" />
+
 ## Add endings
 
 To tell Squiffy that a section is an ending, put `@end` on a line of its own at the start of it. And give the player a way to play again, with a `{{restart}}` link:
@@ -99,6 +106,8 @@ To tell Squiffy that a section is an ending, put `@end` on a line of its own at 
 - `{{restart text="Play again"}}` is a link that starts the story again from the beginning, once the player says they're sure. Anything in `{{double curly brackets}}` is worked out as the story runs, like the `{{#if}}` you used earlier. A published story also has a Restart button above it, but a link at the end is easier to find.
 
 Open the map now to see the whole story: three endings, with the start at the top. When you play the story, the parts you've visited are outlined in green, so you can see which paths you haven't tested yet.
+
+<Screenshot name="tutorial-map" alt="The finished story on the map, with the way to the take me home ending outlined in green, and the other endings not yet visited" />
 
 The finished story has three endings, an object to find, and a choice that depends on it. That's a complete Squiffy story.
 
@@ -118,6 +127,8 @@ A little of this goes a long way. Too many effects make a story harder to read, 
 ## Publish it
 
 When you're happy with your story, it's time to share it. In the editor, open the **File** menu and choose **Publish…**, then pick how to share it:
+
+<Screenshot name="publish" alt="The Publish dialog, with the ways to share a story: textadventures.co.uk, a link, a zip for a website, one HTML file, or JavaScript only" />
 
 - **textadventures.co.uk** puts your story online for free, where players can find it.
 - **One HTML file** downloads your whole story as a single web page. Open it in a browser to play it, or send it to a friend.
