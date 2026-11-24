@@ -6,6 +6,11 @@ story map.
 - Syntax highlighting, folding and snippets for `.squiffy` files
 - Problems as you type, for the whole story, including links to sections that don't exist, dead
   ends and sections nothing links to
+- A Squiffy sidebar in the Activity Bar, whose Sections view lists every section and passage in the
+  story, across all its files, marking the start, endings, dead ends and sections that can't be
+  reached. Click one to go to it, or its ▷ to start the preview there. Its buttons run the preview,
+  add a section, show the story map and export the story. In a folder with no story, it offers to
+  make one.
 - The Outline view and breadcrumbs, Go to Definition, Find All References and Rename for sections
   and passages
 - Completion of section and passage names, attributes and directives, hover, and quick fixes
@@ -69,6 +74,8 @@ This is the `vscode/` workspace in the [Squiffy repository](https://github.com/t
   Vite builds it into `dist/map/`, and the webview loads it with `asWebviewUri`, so it works on
   the web too. `src/client/map.ts` gets the graph from the server, and makes the map's edits (a
   link, with `map-edits.ts`, and positions in `squiffy.json`) as `WorkspaceEdit`s, so Undo works.
+- The sidebar's Sections view (#616) is a `TreeDataProvider` (`src/client/sections-view.ts`) over
+  the same graph as the map, made into a tree by `sections.ts`, which marks it as the map does.
 - The grammar is the compiler's (`compiler/syntaxes/squiffy.tmLanguage.json`), copied into `dist/`
   by the build. The snippets are the editor's, with tab stops (`src/snippets.test.ts` checks they
   match `app/src/lib/snippets.ts`).
