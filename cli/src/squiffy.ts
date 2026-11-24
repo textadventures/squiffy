@@ -105,14 +105,22 @@ const input = argv._[0] === undefined ? "." : String(argv._[0]);
 const outputPathFor = (story: StoryOnDisk) =>
     story.projectFile ? path.join(path.dirname(story.projectFile), BUILD_FOLDER) : path.dirname(story.mainFile);
 
+// Reports what stopped a command, as JSON with --json: { "success": false, "errors": [...] }, the
+// same for every command. (--check's own result has errorCount, as its errors are in "problems".)
+function failWith(errors: string[]): false {
+    if (argv.json) console.log(JSON.stringify({ success: false, errors }, null, 2));
+    else errors.forEach(error => console.error(error));
+    return false;
+}
+const fail = (message: string) => failWith([message]);
+
 const findStoryOrExit = async () => {
     try {
         return await findStory(input);
     }
     catch (e) {
         if (!(e instanceof StoryNotFoundError)) throw e;
-        if (argv.json) console.log(JSON.stringify({ success: false, errors: [e.message] }, null, 2));
-        else console.error(e.message);
+        fail(e.message);
         process.exit(1);
     }
 };
@@ -193,22 +201,16 @@ else {
 async function play(): Promise<boolean> {
     const story = await findStoryOrExit();
     const loaded = await loadPlayableStory(story);
-    if (!loaded.success) {
-        if (argv.json) console.log(JSON.stringify({ success: false, errors: loaded.errors }, null, 2));
-        else loaded.errors.forEach(error => console.error(error));
-        return false;
-    }
+    if (!loaded.success) return failWith(loaded.errors);
     if (argv.seed !== undefined && !Number.isInteger(argv.seed)) {
-        console.error("--seed should be a whole number.");
-        return false;
+        return fail("--seed should be a whole number.");
     }
 
     if (argv.random !== undefined) {
         const runs = argv.random === true || argv.random === "" ? 20 : Number(argv.random);
         const steps = argv.steps ?? 200;
         if (!Number.isInteger(runs) || runs < 1 || !Number.isInteger(steps) || steps < 1) {
-            console.error("--random and --steps should be whole numbers, 1 or more.");
-            return false;
+            return fail("--random and --steps should be whole numbers, 1 or more.");
         }
         const seed = argv.seed ?? Math.floor(Math.random() * 1000000);
         const result = await playRandom(loaded.playable, { runs, steps, seed, start: argv.start });
@@ -227,8 +229,7 @@ async function play(): Promise<boolean> {
     for (const input of argv.input ?? []) {
         const parsed = parseInput(input);
         if (!parsed) {
-            console.error(`--input should be attribute=value, not "${input}".`);
-            return false;
+            return fail(`--input should be attribute=value, not "${input}".`);
         }
         inputs[parsed.attribute] = parsed.value;
     }
@@ -239,8 +240,7 @@ async function play(): Promise<boolean> {
             choose.push(...parseChoicesFile(fs.readFileSync(argv.choices, "utf8")));
         }
         catch {
-            console.error(`Couldn't read ${argv.choices}.`);
-            return false;
+            return fail(`Couldn't read ${argv.choices}.`);
         }
     }
     choose.push(...argv.choose ?? []);
@@ -252,26 +252,22 @@ async function play(): Promise<boolean> {
             save = JSON.parse(fs.readFileSync(argv.save, "utf8"));
         }
         catch {
-            console.error(`${argv.save} isn't a saved game.`);
-            return false;
+            return fail(`${argv.save} isn't a saved game.`);
         }
     }
 
     const record = argv.record;
     if (record !== undefined) {
         if (!record) {
-            console.error(`Give the file to record the test to, e.g. --record tests/playthrough${TEST_EXTENSION}`);
-            return false;
+            return fail(`Give the file to record the test to, e.g. --record tests/playthrough${TEST_EXTENSION}`);
         }
         if (argv.save) {
-            console.error("--record can't carry on from a saved game, as a test plays from the start.");
-            return false;
+            return fail("--record can't carry on from a saved game, as a test plays from the start.");
         }
     }
     const ignore = (argv.ignore ?? []).flatMap(names => names.split(/[\s,]+/)).filter(name => name);
     if (ignore.length && !record) {
-        console.error("--ignore goes with --play --record. To ignore attributes in a test, add an ignore line to the test file.");
-        return false;
+        return fail("--ignore goes with --play --record. To ignore attributes in a test, add an ignore line to the test file.");
     }
     // A test needs a seed, so the story's randomness is the same each time it's played
     const seed = argv.seed ?? (record ? Math.floor(Math.random() * 1000000) : undefined);
@@ -345,11 +341,6 @@ async function play(): Promise<boolean> {
 async function test(): Promise<boolean> {
     const story = await findStoryOrExit();
     const root = path.dirname(story.projectFile ?? story.mainFile);
-    const fail = (message: string) => {
-        if (argv.json) console.log(JSON.stringify({ success: false, errors: [message] }, null, 2));
-        else console.error(message);
-        return false;
-    };
     if (argv.ignore?.length) return fail("--ignore goes with --play --record. To ignore attributes in a test, add an ignore line to the test file.");
     const target = typeof argv.test == "string" && argv.test ? argv.test : root;
     if (!fs.existsSync(target)) return fail(`There's no file or folder called ${target}.`);
@@ -359,11 +350,7 @@ async function test(): Promise<boolean> {
     }
 
     const loaded = await loadPlayableStory(story);
-    if (!loaded.success) {
-        if (argv.json) console.log(JSON.stringify({ success: false, errors: loaded.errors }, null, 2));
-        else loaded.errors.forEach(error => console.error(error));
-        return false;
-    }
+    if (!loaded.success) return failWith(loaded.errors);
 
     const results: TestFileResult[] = [];
     for (const file of files) {

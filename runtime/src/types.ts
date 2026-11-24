@@ -3,7 +3,9 @@ import { SquiffyEventHandler, SquiffyEventMap } from "./events.js";
 export interface SquiffyInitOptions {
     element: HTMLElement;
     story: Story;
-    scroll?: string,
+    // How the page scrolls as text is added: "body" (the default) scrolls the page, "element" the
+    // story's element, and "none" doesn't scroll
+    scroll?: "body" | "element" | "none",
     persist?: boolean,
     storyId?: string,
     onSet?: (attribute: string, value: any) => void,
@@ -29,7 +31,7 @@ export interface SquiffyInitOptions {
 }
 
 export interface SquiffySettings {
-    scroll: string,
+    scroll: "body" | "element" | "none",
     persist: boolean,
     onSet: (attribute: string, value: any) => void,
 }
@@ -145,16 +147,26 @@ export interface SquiffyScriptApi {
     once<E extends SquiffyScriptEvent>(event: E, handler: SquiffyEventHandler<E>): () => void;
 }
 
-// Previous versions of Squiffy had "squiffy", "get" and "set" as globals - we now pass these directly into JS functions.
-// We may tidy up this API at some point, though that would be a breaking change.
+// What a section's or passage's JavaScript gets as squiffy, with get and set on their own too, as
+// Squiffy 5 had them as globals. It's the API documented on the docs' JavaScript page
+// (site/src/content/docs/javascript.mdx), so it can only be added to in 7.x. @ui code gets
+// registerHelper, registerAnimation and SafeString as well.
 interface SquiffyJsFunctionApi {
     get: (attribute: string) => any;
     set: (attribute: string, value: any) => void;
     ui: {
-        transition: (f: any) => void;
+        // Runs a transition effect: links can't be clicked until fn's Promise resolves
+        transition: (fn: () => Promise<void>) => void;
+        write: (text: string, source?: string) => void;
+        scrollToEnd: () => void;
+        // Runs fn once the section's or passage's text is on the page (#106)
+        afterWrite: (fn: () => void) => void;
     };
+    // The story's element
+    element: HTMLElement;
     story: {
-        go: (section: string) => void;
+        // Goes to a section. From an afterWrite function, once the text has been written, as {{goto}} does.
+        go: (section: string) => Promise<void>;
         seen: (sectionOrPassage: string) => boolean;
         visits: (sectionOrPassage: string) => number;
         // How many turns ago it was last visited: 0 if the player is there now, -1 if never (#540)
@@ -294,6 +306,8 @@ export interface Passage {
     jsIndex?: number;
 }
 // A saved game, from SquiffyApi.getSave(). It's JSON, so it can be kept as text or in a file.
+// Its version only goes up when an earlier runtime couldn't load it: anything added to it in 7.x
+// is something an earlier 7.x can do without, and leaves alone (#642).
 export interface SavedGame {
     format: "squiffy-save";
     version: 1;
@@ -312,6 +326,7 @@ export interface SavedGame {
 
 export type LoadSaveResult =
     | { success: true }
-    // notASave: it isn't a saved game, or it's from a newer version of Squiffy.
+    // notASave: it isn't a saved game.
+    // newerSave: it's from a newer version of Squiffy, which saves games in a way this one can't load.
     // wrongStory: it's from a different story.
-    | { success: false; error: "notASave" | "wrongStory" };
+    | { success: false; error: "notASave" | "newerSave" | "wrongStory" };

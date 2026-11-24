@@ -262,6 +262,8 @@ export const createPackage = async (input: CompileSuccess, createZipOrOptions: b
         Object.prototype.hasOwnProperty.call(strings, name) ? escapeAttribute(strings[name]) : match);
     // The page's text, which its script gives to the Saved games dialog and the panels
     htmlData = htmlData.replace("/* PAGE_STRINGS */", () => scriptSafeJson(strings));
+    const projectId = input.output.story.projectId;
+    htmlData = htmlData.replace("/* STORAGE_KEY */", () => projectId ? scriptSafeJson(projectId) : "window.location.pathname");
     htmlData = htmlData.replace("/* START_ANYWHERE */", () => options.startAnywhere === true ? "true" : "false");
     htmlData = htmlData.replace("<!-- INFO -->", () => infoComment);
     htmlData = htmlData.replace("<!-- TITLE -->", () => uiInfo.title);

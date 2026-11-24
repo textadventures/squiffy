@@ -165,9 +165,9 @@ test("{{live}} shows a setting as it changes, and only fades when its own value 
     const live = element.querySelector<HTMLElement>(".squiffy-live")!;
     expect(live.textContent).toBe("3");
     api.setSetting("warnings", false);
-    expect(live.classList.contains("fade-out")).toBe(false);
+    expect(live.classList.contains("squiffy-fade-out")).toBe(false);
     api.setSetting("speed", 4);
-    expect(live.classList.contains("fade-out")).toBe(true);
+    expect(live.classList.contains("squiffy-fade-out")).toBe(true);
 });
 
 const settingsDialog = () => document.querySelector<HTMLDialogElement>("dialog.squiffy-settings");

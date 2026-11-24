@@ -44,10 +44,33 @@ describe("parseProjectFile", () => {
         });
     });
 
-    test("strings are kept, leaving out any Squiffy doesn't know", () => {
+    test("strings are kept, leaving out any Squiffy doesn't know, with a warning", () => {
         const text = JSON.stringify({ version: 1, main: "a.squiffy", strings: { restart: "Recommencer", future: "x", toString: "y" } });
         expect(parseProjectFile(text)).toEqual({
             success: true, project: { version: 1, main: "a.squiffy", exclude: [], strings: { restart: "Recommencer" } },
+            warnings: [
+                "squiffy.json's \"strings\" has \"future\", which isn't one of the page's strings, so it's left out. It may be misspelt, or need a newer version of Squiffy.",
+                "squiffy.json's \"strings\" has \"toString\", which isn't one of the page's strings, so it's left out. It may be misspelt, or need a newer version of Squiffy.",
+            ],
+        });
+    });
+
+    // So that a story written for a later 7.x, which may have more of these, still builds (#642)
+    test("properties, panel icons and positions, and kinds of setting it doesn't know are left out, with a warning", () => {
+        const text = JSON.stringify({
+            version: 1, main: "a.squiffy", fonts: ["x"],
+            panels: [{ passage: "x", label: "X", icon: "cat", position: "top" }],
+            settings: [{ name: "a", type: "colour" }, { name: "b" }],
+        });
+        expect(parseProjectFile(text)).toEqual({
+            success: true,
+            project: { version: 1, main: "a.squiffy", exclude: [], panels: [{ passage: "x", label: "X" }], settings: [{ name: "b", label: "b", type: "toggle" }] },
+            warnings: [
+                "squiffy.json has \"fonts\", which this version of Squiffy doesn't know, so it's left out. It may be misspelt, or need a newer version of Squiffy.",
+                "squiffy.json's panel 1's \"position\" should be \"side\" or \"button\", not \"top\", so it's a button. It may be misspelt, or need a newer version of Squiffy.",
+                "squiffy.json's panel 1's \"icon\" should be one of \"bag\", \"person\", \"map\", \"help\", \"info\", \"list\", \"book\", \"star\", \"heart\", not \"cat\", so it has its label instead. It may be misspelt, or need a newer version of Squiffy.",
+                "squiffy.json's setting 1's \"type\" should be \"toggle\", \"list\", \"range\", not \"colour\", so it's left out. It may be misspelt, or need a newer version of Squiffy.",
+            ],
         });
     });
 
@@ -129,8 +152,8 @@ describe("parseProjectFile", () => {
         ["a panel that isn't an object", "{ \"version\": 1, \"main\": \"a.squiffy\", \"panels\": [\"x\"] }", "panel 1 should be an object"],
         ["a panel with no passage", "{ \"version\": 1, \"main\": \"a.squiffy\", \"panels\": [{ \"label\": \"x\" }] }", "panel 1 needs a \"passage\""],
         ["a panel with no label", "{ \"version\": 1, \"main\": \"a.squiffy\", \"panels\": [{ \"passage\": \"x\" }] }", "panel 1 needs a \"label\""],
-        ["a panel in the wrong place", "{ \"version\": 1, \"main\": \"a.squiffy\", \"panels\": [{ \"passage\": \"x\", \"label\": \"x\", \"position\": \"top\" }] }", "should be \"side\" or \"button\""],
-        ["a panel with an unknown icon", "{ \"version\": 1, \"main\": \"a.squiffy\", \"panels\": [{ \"passage\": \"x\", \"label\": \"x\", \"icon\": \"cat\" }] }", "\"icon\" should be one of \"bag\""],
+        ["a panel position that isn't text", "{ \"version\": 1, \"main\": \"a.squiffy\", \"panels\": [{ \"passage\": \"x\", \"label\": \"x\", \"position\": 1 }] }", "should be \"side\" or \"button\""],
+        ["a panel icon that isn't text", "{ \"version\": 1, \"main\": \"a.squiffy\", \"panels\": [{ \"passage\": \"x\", \"label\": \"x\", \"icon\": true }] }", "\"icon\" should be one of \"bag\""],
         ["a description that isn't text", "{ \"version\": 1, \"main\": \"a.squiffy\", \"description\": [\"x\"] }", "\"description\" should be text"],
         ["an author that isn't text", "{ \"version\": 1, \"main\": \"a.squiffy\", \"author\": 1 }", "\"author\" should be text"],
         ["a cover outside the folder", "{ \"version\": 1, \"main\": \"a.squiffy\", \"cover\": \"../cover.png\" }", "\"cover\" should be the path of an image"],
@@ -148,7 +171,7 @@ describe("parseProjectFile", () => {
             ["a setting with no name", "[{ \"label\": \"x\" }]", "setting 1 needs a \"name\""],
             ["a setting with a name that isn't an attribute name", "[{ \"name\": \"text size\" }]", "setting 1 needs a \"name\" of letters"],
             ["two settings with the same name", "[{ \"name\": \"a\" }, { \"name\": \"a\" }]", "more than one setting called \"a\""],
-            ["a setting of an unknown type", "[{ \"name\": \"a\", \"type\": \"text\" }]", "\"type\" should be \"toggle\", \"list\", \"range\""],
+            ["a setting type that isn't text", "[{ \"name\": \"a\", \"type\": 1 }]", "\"type\" should be \"toggle\", \"list\", \"range\""],
             ["a toggle whose default isn't true or false", "[{ \"name\": \"a\", \"default\": \"yes\" }]", "should be true or false"],
             ["a list with no options", "[{ \"name\": \"a\", \"type\": \"list\" }]", "needs \"options\""],
             ["a list with an empty option", "[{ \"name\": \"a\", \"type\": \"list\", \"options\": [\"\"] }]", "needs \"options\""],

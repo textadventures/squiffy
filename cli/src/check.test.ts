@@ -34,8 +34,8 @@ describe("checkStory", () => {
         const result = await check();
 
         expect(result.success).toBe(true);
-        expect(result.errors).toBe(0);
-        expect(result.warnings).toBe(3);
+        expect(result.errorCount).toBe(0);
+        expect(result.warningCount).toBe(3);
         expect(result.problems.map(p => [p.file, p.line, p.code])).toEqual([
             ["story.squiffy", 1, "squiffy/unknown-section-link"],
             ["story.squiffy", 3, "squiffy/dead-end"],
@@ -55,7 +55,7 @@ describe("checkStory", () => {
         const result = await check();
 
         expect(result.success).toBe(false);
-        expect(result.errors).toBe(1);
+        expect(result.errorCount).toBe(1);
         expect(result.problems[0]).toMatchObject({ file: "parts/shop.squiffy", line: 1, severity: "error", code: "squiffy/passage-without-section" });
     });
 
@@ -83,7 +83,7 @@ describe("checkStory", () => {
         const result = await check();
 
         expect(result.success).toBe(false);
-        expect(result.errors).toBe(2);
+        expect(result.errorCount).toBe(2);
         expect(formatCheckResult(result).split("\n").slice(0, 2)).toEqual([
             "story.squiffy:2:19: error: In section 'start', {{round + 1}} isn't valid Handlebars. To show the result of an expression, start it with \"=\": {{= round + 1}} [squiffy/template-syntax]",
             "story.squiffy:7:1: error: In section 'guess', {{#unless word}} is closed by {{/if}}, but it needs a {{/unless}} [squiffy/template-syntax]",

@@ -7,9 +7,20 @@
     <!-- META -->
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script>
+        // What the reader's progress, saved games and choices are kept under in the browser:
+        // squiffy.json's id, so they're kept wherever the story is put, or else the page's address
+        window.squiffyStorageKey = /* STORAGE_KEY */;
+
         // Applies the reader's light or dark choice from the theme button before the page is shown
         try {
-            const theme = localStorage.getItem('squiffy-theme:' + window.location.pathname);
+            const themeKey = 'squiffy-theme:' + window.squiffyStorageKey;
+            // A choice made when it was kept by the page's address
+            const oldThemeKey = 'squiffy-theme:' + window.location.pathname;
+            if (oldThemeKey !== themeKey && localStorage.getItem(oldThemeKey) !== null) {
+                if (localStorage.getItem(themeKey) === null) localStorage.setItem(themeKey, localStorage.getItem(oldThemeKey));
+                localStorage.removeItem(oldThemeKey);
+            }
+            const theme = localStorage.getItem(themeKey);
             if (theme === 'light' || theme === 'dark') document.documentElement.dataset.squiffyTheme = theme;
         } catch (e) {
             // Storage can be unavailable, e.g. in a private window
@@ -28,7 +39,6 @@
                 story: story,
                 persist: true,
                 strings: pageStrings,
-                storyId: window.location.pathname,
                 /* ASSET_OPTIONS */
             });
 
@@ -66,6 +76,7 @@
                 if (!savesDialog) {
                     savesDialog = squiffyRuntime.createSavesDialog(squiffyApi, {
                         strings: pageStrings,
+                        key: window.squiffyStorageKey,
                     });
                 }
                 savesDialog.open();
@@ -190,7 +201,7 @@
     (function () {
         const root = document.documentElement;
         const button = document.getElementById('squiffy-theme');
-        const key = 'squiffy-theme:' + window.location.pathname;
+        const key = 'squiffy-theme:' + window.squiffyStorageKey;
         const system = window.matchMedia('(prefers-color-scheme: dark)');
         const chosen = root.dataset.squiffyTheme;
 

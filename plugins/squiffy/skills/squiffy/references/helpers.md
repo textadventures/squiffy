@@ -7,6 +7,7 @@ Every `{{helper}}` in Squiffy's Handlebars text processor. Docs: https://squiffy
 - Named options are `key=value`: `{{goto "end" after=2000}}`.
 - In `{{#if}}`, `{{#unless}}`, `{{else if}}` and `{{= }}`, use the operators (`=`, `>`, `and`, `+`...) rather than the comparison, logic and maths helpers. The helpers are what the operators turn into, and are needed only outside those places.
 - Helpers that change attributes run where they are in the text, so they respect `{{#if}}`. Directives (`@set`, `@music`) always run.
+- An attribute can share a helper's name: `{{count}}` on its own shows the attribute, `{{count bag}}` calls the helper. Not for `clear`, `content`, `deactivate`, `forget`, `headertitle`, `restart`, `saves`, `settings`, `stop`, `stopmusic`, `stopsounds`, which do something with nothing given: use `{{get "restart"}}`.
 
 ## Built-in Handlebars blocks
 

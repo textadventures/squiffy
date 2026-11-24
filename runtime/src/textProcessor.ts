@@ -17,6 +17,15 @@ const styleEffects = new Set([
     "double-underline", "wavy-underline", "double-strike", "wavy-strike",
 ]);
 
+// The helpers that do something with nothing given, so that {{name}} on its own calls them even
+// when the story has an attribute of that name. Every other helper shows the attribute (see the
+// TextProcessor constructor). Don't add to this: a helper added to it would change what {{name}}
+// shows in a story that already has an attribute of that name.
+export const HELPERS_WITHOUT_VALUES: ReadonlySet<string> = new Set([
+    "clear", "content", "deactivate", "forget", "headertitle", "restart", "saves", "settings",
+    "stop", "stopmusic", "stopsounds",
+]);
+
 // An embed being shown (#450): its parameters, and the text it wraps, if any
 interface EmbedScope {
     params: Record<string, unknown>;
@@ -51,6 +60,8 @@ export class TextProcessor {
     state: State;
     getCurrentSection: () => Section;
     handlebars: typeof Handlebars;
+    // Registers a helper of the story's own, which {{name}} on its own always calls
+    registerOwnHelper: typeof Handlebars.registerHelper;
 
     constructor (story: () => Story,
                  state: State,
@@ -59,6 +70,28 @@ export class TextProcessor {
         this.state = state;
         this.getCurrentSection = currentSection;
         this.handlebars = Handlebars.create();
+
+        // A story can have an attribute with the same name as a helper, such as count or min,
+        // which {{count}} on its own would call the helper for, as Handlebars looks for a helper
+        // first. So {{name}} on its own, with no values, no name=value and no block, shows the
+        // attribute when there is one, for every helper apart from those that do something with
+        // nothing given. That way a helper added in a later version doesn't change what a story
+        // that has an attribute of that name shows (#642). The story's own helpers, registered
+        // with registerOwnHelper, are left as they are.
+        this.registerOwnHelper = this.handlebars.registerHelper.bind(this.handlebars);
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
+        const self = this;
+        this.handlebars.registerHelper = ((name: string, fn: Handlebars.HelperDelegate) => {
+            if (HELPERS_WITHOUT_VALUES.has(name) || name.startsWith("__")) return this.registerOwnHelper(name, fn);
+            this.registerOwnHelper(name, function (this: unknown, ...args: any[]) {
+                const options = args[args.length - 1];
+                if (args.length == 1 && typeof options?.fn != "function" && !Object.keys(options?.hash ?? {}).length
+                    && self.hasAttribute(name)) {
+                    return self.getAttribute(name);
+                }
+                return (fn as (...values: any[]) => unknown).apply(this, args);
+            });
+        }) as typeof this.handlebars.registerHelper;
 
         // {{embed "name"}} shows a section's or passage's text here. It can be given parameters,
         // {{embed "say" who="Ann"}}, which the embedded text reads as {{who}} and which hide any

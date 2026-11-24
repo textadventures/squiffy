@@ -26,6 +26,7 @@ export const SAVES_STRINGS = {
     close: "Close",
     wrongStory: "This saved game is for a different story.",
     notASave: "This file isn't a saved game.",
+    newerSave: "This saved game is from a newer version of this story, so it can't be loaded here.",
     cantSave: "The game couldn't be saved. Try Save to file instead.",
 };
 

@@ -41,7 +41,7 @@ test("Exported page has a light/dark button, and applies the saved choice before
     expect(html).toContain('id="squiffy-theme"');
     // The saved choice is applied in <head>, before the stylesheets
     const head = html.substring(0, html.indexOf("</head>"));
-    expect(head).toContain("localStorage.getItem('squiffy-theme:'");
+    expect(head).toContain("const themeKey = 'squiffy-theme:' + window.squiffyStorageKey;");
     expect(head.indexOf("squiffyTheme")).toBeLessThan(head.indexOf('href="style.css"'));
 });
 
@@ -378,7 +378,7 @@ test("Package without assets has no asset options in HTML", async () => {
     expect(html).not.toContain("ASSET_OPTIONS");
     expect(html).not.toContain("resolveAssetUrl: function");
     expect(html).not.toContain("squiffyAssetUrls");
-    expect(html).toContain("storyId: window.location.pathname,\n            });");
+    expect(html).toContain("strings: pageStrings,\n            });");
 });
 
 test("Assets are added to the zip at their paths", async () => {
@@ -632,4 +632,15 @@ test("Exported page's story details are escaped", async () => {
     expect(head).toContain("<meta name=\"author\" content=\"O&#39;Brien\">");
     expect(head).toContain("<meta property=\"og:title\" content=\"Tom &#38; &#34;Jerry&#34;\">");
     expect(head).toContain("<meta property=\"og:image\" content=\"a&#34;b.png\">");
+});
+
+test("The page keeps the reader's progress under squiffy.json's id, or else the page's address", async () => {
+    const withId = await compile({ script: "Hello", projectId: "0b7c6d9e-story" });
+    const without = await compile({ script: "Hello" });
+    if (!withId.success || !without.success) throw new Error("Compile failed");
+    expect((await createPackage(withId, false)).files["index.html"]).toContain('window.squiffyStorageKey = "0b7c6d9e-story";');
+    const html = (await createPackage(without, false)).files["index.html"];
+    expect(html).toContain("window.squiffyStorageKey = window.location.pathname;");
+    expect(html).toContain("key: window.squiffyStorageKey,");
+    expect(html).not.toContain("STORAGE_KEY");
 });

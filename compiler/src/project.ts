@@ -147,6 +147,7 @@ export const PAGE_STRINGS = {
     close: "Close",
     wrongStory: "This saved game is for a different story.",
     notASave: "This file isn't a saved game.",
+    newerSave: "This saved game is from a newer version of this story, so it can't be loaded here.",
     cantSave: "The game couldn't be saved. Try Save to file instead.",
     // The Settings dialog, for a story with "settings"
     settings: "Settings",
@@ -167,12 +168,25 @@ export interface MapPositions {
 }
 
 export type ParsedProjectFile =
-    | { success: true; project: ProjectFile }
+    // Warnings are about what the story can be built without: a property this version of Squiffy
+    // doesn't know, or a value it doesn't, such as a panel icon from a later version (#642)
+    | { success: true; project: ProjectFile; warnings?: string[] }
     | { success: false; error: string };
 
-// Parses and checks a squiffy.json. An error is a sentence to show the author as is.
+// The properties a project file can have
+export const PROJECT_PROPERTIES = new Set([
+    "$schema", "version", "id", "main", "exclude", "map", "backButton", "saveButton", "startAnywhere", "strings",
+    "panels", "settings", "persistent", "headerTitle", "description", "author", "cover", "language", "ignore",
+]);
+
+// Parses and checks a squiffy.json. An error or warning is a sentence to show the author as is.
+// Anything that stops the story being what the author meant is an error. What a later version of
+// Squiffy may add (a property, a page string, a panel icon or position, a kind of setting) is a
+// warning, and left out, so a story written for a later 7.x still builds, as well as it can.
 export function parseProjectFile(text: string): ParsedProjectFile {
     const fail = (error: string): ParsedProjectFile => ({ success: false, error });
+    const warnings: string[] = [];
+    const newer = "It may be misspelt, or need a newer version of Squiffy.";
     let json: unknown;
     try {
         json = JSON.parse(text);
@@ -184,6 +198,9 @@ export function parseProjectFile(text: string): ParsedProjectFile {
         return fail(`${PROJECT_FILENAME} should contain an object, such as { "version": 1, "main": "story.squiffy" }.`);
     }
     const data = json as Record<string, unknown>;
+    for (const name of Object.keys(data)) {
+        if (!PROJECT_PROPERTIES.has(name)) warnings.push(`${PROJECT_FILENAME} has "${name}", which this version of Squiffy doesn't know, so it's left out. ${newer}`);
+    }
 
     const version = data.version;
     if (version === undefined) {
@@ -246,10 +263,19 @@ export function parseProjectFile(text: string): ParsedProjectFile {
         return fail(`${PROJECT_FILENAME}'s "strings" should be an object of text, such as { "restart": "Recommencer" }.`);
     }
 
-    const panels = parsePanels(data.panels);
+    if (strings !== undefined) {
+        for (const name of Object.keys(strings as object)) {
+            if (!Object.prototype.hasOwnProperty.call(PAGE_STRINGS, name)) {
+                warnings.push(`${PROJECT_FILENAME}'s "strings" has "${name}", which isn't one of the page's strings, so it's left out. ${newer}`);
+            }
+        }
+    }
+
+    const warn = (warning: string) => warnings.push(`${warning} ${newer}`);
+    const panels = parsePanels(data.panels, warn);
     if (typeof panels == "string") return fail(panels);
 
-    const settings = parseSettings(data.settings);
+    const settings = parseSettings(data.settings, warn);
     if (typeof settings == "string") return fail(settings);
 
     const persistent = parsePersistent(data.persistent);
@@ -300,6 +326,7 @@ export function parseProjectFile(text: string): ParsedProjectFile {
             ...(ignore !== undefined ? { ignore: (ignore as string[]).map(item => item.trim()) } : {}),
             ...details,
         },
+        ...(warnings.length ? { warnings } : {}),
     };
 }
 
@@ -321,14 +348,14 @@ export function languageTag(text: string): string | null {
     }
 }
 
-// The page strings Squiffy knows about. Others are left out, so a story written for a newer Squiffy,
-// with strings this one doesn't have, still builds.
+// The page strings Squiffy knows about. Others are left out, with a warning, so a story written for
+// a newer Squiffy, with strings this one doesn't have, still builds.
 function pickPageStrings(strings: Record<string, string>): PageStrings {
     return Object.fromEntries(Object.entries(strings).filter(([name]) => Object.prototype.hasOwnProperty.call(PAGE_STRINGS, name)));
 }
 
 // squiffy.json's "panels", or an error to show the author
-function parsePanels(value: unknown): Panel[] | string | undefined {
+function parsePanels(value: unknown, warn: (warning: string) => void): Panel[] | string | undefined {
     if (value === undefined) return undefined;
     const example = "{ \"passage\": \"inventory\", \"label\": \"Inventory\" }";
     if (!Array.isArray(value)) return `${PROJECT_FILENAME}'s "panels" should be a list, such as [${example}].`;
@@ -342,17 +369,23 @@ function parsePanels(value: unknown): Panel[] | string | undefined {
         if (typeof item.label != "string" || !item.label.trim()) {
             return `${which} needs a "label", for its button, such as "Inventory".`;
         }
-        if (item.position !== undefined && item.position !== "side" && item.position !== "button") {
-            return `${which}'s "position" should be "side" or "button".`;
+        let position = item.position;
+        if (position !== undefined && position !== "side" && position !== "button") {
+            if (typeof position != "string") return `${which}'s "position" should be "side" or "button".`;
+            warn(`${which}'s "position" should be "side" or "button", not "${position}", so it's a button.`);
+            position = undefined;
         }
-        if (item.icon !== undefined && !(PANEL_ICONS as readonly unknown[]).includes(item.icon)) {
-            return `${which}'s "icon" should be one of ${PANEL_ICONS.map(icon => `"${icon}"`).join(", ")}.`;
+        let icon = item.icon;
+        if (icon !== undefined && !(PANEL_ICONS as readonly unknown[]).includes(icon)) {
+            if (typeof icon != "string") return `${which}'s "icon" should be one of ${PANEL_ICONS.map(icon => `"${icon}"`).join(", ")}.`;
+            warn(`${which}'s "icon" should be one of ${PANEL_ICONS.map(icon => `"${icon}"`).join(", ")}, not "${icon}", so it has its label instead.`);
+            icon = undefined;
         }
         panels.push({
             passage: item.passage.trim(),
             label: item.label.trim(),
-            ...(item.position !== undefined ? { position: item.position } : {}),
-            ...(item.icon !== undefined ? { icon: item.icon as PanelIcon } : {}),
+            ...(position !== undefined ? { position: position as Panel["position"] } : {}),
+            ...(icon !== undefined ? { icon: icon as PanelIcon } : {}),
         });
     }
     return panels;
@@ -376,7 +409,7 @@ function parsePersistent(value: unknown): string[] | string | undefined {
 }
 
 // squiffy.json's "settings", or an error to show the author
-function parseSettings(value: unknown): PlayerSetting[] | string | undefined {
+function parseSettings(value: unknown, warn: (warning: string) => void): PlayerSetting[] | string | undefined {
     if (value === undefined) return undefined;
     const example = "{ \"name\": \"warnings\", \"type\": \"toggle\", \"label\": \"Content warnings\" }";
     if (!Array.isArray(value)) return `${PROJECT_FILENAME}'s "settings" should be a list, such as [${example}].`;
@@ -437,6 +470,9 @@ function parseSettings(value: unknown): PlayerSetting[] | string | undefined {
                 ...(item.step !== undefined ? { step: item.step as number } : {}),
                 ...(item.default !== undefined ? { default: item.default as number } : {}),
             });
+        }
+        else if (typeof type == "string") {
+            warn(`${which}'s "type" should be ${PLAYER_SETTING_TYPES.map(t => `"${t}"`).join(", ")}, not "${type}", so it's left out.`);
         }
         else {
             return `${which}'s "type" should be ${PLAYER_SETTING_TYPES.map(t => `"${t}"`).join(", ")}.`;

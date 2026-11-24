@@ -55,6 +55,7 @@ async function getCompileResult(story: StoryOnDisk, testing = false) {
 
 const logLoading = (story: StoryOnDisk) => {
     if (story.note) console.log(story.note);
+    for (const warning of story.projectWarnings ?? []) console.warn("Warning: " + warning);
     console.log("Loading " + (story.projectFile ?? story.mainFile));
 };
 
