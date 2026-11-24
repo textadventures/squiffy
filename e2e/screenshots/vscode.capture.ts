@@ -65,6 +65,9 @@ test("the story map beside the script", async ({ page }) => {
     // Room for the map, and close enough to read: the whole game show is too small to
     await command(page, "View: Close Primary Side Bar");
     for (let i = 0; i < 5; i++) await map.getByRole("button", { name: "Zoom in" }).click();
+    // Selected, for its details along the bottom of the map
+    await map.locator(".gm-node.current").click();
+    await expect(map.getByRole("region", { name: "Selected section" })).toBeVisible();
     await settle(page);
     await page.addStyleTag({ content: ".monaco-sash { visibility: hidden !important; }" });
     await capture(page, "vscode-story-map", { setTheme: setTheme(page), clip: await belowTitleBar(page) });
