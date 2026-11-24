@@ -64,6 +64,14 @@ div.squiffy-output-section.links-disabled a.squiffy-link
     pointer-events: none;
 }
 
+/* After a link is clicked, the keyboard focus moves to the text it shows, so a screen reader reads
+   it next (and the story holds it while the screen is cleared). That text isn't something to click,
+   so it isn't outlined. */
+.squiffy-focus-target:focus
+{
+    outline: none;
+}
+
 /* Links disabled due to input validation */
 a.squiffy-link.validation-disabled
 {

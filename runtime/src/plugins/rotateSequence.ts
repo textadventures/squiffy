@@ -20,7 +20,7 @@ export function RotateSequencePlugin() : SquiffyPlugin {
         }
         const optionsString = escapeHtml(JSON.stringify(rotation.slice(1)) || "");
         const text = options.hash.show == "next" ? rotation[1] : rotation[0];
-        return new Handlebars.SafeString(`<a class="squiffy-link" data-handler="${type}" data-value="${escapeHtml(rotation[0])}" data-show="${options.hash.show || ""}" data-options='${optionsString}' data-attribute="${attribute}" role="link">${text}</a>`);
+        return new Handlebars.SafeString(`<a class="squiffy-link" data-handler="${type}" data-value="${escapeHtml(rotation[0])}" data-show="${options.hash.show || ""}" data-options='${optionsString}' data-attribute="${attribute}" role="link" tabindex="0">${text}</a>`);
     };
 
     const handleLink = (squiffy: PluginHost, link: HTMLElement, isRotate: boolean) => {

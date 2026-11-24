@@ -12,6 +12,7 @@ import { LinkHandler } from "./linkHandler.js";
 import { Animation } from "./animation.js";
 import { imports } from "./import.js";
 import { areInputsValid, setupInputValidation } from "./inputValidation.js";
+import { focusIsIn, focusNewText, holdFocus, isLinkActive, setLinkActive, syncLinkStates } from "./linkStates.js";
 import { createAssetHtmlResolver, isAbsolute } from "./assets.js";
 import { Sound, DEFAULT_FADE } from "./sound.js";
 import { EveryTimers } from "./every.js";
@@ -77,6 +78,8 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         if (outputSection !== currentSectionElement) return false;
 
         if (link.classList.contains("disabled")) return false;
+        // Whether to move the focus to the text the link shows (see focusNewText)
+        const hadFocus = focusIsIn(outputElementContainer);
 
         // Check if all inputs in the current section are valid before allowing navigation
         if (!areInputsValid(currentSectionElement)) {
@@ -111,6 +114,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             if (passage) {
                 currentBlockOutputElement = null;
                 await showPassage(passage, clicked);
+                focusNewText(currentPassageElement ?? currentSectionElement, outputElementContainer, hadFocus);
             }
 
             emitter.emit("linkClick", { linkType: "passage" });
@@ -121,6 +125,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             await processLink(link);
             if (section) {
                 await go(section);
+                focusNewText(currentPassageElement ?? currentSectionElement, outputElementContainer, hadFocus);
             }
 
             emitter.emit("linkClick", { linkType: "section" });
@@ -166,7 +171,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             return;
         }
         link.classList.add("disabled");
-        link.setAttribute("tabindex", "-1");
+        setLinkActive(link, false);
     }
 
     function enableLink(link: Element) {
@@ -176,7 +181,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             return;
         }
         link.classList.remove("disabled");
-        link.removeAttribute("tabindex");
+        setLinkActive(link, isLinkActive(link, currentSectionElement));
     }
 
     // Numbers a passage link that was clicked, so that going back can enable just that link, and
@@ -275,7 +280,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             gotoTimer = setTimeout(() => {
                 gotoTimer = undefined;
                 gotoHops = 0;
-                void go(pending.section);
+                void go(pending.section).then(() => focusNewText(currentSectionElement, outputElementContainer));
             }, pending.after);
             return;
         }
@@ -739,9 +744,14 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         // TODO: Queue up all attribute changes and save them only when this is called
         // A transition still playing isn't saved, so loading the game doesn't play it again (#489)
         let output = outputElement;
-        if (output.querySelector(".squiffy-transition")) {
+        if (output.querySelector(".squiffy-transition, .squiffy-focus-target")) {
             output = outputElement.cloneNode(true) as HTMLDivElement;
             output.querySelectorAll<HTMLElement>(".squiffy-transition").forEach(endTransition);
+            // Nor the tabindex given to the text that has the focus (see focusNewText)
+            for (const target of output.querySelectorAll(".squiffy-focus-target")) {
+                target.classList.remove("squiffy-focus-target");
+                target.removeAttribute("tabindex");
+            }
         }
         set("_output", output.innerHTML);
     }
@@ -790,6 +800,8 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         currentBlockOutputElement = outputElement.querySelector(".squiffy-output-block:last-child");
 
         currentSection = story.sections[get("_section")];
+        // A game saved by an earlier version has none of the links marked
+        syncLinkStates(outputElement, currentSectionElement);
     }
 
     // The game as it is now. The attributes include the text on screen (_output), and the undo
@@ -934,6 +946,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             currentSectionElement.setAttribute("data-clear", "true");
         }
         outputElement.appendChild(currentSectionElement);
+        syncLinkStates(outputElement, currentSectionElement);
     }
 
     function getClearStack() {
@@ -1004,10 +1017,10 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         scrollToTop = true;
 
         // Move everything in the outputElement (except the clearStack itself) into the new clearStackItem
-        for (const child of [...outputElement.children]) {
-            if (child !== clearStack && child !== keep) {
-                clearStackItem.appendChild(child);
-            }
+        const hiding = [...outputElement.children].filter(child => child !== clearStack && child !== keep);
+        holdFocus(outputElementContainer, hiding);
+        for (const child of hiding) {
+            clearStackItem.appendChild(child);
         }
         // Without its transitions, so it's as it was if the player goes back to it
         clearStackItem.querySelectorAll<HTMLElement>(".squiffy-transition").forEach(endTransition);
@@ -1267,6 +1280,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
 
         setCurrentSectionElement();
         setCurrentPassageElement();
+        syncLinkStates(outputElement, currentSectionElement);
         // The {{#every}}s shown again start again
         everyTimers.sync();
         emitter.emit("storyUpdated", {});
@@ -1350,6 +1364,8 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         do {
             undoLast();
         } while ((currentPassageElement ?? currentSectionElement).hasAttribute("data-goto") && getHistoryCount() > 1);
+        // The links in the section gone back to can be clicked again
+        syncLinkStates(outputElement, currentSectionElement);
         // The music goes back to what it was, as _music was undone
         sound.sync();
         syncClasses();

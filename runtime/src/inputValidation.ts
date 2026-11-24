@@ -40,7 +40,8 @@ export function updateLinkStates(sectionElement: HTMLElement | null): void {
     for (const link of links) {
         if (isValid) {
             link.classList.remove("validation-disabled");
-            link.removeAttribute("aria-disabled");
+            // A link that was clicked already stays disabled
+            if (!link.classList.contains("disabled")) link.removeAttribute("aria-disabled");
         } else {
             link.classList.add("validation-disabled");
             link.setAttribute("aria-disabled", "true");
