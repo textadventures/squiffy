@@ -40,6 +40,13 @@ Be nice to Hank. He's had a long day, and when his patience runs out, so does th
 **Studio lights** and **Timed rounds** are in the Settings. Turn off timed rounds to take as long as you like.
 
 [[before the show]]:
+@set score = 0
+@set round = 0
+@set patience = 3
+@set prizes = []
+@set rounds_tonight = 3
+@set wheel = ["General Knowledge", "Beat the Clock", "Professor Boom's Lab", "The Mystery Box", "The Audience Decides"]
+@set tonight = (slice (shuffle wheel) 0 rounds_tonight)
 The studio is dark. A sign above the stage says ON AIR, but it isn't lit yet. Somewhere, someone is testing a microphone: "One, two. One, two. Is this thing... it is? Oh."
 
 "Tonight's recording is about to begin," says a voice. "Please switch off your phones, and laugh when the sign tells you to."
@@ -48,13 +55,6 @@ The studio is dark. A sign above the stage says ON AIR, but it isn't lit yet. So
 
 [[intro]]:
 @music sounds/theme.mp3
-@set score = 0
-@set round = 0
-@set patience = 3
-@set prizes = []
-@set rounds_tonight = 3
-@set wheel = ["General Knowledge", "Beat the Clock", "Professor Boom's Lab", "The Mystery Box", "The Audience Decides"]
-@set tonight = (slice (shuffle wheel) 0 rounds_tonight)
 **{{#animate "typewriter" interval=120}}WELCOME TO...{{/animate}}**
 
 # {{#animate "toast" interval=250}}THE WHEEL OF {{#style "sway"}}DUBIOUS{{/style}} FORTUNE!{{/animate}}
