@@ -1,14 +1,16 @@
 #!/usr/bin/env bash
-# Start the editor (app/) from its Vite dev server, after building the packages it uses.
+# Start the editor (app/) from its Vite dev server, after building the packages it uses, with the
+# player (player/) beside it on the next port, which plays the editor's share links and its Play in
+# a new tab.
 #
 # Usage:
 #   ./dev.sh [--skip-build] [--port <n>]
 #
 # Options:
 #   --skip-build   Start without rebuilding the packages first.
-#   --port <n>     Editor port (default 5180). Set this to a different value per checkout (e.g. when
-#                  reviewing a PR in a git worktree alongside your main checkout) so the two dev.sh
-#                  instances don't collide.
+#   --port <n>     Editor port (default 5180), with the player on the next one (5181). Set this to a
+#                  different value per checkout (e.g. when reviewing a PR in a git worktree alongside
+#                  your main checkout) so the two dev.sh instances don't collide.
 #
 # app/ hot-reloads, as does graph-map's GraphMap.svelte. The other packages it uses (compiler,
 # runtime, packager, project-fs, graph-map, editor-search, codemirror-lang) are used from their
@@ -41,14 +43,17 @@ port_in_use() {
         (exec 3<>"/dev/tcp/127.0.0.1/$1") 2>/dev/null
     fi
 }
-if port_in_use "$PORT"; then
-    holder="$(port_holder "$PORT" || true)"
-    echo "Port $PORT is already in use${holder:+ by $holder}." >&2
-    echo "" >&2
-    echo "Another dev server may be running, perhaps from another checkout or worktree." >&2
-    echo "Stop it, or pick another port with --port <n>, e.g. ./dev.sh --port $((PORT + 10))" >&2
-    exit 1
-fi
+PLAYER_PORT=$((PORT + 1))
+for p in "$PORT" "$PLAYER_PORT"; do
+    if port_in_use "$p"; then
+        holder="$(port_holder "$p" || true)"
+        echo "Port $p is already in use${holder:+ by $holder}." >&2
+        echo "" >&2
+        echo "Another dev server may be running, perhaps from another checkout or worktree." >&2
+        echo "Stop it, or pick another port with --port <n>, e.g. ./dev.sh --port $((PORT + 10))" >&2
+        exit 1
+    fi
+done
 
 if [[ ! -d node_modules ]]; then
     echo "node_modules missing, installing (fresh checkout/worktree)..."
@@ -67,8 +72,16 @@ if [[ "$BUILD" == true ]]; then
     npx lerna run build "${SCOPES[@]}"
 fi
 
+# The player, in the background, stopped when the editor is. Each is told where the other is: the
+# editor sends share links and Play in a new tab to the player, whose "Open in editor" comes back.
+# (The player's dev server uses a strict port of its own.)
+EDITOR_URL="http://localhost:$PORT"
+VITE_EDITOR_URL="$EDITOR_URL" PORT="$PLAYER_PORT" npm --prefix player run dev &
+PLAYER_PID=$!
+trap 'kill "$PLAYER_PID" 2>/dev/null || true' EXIT
+
 echo ""
-echo "Starting the editor on http://localhost:$PORT"
+echo "Starting the editor on http://localhost:$PORT, and the player on http://localhost:$PLAYER_PORT/v7/"
 echo ""
 # --strictPort, so Vite fails rather than quietly moving to another port.
-exec npm --prefix app run dev -- --port "$PORT" --strictPort
+VITE_PLAYER_URL="http://localhost:$PLAYER_PORT" npm --prefix app run dev -- --port "$PORT" --strictPort
