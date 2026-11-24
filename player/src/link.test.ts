@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { deflateSync, strToU8, zipSync } from "fflate";
-import { decodeStory, encodeStory, mainFile, payloadFromFragment, storyFragment, storyPath } from "./link.js";
+import { decodeStory, encodeStory, mainFile, payloadFromFragment, showsEditButton, storyFragment, storyPath } from "./link.js";
 
 const story = {
     files: {
@@ -101,6 +101,20 @@ describe("the fragment", () => {
         expect(payloadFromFragment("")).toBeNull();
         expect(payloadFromFragment("#story=")).toBeNull();
         expect(payloadFromFragment("#other=1abc")).toBeNull();
+    });
+
+    test("shows the edit button unless it says not", () => {
+        expect(storyFragment("1abc")).toBe("#story=1abc");
+        expect(showsEditButton(storyFragment("1abc"))).toBe(true);
+        expect(showsEditButton("#story=1abc&start=cave")).toBe(true);
+        expect(storyFragment("1abc", { edit: false })).toBe("#story=1abc&noedit");
+        expect(showsEditButton(storyFragment("1abc", { edit: false }))).toBe(false);
+        expect(showsEditButton("#noedit&story=1abc")).toBe(false);
+    });
+
+    test("has the payload whether or not it shows the edit button", () => {
+        const payload = encodeStory(story);
+        expect(payloadFromFragment(storyFragment(payload, { edit: false }))).toBe(payload);
     });
 });
 

@@ -66,6 +66,9 @@
         | { name: "error"; message: string };
 
     let stage = $state<Stage>({ name: "choose" });
+    // A link can ask the player not to show its "Open in editor" button
+    let hideEdit = $state(false);
+    let linkUrl = $derived(stage.name === "link" ? (hideEdit ? stage.link.noEditUrl : stage.link.url) : "");
     let busy = $derived(stage.name === "saving" || stage.name === "preparing" || stage.name === "uploading");
     let dialogEl = $state<HTMLDivElement>();
     const abort = new AbortController();
@@ -129,7 +132,7 @@
         if (stage.name !== "link") return;
         const link = stage.link;
         try {
-            await navigator.clipboard.writeText(link.url);
+            await navigator.clipboard.writeText(linkUrl);
         } catch {
             // No clipboard access: the link is selected, to copy by hand
             dialogEl?.querySelector<HTMLInputElement>("#publish-link")?.select();
@@ -242,7 +245,7 @@
 
             {#if stage.name === "choose" && stage.error}<p class="text-sm text-error-500" role="alert">{stage.error}</p>{/if}
         {:else if stage.name === "link"}
-            {@const length = stage.link.url.length}
+            {@const length = linkUrl.length}
             <div class="publish-link flex flex-col gap-3 text-sm">
                 <p>This link is your story. Anyone who opens it can play it, and nothing has been uploaded.</p>
                 <div class="flex gap-2">
@@ -251,7 +254,7 @@
                         class="input text-xs flex-1 min-w-0 font-mono"
                         type="text"
                         readonly
-                        value={stage.link.url}
+                        value={linkUrl}
                         aria-label="Link to the story"
                         onfocus={e => e.currentTarget.select()}
                     />
@@ -260,6 +263,24 @@
                     </button>
                 </div>
                 <span class="sr-only" aria-live="polite">{stage.copied ? "Link copied" : ""}</span>
+                <label class="flex items-start gap-2 cursor-pointer">
+                    <!-- One line tall, so the checkbox centres on the caption's first line -->
+                    <span class="flex h-[1lh] shrink-0 items-center">
+                        <input
+                            type="checkbox"
+                            class="checkbox"
+                            bind:checked={hideEdit}
+                            onchange={() => { if (stage.name === "link") stage = { ...stage, copied: false }; }}
+                        />
+                    </span>
+                    <span>
+                        Hide the <span class="font-medium">Open in editor</span> button
+                        <span class="block text-xs text-surface-600-400">
+                            This only hides the button. The whole story is still in the link, so anyone who wants
+                            to can read it.
+                        </span>
+                    </span>
+                </label>
                 {#if length > SHORT_LINK_LENGTH}
                     <p class="flex items-start gap-2 text-warning-700-300">
                         <TriangleAlert class="size-4 shrink-0 mt-0.5" />
@@ -285,10 +306,10 @@
                     </p>
                 {/if}
                 <p class="text-xs text-surface-600-400">
-                    The link plays the story as it is now. If you change the story, make a new link. Players can
-                    also open the story in the editor, to make a version of their own.
+                    The link plays the story as it is now. If you change the story, make a new link.
+                    {#if !hideEdit}Players can also open the story in the editor, to make a version of their own.{/if}
                 </p>
-                <a class="anchor self-start flex items-center gap-1" href={stage.link.url} target="_blank" rel="noopener">
+                <a class="anchor self-start flex items-center gap-1" href={linkUrl} target="_blank" rel="noopener">
                     <ExternalLink class="size-4" /> Play it
                 </a>
             </div>

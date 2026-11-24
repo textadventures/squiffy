@@ -127,14 +127,23 @@ export function decodeStory(payload: string): LinkedStory | null {
     }
 }
 
+// After the payload in a link whose author has asked the player not to show its "Open in editor"
+// button: #story=1abc&noedit. That only hides the button. The story can still be read from the
+// link, as it's all there.
+const NO_EDIT = "noedit";
+
 // The fragment for a payload, with its "#"
-export const storyFragment = (payload: string) => `#${KEY}=${payload}`;
+export const storyFragment = (payload: string, options: { edit?: boolean } = {}) =>
+    `#${KEY}=${payload}${options.edit === false ? `&${NO_EDIT}` : ""}`;
 
 // The payload in a page's location.hash, if it has one
 export function payloadFromFragment(hash: string): string | null {
     const value = new URLSearchParams(hash.replace(/^#/, "")).get(KEY);
     return value || null;
 }
+
+// Whether a page's location.hash asks for the "Open in editor" button. It does unless it says not.
+export const showsEditButton = (hash: string) => !new URLSearchParams(hash.replace(/^#/, "")).has(NO_EDIT);
 
 // The story's main file: squiffy.json's, if it has one, else the first in the link
 export function mainFile(story: LinkedStory): string | undefined {

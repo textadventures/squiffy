@@ -21,6 +21,9 @@ export const MAX_ASSET_BYTES = 4096;
 
 export interface StoryLink {
     url: string;
+    // The same link, asking the player not to show its "Open in editor" button. That's all it
+    // does: the story's files can still be read from the link.
+    noEditUrl: string;
     // The images and so on that are in the link
     assets: string[];
     // The project's files that aren't: bigger images, sounds and so on
@@ -62,7 +65,7 @@ export function createStoryLink(files: Map<string, string | Uint8Array>, mainFil
         else if (isAsset(path) && typeof content !== "string" && content.length <= MAX_ASSET_BYTES) assets[path] = content;
         else leftOut.push(path);
     }
-    const link = (story: LinkedStory) => playerUrl(version) + storyFragment(encodeStory(story));
+    const link = (story: LinkedStory, edit = true) => playerUrl(version) + storyFragment(encodeStory(story), { edit });
     const story: LinkedStory = { files: linked, assets, main: mainFile };
     const url = link(story);
     if (url.length > MAX_LINK_LENGTH) {
@@ -75,7 +78,8 @@ export function createStoryLink(files: Map<string, string | Uint8Array>, mainFil
                 : `This story is too big to share as a link: ${length}. Publish it another way.`,
         };
     }
-    return { url, assets: Object.keys(assets), leftOut };
+    // Seven characters longer, which the limit has room for
+    return { url, noEditUrl: link(story, false), assets: Object.keys(assets), leftOut };
 }
 
 // The files of a new story made from a link's

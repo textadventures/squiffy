@@ -5,7 +5,7 @@
 import { createLanguageService } from "squiffy-compiler/language-service";
 import { createPreviewHost, iframeChannel, setUpPreviewFrame, type PreviewHost, type PreviewTheme } from "squiffy-runtime/preview-host";
 import { previewHtml } from "squiffy-runtime/preview-html";
-import { decodeStory, mainFile, payloadFromFragment, storyFragment, storyPath, type LinkedStory } from "./link.ts";
+import { decodeStory, mainFile, payloadFromFragment, showsEditButton, storyFragment, storyPath, type LinkedStory } from "./link.ts";
 
 // Where "Open in editor" goes: the editor makes a new story from the same payload
 const EDITOR_URL: string = import.meta.env.VITE_EDITOR_URL || (import.meta.env.DEV ? "http://localhost:5180" : "https://app.squiffystory.com");
@@ -21,6 +21,8 @@ const frame = element<HTMLIFrameElement>("story");
 const message = element("message");
 
 let preview: PreviewHost | undefined;
+// Whether the story's link asks for its "Open in editor" button (see showsEditButton)
+let editable = true;
 
 // The reader's choices from the story's own light/dark and mute buttons, kept for every story
 const THEME_KEY = "squiffy-player-theme";
@@ -111,7 +113,10 @@ async function play() {
         return;
     }
     edit.href = `${EDITOR_URL}/${storyFragment(payload)}`;
-    edit.hidden = false;
+    // The author can ask for no "Open in editor" button while the story plays. One that can't be
+    // played still has it, so they can see why.
+    editable = showsEditButton(location.hash);
+    edit.hidden = !editable;
 
     let compiled: Awaited<ReturnType<typeof compile>>;
     try {
@@ -120,6 +125,7 @@ async function play() {
         compiled = { success: false, errors: [err instanceof Error ? err.message : String(err)] };
     }
     if (!compiled.success) {
+        edit.hidden = false;
         show("This story has a problem", "It can't be played until its author fixes this. You can open it in the editor to see.", compiled.errors.join("\n"));
         return;
     }
@@ -137,7 +143,7 @@ async function play() {
                 showTheme();
             },
             onMutedChosen: muted => store(MUTED_KEY, muted ? "true" : null),
-            onEditRequested: () => { location.href = edit.href; },
+            onEditRequested: () => { if (editable) location.href = edit.href; },
             onRuntimeError: (text, stack) => console.error(text, stack),
         });
         preview.setTheme(theme);
@@ -150,7 +156,7 @@ async function play() {
     // the title before them and an edit button after. There's no Save, as nothing is saved.
     preview.setControls({
         back: compiled.backButton, restart: true, mute: true, theme: true, strings: compiled.strings,
-        title: compiled.title, edit: true, editLabel: edit.title,
+        title: compiled.title, edit: editable, editLabel: edit.title,
     });
     preview.setAssets({ files: compiled.assets });
     preview.load({ js: compiled.js, css: compiled.css, scripts: compiled.scripts });

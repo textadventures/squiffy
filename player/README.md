@@ -19,6 +19,11 @@ preview doesn't, as it has buttons of its own. This page's own bar, with the tit
 editor", only shows when there's no story to play, such as for a broken link. The reader's light
 or dark and mute choices are kept in this page's storage, for every story.
 
+A link ending `&noedit` (`#story=1XZG…&noedit`) asks for no "Open in editor" button: the Publish
+dialog has a checkbox for it. The button inside the frame isn't drawn, and this page's own one
+only shows if the story has an error, so its author can open it to see why. It only hides the
+button: the story can still be read from the link.
+
 - `src/link.ts`: the encoding, which the editor imports too (`@textadventures/squiffy-player/link`)
 - `src/main.ts`: the page
 - `app/src/lib/share-link.ts`: the editor's side, which chooses the files that go in a link
