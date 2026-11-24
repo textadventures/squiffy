@@ -67,8 +67,9 @@ first time. Both servers are reused if they're already running.
   `tutorial.capture.ts` (both parts of the tutorial), `twine.capture.ts` and `quest.capture.ts`
   (converting a Twine story and a Quest gamebook), `desktop.capture.ts` and `vscode.capture.ts`.
 - `desktop.capture.ts` launches the desktop app with Playwright's `_electron`, with a userData
-  folder of its own holding a made-up recent folders list and New story location
-  (`/Users/you/Documents/Squiffy`), so it neither touches nor shows your own. Only the window's
+  folder of its own holding a made-up New story location (`/Users/you/Documents/Squiffy`), so it
+  neither touches nor shows your own settings and paths. The desktop app's home page isn't
+  captured, as it's the editor's (`editor-home`), but for a line or two. Only the window's
   contents can be captured: the title bar, the native menu and native file dialogs are the OS's. They aren't tests, aren't run by `npm run test:e2e`, and aren't run in CI.
 - `e2e/screenshots/stories/` has stories made for a screenshot, such as `cave/`, which has a
   missing link, a dead end and an unreachable section for the map to show, and
