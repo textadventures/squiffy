@@ -152,3 +152,58 @@ input.input:not([type='color']):not([type='range']):active {
     border-color: var(--color-primary-500);
     outline: none;
 }
+
+/* For people who've asked their system to reduce motion, things change at once rather than
+   sliding or turning (Skeleton's and Tailwind's transitions, and the editor's own). Spinners
+   still turn, as they're how the editor shows it's busy. The story map does its own (#639). */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+        transition-duration: 0s !important;
+        transition-delay: 0s !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* Skeleton's .anchor links are told from the text around them only by colour, which isn't
+   enough (WCAG 1.4.1), so they're underlined too (#639) */
+.anchor {
+    text-decoration-line: underline;
+}
+
+/* Text colours that reach WCAG AA's 4.5:1 (#639). Wintry's paired text colours (the X-600-400
+   ones: 600 in light mode, 400 in dark) don't on the editor's backgrounds, so they're each a
+   shade or two further from the background here, and the colour scales themselves, which the
+   fills and borders use, are left alone. e2e/editor/accessibility.spec.ts checks them with axe.
+   Light first, then dark, as in Skeleton's pairings. */
+[data-theme='wintry'] {
+    --color-surface-600-400: light-dark(var(--color-surface-600), var(--color-surface-300));
+    --color-primary-600-400: light-dark(var(--color-primary-700), var(--color-primary-400));
+    --color-secondary-600-400: light-dark(var(--color-secondary-800), var(--color-secondary-400));
+    --color-tertiary-600-400: light-dark(var(--color-tertiary-700), var(--color-tertiary-400));
+    --color-success-600-400: light-dark(var(--color-success-900), var(--color-success-400));
+    --color-warning-600-400: light-dark(var(--color-warning-800), var(--color-warning-300));
+    --color-warning-700-300: light-dark(var(--color-warning-800), var(--color-warning-300));
+    --color-error-600-400: light-dark(var(--color-error-600), var(--color-error-300));
+    --typo-anchor--color-light: var(--color-primary-700);
+    --typo-anchor--color-dark: var(--color-primary-400);
+}
+
+/* Tailwind writes the pairings' values into its text-* utilities, rather than using the
+   properties above, so those utilities are pointed back at them */
+.text-surface-600-400 { color: var(--color-surface-600-400); }
+.text-primary-600-400 { color: var(--color-primary-600-400); }
+.text-warning-700-300 { color: var(--color-warning-700-300); }
+.text-error-600-400 { color: var(--color-error-600-400); }
+
+/* Filled primary and error buttons: Skeleton's near-white text on the 500 shade is 3.3:1 and
+   3.7:1, so they're a shade darker, with white text */
+.preset-filled-primary-500 {
+    background-color: var(--color-primary-600);
+    color: white;
+}
+.preset-filled-error-500 {
+    background-color: var(--color-error-600);
+    color: white;
+}

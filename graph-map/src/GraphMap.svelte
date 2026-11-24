@@ -85,6 +85,12 @@
     let fast = true;
     let raf = 0;
     let announcement = $state("");
+    // The viewer has asked their system for less motion: the map doesn't show the nodes moving
+    // into place, only where they end up (or, for a big map that takes a while, where they've
+    // got to every second or so). Nodes still follow a drag.
+    let reduceMotion = false;
+    // While reducing motion, when the moving nodes were last drawn
+    let shownAt = 0;
 
     const nodesById = $derived(new Map(graph.nodes.map(n => [n.id, n])));
 
@@ -108,9 +114,14 @@
         observer.observe(document.documentElement, { attributes: true });
         const media = matchMedia("(prefers-color-scheme: dark)");
         media.addEventListener("change", restyle);
+        const motion = matchMedia("(prefers-reduced-motion: reduce)");
+        const updateMotion = () => { reduceMotion = motion.matches; };
+        updateMotion();
+        motion.addEventListener("change", updateMotion);
         return () => {
             observer.disconnect();
             media.removeEventListener("change", restyle);
+            motion.removeEventListener("change", updateMotion);
             cancelAnimationFrame(raf);
             cancelAnimationFrame(drawRaf);
         };
@@ -134,15 +145,19 @@
         // and drawing gets at most half the time. That keeps each piece of work short, so the
         // page stays responsive while the map lays itself out.
         const slow = drawMs > 8;
-        if (slow && stale && performance.now() - drewAt >= drawMs) {
+        // Reducing motion, the simulation runs as fast as it can, as it does laying out from
+        // scratch, and the nodes are only drawn once they've stopped, unless they're being dragged
+        const still = reduceMotion && gesture?.kind != "node";
+        // Whether moving nodes can be drawn where they've got to
+        const show = () => !still || model.settled || performance.now() - shownAt >= 1000;
+        if (slow && stale && performance.now() - drewAt >= drawMs && show()) {
             draw();
         } else {
-            const moved = model.step(fast ? 12 : 4, fast ? Infinity : 1);
+            const quick = fast || reduceMotion;
+            const moved = model.step(quick ? 12 : 4, quick ? Infinity : 1);
             if (model.settled) fast = false;
-            if (moved) {
-                stale = true;
-                if (!slow) draw();
-            }
+            if (moved) stale = true;
+            if (stale && !slow && show()) draw();
         }
         if (!model.settled || stale) raf = requestAnimationFrame(loop);
     }
@@ -177,7 +192,7 @@
         for (const n of graph.nodes) paintNode(n.id);
         drawEdges();
         stale = false;
-        drewAt = performance.now();
+        drewAt = shownAt = performance.now();
         drawMs = drewAt - started;
     }
 
@@ -853,7 +868,9 @@
     const connectFrom = $derived(gesture?.kind == "connect" ? box(gesture.from) : undefined);
 </script>
 
-<!-- An application role, so screen readers pass the arrow keys through -->
+<!-- An application role, so screen readers pass the arrow keys through. Svelte's checks don't
+     count role="application" as interactive, but it is: this element is the control, with focus
+     and its own keyboard handling, and the boxes are drawn inside it (#639) -->
 <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
 <div
     bind:this={container}
@@ -936,7 +953,9 @@
     {#if instructions}
         <p id={instructionsId} class="gm-sr-only">{instructions}</p>
     {/if}
-    <p class="gm-sr-only" aria-live="polite">{announcement}</p>
+    <!-- Atomic, as VoiceOver otherwise reads only the words that changed, which can leave out the
+         box's name (#639) -->
+    <p class="gm-sr-only" aria-live="polite" aria-atomic="true">{announcement}</p>
 </div>
 
 <style>

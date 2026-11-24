@@ -173,11 +173,11 @@ export const editorTheme = EditorView.theme({
 }, { dark: false });
 
 export const squiffyHighlightStyle = HighlightStyle.define([
-    { tag: t.keyword, color: "var(--color-primary-500)", fontWeight: "bold" },
+    { tag: t.keyword, color: "var(--color-primary-600-400)", fontWeight: "bold" },
     { tag: [t.string, t.attributeValue], color: "var(--color-success-600-400)" },
     { tag: t.comment, color: "var(--color-surface-600-400)", fontStyle: "italic" },
-    { tag: t.number, color: "var(--color-tertiary-500)" },
-    { tag: [t.tagName, t.attributeName], color: "var(--color-primary-500)" },
+    { tag: t.number, color: "var(--color-tertiary-600-400)" },
+    { tag: [t.tagName, t.attributeName], color: "var(--color-primary-600-400)" },
     { tag: [t.bracket, t.paren, t.squareBracket, t.brace], color: "var(--color-surface-600-400)" },
     // CSS and JavaScript files (@codemirror/lang-css, @codemirror/lang-javascript). Keywords, strings,
     // comments, numbers and brackets are covered above.

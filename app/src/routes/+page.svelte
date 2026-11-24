@@ -170,7 +170,7 @@
 <main class="max-w-3xl mx-auto px-4 py-6 flex flex-col gap-8">
     {#if storageBlocked}
         <section aria-labelledby="storage-heading" role="alert" class="card preset-outlined-error-500 p-4 flex gap-3">
-            <ShieldAlert size={22} class="shrink-0 text-error-500" />
+            <ShieldAlert size={22} class="shrink-0 text-error-600-400" />
             <div class="flex flex-col gap-1 text-sm">
                 <h2 id="storage-heading" class="font-semibold">This browser is blocking the storage the editor needs</h2>
                 <p>
@@ -272,7 +272,7 @@
             {#if storageBlocked}
                 <p class="text-sm text-surface-600-400">Stories can't be kept in this browser while it's blocking storage.</p>
             {:else if storiesError}
-                <p class="text-sm text-error-500">Stories can't be kept in this browser: {storiesError}</p>
+                <p class="text-sm text-error-600-400">Stories can't be kept in this browser: {storiesError}</p>
             {:else if storyList === null}
                 <p class="text-sm text-surface-600-400">Loading…</p>
             {:else if storyList.length === 0}

@@ -243,7 +243,7 @@
                 </p>
             {/if}
 
-            {#if stage.name === "choose" && stage.error}<p class="text-sm text-error-500" role="alert">{stage.error}</p>{/if}
+            {#if stage.name === "choose" && stage.error}<p class="text-sm text-error-600-400" role="alert">{stage.error}</p>{/if}
         {:else if stage.name === "link"}
             {@const length = linkUrl.length}
             <div class="publish-link flex flex-col gap-3 text-sm">
@@ -348,7 +348,7 @@
                         </a>
                     {/if}
                 {:else if stage.name === "error"}
-                    <p class="text-error-500" role="alert">{stage.message}</p>
+                    <p class="text-error-600-400" role="alert">{stage.message}</p>
                 {/if}
             </div>
         {/if}

@@ -1743,6 +1743,7 @@
                         <div class="flex-1 min-h-0">
                             <CodeEditor
                                 value={file.text}
+                                label={file.path}
                                 extensions={extensionsFor(file.path)}
                                 onChange={text => file.setText(text)}
                                 onSave={() => void p.save()}

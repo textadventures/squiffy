@@ -50,6 +50,8 @@ export const SHORTCUT_GROUPS: ShortcutGroup[] = [
             { keys: ["Shift-Alt-ArrowUp", "Shift-Alt-ArrowDown"], description: "Copy the line up or down" },
             { keys: ["Shift-Mod-k"], description: "Delete the line" },
             { keys: ["Mod-[", "Mod-]"], description: "Indent less or more" },
+            // Tab indents, so this is how a keyboard user leaves the editor (#639)
+            { keys: ["Ctrl-m"], mac: ["Shift-Alt-m"], description: "Make Tab move out of the editor, rather than indent. Or press Esc then Tab to move out once" },
             { keys: ["Mod-/"], description: "Comment out, or back in" },
         ],
     },

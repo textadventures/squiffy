@@ -31,6 +31,7 @@
     "screenshots": "playwright test -c playwright.screenshots.config.ts"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
     "@eslint/compat": "^2.0.0",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.49.1",

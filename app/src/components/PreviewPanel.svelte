@@ -260,6 +260,9 @@
             {#if startMenuOpen}
                 <!-- Catches a click anywhere else, including over the story's frame -->
                 <div class="fixed inset-0 z-20" role="presentation" onclick={() => { startMenuOpen = false; }}></div>
+                <!-- The keydown handles Escape and Enter as they bubble up from the search box and the
+                     buttons inside, which is all keyboard users need: the dialog itself isn't a control
+                     (#639) -->
                 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
                 <div
                     role="dialog"

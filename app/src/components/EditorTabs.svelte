@@ -64,8 +64,10 @@
     }
 </script>
 
+<!-- A group of buttons, the open one marked as current, rather than ARIA tabs: each has a close
+     button, which a tablist can't hold, and they're reached with Tab, not the arrow keys (#639) -->
 <div
-    role="tablist"
+    role="group"
     aria-label="Open files"
     tabindex="-1"
     class="flex items-end overflow-x-auto border-b border-surface-200-800 bg-surface-100-900 shrink-0"
@@ -87,8 +89,7 @@
         >
             <button
                 type="button"
-                role="tab"
-                aria-selected={selected}
+                aria-current={selected ? "true" : undefined}
                 title={file.path}
                 class="flex items-center gap-1"
                 onclick={() => { project.activePath = file.path; }}
