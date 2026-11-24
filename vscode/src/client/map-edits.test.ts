@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { createLanguageService, type TextEdit } from "squiffy-compiler/language-service";
-import { addPassageEdits, linkEdit, movedPositions } from "./map-edits.js";
+import { addPassageEdits, linkEdit, missingTarget, movedPositions, newPassageEdit, newSectionEdits } from "./map-edits.js";
 
 async function graphOf(text: string) {
     const files: Record<string, string> = { "story.squiffy": text };
@@ -72,6 +72,39 @@ test("a passage goes at the end of its section, with a link to it after the sect
     expect(result.file).toBe("story.squiffy");
     const text = [...result.edits].reverse().reduce(apply, story);
     expect(text).toContain("Go [[left]].\n\n[listen]\n\n[look]:\nNothing.\n\n[listen]:\n\n[[left]]:");
+});
+
+describe("making sections and passages on the map", () => {
+    const applyAll = (text: string, edits: TextEdit[]) => [...edits].reverse().reduce(apply, text);
+
+    test("a section linked from another goes after the ones it already leads to, with the link after its text", async () => {
+        const graph = await graphOf(story);
+        const start = graph.nodes.find(n => n.id == "section:start")!;
+        const text = applyAll(story, newSectionEdits(graph, "down", { from: start, file: "story.squiffy" }, story));
+        expect(text).toContain("Go [[left]].\n\n[[down]]\n\n[look]:");
+        expect(text).toContain("[[left]]:\nLeft.\n\n[[down]]:\n\n[[right]]:");
+    });
+
+    test("a section made near another goes after it, without a link", async () => {
+        const graph = await graphOf(story);
+        const left = graph.nodes.find(n => n.id == "section:left")!;
+        const text = applyAll(story, newSectionEdits(graph, "up", { near: left, file: "story.squiffy" }, story));
+        expect(text).toBe(story.replace("Left.\n", "Left.\n\n[[up]]:\n"));
+    });
+
+    test("what a broken link is missing is made without another link to it", async () => {
+        const broken = "[[start]]:\nGo [[nowhere]] or [here].\n";
+        const graph = await graphOf(broken);
+        const edges = graph.edges.filter(e => !e.to);
+        const section = missingTarget(graph, edges.find(e => e.kind == "section-link")!);
+        const passage = missingTarget(graph, edges.find(e => e.kind == "passage-link")!);
+        expect(section).toMatchObject({ kind: "section", name: "nowhere" });
+        expect(passage).toMatchObject({ kind: "passage", name: "here" });
+        expect(applyAll(broken, newSectionEdits(graph, "nowhere", { from: section!.from, link: false, file: "story.squiffy" }, broken)))
+            .toBe(`${broken}\n[[nowhere]]:\n`);
+        const { edit } = newPassageEdit(passage!.from, "here", broken);
+        expect(apply(broken, edit)).toBe(`${broken}\n[here]:\n`);
+    });
 });
 
 test("dropped sections and passages are kept by name, and markers aren't kept", async () => {

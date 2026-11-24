@@ -13,7 +13,9 @@ export type ToMap =
     // whose ids have changed since the last graph (renamed, say), which keep their places.
     | { type: "graph"; graph: StoryGraph; positions?: MapPositions; renamed: [string, string][] }
     // The section or passage the cursor is in, if it's in the story
-    | { type: "current"; id: string | null };
+    | { type: "current"; id: string | null }
+    // Select a node once a graph has it (a section or passage just made from the map)
+    | { type: "select"; id: string };
 
 export type FromMap =
     // The page has loaded and wants the graph
@@ -28,4 +30,9 @@ export type FromMap =
     // From the right-click menu (or F2 and Delete): a section or passage to rename, add a passage
     // to, run the preview from or start the story at, or sections and passages to delete
     | { type: "rename" | "addPassage" | "run" | "start"; id: string }
-    | { type: "delete"; ids: string[] };
+    | { type: "delete"; ids: string[] }
+    // Make a new section, its box at `at`: linked from `from` (a link dragged to empty space), or
+    // near `near` in the script (the selected box, or the nearest one)
+    | { type: "create"; at: Point; from?: string; near?: string }
+    // Make what a broken link is missing: its marker's box is at `at`
+    | { type: "createMissing"; edge: { from: string; kind: string; target?: string }; at?: Point };
