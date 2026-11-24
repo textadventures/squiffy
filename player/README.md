@@ -30,6 +30,26 @@ decoded from the link.
 - `src/main.ts`: the page
 - `app/src/lib/share-link.ts`: the editor's side, which chooses the files that go in a link
 
+## The play page
+
+`/v7/play` (`play.html`, `src/play.ts`) is for the editor's Play in a new tab (#644), which plays
+the published story as players will see it. The story is someone's JavaScript, so it plays here,
+rather than in a tab of the editor's own, which would have the editor's origin and storage. The
+editor opens this page, which tells it it's ready; the editor sends the story's published page,
+and this page becomes it, so the story keeps its saves in this domain's storage, as a published
+story does. Its messages are in `src/play-protocol.ts`, which the editor imports too
+(`@textadventures/squiffy-player/play-protocol`), with its side in `app/src/lib/play-in-tab.ts`.
+
+- The runtime is in the page the editor sends, so this page doesn't change with the editor: only
+  if the messages do, which carry a version for that.
+- It only takes a story from the window that opened it, from the editors in `play-protocol.ts`
+  (and from `localhost` in development), and then cuts itself off from that window
+  (`window.opener = null`), so the story can't reach the editor's tab.
+- It keeps the story in `sessionStorage`, so it plays again when the page reloads, which is what
+  the story's Restart does. A story too big to keep (with its sounds in it) doesn't.
+- `_headers` keeps it out of other sites' frames.
+- In development, Play in a new tab needs this dev server running, as share links do.
+
 ## Running it
 
     npm run dev --workspace player    # http://localhost:5181/v7/

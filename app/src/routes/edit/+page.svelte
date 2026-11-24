@@ -56,6 +56,7 @@
     import { addSectionOrPassage, clipboardCommand, insertSnippet, runCommand, userSnippets } from "#lib/editor-commands.js";
     import { formatKey } from "#lib/shortcuts.js";
     import { desktopApi } from "#lib/desktop.js";
+    import { connectPlayTab, playPageUrl } from "#lib/play-in-tab.js";
     import type { ExportKind } from "#lib/language/protocol.js";
 
     const p = $derived(project.current);
@@ -1402,33 +1403,30 @@
     }
 
     // The published story, in a tab of its own, as players will see it (the 6.x editor's Preview).
-    // The tab is opened straight away, during the click, so a popup blocker lets it through. The
-    // desktop app opens a window of its own for it instead, with its own origin, as one the editor
-    // opened would share the editor's, and could reach its bridges through window.opener (#644).
+    // The story is someone's JavaScript, so it never runs as the editor (#644): in a browser it
+    // plays on the player's domain (play-in-tab.ts), in a tab opened straight away, during the
+    // click, so a popup blocker lets it through; the desktop app opens a window of its own for it.
     async function handlePlayInTab() {
         const current = p;
         const c = client;
         if (!current || !c) return;
         const desktop = desktopApi()?.desktop;
-        const tab = desktop ? null : window.open("", "_blank");
+        const tab = desktop ? null : window.open(playPageUrl(__APP_VERSION__), "_blank");
+        const playTab = tab ? connectPlayTab(tab) : null;
         try {
             await syncOpenFiles();
             const { storyAssets } = await import("#lib/export.js");
             const result = await c.call("exportStory", "html", await storyAssets(current));
             if (!result.success) {
-                tab?.close();
+                playTab?.close();
                 showToast(`The story can't run until this is fixed: ${result.errors[0]}`);
                 return;
             }
-            if (desktop) {
-                await desktop.playStory(result.files["index.html"]);
-                return;
-            }
-            const url = URL.createObjectURL(new Blob([result.files["index.html"]], { type: "text/html" }));
-            if (tab) tab.location.href = url;
+            if (desktop) await desktop.playStory(result.files["index.html"]);
+            else if (playTab) await playTab.play(result.files["index.html"]);
             else showToast("The browser blocked the new tab.", "info");
         } catch (err) {
-            tab?.close();
+            playTab?.close();
             showToast(`Couldn't play the story: ${errorText(err)}`);
         }
     }

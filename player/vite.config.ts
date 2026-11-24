@@ -35,6 +35,12 @@ const headers = `/*
   Referrer-Policy: no-referrer
   X-Robots-Tag: noindex
 
+# The play page, which the editor's Play in a new tab sends a story to (src/play.ts), is only ever
+# a tab of its own, so no other site can put it in a frame
+/:version/play
+  Content-Security-Policy: frame-ancestors 'none'
+  X-Frame-Options: DENY
+
 # Each version's page is checked for a new build on every load. Its files have a hash in their names.
 /:version/assets/*
   Cache-Control: public, max-age=31536000, immutable
@@ -46,6 +52,10 @@ export default defineConfig({
         target: "es2022",
         outDir: `build/${folder}`,
         emptyOutDir: true,
+        rollupOptions: {
+            // The player, and the play page for the editor's Play in a new tab (src/play.ts)
+            input: { main: "index.html", play: "play.html" },
+        },
     },
     server: {
         port: Number(process.env.PORT) || 5181,
