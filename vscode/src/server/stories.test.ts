@@ -42,6 +42,8 @@ describe("stories", () => {
         const main = await stories.storyFor("file:///w/game/main.squiffy");
         const cellar = await stories.storyFor("file:///w/game/rooms/cellar.squiffy");
         expect(cellar).toBe(main);
+        // From its squiffy.json too, for the preview, map and export buttons there
+        expect(await stories.storyFor("file:///w/game/squiffy.json")).toBe(main);
         expect(main.project).toBe(true);
         const diagnostics = await main.service.getAllDiagnostics();
         expect(diagnostics.filter(d => d.code == "squiffy/unknown-section-link")).toEqual([]);
