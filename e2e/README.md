@@ -44,6 +44,17 @@ npx playwright test --project=editor
 
 The dev server uses the built packages, so run `npm run build` first if you've changed the compiler, runtime or another workspace.
 
+## The player and the docs site
+
+`e2e/player/` and `e2e/site/` check the player (`player/`, on port 5181) and the docs site (`site/`, on port 4329, as the beta site) from their dev servers, for accessibility (#640): axe's automated WCAG checks of each page in light and dark, with the docs' samples running, and what the keyboard and a screen reader get from them, such as where the focus goes and what things are called. Like the editor's `accessibility.spec.ts`, they're instead of trying each change with a screen reader by hand, though they can't catch everything one would.
+
+```bash
+npx playwright test --project=player
+npx playwright test --project=site
+```
+
+Astro won't start a second dev server for the site, so if one's already running, it has to be on port 4329 for these to use it.
+
 ## The docs' screenshots
 
 `screenshots/` isn't tests: it takes the screenshots of the editor and the VS Code extension that the docs show, with `npm run screenshots`. See `.claude/skills/docs-screenshots/SKILL.md`.

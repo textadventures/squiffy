@@ -32,10 +32,11 @@ export const sampleEditorExtensions = [
         ".cm-content": { fontSize: "13px" },
         ".cm-lineNumbers": { fontSize: "13px" },
         // basicSetup's own colours are light-only, so use Starlight's, which follow
-        // the site's light/dark switch
+        // the site's light/dark switch. The line numbers are --sample-muted (Sample.astro), as
+        // gray-3 on gray-6 is just under WCAG AA's 4.5:1 in dark mode (#640).
         ".cm-gutters": {
             backgroundColor: "var(--sl-color-gray-6)",
-            color: "var(--sl-color-gray-3)",
+            color: "var(--sample-muted)",
             borderRight: "1px solid var(--sl-color-hairline)",
         },
         ".cm-activeLine": {
@@ -51,6 +52,9 @@ export const sampleEditorExtensions = [
         ".cm-cursor": { borderLeftColor: "var(--sl-color-white)" },
     }),
 ];
+
+// What a screen reader calls a sample's editor, which is otherwise just "edit text" (#640)
+export const sampleEditorName = (name: string) => EditorView.contentAttributes.of({ "aria-label": name });
 
 // Makes the sample's copy button copy getText(): the text as it is now, with any changes the
 // reader has made
