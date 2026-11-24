@@ -1,7 +1,7 @@
 {
   "name": "squiffy",
   "displayName": "Squiffy",
-  "description": "Write Squiffy interactive stories in VS Code, with a live preview",
+  "description": "Write Squiffy interactive stories in VS Code, with a live preview and a story map",
   "version": "7.0.0-beta.15",
   "private": true,
   "publisher": "textadventures",
@@ -78,6 +78,12 @@
         "icon": "$(arrow-left)"
       },
       {
+        "command": "squiffy.showMap",
+        "title": "Show Story Map",
+        "category": "Squiffy",
+        "icon": "$(type-hierarchy)"
+      },
+      {
         "command": "squiffy.previewFromHere",
         "title": "Start Preview at This Section",
         "category": "Squiffy"
@@ -130,6 +136,11 @@
           "command": "squiffy.addSection",
           "when": "editorLangId == squiffy && !editorReadonly",
           "group": "navigation@1"
+        },
+        {
+          "command": "squiffy.showMap",
+          "when": "editorLangId == squiffy",
+          "group": "navigation@2"
         },
         {
           "command": "squiffy.previewBack",
@@ -185,6 +196,10 @@
           "when": "editorLangId == squiffy"
         },
         {
+          "command": "squiffy.showMap",
+          "when": "editorLangId == squiffy"
+        },
+        {
           "command": "squiffy.previewFromHere",
           "when": "editorLangId == squiffy"
         },
@@ -231,7 +246,7 @@
     }
   },
   "scripts": {
-    "build": "tsc --noEmit && node esbuild.mjs",
+    "build": "tsc --noEmit && svelte-check --tsconfig src/map/tsconfig.json --fail-on-warnings && node esbuild.mjs",
     "watch": "node esbuild.mjs --watch",
     "test": "vitest --run",
     "dev": "vitest",
@@ -239,6 +254,9 @@
     "open-web": "vscode-test-web --extensionDevelopmentPath=. ../examples"
   },
   "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^7.3.1",
+    "@textadventures/graph-map": "^7.0.0-beta.15",
+    "@textadventures/squiffy-app": "^7.0.0-beta.15",
     "@textadventures/squiffy-packager": "^7.0.0-beta.15",
     "@types/node": "^26.6.6",
     "@types/vscode": "~1.91.0",
@@ -248,7 +266,10 @@
     "fflate": "^0.8.3",
     "squiffy-compiler": "^7.0.0-beta.15",
     "squiffy-runtime": "^7.0.0-beta.15",
+    "svelte": "^5.57.3",
+    "svelte-check": "^4.7.8",
     "typescript": "^6.0.3",
+    "vite": "^8.3.8",
     "vitest": "^5.1.0",
     "vscode-languageclient": "^11.0.1",
     "vscode-languageserver": "^11.0.1",

@@ -1,5 +1,5 @@
 // The extension: starts the language server, answers its requests for files, and adds the
-// preview and commands. node.ts and web.ts start the server in a process or a Web Worker.
+// preview, the story map and commands. node.ts and web.ts start the server in a process or a Web Worker.
 
 import * as vscode from "vscode";
 import type { BaseLanguageClient, LanguageClientOptions } from "vscode-languageclient";
@@ -12,6 +12,7 @@ import { findProjectFiles, listFiles, readText } from "./files.js";
 import { exportStory } from "./export.js";
 import { insertHeader, newStory } from "./new-story.js";
 import { Preview } from "./preview.js";
+import { StoryMap } from "./map.js";
 
 export type CreateClient = (options: LanguageClientOptions) => BaseLanguageClient;
 
@@ -28,7 +29,8 @@ export async function activate(context: vscode.ExtensionContext, createClient: C
 
     const log = vscode.window.createOutputChannel("Squiffy Preview");
     const preview = new Preview(client, log);
-    context.subscriptions.push(log, preview);
+    const map = new StoryMap(client, context.extensionUri);
+    context.subscriptions.push(log, preview, map);
 
     const activeSquiffyEditor = () => {
         const editor = vscode.window.activeTextEditor;
@@ -41,6 +43,11 @@ export async function activate(context: vscode.ExtensionContext, createClient: C
     command("squiffy.showPreview", (uri?: unknown) => {
         const target = uri instanceof vscode.Uri ? uri : activeSquiffyEditor()?.document.uri;
         if (target) return preview.show(target);
+    });
+
+    command("squiffy.showMap", (uri?: unknown) => {
+        const target = uri instanceof vscode.Uri ? uri : activeSquiffyEditor()?.document.uri;
+        if (target) return map.show(target);
     });
 
     command("squiffy.previewFromHere", async (...args: unknown[]) => {

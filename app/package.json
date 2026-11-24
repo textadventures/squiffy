@@ -10,6 +10,10 @@
     "directory": "app"
   },
   "type": "module",
+  "exports": {
+    "./story-map": "./src/lib/story-map.ts",
+    "./StoryMapNode.svelte": "./src/components/StoryMapNode.svelte"
+  },
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",

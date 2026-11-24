@@ -2,7 +2,7 @@
 // server, besides LSP's. The server reads files through the client, with VS Code's workspace.fs,
 // so it works the same on the desktop and the web, and with files that aren't on disk.
 
-import type { PreviewStory } from "squiffy-compiler/language-service";
+import type { PreviewStory, StoryGraph } from "squiffy-compiler/language-service";
 
 // Client -> server
 
@@ -33,6 +33,18 @@ export type ExportStoryResult =
 export const SECTION_AT = "squiffy/sectionAt";
 export interface SectionAtParams { uri: string; position: { line: number; character: number } }
 export type SectionAtResult = { section: string; passage?: string } | null;
+
+// The story map's graph for the story a file is part of. Its locations' files are paths from
+// `root`, the story's folder.
+export const STORY_GRAPH = "squiffy/storyGraph";
+export interface StoryGraphParams { uri: string }
+export interface StoryGraphResult {
+    graph: StoryGraph;
+    root: string;
+    // The story's squiffy.json, if it has one, which is where positions chosen on the map are
+    // kept. The client reads them, as the file may have changes that aren't saved.
+    projectFile?: string;
+}
 
 // Makes a file the main file of the story in its folder, when there's no squiffy.json
 export const SET_MAIN_FILE = "squiffy/setMainFile";
