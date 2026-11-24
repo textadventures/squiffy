@@ -44,6 +44,10 @@ npx playwright test --project=editor
 
 The dev server uses the built packages, so run `npm run build` first if you've changed the compiler, runtime or another workspace.
 
+## The docs' screenshots
+
+`screenshots/` isn't tests: it takes the screenshots of the editor and the VS Code extension that the docs show, with `npm run screenshots`. See `.claude/skills/docs-screenshots/SKILL.md`.
+
 ## Test Stories
 
 Test stories are in `e2e/test-stories/`:

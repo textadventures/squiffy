@@ -59,6 +59,8 @@ cd runtime && npm run dev
 
 End-to-end tests use Playwright (`npm run test:e2e`, not run in CI): `e2e/` runs compiled stories in a browser, and `e2e/editor/` runs the editor from its dev server (`npx playwright test --project=editor`), for what needs a real browser, such as the story map and writing on it.
 
+The docs' screenshots of the editor and the VS Code extension (`site/src/assets/screenshots/`, shown with `site/src/components/Screenshot.astro`) are taken by Playwright scripts in `e2e/screenshots/`: `npm run screenshots` (config in `playwright.screenshots.config.ts`, which starts the editor and VS Code for the web). They aren't tests. See `.claude/skills/docs-screenshots/SKILL.md`.
+
 The runtime tests run in the `node` environment, and each test creates a fresh DOM with `global-jsdom` (so use `window.Event` etc. rather than the Node globals).
 
 ## Linting

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://squiffystory.com/schema/squiffy.json",
+  "version": 1,
+  "id": "7c1b0d0e-5d1e-4f4e-9a57-cave00000001",
+  "main": "story.squiffy",
+  "map": {
+    "sections": {
+      "(Start)": [0, 0],
+      "home": [110, 80],
+      "entrance": [-90, 90],
+      "left tunnel": [-160, 210],
+      "right tunnel": [20, 210],
+      "ledge": [-230, 330],
+      "lake": [-60, 330],
+      "treasure room": [120, 330],
+      "drowned": [20, 440],
+      "old notes": [330, 0]
+    },
+    "passages": {
+      "entrance": { "look around": [-150, 150] }
+    }
+  }
+}
