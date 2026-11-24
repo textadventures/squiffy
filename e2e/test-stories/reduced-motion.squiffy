@@ -1,0 +1,14 @@
+@start intro
+
+[[intro]]:
+@transition slide-up 2s
+{{#animate "typewriter" interval=200}}Typed out slowly.{{/animate}}
+
+{{#animate "toast" interval=300}}Word by word.{{/animate}}
+
+Some {{#style "sway"}}swaying{{/style}} text.
+
+[[Next]](next)
+
+[[next]]:
+The end.

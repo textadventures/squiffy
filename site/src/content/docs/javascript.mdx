@@ -184,6 +184,8 @@ The function you give it is called with:
 - `onComplete`: a function to call when the animation has finished
 - `loop`: `true` if the `{{#animate}}` has `loop=true`
 
+`params.reducedMotion` is `true` if the player has asked their system to [reduce motion](/dynamic-text/#reduced-motion). The built-in animations show their text with a quick fade then, rather than moving it, and yours can do the same.
+
 This animation makes each letter spin and drop into place:
 
 <Sample sandboxed script={spin} height="26rem"></Sample>

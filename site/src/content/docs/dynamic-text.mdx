@@ -118,7 +118,7 @@ Squiffy includes [Anime.js](https://animejs.com/), and you can define your own a
 | `double-underline`, `wavy-underline` | Underlined twice, or with a wavy line |
 | `double-strike`, `wavy-strike` | Struck through twice, or with a wavy line |
 
-You can give text more than one effect, and they all apply: `{{#style "rumble fade-in-out"}}` rumbles as it fades. You can add your own classes too: see [Styling some text](/styling/#styling-some-text). Effects that move stay still for readers who've asked their system to reduce motion.
+You can give text more than one effect, and they all apply: `{{#style "rumble fade-in-out"}}` rumbles as it fades. You can add your own classes too: see [Styling some text](/styling/#styling-some-text). Effects that move stay still for readers who've asked their system to [reduce motion](#reduced-motion).
 
 ### Animation options
 
@@ -278,6 +278,20 @@ Here, each section's text slides off to the left, and the next one slides in fro
 The player can't click anything until the old text has gone, so keep it short. As with `@transition`, a passage uses its section's `@leave` unless it has its own, `@leave` in the master section is for every section and passage that clears the screen, and `@leave none` turns it off. When the player goes back, the old text comes back as it was.
 
 To change how a transition looks, or add your own, see [Transitions](/styling/#transitions) in Customising styles.
+
+## Reduced motion
+
+Some players ask their system to reduce motion, because movement on the screen makes them feel ill or is hard to read past. Squiffy follows that setting, so your story is still comfortable for them, without you doing anything:
+
+- `typewriter` and `toast` animations fade the whole text in quickly, instead of a letter or word at a time. They still wait for their `start` time, and the text after them still waits for them.
+- `fadeIn` stays as it is, as it doesn't move.
+- Every `@transition` and `@leave`, including your own, is a plain fade, taking the same time.
+- `{{#style}}` effects that move or keep repeating, such as `sway`, `shudder` and `blink`, stay still, and so do the `continue` animation's styles. It's still a link to click.
+- An animation with `loop=true` shows its text without playing.
+
+Everything else, such as [moving on after a delay](#moving-on-after-a-delay), happens as usual. The editor's preview follows the setting too, so you can turn it on in your system to see what these players see. On a Mac, it's in System Settings, Accessibility, Display; on Windows, Settings, Accessibility, Visual effects, Animation effects.
+
+A [custom animation](/javascript/#custom-animations) can do the same: `params.reducedMotion` is `true` when the player has asked for less motion.
 
 ## Moving on after a delay
 

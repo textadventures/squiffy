@@ -60,7 +60,7 @@ Animations queue and play in order. `continue` shows its text as a link that pau
 
 Times can be text in seconds (`start="1.5s"`) or expressions (`start=delay * 1000`).
 
-To link to the next section from inside `{{#animate}}`, use `[[Begin>]]` and a `---` divider rather than `+++`, which would split the block. Don't overuse animations. Authors can add their own with `squiffy.registerAnimation` (javascript.md).
+To link to the next section from inside `{{#animate}}`, use `[[Begin>]]` and a `---` divider rather than `+++`, which would split the block. Don't overuse animations. Authors can add their own with `squiffy.registerAnimation` (javascript.md). If the player's system asks to reduce motion, `typewriter` and `toast` fade the whole text in quickly (same `start`, and what follows still waits), `fadeIn` is unchanged, and `loop=true` shows the text without playing; moving or repeating `{{#style}}` effects and `continue`'s styles stay still.
 
 ## Transitions
 
