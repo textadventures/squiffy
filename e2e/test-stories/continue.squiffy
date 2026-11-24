@@ -1,0 +1,9 @@
+[[start]]:
+Before the pause.
+
+{{#animate "continue"}}Go on{{/animate}}
+
+{{#animate "fadeIn" duration=200}}After the pause. [[next]]{{/animate}}
+
+[[next]]:
+Done.

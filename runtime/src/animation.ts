@@ -132,7 +132,7 @@ export class Animation {
         }, { initiallyHidden: true });
 
         this.registerAnimation("continue", function(el, params, onComplete) {
-            // Make it look and behave like a link
+            // Make it look like a link
             el.classList.add("squiffy-continue");
 
             const style = params.style || "pulse";
@@ -140,7 +140,7 @@ export class Animation {
             let chars: HTMLElement[] | null = null;
 
             if (params.reducedMotion) {
-                // Still a link, but without the movement. The stylesheet stops the CSS styles'.
+                // Still looks like a link, but without the movement. The stylesheet stops the CSS styles'.
                 if (style === "wave") el.classList.add("squiffy-continue-wave");
             } else if (style === "wave") {
                 // Wave style needs JS animation - split into chars and animate opacity. Words too,
@@ -161,9 +161,30 @@ export class Animation {
                 el.classList.add(`squiffy-continue-${style}`);
             }
 
+            // A button, as it doesn't go anywhere: it shows the rest of the text. It can be
+            // reached with Tab, and pressed with Enter or Space, as well as clicked.
+            el.setAttribute("role", "button");
+            el.setAttribute("tabindex", "0");
+            const handleKey = (event: KeyboardEvent) => {
+                if (event.key !== "Enter" && event.key !== " ") return;
+                // Space would scroll the page
+                event.preventDefault();
+                handleClick();
+            };
+
             const handleClick = () => {
                 el.classList.remove("squiffy-continue", "squiffy-continue-wave", `squiffy-continue-${style}`);
                 el.removeEventListener("click", handleClick);
+                el.removeEventListener("keydown", handleKey);
+                // It's only text now. If it has the focus it keeps it, out of the Tab order, so a
+                // screen reader goes on to the text it shows, and so does Tab.
+                el.removeAttribute("role");
+                if (el.ownerDocument.activeElement === el) {
+                    el.setAttribute("tabindex", "-1");
+                    el.addEventListener("blur", () => el.removeAttribute("tabindex"), { once: true });
+                } else {
+                    el.removeAttribute("tabindex");
+                }
 
                 if (waveAnimation) {
                     waveAnimation.pause();
@@ -179,6 +200,7 @@ export class Animation {
             };
 
             el.addEventListener("click", handleClick);
+            el.addEventListener("keydown", handleKey);
         });
     }
 }
