@@ -12,6 +12,7 @@ import { LinkHandler } from "./linkHandler.js";
 import { Animation } from "./animation.js";
 import { imports } from "./import.js";
 import { areInputsValid, setupInputValidation } from "./inputValidation.js";
+import { focusNewText, isLinkActive, setLinkActive, syncLinkStates } from "./linkStates.js";
 import { createAssetHtmlResolver, isAbsolute } from "./assets.js";
 import { Sound, DEFAULT_FADE } from "./sound.js";
 import { EveryTimers } from "./every.js";
@@ -111,6 +112,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             if (passage) {
                 currentBlockOutputElement = null;
                 await showPassage(passage, clicked);
+                focusNewText(currentPassageElement ?? currentSectionElement, outputElementContainer);
             }
 
             emitter.emit("linkClick", { linkType: "passage" });
@@ -121,6 +123,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             await processLink(link);
             if (section) {
                 await go(section);
+                focusNewText(currentPassageElement ?? currentSectionElement, outputElementContainer);
             }
 
             emitter.emit("linkClick", { linkType: "section" });
@@ -166,7 +169,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             return;
         }
         link.classList.add("disabled");
-        link.setAttribute("tabindex", "-1");
+        setLinkActive(link, false);
     }
 
     function enableLink(link: Element) {
@@ -176,7 +179,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             return;
         }
         link.classList.remove("disabled");
-        link.removeAttribute("tabindex");
+        setLinkActive(link, isLinkActive(link, currentSectionElement));
     }
 
     // Numbers a passage link that was clicked, so that going back can enable just that link, and
@@ -275,7 +278,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             gotoTimer = setTimeout(() => {
                 gotoTimer = undefined;
                 gotoHops = 0;
-                void go(pending.section);
+                void go(pending.section).then(() => focusNewText(currentSectionElement, outputElementContainer));
             }, pending.after);
             return;
         }
@@ -790,6 +793,8 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         currentBlockOutputElement = outputElement.querySelector(".squiffy-output-block:last-child");
 
         currentSection = story.sections[get("_section")];
+        // A game saved by an earlier version has none of the links marked
+        syncLinkStates(outputElement, currentSectionElement);
     }
 
     // The game as it is now. The attributes include the text on screen (_output), and the undo
@@ -934,6 +939,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             currentSectionElement.setAttribute("data-clear", "true");
         }
         outputElement.appendChild(currentSectionElement);
+        syncLinkStates(outputElement, currentSectionElement);
     }
 
     function getClearStack() {
@@ -1267,6 +1273,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
 
         setCurrentSectionElement();
         setCurrentPassageElement();
+        syncLinkStates(outputElement, currentSectionElement);
         // The {{#every}}s shown again start again
         everyTimers.sync();
         emitter.emit("storyUpdated", {});
@@ -1350,6 +1357,8 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         do {
             undoLast();
         } while ((currentPassageElement ?? currentSectionElement).hasAttribute("data-goto") && getHistoryCount() > 1);
+        // The links in the section gone back to can be clicked again
+        syncLinkStates(outputElement, currentSectionElement);
         // The music goes back to what it was, as _music was undone
         sound.sync();
         syncClasses();
