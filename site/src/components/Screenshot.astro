@@ -22,10 +22,11 @@ if (!light) throw new Error(`There's no screenshot called ${name} in src/assets/
 
 // The screenshots are taken at twice the size they're shown, for screens with more pixels
 const widths = [800, 1600, light.width].filter((w, i, all) => w <= light.width && all.indexOf(w) === i);
-// As wide as the content column, which is wider on the home page
-const sizes = "(min-width: 72rem) 68rem, 100vw";
+// As wide as the content column, which is wider on the home page, or the screenshot's own size
+// for a small one, such as a dialog
+const sizes = `(min-width: 72rem) ${Math.min(1088, light.width / 2)}px, 100vw`;
 ---
-<figure class="screenshot not-content">
+<figure class="screenshot not-content" style={`--natural-width: ${light.width / 2}px`}>
     <a href={light.src} class:list={{ "dark:sl-hidden": Boolean(dark) }} aria-label={`${alt} (full size)`}>
         <Image src={light} alt={alt} widths={widths} sizes={sizes} />
     </a>
@@ -44,6 +45,8 @@ const sizes = "(min-width: 72rem) 68rem, 100vw";
     .screenshot img {
         display: block;
         width: 100%;
+        max-width: var(--natural-width);
+        margin-inline: auto;
         height: auto;
         border: 1px solid var(--sl-color-hairline);
         border-radius: 0.5rem;

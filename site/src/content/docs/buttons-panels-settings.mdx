@@ -4,6 +4,7 @@ description: The Back and Save buttons, saved games, panels, player settings, an
 ---
 
 import Sample from "@components/Sample.astro";
+import Screenshot from "@components/Screenshot.astro";
 import panels from "../../samples/panels/panels.squiffy?raw";
 import panelsJson from "../../samples/panels/panels.json?raw";
 import settings from "../../samples/panels/settings.squiffy?raw";
@@ -11,6 +12,8 @@ import settingsJson from "../../samples/panels/settings.json?raw";
 import settingsCss from "../../samples/panels/settings.css?raw";
 
 A published story has buttons above it for going back, saving, restarting and switching between light and dark. You can change what's there, add [panels](#panels) that are always to hand, give the player [settings](#player-settings) to choose, and put the page's text into another language. All of these are set in the story's project file, `squiffy.json`: see [The project file](/project-file/) for what it is and how to add one.
+
+<Screenshot name="player" alt="The game show from the Examples, as players see it: the story, a scoreboard panel beside it, and buttons above it for the prizes, help, going back, saving, restarting, settings and sound" caption="The game show from the Examples has a scoreboard panel beside the story, and buttons for its prizes, help and settings." />
 
 ## The Back button
 
@@ -69,6 +72,8 @@ Settings are options the player can change at any time, such as the size of the 
 <Sample script={settings} files={{ "squiffy.json": settingsJson }}></Sample>
 
 The published story then has a Settings button in the header, which opens a dialog where the player changes them. In the sample, it's the cog at the top: turn off content warnings, or turn up the text speed, and then set sail. You can also put a link to the dialog in your story with [`{{settings}}`](/basic-concepts/#restarting-and-saving-from-the-story), for example on the first screen.
+
+<Screenshot name="player-settings" alt="The game show's Settings dialog, with a switch for timed rounds and a list to choose the studio lights" />
 
 Each setting has a `name`, which your story uses to read it, and a `label`, which the dialog shows, with an optional `description` under it. Its `type` is one of:
 

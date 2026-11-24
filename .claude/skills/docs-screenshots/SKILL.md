@@ -12,9 +12,15 @@ scripts, not by hand, so when the UI changes they can be taken again with one co
 ```bash
 npm run build                     # the editor and the extension use the packages' builds
 npm run build --workspace vscode  # the extension, for the VS Code shots
-npm run screenshots               # all of them
+npm run screenshots               # all of them, in about a minute
 npm run screenshots -- editor     # the files matching "editor"
 ```
+
+**In a git worktree**, `npm run build` (and `./dev.sh`, which uses lerna too) builds the main
+checkout's packages, not the worktree's, so the screenshots show whatever the worktree last built
+by hand. Build each package in the worktree instead: `for p in compiler runtime packager player
+codemirror-lang editor-search graph-map project-fs vscode; do (cd $p && npm run build); done`.
+Check with `ls -la runtime/dist` that the dates are today's.
 
 `playwright.screenshots.config.ts` starts the editor's dev server on port 5188, and VS Code for
 the web (`@vscode/test-web`, stable quality) on port 3123 with the extension from `vscode/` and
@@ -24,13 +30,19 @@ first time. Both servers are reused if they're already running.
 ## How it fits together
 
 - `e2e/screenshots/lib.ts` has the helpers. Use them rather than finding the editor's DOM again:
-  - `test` is Playwright's, with `Math.random` seeded in every frame (the preview's too), so
-    `{{random}}`, `shuffle` and so on come out the same each time.
+  - `test` is Playwright's, with `Math.random` seeded in every frame of every page in the
+    context (the preview's, and a tab from **Play in a new tab**), so `{{random}}`, `shuffle`
+    and so on come out the same each time. `choose()` seeds it again before each click, and
+    `reseed(page)` does for anything else that moves the story on, such as pressing Enter in a
+    text box, as how many numbers get used before a click can depend on timing. It also blocks requests to
+    textadventures.co.uk, so the home page has no "Made with Squiffy" games, which change.
   - `openStory(page, folder)` opens a story folder in the editor, by zipping it and giving it to
     the home page's **Open file**, as a project `.zip`. Sounds and images come too.
   - `setView`, `run` (returns the preview's frame), `choose` (clicks a link in the preview, and
     clicks again if the preview wasn't ready for it), `goToLine` (scrolls the script to a line),
-    `resizePane` (drags the preview's or map's splitter).
+    `resizePane` (drags the preview's or map's splitter), `menu(page, "File", "Publish…")`.
+  - `dialog(page)` is the open dialog's panel, and puts a plain background behind it in place of
+    the dimmed editor. `around(locator, padding)` is a rectangle around an element, for `clip`.
   - `capture(page, name, options)` saves `site/src/assets/screenshots/<name>.png` and
     `<name>-dark.png`. It switches the theme by emulating the system's light or dark mode, which
     the editor follows; pass `setTheme` for a page that doesn't (VS Code). `clip` takes an element
@@ -38,7 +50,9 @@ first time. Both servers are reused if they're already running.
   - `settle(page)` waits until nothing on the map or in the preview has moved or faded for a
     moment. The runtime's `{{#animate}}` and transitions take no notice of reduced motion, so a
     story with a typewriter intro takes a few seconds.
-- One `*.capture.ts` file per area: `editor.capture.ts` (the editor and the story map) and
+- One `*.capture.ts` file per area: `editor.capture.ts` (the editor and the story map),
+  `editor-tools.capture.ts` (the home page, problems, Start at menu and dialogs),
+  `player.capture.ts` (the published game show, from **Play in a new tab**) and
   `vscode.capture.ts`. They aren't tests, aren't run by `npm run test:e2e`, and aren't run in CI.
 - `e2e/screenshots/stories/` has stories made for a screenshot, such as `cave/`, which has a
   missing link, a dead end and an unreachable section for the map to show. Its `squiffy.json` has
@@ -46,10 +60,27 @@ first time. Both servers are reused if they're already running.
   real story suits.
 - `site/src/components/Screenshot.astro` shows one in a page: `<Screenshot name="editor"
   alt="..." caption="..." />`, with the dark version when the site is dark, and a link to it full
-  size. Astro makes webp versions at the sizes the page needs.
+  size. A small one, such as a dialog, is shown at its own size rather than stretched to the
+  column. Astro makes webp versions at the sizes the page needs.
 
 The window is 1440×810 at twice the pixels (`deviceScaleFactor: 2`), so text stays sharp when the
 page scales a screenshot down to the content column.
+
+Things that would make a picture different each run, and what the captures do about them:
+
+- Dates: `page.clock.setFixedTime(...)`, as the home page shot does for "Last opened". Only
+  where it's needed, as it stops time for the story's animations too.
+- Random text: the seeded `Math.random`, and `reseed` before clicks.
+- Animations: `settle`, and reduced motion, which the config turns on and the runtime follows,
+  so typewriter and toast fade in at once and looping animations stay still. Something that
+  keeps changing anyway makes `settle` give up after about 18 seconds, so a slow capture is a
+  sign of one.
+- The mouse: something it was left over can show a hover state. VS Code's splitters show dots,
+  so `vscode.capture.ts` hides them.
+- VS Code's language server: wait for what it provides (the Outline's sections) before the
+  shot, or the Outline says it has nothing to show.
+- Something that looks the same in both themes, such as the game show, whose studio is always
+  dark: pass `themes: false`, so there's no `-dark` copy.
 
 ## Adding a screenshot
 
@@ -63,6 +94,12 @@ page scales a screenshot down to the content column.
 5. Add `<Screenshot>` to the page, with alt text that says what the picture shows.
 6. Commit the PNGs with the change. Retaking them gives different bytes even when nothing has
    changed, so only commit the ones that matter to the change.
+
+To check a capture is repeatable, run it twice and compare the PNGs with `cmp`: a picture that
+comes out different each time would make every retake look like a change.
+
+The first run after the editor's dev server starts can time out while Vite prepares its
+dependencies. Run it again.
 
 ## When the UI changes
 

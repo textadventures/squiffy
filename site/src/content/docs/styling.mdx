@@ -5,6 +5,7 @@ description: How to change the colours, fonts and layout of your story, and how 
 
 import {Aside} from "@astrojs/starlight/components";
 import Sample from "@components/Sample.astro";
+import Screenshot from "@components/Screenshot.astro";
 import story from "../../samples/styling/story.squiffy?raw";
 import cellar from "../../samples/styling/cellar.squiffy?raw";
 import warning from "../../samples/styling/warning.squiffy?raw";
@@ -73,6 +74,8 @@ Sizes are in `rem`, so they scale with the text size the reader has chosen in th
 Squiffy's own font is Charter, which Macs, iPhones and iPads have, or Georgia everywhere else. To use another font, add it to your story, so readers who don't have it still see it.
 
 In the editor, the **Fonts** button in the toolbar (the **T**) lists the fonts in your story and lets you choose the one for the story's text. To add a font, choose one of the suggestions, or search over 2,000 fonts from [Fontsource](https://fontsource.org), which has every Google font and other open source fonts. Choose which alphabets you need (Latin and Latin Extended, enough for English and most European languages, to start with), and **Add to story**.
+
+<Screenshot name="fonts" alt="The Fonts dialog, with the story's font, a box to search for fonts, and some suggested fonts for stories, each shown in its own typeface" />
 
 The editor downloads the font into your story's `fonts` folder: `fonts/literata/`, for example, with the font's files, its licence (`LICENSE.txt`, which has to stay with the font), and a stylesheet, `literata.css`. From then on the font is an ordinary part of your story. The preview and publishing work offline, and the published story loads the font from its own files, not from Google. Adding a font is the only part that needs the internet.
 

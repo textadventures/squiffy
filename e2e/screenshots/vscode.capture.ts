@@ -38,8 +38,12 @@ test("the game show, with the preview beside it", async ({ page }) => {
     await expect(page.locator(".monaco-editor .view-lines")).toContainText("@title");
     // The Outline lists the story's sections
     await page.getByRole("button", { name: "Outline Section" }).click();
+    // Once the language server has started, which can take a while
+    await expect(page.getByRole("treeitem", { name: /scoreboard/ })).toBeVisible({ timeout: 60_000 });
     await command(page, "Squiffy: Show Preview");
     const preview = page.frameLocator("iframe.webview").frameLocator("iframe");
     await expect(preview.getByRole("link", { name: "Take your seat" })).toBeVisible({ timeout: 30_000 });
+    // The splitters between the views show dots for a moment when the mouse goes over one
+    await page.addStyleTag({ content: ".monaco-sash { visibility: hidden !important; }" });
     await capture(page, "vscode", { setTheme: setTheme(page), clip: await belowTitleBar(page) });
 });

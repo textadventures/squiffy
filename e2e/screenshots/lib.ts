@@ -11,18 +11,25 @@ const here = dirname(fileURLToPath(import.meta.url));
 export const repoRoot = resolve(here, "../..");
 export const outDir = join(repoRoot, "site/src/assets/screenshots");
 
-// Playwright's test, with Math.random seeded in every frame (the preview's too), so a story that
-// picks things at random picks the same ones each time
+type Rect = { x: number; y: number; width: number; height: number };
+
+// Playwright's test, with Math.random seeded in every frame of every page (the preview's, and a
+// tab from Play in a new tab), so a story that picks things at random picks the same ones each
+// time. How many numbers have been used by the time the player clicks something can depend on
+// timing, so choose() and reseed() seed it again just before each click.
 export const test = base.extend({
-    page: async ({ page }, use) => {
-        await page.addInitScript(() => {
+    context: async ({ context }, use) => {
+        await context.addInitScript(() => {
             let seed = 12345;
             Math.random = () => {
                 seed = (seed * 1664525 + 1013904223) % 4294967296;
                 return seed / 4294967296;
             };
+            (window as unknown as { reseedRandom: () => void }).reseedRandom = () => { seed = 12345; };
         });
-        await use(page);
+        // The home page's "Made with Squiffy" comes from textadventures.co.uk, and changes
+        await context.route("https://textadventures.co.uk/**", route => route.abort());
+        await use(context);
     },
 });
 export { expect };
@@ -75,11 +82,17 @@ export async function run(page: Page): Promise<FrameLocator> {
     return frame;
 }
 
+// Seeds Math.random again, in a page or the preview's frame, before something that may use it
+export async function reseed(target: Page | FrameLocator) {
+    await target.locator("body").evaluate(() => (window as unknown as { reseedRandom?: () => void }).reseedRandom?.());
+}
+
 // Clicks a link in the preview, by its text, and waits for it to take effect
 export async function choose(frame: FrameLocator, text: string) {
     const link = frame.getByRole("link", { name: text, exact: true }).last();
     const blocks = frame.locator(".squiffy-output-block");
     const before = await blocks.count();
+    await reseed(frame);
     // The preview may still be starting up, or running the last click's transition, and take no
     // notice of a click. So click until something's written.
     await expect(async () => {
@@ -101,6 +114,25 @@ export async function resizePane(page: Page, pane: "preview" | "map", dx: number
     await page.mouse.up();
 }
 
+// Chooses an item from one of the toolbar's menus, such as File
+export async function menu(page: Page, button: string, item: string) {
+    await page.getByRole("button", { name: button, exact: true }).click();
+    await page.getByRole("menuitem", { name: item }).click();
+}
+
+// The open dialog's panel. Pass it to around() for capture's clip: the page behind it is hidden,
+// so it's on a plain background rather than dimmed script.
+export function dialog(page: Page) {
+    void page.addStyleTag({ content: "[role=dialog][aria-modal] { background: Canvas !important; }" });
+    return page.locator("[role=dialog] > .card");
+}
+
+// A rectangle around an element, with some space around it, for capture's clip
+export async function around(locator: Locator, padding = 16): Promise<Rect> {
+    const box = (await locator.boundingBox())!;
+    return { x: box.x - padding, y: box.y - padding, width: box.width + padding * 2, height: box.height + padding * 2 };
+}
+
 // Puts the cursor at the start of the first line with this text, scrolled to the top of the
 // editor, so the script shows that part of the story
 export async function goToLine(page: Page, text: string) {
@@ -111,7 +143,8 @@ export async function goToLine(page: Page, text: string) {
 
 // Lets animations, transitions and the map's layout finish, so each run's pictures are the same
 export async function settle(page: Page) {
-    await page.waitForLoadState("networkidle");
+    // Images and fonts loading. VS Code for the web never goes quiet, so it's only a few seconds.
+    await page.waitForLoadState("networkidle", { timeout: 5000 }).catch(() => {});
     await page.evaluate(() => document.fonts.ready);
     // The map is laid out by a simulation, which runs for a while after any change, and the
     // story's animations and transitions run in the preview, taking no notice of reduced motion.
@@ -133,11 +166,9 @@ export async function settle(page: Page) {
         last = now;
         await page.waitForTimeout(300);
     }
-    // The cursor blinks
-    await page.addStyleTag({ content: ".cm-cursorLayer { animation: none !important; }" }).catch(() => {});
+    // The cursor blinks: CodeMirror's with a CSS animation, VS Code's by script, so that one's hidden
+    await page.addStyleTag({ content: ".cm-cursorLayer { animation: none !important; } .monaco-editor .cursors-layer { visibility: hidden !important; }" }).catch(() => {});
 }
-
-type Rect = { x: number; y: number; width: number; height: number };
 
 interface CaptureOptions {
     // Only this part of the page: an element, or a rectangle in CSS pixels
