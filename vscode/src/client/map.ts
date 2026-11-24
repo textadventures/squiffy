@@ -8,11 +8,12 @@
 import * as vscode from "vscode";
 import type { BaseLanguageClient } from "vscode-languageclient";
 import { parseProjectFile, updateProjectFile, type MapPositions } from "squiffy-compiler";
-import type { Location, StoryGraph } from "squiffy-compiler/language-service";
+import type { GraphNode, Location, StoryGraph, TextEdit } from "squiffy-compiler/language-service";
+import { checkPassageName, deleteLinesEdits, deletionMessage, planDeletion, startEdit } from "@textadventures/squiffy-app/map-edits";
 import { movedNodes, nodeAtLine, renamePositions } from "@textadventures/squiffy-app/story-map";
-import { STORY_GRAPH, type StoryGraphParams, type StoryGraphResult } from "../protocol.js";
+import { STORY_GRAPH, type PreviewFromHereArgs, type StoryGraphParams, type StoryGraphResult } from "../protocol.js";
 import type { FromMap, ToMap } from "../map/messages.js";
-import { linkEdit, movedPositions, type Cursor } from "./map-edits.js";
+import { addPassageEdits, linkEdit, movedPositions, sectionFor, type Cursor } from "./map-edits.js";
 
 // How long to wait after typing before drawing the map again
 const UPDATE_DELAY = 300;
@@ -24,6 +25,7 @@ export class StoryMap implements vscode.Disposable {
     // The story's folder, as a URI ending "/"
     private root: string | undefined;
     private projectFile: vscode.Uri | undefined;
+    private mainFile: string | undefined;
     private graph: StoryGraph | undefined;
     private positions: MapPositions | undefined;
     // Positions for stories without a squiffy.json, by their folder, while VS Code's open
@@ -120,6 +122,21 @@ export class StoryMap implements vscode.Disposable {
             case "move":
                 this.move(message.moves);
                 break;
+            case "rename":
+                void this.act([message.id], "rename", ([node]) => this.rename(node));
+                break;
+            case "addPassage":
+                void this.act([message.id], "add the passage", ([node]) => this.addPassage(node));
+                break;
+            case "run":
+                void this.act([message.id], "run the preview", ([node]) => this.run(node));
+                break;
+            case "start":
+                void this.act([message.id], "change where the story starts", ([node]) => this.startAt(node));
+                break;
+            case "delete":
+                void this.act(message.ids, "delete", nodes => this.delete(nodes));
+                break;
         }
     }
 
@@ -140,6 +157,7 @@ export class StoryMap implements vscode.Disposable {
         const before = result.root == this.root ? this.graph : undefined;
         this.root = result.root;
         this.projectFile = result.projectFile ? vscode.Uri.parse(result.projectFile) : undefined;
+        this.mainFile = result.mainFile;
         if (this.editor && !this.editor.document.uri.toString().startsWith(this.root)) this.editor = undefined;
         let positions = await this.readPositions();
         // Renamed sections and passages keep their places
@@ -201,6 +219,99 @@ export class StoryMap implements vscode.Disposable {
         const edit = new vscode.WorkspaceEdit();
         edit.insert(this.uriOf(result.file), new vscode.Position(start.line, start.character), result.edit.newText);
         if (!(await vscode.workspace.applyEdit(edit))) void vscode.window.showWarningMessage("Couldn't add the link.");
+    }
+
+    // Something from the map's menu, for the nodes it's for, once the graph's up to date
+    private async act(ids: string[], what: string, run: (nodes: GraphNode[]) => Promise<void>) {
+        await this.queue;
+        const graph = this.graph;
+        if (!graph || !this.root) return;
+        const nodes = ids.flatMap(id => graph.nodes.find(n => n.id == id) ?? []);
+        if (nodes.length < ids.length) {
+            void vscode.window.showInformationMessage("The story has changed. Try again.");
+            return;
+        }
+        try {
+            await run(nodes);
+        } catch (e) {
+            void vscode.window.showWarningMessage(`Couldn't ${what}: ${e instanceof Error ? e.message : e}`);
+        }
+    }
+
+    // As F2 in the script does, with the language server's rename
+    private async rename(node: GraphNode) {
+        if (node.detail) return;
+        const name = await vscode.window.showInputBox({
+            title: `Rename the ${node.kind} "${node.name}"`,
+            prompt: "Links to it are changed too.",
+            value: node.name,
+            validateInput: value => value.trim() ? undefined : "A name can't be empty.",
+        });
+        if (name === undefined || name.trim() == node.name) return;
+        const { start } = node.location.range;
+        const edit = await vscode.commands.executeCommand<vscode.WorkspaceEdit | undefined>("vscode.executeDocumentRenameProvider",
+            this.uriOf(node.location.file), new vscode.Position(start.line, start.character), name.trim());
+        if (edit) await vscode.workspace.applyEdit(edit);
+    }
+
+    // A passage at the end of the section, with a link to it from the box the menu was for
+    private async addPassage(node: GraphNode) {
+        const graph = this.graph!;
+        const section = sectionFor(graph, node);
+        if (!section) return;
+        const name = await vscode.window.showInputBox({
+            title: `Add a passage to the section "${section.name}"`,
+            prompt: node.kind == "passage" ? `With a link to it from the passage "${node.name}".` : "With a link to it from the section.",
+            validateInput: value => checkPassageName(value, section.name, graph),
+        });
+        if (name === undefined) return;
+        const uri = this.uriOf(section.location.file);
+        const text = (await vscode.workspace.openTextDocument(uri)).getText();
+        const result = addPassageEdits(graph, node, name, text, this.cursor());
+        if (!result) return;
+        await this.applyEdits(new Map([[result.file, result.edits]]));
+    }
+
+    private async run(node: GraphNode) {
+        const startAt = node.kind == "section" ? { section: node.name } : { section: node.section!, passage: node.name };
+        const args: PreviewFromHereArgs = [this.uriOf(node.location.file).toString(), startAt];
+        await vscode.commands.executeCommand("squiffy.previewFromHere", ...args);
+    }
+
+    // With @start in the main file
+    private async startAt(node: GraphNode) {
+        if (node.kind != "section" || node.start || node.detail || !node.name || !this.mainFile) return;
+        const text = (await vscode.workspace.openTextDocument(this.uriOf(this.mainFile))).getText();
+        await this.applyEdits(new Map([[this.mainFile, [startEdit(text, node.name)]]]));
+    }
+
+    // After asking, as the editor's map does
+    private async delete(nodes: GraphNode[]) {
+        const graph = this.graph!;
+        // The text of every file with links in it, to find the links on lines of their own
+        const texts = new Map<string, string>();
+        for (const file of new Set(graph.edges.map(e => e.location.file))) {
+            texts.set(file, (await vscode.workspace.openTextDocument(this.uriOf(file))).getText());
+        }
+        const plan = planDeletion(graph, nodes, texts);
+        if (!plan) return;
+        const answer = await vscode.window.showWarningMessage(deletionMessage(plan), { modal: true }, "Delete");
+        if (answer != "Delete" || this.graph != graph) return;
+        const edits = new Map<string, TextEdit[]>();
+        for (const [file, ranges] of plan.ranges) {
+            edits.set(file, deleteLinesEdits((await vscode.workspace.openTextDocument(this.uriOf(file))).getText(), ranges));
+        }
+        await this.applyEdits(edits);
+    }
+
+    // Edits to the story's files (by their paths), as one change, so one Undo takes it all out
+    private async applyEdits(edits: Map<string, TextEdit[]>) {
+        const edit = new vscode.WorkspaceEdit();
+        for (const [file, list] of edits) {
+            edit.set(this.uriOf(file), list.map(e => new vscode.TextEdit(
+                new vscode.Range(e.range.start.line, e.range.start.character, e.range.end.line, e.range.end.character), e.newText)));
+        }
+        if (!(await vscode.workspace.applyEdit(edit))) throw new Error("VS Code didn't make the change.");
     }
 
     private move(moves: { id: string; at: { x: number; y: number } }[]) {
