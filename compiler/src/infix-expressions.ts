@@ -31,6 +31,10 @@
 // it's empty, or has a comma in it, or starts with a literal value; otherwise it's a Handlebars
 // name that isn't a plain word, such as [my attribute], as before. A list of one attribute is
 // written (array name).
+//
+// The runtime bundles this file, so it runs in published stories, in readers' browsers. The
+// compiler's tsconfig allows ES2022's APIs, but this file keeps to ES2020's (no Object.hasOwn,
+// Array.prototype.at and so on), as the runtime does.
 
 // "index" is a "[" straight after a value, and "[" one that starts a list
 type TokenType = "op" | "(" | ")" | "value" | "ident" | "index" | "[" | "]" | "{" | "}" | ":" | ",";
