@@ -30,8 +30,10 @@ const names = files.map(file => {
         </ul>
     </nav>
     <div class="files">
+        {/* Each file scrolls, so it can have the focus, for the keyboard to scroll it (#640). Expressive
+            Code only lets its code block have the focus when it's too wide, so it's the section. */}
         {files.map((file, index) => (
-            <section data-index={index} class:list={{ current: index == 0 }} aria-label={file.path}>
+            <section data-index={index} class:list={{ current: index == 0 }} aria-label={file.path} tabindex="0">
                 <Code code={file.code} lang={file.lang} title={file.path} wrap />
             </section>
         ))}
@@ -93,9 +95,20 @@ const names = files.map(file => {
     example-files:defined section:not(.current) {
         display: none;
     }
-    .files :global(pre) {
+    .files section {
         max-height: min(36rem, 75vh);
         overflow-y: auto;
+        border-radius: 0.25rem;
+    }
+    .files section:focus-visible {
+        outline: 2px solid var(--sl-color-accent);
+        outline-offset: 2px;
+    }
+    /* The file's name stays at the top as it scrolls */
+    .files :global(.frame .header) {
+        position: sticky;
+        top: 0;
+        z-index: 1;
     }
 </style>
 

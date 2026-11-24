@@ -15,7 +15,9 @@ What is your name?
 Welcome, {{player_name}}!
 ```
 
-`<select data-attribute="...">` and `<textarea data-attribute="...">` work too. `data-attribute` can be a value inside an object: `data-attribute="hero.name"`.
+`<select data-attribute="...">` and `<textarea data-attribute="...">` work too.
+
+Give every box a label for screen readers: wrap it with the text before it, `<label>Name: <input ...></label>`, or give it an `aria-label="Your name"`. A `placeholder` alone disappears once the player types. `data-attribute` can be a value inside an object: `data-attribute="hero.name"`.
 
 The runtime gives text boxes `autocomplete="off"` and the attributes that tell password managers (1Password, LastPass, Bitwarden, Dashlane) not to fill them in, unless the box has an `autocomplete` attribute of its own, such as `autocomplete="given-name"`.
 
@@ -24,7 +26,7 @@ The runtime gives text boxes `autocomplete="off"` and the attributes that tell p
 `data-section` on an `<input>` goes to that section when the player presses Enter, like clicking a link to it; `data-passage` shows a passage. What was typed is stored first, so the section or passage can use it:
 
 ```squiffy
-What is your name? <input type="text" data-attribute="player_name" data-section="begin" required>
+What is your name? <input type="text" data-attribute="player_name" data-section="begin" aria-label="Your name" required>
 
 [[begin]]:
 Welcome, {{player_name}}!
@@ -40,9 +42,9 @@ Welcome, {{player_name}}!
 With HTML validation attributes, section and passage links are disabled until every input is valid:
 
 ```squiffy
-Name: <input type="text" data-attribute="name" required minlength="2">
-Age: <input type="number" data-attribute="age" required min="1" max="120">
-Email: <input type="email" data-attribute="email" required>
+<label>Name: <input type="text" data-attribute="name" required minlength="2"></label>
+<label>Age: <input type="number" data-attribute="age" required min="1" max="120"></label>
+<label>Email: <input type="email" data-attribute="email" required></label>
 ```
 
 Supported: `required`, `minlength`, `maxlength`, `min`, `max`, `pattern`, and `type` (`email`, `url`, `number`...).

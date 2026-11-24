@@ -117,7 +117,7 @@ document.addEventListener("squiffy:ready", ({ detail: squiffy }) => {
 
 `navigated` happens whenever a section or passage is shown, including when the player goes back, restarts, or carries on from a saved game, so it's the place to start and stop an effect that belongs to a section. A section's JavaScript doesn't run again when the player comes back to a saved game, but this does.
 
-| | |
+| Function | Description |
 |---|---|
 | `squiffy.on(event, fn)` | Call `fn` each time `event` happens. Returns a function that stops it |
 | `squiffy.once(event, fn)` | Call `fn` the next time `event` happens |

@@ -15,8 +15,9 @@ A playing story has one bar, inside its frame, which the story's own CSS styles:
 the published page's buttons (its panels' buttons, Back, Restart, Settings, mute, light/dark) in
 the same order and with the same icons, then an edit button for "Open in editor", which asks this
 page to go there. The player asks for these with the preview host's `setControls()`; the editor's
-preview doesn't, as it has buttons of its own. This page's own bar, with the title and "Open in
-editor", only shows when there's no story to play, such as for a broken link. The reader's light
+preview doesn't, as it has buttons of its own. This page's own bar, with "Open in editor", only
+shows when there's no story to play, such as for a broken link. The frame is named for the story's
+title, which is what a screen reader calls it. The reader's light
 or dark and mute choices are kept in this page's storage, for every story.
 
 The Publish dialog can make a link that asks for no "Open in editor" button. That's an option

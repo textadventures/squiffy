@@ -30,18 +30,7 @@ header {
 
 header[hidden] { display: none; }
 
-h1 {
-    flex: 1;
-    min-width: 0;
-    margin: 0;
-    font-size: inherit;
-    font-weight: 600;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-nav { flex: none; display: flex; align-items: center; gap: 0.5rem; }
+nav { flex: none; display: flex; align-items: center; gap: 0.5rem; margin-left: auto; }
 
 nav button, nav a {
     font: inherit;
@@ -69,7 +58,7 @@ iframe { flex: 1; border: 0; width: 100%; height: 100%; }
     font-size: 1rem;
     line-height: 1.5;
 }
-#message h2 { font-size: 1.25rem; margin: 0 0 0.5rem; }
+#message h1 { font-size: 1.25rem; margin: 0 0 0.5rem; }
 #message p { margin: 0 0 0.75rem; color: var(--muted); }
 #message pre { white-space: pre-wrap; font-size: 0.8125rem; color: var(--muted); }
 #message a { color: var(--accent); }

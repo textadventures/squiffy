@@ -15,7 +15,7 @@ export default defineConfig({
   projects: [
     {
       name: "chromium",
-      testIgnore: "editor/**",
+      testIgnore: ["editor/**", "player/**", "site/**"],
       use: { ...devices["Desktop Chrome"] },
     },
     // The editor (app/), from its dev server: `npx playwright test --project=editor`
@@ -23,6 +23,18 @@ export default defineConfig({
       name: "editor",
       testDir: "./e2e/editor",
       use: { ...devices["Desktop Chrome"], baseURL: "http://localhost:5188", viewport: { width: 1400, height: 850 } },
+    },
+    // The player (player/), from its dev server: `npx playwright test --project=player`
+    {
+      name: "player",
+      testDir: "./e2e/player",
+      use: { ...devices["Desktop Chrome"], baseURL: "http://localhost:5181" },
+    },
+    // The docs site (site/), from its dev server, as the beta site: `npx playwright test --project=site`
+    {
+      name: "site",
+      testDir: "./e2e/site",
+      use: { ...devices["Desktop Chrome"], baseURL: "http://localhost:4329" },
     },
     // Uncomment to test in Firefox (run: npx playwright install firefox)
     // {
@@ -50,6 +62,23 @@ export default defineConfig({
       url: "http://localhost:5188",
       reuseExistingServer: !process.env.CI,
       timeout: 60_000,
+      stdout: "pipe",
+      stderr: "pipe",
+    },
+    {
+      command: "npm run dev --workspace player",
+      url: "http://localhost:5181/v7/",
+      reuseExistingServer: !process.env.CI,
+      timeout: 60_000,
+      stdout: "pipe",
+      stderr: "pipe",
+    },
+    {
+      command: "npm run dev --workspace site -- --port 4329",
+      env: { PUBLIC_BETA_SITE: "true" },
+      url: "http://localhost:4329",
+      reuseExistingServer: !process.env.CI,
+      timeout: 120_000,
       stdout: "pipe",
       stderr: "pipe",
     },

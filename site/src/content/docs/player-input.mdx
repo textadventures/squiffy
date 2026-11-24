@@ -20,6 +20,8 @@ The `data-attribute` specifies which attribute will store the input value. You c
 
 It can also be a value inside an [object](/attributes/#objects), as in `data-attribute="hero.name"`.
 
+Give each box a label, so that a player using a screen reader knows what it's for. Put the box and the text before it in a `<label>`, as in `<label>Name: <input ...></label>`, or give the box an `aria-label`, as in `aria-label="Your name"`. A `placeholder` is better than nothing, but it goes as soon as the player starts typing.
+
 Browsers and password managers such as 1Password are asked not to offer to fill in the story's text boxes, as they'd take a box asking for a name for a sign-up form. To let them, give the box an [`autocomplete`](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Attributes/autocomplete) attribute of your own, such as `autocomplete="given-name"`.
 
 ## Going on when Enter is pressed
@@ -28,14 +30,14 @@ Add `data-section` to a text box, and pressing Enter in it goes to that section,
 
 <Sample script="What is your name?
 
-&lt;input type=&quot;text&quot; data-attribute=&quot;player_name&quot; data-section=&quot;begin&quot; required&gt;
+&lt;input type=&quot;text&quot; data-attribute=&quot;player_name&quot; data-section=&quot;begin&quot; aria-label=&quot;Your name&quot; required&gt;
 
 [[begin]]:
 Welcome, {{player_name}}!"></Sample>
 
 Like a passage link, a text box with `data-passage` can only be used once, unless the passage has [`@repeat`](/basic-concepts/#passages-you-can-click-again), so the player can try again:
 
-<Sample script="I'm thinking of a number between 1 and 10. &lt;input type=&quot;number&quot; data-attribute=&quot;guess&quot; data-passage=&quot;check&quot;&gt;
+<Sample script="I'm thinking of a number between 1 and 10. &lt;input type=&quot;number&quot; data-attribute=&quot;guess&quot; data-passage=&quot;check&quot; aria-label=&quot;Your guess&quot;&gt;
 
 [check]:
 @repeat
@@ -56,11 +58,11 @@ Supported validation attributes include:
 
 <Sample script="Please tell us about yourself:
 
-Name: &lt;input type=&quot;text&quot; data-attribute=&quot;name&quot; required minlength=&quot;2&quot; placeholder=&quot;At least 2 characters&quot;&gt;
+&lt;label&gt;Name: &lt;input type=&quot;text&quot; data-attribute=&quot;name&quot; required minlength=&quot;2&quot; placeholder=&quot;At least 2 characters&quot;&gt;&lt;/label&gt;
 
-Age: &lt;input type=&quot;number&quot; data-attribute=&quot;age&quot; required min=&quot;1&quot; max=&quot;120&quot;&gt;
+&lt;label&gt;Age: &lt;input type=&quot;number&quot; data-attribute=&quot;age&quot; required min=&quot;1&quot; max=&quot;120&quot;&gt;&lt;/label&gt;
 
-Email: &lt;input type=&quot;email&quot; data-attribute=&quot;email&quot; required&gt;
+&lt;label&gt;Email: &lt;input type=&quot;email&quot; data-attribute=&quot;email&quot; required&gt;&lt;/label&gt;
 
 [[Submit]]
 
@@ -82,14 +84,14 @@ You can use other HTML input types as well:
 
 <Sample script="Choose your preferences:
 
-Difficulty: &lt;select data-attribute=&quot;difficulty&quot; required&gt;
+&lt;label&gt;Difficulty: &lt;select data-attribute=&quot;difficulty&quot; required&gt;
     &lt;option value=&quot;&quot;&gt;-- Select --&lt;/option&gt;
     &lt;option value=&quot;easy&quot;&gt;Easy&lt;/option&gt;
     &lt;option value=&quot;normal&quot;&gt;Normal&lt;/option&gt;
     &lt;option value=&quot;hard&quot;&gt;Hard&lt;/option&gt;
-&lt;/select&gt;
+&lt;/select&gt;&lt;/label&gt;
 
-Comments: &lt;textarea data-attribute=&quot;comments&quot; rows=&quot;3&quot; maxlength=&quot;200&quot;&gt;&lt;/textarea&gt;
+&lt;label&gt;Comments: &lt;textarea data-attribute=&quot;comments&quot; rows=&quot;3&quot; maxlength=&quot;200&quot;&gt;&lt;/textarea&gt;&lt;/label&gt;
 
 [[Start game]]
 
