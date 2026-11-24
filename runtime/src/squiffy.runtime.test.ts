@@ -4281,6 +4281,18 @@ Start.{{goto where}}`);
     expect(element.querySelector(".squiffy-error")?.textContent).toContain("there is no section called \"nowhere\"");
 });
 
+test("A link to a section that doesn't exist leaves the player where they were", async () => {
+    // As in Squiffy 5 stories with a typo in a link (#643): the section's passage links still work
+    const { squiffyApi, element } = await initScript(`Start. [[Nowhere]](nowhere) [a passage]
+
+[a passage]:
+The passage.`);
+    await squiffyApi.clickLink(findLink(element, "section", "Nowhere"));
+    expect(squiffyApi.get("_section")).toBe("_default");
+    await squiffyApi.clickLink(findLink(element, "passage", "a passage"));
+    expect(element.textContent).toContain("The passage.");
+});
+
 test("A {{goto}} loop is stopped and reported", async () => {
     const errors = vi.spyOn(console, "error").mockImplementation(() => {});
     const script = `

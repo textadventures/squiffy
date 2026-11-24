@@ -444,8 +444,11 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     async function goNow(sectionName: string) {
         cancelGoto();
         const oldCanGoBack = canGoBack();
-        currentSection = story.sections[sectionName];
-        if (!currentSection) return;
+        // A link to a section that doesn't exist does nothing, and leaves the player where they
+        // were, with the section's passage links still working
+        const section = story.sections[sectionName];
+        if (!section) return;
+        currentSection = section;
         const sectionBefore = get("_section");
         if (sectionBefore !== null) {
             // Where the player was before this (#56): the section, or the passage in it shown last
