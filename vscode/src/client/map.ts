@@ -10,9 +10,10 @@ import type { BaseLanguageClient } from "vscode-languageclient";
 import { parseProjectFile, updateProjectFile, type MapPositions } from "squiffy-compiler";
 import type { GraphNode, Location, StoryGraph, TextEdit } from "squiffy-compiler/language-service";
 import { checkPassageName, deleteLinesEdits, deletionMessage, planDeletion, startEdit } from "@textadventures/squiffy-app/map-edits";
-import { checkSectionName, movedNodes, nodeAtLine, renamePositions, withPosition } from "@textadventures/squiffy-app/story-map";
+import { checkSectionName, emptyPositions, movedNodes, nodeAtLine, renamePositions, withPosition } from "@textadventures/squiffy-app/story-map";
 import { STORY_GRAPH, type PreviewFromHereArgs, type StoryGraphParams, type StoryGraphResult } from "../protocol.js";
-import type { FromMap, Point, ToMap } from "../map/messages.js";
+import type { FromMap, Point, ToMap, TraceStep } from "../map/messages.js";
+import type { Preview } from "./preview.js";
 import { addPassageEdits, linkEdit, missingTarget, movedPositions, newPassageEdit, newSectionEdits, sectionFor, type Cursor } from "./map-edits.js";
 
 // How long to wait after typing before drawing the map again
@@ -36,9 +37,21 @@ export class StoryMap implements vscode.Disposable {
     // Graphs are read and positions written one at a time, so they land in order
     private queue: Promise<void> = Promise.resolve();
     private disposables: vscode.Disposable[] = [];
+    // Where the player has been in the preview, and the story's folder
+    private trace: { root: string; steps: TraceStep[] } | undefined;
 
-    constructor(private client: BaseLanguageClient, private extensionUri: vscode.Uri) {
+    constructor(private client: BaseLanguageClient, private extensionUri: vscode.Uri, preview: Preview) {
         this.disposables.push(
+            preview.onDidStart(root => {
+                this.trace = { root, steps: [] };
+                this.sendTrace();
+            }),
+            preview.onDidVisit(({ root, section, passage }) => {
+                if (this.trace?.root != root) this.trace = { root, steps: [] };
+                // The last 500 places, as in the editor
+                this.trace.steps = [...this.trace.steps.slice(-499), passage === undefined ? { section } : { section, passage }];
+                this.sendTrace();
+            }),
             vscode.workspace.onDidChangeTextDocument(e => {
                 if (this.isInStory(e.document.uri) && e.contentChanges.length) this.scheduleUpdate();
             }),
@@ -151,6 +164,9 @@ export class StoryMap implements vscode.Disposable {
                     return this.createSection(message.at, from, message.near ? nodes[nodes.length - 1] : undefined);
                 });
                 break;
+            case "relayout":
+                void this.relayout();
+                break;
             case "createMissing":
                 void this.act([message.edge.from], "add it", () => this.createMissing(message.edge, message.at));
                 break;
@@ -188,6 +204,13 @@ export class StoryMap implements vscode.Disposable {
         this.positions = positions;
         this.post({ type: "graph", graph: result.graph, positions, renamed });
         this.sendCurrent();
+        if (!before) this.sendTrace();
+    }
+
+    // The preview's trace, if it's of the story the map shows
+    private sendTrace() {
+        if (!this.root) return;
+        this.post({ type: "trace", steps: this.trace?.root == this.root ? this.trace.steps : [] });
     }
 
     // The section or passage the cursor is in
@@ -356,6 +379,22 @@ export class StoryMap implements vscode.Disposable {
         const text = (await vscode.workspace.openTextDocument(this.uriOf(file))).getText();
         await this.applyEdits(new Map([[file, newSectionEdits(graph, name, { from, link: false, file }, text)]]));
         this.placeNew({ kind: "section", name }, at);
+    }
+
+    // Lay out again: forgets where boxes have been put, after asking, as the editor does
+    private async relayout() {
+        await this.queue;
+        const saved = this.positions && (Object.keys(this.positions.sections).length || Object.keys(this.positions.passages).length);
+        if (saved) {
+            const answer = await vscode.window.showWarningMessage("Lay out the map again?", { modal: true, detail: "Everything you've moved by hand goes back to where the map puts it." }, "Lay out again");
+            if (answer != "Lay out again") return;
+        }
+        this.post({ type: "relayout" });
+        if (!saved) return;
+        this.queue = this.queue.then(async () => {
+            this.positions = emptyPositions();
+            await this.savePositions(this.positions);
+        }).catch(e => void vscode.window.showWarningMessage(`Couldn't save the map: ${e instanceof Error ? e.message : e}`));
     }
 
     // A section or passage just made from the map: its box goes where it was made, and it's selected

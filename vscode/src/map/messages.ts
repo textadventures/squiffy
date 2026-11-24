@@ -17,7 +17,16 @@ export type ToMap =
     // Select a node once a graph has it (a section or passage just made from the map)
     | { type: "select"; id: string }
     // Put the focus in the search box (Control or Command and F)
-    | { type: "search" };
+    | { type: "search" }
+    // Where the player has been in the preview, in order, since the story last started
+    | { type: "trace"; steps: TraceStep[] }
+    // Lay the map out again, forgetting where boxes were moved to
+    | { type: "relayout" };
+
+export interface TraceStep {
+    section: string;
+    passage?: string;
+}
 
 export type FromMap =
     // The page has loaded and wants the graph
@@ -37,4 +46,6 @@ export type FromMap =
     // near `near` in the script (the selected box, or the nearest one)
     | { type: "create"; at: Point; from?: string; near?: string }
     // Make what a broken link is missing: its marker's box is at `at`
-    | { type: "createMissing"; edge: { from: string; kind: string; target?: string }; at?: Point };
+    | { type: "createMissing"; edge: { from: string; kind: string; target?: string }; at?: Point }
+    // Forget where boxes have been moved to (Lay out again)
+    | { type: "relayout" };

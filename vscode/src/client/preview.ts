@@ -27,6 +27,14 @@ export class Preview implements vscode.Disposable {
     private queue: Promise<void> = Promise.resolve();
     private disposables: vscode.Disposable[] = [];
     private log: vscode.OutputChannel;
+    // Where the player goes, for the story map's trace (#615): the story starting again, and each
+    // section or passage it moves to, with the story's folder
+    private readonly started = new vscode.EventEmitter<string>();
+    readonly onDidStart = this.started.event;
+    private readonly visited = new vscode.EventEmitter<{ root: string; section: string; passage?: string }>();
+    readonly onDidVisit = this.visited.event;
+    // The last place visited: a hot update reports the one that's showing again
+    private lastPlace = "";
 
     constructor(private client: BaseLanguageClient, log: vscode.OutputChannel) {
         this.log = log;
@@ -66,6 +74,12 @@ export class Preview implements vscode.Disposable {
 
     restart() {
         this.host?.restart();
+        this.startedAgain();
+    }
+
+    private startedAgain() {
+        this.lastPlace = "";
+        if (this.root) this.started.fire(this.root);
     }
 
     back() {
@@ -101,6 +115,12 @@ export class Preview implements vscode.Disposable {
                 if (pageStarted && this.running) void this.run();
                 pageStarted = true;
             },
+            onNavigated: (section, passage) => {
+                const place = `${section}\u0000${passage ?? ""}`;
+                if (place == this.lastPlace || !this.root) return;
+                this.lastPlace = place;
+                this.visited.fire({ root: this.root, section, passage });
+            },
             onCanGoBackChanged: canGoBack => void vscode.commands.executeCommand("setContext", "squiffyPreviewCanGoBack", canGoBack),
             onAttributeSet: (name, value) => this.log.appendLine(`${name} = ${JSON.stringify(value)}`),
             onRuntimeError: (message, stack) => {
@@ -135,6 +155,7 @@ export class Preview implements vscode.Disposable {
             return;
         }
         this.log.clear();
+        this.startedAgain();
         await this.sendAssets();
         this.host.load({ js: result.js, css: result.css, scripts: result.scripts }, startAt ? { startAt } : {});
         this.running = true;
@@ -182,6 +203,8 @@ export class Preview implements vscode.Disposable {
     dispose() {
         clearTimeout(this.updateTimer);
         this.panel?.dispose();
+        this.started.dispose();
+        this.visited.dispose();
         for (const d of this.disposables) d.dispose();
     }
 }
