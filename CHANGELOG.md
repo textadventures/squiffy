@@ -1,5 +1,31 @@
 # Changelog
 
+## [7.0.0-beta.16](https://github.com/textadventures/squiffy/compare/v7.0.0-beta.15...v7.0.0-beta.16) (2026-11-24)
+
+
+### Features
+
+* a shared link can hide the player's Open in editor button ([#609](https://github.com/textadventures/squiffy/issues/609)) ([bce2090](https://github.com/textadventures/squiffy/commit/bce209079da245ea2a41d728d8eee54d197d265f))
+* a title in the published page's header ([#610](https://github.com/textadventures/squiffy/issues/610)) ([0c64941](https://github.com/textadventures/squiffy/commit/0c6494123a66ee5215b805753626cfd51d95a53a))
+* one header bar on squiffystories.com, with the published page's buttons ([#608](https://github.com/textadventures/squiffy/issues/608)) ([f047806](https://github.com/textadventures/squiffy/commit/f047806f2ecbe6336fedd8391ca10f46dd690568))
+* **runtime:** style story inputs to match the story, and keep password managers out of them ([#631](https://github.com/textadventures/squiffy/issues/631)) ([628c3ca](https://github.com/textadventures/squiffy/commit/628c3ca29ee193140897061a29205d76ea732f04))
+* squiffy.json's "ignore" turns warnings off for the whole story ([#599](https://github.com/textadventures/squiffy/issues/599)) ([f2af675](https://github.com/textadventures/squiffy/commit/f2af6759b03ef6e0881fc11993b2f716252a15df))
+* **vscode:** a right-click menu on the story map ([#623](https://github.com/textadventures/squiffy/issues/623)) ([1e17845](https://github.com/textadventures/squiffy/commit/1e17845cdb015bc751127f744b05dddbdf7be499))
+* **vscode:** make sections from the story map ([#625](https://github.com/textadventures/squiffy/issues/625)) ([e9dc5ef](https://github.com/textadventures/squiffy/commit/e9dc5ef462724c5061e1b2b6ef2ca2a605aacd17))
+* **vscode:** Preview from here and link counts above sections, and more buttons ([#619](https://github.com/textadventures/squiffy/issues/619)) ([5b7cd43](https://github.com/textadventures/squiffy/commit/5b7cd433e4a1ff64f8c56f4df989a5284b26d2c7))
+* **vscode:** search the story map ([#626](https://github.com/textadventures/squiffy/issues/626)) ([072c838](https://github.com/textadventures/squiffy/commit/072c8389de028b5e462f94e1c9a581f0af388dee))
+* **vscode:** story buttons when squiffy.json is open ([#624](https://github.com/textadventures/squiffy/issues/624)) ([2af528b](https://github.com/textadventures/squiffy/commit/2af528b222e8b280b32c83d621d1b6e15a02d893))
+* **vscode:** the preview's trace, a key and Lay out again on the story map ([#628](https://github.com/textadventures/squiffy/issues/628)) ([1626420](https://github.com/textadventures/squiffy/commit/16264200ff5b78a17acdc6bfc2645fd226c4b84a))
+* **vscode:** the selected box's details on the story map ([#627](https://github.com/textadventures/squiffy/issues/627)) ([d5bae51](https://github.com/textadventures/squiffy/commit/d5bae5114e90095a9d0ddedf7c95cd8bcc37ecb1))
+* **vscode:** the story map ([#621](https://github.com/textadventures/squiffy/issues/621)) ([8fe0447](https://github.com/textadventures/squiffy/commit/8fe0447defa0e8e0d92638bfb972c35bc888d567))
+
+
+### Bug Fixes
+
+* animations follow the player's reduced-motion setting ([#606](https://github.com/textadventures/squiffy/issues/606)) ([71eb279](https://github.com/textadventures/squiffy/commit/71eb279ffb41fc2c8a34f4ed9d5fae7e1b3a5d07))
+* Start Preview at This Section works while the preview is open ([#603](https://github.com/textadventures/squiffy/issues/603)) ([a96518f](https://github.com/textadventures/squiffy/commit/a96518f8f9feeacc56819190adbc2c80779df18a))
+* the preview scrolls to where new text starts, padding and all, as the exported page does ([#604](https://github.com/textadventures/squiffy/issues/604)) ([61b37c6](https://github.com/textadventures/squiffy/commit/61b37c6e95c8226fb6c2f1bef7cdcce60b111781))
+
 ## [7.0.0-beta.15](https://github.com/textadventures/squiffy/compare/v7.0.0-beta.14...v7.0.0-beta.15) (2026-11-23)
 
 
