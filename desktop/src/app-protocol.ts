@@ -1,6 +1,7 @@
 import { promises as fsp } from "node:fs";
 import * as nodePath from "node:path";
 import { protocol } from "electron";
+import { STORY_SCHEME } from "./story-window.js";
 
 // The editor is served from app://squiffy/, a privileged scheme of the app's own, rather than
 // from file:// (where module workers and fetch don't work) or a loopback server. Quest Viva uses
@@ -27,12 +28,22 @@ const MIME_TYPES: Record<string, string> = {
     ".txt": "text/plain; charset=utf-8",
 };
 
-/** Must be called before the app's ready event. */
-export function registerAppScheme(): void {
-    protocol.registerSchemesAsPrivileged([{
-        scheme: APP_SCHEME,
-        privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true, stream: true, codeCache: true },
-    }]);
+/**
+ * Registers app:// and story:// (story-window.ts), each a standard, secure scheme, so each has an
+ * origin of its own with storage. Electron takes only one call to this, so both are here. Must be
+ * called before the app's ready event.
+ */
+export function registerSchemes(): void {
+    protocol.registerSchemesAsPrivileged([
+        {
+            scheme: APP_SCHEME,
+            privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true, stream: true, codeCache: true },
+        },
+        {
+            scheme: STORY_SCHEME,
+            privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true },
+        },
+    ]);
 }
 
 /** Serves the editor's static build from `root`, with index.html for any route that isn't a file. */

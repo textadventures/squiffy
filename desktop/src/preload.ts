@@ -32,15 +32,16 @@ const api: SquiffyDesktopApi = {
         onOpenRecent: (listener) => on<[string]>("open-recent", listener),
     },
     showInFolder: (rootId, path) => invoke("show-in-folder", rootId, path),
+    playStory: (html) => invoke("play-story", html),
     onBeforeClose: (listener) =>
         on("before-close", () => {
             void listener().finally(() => ipcRenderer.send(CHANNEL_PREFIX + "close-ready"));
         }),
 };
 
-// Only the editor's own window gets the bridges. A window it opens (Play in a new tab runs the
-// published story, which is the author's code) gets nothing; the main process checks the
-// sender as well.
+// Only the editor's own window gets the bridges. The main process lets it open no windows (Play in
+// a new tab's story window has no preload at all), but one that had an opener would get nothing;
+// the main process checks the sender as well.
 if (!window.opener) {
     exposeProjectFs(contextBridge, ipcRenderer);
     contextBridge.exposeInMainWorld("squiffyDesktop", api);

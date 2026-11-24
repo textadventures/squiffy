@@ -4,10 +4,11 @@ import { fileURLToPath } from "node:url";
 import { app, BrowserWindow, dialog, ipcMain, shell, type IpcMainEvent, type IpcMainInvokeEvent, type OpenDialogOptions, type WebContents } from "electron";
 import { registerProjectFsHandlers } from "@textadventures/project-fs/electron-main";
 import { CHANNEL_PREFIX, type MenuAction, type NewStoryResult, type OpenedRecentFolder } from "./api.js";
-import { APP_ORIGIN, handleAppScheme, registerAppScheme } from "./app-protocol.js";
+import { APP_ORIGIN, handleAppScheme, registerSchemes } from "./app-protocol.js";
 import { buildMenu } from "./menu.js";
 import { NewStoryLocation } from "./new-story.js";
 import { RecentFolders, toInfo } from "./recent.js";
+import { isStoryContents, isStoryUrl, MAX_STORY_HTML, openStoryWindow } from "./story-window.js";
 import { loadWindowState, trackWindowState } from "./window-state.js";
 
 const here = nodePath.dirname(fileURLToPath(import.meta.url));
@@ -28,7 +29,7 @@ function iconPath(): string {
     return app.isPackaged ? nodePath.join(process.resourcesPath, "icon.png") : nodePath.resolve(app.getAppPath(), "build/icons/512x512.png");
 }
 
-registerAppScheme();
+registerSchemes();
 
 if (!app.requestSingleInstanceLock()) {
     app.quit();
@@ -169,19 +170,17 @@ function focusWindow() {
     mainWindow.focus();
 }
 
-// Every window, including ones the editor opens: links to other sites go to the browser, and
-// nothing navigates away from the editor
+// Every window, the editor's and the stories' (story-window.ts): links to other sites go to the
+// browser, nothing navigates away from the editor, and a story stays in its own window. No window
+// opens another of the app's own: one opened by the editor would share its origin, and could reach
+// its bridges through window.opener (#644).
 app.on("web-contents-created", (_event, contents) => {
     contents.setWindowOpenHandler(({ url }) => {
-        // Play in a new tab opens about:blank and then shows the published story from a blob: URL
-        if (url === "about:blank" || url.startsWith("blob:")) {
-            return { action: "allow", overrideBrowserWindowOptions: { autoHideMenuBar: true } };
-        }
         openExternal(url);
         return { action: "deny" };
     });
     contents.on("will-navigate", (event, url) => {
-        if (isAppUrl(url) || url.startsWith("blob:") || url === "about:blank") return;
+        if (isStoryContents(contents) ? isStoryUrl(url) : isAppUrl(url) || url.startsWith("blob:") || url === "about:blank") return;
         event.preventDefault();
         openExternal(url);
     });
@@ -296,6 +295,11 @@ function registerDesktopHandlers(projectFs: ProjectFsMain) {
         if (relative === ".." || relative.startsWith(".." + nodePath.sep) || nodePath.isAbsolute(relative)) throw new Error("Not in the project");
         if (relative === "") await shell.openPath(root);
         else shell.showItemInFolder(target);
+    });
+
+    handle("play-story", async (_sender, html) => {
+        if (typeof html !== "string" || html.length > MAX_STORY_HTML) throw new Error("Not a story's page");
+        openStoryWindow(html, process.platform === "linux" ? iconPath() : undefined);
     });
 
     ipcMain.on(CHANNEL_PREFIX + "close-ready", (event) => {
