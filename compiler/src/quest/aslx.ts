@@ -87,7 +87,7 @@ function decodeEntities(text: string): string {
     return text.replace(/&(#x[0-9a-fA-F]+|#\d+|\w+);/g, (match, entity: string) => {
         if (entity.startsWith("#x")) return character(parseInt(entity.substring(2), 16), match);
         if (entity.startsWith("#")) return character(parseInt(entity.substring(1), 10), match);
-        return Object.hasOwn(namedEntities, entity) ? namedEntities[entity] : match;
+        return Object.prototype.hasOwnProperty.call(namedEntities, entity) ? namedEntities[entity] : match;
     });
 }
 

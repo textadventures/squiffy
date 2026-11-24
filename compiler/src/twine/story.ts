@@ -71,7 +71,7 @@ export function decodeEntities(s: string): string {
             // Not a character, such as &#x110000;, which String.fromCodePoint would throw on (#644)
             return Number.isFinite(code) && code <= 0x10ffff ? String.fromCodePoint(code) : match;
         }
-        return Object.hasOwn(entities, entity.toLowerCase()) ? entities[entity.toLowerCase()] : match;
+        return Object.prototype.hasOwnProperty.call(entities, entity.toLowerCase()) ? entities[entity.toLowerCase()] : match;
     });
 }
 
