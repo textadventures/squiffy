@@ -4,7 +4,9 @@
 import { init } from "./squiffy.runtime.js";
 import { createPanels, type Panels } from "./panels.js";
 import { createSettingsDialog, SETTINGS_ICON, type SettingsDialog } from "./settingsDialog.js";
-import type { HostMessage, PreviewAssets, PreviewMessage, PreviewStory } from "./preview-protocol.js";
+import { confirmDialog } from "./confirmDialog.js";
+import { BACK_ICON, EDIT_ICON, MUTE_ICONS, RESTART_ICON, THEME_ICONS } from "./headerIcons.js";
+import type { HostMessage, PreviewAssets, PreviewControls, PreviewMessage, PreviewStory, PreviewTheme } from "./preview-protocol.js";
 import type { Panel, PlayerSetting, SquiffyApi, Story } from "./types.js";
 
 export interface PreviewOptions {
@@ -17,6 +19,19 @@ export interface PreviewOptions {
     // Reloads the page, for a "reload" message
     reload?(): void;
 }
+
+// The English for the published page's buttons, as in the compiler's PAGE_STRINGS
+const CONTROL_STRINGS: Record<string, string> = {
+    back: "Back",
+    restart: "Restart",
+    restartConfirm: "Are you sure you want to restart?",
+    cancel: "Cancel",
+    switchToDark: "Switch to dark mode",
+    switchToLight: "Switch to light mode",
+    mute: "Mute",
+    unmute: "Unmute",
+    settings: "Settings",
+};
 
 const mimeTypes: Record<string, string> = {
     png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", webp: "image/webp",
@@ -60,6 +75,8 @@ export function createPreview(options: PreviewOptions) {
     let panels: Panels | undefined;
     let panelsJson = "";
     let panelButtons: HTMLElement | undefined;
+    // The bar they're in, which has the story's title before them if the host asks
+    let header: HTMLElement | undefined;
     // The Settings button (#452), after the panels' buttons, for a story with "settings"
     let settingsButton: HTMLButtonElement | undefined;
     let settingsDialog: SettingsDialog | undefined;
@@ -73,6 +90,18 @@ export function createPreview(options: PreviewOptions) {
     // The host's mute button (#444), which carries on to the next story loaded
     let muted = false;
     let usesSound = false;
+    // The published page's buttons, if the host asked for them (see PreviewControls): Back and
+    // Restart after the panels' buttons, then Settings, then mute and light/dark
+    let controls: PreviewControls = {};
+    let controlButtons: HTMLButtonElement[] = [];
+    let backButton: HTMLButtonElement | undefined;
+    let muteButton: HTMLButtonElement | undefined;
+    let themeButton: HTMLButtonElement | undefined;
+    // The theme the host or the reader chose, and whether the story's CSS fixes it
+    let theme: PreviewTheme = "system";
+    let themeFixed = false;
+    const systemDark = typeof window.matchMedia == "function" ? window.matchMedia("(prefers-color-scheme: dark)") : undefined;
+    systemDark?.addEventListener("change", () => updateThemeButton());
     // Each load gets a new number, so a slow load that's been replaced doesn't start
     let loadCount = 0;
     const assetUrls = new Map<string, string>();
@@ -107,6 +136,113 @@ export function createPreview(options: PreviewOptions) {
         const fixed = schemeFor("light") == schemeFor("dark");
         themeStyle.textContent = theme;
         return fixed;
+    }
+
+    const string = (name: string) => {
+        const value = controls.strings?.[name];
+        return typeof value == "string" ? value : CONTROL_STRINGS[name];
+    };
+
+    function setTheme(value: PreviewTheme) {
+        theme = value;
+        themeStyle.textContent = theme == "system" ? "" : `:root { color-scheme: ${theme}; }`;
+        updateThemeButton();
+    }
+
+    function setThemeFixed(fixed: boolean) {
+        themeFixed = fixed;
+        send({ type: "themeFixed", fixed });
+        updateThemeButton();
+    }
+
+    const systemTheme = (): "light" | "dark" => systemDark?.matches ? "dark" : "light";
+
+    // As on the published page: the button switches to the theme that isn't showing, and
+    // choosing the system's own theme goes back to following it
+    function updateThemeButton() {
+        if (!themeButton) return;
+        themeButton.hidden = themeFixed;
+        const next = (theme == "system" ? systemTheme() : theme) == "dark" ? "light" : "dark";
+        themeButton.dataset.next = next;
+        themeButton.title = string(next == "dark" ? "switchToDark" : "switchToLight");
+        themeButton.setAttribute("aria-label", themeButton.title);
+    }
+
+    function updateMuteButton() {
+        if (!muteButton) return;
+        muteButton.hidden = !usesSound;
+        muteButton.title = string(muted ? "unmute" : "mute");
+        muteButton.setAttribute("aria-label", muteButton.title);
+        muteButton.classList.toggle("squiffy-muted", muted);
+    }
+
+    function controlButton(id: string, icon: string, onClick: () => void, label?: string) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.id = id;
+        button.className = "squiffy-header-button";
+        button.innerHTML = icon;
+        if (label) {
+            button.title = label;
+            button.setAttribute("aria-label", label);
+        }
+        button.addEventListener("click", onClick);
+        controlButtons.push(button);
+        return button;
+    }
+
+    // Shows the buttons the host asked for, replacing any already shown
+    function renderControls() {
+        for (const button of controlButtons) button.remove();
+        controlButtons = [];
+        backButton = muteButton = themeButton = undefined;
+        if (!panelButtons || !header || !api) return;
+        header.querySelector(".squiffy-preview-title")?.remove();
+        if (controls.title) {
+            const title = document.createElement("span");
+            title.className = "squiffy-preview-title";
+            title.textContent = controls.title;
+            header.prepend(title);
+        }
+        const buttons = panelButtons;
+        const current = api;
+        const beforeSettings = settingsButton ?? null;
+        if (controls.back) {
+            backButton = controlButton("squiffy-back", BACK_ICON, () => api?.goBack(), string("back"));
+            backButton.disabled = !current.canGoBack();
+            buttons.insertBefore(backButton, beforeSettings);
+        }
+        if (controls.restart) {
+            buttons.insertBefore(controlButton("squiffy-restart", RESTART_ICON, async () => {
+                const restarting = api;
+                if (!await confirmDialog({ message: string("restartConfirm"), confirm: string("restart"), cancel: string("cancel") })) return;
+                if (api == restarting) api?.restart();
+            }, string("restart")), beforeSettings);
+        }
+        if (controls.mute) {
+            muteButton = controlButton("squiffy-mute", MUTE_ICONS, () => {
+                muted = !muted;
+                api?.setMuted(muted);
+                send({ type: "mutedChosen", muted });
+                updateMuteButton();
+            });
+            buttons.appendChild(muteButton);
+            updateMuteButton();
+        }
+        if (controls.theme) {
+            themeButton = controlButton("squiffy-theme", THEME_ICONS, () => {
+                const chosen = themeButton!.dataset.next as "light" | "dark";
+                setTheme(chosen == systemTheme() ? "system" : chosen);
+                send({ type: "themeChosen", theme });
+            });
+            buttons.appendChild(themeButton);
+            updateThemeButton();
+        }
+        if (controls.edit) {
+            const label = controls.editLabel ?? "Open in editor";
+            buttons.appendChild(controlButton("squiffy-edit", EDIT_ICON, () => send({ type: "editRequested" }), label));
+        }
+        header.classList.toggle("squiffy-preview-controls", controlButtons.length > 0 || !!controls.title);
     }
 
     const resolveAssetUrl = (path: string) => assetUrls.get(normalisePath(path)) ?? path;
@@ -191,7 +327,7 @@ export function createPreview(options: PreviewOptions) {
         await addStoryFiles(message.story);
         const { story } = await loadModule(message.story.js);
         if (thisLoad != loadCount) return;
-        send({ type: "themeFixed", fixed: themeIsFixed() });
+        setThemeFixed(themeIsFixed());
 
         panels?.dispose();
         panels = undefined;
@@ -199,14 +335,17 @@ export function createPreview(options: PreviewOptions) {
         settingsDialog?.element.remove();
         settingsDialog = undefined;
         settingsButton = undefined;
+        header = document.createElement("div");
+        header.className = "squiffy-preview-header";
         panelButtons = document.createElement("div");
-        panelButtons.className = "squiffy-preview-header";
+        panelButtons.className = "squiffy-preview-buttons";
+        header.appendChild(panelButtons);
         panelSide = document.createElement("div");
         panelSide.className = "squiffy-preview-body";
         const container = document.createElement("div");
         container.className = "squiffy-preview-story";
         panelSide.appendChild(container);
-        options.element.append(panelButtons, panelSide);
+        options.element.append(header, panelSide);
         classObserver = new MutationObserver(() => mirrorClasses(container));
         classObserver.observe(container, { attributes: true, attributeFilter: ["class"] });
 
@@ -221,7 +360,9 @@ export function createPreview(options: PreviewOptions) {
             },
         });
         newApi.on("canGoBackChanged", e => {
-            if (thisLoad == loadCount) send({ type: "canGoBackChanged", canGoBack: e.canGoBack });
+            if (thisLoad != loadCount) return;
+            if (backButton) backButton.disabled = !e.canGoBack;
+            send({ type: "canGoBackChanged", canGoBack: e.canGoBack });
         });
         newApi.on("navigated", e => {
             if (thisLoad == loadCount) send({ type: "navigated", ...e });
@@ -230,6 +371,7 @@ export function createPreview(options: PreviewOptions) {
             if (thisLoad == loadCount && !usesSound) {
                 usesSound = true;
                 send({ type: "usesSound", usesSound });
+                updateMuteButton();
             }
         });
         newApi.setMuted(muted);
@@ -238,8 +380,11 @@ export function createPreview(options: PreviewOptions) {
         api = newApi;
         setPanels(story.panels);
         setSettingsButton(story.settings);
+        renderControls();
         send({ type: "canGoBackChanged", canGoBack: false });
         await newApi.begin(message.startAt);
+        // A story can start somewhere there's something to go back to
+        if (thisLoad == loadCount && backButton) backButton.disabled = !newApi.canGoBack();
         // Now, rather than waiting for the observer, so they're there when the host hears it's loaded
         if (thisLoad == loadCount) mirrorClasses(container);
         if (thisLoad == loadCount) send({ type: "loaded" });
@@ -262,23 +407,25 @@ export function createPreview(options: PreviewOptions) {
             settingsButton = undefined;
             return;
         }
+        // Before the mute, light/dark and edit buttons, if there are any
+        const before = muteButton ?? themeButton ?? panelButtons.querySelector("#squiffy-edit");
         if (settingsButton) {
-            panelButtons.appendChild(settingsButton);
+            panelButtons.insertBefore(settingsButton, before);
             return;
         }
         const button = document.createElement("button");
         button.type = "button";
         button.className = "squiffy-header-button squiffy-settings-button";
-        button.title = "Settings";
-        button.setAttribute("aria-label", "Settings");
+        button.title = string("settings");
+        button.setAttribute("aria-label", button.title);
         button.setAttribute("aria-haspopup", "dialog");
         button.innerHTML = SETTINGS_ICON;
         button.addEventListener("click", () => {
             if (!api) return;
-            settingsDialog ??= createSettingsDialog(api);
+            settingsDialog ??= createSettingsDialog(api, { strings: controls.strings });
             settingsDialog.open();
         });
-        panelButtons.appendChild(button);
+        panelButtons.insertBefore(button, before);
         settingsButton = button;
     }
 
@@ -291,7 +438,7 @@ export function createPreview(options: PreviewOptions) {
                 case "update":
                     if (!api) break;
                     // A stylesheet can change whether the story sets its own color-scheme
-                    if (message.css && setStyles(message.css)) send({ type: "themeFixed", fixed: themeIsFixed() });
+                    if (message.css && setStyles(message.css)) setThemeFixed(themeIsFixed());
                     {
                         const { story } = await loadModule(message.js);
                         api.update(story);
@@ -311,12 +458,24 @@ export function createPreview(options: PreviewOptions) {
                 case "muted":
                     muted = message.muted;
                     api?.setMuted(muted);
+                    updateMuteButton();
+                    break;
+                case "controls":
+                    controls = message.controls;
+                    renderControls();
+                    // The Settings button's text may have changed with the strings
+                    if (settingsButton) {
+                        settingsButton.title = string("settings");
+                        settingsButton.setAttribute("aria-label", settingsButton.title);
+                    }
+                    settingsDialog?.element.remove();
+                    settingsDialog = undefined;
                     break;
                 case "reload":
                     options.reload?.();
                     break;
                 case "theme":
-                    themeStyle.textContent = message.theme == "system" ? "" : `:root { color-scheme: ${message.theme}; }`;
+                    setTheme(message.theme);
                     break;
             }
         }

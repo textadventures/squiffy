@@ -33,6 +33,27 @@ export interface PreviewAssets {
 // "system" follows the reader's system setting, like an exported story
 export type PreviewTheme = "light" | "dark" | "system";
 
+// The published page's buttons, which a host can ask the preview to show in its own header, for
+// a reader rather than an author (the player at squiffystories.com). The editor has buttons of
+// its own, so sends none of these.
+export interface PreviewControls {
+    back?: boolean;
+    restart?: boolean;
+    // Shown only if the story has music or sounds
+    mute?: boolean;
+    // Shown only if the story's CSS doesn't set its own color-scheme
+    theme?: boolean;
+    // The story's title, at the left of the header, as a site with no header of its own shows it
+    title?: string;
+    // A button after the rest that asks the host to open the story in the editor: the page sends
+    // "editRequested", and the host goes there. It's labelled by editLabel.
+    edit?: boolean;
+    editLabel?: string;
+    // The page's text, by the names in the compiler's PAGE_STRINGS (squiffy.json's "strings"),
+    // for these buttons and the Settings dialog. Anything left out is in English.
+    strings?: Record<string, string>;
+}
+
 export type HostMessage =
     // Starts a story, replacing any that's running. Send assets first.
     | { type: "load"; story: PreviewStory; startAt?: StartAt }
@@ -48,6 +69,8 @@ export type HostMessage =
     | { type: "theme"; theme: PreviewTheme }
     // Mutes or unmutes the story's music and sounds (#444)
     | { type: "muted"; muted: boolean }
+    // Which of the published page's buttons to show in the preview's header
+    | { type: "controls"; controls: PreviewControls }
     // Reloads the page, which then sends "ready" again. The host sends this before loading a story
     // after one that had scripts, which can leave things behind, such as a squiffy:ready listener
     // that would hear about the next story too (#528).
@@ -67,6 +90,12 @@ export type PreviewMessage =
     // Whether the story plays music or sounds (#444), so the host can show a mute button. Sent
     // each time a story is loaded, before "loaded", and when a sound plays.
     | { type: "usesSound"; usesSound: boolean }
+    // The reader chose light or dark, or muted or unmuted, with the preview's own buttons (see
+    // PreviewControls), so the host can remember it
+    | { type: "themeChosen"; theme: PreviewTheme }
+    | { type: "mutedChosen"; muted: boolean }
+    // The reader clicked the edit button (see PreviewControls)
+    | { type: "editRequested" }
     // A section or passage was shown, or Back went to one
     | { type: "navigated"; section: string; passage?: string }
     // An error from the story's JavaScript or the runtime

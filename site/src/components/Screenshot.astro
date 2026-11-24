@@ -1,0 +1,58 @@
+---
+// A screenshot from site/src/assets/screenshots/, which e2e/screenshots/ takes (`npm run
+// screenshots` at the top of the repo). Where there's a dark version too (name-dark.png), the
+// page shows whichever matches the site's theme. Clicking it opens it full size.
+//
+//     <Screenshot name="editor" alt="..." caption="..." />
+import { Image } from "astro:assets";
+import type { ImageMetadata } from "astro";
+
+interface Props {
+    name: string;
+    alt: string;
+    caption?: string;
+}
+
+const { name, alt, caption } = Astro.props;
+const images = import.meta.glob<{ default: ImageMetadata }>("../assets/screenshots/*.png", { eager: true });
+const find = (file: string) => images[`../assets/screenshots/${file}.png`]?.default;
+const light = find(name);
+const dark = find(`${name}-dark`);
+if (!light) throw new Error(`There's no screenshot called ${name} in src/assets/screenshots`);
+
+// The screenshots are taken at twice the size they're shown, for screens with more pixels
+const widths = [800, 1600, light.width].filter((w, i, all) => w <= light.width && all.indexOf(w) === i);
+// As wide as the content column, which is wider on the home page
+const sizes = "(min-width: 72rem) 68rem, 100vw";
+---
+<figure class="screenshot not-content">
+    <a href={light.src} class:list={{ "dark:sl-hidden": Boolean(dark) }} aria-label={`${alt} (full size)`}>
+        <Image src={light} alt={alt} widths={widths} sizes={sizes} />
+    </a>
+    {dark && (
+        <a href={dark.src} class="light:sl-hidden" aria-label={`${alt} (full size)`}>
+            <Image src={dark} alt={alt} widths={widths} sizes={sizes} />
+        </a>
+    )}
+    {caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<style>
+    .screenshot {
+        margin-block: 1.5rem;
+    }
+    .screenshot img {
+        display: block;
+        width: 100%;
+        height: auto;
+        border: 1px solid var(--sl-color-hairline);
+        border-radius: 0.5rem;
+        box-shadow: var(--sl-shadow-md);
+    }
+    .screenshot figcaption {
+        margin-top: 0.5rem;
+        font-size: var(--sl-text-sm);
+        color: var(--sl-color-gray-3);
+        text-align: center;
+    }
+</style>

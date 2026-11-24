@@ -28,6 +28,8 @@ header {
     border-bottom: 1px solid var(--border);
 }
 
+header[hidden] { display: none; }
+
 h1 {
     flex: 1;
     min-width: 0;

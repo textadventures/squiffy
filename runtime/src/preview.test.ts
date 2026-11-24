@@ -339,6 +339,137 @@ body { background: url("blob:preview/1"), url(https://example.com/x.png); }`);
         expect([...element.classList]).toEqual([]);
     });
 
+    test("shows no buttons of its own unless the host asks", async () => {
+        const { preview, element } = setUp();
+        await preview.receive({ type: "load", story: { js: await compileJs(script) } });
+        expect(element.querySelectorAll(".squiffy-preview-header button")).toHaveLength(0);
+    });
+
+    test("shows the published page's buttons when the host asks, for a reader", async () => {
+        // jsdom has no showModal() or close()
+        window.HTMLDialogElement.prototype.showModal = function () { this.setAttribute("open", ""); };
+        window.HTMLDialogElement.prototype.close = function () { this.removeAttribute("open"); };
+        const { preview, messages, element } = setUp();
+        const settings: PlayerSetting[] = [{ name: "warnings", label: "Content warnings", type: "toggle" }];
+        const panels: Panel[] = [{ passage: "status", label: "Status" }];
+        const panelScript = "[[]]:\n\n[status]:\nScore: {{score}}\n\n" + script;
+        await preview.receive({ type: "controls", controls: { back: true, restart: true, mute: true, theme: true, strings: { restart: "Recommencer" } } });
+        await preview.receive({ type: "load", story: { js: await compileJs(panelScript, panels, settings) } });
+        expect(element.querySelector(".squiffy-preview-header")!.classList.contains("squiffy-preview-controls")).toBe(true);
+        const buttons = () => [...element.querySelectorAll<HTMLButtonElement>(".squiffy-preview-header button")];
+        const shown = () => buttons().filter(b => !b.hidden).map(b => b.id || b.title || b.textContent);
+        // In the published page's order, with the panels' buttons first. Mute only for a story with sound.
+        expect(shown()).toEqual(["Status", "squiffy-back", "squiffy-restart", "Settings", "squiffy-theme"]);
+        expect(buttons().find(b => b.id == "squiffy-mute")!.hidden).toBe(true);
+
+        // Back follows whether there's anywhere to go back to
+        const back = element.querySelector<HTMLButtonElement>("#squiffy-back")!;
+        expect(back.disabled).toBe(true);
+        element.querySelector<HTMLElement>("a[data-passage='look']")!.click();
+        await vi.waitFor(() => expect(back.disabled).toBe(false));
+        back.click();
+        await vi.waitFor(() => expect(back.disabled).toBe(true));
+
+        // Restart asks first, in the story's own words
+        const restart = element.querySelector<HTMLButtonElement>("#squiffy-restart")!;
+        expect(restart.title).toBe("Recommencer");
+        element.querySelector<HTMLElement>("a[data-passage='look']")!.click();
+        await vi.waitFor(() => expect(element.textContent).toContain("You look around"));
+        restart.click();
+        document.querySelector<HTMLElement>("dialog.squiffy-confirm [data-answer=yes]")!.click();
+        await vi.waitFor(() => expect(element.textContent).not.toContain("You look around"));
+
+        // Light/dark sets the theme, and tells the host so it can remember it
+        const theme = element.querySelector<HTMLButtonElement>("#squiffy-theme")!;
+        expect(theme.dataset.next).toBe("dark");
+        theme.click();
+        expect(messages).toContainEqual({ type: "themeChosen", theme: "dark" });
+        expect(document.head.querySelector("style")!.textContent).toBe(":root { color-scheme: dark; }");
+        expect(theme.dataset.next).toBe("light");
+        // Back to the system's own theme
+        theme.click();
+        expect(messages).toContainEqual({ type: "themeChosen", theme: "system" });
+        expect(document.head.querySelector("style")!.textContent).toBe("");
+
+        // Settings stays before mute and light/dark when the story changes
+        await preview.receive({ type: "update", js: await compileJs(panelScript, [{ passage: "status", label: "Score" }], settings) });
+        expect(shown()).toEqual(["Score", "squiffy-back", "squiffy-restart", "Settings", "squiffy-theme"]);
+
+        // Hidden for a story whose CSS fixes its theme
+        await preview.receive({ type: "load", story: { js: await compileJs(script), css: [":root { color-scheme: light; }"] } });
+        expect(shown()).toEqual(["squiffy-back", "squiffy-restart"]);
+
+        // And gone when the host asks for none
+        await preview.receive({ type: "controls", controls: {} });
+        expect(buttons()).toHaveLength(0);
+    });
+
+    test("shows the story's title and an edit button when the host asks, in one row with the rest", async () => {
+        const { preview, messages, element } = setUp();
+        const settings: PlayerSetting[] = [{ name: "warnings", label: "Content warnings", type: "toggle" }];
+        const panels: Panel[] = [{ passage: "status", label: "Status" }];
+        const panelScript = "[[]]:\n\n[status]:\nScore: {{score}}\n\n" + script;
+        await preview.receive({ type: "controls", controls: { restart: true, theme: true, title: "Test", edit: true } });
+        await preview.receive({ type: "load", story: { js: await compileJs(panelScript, panels, settings) } });
+        const header = () => element.querySelector(".squiffy-preview-header")!;
+        const items = () => [...header().querySelectorAll<HTMLElement>(".squiffy-preview-title, button")]
+            .map(e => e.id || e.title || e.textContent);
+        expect(items()).toEqual(["Test", "Status", "squiffy-restart", "Settings", "squiffy-theme", "squiffy-edit"]);
+
+        // The panels' and Settings buttons stay between the title and the edit button when they change
+        await preview.receive({ type: "update", js: await compileJs(panelScript, [{ passage: "status", label: "Score" }], settings) });
+        expect(items()).toEqual(["Test", "Score", "squiffy-restart", "Settings", "squiffy-theme", "squiffy-edit"]);
+        await preview.receive({ type: "update", js: await compileJs(panelScript, panels) });
+        await preview.receive({ type: "update", js: await compileJs(panelScript, panels, settings) });
+        expect(items()).toEqual(["Test", "Status", "squiffy-restart", "Settings", "squiffy-theme", "squiffy-edit"]);
+
+        element.querySelector<HTMLButtonElement>("#squiffy-edit")!.click();
+        expect(messages).toContainEqual({ type: "editRequested" });
+        expect(element.querySelector<HTMLButtonElement>("#squiffy-edit")!.title).toBe("Open in editor");
+
+        await preview.receive({ type: "controls", controls: { title: "Another" } });
+        expect(items()).toEqual(["Another", "Status", "Settings"]);
+    });
+
+    test("the mute button mutes the story, and tells the host (#444)", async () => {
+        vi.stubGlobal("Audio", class {
+            muted = false;
+            paused = true;
+            volume = 1;
+            loop = false;
+            preload = "";
+            constructor(public src = "") {}
+            play() {
+                this.paused = false;
+                return Promise.resolve();
+            }
+            pause() {
+                this.paused = true;
+            }
+            addEventListener() {}
+        });
+        try {
+            const { preview, messages, element } = setUp();
+            await preview.receive({ type: "controls", controls: { mute: true } });
+            await preview.receive({ type: "load", story: { js: await compileJs("@music theme.mp3\nHello.") } });
+            const mute = element.querySelector<HTMLButtonElement>("#squiffy-mute")!;
+            expect(mute.hidden).toBe(false);
+            expect(mute.title).toBe("Mute");
+            mute.click();
+            expect(messages).toContainEqual({ type: "mutedChosen", muted: true });
+            expect(mute.title).toBe("Unmute");
+            expect(mute.classList.contains("squiffy-muted")).toBe(true);
+
+            // The host's own mute shows on the button too
+            await preview.receive({ type: "muted", muted: false });
+            expect(mute.title).toBe("Mute");
+        }
+        finally {
+            vi.unstubAllGlobals();
+            vi.stubGlobal("crypto", { randomUUID: () => "00000000-0000-0000-0000-000000000000" });
+        }
+    });
+
     test("reports errors", async () => {
         const messages: PreviewMessage[] = [];
         const preview = createPreview({
