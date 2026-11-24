@@ -31,3 +31,17 @@ test("the player's settings", async ({ page }) => {
     await expect(settings).toBeVisible();
     await capture(tab, "player-settings", { clip: await around(settings, 24), themes: false });
 });
+
+test("the published Coffee Shop Confessions, with its order pad", async ({ page }) => {
+    await openStory(page, "examples/coffeeshop");
+    await run(page);
+    const tab = await playInNewTab(page);
+    const name = tab.getByPlaceholder("Your name");
+    await expect(name).toBeVisible();
+    await name.fill("Priya");
+    await reseed(tab);
+    await name.press("Enter");
+    await choose(tab, "The man by the window");
+    await expect(tab.getByText("black coffee, no room").first()).toBeVisible();
+    await capture(tab, "player-coffeeshop");
+});
