@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-import AxeBuilder from "@axe-core/playwright";
+import { checkAccessibility } from "../axe.ts";
 import { readdirSync } from "node:fs";
 
 // The docs site (site/), from its dev server, as beta.squiffystory.com: axe's automated checks
@@ -27,29 +27,8 @@ async function startSamples(page: Page) {
     await page.waitForTimeout(1000);
 }
 
-// What axe reports that isn't a problem, or isn't ours to fix
-function knownProblem(rule: string, html: string) {
-    // A sample's editor scrolls, and axe doesn't count CodeMirror's text (contenteditable) as
-    // something in it that can have the focus, but it is
-    if (rule == "scrollable-region-focusable" && html.includes("cm-scroller")) return true;
-    // Starlight's search button, which is named "Search", and shows "Search" and its shortcut
-    // (Ctrl K). Its name starts with the word it shows, so a voice control user can say it.
-    if (rule == "label-content-name-mismatch" && html.includes("data-open-modal")) return true;
-    return false;
-}
-
-async function check(page: Page) {
-    const results = await new AxeBuilder({ page })
-        .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
-        // Astro's dev toolbar, which isn't on the published site
-        .exclude("astro-dev-toolbar")
-        .analyze();
-    const violations = results.violations
-        .map(v => ({ ...v, nodes: v.nodes.filter(n => !knownProblem(v.id, n.html)) }))
-        .filter(v => v.nodes.length);
-    const found = violations.map(v => `${v.id} (${v.impact}): ${v.help}\n${v.nodes.map(n => `    ${n.target.join(" ")}: ${n.failureSummary?.split("\n").slice(1).join(" ")}`).join("\n")}`);
-    expect(found, found.join("\n\n")).toEqual([]);
-}
+// Astro's dev toolbar isn't on the published site
+const check = (page: Page) => checkAccessibility(page, { exclude: ["astro-dev-toolbar"] });
 
 for (const colorScheme of ["light", "dark"] as const) {
     test.describe(`${colorScheme} theme`, () => {

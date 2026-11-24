@@ -3,6 +3,7 @@
   "version": 1,
   "id": "4c2ca1f2-6623-45e8-bbcf-42b553f326ac",
   "main": "coffeeshop.squiffy",
+  "language": "en",
   "panels": [
     { "passage": "order pad", "label": "Order pad", "position": "side" }
   ]

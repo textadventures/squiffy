@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-import AxeBuilder from "@axe-core/playwright";
+import { checkAccessibility } from "../axe.ts";
 
 // axe's automated checks (WCAG 2.2 A and AA: contrast, names, roles...) on the editor's main
 // views, light and dark (#639). They catch only some problems: the rest needs a screen reader and
@@ -25,18 +25,8 @@ The end. [[nowhere]]
 
 const editor = (page: Page) => page.locator("#editor .cm-content:visible");
 
-async function check(page: Page) {
-    const results = await new AxeBuilder({ page })
-        .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
-        // The story's own page, in the preview's sandboxed frame, is the author's, not the editor's
-        .exclude("iframe")
-        // Not yet: maximum-scale=1 stops iOS zooming in when the script (14px text) gets the
-        // focus, but also stops pinch zoom on Android (#639)
-        .disableRules(["meta-viewport"])
-        .analyze();
-    const found = results.violations.map(v => `${v.id} (${v.impact}): ${v.help}\n${v.nodes.map(n => `    ${n.target.join(" ")}: ${n.failureSummary?.split("\n").slice(1).join(" ")}`).join("\n")}`);
-    expect(found, found.join("\n\n")).toEqual([]);
-}
+// The story's own page, in the preview's sandboxed frame, is the author's, not the editor's
+const check = (page: Page) => checkAccessibility(page, { exclude: ["iframe"] });
 
 for (const colorScheme of ["light", "dark"] as const) {
     test.describe(`${colorScheme} theme`, () => {
