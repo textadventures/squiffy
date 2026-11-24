@@ -70,7 +70,7 @@ Its `squiffy` has `get`, `set`, `story.go`/`seen`/`visits`/`passages`/`sections`
 
 ## Custom animations
 
-`squiffy.registerAnimation(name, (el, params, onComplete, loop) => { ... })` in a `@ui` block. `params` has the `{{#animate}}` options; call `onComplete()` when done. Anime.js is available as `squiffy.import.animejs`.
+`squiffy.registerAnimation(name, (el, params, onComplete, loop) => { ... })` in a `@ui` block. `params` has the `{{#animate}}` options, and `params.reducedMotion` is true if the player's system asks to reduce motion; call `onComplete()` when done. Anime.js is available as `squiffy.import.animejs`.
 
 ## Errors
 

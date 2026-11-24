@@ -2,6 +2,29 @@ import { animate, splitText, stagger } from "animejs";
 
 export type AnimationHandler = (el: HTMLElement, params: Record<string, any>, onComplete: () => void, loop: boolean) => void;
 
+// Whether the player has asked their system to reduce motion. Not in jsdom, which has no
+// matchMedia, so --play is the same either way.
+export function prefersReducedMotion(): boolean {
+    return typeof window !== "undefined" && typeof window.matchMedia === "function"
+        && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+// How long typewriter and toast take to fade the whole text in, under reduced motion
+const reducedMotionFade = 200;
+
+// Typewriter and toast under reduced motion: the whole text fades in quickly, after the same
+// start, so what comes after it still waits for it. A loop just shows the text.
+function fadeInWhole(el: HTMLElement, params: Record<string, any>, onComplete: () => void, loop: boolean) {
+    if (loop) return;
+    animate(el, {
+        opacity: [0, 1],
+        easing: "linear",
+        duration: reducedMotionFade,
+        delay: params.start || 0,
+        onComplete: onComplete
+    });
+}
+
 export interface AnimationOptions {
     initiallyHidden?: boolean;
 }
@@ -26,7 +49,8 @@ export class Animation {
     runAnimation(name: string, el: HTMLElement, params: Record<string, any>, onComplete: () => void, loop: boolean) {
         const animation = this.animations[name];
         if (animation) {
-            animation.handler(el, params, onComplete, loop);
+            // So a custom animation can do less, as the built-in ones do
+            animation.handler(el, { ...params, reducedMotion: prefersReducedMotion() }, onComplete, loop);
         } else {
             console.warn(`No animation registered with name: ${name}`);
             onComplete();
@@ -50,6 +74,8 @@ export class Animation {
 
     constructor() {
         this.registerAnimation("typewriter", function(el, params, onComplete, loop) {
+            if (params.reducedMotion) return fadeInWhole(el, params, onComplete, loop);
+
             // Each character in a span, inside a span for its word, so a line only breaks
             // between words: without the words, it could break anywhere, e.g. at the
             // apostrophe in "let's"
@@ -69,6 +95,8 @@ export class Animation {
         }, { initiallyHidden: true });
 
         this.registerAnimation("toast", function(el, params, onComplete, loop) {
+            if (params.reducedMotion) return fadeInWhole(el, params, onComplete, loop);
+
             const { words } = splitText(el, { words: true, chars: false });
 
             const fadeDuration = params.fadeDuration || 100;   // ms fade-in per word
@@ -88,6 +116,9 @@ export class Animation {
         }, { initiallyHidden: true });
 
         this.registerAnimation("fadeIn", function(el, params, onComplete, loop) {
+            // A fade isn't motion, but one that repeats forever is left still, as pulse is
+            if (params.reducedMotion && loop) return;
+
             const duration = params.duration || 500;   // ms for the fade
 
             animate(el, {
@@ -108,7 +139,10 @@ export class Animation {
             let waveAnimation: ReturnType<typeof animate> | null = null;
             let chars: HTMLElement[] | null = null;
 
-            if (style === "wave") {
+            if (params.reducedMotion) {
+                // Still a link, but without the movement. The stylesheet stops the CSS styles'.
+                if (style === "wave") el.classList.add("squiffy-continue-wave");
+            } else if (style === "wave") {
                 // Wave style needs JS animation - split into chars and animate opacity. Words too,
                 // so a line only breaks between words, as with typewriter.
                 el.classList.add("squiffy-continue-wave");

@@ -1,5 +1,5 @@
 // The built-in animations in animation.ts
-import { afterAll, beforeAll, expect, test } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test } from "vitest";
 import globalJsdom from "global-jsdom";
 import type { Animation as AnimationClass } from "./animation.js";
 
@@ -41,4 +41,68 @@ test.each([
     new Animation().runAnimation(name, el, params, () => {}, false);
 
     expect(charsByParent(el)).toEqual(["Now,", "let's", "spin..."]);
+});
+
+describe("with the player's system set to reduce motion", () => {
+    beforeEach(() => {
+        window.matchMedia = ((media: string) => ({
+            matches: media === "(prefers-reduced-motion: reduce)",
+            media,
+            addEventListener() {},
+            removeEventListener() {},
+        })) as any;
+    });
+
+    afterEach(() => {
+        delete (window as any).matchMedia;
+    });
+
+    const run = (name: string, params: Record<string, any> = {}, loop = false) => {
+        const el = document.createElement("span");
+        el.textContent = "Now, let's spin...";
+        document.body.appendChild(el);
+        const done = new Promise<void>(resolve => {
+            new Animation().runAnimation(name, el, params, resolve, loop);
+        });
+        return { el, done };
+    };
+
+    test.each(["typewriter", "toast"])("%s fades the whole text in, instead of a piece at a time", async (name) => {
+        const { el, done } = run(name);
+        expect(el.querySelector("[data-char], [data-word]")).toBeNull();
+        expect(el.textContent).toBe("Now, let's spin...");
+        // Still finishes, so what comes after it is shown
+        await done;
+    });
+
+    test.each(["typewriter", "toast", "fadeIn"])("%s with loop=true just shows the text", (name) => {
+        const { el } = run(name, {}, true);
+        expect(el.innerHTML).toBe("Now, let's spin...");
+        expect(el.getAttribute("style")).toBeNull();
+    });
+
+    test("continue's wave doesn't ripple, but is still a link", () => {
+        let continued = false;
+        const el = document.createElement("span");
+        el.textContent = "Step inside";
+        document.body.appendChild(el);
+        new Animation().runAnimation("continue", el, { style: "wave" }, () => continued = true, false);
+        expect(el.querySelector("[data-char]")).toBeNull();
+        expect(el.classList.contains("squiffy-continue")).toBe(true);
+        el.click();
+        expect(continued).toBe(true);
+    });
+
+    test("a custom animation is told, in params.reducedMotion", () => {
+        const animation = new Animation();
+        const seen: any[] = [];
+        animation.registerAnimation("spin", (_el, params, onComplete) => {
+            seen.push(params.reducedMotion);
+            onComplete();
+        });
+        animation.runAnimation("spin", document.createElement("span"), {}, () => {}, false);
+        delete (window as any).matchMedia;
+        animation.runAnimation("spin", document.createElement("span"), {}, () => {}, false);
+        expect(seen).toEqual([true, false]);
+    });
 });
