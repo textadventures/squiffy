@@ -17,6 +17,19 @@ import soundCss from "../../tutorial/part-2/3-sound/style.css?raw";
 import panel from "../../tutorial/part-2/4-panel/story.squiffy?raw";
 import panelCss from "../../tutorial/part-2/4-panel/style.css?raw";
 import panelJson from "../../tutorial/part-2/4-panel/squiffy.json?raw";
+import partOneStory from "../../tutorial/6-atmosphere.squiffy?raw";
+import { encodeStory, storyFragment } from "@textadventures/squiffy-player/link";
+import { stableAppUrl } from "../../channel.mjs";
+
+export const partOneLink = // The story from the end of the first part, as a link that opens it in the editor, with the
+    // squiffy.json a new story has, as in the-island.zip (scripts/build-examples.ts). It's to the
+    // stable editor: a beta build's links are rewritten to the beta one (app-links.mjs).
+    `${stableAppUrl}/${storyFragment(encodeStory({
+    files: {
+        "story.squiffy": partOneStory,
+        "squiffy.json": JSON.stringify({ $schema: "https://squiffystory.com/schema/squiffy.json", version: 1, main: "story.squiffy" }, null, 2) + "\n",
+    },
+}))}`;
 
 export const sounds = { "sea.mp3": "/tutorial/sounds/sea.mp3", "snuffle.mp3": "/tutorial/sounds/snuffle.mp3" };
 
@@ -32,7 +45,9 @@ It takes about half an hour. You don't need to know any CSS: you'll copy what yo
 
 Open the story you wrote in the first part in the editor, or the [desktop app](/desktop-app/).
 
-If you don't have it, or you'd like to start from the same place as this tutorial, download <a href="/tutorial/the-island.zip" download>the-island.zip</a>. Choose **Open file** on the editor's home page (in the desktop app, **File > Open File…**), and choose the zip. It opens as a new story.
+If you don't have it, or you'd like to start from the same place as this tutorial, <a href={partOneLink} target="_blank">open it in the editor</a>, where it opens as a new story.
+
+In the desktop app, download <a href="/tutorial/the-island.zip" download>the-island.zip</a> instead, choose **File > Open File…**, and choose the zip.
 
 <Aside type="tip">
 As in the first part, every step has the story so far, which you can play and edit. These samples have more than one file: choose a file's tab to see it.
@@ -75,7 +90,7 @@ Sound needs some files. Download these two, which are free to use in your story:
 - <a href="/tutorial/sounds/sea.mp3" download>sea.mp3</a>: waves on a beach, for the music
 - <a href="/tutorial/sounds/snuffle.mp3" download>snuffle.mp3</a>: something sniffing in the dark
 
-In the editor, choose the image button in the toolbar, to open **Images and other files**, then **Add files**, and choose them. (If you downloaded the-island.zip, you'll need to add these too.) Then add the sound to your story:
+In the editor, choose the image button in the toolbar, to open **Images and other files**, then **Add files**, and choose them. (If you opened this tutorial's story, you'll need to add these too.) Then add the sound to your story:
 
 <Sample script={sound} files={{ "style.css": soundCss }} assets={sounds}></Sample>
 
