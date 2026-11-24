@@ -33,19 +33,48 @@ export function syncLinkStates(output: Element, currentSection: Element | null) 
     }
 }
 
+// Whether the keyboard focus is in the story, or nowhere (on the page's body)
+export function focusIsIn(story: Element) {
+    const active = story.ownerDocument.activeElement;
+    return !active || active === story.ownerDocument.body || story.contains(active);
+}
+
+// Gives an element the focus with a tabindex it only has while it has the focus, so it isn't saved
+// with the story's text
+function focusTemporarily(element: HTMLElement) {
+    if (!element.hasAttribute("tabindex")) {
+        element.setAttribute("tabindex", "-1");
+        element.classList.add("squiffy-focus-target");
+        element.addEventListener("blur", () => {
+            element.removeAttribute("tabindex");
+            element.classList.remove("squiffy-focus-target");
+            if (!element.classList.length) element.removeAttribute("class");
+        }, { once: true });
+    }
+    element.focus({ preventScroll: true });
+}
+
+// When the screen is cleared and the text that has the focus (the link just clicked) is about to be
+// hidden, the story itself takes the focus until the new text is shown. Otherwise the focus is lost
+// as soon as the text is moved, and a screen reader such as VoiceOver moves it somewhere else, such
+// as a header button.
+export function holdFocus(story: HTMLElement, hiding: Element[]) {
+    const active = story.ownerDocument.activeElement;
+    if (active && hiding.some(e => e.contains(active))) focusTemporarily(story);
+}
+
 // Moves the keyboard focus to the text just shown, after the player clicked a link or the story
 // went on by itself, so a screen reader reads it next, and Tab goes on to its links. Otherwise the
 // focus would be left on the link that was clicked, which can't be clicked again and is taken out
-// of the Tab order. Only if the focus is in the story already, or nowhere, so it doesn't jump away
-// from a header button, a dialog, or a page the story is embedded in.
-export function focusNewText(element: HTMLElement | null, story: Element) {
+// of the Tab order.
+// clicked: the focus was in the story when the player clicked the link that showed it, so it goes
+// to the new text wherever it is now (it may have been moved while the old text was cleared away),
+// unless a dialog has been opened since. Otherwise, only if the focus is in the story or nowhere,
+// so a {{goto after=}} doesn't take it from a header button, a dialog, or a page the story is
+// embedded in.
+export function focusNewText(element: HTMLElement | null, story: Element, clicked = false) {
     if (!element || !element.isConnected) return;
     const active = element.ownerDocument.activeElement;
-    if (active && active !== element.ownerDocument.body && !story.contains(active)) return;
-    if (!element.hasAttribute("tabindex")) {
-        element.setAttribute("tabindex", "-1");
-        // Only while it has the focus, so it isn't saved with the story's text
-        element.addEventListener("blur", () => element.removeAttribute("tabindex"), { once: true });
-    }
-    element.focus({ preventScroll: true });
+    if (clicked ? active?.closest("dialog[open]") : !focusIsIn(story)) return;
+    focusTemporarily(element);
 }

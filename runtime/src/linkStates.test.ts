@@ -40,9 +40,9 @@ You wait. {{goto "later" after=10}}
 [[later]]:
 Later.`;
 
-const start = async (options: Partial<SquiffyInitOptions> = {}) => {
+const start = async (options: Partial<SquiffyInitOptions> = {}, story = script) => {
     const element = document.getElementById("squiffy")!;
-    const result = await squiffyCompile({ script });
+    const result = await squiffyCompile({ script: story });
     if (!result.success) throw new Error("Compile failed");
     const js = result.output.js.map(lines => new Function("squiffy", "get", "set", lines.join("\n")));
     const api = await init({ element, story: { js: js as any, ...result.output.story }, persist: false, scroll: "none", ...options });
@@ -119,12 +119,24 @@ test("clicking a section link moves the focus to the section's text", async () =
     expect(document.activeElement).toBe(element.querySelector(".squiffy-output-section[data-section='outside']"));
 });
 
-test("the text loses its tabindex when it loses the focus, so it isn't saved", async () => {
+test("the text loses its tabindex when it loses the focus", async () => {
     const { api, element } = await start();
     await click(api, element, "outside");
     const section = element.querySelector<HTMLElement>(".squiffy-output-section[data-section='outside']")!;
     link(element, "back inside").focus();
     expect(section.hasAttribute("tabindex")).toBe(false);
+    expect(section.classList.contains("squiffy-focus-target")).toBe(false);
+});
+
+test("the tabindex of the text that has the focus isn't saved", async () => {
+    const { api, element } = await start({ persist: true, storyId: "links" });
+    await click(api, element, "Look around");
+    // Clicked without the link taking the focus, so the passage still has it when the game is saved
+    expect(await api.clickLink(link(element, "outside"))).toBe(true);
+    expect(document.activeElement?.getAttribute("data-section")).toBe("outside");
+    const saved = JSON.parse(localStorage.getItem("links-_output")!) as string;
+    expect(saved).not.toContain("squiffy-focus-target");
+    expect(saved).not.toMatch(/<div class="squiffy-output-passage"[^>]*tabindex/);
 });
 
 test("a {{goto after=}} moves the focus to where it goes", async () => {
@@ -156,4 +168,41 @@ test("a saved game's links are brought up to date when it's loaded", async () =>
     const { element } = await start({ persist: true, storyId: "links" });
     expect(unreachable(link(element, "outside"))).toBe(true);
     expect(reachable(link(element, "back inside"))).toBe(true);
+});
+
+// A section with @clear hides the link that was clicked. VoiceOver then moves the focus somewhere
+// else, such as the header's dark mode button, which the section's JavaScript does here.
+const clearing = `[[start]]:
+Start. [[Go on]](next)
+
+[[next]]:
+@clear
+    document.getElementById("outside").focus();
+Next. [[Finish]](end)
+
+[[end]]:
+@clear
+The end.`;
+
+test("the story holds the focus while the screen is cleared, and then gives it to the new text", async () => {
+    const { api, element } = await start({}, clearing.replace(/\n {4}document.*\n/, "\n"));
+    const focused: Element[] = [];
+    document.addEventListener("focusin", event => focused.push(event.target as Element));
+    await click(api, element, "Go on");
+    expect(focused.slice(1)).toEqual([element, element.querySelector(".squiffy-output-section[data-section='next']")]);
+    expect(element.hasAttribute("tabindex")).toBe(false);
+});
+
+test("the focus goes to the new text even if something else took it while the screen was cleared", async () => {
+    const { api, element } = await start({}, clearing);
+    await click(api, element, "Go on");
+    expect(document.activeElement).toBe(element.querySelector(".squiffy-output-section[data-section='next']"));
+});
+
+test("the focus stays outside the story if the link was clicked while it was there", async () => {
+    const { api, element } = await start({}, clearing);
+    const outside = document.getElementById("outside")!;
+    outside.focus();
+    expect(await api.clickLink(link(element, "Go on"))).toBe(true);
+    expect(document.activeElement).toBe(outside);
 });
