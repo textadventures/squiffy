@@ -78,9 +78,17 @@ export class Preview implements vscode.Disposable {
             retainContextWhenHidden: true,
             localResourceRoots: vscode.workspace.workspaceFolders?.map(f => f.uri) ?? [],
         });
-        panel.webview.html = withCsp(previewHtml, panel.webview.cspSource);
+        const html = withCsp(previewHtml, panel.webview.cspSource);
+        panel.webview.html = html;
+        let reloads = 0;
         const channel: PreviewChannel = {
-            send: message => void panel.webview.postMessage(message),
+            send: message => {
+                // The host asks the page to reload before loading a story again after one with
+                // scripts. A webview's page can't reload itself (it goes blank), but setting its
+                // HTML reloads it. VS Code skips setting the same HTML, so each time is different.
+                if (isReload(message)) panel.webview.html = `${html}\n<!-- ${++reloads} -->`;
+                else void panel.webview.postMessage(message);
+            },
             onMessage: handler => {
                 const subscription = panel.webview.onDidReceiveMessage(handler);
                 return () => subscription.dispose();
@@ -177,6 +185,9 @@ export class Preview implements vscode.Disposable {
         for (const d of this.disposables) d.dispose();
     }
 }
+
+const isReload = (message: unknown) =>
+    typeof message == "object" && message !== null && (message as { type?: unknown }).type == "reload";
 
 // The preview page with a Content Security Policy: its own inline script and styles, the story
 // as a blob: module, and assets from the workspace. The webview is already isolated from VS Code,

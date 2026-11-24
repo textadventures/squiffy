@@ -48,7 +48,9 @@ export async function activate(context: vscode.ExtensionContext, createClient: C
         if (!editor) return;
         const at = await client!.sendRequest<SectionAtResult>(SECTION_AT, {
             uri: editor.document.uri.toString(),
-            position: editor.selection.active,
+            // As a plain object: on the web, the server is in a worker, and a vscode.Position
+            // would arrive there with only its private fields
+            position: { line: editor.selection.active.line, character: editor.selection.active.character },
         } satisfies SectionAtParams);
         return preview.show(editor.document.uri, at ?? undefined);
     });
