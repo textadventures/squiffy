@@ -31,6 +31,37 @@ async function compileStory(storyName) {
   return pkg.files;
 }
 
+// Expose the Squiffy API as window.squiffyApi, so tests can call e.g. goBack(). Rather than
+// matching the page's own script, which changes, this wraps squiffyRuntime.init() as the runtime
+// defines it, from a script at the top of <head>, before any other script runs.
+const exposeApiScript = `<script>
+(function () {
+    let runtime;
+    Object.defineProperty(window, "squiffyRuntime", {
+        configurable: true,
+        get: () => runtime,
+        set: value => {
+            const init = value.init;
+            value.init = async options => {
+                const api = await init(options);
+                window.squiffyApi = api;
+                return api;
+            };
+            runtime = value;
+        },
+    });
+})();
+</script>`;
+
+function exposeApi(html) {
+  const head = /<head[^>]*>/i.exec(html);
+  if (!head) {
+    throw new Error("Can't expose squiffyApi: the packaged index.html has no <head>");
+  }
+  const at = head.index + head[0].length;
+  return html.slice(0, at) + "\n" + exposeApiScript + html.slice(at);
+}
+
 const server = http.createServer(async (req, res) => {
   try {
     // Parse URL to get story name and file
@@ -82,8 +113,7 @@ const server = http.createServer(async (req, res) => {
 
     let content = files[fileName];
     if (fileName === "index.html") {
-      // Expose the Squiffy API so tests can call e.g. goBack()
-      content = content.replace("await squiffyApi.begin();", "window.squiffyApi = squiffyApi;\n            await squiffyApi.begin();");
+      content = exposeApi(content);
     }
 
     res.writeHead(200, { "Content-Type": contentType });
