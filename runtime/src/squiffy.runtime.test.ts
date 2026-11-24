@@ -5241,12 +5241,25 @@ describe('scroll: "element"', () => {
         return scrolls;
     };
 
+    // Where the text so far ends in the box, as the bottom of the output's children, with what's
+    // in the box moving up as it scrolls
+    const textEndsAt = (element: HTMLElement, bottom: () => number) => {
+        vi.spyOn(window.Element.prototype, "getBoundingClientRect").mockImplementation(function (this: Element) {
+            const inBox = this !== element && element.contains(this);
+            const top = inBox ? -element.scrollTop : 0;
+            const b = top + (this.parentElement?.parentElement === element ? bottom() : 0);
+            return { top, bottom: b, left: 0, right: 0, width: 0, height: b - top, x: 0, y: top, toJSON: () => ({}) };
+        });
+    };
+
     test("scrolls the story's own box, and not the page around it", async () => {
         const element = document.getElementById("squiffy")!;
         const scrolls = boxedStory(element);
         const scrollIntoView = vi.fn();
         window.Element.prototype.scrollIntoView = scrollIntoView;
         const windowScroll = vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+        let bottom = 0;
+        textEndsAt(element, () => bottom += 50);
 
         const { story } = await compile("[[start]]:\n[[Go on]](next)\n\n[[next]]:\nYou go on.\n\n[[Clear]](clear)\n\n[[clear]]:\n@clear\nA fresh page.");
         const squiffyApi = await init({ element, story, scroll: "element" });
@@ -5262,6 +5275,33 @@ describe('scroll: "element"', () => {
 
         expect(scrollIntoView).not.toHaveBeenCalled();
         expect(windowScroll).not.toHaveBeenCalled();
+    });
+
+    const goOn = async (textBottom: number, scrollTop = 0) => {
+        const element = document.getElementById("squiffy")!;
+        const scrolls = boxedStory(element);
+        Object.defineProperty(element, "scrollTop", { value: scrollTop, configurable: true });
+        let bottom = 0;
+        textEndsAt(element, () => bottom);
+        const { story } = await compile("[[start]]:\n[[Go on]](next)\n\n[[next]]:\nYou go on.");
+        const squiffyApi = await init({ element, story, scroll: "element" });
+        await squiffyApi.begin();
+        scrolls.length = 0;
+        bottom = textBottom;
+        await squiffyApi.clickLink(findLink(element, "section", "Go on"));
+        return scrolls;
+    };
+
+    test("scrolls down to where the new text starts, not past it", async () => {
+        expect(await goOn(250)).toEqual([{ top: 250, behavior: "smooth" }]);
+    });
+
+    test("scrolls no further than the end of the box, its padding included", async () => {
+        expect((await goOn(450)).at(-1)).toEqual({ top: 400, behavior: "smooth" });
+    });
+
+    test("doesn't scroll up to where the new text starts", async () => {
+        expect(await goOn(250, 300)).toEqual([]);
     });
 });
 

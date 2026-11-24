@@ -21,7 +21,7 @@ ${css}
 html, body { height: 100%; }
 div#squiffy-container { max-width: none; height: 100%; padding: 0; }
 #squiffy, .squiffy-preview-story, .squiffy-preview-story > div { height: 100%; box-sizing: border-box; }
-.squiffy-preview-story > div { padding: 1em max(1.25rem, calc((100% - var(--squiffy-max-width)) / 2)); }
+.squiffy-preview-story > div { padding: 1em max(1.25rem, calc((100% - var(--squiffy-max-width)) / 2)) 3rem; }
 /* The story's panels: their buttons above the story, and side panels to its right */
 #squiffy { display: flex; flex-direction: column; }
 .squiffy-preview-header { flex: none; padding: 0.5rem 0.75rem 0; font-family: system-ui, sans-serif; font-size: 0.875rem; text-align: right; }

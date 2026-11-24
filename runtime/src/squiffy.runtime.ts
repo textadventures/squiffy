@@ -44,6 +44,10 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     let currentSectionElement: HTMLElement;
     let currentPassageElement: HTMLElement | null;
     let currentBlockOutputElement: HTMLElement | null;
+    // Where the latest text starts, which the next scroll goes down to (and no further, so a long
+    // passage isn't scrolled past its beginning). For scroll: "body", it's the output's height
+    // before the text was written. For scroll: "element", it's the bottom of the text before it,
+    // measured from the top of the output's content (see outputOffset).
     let scrollPosition = 0;
     // Set when the screen is cleared, so the next scroll goes up to the top of the new screen (#54)
     let scrollToTop = false;
@@ -934,26 +938,45 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     }
 
 
-    // For scroll: "element", scrolls the story's own scrolling box (its nearest ancestor that
-    // scrolls, or else its own window) so that the top or the bottom of el is at the top or the
-    // bottom of it. Unlike scrollIntoView, this never scrolls the page around that box, or the page
-    // the story is in a frame of, such as the docs' samples.
-    function scrollWithin(el: Element, block: "start" | "end") {
-        const rect = el.getBoundingClientRect();
-        const box = scrollingBox(el);
+    // For scroll: "element", the story's own scrolling box is the output itself, or its nearest
+    // ancestor that scrolls, or else its own window. Unlike scrollIntoView, these never scroll the
+    // page around that box, or the page the story is in a frame of, such as the docs' samples.
+
+    // Scrolls the box so that the top of el is at the top of it
+    function scrollToElement(el: Element) {
+        const box = scrollingBox();
+        const top = el.getBoundingClientRect().top;
+        if (box) box.scrollTo({ top: box.scrollTop + top - box.getBoundingClientRect().top, behavior: "smooth" });
+        else window.scrollTo({ top: window.scrollY + top, behavior: "smooth" });
+    }
+
+    // How far down the output's content the bottom of its text is, which is where the next text
+    // will start. It doesn't change as the box scrolls.
+    function outputOffset(): number {
+        const last = outputElement.lastElementChild;
+        if (!last) return 0;
+        return last.getBoundingClientRect().bottom - outputElement.getBoundingClientRect().top + outputElement.scrollTop;
+    }
+
+    // Scrolls the box down so that the given offset into the output's content is at the top of it,
+    // or as near as it can: to the end of the box, padding and all, if that's nearer, as the
+    // exported page does. It never scrolls up.
+    function scrollToOffset(offset: number) {
+        const box = scrollingBox();
+        const outputTop = outputElement.getBoundingClientRect().top;
         if (box) {
-            const bounds = box.getBoundingClientRect();
-            const by = block === "start" ? rect.top - bounds.top : rect.bottom - bounds.bottom;
-            box.scrollTo({ top: box.scrollTop + by, behavior: "smooth" });
+            const contentTop = box === outputElement ? 0 : box.scrollTop + outputTop - box.getBoundingClientRect().top;
+            const top = Math.min(contentTop + offset, box.scrollHeight - box.clientHeight);
+            if (top > box.scrollTop) box.scrollTo({ top, behavior: "smooth" });
         }
         else {
-            const by = block === "start" ? rect.top : rect.bottom - window.innerHeight;
-            window.scrollTo({ top: window.scrollY + by, behavior: "smooth" });
+            const top = Math.min(window.scrollY + outputTop + offset, document.documentElement.scrollHeight - window.innerHeight);
+            if (top > window.scrollY) window.scrollTo({ top, behavior: "smooth" });
         }
     }
 
-    function scrollingBox(el: Element): HTMLElement | null {
-        for (let e = el.parentElement; e && e !== document.body && e !== document.documentElement; e = e.parentElement) {
+    function scrollingBox(): HTMLElement | null {
+        for (let e: HTMLElement | null = outputElement; e && e !== document.body && e !== document.documentElement; e = e.parentElement) {
             const overflow = getComputedStyle(e).overflowY;
             if ((overflow === "auto" || overflow === "scroll") && e.scrollHeight > e.clientHeight) return e;
         }
@@ -1124,7 +1147,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             ui.writeHtml(ui.renderHtml(text, false), source);
         },
         writeHtml: (rendered: string, source: string) => {
-            scrollPosition = outputElement.scrollHeight;
+            scrollPosition = settings.scroll === "element" ? outputOffset() : outputElement.scrollHeight;
 
             const html = pendingErrors.splice(0).join("") + rendered.trim();
 
@@ -1166,7 +1189,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
                 // above where the reader has scrolled to.
                 scrollToTop = false;
                 if (settings.scroll === "element") {
-                    scrollWithin(currentSectionElement, "start");
+                    scrollToElement(currentSectionElement);
                 }
                 else {
                     const currentScrollTop = Math.max(document.body.scrollTop, document.documentElement.scrollTop);
@@ -1177,8 +1200,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
                 }
             }
             else if (settings.scroll === "element") {
-                const last = outputElement.lastElementChild;
-                if (last) scrollWithin(last, "end");
+                scrollToOffset(scrollPosition);
             }
             else {
                 let scrollTo = scrollPosition;
