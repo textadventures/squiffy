@@ -2,8 +2,10 @@ name: Lint PR title
 
 # The PR title becomes the commit message release-please parses (PRs are
 # squash-merged), and a commit without a Conventional Commits prefix (fix:,
-# feat:, chore:, etc.) never triggers a release. This enforces the prefix
-# only; scopes are not enforced.
+# feat:, chore:, etc.) never triggers a release. A scope is optional, but
+# must be one of these, so a typo doesn't make a new one: one product's
+# changes, which release-please shows in bold in the changelog, and main,
+# which release-please's own release PRs use. See CLAUDE.md's Releasing.
 on:
   pull_request_target:
     types: [opened, edited, synchronize, reopened]
@@ -18,3 +20,13 @@ jobs:
       - uses: amannn/action-semantic-pull-request@v6
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          requireScope: false
+          scopes: |
+            vscode
+            editor
+            desktop
+            cli
+            player
+            runtime
+            main
