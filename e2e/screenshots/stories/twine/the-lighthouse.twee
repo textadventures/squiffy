@@ -1,0 +1,51 @@
+:: StoryTitle
+The Lighthouse
+
+:: StoryData
+{
+  "ifid": "5B1C6A0E-3F7D-4C8A-9E21-7D4F2B8C1A90",
+  "format": "Harlowe",
+  "format-version": "3.3.9",
+  "start": "The Shore",
+  "zoom": 1
+}
+
+:: The Shore {"position":"400,100","size":"100,100"}
+(set: $matches to 0)
+The storm has passed. Across the bay, the old lighthouse is dark for the first time in a hundred years.
+
+[[Row across the bay->The Jetty]]
+[[Walk along the cliffs->The Cliffs]]
+
+:: The Cliffs {"position":"650,250","size":"100,100"}
+The wind tugs at your coat. Half buried in the grass, you find a tin of (text-style:"shudder")[damp] matches.
+(set: $matches to 3)
+
+[[Climb down to the jetty->The Jetty]]
+
+:: The Jetty {"position":"400,400","size":"100,100"}
+The boat bumps against the stones. The lighthouse door hangs open.
+
+[[Go inside->The Stairs]]
+[[Row home->Home]]
+
+:: The Stairs {"position":"400,600","size":"100,100"}
+(transition: "dissolve")[A spiral of iron steps climbs into the dark.]
+
+(if: $matches > 0)[[[Strike a match->The Lamp Room]]](else:)[[[Feel your way up->Lost]]]
+
+:: The Lamp Room {"position":"250,800","size":"100,100"}
+The great lamp is cracked, but the wick is dry. You light it, and the beam sweeps out across the water.
+
+(link: "Watch the ships")[(goto: "Dawn")]
+
+:: Lost {"position":"600,800","size":"100,100"}
+You climb and climb. Somewhere above you, a door bangs in the wind.
+
+[[Go back down->The Jetty]]
+
+:: Dawn {"position":"250,1000","size":"100,100"}
+By morning, three ships have found their way into the harbour. THE END.
+
+:: Home {"position":"700,550","size":"100,100"}
+You row home. The lighthouse stays dark. THE END.

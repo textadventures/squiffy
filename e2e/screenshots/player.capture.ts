@@ -1,21 +1,13 @@
 // The published story, as players see it: "Buttons, panels and settings"
-import { test, expect, around, capture, openStory, reseed, run, settle } from "./lib.js";
+import { test, expect, around, capture, choose, openStory, playInNewTab, reseed, run, settle } from "./lib.js";
 import type { Page } from "@playwright/test";
 
-// Plays the game show up to where Hank asks the contestant's name, in a tab of its own from the
-// preview's Run options, Play in a new tab
+// Plays the published game show up to where Hank asks the contestant's name
 async function playInTab(page: Page): Promise<Page> {
     await openStory(page, "examples/gameshow");
     await run(page);
-    const [tab] = await Promise.all([
-        page.context().waitForEvent("page"),
-        page.getByRole("button", { name: "Run options" }).click().then(() =>
-            page.getByRole("menuitem", { name: "Play in a new tab" }).click()),
-    ]);
-    await tab.waitForURL(/^blob:/);
-    await tab.setViewportSize(page.viewportSize()!);
-    const story = tab.locator("body");
-    await story.getByRole("link", { name: "Take your seat" }).click();
+    const tab = await playInNewTab(page);
+    await choose(tab, "Take your seat");
     const name = tab.getByPlaceholder("Your name");
     await expect(name).toBeVisible({ timeout: 30_000 });
     await settle(tab);

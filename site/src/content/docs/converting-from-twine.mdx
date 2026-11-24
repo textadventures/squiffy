@@ -4,6 +4,7 @@ description: Converting a Twine story, written in Harlowe or SugarCube, to Squif
 ---
 
 import {Aside} from "@astrojs/starlight/components";
+import Screenshot from "@components/Screenshot.astro";
 
 Squiffy can convert a [Twine](https://twinery.org/) story into a Squiffy story. It reads stories written in the two most popular story formats, **Harlowe** (Twine's default) and **SugarCube**, and converts their passages, links and macros to Squiffy's sections, links and helpers.
 
@@ -27,6 +28,8 @@ Then either:
 
   This puts the converted story in a new folder next to the file, called `mygame`. Use `--out` to choose another folder.
 
+<Screenshot name="twine-convert" alt="The editor asking whether to convert The Lighthouse, a Twine story in Harlowe 3.3.9 with 8 passages, to Squiffy" />
+
 ## What you get
 
 The converted story is a folder with:
@@ -46,6 +49,8 @@ Anything that couldn't be converted at all is kept in the story as a comment, so
 ```
 
 Search for `Twine:` to find them all. A converted story opens on the editor's [story map](/story-map/), with **Map** chosen in the toolbar, as that's how you're used to seeing it. It's a good way to get to know the converted story, and to spot links that go nowhere. Double-click a section to [write it beside the map](/story-map/#writing-on-the-map), or choose **Code** or **Code + Map** in the toolbar to see the script.
+
+<Screenshot name="twine-map" alt="A converted Twine story on the story map, with its passages where they were on Twine's map, and its two endings marked as dead ends" />
 
 <Aside>
 Play the story through after converting it. Twine and Squiffy work differently in places, so some things are converted to the nearest thing Squiffy has, rather than exactly: these are listed in `twine-import.txt` too.
