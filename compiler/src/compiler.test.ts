@@ -780,6 +780,20 @@ test("A story's squiffy.json id is in its output, for checking saved games again
     expect(await without.getJs()).not.toContain("projectId");
 });
 
+test("A story's @title is in its output for the page's header, if squiffy.json's headerTitle shows it", async () => {
+    const shown = await compile({ script: "@title The \"Cave\"\nHello", headerTitle: true });
+    assertSuccess(shown);
+    expect(shown.output.story.headerTitle).toBe("The \"Cave\"");
+    expect(await shown.getJs()).toContain("story.headerTitle = \"The \\\"Cave\\\"\";");
+
+    // Not by default, nor for a story with no @title
+    for (const result of [await compile({ script: "@title The Cave\nHello" }), await compile({ script: "Hello", headerTitle: true })]) {
+        assertSuccess(result);
+        expect(result.output.story.headerTitle).toBeUndefined();
+        expect(await result.getJs()).not.toContain("headerTitle");
+    }
+});
+
 test("A story's squiffy.json panels are in its output (#14, #443)", async () => {
     const panels = [{ passage: "status", label: "Status", position: "side" as const }];
     const withPanels = await compile({ script: "Hello", panels });

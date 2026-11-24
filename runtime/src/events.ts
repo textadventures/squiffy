@@ -19,6 +19,8 @@ export type SquiffyEventMap = {
     // The player changed a setting (#452). Putting them back to their defaults raises it for each
     // one that changes.
     settingChanged: { name: string, value: unknown };
+    // The title for the page's header changed (squiffy.json's "headerTitle", {{headertitle}}): "" for none
+    headerTitleChanged: { title: string };
 };
 
 export type SquiffyEventHandler<E extends keyof SquiffyEventMap> =

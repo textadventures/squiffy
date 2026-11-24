@@ -63,6 +63,11 @@
       "type": "boolean",
       "default": true
     },
+    "headerTitle": {
+      "description": "Whether the published story shows its title, from @title, at the left of the bar of buttons above it. {{headertitle}} can show a different title at any point, such as a chapter's, whether or not this is on.",
+      "type": "boolean",
+      "default": false
+    },
     "startAnywhere": {
       "description": "Whether the published story lets anyone start at any section, for a build that's for testing: \"?start=section\" on its address, and a Start at menu that lists the sections. It's also published with its @test sections, which are otherwise left out. A story served by the command-line tool's --serve has all this without it.",
       "type": "boolean",

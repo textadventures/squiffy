@@ -197,13 +197,7 @@ export function createPreview(options: PreviewOptions) {
         controlButtons = [];
         backButton = muteButton = themeButton = undefined;
         if (!panelButtons || !header || !api) return;
-        header.querySelector(".squiffy-preview-title")?.remove();
-        if (controls.title) {
-            const title = document.createElement("span");
-            title.className = "squiffy-preview-title";
-            title.textContent = controls.title;
-            header.prepend(title);
-        }
+        renderTitle();
         const buttons = panelButtons;
         const current = api;
         const beforeSettings = settingsButton ?? null;
@@ -242,7 +236,33 @@ export function createPreview(options: PreviewOptions) {
             const label = controls.editLabel ?? "Open in editor";
             buttons.appendChild(controlButton("squiffy-edit", EDIT_ICON, () => send({ type: "editRequested" }), label));
         }
-        header.classList.toggle("squiffy-preview-controls", controlButtons.length > 0 || !!controls.title);
+        updateHeaderLayout();
+    }
+
+    // The title at the left of the header: the one the story's header would show (squiffy.json's
+    // "headerTitle", {{headertitle}}), or else the one the host gave (the player's, the story's title)
+    function renderTitle() {
+        if (!header || !api) return;
+        const text = api.headerTitle() || controls.title;
+        let title = header.querySelector<HTMLElement>(".squiffy-preview-title");
+        if (!text) {
+            title?.remove();
+        }
+        else {
+            if (!title) {
+                title = document.createElement("span");
+                title.className = "squiffy-preview-title";
+                header.prepend(title);
+            }
+            title.textContent = text;
+        }
+        updateHeaderLayout();
+    }
+
+    // With a title or the published page's buttons, the header lines up with the story's text
+    function updateHeaderLayout() {
+        header?.classList.toggle("squiffy-preview-controls",
+            controlButtons.length > 0 || !!header.querySelector(".squiffy-preview-title"));
     }
 
     const resolveAssetUrl = (path: string) => assetUrls.get(normalisePath(path)) ?? path;
@@ -363,6 +383,9 @@ export function createPreview(options: PreviewOptions) {
             if (thisLoad != loadCount) return;
             if (backButton) backButton.disabled = !e.canGoBack;
             send({ type: "canGoBackChanged", canGoBack: e.canGoBack });
+        });
+        newApi.on("headerTitleChanged", () => {
+            if (thisLoad == loadCount) renderTitle();
         });
         newApi.on("navigated", e => {
             if (thisLoad == loadCount) send({ type: "navigated", ...e });

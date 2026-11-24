@@ -316,6 +316,14 @@ These change the classes on the element that holds the story, for your [CSS](/st
 
 Each one takes one or more class names, which can be separate or in one piece of text with spaces between them: `{{addclass "dark" "rain"}}` and `{{addclass "dark rain"}}` are the same.
 
+## Header title helper
+
+| Helper | Parameters | Description | Example |
+|--------|------------|-------------|---------|
+| `{{headertitle}}` | `["title"]` | Show a title at the left of the bar of buttons above the story. `""` hides it, and nothing goes back to the story's `@title`, if `headerTitle` in `squiffy.json` shows it | `{{headertitle "Chapter 2"}}` |
+
+See [The title in the header](/buttons-panels-settings/#the-title-in-the-header).
+
 ## Array management helpers
 
 These helpers let you manage arrays stored in attributes - useful for tracking items, available options, or game state.

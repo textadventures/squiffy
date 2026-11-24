@@ -113,6 +113,7 @@ export default function squiffyPlugin(options: SquiffyPluginOptions = {}): Plugi
                 panels: story.panels,
                 settings: story.settings,
                 persistent: story.persistent,
+                headerTitle: story.headerTitle,
             });
 
             for (const file of readFiles.slice(1)) {

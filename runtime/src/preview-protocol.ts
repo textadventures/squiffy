@@ -43,7 +43,9 @@ export interface PreviewControls {
     mute?: boolean;
     // Shown only if the story's CSS doesn't set its own color-scheme
     theme?: boolean;
-    // The story's title, at the left of the header, as a site with no header of its own shows it
+    // The story's title, at the left of the header, as a site with no header of its own shows it.
+    // A title the story's own header would show (squiffy.json's "headerTitle", {{headertitle}})
+    // is shown in its place, and the preview shows that one even without this, as the editor's does.
     title?: string;
     // A button after the rest that asks the host to open the story in the editor: the page sends
     // "editRequested", and the host goes there. It's labelled by editLabel.

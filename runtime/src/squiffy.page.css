@@ -76,6 +76,28 @@ div#squiffy-header::after
     pointer-events: none;
 }
 
+/* The title at the left of the header, if the story has one (squiffy.json's "headerTitle", and
+   {{headertitle}}). The header is then a row, with the title first, in whatever space the buttons
+   leave, and cut short with "…" if it doesn't fit. */
+div#squiffy-header:has(> span#squiffy-header-title:not([hidden]))
+{
+    display: flex;
+    align-items: center;
+    column-gap: 0.25em;
+}
+
+span#squiffy-header-title
+{
+    order: -1;
+    flex: 1;
+    min-width: 0;
+    margin-right: 0.75rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: left;
+    font-weight: 600;
+}
+
 /* Space between the Back, Restart and light/dark buttons */
 button.squiffy-header-button + button.squiffy-header-button
 {

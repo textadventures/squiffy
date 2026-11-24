@@ -24,6 +24,8 @@ interface OutputStory {
     settings?: PlayerSetting[];
     // squiffy.json's "persistent": attributes that last across playthroughs (#539)
     persistent?: string[];
+    // The story's @title, if squiffy.json's "headerTitle" shows it in the page's header
+    headerTitle?: string;
     sections: Record<string, OutputSection>;
     // The sound files the story names (#444), from @music, @sound and {{music}} and {{sound}}
     // with a file in quotes, so the runtime can load them before they're needed
@@ -95,6 +97,8 @@ export interface EmitSettings {
     settings?: PlayerSetting[];
     // squiffy.json's "persistent", if it has any: see ProjectFile.persistent
     persistent?: string[];
+    // squiffy.json's "headerTitle": whether the page's header shows the story's @title
+    headerTitle?: boolean;
     // Leave out the sections marked with @test, which are for testing the story: for a story
     // that's being published, unless it's one that can be started anywhere
     omitTestSections?: boolean;
@@ -166,6 +170,10 @@ export function emit(analysis: Analysis, settings: EmitSettings = {}): CompileSu
 
     if (settings.persistent?.length) {
         output.story.persistent = settings.persistent;
+    }
+
+    if (settings.headerTitle && story.title) {
+        output.story.headerTitle = story.title;
     }
 
     if (story.uiJs.length > 0) {
@@ -276,6 +284,9 @@ export function emit(analysis: Analysis, settings: EmitSettings = {}): CompileSu
         }
         if (output.story.persistent) {
             outputJs.push(`story.persistent = ${JSON.stringify(output.story.persistent)};`);
+        }
+        if (output.story.headerTitle) {
+            outputJs.push(`story.headerTitle = ${JSON.stringify(output.story.headerTitle)};`);
         }
         if (output.story.audio) {
             outputJs.push(`story.audio = ${JSON.stringify(output.story.audio, null, 4)};`);

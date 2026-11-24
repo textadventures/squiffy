@@ -203,7 +203,7 @@ export function startServer(connection: Connection) {
         }
         const result = emit(analysis, {
             globalJs: true, omitTestSections: !projectFile?.startAnywhere, projectId: projectFile?.id,
-            panels: projectFile?.panels, settings: projectFile?.settings, persistent: projectFile?.persistent,
+            panels: projectFile?.panels, settings: projectFile?.settings, persistent: projectFile?.persistent, headerTitle: projectFile?.headerTitle,
         });
         const root = folderOf(toUri(story.root, mainFile));
         // The cover is left out if it isn't there. A single-file export leaves it out anyway.

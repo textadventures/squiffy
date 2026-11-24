@@ -43,6 +43,11 @@ describe("findStory", () => {
         expect((await findStory(dir)).backButton).toBe(false);
     });
 
+    test("a project's headerTitle setting comes with it", async () => {
+        await write({ "squiffy.json": "{ \"version\": 1, \"main\": \"story.squiffy\", \"headerTitle\": true }", "story.squiffy": "" });
+        expect((await findStory(dir)).headerTitle).toBe(true);
+    });
+
     test("a project's startAnywhere setting comes with it", async () => {
         await write({ "squiffy.json": "{ \"version\": 1, \"main\": \"story.squiffy\", \"startAnywhere\": true }", "story.squiffy": "" });
         expect((await findStory(dir)).startAnywhere).toBe(true);

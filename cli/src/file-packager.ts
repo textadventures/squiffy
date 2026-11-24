@@ -21,6 +21,7 @@ export const compileSettings = (story: StoryOnDisk, script: string) => ({
     panels: story.panels,
     settings: story.settings,
     persistent: story.persistent,
+    headerTitle: story.headerTitle,
     ignore: story.ignore,
 });
 

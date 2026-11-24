@@ -85,6 +85,10 @@ export interface SquiffyApi {
     // The values of the story's persistent attributes (squiffy.json's "persistent", #539), by
     // name: those the story has set. They aren't in getSave(), as loading a game leaves them alone.
     getPersistent: () => Record<string, unknown>;
+    // The title for the page's header, at its left: the one the story set with {{headertitle}}, or
+    // else the story's @title if squiffy.json has "headerTitle": true. "" for none. The
+    // headerTitleChanged event says when it changes.
+    headerTitle: () => string;
     // Clears persistent attributes, as {{forget}} does: the ones named, or all of them
     forget: (names?: string[]) => void;
     // Stops the story's music and sounds for good, when it's being replaced, e.g. in the editor's preview
@@ -196,6 +200,8 @@ export interface Story {
     // squiffy.json's "persistent": attributes that belong to the player rather than the
     // playthrough (#539). Restarting, going back and loading a saved game leave them as they are.
     persistent?: string[];
+    // The story's @title, if squiffy.json's "headerTitle" shows it in the page's header
+    headerTitle?: string;
     sections: Record<string, Section>;
 }
 

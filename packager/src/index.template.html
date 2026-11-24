@@ -131,7 +131,20 @@
                 }).startAt;
             }
 
+            // The title at the left of the header: the story's @title, if its squiffy.json has
+            // "headerTitle": true, or whatever the story sets with the headertitle helper
+            const headerTitle = document.getElementById('squiffy-header-title');
+            const showHeaderTitle = function (title) {
+                headerTitle.textContent = title;
+                headerTitle.hidden = !title;
+            };
+            showHeaderTitle(squiffyApi.headerTitle());
+            squiffyApi.on('headerTitleChanged', function (event) {
+                showHeaderTitle(event.title);
+            });
+
             await squiffyApi.begin(startAt);
+            showHeaderTitle(squiffyApi.headerTitle());
             // A saved game may have somewhere to go back to
             if (backButton) backButton.disabled = !squiffyApi.canGoBack();
         });
@@ -141,6 +154,7 @@
 <body>
 <div id="squiffy-container">
     <div id="squiffy-header">
+        <span id="squiffy-header-title" hidden></span>
         <!-- BACK_BUTTON -->
         <button class="squiffy-header-button" id="squiffy-back" type="button" title="{{back}}" aria-label="{{back}}" disabled>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
