@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-import AxeBuilder from "@axe-core/playwright";
+import { checkAccessibility } from "../axe.ts";
 import { encodeStory } from "../../player/src/link.ts";
 
 // The player (player/, squiffystories.com), from its dev server: axe's automated checks (WCAG 2.2
@@ -20,13 +20,7 @@ It's dark.
 
 const link = (files: Record<string, string>) => `/v7/#story=${encodeStory({ files })}`;
 
-async function check(page: Page) {
-    const results = await new AxeBuilder({ page })
-        .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
-        .analyze();
-    const found = results.violations.map(v => `${v.id} (${v.impact}): ${v.help}\n${v.nodes.map(n => `    ${n.target.join(" ")}: ${n.failureSummary?.split("\n").slice(1).join(" ")}`).join("\n")}`);
-    expect(found, found.join("\n\n")).toEqual([]);
-}
+const check = (page: Page) => checkAccessibility(page);
 
 for (const colorScheme of ["light", "dark"] as const) {
     test.describe(`${colorScheme} theme`, () => {
@@ -34,7 +28,7 @@ for (const colorScheme of ["light", "dark"] as const) {
 
         test("a story", async ({ page }) => {
             await page.goto(link({ "story.squiffy": story }));
-            await expect(page.frameLocator("#story").getByText("Go to the")).toBeVisible();
+            await expect(page.frameLocator("#story").getByRole("paragraph").filter({ hasText: "Go to the" })).toBeVisible();
             await check(page);
         });
 
@@ -62,7 +56,7 @@ test("the story's frame is named for its title", async ({ page }) => {
 test("Tab goes through the story's bar, then its links", async ({ page }) => {
     await page.goto(link({ "story.squiffy": story }));
     const frame = page.frameLocator("#story");
-    await expect(frame.getByText("Go to the")).toBeVisible();
+    await expect(frame.getByRole("paragraph").filter({ hasText: "Go to the" })).toBeVisible();
     const focused: string[] = [];
     for (let i = 0; i < 5; i++) {
         await page.keyboard.press("Tab");

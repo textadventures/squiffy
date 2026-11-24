@@ -10,7 +10,7 @@
     --squiffy-link: light-dark(#9a4a1c, #f0a868);
     --squiffy-link-hover: light-dark(#6f2f0b, #ffc890);
     --squiffy-border: light-dark(#e2d3bd, #3a2c22);
-    --squiffy-muted: light-dark(#8c7561, #a89480);
+    --squiffy-muted: light-dark(#7d6753, #a89480);
 }
 
 body, div#squiffy-header {

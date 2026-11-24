@@ -3,6 +3,7 @@
   "version": 1,
   "id": "69f98581-092f-442a-a592-70e2d41cf2ee",
   "main": "gameshow.squiffy",
+  "language": "en",
   "description": "Spin the wheel and play your way through the rounds of a TV game show, if the host lets you.",
   "panels": [
     { "passage": "scoreboard", "label": "Scoreboard", "position": "side" },

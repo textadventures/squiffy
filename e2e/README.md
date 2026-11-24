@@ -55,6 +55,16 @@ npx playwright test --project=site
 
 Astro won't start a second dev server for the site, so if one's already running, it has to be on port 4329 for these to use it.
 
+## Accessibility checks
+
+`examples-accessibility.spec.ts` runs axe over the example stories in `examples/` as they're published (#641), light and dark: at the start, after a few links, and with their panels, the saved games dialog and the settings dialog open. `test-server.js` builds them as the CLI does, at `/examples/<name>/`.
+
+```bash
+npx playwright test examples-accessibility --project=chromium
+```
+
+Every accessibility spec uses `checkAccessibility()` in `axe.ts`, which runs axe's WCAG 2.2 A and AA rules, after the page's CSS transitions and animations have finished. Every violation fails the test: nothing only warns. Anything axe reports that we've decided to live with goes in that file's `knownProblems`, with why, so all the exceptions are in one place.
+
 ## The docs' screenshots
 
 `screenshots/` isn't tests: it takes the screenshots of the editor and the VS Code extension that the docs show, with `npm run screenshots`. See `.claude/skills/docs-screenshots/SKILL.md`.

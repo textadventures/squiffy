@@ -40,7 +40,9 @@ test.describe("Link-triggered animation", () => {
 
     await expect(page.locator("text=Link passage shown.")).toHaveCount(0);
     await expect(link).not.toHaveClass(/\bdisabled\b/);
-    await expect(link).not.toHaveAttribute("tabindex", /.*/);
+    // Back in the Tab order, as a link that can be clicked is (#648)
+    await expect(link).toHaveAttribute("tabindex", "0");
+    await expect(link).not.toHaveAttribute("aria-disabled", /.*/);
 
     // Clicking again runs the animation (the link text gets split into characters)
     // and shows the passage once more
