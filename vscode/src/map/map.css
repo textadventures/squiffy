@@ -25,6 +25,7 @@ body.vscode-dark, body.vscode-high-contrast:not(.vscode-high-contrast-light) {
     --sm-accent: var(--vscode-focusBorder, #007fd4);
     --sm-muted: var(--vscode-descriptionForeground, #888);
     --sm-box: var(--vscode-editorWidget-background, var(--vscode-editor-background));
+    --sm-trace: var(--vscode-charts-green, #388a34);
     --sm-border: var(--vscode-editorWidget-border, var(--vscode-widget-border, var(--sm-muted)));
     display: flex;
     flex-direction: column;
@@ -283,4 +284,70 @@ button:focus-visible {
 }
 .details .chip-missing {
     color: var(--sm-error);
+}
+
+/* The way the player went in the preview */
+.story-map .gm-node.visited .gm-node-box {
+    stroke: var(--sm-trace);
+    stroke-width: 2;
+}
+.story-map .trace.gm-edge-line,
+.story-map .trace .gm-edge-line {
+    stroke: var(--sm-trace);
+    stroke-width: 2.5;
+}
+.story-map .trace .gm-edge-arrow {
+    fill: var(--sm-trace);
+}
+/* However long its links */
+.story-map .gm-edge.trace[data-long] {
+    opacity: 1;
+}
+
+/* The key, under the toolbar */
+.key {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 4px 12px;
+    align-items: center;
+    max-height: 45%;
+    overflow-y: auto;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--vscode-panel-border, var(--sm-border));
+}
+.key svg {
+    overflow: visible;
+}
+.key-help {
+    color: var(--sm-muted);
+    padding-top: 4px;
+}
+.key-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: 36px;
+    height: 14px;
+    font-size: 9px;
+    border-radius: 3px;
+    border: 1px solid var(--sm-border);
+}
+.key-start {
+    color: var(--sm-accent);
+    border-color: var(--sm-accent);
+}
+.key-ending {
+    outline: 1px solid var(--sm-border);
+    outline-offset: -4px;
+    color: transparent;
+}
+.key-dead-end {
+    border-color: var(--sm-warning);
+    color: var(--sm-warning);
+    font-weight: 700;
+}
+.key-unreachable {
+    border-style: dashed;
+    opacity: 0.5;
 }

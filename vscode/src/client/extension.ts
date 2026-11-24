@@ -29,7 +29,7 @@ export async function activate(context: vscode.ExtensionContext, createClient: C
 
     const log = vscode.window.createOutputChannel("Squiffy Preview");
     const preview = new Preview(client, log);
-    const map = new StoryMap(client, context.extensionUri);
+    const map = new StoryMap(client, context.extensionUri, preview);
     context.subscriptions.push(log, preview, map);
 
     // The active editor, if it's a .squiffy file, for the commands that act at the cursor

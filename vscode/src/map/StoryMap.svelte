@@ -9,7 +9,7 @@
     import GraphMap, { type NodeState } from "@textadventures/graph-map/GraphMap.svelte";
     import StoryMapNodeBox from "@textadventures/squiffy-app/StoryMapNode.svelte";
     import { buildStoryMap, linkTo, pinnedPositions, reachNote, storyMapLayout, type StoryMapEdge, type StoryMapNode } from "@textadventures/squiffy-app/story-map";
-    import type { FromMap, Point, ToMap } from "./messages.js";
+    import type { FromMap, Point, ToMap, TraceStep } from "./messages.js";
     import Menu, { type MenuItem } from "./Menu.svelte";
 
     let { post }: { post: (message: FromMap) => void } = $props();
@@ -22,6 +22,7 @@
     let current = $state<string | null>(null);
     let selected = $state<string | null>(null);
     let showLarge = $state(false);
+    let keyOpen = $state(false);
     let map = $state<ReturnType<typeof GraphMap<StoryMapNode, StoryMapEdge>>>();
     const layout = storyMapLayout();
 
@@ -40,17 +41,49 @@
         return base.nodes.filter(n => n.graphNode && (n.label.toLowerCase().includes(q) || n.section.toLowerCase().includes(q)));
     });
 
-    // The map's graph, with the cursor's section or passage and the search as classes
+    // Where the player has been in the preview, and the links they took between those places,
+    // as on the editor's map
+    let trace = $state.raw<TraceStep[]>([]);
+    const traced = $derived.by(() => {
+        const visited = new Set<string>();
+        const taken = new Set<string>();
+        if (!base || !trace.length) return { visited, taken };
+        const idOf = (step: TraceStep) => step.passage === undefined ? `section:${step.section}` : `passage:${step.section}/${step.passage}`;
+        // Edges by where they go, with the section they come from
+        const sectionOf = new Map(base.nodes.map(n => [n.id, n.section]));
+        const into = new Map<string, { id: string; fromSection: string | undefined }[]>();
+        for (const edge of base.edges) {
+            let list = into.get(edge.to);
+            if (!list) into.set(edge.to, list = []);
+            list.push({ id: edge.id, fromSection: sectionOf.get(edge.from) });
+        }
+        for (let i = 0; i < trace.length; i++) {
+            const id = idOf(trace[i]);
+            visited.add(id);
+            if (trace[i].passage !== undefined) visited.add(`section:${trace[i].section}`);
+            if (i == 0) continue;
+            const before = trace[i - 1].section;
+            for (const edge of into.get(id) ?? []) {
+                if (edge.fromSection == before) taken.add(edge.id);
+            }
+        }
+        return { visited, taken };
+    });
+
+    // The map's graph, with the cursor's section or passage, the search and the trace as classes
     const decorated = $derived.by(() => {
         if (!base) return null;
-        if (!current && !matching) return base;
+        if (!current && !matching && !trace.length) return base;
         const found = matching && new Set(matching.map(n => n.id));
         const hidden = (id: string) => !!found && !found.has(id);
         const nodes = base.nodes.map(n => {
-            const extra = [n.id == current ? "current" : "", hidden(n.id) ? "filtered-out" : ""].filter(Boolean);
+            const extra = [n.id == current ? "current" : "", traced.visited.has(n.id) ? "visited" : "", hidden(n.id) ? "filtered-out" : ""].filter(Boolean);
             return extra.length ? { ...n, class: `${n.class} ${extra.join(" ")}` } : n;
         });
-        const edges = found ? base.edges.map(e => hidden(e.from) || hidden(e.to) ? { ...e, class: `${e.class} filtered-out` } : e) : base.edges;
+        const edges = base.edges.map(e => {
+            const extra = [traced.taken.has(e.id) ? "trace" : "", hidden(e.from) || hidden(e.to) ? "filtered-out" : ""].filter(Boolean);
+            return extra.length ? { ...e, class: `${e.class} ${extra.join(" ")}` } : e;
+        });
         return { nodes, edges };
     });
 
@@ -96,6 +129,10 @@
             current = message.id;
         } else if (message.type == "select") {
             selectWhenReady = message.id;
+        } else if (message.type == "trace") {
+            trace = message.steps;
+        } else if (message.type == "relayout") {
+            map?.relayout(new Map());
         } else if (message.type == "search") {
             searchInput?.focus();
             searchInput?.select();
@@ -212,6 +249,7 @@
                 { label: "Zoom in", shortcut: "+", divider: true, action: () => map?.zoomBy(1.25) },
                 { label: "Zoom out", shortcut: "-", action: () => map?.zoomBy(0.8) },
                 { label: "Show the whole story", shortcut: "0", action: () => map?.fit() },
+                { label: "Lay out again…", divider: true, action: () => post({ type: "relayout" }) },
             ];
         }
         menu = { ...screen, keyboard, items };
@@ -264,6 +302,7 @@
         <button type="button" title="Zoom in (+)" aria-label="Zoom in" onclick={() => map?.zoomBy(1.25)}>+</button>
         <button type="button" title="Zoom out (-)" aria-label="Zoom out" onclick={() => map?.zoomBy(0.8)}>−</button>
         <button type="button" title="Show the whole story (0)" aria-label="Show the whole story" onclick={() => map?.fit()}>Fit</button>
+        <button type="button" title="What the map's colours and lines mean" aria-expanded={keyOpen} onclick={() => { keyOpen = !keyOpen; }}>Key</button>
         <div class="search">
             <input
                 bind:this={searchInput}
@@ -277,6 +316,23 @@
             <span class="count" aria-live="polite">{matchCount}</span>
         </div>
     </div>
+    {#if keyOpen}
+        <div class="key">
+            <svg width="36" height="10" aria-hidden="true"><line x1="0" y1="5" x2="36" y2="5" class="gm-edge-line edge-section-link" /></svg><span>Link to a section</span>
+            <svg width="36" height="10" aria-hidden="true"><line x1="0" y1="5" x2="36" y2="5" class="gm-edge-line edge-passage-link" /></svg><span>Link to a passage</span>
+            <svg width="36" height="10" aria-hidden="true"><line x1="0" y1="5" x2="36" y2="5" class="gm-edge-line edge-embed" /></svg><span>Embed</span>
+            <svg width="36" height="10" aria-hidden="true"><line x1="0" y1="5" x2="36" y2="5" class="gm-edge-line edge-script" /></svg><span>{"{{goto}}"}, or squiffy.story.go in JavaScript</span>
+            <svg width="36" height="10" aria-hidden="true"><line x1="0" y1="5" x2="36" y2="5" class="gm-edge-line edge-auto" /></svg><span>A passage that runs on its own, such as @last</span>
+            <svg width="36" height="10" aria-hidden="true"><line x1="0" y1="5" x2="36" y2="5" class="gm-edge-line edge-section-link conditional" /></svg><span>Inside {"{{#if}}"} or {"{{#unless}}"}</span>
+            <svg width="36" height="10" aria-hidden="true"><line x1="0" y1="5" x2="36" y2="5" class="gm-edge-line edge-section-link broken" /></svg><span>Broken link, to something that doesn't exist</span>
+            <svg width="36" height="10" aria-hidden="true"><line x1="0" y1="5" x2="36" y2="5" class="gm-edge-line edge-section-link trace" /></svg><span>The way the player went in the preview</span>
+            <span class="key-badge key-start">▶</span><span>The start</span>
+            <span class="key-badge key-ending">■</span><span>An ending (@end)</span>
+            <span class="key-badge key-dead-end">!</span><span>A dead end: no way out, and not an ending</span>
+            <span class="key-badge key-unreachable"></span><span>Can't be reached from the start</span>
+            <span></span><span class="key-help">Drag the dot under the selected box to another to add a link, or to empty space for a new section. Double-click empty space to add a section, or a red box to add what's missing. Right-click a box for more, or the background to lay the map out again. Shift+drag empty space, or Shift+click, to select several boxes and move them together.</span>
+        </div>
+    {/if}
     <div class="area">
         {#if !decorated}
             <p class="message">Reading the story…</p>
