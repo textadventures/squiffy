@@ -17,6 +17,17 @@ body, div#squiffy-header {
     transition: background-color 1.5s ease, color 1.5s ease;
 }
 
+/* The text boxes and the order pad's border fade with the page, so they don't change before it.
+   A text box's border and focus ring still change quickly when it's clicked. */
+input {
+    transition: background-color 1.5s ease, color 1.5s ease,
+        border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+aside.squiffy-panels-side {
+    transition: border-color 1.5s ease;
+}
+
 /* Evening: the big lights go off and the fairy lights come on */
 body:has(.evening) {
     --squiffy-background: light-dark(#2a2030, #150f18);
