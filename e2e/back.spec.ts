@@ -1,27 +1,10 @@
 import { test, expect, Page } from "@playwright/test";
 
-// The packaged story has no Back button (only the editor does), so we capture the API that
-// squiffyRuntime.init() returns, and call goBack() on it directly.
+// The test server exposes the API that squiffyRuntime.init() returns as window.squiffyApi, so
+// we call goBack() on it directly.
 async function openStory(page: Page) {
   const pageErrors: string[] = [];
   page.on("pageerror", error => pageErrors.push(error.message));
-
-  await page.addInitScript(() => {
-    let runtime: any;
-    Object.defineProperty(window, "squiffyRuntime", {
-      configurable: true,
-      get: () => runtime,
-      set: value => {
-        const init = value.init;
-        value.init = async (options: any) => {
-          const api = await init(options);
-          (window as any).squiffyApi = api;
-          return api;
-        };
-        runtime = value;
-      },
-    });
-  });
 
   await page.goto("/back/");
   await page.waitForSelector("#squiffy .squiffy-output-section");
