@@ -5,6 +5,7 @@ description: Squiffy for Twine authors - how it compares, and how to write in Sq
 
 import { Aside, Tabs, TabItem } from "@astrojs/starlight/components";
 import Sample from "@components/Sample.astro";
+import Screenshot from "@components/Screenshot.astro";
 
 If you've written stories with [Twine](https://twinery.org/), much of Squiffy will feel familiar: a story is made of named chunks of text, joined by links, with variables to remember what the player has done. This page explains what's different, and how to write in Squiffy the things you'd write in Harlowe or SugarCube.
 
@@ -15,7 +16,11 @@ If you already have a Twine story, Squiffy can convert it for you: see [Converti
 Twine is a great tool with a big community, and if it's working well for you, there's no need to switch. But there are some things Squiffy does that Twine doesn't.
 
 - **It finds problems for you.** As you write, the [editor](/editor/) and the [story map](/story-map/) show sections the player can't reach and dead ends, as well as broken links, and attributes you've misspelled. From the [command line](/cli/), Squiffy can play your story hundreds of times at random, to find errors and dead ends you'd never come across yourself, and replay playthroughs you've recorded, to check the story still goes the way it did. Twine marks broken links on its story map, but the rest is up to you, or to scripts you find or write yourself.
+
+  <Screenshot name="editor-problems" alt="The problems list below the script: a link to a missing section, a dead end and a section nothing links to, each with a quick fix" />
 - **The map and the text, side by side.** The editor shows the [story map](/story-map/) beside your script, or on its own if you'd rather. You can add links and sections by dragging on the map, and write a section beside it, and whichever you change, the other follows. In Twine, the map is the story, and you open each passage from it to see its text.
+
+  <Screenshot name="story-map" alt="The story map beside the script and the preview, with the way the player went in green" />
 - **Scenes the player can explore.** A section can have [passages](/basic-concepts/): pieces of text that appear in the same section when the player clicks their links, in any order, while the section's other links still work. They're made for looking around a room, or asking someone questions, and they close when the player moves on. In Twine, you'd build that yourself, out of link-reveal macros, or links back and forth between passages.
 - **An AI agent can write it, play it and check it.** The command line can play a story a link at a time, check it and test it, and print the results for an agent to read. With the [Squiffy plugin for Claude Code](/writing-with-ai/), an agent can write a scene, play through it, and fix what it finds, without you clicking through it yourself.
 - **Publishing is built in.** The editor can put your story on [textadventures.co.uk](/publishing/#publishing-to-textadventurescouk), which hosts it for free and lists it for players to find, and update it there when you change it. Or it can turn a short story into [a link](/publishing/#sharing-a-link) you can send to anyone, with the story inside it: nothing to upload, and no account to make. Twine gives you an HTML file, and finding somewhere to put it is up to you.

@@ -7,6 +7,7 @@ import Sample from "@components/Sample.astro";
 import story from "../../samples/files/story.squiffy?raw";
 import chapter2 from "../../samples/files/chapter2.squiffy?raw";
 import projectJson from "../../samples/files/squiffy.json?raw";
+import Screenshot from "@components/Screenshot.astro";
 
 A story can be split across several `.squiffy` files. To make a folder of files one story, give it a [project file](/project-file/), `squiffy.json`, naming the story's main file:
 
@@ -30,6 +31,8 @@ Here's a story in two files. The link in `story.squiffy` goes to a section in `c
 
 ## Stylesheets and scripts
 
+<Screenshot name="files-new" alt="The + menu in the files list, offering a story file, a stylesheet or a script" />
+
 With a `squiffy.json`, every `.css` file in the folder and its subfolders is one of the story's [stylesheets](/styling/), and every `.js` file is one of its [scripts](/javascript/). The published page links to each of them, as it does for an `@import`: stylesheets after Squiffy's own styles, so your rules take precedence, and scripts before the story starts.
 
 - They're added in order of their paths. Order rarely matters for stylesheets, but a script that uses another, such as a library, needs to come after it. To choose the order, `@import` the ones that need to come first in the main file: anything `@import`ed comes before the rest, and nothing is added twice.
@@ -41,6 +44,8 @@ With a `squiffy.json`, every `.css` file in the folder and its subfolders is one
 ## Leaving files out
 
 To keep a `.squiffy`, `.css` or `.js` file in the folder without it being part of the story, list it under `exclude`. In the editor, choose **Exclude from story** from the file's menu in the files list.
+
+<Screenshot name="files-excluded" alt="A stylesheet left out of the story, greyed out and marked excluded in the files list, with its menu open at Include in story" />
 
 ```json
 {

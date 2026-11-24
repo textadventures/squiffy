@@ -24,7 +24,8 @@ export default defineConfig({
     webServer: [
         {
             command: "npm run dev --workspace app",
-            env: { PORT: "5188" },
+            // The links Publish's "A link" makes go to the real player, not a local one
+            env: { PORT: "5188", VITE_PLAYER_URL: "https://squiffystories.com" },
             url: "http://localhost:5188",
             reuseExistingServer: true,
             timeout: 60_000,

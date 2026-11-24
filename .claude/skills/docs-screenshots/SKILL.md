@@ -26,7 +26,8 @@ by hand. Build each package in the worktree instead: `for p in compiler runtime 
 codemirror-lang editor-search graph-map project-fs vscode; do (cd $p && npm run build); done`.
 Check with `ls -la runtime/dist` that the dates are today's.
 
-`playwright.screenshots.config.ts` starts the editor's dev server on port 5188, and VS Code for
+`playwright.screenshots.config.ts` starts the editor's dev server on port 5188 (with
+`VITE_PLAYER_URL` set to squiffystories.com, so a shared link shows the real address), and VS Code for
 the web (`@vscode/test-web`, stable quality) on port 3123 with the extension from `vscode/` and
 `examples/gameshow` open. VS Code is downloaded into `node_modules/.cache/vscode-test-web` the
 first time. Both servers are reused if they're already running.
@@ -63,6 +64,8 @@ first time. Both servers are reused if they're already running.
     story with a typewriter intro takes a few seconds.
 - One `*.capture.ts` file per area: `editor.capture.ts` (the editor and the story map),
   `editor-tools.capture.ts` (the home page, problems, Start at menu and dialogs),
+  `features.capture.ts` (the Add menu, the files list's menus, writing on the map, sharing a
+  link, Story details and Settings),
   `player.capture.ts` (the published game show, from **Play in a new tab**),
   `tutorial.capture.ts` (both parts of the tutorial), `twine.capture.ts` and `quest.capture.ts`
   (converting a Twine story and a Quest gamebook), `desktop.capture.ts` and `vscode.capture.ts`.
