@@ -80,7 +80,7 @@
     "viewsWelcome": [
       {
         "view": "squiffy.sections",
-        "contents": "There's no Squiffy story in this folder yet.\n[New Story](command:squiffy.newStory)\nTo bring in a story from [Twine](https://squiffystory.com/converting-from-twine/) or a gamebook from [Quest](https://squiffystory.com/converting-from-quest/), convert it with Squiffy's command-line tool.",
+        "contents": "There's no Squiffy story in this folder yet.\n[New Story](command:squiffy.newStory)\nOr bring in a story from [Twine](https://squiffystory.com/converting-from-twine/) or a gamebook from [Quest](https://squiffystory.com/converting-from-quest/):\n[Convert Twine Story](command:squiffy.convertTwine)\n[Convert Quest Gamebook](command:squiffy.convertQuest)",
         "when": "squiffyNoStory"
       }
     ],
@@ -150,6 +150,16 @@
       {
         "command": "squiffy.newStoryInFolder",
         "title": "New Squiffy Story Here"
+      },
+      {
+        "command": "squiffy.convertTwine",
+        "title": "Convert Twine Story",
+        "category": "Squiffy"
+      },
+      {
+        "command": "squiffy.convertQuest",
+        "title": "Convert Quest Gamebook",
+        "category": "Squiffy"
       },
       {
         "command": "squiffy.addSection",

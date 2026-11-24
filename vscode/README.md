@@ -10,7 +10,7 @@ story map.
   story, across all its files, marking the start, endings, dead ends and sections that can't be
   reached. Click one to go to it, or its ▷ to start the preview there. Its buttons run the preview,
   add a section, show the story map and export the story. In a folder with no story, it offers to
-  make one.
+  make one, or to convert a Twine story or Quest gamebook.
 - The Outline view and breadcrumbs, Go to Definition, Find All References and Rename for sections
   and passages
 - Completion of section and passage names, attributes and directives, hover, and quick fixes
@@ -39,6 +39,11 @@ story map.
 - **Squiffy: Add Section** and **Add Passage** (also in the editor's context menu, and its title
   bar: **+** and the **...** menu) add a section
   or passage header at the cursor, to type its name into
+- **Squiffy: Convert Twine Story** and **Convert Quest Gamebook** convert a Twine story (a `.twee`
+  file, or Twine's published or archive HTML) or a Quest gamebook (`.quest` or `.aslx`) into a new
+  story folder, as the Squiffy editor and command line tool convert them, with `twine-import.txt`
+  or `quest-import.txt` listing what couldn't be converted exactly, and a Quest game's images and
+  sounds. If the folder you choose isn't empty, the story goes in a new folder in it
 - **Squiffy: Convert from Squiffy 5** converts a Squiffy 5 file's text processor syntax
 
 It works in VS Code on the desktop, and on [vscode.dev](https://vscode.dev) and github.dev.
@@ -68,6 +73,9 @@ This is the `vscode/` workspace in the [Squiffy repository](https://github.com/t
   `workspace.fs`, zipping them with fflate for a zip. For a single HTML file, it sends the assets
   to the server (in base64), which puts them in the page. New Story (`new-story.ts`) uses the editor's
   starter story (`src/client/new-story.test.ts` checks it matches `app/src/lib/project.svelte.ts`).
+  Convert Twine Story and Convert Quest Gamebook (`convert.ts`) pick the file and a folder, and
+  write what `convert-story.ts` makes with the compiler's converters, as the command line tool does
+  (`cli/src/convert-twine.ts` and `convert-quest.ts`), with `workspace.fs`.
 - `src/map/` is the story map's page (#615), which runs in a webview: a Svelte page around
   `@textadventures/graph-map`'s `GraphMap.svelte`, with the editor's `story-map.ts` and
   `StoryMapNode.svelte` (which the app exports for it), styled with VS Code's theme variables.

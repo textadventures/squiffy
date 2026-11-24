@@ -10,6 +10,7 @@ import {
 } from "../protocol.js";
 import { findProjectFiles, isProjectFile, listFiles, readText } from "./files.js";
 import { exportStory } from "./export.js";
+import { convertQuestGamebook, convertTwineStory } from "./convert.js";
 import { insertHeader, newStory } from "./new-story.js";
 import { Preview } from "./preview.js";
 import { StoryMap } from "./map.js";
@@ -123,6 +124,8 @@ export async function activate(context: vscode.ExtensionContext, createClient: C
     command("squiffy.newStory", () => newStory());
     // From the Explorer's context menu, in that folder
     command("squiffy.newStoryInFolder", (uri?: unknown) => newStory(uri instanceof vscode.Uri ? uri : undefined));
+    command("squiffy.convertTwine", () => convertTwineStory());
+    command("squiffy.convertQuest", () => convertQuestGamebook());
 
     command("squiffy.addSection", async () => {
         let editor = activeSquiffyEditor();
