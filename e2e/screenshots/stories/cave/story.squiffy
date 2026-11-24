@@ -1,0 +1,38 @@
+@title The Cave
+
+You stand at the mouth of a cave. [[Go in]](entrance) or [[walk away]](home).
+
+[[entrance]]:
+It's dark. You can go [[left]](left tunnel), go [[right]](right tunnel), or [look around].
+
+[look around]:
+@set torch
+You find an old torch, and it still works.
+
+[[left tunnel]]:
+A narrow passage. [[Keep going]](lake) or [[go back]](entrance).
+{{#if torch}}[[Climb up]](ledge){{/if}}
+
+[[right tunnel]]:
+Bones everywhere. [[Run!]](lake), or [[search]](treasure room).
+
+[[lake]]:
+An underground lake. [[Swim]](drowned), [[go around]](treasure room) or [[call out]](echo).
+
+[[treasure room]]:
+@end
+Gold! You win.
+
+[[drowned]]:
+The water is too cold.
+
+[[home]]:
+@end
+You go home. Nothing happens.
+
+[[ledge]]:
+From up here you can see the lake.
+{{embed "lake"}}
+
+[[old notes]]:
+Nothing links here yet.

@@ -27,7 +27,8 @@
     "test:e2e:ui": "playwright test --ui",
     "test:all": "npm run test && npm run test:e2e",
     "publish:manual": "lerna publish from-package --no-private",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "screenshots": "playwright test -c playwright.screenshots.config.ts"
   },
   "devDependencies": {
     "@eslint/compat": "^2.0.0",
