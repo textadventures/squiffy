@@ -134,8 +134,9 @@ describe("story corpus", async () => {
     for (const dir of corpusDirs) {
         // syntaxes/samples holds the TextMate grammar's test files, which @import and @ui files that don't exist.
         // site/src/tutorial, site/src/cookbook and site/src/samples are the docs' stories, and examples/coffeeshop and examples/gameshow
-        // the Examples page's, which use @end and other directives that the old compiler doesn't have.
-        files.push(...(await glob("**/*.squiffy", { cwd: dir, absolute: true, ignore: ["**/node_modules/**", "**/dist/**", "**/syntaxes/samples/**", "**/site/src/tutorial/**", "**/site/src/cookbook/**", "**/site/src/samples/**", "**/examples/coffeeshop/**", "**/examples/gameshow/**"] })).sort());
+        // the Examples page's, which use @end and other directives that the old compiler doesn't have, as do the docs'
+        // screenshots' stories in e2e/screenshots/stories.
+        files.push(...(await glob("**/*.squiffy", { cwd: dir, absolute: true, ignore: ["**/node_modules/**", "**/dist/**", "**/syntaxes/samples/**", "**/site/src/tutorial/**", "**/site/src/cookbook/**", "**/site/src/samples/**", "**/examples/coffeeshop/**", "**/examples/gameshow/**", "**/e2e/screenshots/stories/**"] })).sort());
     }
 
     test("finds stories", () => {
