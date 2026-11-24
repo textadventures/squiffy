@@ -12,6 +12,8 @@
     --squiffy-muted: light-dark(#6b6f76, #9a9ca3);
     /* The lines between sections */
     --squiffy-border: light-dark(#e2e2e6, #34343a);
+    /* The edges of text boxes, lists and buttons in the story */
+    --squiffy-input-border: light-dark(#8c8f96, #6b6d75);
     --squiffy-link: light-dark(#1d5fd6, #7aa7ff);
     --squiffy-link-hover: light-dark(#0f3f99, #b0cbff);
     --squiffy-error: light-dark(#c62828, #ff7b72);
@@ -72,31 +74,132 @@ a.squiffy-link.validation-disabled
     pointer-events: none;
 }
 
-/* Invalid input field states */
+/* Text boxes, lists and buttons in the story and its panels. Without these, browsers draw them
+   in their own default styles, which don't match the story. The selectors are inside :where(), so
+   a story's own rule, such as "input { border: none; }", overrides them. */
+:where(.squiffy-output-section, .squiffy-panel) :where(
+    input:not([type=checkbox], [type=radio], [type=range], [type=color], [type=file], [type=hidden],
+        [type=button], [type=submit], [type=reset], [type=image]),
+    textarea,
+    select)
+{
+    box-sizing: border-box;
+    max-width: 100%;
+    padding: 0.3em 0.6em;
+    border: 1px solid var(--squiffy-input-border);
+    border-radius: 0.375em;
+    background-color: var(--squiffy-background);
+    color: var(--squiffy-text);
+    font: inherit;
+    line-height: 1.4;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+:where(.squiffy-output-section, .squiffy-panel) :where(textarea)
+{
+    vertical-align: top;
+    resize: vertical;
+}
+
+:where(.squiffy-output-section, .squiffy-panel) :where(input, textarea)::placeholder
+{
+    color: var(--squiffy-muted);
+    opacity: 1;
+}
+
+/* A drop-down list, with its arrow drawn in the story's colours */
+:where(.squiffy-output-section, .squiffy-panel) :where(select:not([multiple], [size]))
+{
+    appearance: none;
+    padding-right: 2em;
+    background-image: linear-gradient(45deg, transparent 50%, var(--squiffy-muted) 50%),
+        linear-gradient(135deg, var(--squiffy-muted) 50%, transparent 50%);
+    background-position: calc(100% - 1.05em) 55%, calc(100% - 0.75em) 55%;
+    background-size: 0.3em 0.3em;
+    background-repeat: no-repeat;
+    cursor: pointer;
+}
+
+:where(.squiffy-output-section, .squiffy-panel) :where(
+    button, input[type=button], input[type=submit], input[type=reset])
+{
+    padding: 0.3em 0.9em;
+    border: 1px solid var(--squiffy-input-border);
+    border-radius: 0.375em;
+    background-color: color-mix(in srgb, var(--squiffy-text) 5%, var(--squiffy-background));
+    color: var(--squiffy-text);
+    font: inherit;
+    line-height: 1.4;
+    cursor: pointer;
+    transition: background-color 0.15s ease-in-out;
+}
+
+:where(.squiffy-output-section, .squiffy-panel) :where(
+    button, input[type=button], input[type=submit], input[type=reset]):where(:hover:not(:disabled))
+{
+    background-color: color-mix(in srgb, var(--squiffy-text) 12%, var(--squiffy-background));
+}
+
+/* Tick boxes, radio buttons, sliders and progress bars, in the links' colour */
+:where(.squiffy-output-section, .squiffy-panel) :where(
+    input[type=checkbox], input[type=radio], input[type=range], progress, meter)
+{
+    accent-color: var(--squiffy-link);
+}
+
+:where(.squiffy-output-section, .squiffy-panel) :where(input[type=checkbox], input[type=radio])
+{
+    width: 1em;
+    height: 1em;
+    vertical-align: -0.125em;
+}
+
+:where(.squiffy-output-section, .squiffy-panel) :where(input, textarea, select):where(:focus)
+{
+    outline: none;
+    border-color: var(--squiffy-link);
+    box-shadow: 0 0 0 0.2em color-mix(in srgb, var(--squiffy-link) 25%, transparent);
+}
+
+:where(.squiffy-output-section, .squiffy-panel) :where(input[type=checkbox], input[type=radio], input[type=range]):where(:focus),
+:where(.squiffy-output-section, .squiffy-panel) :where(
+    button, input[type=button], input[type=submit], input[type=reset]):where(:focus-visible)
+{
+    box-shadow: none;
+    outline: 2px solid var(--squiffy-link);
+    outline-offset: 2px;
+}
+
+/* Once the player has left a section, its inputs are disabled */
+:where(.squiffy-output-section, .squiffy-panel) :where(input, textarea, select, button):where(:disabled)
+{
+    opacity: 0.6;
+    cursor: default;
+}
+
+/* An input that fails validation */
 input.squiffy-invalid,
 textarea.squiffy-invalid,
 select.squiffy-invalid
 {
     border-color: var(--squiffy-error) !important;
-    box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--squiffy-error) 25%, transparent);
 }
 
-/* Valid input field states (optional, provides positive feedback) */
-input:not([disabled]):valid,
-textarea:not([disabled]):valid,
-select:not([disabled]):valid
-{
-    border-color: var(--squiffy-success);
-}
-
-/* Focus state for invalid inputs */
 input.squiffy-invalid:focus,
 textarea.squiffy-invalid:focus,
 select.squiffy-invalid:focus
 {
     outline: none;
-    border-color: var(--squiffy-error) !important;
-    box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--squiffy-error) 50%, transparent);
+    box-shadow: 0 0 0 0.2em color-mix(in srgb, var(--squiffy-error) 30%, transparent);
+}
+
+/* An input with a rule (such as required or minlength) that passes it, once the player has changed
+   it */
+:where(.squiffy-output-section, .squiffy-panel) :where(input, textarea, select):where(
+    [required], [pattern], [minlength], [min], [max], [type=email], [type=url], [type=number]):where(
+    :not(:disabled):user-valid)
+{
+    border-color: var(--squiffy-success);
 }
 
 /* Header button styles: the Back, Restart and light/dark buttons, which are icons */

@@ -22,7 +22,7 @@ Put a `.css` file in the story's folder. With `squiffy.json` it's included autom
 }
 ```
 
-Other colour variables: `--squiffy-muted` (header buttons, links awaiting valid input), `--squiffy-border` (lines between sections), `--squiffy-error`, `--squiffy-success` (input validation). `--squiffy-side-width` is the side panel width (16rem).
+Other colour variables: `--squiffy-muted` (header buttons, links awaiting valid input), `--squiffy-border` (lines between sections), `--squiffy-input-border` (text boxes, lists and buttons in the story, which are styled to match it; the rules are in `:where()`, so the story's own `input { ... }` overrides them), `--squiffy-error`, `--squiffy-success` (input validation). `--squiffy-side-width` is the side panel width (16rem).
 
 ## Light and dark mode
 

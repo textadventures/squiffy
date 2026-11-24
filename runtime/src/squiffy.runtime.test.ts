@@ -3149,6 +3149,30 @@ Go to [[next]].
     expect(content).toContain("At next or another.");
 });
 
+test("Text boxes ask password managers not to fill them in, unless they have an autocomplete attribute", async () => {
+    const script = `
+Name: <input type="text" data-attribute="player_name">
+
+Notes: <textarea data-attribute="notes"></textarea>
+
+Email: <input type="email" data-attribute="email" autocomplete="email">
+`;
+
+    const { element } = await initScript(script);
+
+    const [name, email] = element.querySelectorAll("input");
+    const notes = element.querySelector("textarea")!;
+    for (const input of [name, notes]) {
+        expect(input.getAttribute("autocomplete")).toBe("off");
+        expect(input.hasAttribute("data-1p-ignore")).toBe(true);
+        expect(input.getAttribute("data-lpignore")).toBe("true");
+        expect(input.hasAttribute("data-bwignore")).toBe(true);
+        expect(input.getAttribute("data-form-type")).toBe("other");
+    }
+    expect(email.getAttribute("autocomplete")).toBe("email");
+    expect(email.hasAttribute("data-1p-ignore")).toBe(false);
+});
+
 test("Input validation: links are disabled when required input is empty", async () => {
     const script = `
 Enter your name: <input type="text" data-attribute="player_name" required>

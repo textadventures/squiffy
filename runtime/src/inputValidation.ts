@@ -49,11 +49,33 @@ export function updateLinkStates(sectionElement: HTMLElement | null): void {
 }
 
 /**
+ * Ask browsers and password managers (1Password, LastPass, Bitwarden, Dashlane) not to offer to fill
+ * in the story's text boxes, which they take for a login or address form. A text box the author has
+ * given an autocomplete attribute is left alone, so <input autocomplete="name"> still gets offered
+ * the player's name.
+ */
+export function ignorePasswordManagers(sectionElement: HTMLElement | null): void {
+    if (!sectionElement) return;
+
+    for (const input of sectionElement.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>(
+        "input:not([autocomplete]), textarea:not([autocomplete])"
+    )) {
+        input.setAttribute("autocomplete", "off");
+        input.setAttribute("data-1p-ignore", "");
+        input.setAttribute("data-lpignore", "true");
+        input.setAttribute("data-bwignore", "");
+        input.setAttribute("data-form-type", "other");
+    }
+}
+
+/**
  * Set up input validation listeners on all inputs in the given section element.
  * This should be called whenever new content is added to the section.
  */
 export function setupInputValidation(sectionElement: HTMLElement | null): void {
     if (!sectionElement) return;
+
+    ignorePasswordManagers(sectionElement);
 
     const inputs = sectionElement.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(
         INPUT_SELECTOR

@@ -130,6 +130,7 @@ If you've [kept your story in one mode](#light-and-dark-mode), you can give just
 | `--squiffy-link-hover` | Links under the mouse pointer | `#0f3f99` | `#b0cbff` |
 | `--squiffy-muted` | The Back, Save, Restart and light/dark buttons, and links waiting for [valid input](/player-input/#input-validation) | `#6b6f76` | `#9a9ca3` |
 | `--squiffy-border` | The lines between sections | `#e2e2e6` | `#34343a` |
+| `--squiffy-input-border` | The edges of text boxes, lists and buttons in the story | `#8c8f96` | `#6b6d75` |
 | `--squiffy-error` | Inputs that fail validation | `#c62828` | `#ff7b72` |
 | `--squiffy-success` | Inputs that pass validation | `#2e7d32` | `#6cc070` |
 
@@ -300,8 +301,9 @@ The exported `style.css` combines two sets of rules: the page layout, and the st
 | `.squiffy-output-section` | Each section's output | A `1px solid var(--squiffy-border)` line underneath, and a `1em` gap, except for the latest one |
 | `.squiffy-output-passage` | Each passage's output | As above |
 | `dialog.squiffy-saves` | The [Saved games](/buttons-panels-settings/#saved-games) dialog | In the story's colours (the variables above), with the system's own font. Its parts have classes starting `squiffy-saves-` |
+| `input`, `textarea`, `select`, `button` | [Text boxes](/player-input/), lists and buttons in the story and its panels | In the story's colours and font, with a `1px solid var(--squiffy-input-border)` border and rounded corners, and a `var(--squiffy-link)` border when focused. Tick boxes, radio buttons and sliders are in `var(--squiffy-link)`. These rules are inside `:where()`, so any rule of your own, such as `input { border: none; }`, overrides them |
 | `input.squiffy-invalid` (and `textarea`, `select`) | An input that fails validation | `border-color: var(--squiffy-error)` |
-| `input:valid` (and `textarea`, `select`) | An input that passes validation | `border-color: var(--squiffy-success)` |
+| `input:user-valid` (and `textarea`, `select`) | An input with a [validation](/player-input/#input-validation) rule that passes it, once the player has changed it | `border-color: var(--squiffy-success)` |
 | `.squiffy-continue` | [Continue](/dynamic-text/#animation) links | `color: var(--squiffy-link)`, underlined, like other links. Its pulse, glow and bounce animations are turned off if the reader has asked their system to reduce motion. |
 
 The full set of rules is in [`squiffy.runtime.css`](https://github.com/textadventures/squiffy/blob/main/runtime/src/squiffy.runtime.css) and [`squiffy.page.css`](https://github.com/textadventures/squiffy/blob/main/runtime/src/squiffy.page.css) on GitHub.

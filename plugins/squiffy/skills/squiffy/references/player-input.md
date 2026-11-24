@@ -17,6 +17,8 @@ Welcome, {{player_name}}!
 
 `<select data-attribute="...">` and `<textarea data-attribute="...">` work too. `data-attribute` can be a value inside an object: `data-attribute="hero.name"`.
 
+The runtime gives text boxes `autocomplete="off"` and the attributes that tell password managers (1Password, LastPass, Bitwarden, Dashlane) not to fill them in, unless the box has an `autocomplete` attribute of its own, such as `autocomplete="given-name"`.
+
 ## Going on when Enter is pressed
 
 `data-section` on an `<input>` goes to that section when the player presses Enter, like clicking a link to it; `data-passage` shows a passage. What was typed is stored first, so the section or passage can use it:
