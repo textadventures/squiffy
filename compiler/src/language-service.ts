@@ -44,6 +44,8 @@ export interface ProjectInfo {
     projectFile?: ProjectFile;
     // Why squiffy.json couldn't be used, if it couldn't
     error?: string;
+    // What in squiffy.json this version of Squiffy left out: see ParsedProjectFile
+    warnings?: string[];
     // The main file: squiffy.json's "main", or else the one the service was given
     mainFile: string;
     // In folder mode, the story's other files, in the order they're added to the story: its
@@ -371,7 +373,10 @@ export function createLanguageService(options: LanguageServiceOptions): Language
         if (!parsed.success) return { ...fallback, error: parsed.error };
         const project = parsed.project;
         const story = getStoryFiles(project, paths);
-        return { projectFile: project, mainFile: project.main, storyFiles: storyFileList(story), excludedFiles: story.excluded };
+        return {
+            projectFile: project, mainFile: project.main, storyFiles: storyFileList(story), excludedFiles: story.excluded,
+            ...(parsed.warnings ? { warnings: parsed.warnings } : {}),
+        };
     }
 
     async function buildIndex(): Promise<Index> {
@@ -397,6 +402,15 @@ export function createLanguageService(options: LanguageServiceOptions): Language
             expressions: !!project.projectFile,
             ...(project.projectFile?.ignore ? { ignore: project.projectFile.ignore } : {}),
         });
+        for (const warning of [...project.warnings ?? []].reverse()) {
+            analysis.diagnostics.unshift({
+                file: PROJECT_FILENAME,
+                range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } },
+                severity: "warning",
+                code: "squiffy/project-file",
+                message: warning,
+            });
+        }
         if (project.error) {
             // A broken squiffy.json stops the story building, as it does in the CLI
             analysis.success = false;

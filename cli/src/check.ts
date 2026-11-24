@@ -24,8 +24,10 @@ export interface CheckProblem {
 export interface CheckResult {
     // False if there are any errors, which would stop the story building
     success: boolean;
-    errors: number;
-    warnings: number;
+    // How many of the problems are errors and warnings. (Elsewhere in --json output, "errors" is a
+    // list of messages, so these aren't called that.)
+    errorCount: number;
+    warningCount: number;
     problems: CheckProblem[];
     story: {
         start?: string;
@@ -106,8 +108,8 @@ export async function checkStory(story: StoryOnDisk, cwd = process.cwd()): Promi
     const labelled = [start, ...endings].filter(n => n?.detail && n.label);
     return {
         success: errors == 0,
-        errors,
-        warnings: problems.filter(p => p.severity == "warning").length,
+        errorCount: errors,
+        warningCount: problems.filter(p => p.severity == "warning").length,
         problems,
         story: {
             start: start?.name,
@@ -136,8 +138,8 @@ export function formatCheckResult(result: CheckResult): string {
         + (story.start !== undefined ? `, starting at ${describe(story.start)}` : "")
         + (story.endings.length ? `, with ${plural(story.endings.length, "ending")}: ${story.endings.map(describe).join(", ")}` : ", with no sections marked @end")
         + ".");
-    lines.push(result.errors || result.warnings
-        ? `${plural(result.errors, "error")}, ${plural(result.warnings, "warning")}.`
+    lines.push(result.errorCount || result.warningCount
+        ? `${plural(result.errorCount, "error")}, ${plural(result.warningCount, "warning")}.`
         : "No problems found.");
     return lines.join("\n");
 }

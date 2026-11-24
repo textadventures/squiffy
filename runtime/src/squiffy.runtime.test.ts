@@ -4177,6 +4177,20 @@ test("Custom helpers can be registered in @ui", async () => {
     expect(section?.querySelector("i")).toBeNull();
 });
 
+test("A story's own helper is called on its own, even with an attribute of the same name", async () => {
+    const script = `
+@ui
+    squiffy.registerHelper("greeting", () => "from the helper");
+---
+
+@set greeting = "from the attribute"
+{{greeting}}
+`;
+
+    const { element } = await initScript(script);
+    expect(element.textContent).toContain("from the helper");
+});
+
 // {{goto}} (#375)
 
 test("{{goto}} goes to another section after showing this one", async () => {

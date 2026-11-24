@@ -15,9 +15,9 @@ Docs: https://squiffystory.com/project-file/, https://squiffystory.com/multiple-
 
 | Property | Meaning |
 |---|---|
-| `version` | Format version, `1`. Required |
+| `version` | Format version, `1`. Required. A property or value (page string, panel icon, setting type) this Squiffy doesn't know is a warning and left out, not an error |
 | `main` | The main file, where the story starts. Required |
-| `id` | Identifies the story for saved games, and is the published page's IFID (uppercased), which sites that list stories match it by. Keep it when publishing a new version; never copy it to another story. Any unique text |
+| `id` | Identifies the story for saved games, and the player's progress, saves and choices are kept in the browser under it. It's the published page's IFID (uppercased), which sites that list stories match it by. Keep it when publishing a new version; never copy it to another story. Any unique text |
 | `description` | What the story is about, in a sentence or two, for the published page's `<meta name="description">` and link previews |
 | `author` | Who wrote it, for the published page's `<meta name="author">` |
 | `cover` | An image's path from the main file's folder, for link previews (`og:image`). Published with the story even if the story doesn't show it; left out of a single HTML file |
@@ -116,7 +116,7 @@ You're carrying nothing.
 "strings": { "back": "Retour", "restart": "Recommencer", "restartConfirm": "Voulez-vous vraiment recommencer ?" }
 ```
 
-Keys: `back`, `restart`, `restartConfirm`, `switchToDark`, `switchToLight`, `saves`, `saveName`, `save`, `noSaves`, `savedGame`, `savedToday`, `savedYesterday`, `load`, `loadConfirm`, `saveOptions`, `overwrite`, `overwriteConfirm`, `rename`, `newName`, `saveToFile`, `loadFromFile`, `delete`, `deleteConfirm`, `cancel`, `close`, `wrongStory`, `notASave`, `cantSave`, `settings`, `resetSettings`, and for the Start at list, `startAt`, `findSection`, `testSections`, `allSections`, `noSection`. `[name]` and `[time]` are filled in. Missing keys stay English.
+Keys: `back`, `restart`, `restartConfirm`, `switchToDark`, `switchToLight`, `mute`, `unmute`, `saves`, `saveName`, `save`, `noSaves`, `savedGame`, `savedToday`, `savedYesterday`, `load`, `loadConfirm`, `saveOptions`, `overwrite`, `overwriteConfirm`, `rename`, `newName`, `saveToFile`, `loadFromFile`, `delete`, `deleteConfirm`, `cancel`, `close`, `wrongStory`, `notASave`, `newerSave`, `cantSave`, `settings`, `resetSettings`, and for the Start at list, `startAt`, `findSection`, `testSections`, `allSections`, `noSection`. `[name]` and `[time]` are filled in. Missing keys stay English.
 
 ## Starting at a later section
 

@@ -3,16 +3,16 @@
 // new text is in it.
 export async function fadeReplace(element: HTMLElement, text: string, written?: (el: HTMLElement) => void): Promise<void> {
     const fadedOut = transitionEnd(element);
-    element.classList.add("fade-out");
+    element.classList.add("squiffy-fade-out");
     await fadedOut;
 
     element.innerHTML = text;
     written?.(element);
     const fadedIn = transitionEnd(element);
-    element.classList.remove("fade-out");
-    element.classList.add("fade-in");
+    element.classList.remove("squiffy-fade-out");
+    element.classList.add("squiffy-fade-in");
     await fadedIn;
-    element.classList.remove("fade-in");
+    element.classList.remove("squiffy-fade-in");
 }
 
 // When the element's own transition ends. Not one inside it, whose transitionend bubbles up to it,

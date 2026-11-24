@@ -38,9 +38,11 @@ The `$schema` line is optional. It lets text editors such as VS Code check the f
 
 The version of the project file format, which is `1`. A version of Squiffy that doesn't know the version refuses to build the story, saying you need a newer Squiffy.
 
+A later version of Squiffy 7 can add things to the project file without changing its version: a new property, a new [page string](/buttons-panels-settings/#the-pages-text-in-another-language), a new panel icon or kind of setting. An earlier version leaves out anything it doesn't know, with a warning, and builds the story without it. You'll see the same warning for a misspelt property name.
+
 ### `id`
 
-Identifies your story, so a player's [saved game](/buttons-panels-settings/#saved-games) can only be loaded into the story it came from. The published page also gives it as the story's IFID, which sites that list stories use to recognise it: see [Story details](/publishing/#story-details).
+Identifies your story, so a player's [saved game](/buttons-panels-settings/#saved-games) can only be loaded into the story it came from. The player's progress, saved games and choices are kept in their browser under it, so they're still there when you publish a new version of the story somewhere else, such as a new upload to itch.io. (A story without an `id` keeps them under its web address.) The published page also gives it as the story's IFID, which sites that list stories use to recognise it: see [Story details](/publishing/#story-details).
 
 The editor and the command-line tool give a new `squiffy.json` a random one. Any text will do, as long as no other story has it. Keep it the same when you publish a new version of your story, and don't copy it into another story.
 

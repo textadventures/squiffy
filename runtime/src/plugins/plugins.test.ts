@@ -89,7 +89,7 @@ const completeFadeTransitions = () => {
         for (const mutation of mutations) {
             const el = mutation.target as HTMLElement;
             const oldClasses = (mutation.oldValue || "").split(" ");
-            for (const fadeClass of ["fade-out", "fade-in"]) {
+            for (const fadeClass of ["squiffy-fade-out", "squiffy-fade-in"]) {
                 if (el.classList.contains(fadeClass) && !oldClasses.includes(fadeClass)) {
                     setTimeout(() => el.dispatchEvent(new TransitionEvent("transitionend")));
                 }
@@ -215,8 +215,8 @@ Your score is {{#label "score"}}0{{/label}}.
     const labelSpans = element.querySelectorAll(".squiffy-label-score");
     expect(labelSpans.length).toBe(1);
     expect(labelSpans[0].innerHTML).toBe("<strong>10</strong>");
-    expect(labelSpans[0].classList.contains("fade-out")).toBe(false);
-    expect(labelSpans[0].classList.contains("fade-in")).toBe(false);
+    expect(labelSpans[0].classList.contains("squiffy-fade-out")).toBe(false);
+    expect(labelSpans[0].classList.contains("squiffy-fade-in")).toBe(false);
 });
 
 test("Replace plugin: replaces the latest label, in a section visited again after the screen is cleared", async () => {
@@ -383,7 +383,7 @@ Score: {{live "score"}}.
     const liveSpan = element.querySelector(".squiffy-live");
     await vi.waitFor(() => {
         expect(liveSpan?.textContent).toBe("10");
-        expect(liveSpan?.classList.contains("fade-in")).toBe(false);
+        expect(liveSpan?.classList.contains("squiffy-fade-in")).toBe(false);
     });
 });
 
@@ -409,7 +409,7 @@ HP: {{live "hero.hp"}}
     await squiffyApi.clickLink(findPassageLink(element, "Hurt")!);
     await vi.waitFor(() => {
         expect(liveSpan()?.textContent).toBe("4");
-        expect(liveSpan()?.classList.contains("fade-in")).toBe(false);
+        expect(liveSpan()?.classList.contains("squiffy-fade-in")).toBe(false);
     });
 
     await squiffyApi.clickLink(findPassageLink(element, "Heal")!);

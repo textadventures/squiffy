@@ -182,9 +182,22 @@ test("a save from a story with no id, or into one, is loaded", async () => {
 test("something that isn't a save isn't loaded", async () => {
     const { api } = await start();
     const save = api.getSave();
-    for (const bad of [null, "text", {}, { ...save, format: "other" }, { ...save, version: 2 }, { ...save, state: {} }]) {
+    for (const bad of [null, "text", {}, { ...save, format: "other" }, { ...save, version: "2" }, { ...save, state: {} }]) {
         expect(await api.loadSave(bad as any)).toEqual({ success: false, error: "notASave" });
     }
+});
+
+test("a save from a newer version of Squiffy isn't loaded, saying so", async () => {
+    const { api } = await start();
+    const save = api.getSave();
+    expect(await api.loadSave({ ...save, version: 2 } as any)).toEqual({ success: false, error: "newerSave" });
+});
+
+// Something added to saves in a later 7.x is something an earlier one can do without (#642)
+test("a save with things this version doesn't know is loaded", async () => {
+    const { api } = await start();
+    const save = api.getSave();
+    expect(await api.loadSave({ ...save, fromLaterVersion: { x: 1 } } as any)).toEqual({ success: true });
 });
 
 test("a save whose section has gone starts the story again, keeping its attributes", async () => {

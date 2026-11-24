@@ -27,12 +27,12 @@ test("fadeReplace fades the text out, replaces it, and fades it in", async () =>
     const element = label();
     let done = false;
     void fadeReplace(element, "New").then(() => { done = true; });
-    expect(element.classList.contains("fade-out")).toBe(true);
+    expect(element.classList.contains("squiffy-fade-out")).toBe(true);
 
     transitionEnd(element);
     await vi.advanceTimersByTimeAsync(0);
     expect(element.innerHTML).toBe("New");
-    expect(element.classList.contains("fade-in")).toBe(true);
+    expect(element.classList.contains("squiffy-fade-in")).toBe(true);
 
     transitionEnd(element);
     await vi.advanceTimersByTimeAsync(0);

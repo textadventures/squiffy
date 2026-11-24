@@ -22,6 +22,8 @@ export interface StoryOnDisk {
     projectFile?: string;
     // Something to tell the author, e.g. that a squiffy.json was ignored
     note?: string;
+    // What in squiffy.json this version of Squiffy left out, in folder mode: see ParsedProjectFile
+    projectWarnings?: string[];
     // Whether @set and link setters take expressions (#373): true if there's a squiffy.json in
     // the story's folder or above, even if it's only building one file
     expressions: boolean;
@@ -120,7 +122,7 @@ async function readProject(projectFile: string) {
     if (!parsed.success) {
         throw new StoryNotFoundError(`${parsed.error} (${projectFile})`);
     }
-    return parsed.project;
+    return { ...parsed.project, warnings: parsed.warnings };
 }
 
 async function folderStory(projectFile: string, options: FindStoryOptions): Promise<StoryOnDisk> {
@@ -136,6 +138,7 @@ async function folderStory(projectFile: string, options: FindStoryOptions): Prom
     const story = getStoryFiles(project, await listStoryFiles(root), skip);
     return {
         mainFile, storyFiles: storyFileList(story).map(file => path.resolve(root, file)), projectFile, expressions: true,
+        ...(project.warnings ? { projectWarnings: project.warnings.map(warning => `${warning} (${projectFile})`) } : {}),
         ...(project.backButton !== undefined ? { backButton: project.backButton } : {}),
         ...(project.strings !== undefined ? { strings: project.strings } : {}),
         ...(project.saveButton !== undefined ? { saveButton: project.saveButton } : {}),

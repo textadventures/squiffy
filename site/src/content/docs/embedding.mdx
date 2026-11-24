@@ -103,7 +103,7 @@ The `squiffyRuntime.init()` function accepts an options object:
 | `element` | `HTMLElement` | (required) | The container element for the story output |
 | `story` | `Story` | (required) | The compiled story object (from `story.js`) |
 | `persist` | `boolean` | `true` | Whether to save state to localStorage |
-| `storyId` | `string` | URL path (or the story's ID when opened from a local file) | Key used for localStorage (allows multiple stories on same domain) |
+| `storyId` | `string` | The `id` in the story's [`squiffy.json`](/project-file/#id), or else the URL path (or an ID made when the story is compiled, when it's opened from a local file) | Key used for localStorage (allows multiple stories on same domain) |
 | `scroll` | `string` | `"body"` | Scroll behavior: `"body"`, `"element"`, or `"none"` |
 | `onSet` | `function` | - | Callback when an attribute is set |
 | `resolveAssetUrl` | `function` | - | Maps an image or other file path used in the story to the URL to load it from. See [Asset URLs](#asset-urls) |
@@ -245,7 +245,7 @@ Carries on from a saved game, replacing the game as it is now. A save from a sto
 ```javascript
 const result = await squiffyApi.loadSave(JSON.parse(localStorage.getItem('my-save')));
 if (!result.success) {
-    console.log(result.error); // "wrongStory", or "notASave" if it isn't a saved game
+    console.log(result.error); // "wrongStory", "notASave" if it isn't a saved game, or "newerSave" if it's from a newer Squiffy
 }
 ```
 
@@ -321,7 +321,7 @@ The saves are kept in the browser's IndexedDB, under the page's path. These opti
 
 | Option | Description |
 |---|---|
-| `key` | Which story the saves are for, if not the page's path |
+| `key` | Which story the saves are for, if not the page's path. The published page gives the story's [`id`](/project-file/#id), so its saves are kept wherever it's put |
 | `slots` | Somewhere else to keep the saves: an object with `list`, `get`, `add`, `overwrite`, `rename` and `delete` methods, like the runtime's `memorySaveSlots()` |
 | `strings` | The dialog's text, using the [names in `squiffy.json`](/buttons-panels-settings/#the-pages-text-in-another-language) |
 | `fileName` | The name Save to file gives the file, before `.squiffy-save`. The page's title by default |

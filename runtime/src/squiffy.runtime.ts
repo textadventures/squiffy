@@ -3,7 +3,7 @@ import { listPassages, listSections, tagsOf } from "./storyLists.js";
 import { TextProcessor, afterClear, errorHtml } from "./textProcessor.js";
 import { toNumber } from "./numbers.js";
 import { Emitter, SquiffyEventMap } from "./events.js";
-import { State } from "./state.js";
+import { State, moveStoredProgress } from "./state.js";
 import { checkSegment, readTarget, Target } from "./paths.js";
 import { updateStory } from "./updater.js";
 import { PluginManager } from "./pluginManager.js";
@@ -21,7 +21,7 @@ import { createSavesDialog, type SavesDialog } from "./savesDialog.js";
 import { createSettingsDialog, type SettingsDialog } from "./settingsDialog.js";
 import { PlayerSettings } from "./playerSettings.js";
 
-export type { StartAt } from "./types.js";
+export type { StartAt, SquiffyInitOptions, Story } from "./types.js";
 export type { SquiffyApi, SquiffyScriptApi, SquiffyScriptEvent, SavedGame, LoadSaveResult, PlayerSetting, PlayerSettingOption, SettingValue } from "./types.js";
 export type { SquiffyEventHandler, SquiffyEventMap } from "./events.js";
 export { createSavesDialog, formatSaveTime, SAVES_STRINGS, SAVE_FILE_EXTENSION } from "./savesDialog.js";
@@ -766,7 +766,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         if (story.uiJsIndex !== undefined) {
             runJs(story.uiJsIndex, {
                 registerAnimation: animation.registerAnimation.bind(animation),
-                registerHelper: textProcessor.handlebars.registerHelper.bind(textProcessor.handlebars),
+                registerHelper: textProcessor.registerOwnHelper,
                 SafeString: textProcessor.handlebars.SafeString,
             });
         }
@@ -854,7 +854,14 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             && !Array.isArray(s.state) && typeof s.state._output == "string";
     }
 
+    // A saved game in a format from a later version of Squiffy
+    function isNewerSave(save: unknown) {
+        const s = save as Partial<Record<keyof SavedGame, unknown>> | null;
+        return !!s && typeof s == "object" && s.format === "squiffy-save" && typeof s.version == "number" && s.version > 1;
+    }
+
     async function loadSave(save: SavedGame): Promise<LoadSaveResult> {
+        if (isNewerSave(save)) return { success: false, error: "newerSave" };
         if (!isSavedGame(save)) return { success: false, error: "notASave" };
         // A story without an id, or a save from one, can't be checked, so it's loaded
         if (save.storyId && story.projectId && save.storyId !== story.projectId) {
@@ -1470,18 +1477,22 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         onSet: options.onSet || (() => {})
     };
 
-    // Determine the storage key to use for localStorage
+    // The key the player's progress is kept under in localStorage: squiffy.json's id, so it's kept
+    // wherever the story is put (a new upload to itch.io has a new address, for one), and two
+    // stories at the same address, such as the CLI's server's, have their own. A story without
+    // one uses the page's address, or for a file opened from disk, an id made when it's compiled.
     let storageKey = "";
     if (settings.persist) {
         if (options.storyId !== undefined) {
-            // Use explicit storyId if provided
             storageKey = options.storyId;
+        } else if (story.projectId) {
+            storageKey = story.projectId;
+            // Progress kept by the page's address, before the story had an id or Squiffy used it
+            if (window.location.protocol !== "file:") moveStoredProgress(window.location.pathname, storageKey);
         } else if (window.location.protocol === "file:") {
-            // For games opened from file system, use story.id (a GUID generated at compile time)
             // This prevents issues with file:// localStorage sharing in Chrome
             storageKey = story.id || "";
         } else {
-            // For games served via HTTP(S), use the URL path
             storageKey = window.location.pathname;
         }
 

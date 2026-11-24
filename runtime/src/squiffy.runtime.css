@@ -280,12 +280,12 @@ div.squiffy-output-section:not(:has(~ div.squiffy-output-section div.squiffy-out
 }
 
 /* Fade animations */
-.fade-out {
+.squiffy-fade-out {
     opacity: 0;
     transition: opacity 200ms;
 }
 
-.fade-in {
+.squiffy-fade-in {
     opacity: 1;
     transition: opacity 200ms;
 }

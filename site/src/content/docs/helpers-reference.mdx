@@ -151,6 +151,8 @@ See [Attributes](/attributes/) for detailed documentation and examples.
 | `{{attribute}}` | Display attribute value (single-word names, always gets latest value) | `{{score}}` |
 | `{{get "name"}}` | Get attribute value (for multi-word names or dynamic attribute names from expressions) | `{{get "player name"}}` |
 
+An attribute can have the same name as a helper, such as `count` or `max`. `{{count}}` on its own shows the attribute, and `{{count bag}}` calls the helper. The exceptions are the helpers that do something with nothing given: `{{clear}}`, `{{content}}`, `{{deactivate}}`, `{{forget}}`, `{{headertitle}}`, `{{restart}}`, `{{saves}}`, `{{settings}}`, `{{stop}}`, `{{stopmusic}}` and `{{stopsounds}}`. Use `{{get "restart"}}` for an attribute with one of those names.
+
 ### Modifying attributes
 
 | Helper | Parameters | Description | Example |

@@ -230,9 +230,11 @@ export class State {
             return;
         }
 
+        // With the "-", so that restarting the story at /story doesn't clear /story2's, nor the
+        // story at / every other story's on the site
         const keys = Object.keys(localStorage);
         for (const key of keys) {
-            if (key.startsWith(this.storyId)) {
+            if (key.startsWith(this.storyId + "-")) {
                 localStorage.removeItem(key);
             }
         }
@@ -281,5 +283,34 @@ export class State {
     private getVisitsFrom(visits: Record<string, number>, seenSections: string[], sectionName: string): number {
         if (Object.prototype.hasOwnProperty.call(visits, sectionName)) return visits[sectionName];
         return seenSections.indexOf(sectionName) > -1 ? 1 : 0;
+    }
+}
+// The keys a story's progress is kept under in localStorage, for the storage key it uses: an item
+// for each attribute, and the persistent attributes, player settings and mute button
+const progressItems = (key: string) => [`squiffy-persistent:${key}`, `squiffy-settings:${key}`, `squiffy-muted:${key}`];
+
+// Moves a story's progress from one storage key to another, if there's none under the new one yet:
+// e.g. from the page's address, which Squiffy 6 and the 7.0 betas used, to squiffy.json's id
+export function moveStoredProgress(from: string, to: string) {
+    if (!from || from == to) return;
+    try {
+        const keys = Object.keys(localStorage);
+        if (!keys.some(key => key.startsWith(to + "-"))) {
+            for (const key of keys) {
+                if (!key.startsWith(from + "-")) continue;
+                localStorage.setItem(to + key.substring(from.length), localStorage.getItem(key)!);
+                localStorage.removeItem(key);
+            }
+        }
+        const fromItems = progressItems(from);
+        progressItems(to).forEach((item, i) => {
+            const value = localStorage.getItem(fromItems[i]);
+            if (value === null) return;
+            if (localStorage.getItem(item) === null) localStorage.setItem(item, value);
+            localStorage.removeItem(fromItems[i]);
+        });
+    }
+    catch {
+        // Storage that can't be read or written
     }
 }

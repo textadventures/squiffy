@@ -5,6 +5,7 @@
   "description": "Makes a folder of .squiffy, .css and .js files one story. See https://squiffystory.com/project-file/",
   "type": "object",
   "required": ["version", "main"],
+  "additionalProperties": false,
   "properties": {
     "$schema": {
       "type": "string"
@@ -179,6 +180,8 @@
         "restartConfirm": { "description": "Asks the player whether they're sure, when they click Restart.", "type": "string", "default": "Are you sure you want to restart?" },
         "switchToDark": { "description": "The light/dark button's tooltip, in light mode.", "type": "string", "default": "Switch to dark mode" },
         "switchToLight": { "description": "The light/dark button's tooltip, in dark mode.", "type": "string", "default": "Switch to light mode" },
+        "mute": { "description": "The mute button's tooltip, for a story with music or sounds.", "type": "string", "default": "Mute" },
+        "unmute": { "description": "The mute button's tooltip while the story is muted.", "type": "string", "default": "Unmute" },
         "saves": { "description": "The Save button's tooltip, and the Saved games dialog's heading.", "type": "string", "default": "Saved games" },
         "saveName": { "description": "The box for a save's name.", "type": "string", "default": "Name (optional)" },
         "save": { "description": "The button that saves the game.", "type": "string", "default": "Save" },
@@ -201,6 +204,7 @@
         "close": { "description": "The close button of the Saved games dialog and the panels' dialog.", "type": "string", "default": "Close" },
         "wrongStory": { "description": "Shown when a saved game is from a different story.", "type": "string", "default": "This saved game is for a different story." },
         "notASave": { "description": "Shown when a file isn't a saved game.", "type": "string", "default": "This file isn't a saved game." },
+        "newerSave": { "description": "Shown when a saved game is from a newer version of Squiffy, which this page can't load.", "type": "string", "default": "This saved game is from a newer version of this story, so it can't be loaded here." },
         "cantSave": { "description": "Shown when the game couldn't be saved in the browser.", "type": "string", "default": "The game couldn't be saved. Try Save to file instead." },
         "settings": { "description": "The Settings button's tooltip, the Settings dialog's heading, and the text of {{settings}} links.", "type": "string", "default": "Settings" },
         "resetSettings": { "description": "The Settings dialog's button that puts every setting back to its default.", "type": "string", "default": "Reset to defaults" },
