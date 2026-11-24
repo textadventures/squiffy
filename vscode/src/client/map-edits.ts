@@ -3,7 +3,7 @@
 
 import type { MapPositions } from "squiffy-compiler";
 import type { GraphNode, Position, StoryGraph, TextEdit } from "squiffy-compiler/language-service";
-import { linkThenHeaderEdits, placeNewPassage } from "@textadventures/squiffy-app/map-edits";
+import { insertHeaderEdit, linkThenHeaderEdits, placeNewPassage, placeNewSection } from "@textadventures/squiffy-app/map-edits";
 import { emptyPositions, linkTo, nodeAtLine, sectionKeys, withPosition } from "@textadventures/squiffy-app/story-map";
 import type { Point } from "../map/messages.js";
 
@@ -49,6 +49,35 @@ export function addPassageEdits(graph: StoryGraph, from: GraphNode, name: string
     if (!section) return undefined;
     const place = placeNewPassage(section);
     return { file: place.file, edits: linkThenHeaderEdits(text, addLink(graph, from, `[${name}]`, cursor), place.afterLine, `[${name}]:`) };
+}
+
+// The edits that add a section: after the section it's linked from or made near, in its file (see
+// placeNewSection), with a link to it from `from` unless `link` is false (for a broken link that's
+// there already). `file` is where it goes, and `text` that file's text.
+export function newSectionEdits(graph: StoryGraph, name: string, where: { from?: GraphNode; near?: GraphNode; link?: boolean; file: string }, text: string, cursor?: Cursor): TextEdit[] {
+    const place = placeNewSection(graph, where);
+    const header = `[[${name}]]:`;
+    if (where.from && where.link !== false && where.from.location.file == where.file) {
+        return linkThenHeaderEdits(text, addLink(graph, where.from, `[[${name}]]`, cursor), place.afterLine, header);
+    }
+    return [insertHeaderEdit(text, place.afterLine, header)];
+}
+
+// The edit that adds a passage to a section, without a link to it (for a broken link to it)
+export function newPassageEdit(section: GraphNode, name: string, text: string): { file: string; edit: TextEdit } {
+    const place = placeNewPassage(section);
+    return { file: place.file, edit: insertHeaderEdit(text, place.afterLine, `[${name}]:`) };
+}
+
+// What a broken link's marker would make: the section or passage it's missing, and where from. Not
+// for an embed, or a name only known when the story runs, which have to be sorted out in the script.
+export function missingTarget(graph: StoryGraph, edge: { kind: string; from: string; target?: string }): { kind: "section" | "passage"; name: string; from: GraphNode } | undefined {
+    const from = graph.nodes.find(n => n.id == edge.from);
+    const name = edge.target;
+    if (!from || !name) return undefined;
+    if (edge.kind == "passage-link") return { kind: "passage", name, from };
+    if (edge.kind == "section-link" || edge.kind == "goto") return { kind: "section", name, from };
+    return undefined;
 }
 
 // The positions after nodes are dropped on the map. Only sections and passages are kept.

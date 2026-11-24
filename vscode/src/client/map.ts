@@ -10,10 +10,10 @@ import type { BaseLanguageClient } from "vscode-languageclient";
 import { parseProjectFile, updateProjectFile, type MapPositions } from "squiffy-compiler";
 import type { GraphNode, Location, StoryGraph, TextEdit } from "squiffy-compiler/language-service";
 import { checkPassageName, deleteLinesEdits, deletionMessage, planDeletion, startEdit } from "@textadventures/squiffy-app/map-edits";
-import { movedNodes, nodeAtLine, renamePositions } from "@textadventures/squiffy-app/story-map";
+import { checkSectionName, movedNodes, nodeAtLine, renamePositions, withPosition } from "@textadventures/squiffy-app/story-map";
 import { STORY_GRAPH, type PreviewFromHereArgs, type StoryGraphParams, type StoryGraphResult } from "../protocol.js";
-import type { FromMap, ToMap } from "../map/messages.js";
-import { addPassageEdits, linkEdit, movedPositions, sectionFor, type Cursor } from "./map-edits.js";
+import type { FromMap, Point, ToMap } from "../map/messages.js";
+import { addPassageEdits, linkEdit, missingTarget, movedPositions, newPassageEdit, newSectionEdits, sectionFor, type Cursor } from "./map-edits.js";
 
 // How long to wait after typing before drawing the map again
 const UPDATE_DELAY = 300;
@@ -138,6 +138,15 @@ export class StoryMap implements vscode.Disposable {
             case "delete":
                 void this.act(message.ids, "delete", nodes => this.delete(nodes));
                 break;
+            case "create":
+                void this.act([message.from, message.near].filter(id => id !== undefined), "add the section", nodes => {
+                    const from = message.from ? nodes[0] : undefined;
+                    return this.createSection(message.at, from, message.near ? nodes[nodes.length - 1] : undefined);
+                });
+                break;
+            case "createMissing":
+                void this.act([message.edge.from], "add it", () => this.createMissing(message.edge, message.at));
+                break;
         }
     }
 
@@ -243,6 +252,8 @@ export class StoryMap implements vscode.Disposable {
     private async rename(node: GraphNode) {
         if (node.detail) return;
         const name = await vscode.window.showInputBox({
+            // The map takes the focus back as the click or drag that asked for it ends
+            ignoreFocusOut: true,
             title: `Rename the ${node.kind} "${node.name}"`,
             prompt: "Links to it are changed too.",
             value: node.name,
@@ -261,6 +272,8 @@ export class StoryMap implements vscode.Disposable {
         const section = sectionFor(graph, node);
         if (!section) return;
         const name = await vscode.window.showInputBox({
+            // The map takes the focus back as the click or drag that asked for it ends
+            ignoreFocusOut: true,
             title: `Add a passage to the section "${section.name}"`,
             prompt: node.kind == "passage" ? `With a link to it from the passage "${node.name}".` : "With a link to it from the section.",
             validateInput: value => checkPassageName(value, section.name, graph),
@@ -284,6 +297,69 @@ export class StoryMap implements vscode.Disposable {
         if (node.kind != "section" || node.start || node.detail || !node.name || !this.mainFile) return;
         const text = (await vscode.workspace.openTextDocument(this.uriOf(this.mainFile))).getText();
         await this.applyEdits(new Map([[this.mainFile, [startEdit(text, node.name)]]]));
+    }
+
+    // A new section, after asking its name: linked from `from` (a link dragged to empty space), or
+    // after `near` in the script. Its box goes where it was made.
+    private async createSection(at: Point, from: GraphNode | undefined, near: GraphNode | undefined) {
+        const graph = this.graph!;
+        const name = await vscode.window.showInputBox({
+            // The map takes the focus back as the click or drag that asked for it ends
+            ignoreFocusOut: true,
+            title: from ? `Add a section, with a link to it from ${describe(from)}` : "Add a section",
+            prompt: "Its name",
+            validateInput: value => checkSectionName(value, graph),
+        });
+        if (name === undefined) return;
+        // In the file of what it's linked from or near, or the script being written in
+        const cursor = this.cursor();
+        const file = from?.location.file ?? near?.location.file ?? (cursor?.file.endsWith(".squiffy") ? cursor.file : this.mainFile!);
+        const text = (await vscode.workspace.openTextDocument(this.uriOf(file))).getText();
+        await this.applyEdits(new Map([[file, newSectionEdits(graph, name, { from, near, file }, text, cursor)]]));
+        this.placeNew({ kind: "section", name }, at);
+    }
+
+    // What a broken link is missing: the section or passage it names
+    private async createMissing(edge: { from: string; kind: string; target?: string }, at: Point | undefined) {
+        const graph = this.graph!;
+        const target = missingTarget(graph, edge);
+        if (!target) {
+            void vscode.window.showInformationMessage("This can't be added from the map. Change it in the script.");
+            return;
+        }
+        const { kind, name, from } = target;
+        if (kind == "passage") {
+            const section = sectionFor(graph, from);
+            const problem = section ? checkPassageName(name, section.name, graph) : "The story has changed. Try again.";
+            if (problem || !section) {
+                void vscode.window.showInformationMessage(problem!);
+                return;
+            }
+            const { file, edit } = newPassageEdit(section, name, (await vscode.workspace.openTextDocument(this.uriOf(section.location.file))).getText());
+            await this.applyEdits(new Map([[file, [edit]]]));
+            this.placeNew({ kind: "passage", name, section: section.name }, at);
+            return;
+        }
+        const problem = checkSectionName(name, graph);
+        if (problem) {
+            void vscode.window.showInformationMessage(problem);
+            return;
+        }
+        const file = from.location.file;
+        const text = (await vscode.workspace.openTextDocument(this.uriOf(file))).getText();
+        await this.applyEdits(new Map([[file, newSectionEdits(graph, name, { from, link: false, file }, text)]]));
+        this.placeNew({ kind: "section", name }, at);
+    }
+
+    // A section or passage just made from the map: its box goes where it was made, and it's selected
+    // once the map has it
+    private placeNew(node: { kind: "section" | "passage"; name: string; section?: string }, at: Point | undefined) {
+        this.post({ type: "select", id: node.kind == "section" ? `section:${node.name}` : `passage:${node.section}/${node.name}` });
+        if (!at) return;
+        this.queue = this.queue.then(async () => {
+            this.positions = withPosition(this.positions, new Map(), node, at);
+            await this.savePositions(this.positions);
+        }).catch(e => void vscode.window.showWarningMessage(`Couldn't save the map: ${e instanceof Error ? e.message : e}`));
     }
 
     // After asking, as the editor's map does
@@ -354,6 +430,12 @@ export class StoryMap implements vscode.Disposable {
         this.panel?.dispose();
         for (const d of this.disposables) d.dispose();
     }
+}
+
+// A section or passage, as a message names it
+function describe(node: GraphNode) {
+    if (node.kind == "passage") return `the passage "${node.name}"`;
+    return node.name ? `the section "${node.name}"` : "the story's opening";
 }
 
 // A file's path in the story's folder, if it's in there

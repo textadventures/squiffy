@@ -10,7 +10,7 @@
     import GraphMap, { type NodeState } from "@textadventures/graph-map/GraphMap.svelte";
     import StoryMapNodeBox from "@textadventures/squiffy-app/StoryMapNode.svelte";
     import { buildStoryMap, linkTo, pinnedPositions, storyMapLayout, type StoryMapEdge, type StoryMapNode } from "@textadventures/squiffy-app/story-map";
-    import type { FromMap, ToMap } from "./messages.js";
+    import type { FromMap, Point, ToMap } from "./messages.js";
     import Menu, { type MenuItem } from "./Menu.svelte";
 
     let { post }: { post: (message: FromMap) => void } = $props();
@@ -47,8 +47,23 @@
             positions = message.positions;
         } else if (message.type == "current") {
             current = message.id;
+        } else if (message.type == "select") {
+            selectWhenReady = message.id;
         }
     }
+
+    // A section or passage just made from the map is selected once the map has it
+    let selectWhenReady: string | null = null;
+    $effect(() => {
+        void decorated;
+        const id = selectWhenReady;
+        untrack(() => {
+            if (!id || !map?.has(id)) return;
+            selectWhenReady = null;
+            map.select(id);
+            map.reveal(id);
+        });
+    });
 
     // The editor's cursor brings its section into view
     let lastCurrent: string | null = null;
@@ -63,15 +78,44 @@
         });
     });
 
+    // To another box, a link to it; to empty space, a new section there
     function canConnect(from: StoryMapNode, to: StoryMapNode | null) {
-        // A link to empty space would make a new section, which the editor's map does, but this
-        // one doesn't yet
-        if (!from.graphNode || !to?.graphNode) return false;
-        return "text" in linkTo(from.graphNode, to.graphNode);
+        if (!from.graphNode) return false;
+        if (!to) return true;
+        return !!to.graphNode && "text" in linkTo(from.graphNode, to.graphNode);
+    }
+
+    // A point the map gives, which can be part of its state, as a plain object that can be posted
+    // to the extension (a Svelte state proxy can't be)
+    const plain = (p: Point): Point => ({ x: p.x, y: p.y });
+
+    // A new section, its box at `at`, after the selected box in the script, or the nearest one
+    function create(at: Point) {
+        const near = (selected ? base?.nodes.find(n => n.id == selected) : undefined)?.graphNode ?? map?.nearest(at, n => !!n.graphNode)?.graphNode;
+        post({ type: "create", at: plain(at), near: near?.id });
+    }
+
+    // What a broken link's marker is missing: a section, or a passage in the section it's from.
+    // Not an embed, or a name only known when the story runs.
+    function canCreateMissing(node: StoryMapNode) {
+        const kind = node.brokenEdge?.kind;
+        return kind == "passage-link" || kind == "section-link" || kind == "goto";
+    }
+
+    function createMissing(node: StoryMapNode) {
+        const edge = node.brokenEdge;
+        if (!edge) return;
+        const at = map?.positionOf(node.id);
+        post({ type: "createMissing", edge: { from: edge.from, kind: edge.kind, target: edge.target }, at: at && plain(at) });
     }
 
     function activate(node: StoryMapNode, how: "click" | "open") {
-        // A broken link's marker goes to the link
+        // Opening a broken link's marker makes what's missing, as in the editor
+        if (node.kind == "missing" && how == "open" && canCreateMissing(node)) {
+            createMissing(node);
+            return;
+        }
+        // Clicking one goes to the link
         const location = node.kind == "missing" ? node.brokenEdge?.location : node.graphNode?.location;
         if (location) post({ type: "goto", location, focus: how == "open" });
     }
@@ -93,11 +137,15 @@
     // The right-click menu, for a box, a broken link's marker, or the background
     let menu = $state<{ x: number; y: number; keyboard: boolean; items: MenuItem[] } | null>(null);
 
-    function showMenu(node: StoryMapNode | null, _at: unknown, screen: { x: number; y: number }, keyboard: boolean) {
+    function showMenu(node: StoryMapNode | null, at: Point, screen: Point, keyboard: boolean) {
         const g = node?.graphNode;
         let items: MenuItem[];
         if (node?.kind == "missing") {
-            items = [{ label: "Show the link in the script", shortcut: "Enter", action: () => activate(node, "open") }];
+            const edge = node.brokenEdge;
+            items = [
+                ...(canCreateMissing(node) ? [{ label: edge?.kind == "passage-link" ? "Add this passage" : "Add this section", shortcut: "Enter", action: () => createMissing(node) }] : []),
+                { label: "Show the link in the script", action: () => activate(node, "click") },
+            ];
         } else if (node && g) {
             const id = g.id;
             items = [
@@ -110,7 +158,8 @@
             ];
         } else {
             items = [
-                { label: "Zoom in", shortcut: "+", action: () => map?.zoomBy(1.25) },
+                { label: "Add a section here…", action: () => create(at) },
+                { label: "Zoom in", shortcut: "+", divider: true, action: () => map?.zoomBy(1.25) },
                 { label: "Zoom out", shortcut: "-", action: () => map?.zoomBy(0.8) },
                 { label: "Show the whole story", shortcut: "0", action: () => map?.fit() },
             ];
@@ -127,11 +176,12 @@
         e.target?.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, button: 0 }));
     }
 
-    const instructions = "Arrow keys move between sections and passages, and Enter goes to one in the editor. F2 renames it and Delete deletes it. The menu key, or Shift and F10, opens a menu for it. Plus and minus zoom, and 0 fits the whole story in view. Drag the background to pan, a box to move it, or the dot under the selected box to another box to add a link. Shift and drag the background to select several boxes, or Shift and click one, then drag one of them to move them all.";
+    const instructions = "Arrow keys move between sections and passages, and Enter goes to one in the editor. F2 renames it and Delete deletes it. The menu key, or Shift and F10, opens a menu for it. Plus and minus zoom, and 0 fits the whole story in view. Double-click the background to add a section there. Drag the background to pan, a box to move it, or the dot under the selected box to another box to add a link, or to empty space to add a section with a link to it. Shift and drag the background to select several boxes, or Shift and click one, then drag one of them to move them all.";
 </script>
 
 <main class="story-map">
     <div class="toolbar" role="toolbar" aria-label="Story map">
+        <button type="button" title="Add a section" aria-label="Add a section" onclick={() => create(map?.centre() ?? { x: 0, y: 0 })}>Add a section</button>
         <button type="button" title="Zoom in (+)" aria-label="Zoom in" onclick={() => map?.zoomBy(1.25)}>+</button>
         <button type="button" title="Zoom out (-)" aria-label="Zoom out" onclick={() => map?.zoomBy(0.8)}>−</button>
         <button type="button" title="Show the whole story (0)" aria-label="Show the whole story" onclick={() => map?.fit()}>Fit</button>
@@ -159,10 +209,13 @@
                 onrename={n => { if (n.graphNode && !n.graphNode.detail) post({ type: "rename", id: n.graphNode.id }); }}
                 ondelete={remove}
                 onmenu={showMenu}
-                onmove={moves => post({ type: "move", moves: moves.flatMap(({ node, at }) => node.graphNode ? [{ id: node.graphNode.id, at }] : []) })}
-                onconnect={(from, to) => {
-                    if (from.graphNode && to?.graphNode) post({ type: "link", from: from.graphNode.id, to: to.graphNode.id });
+                onmove={moves => post({ type: "move", moves: moves.flatMap(({ node, at }) => node.graphNode ? [{ id: node.graphNode.id, at: plain(at) }] : []) })}
+                onconnect={(from, to, at) => {
+                    if (!from.graphNode) return;
+                    if (!to) post({ type: "create", at: plain(at), from: from.graphNode.id });
+                    else if (to.graphNode) post({ type: "link", from: from.graphNode.id, to: to.graphNode.id });
                 }}
+                oncreate={create}
                 node={drawNode}
             />
             {#if decorated.nodes.length === 0}
