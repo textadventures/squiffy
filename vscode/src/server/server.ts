@@ -9,10 +9,11 @@ import { TextDocument } from "vscode-languageserver-textdocument";
 import { emit, formatDiagnostic } from "squiffy-compiler";
 import { createPackage } from "@textadventures/squiffy-packager";
 import {
-    EXPORT_STORY, FIND_PROJECT_FILES, fromBase64, LIST_FILES, PREVIEW_STORY, READ_TEXT, SECTION_AT, SET_MAIN_FILE,
+    EXPORT_STORY, FIND_PROJECT_FILES, fromBase64, LIST_FILES, PREVIEW_STORY, READ_TEXT, SECTION_AT, SET_MAIN_FILE, STORY_GRAPH,
     type ExportStoryParams, type ExportStoryResult, type FindProjectFilesResult, type ListFilesParams, type ListFilesResult, type PreviewStoryParams, type PreviewStoryResult,
     type PreviewFromHereArgs, type ReadTextParams, type ReadTextResult, type SectionAtParams, type SectionAtResult, type SetMainFileParams,
     type ShowLinksHereArgs,
+    type StoryGraphParams, type StoryGraphResult,
 } from "../protocol.js";
 import { groupDiagnostics, markdown, toLspCodeAction, toLspCompletion, toLspSymbol, toLspWorkspaceEdit } from "./convert.js";
 import { folderOf, Stories, type Story, toPath, toUri } from "./stories.js";
@@ -277,6 +278,15 @@ export function startServer(connection: Connection) {
     connection.onRequest(SECTION_AT, async ({ uri, position }: SectionAtParams): Promise<SectionAtResult> => {
         const { story, path } = await locate(uri);
         return (await story.service.getSectionAt(path, position)) ?? null;
+    });
+
+    connection.onRequest(STORY_GRAPH, async ({ uri }: StoryGraphParams): Promise<StoryGraphResult> => {
+        const story = await stories.storyFor(uri);
+        return {
+            graph: await story.service.getStoryGraph(),
+            root: story.root,
+            projectFile: story.project ? toUri(story.root, "squiffy.json") : undefined,
+        };
     });
 
     connection.onRequest(SET_MAIN_FILE, async ({ uri }: SetMainFileParams) => {

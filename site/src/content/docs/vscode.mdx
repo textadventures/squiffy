@@ -1,6 +1,6 @@
 ---
 title: VS Code
-description: Write Squiffy stories in Visual Studio Code, with a live preview
+description: Write Squiffy stories in Visual Studio Code, with a live preview and a story map
 ---
 
 import Screenshot from "@components/Screenshot.astro";
@@ -42,6 +42,17 @@ A folder with a `squiffy.json` is a story, made of every `.squiffy`, `.css` and 
 **Squiffy: Show Preview**, or the ▷ button at the top right of a `.squiffy` file or **Preview** in the status bar at the bottom, runs your story beside your script, updating as you type. The preview's own buttons go back a step and restart the story.
 
 To try a part of the story without playing through from the start, click **Preview from here** above a section or passage, or right-click in one and choose **Start Preview at This Section**. See [Testing your story](/testing/) for more ways to test. The attributes the story sets as you play are listed in the **Output** panel: choose **Squiffy Preview** from the dropdown at its top right.
+
+## The story map
+
+**Squiffy: Show Story Map**, or the map button at the top right of a `.squiffy` file, shows the [story map](/story-map/) beside your script: your sections as boxes, their passages under them, and the links between them as arrows, with dead ends, broken links and sections nothing leads to marked. It's redrawn as you type, and it follows VS Code's light or dark theme.
+
+- **Click** a box to go to it in your script, or **double-click** it (or select it and press **Enter**) to go there and start typing. A broken link's red box goes to the link.
+- The box for the section the cursor is in is highlighted.
+- **Drag** a box to move it. Where you put it is saved in `squiffy.json`, as the editor saves it, so the editor's map and VS Code's look the same.
+- To **add a link**, click a box, then drag the dot under it to another box. The link is added to your script, at the cursor if it's in that section, and **Undo** takes it out again.
+
+The editor's map does more, such as adding, renaming and deleting sections, and writing on the map. For those, use the [editor](/editor/) or your script.
 
 ## Exporting
 

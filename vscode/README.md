@@ -1,6 +1,7 @@
 # Squiffy for VS Code
 
-Write [Squiffy](https://squiffystory.com) interactive stories in VS Code, with a live preview.
+Write [Squiffy](https://squiffystory.com) interactive stories in VS Code, with a live preview and a
+story map.
 
 - Syntax highlighting, folding and snippets for `.squiffy` files
 - Problems as you type, for the whole story, including links to sections that don't exist, dead
@@ -14,6 +15,10 @@ Write [Squiffy](https://squiffystory.com) interactive stories in VS Code, with a
   starts it there.
 - Above each section and passage, a count of the links to it, which lists them (code lenses, from
   the language server) The attributes the story sets are logged in the Squiffy Preview output.
+- **Squiffy: Show Story Map** (also a button in the editor's title bar) shows the Squiffy editor's map of the story beside the text: its
+  sections and passages as boxes and its links as arrows, with problems marked. Click a box to go
+  to it, and drag from one box to another to add a link. Where boxes are dragged to is kept in
+  `squiffy.json`, as the editor keeps it.
 - **Squiffy: Export** builds the playable story (`index.html`, `story.js`, the page's stylesheets
   and the story's images, sounds and other files) into a folder, or a zip to upload to a website,
   as the Squiffy editor and command line tool build it. It can also make a single HTML file with
@@ -52,12 +57,18 @@ This is the `vscode/` workspace in the [Squiffy repository](https://github.com/t
   `workspace.fs`, zipping them with fflate for a zip. For a single HTML file, it sends the assets
   to the server (in base64), which puts them in the page. New Story (`new-story.ts`) uses the editor's
   starter story (`src/client/new-story.test.ts` checks it matches `app/src/lib/project.svelte.ts`).
+- `src/map/` is the story map's page (#615), which runs in a webview: a Svelte page around
+  `@textadventures/graph-map`'s `GraphMap.svelte`, with the editor's `story-map.ts` and
+  `StoryMapNode.svelte` (which the app exports for it), styled with VS Code's theme variables.
+  Vite builds it into `dist/map/`, and the webview loads it with `asWebviewUri`, so it works on
+  the web too. `src/client/map.ts` gets the graph from the server, and makes the map's edits (a
+  link, with `map-edits.ts`, and positions in `squiffy.json`) as `WorkspaceEdit`s, so Undo works.
 - The grammar is the compiler's (`compiler/syntaxes/squiffy.tmLanguage.json`), copied into `dist/`
   by the build. The snippets are the editor's, with tab stops (`src/snippets.test.ts` checks they
   match `app/src/lib/snippets.ts`).
 
 ```bash
-npm run build      # type-check, then bundle into dist/ with esbuild
+npm run build      # type-check, then bundle into dist/ with esbuild (and the map's page with Vite)
 npm test
 npm run package    # build squiffy-<version>.vsix
 ```

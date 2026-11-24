@@ -150,7 +150,7 @@
         {
           "type": "json",
           "path": "vscode/package.json",
-          "jsonpath": "$[dependencies,devDependencies][?(@property.startsWith('squiffy-') || @property.startsWith('@textadventures/squiffy-'))]"
+          "jsonpath": "$[dependencies,devDependencies][?(@property.startsWith('squiffy-') || @property.startsWith('@textadventures/squiffy-') || @property == '@textadventures/graph-map')]"
         },
         {
           "type": "json",
