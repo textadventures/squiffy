@@ -67,6 +67,11 @@ export interface SquiffyDesktopApi {
      * path in a project-fs root the window holds. An empty path opens the root folder itself.
      */
     showInFolder(rootId: string, path: string): Promise<void>;
+    /**
+     * Play in a new tab: opens the published story's page (the exporter's single index.html) in a
+     * window of its own, with its own origin and storage and no way back to the editor (#644)
+     */
+    playStory(html: string): Promise<void>;
     /** The window's about to close: the editor saves, then calls the function it's given. */
     onBeforeClose(listener: () => Promise<void>): () => void;
 }

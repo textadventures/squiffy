@@ -51,6 +51,7 @@ export interface SquiffyDesktopApi {
         onOpenRecent(listener: (id: string) => void): () => void;
     };
     showInFolder(rootId: string, path: string): Promise<void>;
+    playStory(html: string): Promise<void>;
     onBeforeClose(listener: () => Promise<void>): () => void;
 }
 

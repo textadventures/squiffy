@@ -55,6 +55,7 @@
     import { checkPassageName, deleteLinesEdits, deletionMessage, insertHeaderEdit, linkThenHeaderEdits, placeNewPassage, placeNewSection, planDeletion, startEdit, type Place } from "#lib/map-edits.js";
     import { addSectionOrPassage, clipboardCommand, insertSnippet, runCommand, userSnippets } from "#lib/editor-commands.js";
     import { formatKey } from "#lib/shortcuts.js";
+    import { desktopApi } from "#lib/desktop.js";
     import type { ExportKind } from "#lib/language/protocol.js";
 
     const p = $derived(project.current);
@@ -1401,12 +1402,15 @@
     }
 
     // The published story, in a tab of its own, as players will see it (the 6.x editor's Preview).
-    // The tab is opened straight away, during the click, so a popup blocker lets it through.
+    // The tab is opened straight away, during the click, so a popup blocker lets it through. The
+    // desktop app opens a window of its own for it instead, with its own origin, as one the editor
+    // opened would share the editor's, and could reach its bridges through window.opener (#644).
     async function handlePlayInTab() {
         const current = p;
         const c = client;
         if (!current || !c) return;
-        const tab = window.open("", "_blank");
+        const desktop = desktopApi()?.desktop;
+        const tab = desktop ? null : window.open("", "_blank");
         try {
             await syncOpenFiles();
             const { storyAssets } = await import("#lib/export.js");
@@ -1414,6 +1418,10 @@
             if (!result.success) {
                 tab?.close();
                 showToast(`The story can't run until this is fixed: ${result.errors[0]}`);
+                return;
+            }
+            if (desktop) {
+                await desktop.playStory(result.files["index.html"]);
                 return;
             }
             const url = URL.createObjectURL(new Blob([result.files["index.html"]], { type: "text/html" }));

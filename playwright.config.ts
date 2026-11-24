@@ -15,7 +15,7 @@ export default defineConfig({
   projects: [
     {
       name: "chromium",
-      testIgnore: "editor/**",
+      testIgnore: ["editor/**", "desktop/**"],
       use: { ...devices["Desktop Chrome"] },
     },
     // The editor (app/), from its dev server: `npx playwright test --project=editor`
@@ -23,6 +23,11 @@ export default defineConfig({
       name: "editor",
       testDir: "./e2e/editor",
       use: { ...devices["Desktop Chrome"], baseURL: "http://localhost:5188", viewport: { width: 1400, height: 850 } },
+    },
+    // The built desktop app (desktop/, which ./electron.sh builds): `npx playwright test --project=desktop`
+    {
+      name: "desktop",
+      testDir: "./e2e/desktop",
     },
     // Uncomment to test in Firefox (run: npx playwright install firefox)
     // {
