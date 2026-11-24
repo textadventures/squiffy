@@ -73,6 +73,41 @@ describe("preview host", () => {
         expect(sent.slice(1)).toEqual([{ channel: PREVIEW_CHANNEL, type: "muted", muted: false }]);
     });
 
+    test("sends the controls when the page is ready, and again if it reloads", () => {
+        const { channel, sent, receive } = fakeChannel();
+        const host = createPreviewHost(channel);
+        host.setControls({ back: true, theme: true });
+        expect(sent).toEqual([]);
+
+        receive({ channel: PREVIEW_CHANNEL, type: "ready" });
+        expect(sent).toEqual([{ channel: PREVIEW_CHANNEL, type: "controls", controls: { back: true, theme: true } }]);
+
+        receive({ channel: PREVIEW_CHANNEL, type: "ready" });
+        expect(sent.slice(1)).toEqual([{ channel: PREVIEW_CHANNEL, type: "controls", controls: { back: true, theme: true } }]);
+    });
+
+    test("remembers the theme and mute the reader chose in the page, for when it reloads", () => {
+        const { channel, sent, receive } = fakeChannel();
+        const onThemeChosen = vi.fn();
+        const onMutedChosen = vi.fn();
+        const onEditRequested = vi.fn();
+        createPreviewHost(channel, { onThemeChosen, onMutedChosen, onEditRequested });
+        receive({ channel: PREVIEW_CHANNEL, type: "ready" });
+        receive({ channel: PREVIEW_CHANNEL, type: "themeChosen", theme: "dark" });
+        receive({ channel: PREVIEW_CHANNEL, type: "mutedChosen", muted: true });
+        expect(onThemeChosen).toHaveBeenCalledWith("dark");
+        expect(onMutedChosen).toHaveBeenCalledWith(true);
+        receive({ channel: PREVIEW_CHANNEL, type: "editRequested" });
+        expect(onEditRequested).toHaveBeenCalled();
+        expect(sent).toEqual([]);
+
+        receive({ channel: PREVIEW_CHANNEL, type: "ready" });
+        expect(sent).toEqual([
+            { channel: PREVIEW_CHANNEL, type: "theme", theme: "dark" },
+            { channel: PREVIEW_CHANNEL, type: "muted", muted: true },
+        ]);
+    });
+
     test("tells the host whether the story uses sound (#444)", () => {
         const { channel, receive } = fakeChannel();
         const onUsesSound = vi.fn();

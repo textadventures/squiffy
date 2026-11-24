@@ -12,10 +12,10 @@
 //     await preview.load({ js: await result.getJs() }, { startAt: { section: "kitchen" } });
 
 import {
-    Envelope, HostMessage, isEnvelope, PREVIEW_CHANNEL, PreviewAssets, PreviewMessage, PreviewStory, PreviewTheme, StartAt,
+    Envelope, HostMessage, isEnvelope, PREVIEW_CHANNEL, PreviewAssets, PreviewControls, PreviewMessage, PreviewStory, PreviewTheme, StartAt,
 } from "./preview-protocol.js";
 
-export type { HostMessage, PreviewAssets, PreviewMessage, PreviewStory, PreviewTheme, StartAt } from "./preview-protocol.js";
+export type { HostMessage, PreviewAssets, PreviewControls, PreviewMessage, PreviewStory, PreviewTheme, StartAt } from "./preview-protocol.js";
 export { PREVIEW_CHANNEL } from "./preview-protocol.js";
 
 // How the host talks to the preview page
@@ -35,6 +35,12 @@ export interface PreviewHandlers {
     onThemeFixed?(fixed: boolean): void;
     // Whether the story plays music or sounds, so a mute button is worth showing
     onUsesSound?(usesSound: boolean): void;
+    // The reader chose light or dark, or muted or unmuted, with the preview's own buttons (see
+    // setControls). The host is told so it can remember the choice: the preview already shows it.
+    onThemeChosen?(theme: PreviewTheme): void;
+    onMutedChosen?(muted: boolean): void;
+    // The reader clicked the edit button (see setControls)
+    onEditRequested?(): void;
     onRuntimeError?(message: string, stack?: string): void;
 }
 
@@ -54,6 +60,9 @@ export interface PreviewHost {
     setTheme(theme: PreviewTheme): void;
     // Mutes the story's music and sounds. It's kept for the next story loaded, and if the page reloads.
     setMuted(muted: boolean): void;
+    // Shows the published page's buttons in the preview's header, for a reader rather than an
+    // author. It's kept if the page reloads.
+    setControls(controls: PreviewControls): void;
     dispose(): void;
 }
 
@@ -86,6 +95,7 @@ export function createPreviewHost(channel: PreviewChannel, handlers: PreviewHand
     let queue: HostMessage[] = [];
     let theme: PreviewTheme | undefined;
     let muted = false;
+    let controls: PreviewControls | undefined;
     // The assets last sent, to send again after the host has reloaded the page
     let assets: PreviewAssets | undefined;
     // Whether the story last loaded had scripts of its own, so the page needs reloading before
@@ -114,6 +124,7 @@ export function createPreviewHost(channel: PreviewChannel, handlers: PreviewHand
                 isReady = true;
                 if (theme) send({ type: "theme", theme });
                 if (muted) send({ type: "muted", muted });
+                if (controls) send({ type: "controls", controls });
                 let queued = queue;
                 queue = [];
                 if (requested && assets) {
@@ -144,6 +155,17 @@ export function createPreviewHost(channel: PreviewChannel, handlers: PreviewHand
                 break;
             case "usesSound":
                 handlers.onUsesSound?.(message.usesSound);
+                break;
+            case "themeChosen":
+                theme = message.theme;
+                handlers.onThemeChosen?.(message.theme);
+                break;
+            case "mutedChosen":
+                muted = message.muted;
+                handlers.onMutedChosen?.(message.muted);
+                break;
+            case "editRequested":
+                handlers.onEditRequested?.();
                 break;
             case "runtimeError":
                 handlers.onRuntimeError?.(message.message, message.stack);
@@ -181,6 +203,10 @@ export function createPreviewHost(channel: PreviewChannel, handlers: PreviewHand
         setMuted: value => {
             muted = value;
             if (isReady) send({ type: "muted", muted });
+        },
+        setControls: value => {
+            controls = value;
+            if (isReady) send({ type: "controls", controls });
         },
         dispose: () => {
             stop();
