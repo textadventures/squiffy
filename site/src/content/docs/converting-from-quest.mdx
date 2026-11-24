@@ -4,6 +4,7 @@ description: Converting a gamebook made in Quest 5 or Quest Viva to Squiffy
 ---
 
 import {Aside} from "@astrojs/starlight/components";
+import Screenshot from "@components/Screenshot.astro";
 
 Squiffy can convert a gamebook made in the gamebook mode of [Quest Viva](https://questviva.com), or of Quest 5 as it was known before, into a Squiffy story. Each page becomes a section, and its links become Squiffy links, so the story plays the same way, and you can carry on writing it in Squiffy's [editor](/editor/), with its [story map](/story-map/).
 
@@ -28,6 +29,8 @@ Then either:
 
   This puts the converted story in a new folder next to the file, called `mygame`, with the images and sounds the gamebook uses. Use `--out` to choose another folder.
 
+<Screenshot name="quest-convert" alt="The editor asking whether to convert The Dragon's Hoard, a Quest 5.8 gamebook with 7 pages, to Squiffy" />
+
 ## What you get
 
 The converted story is a folder with:
@@ -37,6 +40,8 @@ The converted story is a folder with:
 - `story.css`, if you chose the gamebook's colours, fonts or page width in Quest. They're set with Squiffy's [style variables](/styling/), and the story stays in light mode, as it did in Quest. Without one, the story follows Squiffy's own styles, in light and dark mode.
 - The images and sounds the gamebook uses.
 - `quest-import.txt`, which lists everything that couldn't be converted exactly, page by page.
+
+<Screenshot name="quest-converted" alt="A converted Quest gamebook in the editor: each page is a section in the script, with its links and the flag the armoury sets, and the pages on the map beside it" />
 
 In Quest, the pages a player has read stay on the screen as they go, as they do in Squiffy. If you set your gamebook to clear the screen before each page, the story starts with a [master section](/basic-concepts/#master-sections-and-passages) that does the same.
 
