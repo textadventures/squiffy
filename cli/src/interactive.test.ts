@@ -155,5 +155,5 @@ B [[Go on]](a)`);
         const { written } = await play(playable, ["Start", ...Array(200).fill("Go on")]);
         expect(written).toHaveLength(202);
         expect(written[201].attributes.n).toBe(101);
-    });
+    }, 20000); // under a second locally, but CI can be much slower when its runner is busy
 });
