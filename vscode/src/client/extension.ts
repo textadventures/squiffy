@@ -6,7 +6,7 @@ import type { BaseLanguageClient, LanguageClientOptions } from "vscode-languagec
 import { convertV5Syntax, findV5Syntax } from "squiffy-compiler";
 import {
     FIND_PROJECT_FILES, LIST_FILES, READ_TEXT, SECTION_AT, SET_MAIN_FILE,
-    type ListFilesParams, type ReadTextParams, type SectionAtParams, type SectionAtResult, type SetMainFileParams,
+    type ListFilesParams, type PreviewFromHereArgs, type ShowLinksHereArgs, type ReadTextParams, type SectionAtParams, type SectionAtResult, type SetMainFileParams,
 } from "../protocol.js";
 import { findProjectFiles, listFiles, readText } from "./files.js";
 import { exportStory } from "./export.js";
@@ -43,7 +43,12 @@ export async function activate(context: vscode.ExtensionContext, createClient: C
         if (target) return preview.show(target);
     });
 
-    command("squiffy.previewFromHere", async () => {
+    command("squiffy.previewFromHere", async (...args: unknown[]) => {
+        // From a code lens above a section, which says where to start
+        if (typeof args[0] == "string") {
+            const [uri, startAt] = args as PreviewFromHereArgs;
+            return preview.show(vscode.Uri.parse(uri), startAt);
+        }
         const editor = activeSquiffyEditor();
         if (!editor) return;
         const at = await client!.sendRequest<SectionAtResult>(SECTION_AT, {
@@ -53,6 +58,15 @@ export async function activate(context: vscode.ExtensionContext, createClient: C
             position: { line: editor.selection.active.line, character: editor.selection.active.character },
         } satisfies SectionAtParams);
         return preview.show(editor.document.uri, at ?? undefined);
+    });
+
+    // From the code lens above a section that counts the links to it: lists them in a peek
+    command("squiffy.showLinksHere", (...args: unknown[]) => {
+        const [uri, position, locations] = args as ShowLinksHereArgs;
+        const toPosition = (p: { line: number; character: number }) => new vscode.Position(p.line, p.character);
+        return vscode.commands.executeCommand("editor.action.showReferences",
+            vscode.Uri.parse(uri), toPosition(position),
+            locations.map(l => new vscode.Location(vscode.Uri.parse(l.uri), new vscode.Range(toPosition(l.range.start), toPosition(l.range.end)))));
     });
 
     command("squiffy.restartPreview", () => preview.restart());
@@ -87,6 +101,16 @@ export async function activate(context: vscode.ExtensionContext, createClient: C
         const editor = activeSquiffyEditor();
         if (editor) return insertHeader(editor, "passage");
     });
+
+    // A Preview button in the status bar, while a .squiffy file is open
+    const status = vscode.window.createStatusBarItem("squiffy.preview", vscode.StatusBarAlignment.Right, 100);
+    status.name = "Squiffy Preview";
+    status.text = "$(play) Preview";
+    status.tooltip = "Play the story in the preview";
+    status.command = "squiffy.showPreview";
+    const updateStatus = () => activeSquiffyEditor() ? status.show() : status.hide();
+    updateStatus();
+    context.subscriptions.push(status, vscode.window.onDidChangeActiveTextEditor(updateStatus));
 
     command("squiffy.convertV5", async () => {
         const editor = activeSquiffyEditor();

@@ -38,6 +38,12 @@ export type SectionAtResult = { section: string; passage?: string } | null;
 export const SET_MAIN_FILE = "squiffy/setMainFile";
 export interface SetMainFileParams { uri: string }
 
+// The arguments of the commands the code lenses above each section run, in the client
+// squiffy.previewFromHere: the file, and the section (and passage) to start at
+export type PreviewFromHereArgs = [uri: string, startAt: { section: string; passage?: string }];
+// squiffy.showLinksHere: the file and position to show the links beside, and the links
+export type ShowLinksHereArgs = [uri: string, position: { line: number; character: number }, locations: { uri: string; range: { start: { line: number; character: number }; end: { line: number; character: number } } }[]];
+
 // Server -> client
 
 // The URIs of every squiffy.json in the workspace

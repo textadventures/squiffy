@@ -3,7 +3,7 @@
 // web.ts make the connection.
 
 import {
-    type Connection, DidChangeWatchedFilesNotification, FileChangeType, ResponseError, TextDocuments, TextDocumentSyncKind,
+    type CodeLens, CodeLensRefreshRequest, type Connection, DidChangeWatchedFilesNotification, FileChangeType, ResponseError, TextDocuments, TextDocumentSyncKind,
 } from "vscode-languageserver";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { emit, formatDiagnostic } from "squiffy-compiler";
@@ -11,7 +11,8 @@ import { createPackage } from "@textadventures/squiffy-packager";
 import {
     EXPORT_STORY, FIND_PROJECT_FILES, fromBase64, LIST_FILES, PREVIEW_STORY, READ_TEXT, SECTION_AT, SET_MAIN_FILE,
     type ExportStoryParams, type ExportStoryResult, type FindProjectFilesResult, type ListFilesParams, type ListFilesResult, type PreviewStoryParams, type PreviewStoryResult,
-    type ReadTextParams, type ReadTextResult, type SectionAtParams, type SectionAtResult, type SetMainFileParams,
+    type PreviewFromHereArgs, type ReadTextParams, type ReadTextResult, type SectionAtParams, type SectionAtResult, type SetMainFileParams,
+    type ShowLinksHereArgs,
 } from "../protocol.js";
 import { groupDiagnostics, markdown, toLspCodeAction, toLspCompletion, toLspSymbol, toLspWorkspaceEdit } from "./convert.js";
 import { folderOf, Stories, type Story, toPath, toUri } from "./stories.js";
@@ -64,6 +65,8 @@ export function startServer(connection: Connection) {
         }
         for (const [uri, diagnostics] of byUri) void connection.sendDiagnostics({ uri, diagnostics });
         published.set(story.root, new Set(byUri.keys()));
+        // A link added in one file changes the counts above sections in another
+        if (codeLensRefresh) void connection.sendRequest(CodeLensRefreshRequest.type);
     }
 
     // After a squiffy.json comes or goes, the stories start again
@@ -76,19 +79,26 @@ export function startServer(connection: Connection) {
 
     // ---- Lifecycle ----
 
-    connection.onInitialize(() => ({
-        capabilities: {
-            textDocumentSync: TextDocumentSyncKind.Incremental,
-            documentSymbolProvider: true,
-            definitionProvider: true,
-            referencesProvider: true,
-            renameProvider: { prepareProvider: true },
-            completionProvider: { triggerCharacters: ["[", "{", "@", "\""] },
-            hoverProvider: true,
-            foldingRangeProvider: true,
-            codeActionProvider: { codeActionKinds: ["quickfix"] },
-        },
-    }));
+    // Whether the client can be told to ask for the code lenses again, after another file changes
+    let codeLensRefresh = false;
+
+    connection.onInitialize(({ capabilities: client }) => {
+        codeLensRefresh = !!client.workspace?.codeLens?.refreshSupport;
+        return {
+            capabilities: {
+                textDocumentSync: TextDocumentSyncKind.Incremental,
+                documentSymbolProvider: true,
+                definitionProvider: true,
+                referencesProvider: true,
+                renameProvider: { prepareProvider: true },
+                completionProvider: { triggerCharacters: ["[", "{", "@", "\""] },
+                hoverProvider: true,
+                foldingRangeProvider: true,
+                codeActionProvider: { codeActionKinds: ["quickfix"] },
+                codeLensProvider: {},
+            },
+        };
+    });
 
     connection.onInitialized(() => {
         // The client watches the story files, so the stories hear about changes made outside the
@@ -183,6 +193,48 @@ export function startServer(connection: Connection) {
     connection.onCodeAction(async ({ textDocument, range }) => {
         const { story, path } = await locate(textDocument.uri);
         return (await story.service.getCodeActions(path, range)).map(action => toLspCodeAction(story.root, action));
+    });
+
+    // Above each section and passage's header: a link to start the preview there, and how many
+    // links lead to it, which lists them
+    connection.onCodeLens(async ({ textDocument }) => {
+        const { story, path } = await locate(textDocument.uri);
+        const graph = await story.service.getStoryGraph();
+        const lenses: CodeLens[] = [];
+        for (const node of graph.nodes) {
+            // Not the master section, which is part of every section, or its passages, which
+            // panels show
+            if (node.location.file != path || node.name == "" || node.section == "") continue;
+            const range = node.location.range;
+            const startAt: PreviewFromHereArgs[1] = node.kind == "passage"
+                ? { section: node.section!, passage: node.name }
+                : { section: node.name };
+            lenses.push({
+                range,
+                command: {
+                    title: "$(play) Preview from here",
+                    command: "squiffy.previewFromHere",
+                    arguments: [textDocument.uri, startAt] satisfies PreviewFromHereArgs,
+                },
+            });
+            // A section without a name of its own (the text before the first section, or after a
+            // +++ or ---) has no name to link to
+            if (node.kind == "section" && node.detail) continue;
+            const references = await story.service.getReferences(path, range.start, false);
+            const count = references.length;
+            lenses.push({
+                range,
+                command: count
+                    ? {
+                        title: count == 1 ? "1 link here" : `${count} links here`,
+                        command: "squiffy.showLinksHere",
+                        arguments: [textDocument.uri, range.start, references.map(r => ({ uri: toUri(story.root, r.file), range: r.range }))] satisfies ShowLinksHereArgs,
+                    }
+                    // A lens without a command is just text
+                    : { title: "No links here", command: "" },
+            });
+        }
+        return lenses;
     });
 
     // ---- Squiffy's own requests ----
