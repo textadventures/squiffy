@@ -13,6 +13,8 @@ import { exportStory } from "./export.js";
 import { insertHeader, newStory } from "./new-story.js";
 import { Preview } from "./preview.js";
 import { StoryMap } from "./map.js";
+import { SectionsView } from "./sections-view.js";
+import { startAt, type NodeItem } from "./sections.js";
 
 export type CreateClient = (options: LanguageClientOptions) => BaseLanguageClient;
 
@@ -30,7 +32,8 @@ export async function activate(context: vscode.ExtensionContext, createClient: C
     const log = vscode.window.createOutputChannel("Squiffy Preview");
     const preview = new Preview(client, log);
     const map = new StoryMap(client, context.extensionUri, preview);
-    context.subscriptions.push(log, preview, map);
+    const sections = new SectionsView(client);
+    context.subscriptions.push(log, preview, map, sections);
 
     // The active editor, if it's a .squiffy file, for the commands that act at the cursor
     const activeSquiffyEditor = () => {
@@ -45,17 +48,19 @@ export async function activate(context: vscode.ExtensionContext, createClient: C
         const uri = editor.document.uri;
         return editor.document.languageId == "squiffy" || isProjectFile(uri) ? uri : undefined;
     };
+    // The story to act on: the active editor's, or the one the Sections view shows, for its buttons
+    const storyUri = () => activeStoryUri() ?? sections.storyUri;
 
     const command = (id: string, run: (...args: unknown[]) => unknown) =>
         context.subscriptions.push(vscode.commands.registerCommand(id, run));
 
     command("squiffy.showPreview", (uri?: unknown) => {
-        const target = uri instanceof vscode.Uri ? uri : activeStoryUri();
+        const target = uri instanceof vscode.Uri ? uri : storyUri();
         if (target) return preview.show(target);
     });
 
     command("squiffy.showMap", (uri?: unknown) => {
-        const target = uri instanceof vscode.Uri ? uri : activeStoryUri();
+        const target = uri instanceof vscode.Uri ? uri : storyUri();
         if (target) return map.show(target);
     });
 
@@ -88,6 +93,13 @@ export async function activate(context: vscode.ExtensionContext, createClient: C
             locations.map(l => new vscode.Location(vscode.Uri.parse(l.uri), new vscode.Range(toPosition(l.range.start), toPosition(l.range.end)))));
     });
 
+    // The inline button on a section or passage in the Sections view
+    command("squiffy.previewSection", (item?: unknown) => {
+        if (!item) return;
+        const at = startAt(item as NodeItem);
+        if (at) return preview.show(sections.fileOf(item as NodeItem), at);
+    });
+
     command("squiffy.restartPreview", () => preview.restart());
     command("squiffy.previewBack", () => preview.back());
 
@@ -103,7 +115,7 @@ export async function activate(context: vscode.ExtensionContext, createClient: C
     });
 
     command("squiffy.export", (uri?: unknown) => {
-        const target = uri instanceof vscode.Uri ? uri : activeStoryUri();
+        const target = uri instanceof vscode.Uri ? uri : storyUri();
         if (target) return exportStory(client!, target);
         void vscode.window.showInformationMessage("Open a .squiffy file or squiffy.json to export its story.");
     });
@@ -112,9 +124,17 @@ export async function activate(context: vscode.ExtensionContext, createClient: C
     // From the Explorer's context menu, in that folder
     command("squiffy.newStoryInFolder", (uri?: unknown) => newStory(uri instanceof vscode.Uri ? uri : undefined));
 
-    command("squiffy.addSection", () => {
-        const editor = activeSquiffyEditor();
-        if (editor) return insertHeader(editor, "section");
+    command("squiffy.addSection", async () => {
+        let editor = activeSquiffyEditor();
+        // From the Sections view, with no .squiffy file in front: at the end of the story's main file
+        if (!editor) {
+            const main = sections.mainFileUri();
+            if (!main) return;
+            editor = await vscode.window.showTextDocument(main);
+            const end = editor.document.lineAt(editor.document.lineCount - 1).range.end;
+            editor.selection = new vscode.Selection(end, end);
+        }
+        return insertHeader(editor, "section");
     });
     command("squiffy.addPassage", () => {
         const editor = activeSquiffyEditor();

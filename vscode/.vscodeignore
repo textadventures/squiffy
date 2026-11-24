@@ -2,6 +2,7 @@
 !dist/**
 !snippets/**
 !images/icon.png
+!images/activity-bar.svg
 !language-configuration.json
 !package.json
 !README.md

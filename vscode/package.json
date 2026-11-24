@@ -58,6 +58,32 @@
         "path": "./snippets/squiffy.code-snippets"
       }
     ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "squiffy",
+          "title": "Squiffy",
+          "icon": "images/activity-bar.svg"
+        }
+      ]
+    },
+    "views": {
+      "squiffy": [
+        {
+          "id": "squiffy.sections",
+          "name": "Sections",
+          "icon": "images/activity-bar.svg",
+          "contextualTitle": "Squiffy"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "squiffy.sections",
+        "contents": "There's no Squiffy story in this folder yet.\n[New Story](command:squiffy.newStory)\nTo bring in a story from [Twine](https://squiffystory.com/converting-from-twine/) or a gamebook from [Quest](https://squiffystory.com/converting-from-quest/), convert it with Squiffy's command-line tool.",
+        "when": "squiffyNoStory"
+      }
+    ],
     "commands": [
       {
         "command": "squiffy.showPreview",
@@ -93,6 +119,12 @@
         "command": "squiffy.previewFromHere",
         "title": "Start Preview at This Section",
         "category": "Squiffy"
+      },
+      {
+        "command": "squiffy.previewSection",
+        "title": "Preview from Here",
+        "category": "Squiffy",
+        "icon": "$(play)"
       },
       {
         "command": "squiffy.setMainFile",
@@ -244,6 +276,10 @@
         {
           "command": "squiffy.addPassage",
           "when": "editorLangId == squiffy && !editorReadonly"
+        },
+        {
+          "command": "squiffy.previewSection",
+          "when": "false"
         }
       ],
       "explorer/context": [
@@ -251,6 +287,40 @@
           "command": "squiffy.newStoryInFolder",
           "when": "explorerResourceIsFolder",
           "group": "navigation@10"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "squiffy.showPreview",
+          "when": "view == squiffy.sections && !squiffyNoStory",
+          "group": "navigation@0"
+        },
+        {
+          "command": "squiffy.addSection",
+          "when": "view == squiffy.sections && !squiffyNoStory",
+          "group": "navigation@1"
+        },
+        {
+          "command": "squiffy.showMap",
+          "when": "view == squiffy.sections && !squiffyNoStory",
+          "group": "navigation@2"
+        },
+        {
+          "command": "squiffy.export",
+          "when": "view == squiffy.sections && !squiffyNoStory",
+          "group": "navigation@3"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "squiffy.previewSection",
+          "when": "view == squiffy.sections && viewItem =~ /^(section|passage)$/",
+          "group": "inline"
+        },
+        {
+          "command": "squiffy.previewSection",
+          "when": "view == squiffy.sections && viewItem =~ /^(section|passage)$/",
+          "group": "navigation"
         }
       ]
     },
