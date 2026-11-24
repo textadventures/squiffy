@@ -11,7 +11,8 @@
   },
   "type": "module",
   "exports": {
-    "./link": "./src/link.ts"
+    "./link": "./src/link.ts",
+    "./play-protocol": "./src/play-protocol.ts"
   },
   "scripts": {
     "dev": "vite dev",

@@ -12,7 +12,7 @@ export { MAX_LINK_LENGTH, SHORT_LINK_LENGTH };
 // The player is in a folder for each major version of Squiffy, which goes on playing that
 // version's stories. squiffystories.com is a domain of its own, apart from squiffystory.com, so a
 // story's JavaScript is nowhere near the editor or the stories kept in it.
-const PLAYER_ORIGIN: string = import.meta.env.VITE_PLAYER_URL || (import.meta.env.DEV ? "http://localhost:5181" : "https://squiffystories.com");
+export const PLAYER_ORIGIN: string = import.meta.env.VITE_PLAYER_URL || (import.meta.env.DEV ? "http://localhost:5181" : "https://squiffystories.com");
 export const playerUrl = (version: string) => `${PLAYER_ORIGIN}/v${version.split(".")[0]}/`;
 
 // The biggest image (or other asset) that goes in a link. One this size adds about 5,500
