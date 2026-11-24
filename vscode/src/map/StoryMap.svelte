@@ -31,10 +31,58 @@
     const tooLarge = $derived(!!base && base.nodes.length > LARGE && !showLarge);
 
     // The map's graph, with the cursor's section or passage marked
+    // The search: boxes whose names (or their sections' names) have it in them. The rest are
+    // dimmed, as on the editor's map.
+    let query = $state("");
+    let searchInput = $state<HTMLInputElement>();
+    const matching = $derived.by(() => {
+        const q = query.trim().toLowerCase();
+        if (!q || !base) return null;
+        return base.nodes.filter(n => n.graphNode && (n.label.toLowerCase().includes(q) || n.section.toLowerCase().includes(q)));
+    });
+
+    // The map's graph, with the cursor's section or passage and the search as classes
     const decorated = $derived.by(() => {
         if (!base) return null;
-        if (!current) return base;
-        return { nodes: base.nodes.map(n => n.id == current ? { ...n, class: `${n.class} current` } : n), edges: base.edges };
+        if (!current && !matching) return base;
+        const found = matching && new Set(matching.map(n => n.id));
+        const hidden = (id: string) => !!found && !found.has(id);
+        const nodes = base.nodes.map(n => {
+            const extra = [n.id == current ? "current" : "", hidden(n.id) ? "filtered-out" : ""].filter(Boolean);
+            return extra.length ? { ...n, class: `${n.class} ${extra.join(" ")}` } : n;
+        });
+        const edges = found ? base.edges.map(e => hidden(e.from) || hidden(e.to) ? { ...e, class: `${e.class} filtered-out` } : e) : base.edges;
+        return { nodes, edges };
+    });
+
+    // Typing brings the first match into view
+    $effect(() => {
+        const first = matching?.[0];
+        if (first) untrack(() => { if (map?.has(first.id)) map.reveal(first.id); });
+    });
+
+    // Enter selects the next match (Shift+Enter the one before), and Escape clears the search
+    function searchKey(e: KeyboardEvent) {
+        if (e.key == "Escape") {
+            e.preventDefault();
+            query = "";
+            map?.focus();
+        } else if (e.key == "Enter" && matching?.length) {
+            e.preventDefault();
+            const index = matching.findIndex(n => n.id == selected);
+            const step = e.shiftKey ? -1 : 1;
+            const next = matching[index < 0 ? (e.shiftKey ? matching.length - 1 : 0) : (index + step + matching.length) % matching.length];
+            map?.select(next.id);
+            map?.reveal(next.id);
+        }
+    }
+    // "3 matches", or "2 of 3" once Enter has gone to one
+    const matchCount = $derived.by(() => {
+        if (!matching) return "";
+        if (!matching.length) return "No matches";
+        const index = matching.findIndex(n => n.id == selected);
+        if (index >= 0) return `${index + 1} of ${matching.length}`;
+        return matching.length == 1 ? "1 match" : `${matching.length} matches`;
     });
 
     export function receive(message: ToMap) {
@@ -49,6 +97,9 @@
             current = message.id;
         } else if (message.type == "select") {
             selectWhenReady = message.id;
+        } else if (message.type == "search") {
+            searchInput?.focus();
+            searchInput?.select();
         }
     }
 
@@ -176,7 +227,7 @@
         e.target?.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, button: 0 }));
     }
 
-    const instructions = "Arrow keys move between sections and passages, and Enter goes to one in the editor. F2 renames it and Delete deletes it. The menu key, or Shift and F10, opens a menu for it. Plus and minus zoom, and 0 fits the whole story in view. Double-click the background to add a section there. Drag the background to pan, a box to move it, or the dot under the selected box to another box to add a link, or to empty space to add a section with a link to it. Shift and drag the background to select several boxes, or Shift and click one, then drag one of them to move them all.";
+    const instructions = "Arrow keys move between sections and passages, and Enter goes to one in the editor. F2 renames it and Delete deletes it. The menu key, or Shift and F10, opens a menu for it. Control or Command and F searches the map. Plus and minus zoom, and 0 fits the whole story in view. Double-click the background to add a section there. Drag the background to pan, a box to move it, or the dot under the selected box to another box to add a link, or to empty space to add a section with a link to it. Shift and drag the background to select several boxes, or Shift and click one, then drag one of them to move them all.";
 </script>
 
 <main class="story-map">
@@ -185,6 +236,18 @@
         <button type="button" title="Zoom in (+)" aria-label="Zoom in" onclick={() => map?.zoomBy(1.25)}>+</button>
         <button type="button" title="Zoom out (-)" aria-label="Zoom out" onclick={() => map?.zoomBy(0.8)}>−</button>
         <button type="button" title="Show the whole story (0)" aria-label="Show the whole story" onclick={() => map?.fit()}>Fit</button>
+        <div class="search">
+            <input
+                bind:this={searchInput}
+                bind:value={query}
+                type="search"
+                placeholder="Search"
+                aria-label="Search the map"
+                title="Search the map (Enter goes to the next match, Escape clears it)"
+                onkeydown={searchKey}
+            />
+            <span class="count" aria-live="polite">{matchCount}</span>
+        </div>
     </div>
     <div class="area">
         {#if !decorated}

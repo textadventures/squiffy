@@ -15,7 +15,9 @@ export type ToMap =
     // The section or passage the cursor is in, if it's in the story
     | { type: "current"; id: string | null }
     // Select a node once a graph has it (a section or passage just made from the map)
-    | { type: "select"; id: string };
+    | { type: "select"; id: string }
+    // Put the focus in the search box (Control or Command and F)
+    | { type: "search" };
 
 export type FromMap =
     // The page has loaded and wants the graph
