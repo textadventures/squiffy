@@ -43,6 +43,59 @@ test.each([
     expect(charsByParent(el)).toEqual(["Now,", "let's", "spin..."]);
 });
 
+describe("continue, for the keyboard and a screen reader", () => {
+    const start = () => {
+        let continued = 0;
+        const el = document.createElement("span");
+        el.textContent = "Step inside";
+        document.body.appendChild(el);
+        new Animation().runAnimation("continue", el, {}, () => continued++, false);
+        return { el, continued: () => continued };
+    };
+
+    test("is a button that can be reached with Tab", () => {
+        const { el } = start();
+        expect(el.getAttribute("role")).toBe("button");
+        expect(el.getAttribute("tabindex")).toBe("0");
+    });
+
+    test.each(["Enter", " "])("is pressed with %j, once", (key) => {
+        const { el, continued } = start();
+        const event = new window.KeyboardEvent("keydown", { key, cancelable: true, bubbles: true });
+        el.dispatchEvent(event);
+        expect(continued()).toBe(1);
+        // Space doesn't scroll the page too
+        expect(event.defaultPrevented).toBe(true);
+        el.dispatchEvent(new window.KeyboardEvent("keydown", { key, bubbles: true }));
+        el.click();
+        expect(continued()).toBe(1);
+    });
+
+    test("other keys do nothing", () => {
+        const { el, continued } = start();
+        el.dispatchEvent(new window.KeyboardEvent("keydown", { key: "a", bubbles: true }));
+        expect(continued()).toBe(0);
+    });
+
+    test("is only text once pressed, and keeps the focus out of the Tab order", () => {
+        const { el } = start();
+        el.focus();
+        el.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+        expect(el.hasAttribute("role")).toBe(false);
+        expect(document.activeElement).toBe(el);
+        expect(el.getAttribute("tabindex")).toBe("-1");
+        el.blur();
+        expect(el.hasAttribute("tabindex")).toBe(false);
+    });
+
+    test("is only text once clicked", () => {
+        const { el } = start();
+        el.click();
+        expect(el.hasAttribute("role")).toBe(false);
+        expect(el.hasAttribute("tabindex")).toBe(false);
+    });
+});
+
 describe("with the player's system set to reduce motion", () => {
     beforeEach(() => {
         window.matchMedia = ((media: string) => ({

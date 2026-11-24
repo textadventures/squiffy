@@ -100,11 +100,15 @@ export function AnimatePlugin(): SquiffyPlugin {
                 } else {
                     if (squiffy.animation.isInitiallyHidden(params.name)) {
                         el.style.opacity = "0";
+                        // Until it starts, its links and text boxes can't be reached with Tab,
+                        // and a screen reader doesn't read it, as it can't be seen
+                        el.setAttribute("inert", "");
                     }
                     squiffy.addTransition(() => {
                         return new Promise<void>((resolve) => {
                             // Reset opacity so the animation can control visibility
                             el.style.opacity = "";
+                            el.removeAttribute("inert");
 
                             squiffy.animation.runAnimation(params.name, el, params, () => {
                                 el.classList.remove("squiffy-animate");

@@ -77,6 +77,7 @@ Test stories are in `e2e/test-stories/`:
 - `replace.squiffy` - Tests replace label plugin with fade transitions
 - `live.squiffy` - Tests live update plugin
 - `back.squiffy` - Tests going back (`goBack()`) with animations and cleared screens
+- `continue.squiffy` - Tests `{{#animate "continue"}}` from the keyboard
 
 ## How It Works
 

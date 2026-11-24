@@ -5566,6 +5566,32 @@ Next. [More]
     expect(squiffyApi.get("count")).toBe(2);
 }, 15000);
 
+test("text an {{#animate \"continue\"}} holds back can't be reached until it's shown", async () => {
+    const script = `
+[[start]]:
+{{#animate "continue"}}Go on{{/animate}}
+
+{{#animate "fadeIn" duration=10}}[[next]]{{/animate}}
+
+[[next]]:
+Done.
+`;
+    // begin() waits for the story's animations, which wait for the click
+    const element = document.getElementById("squiffy")!;
+    const { story } = await compile(script, undefined, true);
+    const squiffyApi = await init({ element, story });
+    const begun = squiffyApi.begin();
+    await new Promise(resolve => setTimeout(resolve, 50));
+    const cont = element.querySelector<HTMLElement>(".squiffy-continue")!;
+    const held = findLink(element, "section", "next")!.closest<HTMLElement>("[data-name]")!;
+    // Its link can't be reached with Tab, and a screen reader doesn't read it
+    expect(held.hasAttribute("inert")).toBe(true);
+    cont.click();
+    await begun;
+    expect(element.querySelector("[inert]")).toBeNull();
+    expect(findLink(element, "section", "next")).toBeTruthy();
+});
+
 describe("{{#animate}} times", () => {
     test.each([
         ["\"1.5s\"", 1500],

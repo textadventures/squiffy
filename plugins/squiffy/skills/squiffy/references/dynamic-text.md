@@ -47,7 +47,7 @@ The weather is {{random (array "sunny" "rainy") set="weather"}}.
 {{#animate "continue"}}Step inside{{/animate}}
 ```
 
-Animations queue and play in order. `continue` shows its text as a link that pauses the queue until clicked; `style=` is `pulse` (default), `glow`, `bounce` or `wave`. In `--play`, a `continue` is shown as a link to click.
+Animations queue and play in order. `continue` shows its text as a link that pauses the queue until clicked (or pressed with Enter or Space: it's a button for the keyboard and screen readers); `style=` is `pulse` (default), `glow`, `bounce` or `wave`. In `--play`, a `continue` is shown as a link to click.
 
 | Option | For | Meaning |
 |---|---|---|
