@@ -11,6 +11,14 @@ bytes, so there's room for a few small ones, and none for sounds. The page compi
 does. Its "Open in editor" button sends the same payload to the editor, which makes a new story
 from it, so a reader can change a story and share their own version.
 
+A playing story has one bar, inside its frame, which the story's own CSS styles: its title, then
+the published page's buttons (its panels' buttons, Back, Restart, Settings, mute, light/dark) in
+the same order and with the same icons, then an edit button for "Open in editor", which asks this
+page to go there. The player asks for these with the preview host's `setControls()`; the editor's
+preview doesn't, as it has buttons of its own. This page's own bar, with the title and "Open in
+editor", only shows when there's no story to play, such as for a broken link. The reader's light
+or dark and mute choices are kept in this page's storage, for every story.
+
 - `src/link.ts`: the encoding, which the editor imports too (`@textadventures/squiffy-player/link`)
 - `src/main.ts`: the page
 - `app/src/lib/share-link.ts`: the editor's side, which chooses the files that go in a link

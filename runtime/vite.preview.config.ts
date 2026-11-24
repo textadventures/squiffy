@@ -24,8 +24,14 @@ div#squiffy-container { max-width: none; height: 100%; padding: 0; }
 .squiffy-preview-story > div { padding: 1em max(1.25rem, calc((100% - var(--squiffy-max-width)) / 2)); }
 /* The story's panels: their buttons above the story, and side panels to its right */
 #squiffy { display: flex; flex-direction: column; }
-.squiffy-preview-header { flex: none; padding: 0.5rem 0.75rem 0; font-family: system-ui, sans-serif; font-size: 0.875rem; text-align: right; }
-.squiffy-preview-header:empty { display: none; }
+.squiffy-preview-header { flex: none; display: flex; align-items: center; justify-content: flex-end; gap: 1rem; padding: 0.5rem 0.75rem 0; font-family: system-ui, sans-serif; font-size: 0.875rem; }
+.squiffy-preview-header:not(:has(button, .squiffy-preview-title)) { display: none; }
+.squiffy-preview-buttons { flex: none; white-space: nowrap; }
+/* With the published page's own buttons (for a reader, as in the player), the header lines up with the story's text, as it does on that page */
+.squiffy-preview-header.squiffy-preview-controls { padding: 0.5rem max(1.25rem, calc((100% - var(--squiffy-max-width)) / 2)) 0; font-family: var(--squiffy-font-family); }
+.squiffy-preview-title { flex: 1; min-width: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* The player's edit button, set apart from the story's own buttons */
+button#squiffy-edit { margin-left: 0.75em; }
 .squiffy-preview-body { flex: 1; min-height: 0; display: flex; }
 #squiffy .squiffy-preview-body > .squiffy-preview-story { flex: 1; min-width: 0; height: 100%; }
 .squiffy-preview-body > aside.squiffy-panels-side { flex: none; width: var(--squiffy-side-width); box-sizing: border-box; overflow-y: auto; padding: 1em 1.25rem 1em 0; }
