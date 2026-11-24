@@ -1,0 +1,61 @@
+<!--Saved by Quest 5.8.6836.13983-->
+<asl version="580">
+  <include ref="GamebookCore.aslx" />
+  <game name="The Dragon's Hoard">
+    <gameid>6f1d2c3b-8a4e-4f5d-9b7c-2e1a0d9c8b7a</gameid>
+    <version>1.0</version>
+    <firstpublished>2026</firstpublished>
+    <author>A. Writer</author>
+  </game>
+  <object name="The Gate">
+    <inherit name="editor_object" />
+    <description><![CDATA[The castle gate stands open. Somewhere inside, a dragon is snoring.]]></description>
+    <options type="stringdictionary">
+      <item><key>The Courtyard</key><value>Creep inside</value></item>
+      <item><key>Home</key><value>Go home</value></item>
+    </options>
+    <object name="player">
+      <inherit name="editor_object" />
+      <inherit name="editor_player" />
+    </object>
+  </object>
+  <object name="The Courtyard">
+    <inherit name="editor_object" />
+    <description><![CDATA[Weeds grow between the flagstones. A door to the left says ARMOURY. Ahead, the snoring is very loud.]]></description>
+    <options type="stringdictionary">
+      <item><key>The Armoury</key><value>Try the armoury</value></item>
+      <item><key>The Lair</key><value>Follow the snoring</value></item>
+    </options>
+  </object>
+  <object name="The Armoury">
+    <inherit name="editor_object" />
+    <inherit name="scripttext" />
+    <description><![CDATA[Among the rusty helmets is a sword that still has an edge. You take it.]]></description>
+    <script type="script"><![CDATA[
+      SetFlagOn ("sword")
+    ]]></script>
+    <options type="stringdictionary">
+      <item><key>The Lair</key><value>Follow the snoring</value></item>
+    </options>
+  </object>
+  <object name="The Lair">
+    <inherit name="editor_object" />
+    <description><![CDATA[The dragon is asleep on a heap of gold. {if sword:Your sword glints in the firelight.}{if not sword:You wish you'd brought something sharper than your wit.}]]></description>
+    <options type="stringdictionary">
+      <item><key>Victory</key><value>Fill your pockets</value></item>
+      <item><key>Fled</key><value>Back away slowly</value></item>
+    </options>
+  </object>
+  <object name="Victory">
+    <inherit name="editor_object" />
+    <description><![CDATA[You tiptoe out, heavier by a fortune. {either sword:With a sword at your side, you feel like a hero.|You feel very lucky indeed.}]]></description>
+  </object>
+  <object name="Fled">
+    <inherit name="editor_object" />
+    <description><![CDATA[You back out into the night. The dragon never knew you were there.]]></description>
+  </object>
+  <object name="Home">
+    <inherit name="editor_object" />
+    <description><![CDATA[You go home and have a nice cup of tea.]]></description>
+  </object>
+</asl>

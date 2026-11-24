@@ -16,6 +16,10 @@ npm run screenshots               # all of them, in about a minute
 npm run screenshots -- editor     # the files matching "editor"
 ```
 
+The desktop app's shots need the editor's static build and the desktop app's own, as
+`desktop/` isn't a workspace: `npm run build` in `app/`, then `npm install && npm run build` in
+`desktop/`. Its window opens on the screen while they run.
+
 **In a git worktree**, `npm run build` (and `./dev.sh`, which uses lerna too) builds the main
 checkout's packages, not the worktree's, so the screenshots show whatever the worktree last built
 by hand. Build each package in the worktree instead: `for p in compiler runtime packager player
@@ -60,12 +64,17 @@ first time. Both servers are reused if they're already running.
 - One `*.capture.ts` file per area: `editor.capture.ts` (the editor and the story map),
   `editor-tools.capture.ts` (the home page, problems, Start at menu and dialogs),
   `player.capture.ts` (the published game show, from **Play in a new tab**),
-  `tutorial.capture.ts` (both parts of the tutorial), `twine.capture.ts` (converting a Twine
-  story) and `vscode.capture.ts`. They aren't tests, aren't run by `npm run test:e2e`, and aren't run in CI.
+  `tutorial.capture.ts` (both parts of the tutorial), `twine.capture.ts` and `quest.capture.ts`
+  (converting a Twine story and a Quest gamebook), `desktop.capture.ts` and `vscode.capture.ts`.
+- `desktop.capture.ts` launches the desktop app with Playwright's `_electron`, with a userData
+  folder of its own holding a made-up recent folders list and New story location
+  (`/Users/you/Documents/Squiffy`), so it neither touches nor shows your own. Only the window's
+  contents can be captured: the title bar, the native menu and native file dialogs are the OS's. They aren't tests, aren't run by `npm run test:e2e`, and aren't run in CI.
 - `e2e/screenshots/stories/` has stories made for a screenshot, such as `cave/`, which has a
   missing link, a dead end and an unreachable section for the map to show, and
   `twine/the-lighthouse.twee`, a small Harlowe story with Twine map positions and one thing the
-  converter notes in `twine-import.txt`. Its `squiffy.json` has
+  converter notes in `twine-import.txt`, and `quest/the-dragons-hoard.aslx`, a small Quest 5.8
+  gamebook with a page script, a flag, and one thing noted in `quest-import.txt`. Its `squiffy.json` has
   the map's positions (`map`), so the map's layout is the same each time. Use `examples/` when a
   real story suits.
 - `site/src/components/Screenshot.astro` shows one in a page: `<Screenshot name="editor"
