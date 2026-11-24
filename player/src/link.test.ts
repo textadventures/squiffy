@@ -32,6 +32,21 @@ describe("encodeStory", () => {
         expect(decoded.files).toEqual(bare.files);
     });
 
+    test("can ask the player not to show its edit button, without it showing in the link", () => {
+        const payload = encodeStory({ ...story, edit: false });
+        expect(decodeStory(payload)).toEqual({ ...story, edit: false });
+        expect(payload).toMatch(/^1[A-Za-z0-9_-]+$/);
+        expect(payload).not.toMatch(/edit/i);
+        // Links without it show the button, as they always have
+        expect(decodeStory(encodeStory(story))).not.toHaveProperty("edit");
+        expect(decodeStory(pack([["story.squiffy", 2]], "Hi"))).not.toHaveProperty("edit");
+    });
+
+    test("ignores options it doesn't know, but not a link with only options", () => {
+        expect(decodeStory(pack([["story.squiffy", 2], { edit: true, later: 1 }], "Hi"))).toEqual({ files: { "story.squiffy": "Hi" }, main: "story.squiffy" });
+        expect(decodeStory(pack([{ edit: false }]))).toBeNull();
+    });
+
     test("uses only characters that need no escaping in a link", () => {
         expect(encodeStory(story)).toMatch(/^1[A-Za-z0-9_-]+$/);
     });

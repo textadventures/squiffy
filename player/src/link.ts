@@ -9,7 +9,10 @@
 // how the rest is encoded, so that can change without a new path:
 //
 //     1    base64url of raw deflate of: a line of JSON listing each file's path and length in
-//          bytes, [["story.squiffy", 1234], ["cat.png", 567]], then the files' bytes, in that order
+//          bytes, [["story.squiffy", 1234], ["cat.png", 567]], then the files' bytes, in that order.
+//          The list can end with an object of options for the player: {"edit": false} asks it not
+//          to show "Open in editor". That's in the compressed part, so the address doesn't show it,
+//          but it only hides the button: anyone can still decode the story from the link.
 //
 // It's one stream, rather than a zip, because a zip is longer: it has headers for each file, which
 // aren't compressed, and compresses each file on its own (a third as long again for a small story).
@@ -24,6 +27,8 @@ export interface LinkedStory {
     assets?: Record<string, Uint8Array>;
     // The main file, for a story with no squiffy.json to say. It's the first file in the link.
     main?: string;
+    // False if the player shouldn't show its "Open in editor" button
+    edit?: false;
 }
 
 // The files that are the story's text, which the compiler reads. The rest are assets.
@@ -83,7 +88,9 @@ export function encodeStory(story: LinkedStory): string {
     // The main file first, which is how a story with no squiffy.json says which it is
     texts.sort(([a], [b]) => Number(b === story.main) - Number(a === story.main));
     const entries = [...texts, ...Object.entries(story.assets ?? {})];
-    const list = strToU8(JSON.stringify(entries.map(([path, data]) => [path, data.length])) + "\n");
+    const header: unknown[] = entries.map(([path, data]) => [path, data.length]);
+    if (story.edit === false) header.push({ edit: false });
+    const list = strToU8(JSON.stringify(header) + "\n");
     const data = new Uint8Array(entries.reduce((size, [, bytes]) => size + bytes.length, list.length));
     data.set(list);
     let offset = list.length;
@@ -106,6 +113,13 @@ export function decodeStory(payload: string): LinkedStory | null {
         const files: Record<string, string> = {};
         const assets: Record<string, Uint8Array> = {};
         let main: string | undefined;
+        let edit: false | undefined;
+        // The options, if there are any, after the files
+        const last: unknown = list[list.length - 1];
+        if (typeof last === "object" && last !== null && !Array.isArray(last)) {
+            list.pop();
+            if ((last as { edit?: unknown }).edit === false) edit = false;
+        }
         let offset = end + 1;
         for (const entry of list) {
             if (!Array.isArray(entry) || entry.length !== 2) return null;
@@ -121,7 +135,7 @@ export function decodeStory(payload: string): LinkedStory | null {
             else assets[path] = bytes;
         }
         if (offset !== data.length || main === undefined) return null;
-        return { files, ...(Object.keys(assets).length ? { assets } : {}), main };
+        return { files, ...(Object.keys(assets).length ? { assets } : {}), main, ...(edit === false ? { edit } : {}) };
     } catch {
         return null;
     }

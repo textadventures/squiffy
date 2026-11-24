@@ -25,6 +25,14 @@ describe("createStoryLink", () => {
         expect(mainFile(story)).toBe("story.squiffy");
     });
 
+    test("has a version that asks the player not to show its edit button, with the same story in it", () => {
+        const link = createStoryLink(new Map([["story.squiffy", "Hello"]]), "story.squiffy", "7.0.0");
+        if ("error" in link) throw new Error(link.error);
+        expect(read(link.url).edit).toBeUndefined();
+        expect(read(link.noEditUrl)).toEqual({ ...read(link.url), edit: false });
+        expect(link.noEditUrl).toMatch(/\/v7\/#story=1[\w-]+$/);
+    });
+
     test("leaves the story's ID and map out of squiffy.json", () => {
         const link = createStoryLink(new Map([["story.squiffy", "Hello"], ["squiffy.json", project]]), "story.squiffy", "7.0.0");
         if ("error" in link) throw new Error(link.error);
