@@ -65,7 +65,7 @@ export function createStoryLink(files: Map<string, string | Uint8Array>, mainFil
         else if (isAsset(path) && typeof content !== "string" && content.length <= MAX_ASSET_BYTES) assets[path] = content;
         else leftOut.push(path);
     }
-    const link = (story: LinkedStory, edit = true) => playerUrl(version) + storyFragment(encodeStory(story), { edit });
+    const link = (story: LinkedStory) => playerUrl(version) + storyFragment(encodeStory(story));
     const story: LinkedStory = { files: linked, assets, main: mainFile };
     const url = link(story);
     if (url.length > MAX_LINK_LENGTH) {
@@ -78,8 +78,8 @@ export function createStoryLink(files: Map<string, string | Uint8Array>, mainFil
                 : `This story is too big to share as a link: ${length}. Publish it another way.`,
         };
     }
-    // Seven characters longer, which the limit has room for
-    return { url, noEditUrl: link(story, false), assets: Object.keys(assets), leftOut };
+    // A few characters longer, if any, which the limit has room for
+    return { url, noEditUrl: link({ ...story, edit: false }), assets: Object.keys(assets), leftOut };
 }
 
 // The files of a new story made from a link's

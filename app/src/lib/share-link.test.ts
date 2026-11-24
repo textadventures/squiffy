@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { decodeStory, mainFile, payloadFromFragment, showsEditButton } from "@textadventures/squiffy-player/link";
+import { decodeStory, mainFile, payloadFromFragment } from "@textadventures/squiffy-player/link";
 import { createStoryLink, linkedStoryFiles, MAX_ASSET_BYTES, MAX_LINK_LENGTH } from "./share-link.js";
 
 const project = JSON.stringify({ $schema: "https://squiffystory.com/schema/squiffy.json", version: 1, id: "abc-123", main: "story.squiffy", map: { cave: [1, 2] }, backButton: true }, null, 2);
@@ -28,10 +28,9 @@ describe("createStoryLink", () => {
     test("has a version that asks the player not to show its edit button, with the same story in it", () => {
         const link = createStoryLink(new Map([["story.squiffy", "Hello"]]), "story.squiffy", "7.0.0");
         if ("error" in link) throw new Error(link.error);
-        expect(showsEditButton(new URL(link.url).hash)).toBe(true);
-        expect(link.noEditUrl).toBe(`${link.url}&noedit`);
-        expect(showsEditButton(new URL(link.noEditUrl).hash)).toBe(false);
-        expect(read(link.noEditUrl)).toEqual(read(link.url));
+        expect(read(link.url).edit).toBeUndefined();
+        expect(read(link.noEditUrl)).toEqual({ ...read(link.url), edit: false });
+        expect(link.noEditUrl).toMatch(/\/v7\/#story=1[\w-]+$/);
     });
 
     test("leaves the story's ID and map out of squiffy.json", () => {

@@ -5,7 +5,7 @@
 import { createLanguageService } from "squiffy-compiler/language-service";
 import { createPreviewHost, iframeChannel, setUpPreviewFrame, type PreviewHost, type PreviewTheme } from "squiffy-runtime/preview-host";
 import { previewHtml } from "squiffy-runtime/preview-html";
-import { decodeStory, mainFile, payloadFromFragment, showsEditButton, storyFragment, storyPath, type LinkedStory } from "./link.ts";
+import { decodeStory, mainFile, payloadFromFragment, storyFragment, storyPath, type LinkedStory } from "./link.ts";
 
 // Where "Open in editor" goes: the editor makes a new story from the same payload
 const EDITOR_URL: string = import.meta.env.VITE_EDITOR_URL || (import.meta.env.DEV ? "http://localhost:5180" : "https://app.squiffystory.com");
@@ -21,7 +21,7 @@ const frame = element<HTMLIFrameElement>("story");
 const message = element("message");
 
 let preview: PreviewHost | undefined;
-// Whether the story's link asks for its "Open in editor" button (see showsEditButton)
+// Whether the story's link asks for its "Open in editor" button (see LinkedStory)
 let editable = true;
 
 // The reader's choices from the story's own light/dark and mute buttons, kept for every story
@@ -115,7 +115,7 @@ async function play() {
     edit.href = `${EDITOR_URL}/${storyFragment(payload)}`;
     // The author can ask for no "Open in editor" button while the story plays. One that can't be
     // played still has it, so they can see why.
-    editable = showsEditButton(location.hash);
+    editable = story.edit !== false;
     edit.hidden = !editable;
 
     let compiled: Awaited<ReturnType<typeof compile>>;
