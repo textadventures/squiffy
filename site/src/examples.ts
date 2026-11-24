@@ -1,7 +1,25 @@
 // Central location for importing example Squiffy scripts
 // Uses Vite's ?raw suffix to import file contents as strings
 
-export { default as coffeeshop } from "../../examples/coffeeshop/coffeeshop.squiffy?raw";
+import { encodeStory, storyFragment } from "@textadventures/squiffy-player/link";
+import { stableAppUrl } from "./channel.mjs";
+import coffeeshop from "../../examples/coffeeshop/coffeeshop.squiffy?raw";
+import coffeeshopCss from "../../examples/coffeeshop/daily-grind.css?raw";
+import coffeeshopProject from "../../examples/coffeeshop/squiffy.json?raw";
+
+export { coffeeshop };
+
+// The coffee shop's story as a link that opens it in the editor, as a new story: all of it but
+// its playthrough tests, which are in the download. It's to the stable editor: a beta build's
+// links are rewritten to the beta one (app-links.mjs). The game show has no such link, as its
+// sounds would make it far too long.
+export const coffeeshopEditorLink = `${stableAppUrl}/${storyFragment(encodeStory({
+    files: {
+        "coffeeshop.squiffy": coffeeshop,
+        "daily-grind.css": coffeeshopCss,
+        "squiffy.json": coffeeshopProject,
+    },
+}))}`;
 
 export interface ExampleFile {
     path: string;
