@@ -24,4 +24,8 @@ export type FromMap =
     // A link was dragged from one node to another
     | { type: "link"; from: string; to: string }
     // Nodes were dropped somewhere, and are now pinned there
-    | { type: "move"; moves: { id: string; at: Point }[] };
+    | { type: "move"; moves: { id: string; at: Point }[] }
+    // From the right-click menu (or F2 and Delete): a section or passage to rename, add a passage
+    // to, run the preview from or start the story at, or sections and passages to delete
+    | { type: "rename" | "addPassage" | "run" | "start"; id: string }
+    | { type: "delete"; ids: string[] };

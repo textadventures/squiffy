@@ -6,10 +6,12 @@
     import { untrack } from "svelte";
     import type { MapPositions } from "squiffy-compiler";
     import type { StoryGraph } from "squiffy-compiler/language-service";
+    import type { GraphNode } from "squiffy-compiler/language-service";
     import GraphMap, { type NodeState } from "@textadventures/graph-map/GraphMap.svelte";
     import StoryMapNodeBox from "@textadventures/squiffy-app/StoryMapNode.svelte";
     import { buildStoryMap, linkTo, pinnedPositions, storyMapLayout, type StoryMapEdge, type StoryMapNode } from "@textadventures/squiffy-app/story-map";
     import type { FromMap, ToMap } from "./messages.js";
+    import Menu, { type MenuItem } from "./Menu.svelte";
 
     let { post }: { post: (message: FromMap) => void } = $props();
 
@@ -79,7 +81,53 @@
         if (location) post({ type: "goto", location, focus: false });
     }
 
-    const instructions = "Arrow keys move between sections and passages, and Enter goes to one in the editor. Plus and minus zoom, and 0 fits the whole story in view. Drag the background to pan, a box to move it, or the dot under the selected box to another box to add a link. Shift and drag the background to select several boxes, or Shift and click one, then drag one of them to move them all.";
+    // Named sections and passages can be deleted here. A section without a name of its own
+    // (+++, ---, the text before the first section) is part of what's around it in the script.
+    const canDelete = (g: GraphNode) => g.kind == "passage" || (!g.detail && g.name != "");
+
+    function remove(nodes: StoryMapNode[]) {
+        const ids = nodes.flatMap(n => n.graphNode && canDelete(n.graphNode) ? [n.graphNode.id] : []);
+        if (ids.length) post({ type: "delete", ids });
+    }
+
+    // The right-click menu, for a box, a broken link's marker, or the background
+    let menu = $state<{ x: number; y: number; keyboard: boolean; items: MenuItem[] } | null>(null);
+
+    function showMenu(node: StoryMapNode | null, _at: unknown, screen: { x: number; y: number }, keyboard: boolean) {
+        const g = node?.graphNode;
+        let items: MenuItem[];
+        if (node?.kind == "missing") {
+            items = [{ label: "Show the link in the script", shortcut: "Enter", action: () => activate(node, "open") }];
+        } else if (node && g) {
+            const id = g.id;
+            items = [
+                { label: "Show in the script", shortcut: "Enter", action: () => activate(node, "open") },
+                { label: "Rename…", shortcut: "F2", disabled: !!g.detail, action: () => post({ type: "rename", id }) },
+                { label: "Add a passage…", action: () => post({ type: "addPassage", id }) },
+                { label: "Run from here", divider: true, action: () => post({ type: "run", id }) },
+                ...(g.kind == "section" ? [{ label: "Start the story here", disabled: !!g.start || !!g.detail || g.name == "", action: () => post({ type: "start", id }) }] : []),
+                { label: "Delete…", shortcut: "Del", divider: true, disabled: !canDelete(g), action: () => post({ type: "delete", ids: [id] }) },
+            ];
+        } else {
+            items = [
+                { label: "Zoom in", shortcut: "+", action: () => map?.zoomBy(1.25) },
+                { label: "Zoom out", shortcut: "-", action: () => map?.zoomBy(0.8) },
+                { label: "Show the whole story", shortcut: "0", action: () => map?.fit() },
+            ];
+        }
+        menu = { ...screen, keyboard, items };
+    }
+
+    // The menu key, or Shift+F10, opens the menu for the selected box. In VS Code's webview,
+    // they don't make a contextmenu event of their own, as they do in a browser, so the map's
+    // keyboard menu gets one here.
+    function menuKey(e: KeyboardEvent) {
+        if (!(e.key == "ContextMenu" || (e.key == "F10" && e.shiftKey)) || e.altKey || e.ctrlKey || e.metaKey) return;
+        e.preventDefault();
+        e.target?.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, button: 0 }));
+    }
+
+    const instructions = "Arrow keys move between sections and passages, and Enter goes to one in the editor. F2 renames it and Delete deletes it. The menu key, or Shift and F10, opens a menu for it. Plus and minus zoom, and 0 fits the whole story in view. Drag the background to pan, a box to move it, or the dot under the selected box to another box to add a link. Shift and drag the background to select several boxes, or Shift and click one, then drag one of them to move them all.";
 </script>
 
 <main class="story-map">
@@ -108,6 +156,9 @@
                 {canConnect}
                 onactivate={activate}
                 onedgeactivate={activateEdge}
+                onrename={n => { if (n.graphNode && !n.graphNode.detail) post({ type: "rename", id: n.graphNode.id }); }}
+                ondelete={remove}
+                onmenu={showMenu}
                 onmove={moves => post({ type: "move", moves: moves.flatMap(({ node, at }) => node.graphNode ? [{ id: node.graphNode.id, at }] : []) })}
                 onconnect={(from, to) => {
                     if (from.graphNode && to?.graphNode) post({ type: "link", from: from.graphNode.id, to: to.graphNode.id });
@@ -120,6 +171,12 @@
         {/if}
     </div>
 </main>
+
+<svelte:window onkeydown={menuKey} />
+
+{#if menu}
+    <Menu x={menu.x} y={menu.y} keyboard={menu.keyboard} items={menu.items} onclose={() => { menu = null; map?.focus(); }} />
+{/if}
 
 {#snippet drawNode(n: StoryMapNode, state: NodeState)}
     <StoryMapNodeBox node={n} {state} />

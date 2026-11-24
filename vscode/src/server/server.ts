@@ -286,6 +286,7 @@ export function startServer(connection: Connection) {
             graph: await story.service.getStoryGraph(),
             root: story.root,
             projectFile: story.project ? toUri(story.root, "squiffy.json") : undefined,
+            mainFile: (await story.service.getProjectInfo()).mainFile,
         };
     });
 

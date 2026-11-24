@@ -44,6 +44,8 @@ export interface StoryGraphResult {
     // The story's squiffy.json, if it has one, which is where positions chosen on the map are
     // kept. The client reads them, as the file may have changes that aren't saved.
     projectFile?: string;
+    // The story's main file, as a path from `root`, where "Start the story here" sets @start
+    mainFile: string;
 }
 
 // Makes a file the main file of the story in its folder, when there's no squiffy.json
