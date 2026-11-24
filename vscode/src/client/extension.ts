@@ -8,7 +8,7 @@ import {
     FIND_PROJECT_FILES, LIST_FILES, READ_TEXT, SECTION_AT, SET_MAIN_FILE,
     type ListFilesParams, type PreviewFromHereArgs, type ShowLinksHereArgs, type ReadTextParams, type SectionAtParams, type SectionAtResult, type SetMainFileParams,
 } from "../protocol.js";
-import { findProjectFiles, listFiles, readText } from "./files.js";
+import { findProjectFiles, isProjectFile, listFiles, readText } from "./files.js";
 import { exportStory } from "./export.js";
 import { insertHeader, newStory } from "./new-story.js";
 import { Preview } from "./preview.js";
@@ -32,21 +32,30 @@ export async function activate(context: vscode.ExtensionContext, createClient: C
     const map = new StoryMap(client, context.extensionUri);
     context.subscriptions.push(log, preview, map);
 
+    // The active editor, if it's a .squiffy file, for the commands that act at the cursor
     const activeSquiffyEditor = () => {
         const editor = vscode.window.activeTextEditor;
         return editor?.document.languageId == "squiffy" ? editor : undefined;
+    };
+    // The active editor's file, if it's part of a story: a .squiffy file, or a squiffy.json, as
+    // its title, panels and settings are the story's too. For the commands that act on the story.
+    const activeStoryUri = () => {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) return undefined;
+        const uri = editor.document.uri;
+        return editor.document.languageId == "squiffy" || isProjectFile(uri) ? uri : undefined;
     };
 
     const command = (id: string, run: (...args: unknown[]) => unknown) =>
         context.subscriptions.push(vscode.commands.registerCommand(id, run));
 
     command("squiffy.showPreview", (uri?: unknown) => {
-        const target = uri instanceof vscode.Uri ? uri : activeSquiffyEditor()?.document.uri;
+        const target = uri instanceof vscode.Uri ? uri : activeStoryUri();
         if (target) return preview.show(target);
     });
 
     command("squiffy.showMap", (uri?: unknown) => {
-        const target = uri instanceof vscode.Uri ? uri : activeSquiffyEditor()?.document.uri;
+        const target = uri instanceof vscode.Uri ? uri : activeStoryUri();
         if (target) return map.show(target);
     });
 
@@ -91,9 +100,9 @@ export async function activate(context: vscode.ExtensionContext, createClient: C
     });
 
     command("squiffy.export", (uri?: unknown) => {
-        const target = uri instanceof vscode.Uri ? uri : activeSquiffyEditor()?.document.uri;
+        const target = uri instanceof vscode.Uri ? uri : activeStoryUri();
         if (target) return exportStory(client!, target);
-        void vscode.window.showInformationMessage("Open a .squiffy file to export its story.");
+        void vscode.window.showInformationMessage("Open a .squiffy file or squiffy.json to export its story.");
     });
 
     command("squiffy.newStory", () => newStory());
@@ -109,13 +118,13 @@ export async function activate(context: vscode.ExtensionContext, createClient: C
         if (editor) return insertHeader(editor, "passage");
     });
 
-    // A Preview button in the status bar, while a .squiffy file is open
+    // A Preview button in the status bar, while a .squiffy file or squiffy.json is open
     const status = vscode.window.createStatusBarItem("squiffy.preview", vscode.StatusBarAlignment.Right, 100);
     status.name = "Squiffy Preview";
     status.text = "$(play) Preview";
     status.tooltip = "Play the story in the preview";
     status.command = "squiffy.showPreview";
-    const updateStatus = () => activeSquiffyEditor() ? status.show() : status.hide();
+    const updateStatus = () => activeStoryUri() ? status.show() : status.hide();
     updateStatus();
     context.subscriptions.push(status, vscode.window.onDidChangeActiveTextEditor(updateStatus));
 

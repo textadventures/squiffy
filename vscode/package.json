@@ -129,7 +129,7 @@
       "editor/title": [
         {
           "command": "squiffy.showPreview",
-          "when": "editorLangId == squiffy",
+          "when": "editorLangId == squiffy || resourceFilename == squiffy.json",
           "group": "navigation@0"
         },
         {
@@ -139,7 +139,7 @@
         },
         {
           "command": "squiffy.showMap",
-          "when": "editorLangId == squiffy",
+          "when": "editorLangId == squiffy || resourceFilename == squiffy.json",
           "group": "navigation@2"
         },
         {
@@ -164,7 +164,7 @@
         },
         {
           "command": "squiffy.export",
-          "when": "editorLangId == squiffy",
+          "when": "editorLangId == squiffy || resourceFilename == squiffy.json",
           "group": "1_squiffy@3"
         },
         {
@@ -193,11 +193,11 @@
       "commandPalette": [
         {
           "command": "squiffy.showPreview",
-          "when": "editorLangId == squiffy"
+          "when": "editorLangId == squiffy || resourceFilename == squiffy.json"
         },
         {
           "command": "squiffy.showMap",
-          "when": "editorLangId == squiffy"
+          "when": "editorLangId == squiffy || resourceFilename == squiffy.json"
         },
         {
           "command": "squiffy.previewFromHere",
@@ -221,7 +221,7 @@
         },
         {
           "command": "squiffy.export",
-          "when": "editorLangId == squiffy"
+          "when": "editorLangId == squiffy || resourceFilename == squiffy.json"
         },
         {
           "command": "squiffy.newStoryInFolder",

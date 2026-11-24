@@ -10,17 +10,19 @@ story map.
   and passages
 - Completion of section and passage names, attributes and directives, hover, and quick fixes
 - **Squiffy: Show Preview** (also the ▷ button in the editor's title bar, and Preview in the
-  status bar) runs the story beside the editor, updating as you type. **Preview from here** above
+  status bar, for a `.squiffy` file or the story's `squiffy.json`) runs the story beside the editor, updating as you type. **Preview from here** above
   each section and passage, or **Start Preview at This Section** in the editor's context menu,
   starts it there.
 - Above each section and passage, a count of the links to it, which lists them (code lenses, from
   the language server) The attributes the story sets are logged in the Squiffy Preview output.
-- **Squiffy: Show Story Map** (also a button in the editor's title bar) shows the Squiffy editor's
-  map of the story beside the text: its sections and passages as boxes and its links as arrows,
-  with problems marked. Click a box to go to it, and drag from one box to another to add a link.
-  Right-click a box to rename it, add a passage to it, run the preview from it, start the story
-  there, or delete it. Add a section with the map's button, by double-clicking the background, or
-  by dragging a link to empty space, and make a broken link's missing section from its red box. Where boxes are dragged to is kept in `squiffy.json`, as the editor keeps it.
+- **Squiffy: Show Story Map** (also a button in the editor's title bar, for a `.squiffy` file or
+  `squiffy.json`) shows the Squiffy editor's map of the story beside the text: its sections and
+  passages as boxes and its links as arrows, with problems marked. Click a box to go to it, and
+  drag from one box to another to add a link. Right-click a box to rename it, add a passage to it,
+  run the preview from it, start the story there, or delete it. Add a section with the map's
+  button, by double-clicking the background, or by dragging a link to empty space, and make a
+  broken link's missing section from its red box. Where boxes are dragged to is kept in
+  `squiffy.json`, as the editor keeps it.
 - **Squiffy: Export** builds the playable story (`index.html`, `story.js`, the page's stylesheets
   and the story's images, sounds and other files) into a folder, or a zip to upload to a website,
   as the Squiffy editor and command line tool build it. It can also make a single HTML file with
