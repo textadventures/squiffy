@@ -376,7 +376,7 @@
     .toolbar-icon-btn:hover:not(:disabled),
     .toolbar-icon-btn[aria-pressed="true"] {
         background-color: var(--color-surface-200-800);
-        color: var(--color-primary-500);
+        color: var(--color-primary-600-400);
     }
     .toolbar-icon-btn:disabled {
         opacity: 0.4;
@@ -403,11 +403,11 @@
         white-space: nowrap;
     }
     .view-switch button:hover {
-        color: var(--color-primary-500);
+        color: var(--color-primary-600-400);
     }
     .view-switch button[aria-pressed="true"] {
         background-color: var(--color-surface-50-950);
-        color: var(--color-primary-500);
+        color: var(--color-primary-600-400);
         box-shadow: 0 1px 2px rgb(0 0 0 / 0.12);
     }
     .problems-btn {
@@ -494,7 +494,7 @@
         text-decoration: underline;
     }
     .save-chip-error {
-        color: var(--color-error-500);
+        color: var(--color-error-600-400);
         background-color: color-mix(in srgb, var(--color-error-500) 12%, transparent);
         cursor: pointer;
     }

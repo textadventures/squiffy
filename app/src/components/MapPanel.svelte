@@ -473,6 +473,8 @@
             <span></span><span class="text-surface-600-400 pt-1">Drag the dot under the selected box to another to add a link, or to empty space for a new section. Double-click empty space to add a section, or a red box to add what's missing. Right-click a box for more, or press Delete to delete it. Shift+drag empty space, or Shift+click, to select several boxes and move them together.</span>
         </div>
     {/if}
+    <!-- The keydown catches Ctrl/Cmd+Z and Y as they bubble up from the map, which is the
+         control, so undo works on the map's edits. This wrapper isn't a control itself (#639) -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div bind:this={area} class="relative flex-1 min-h-0" onkeydown={handleKeydown}>
         {#if !decorated}
@@ -636,11 +638,14 @@
         font-size: 10px;
         font-weight: 700;
     }
-    .story-map :global(.gm-node.unreachable) {
-        opacity: 0.5;
-    }
+    /* Faded by its box blending into the background, and a dashed outline, not by opacity, which
+       would take its label below a readable contrast (#639) */
     .story-map :global(.gm-node.unreachable .gm-node-box) {
+        fill: var(--gm-background);
         stroke-dasharray: 4 3;
+    }
+    .story-map :global(.gm-node.unreachable .gm-node-label) {
+        fill: var(--color-surface-700-300);
     }
     .story-map :global(.gm-node.missing .gm-node-box) {
         fill: light-dark(var(--color-error-50), var(--color-error-950));
@@ -786,7 +791,7 @@
         border: 1px solid var(--color-surface-400-600);
     }
     .key-start {
-        color: var(--color-primary-500);
+        color: var(--color-primary-600-400);
         border-color: var(--color-primary-500);
     }
     .key-ending {
@@ -801,7 +806,7 @@
     }
     .key-unreachable {
         border-style: dashed;
-        opacity: 0.5;
+        background-color: var(--color-surface-50-950);
     }
     .link-chip {
         padding: 0 0.4rem;

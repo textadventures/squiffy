@@ -97,6 +97,9 @@
     {#if problems.length === 0}
         <p class="px-3 py-2 text-xs text-surface-600-400">No problems in the story.</p>
     {:else}
+        <!-- The keydown moves focus between the problems' buttons with the arrow keys, Home and
+             End, as they bubble up from those buttons, which are what keyboard users reach with
+             Tab. The list itself isn't a control (#639) -->
         <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
         <ul bind:this={list} class="flex-1 min-h-0 overflow-y-auto text-xs" onkeydown={handleKeydown}>
             {#each problems as problem, i (i)}

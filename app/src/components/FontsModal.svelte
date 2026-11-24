@@ -273,11 +273,11 @@
                         aria-label="Search fonts"
                         bind:value={search}
                     />
-                    {#if chosenError}<p class="text-xs text-error-500">{chosenError}</p>{/if}
+                    {#if chosenError}<p class="text-xs text-error-600-400">{chosenError}</p>{/if}
                     {#if !search.trim()}
                         <p class="text-xs text-surface-600-400">Some good fonts for stories. Search for over 2,000 more.</p>
                     {:else if catalogueError}
-                        <p class="text-xs text-error-500">Couldn't get the list of fonts. Check you're online, then try again.</p>
+                        <p class="text-xs text-error-600-400">Couldn't get the list of fonts. Check you're online, then try again.</p>
                     {:else if !catalogue}
                         <p class="text-xs text-surface-600-400">Getting the list of fonts…</p>
                     {:else if !results.length}
@@ -295,7 +295,7 @@
             </section>
         </div>
 
-        {#if error}<p class="text-xs text-error-500">{error}</p>{/if}
+        {#if error}<p class="text-xs text-error-600-400">{error}</p>{/if}
         <p class="text-xs text-surface-600-400">
             Fonts come from <a class="anchor" href="https://fontsource.org" target="_blank" rel="noopener">Fontsource</a>,
             which has Google Fonts and other open source fonts. An added font is copied into your story's fonts folder,

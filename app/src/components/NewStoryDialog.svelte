@@ -99,7 +99,7 @@
                 <button type="button" class="anchor self-start" onclick={changeLocation} disabled={busy}>Change location…</button>
             </div>
             {#if error}
-                <p class="text-sm text-error-500" role="alert">{error}</p>
+                <p class="text-sm text-error-600-400" role="alert">{error}</p>
             {/if}
             <div class="flex flex-wrap justify-end gap-2">
                 <button type="button" class="btn btn-xs preset-tonal" onclick={() => close(null)} disabled={busy}>Cancel</button>

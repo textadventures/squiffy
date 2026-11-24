@@ -173,12 +173,12 @@
                         <input class="input text-sm" type="text" bind:value={otherLanguage} disabled={saving || unreadable}
                             aria-invalid={languageInvalid} spellcheck="false" autocapitalize="off" />
                     </label>
-                    {#if languageInvalid}<p class="text-xs text-error-500">That isn't a language tag.</p>{/if}
+                    {#if languageInvalid}<p class="text-xs text-error-600-400">That isn't a language tag.</p>{/if}
                 {/if}
             </div>
 
             {#if unreadable}
-                <p class="text-xs text-error-500">{PROJECT_FILENAME} couldn't be read, so these can't be changed. Fix it, then try again.</p>
+                <p class="text-xs text-error-600-400">{PROJECT_FILENAME} couldn't be read, so these can't be changed. Fix it, then try again.</p>
             {:else if !project.projectFile}
                 <p class="text-xs text-surface-600-400">
                     These are kept in a {PROJECT_FILENAME} project file, which saving adds to the story.
@@ -186,7 +186,7 @@
             {/if}
         </div>
 
-        {#if error}<p class="text-xs text-error-500">{error}</p>{/if}
+        {#if error}<p class="text-xs text-error-600-400">{error}</p>{/if}
         <div class="flex items-center gap-2">
             <a class="anchor text-xs flex-1" href={`${DOCS_URL}/publishing/#story-details`} target="_blank" rel="noopener">More about story details</a>
             <button type="button" class="btn btn-sm preset-tonal" onclick={onclose}>Cancel</button>

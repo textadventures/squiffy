@@ -29,9 +29,11 @@
         // browser's. Return true if it does.
         onContextMenu?: (view: EditorView, event: MouseEvent) => boolean;
         class?: string;
+        // The script's accessible name, for screen readers, such as the file's name
+        label?: string;
     }
 
-    let { value, extensions = [], readonly = false, onChange, onSave, onCursor, onView, onContextMenu, class: className = "" }: Props = $props();
+    let { value, extensions = [], readonly = false, onChange, onSave, onCursor, onView, onContextMenu, class: className = "", label }: Props = $props();
 
     let editorEl = $state<HTMLDivElement | null>(null);
     let view: EditorView | null = null;
@@ -53,6 +55,7 @@
             doc: untrack(() => value),
             parent: editorEl,
             extensions: [
+                ...(untrack(() => label) ? [EditorView.contentAttributes.of({ "aria-label": untrack(() => label)! })] : []),
                 lineNumbers(),
                 foldGutter({ foldingChanged, markerDOM: foldMarker }),
                 codeFolding(),

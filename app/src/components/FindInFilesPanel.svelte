@@ -177,6 +177,9 @@
             <button type="button" class="btn btn-sm preset-outlined-surface-300-700 text-xs justify-self-start" disabled={!results?.total} onclick={onreplaceall}>Replace all</button>
         {/if}
     </header>
+    <!-- The keydown moves focus between the matches' buttons with the arrow keys, Home and End,
+         and closes the panel with Escape, as those keys bubble up from the buttons. The list
+         itself isn't a control (#639) -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div bind:this={list} class="flex-1 min-h-0 overflow-y-auto text-xs" onkeydown={handleListKeydown}>
         {#if results}

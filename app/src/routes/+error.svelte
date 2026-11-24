@@ -48,7 +48,7 @@
         </div>
     {:else}
         <div class="flex items-center gap-3">
-            <TriangleAlert size={26} class="shrink-0 text-error-500" />
+            <TriangleAlert size={26} class="shrink-0 text-error-600-400" />
             <h1 class="text-xl font-semibold">Something went wrong in the editor</h1>
         </div>
 

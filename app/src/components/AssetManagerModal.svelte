@@ -111,7 +111,7 @@
                 disabled={uploading}
             >{uploading ? "Adding…" : "Add files"}</button>
             <input bind:this={inputEl} type="file" multiple accept="image/*,audio/*,video/*,.woff,.woff2,.ttf,.otf" class="hidden" onchange={handleUpload} />
-            {#if error}<p class="text-xs text-error-500">{error}</p>{/if}
+            {#if error}<p class="text-xs text-error-600-400">{error}</p>{/if}
         </div>
 
         <div class="flex-1 overflow-y-auto flex flex-col gap-1">
