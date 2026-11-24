@@ -1,6 +1,6 @@
 {
   "name": "@textadventures/editor-search",
-  "version": "7.0.0-beta.16",
+  "version": "7.0.0-beta.17",
   "private": true,
   "description": "A Find and Replace panel and a Go to line bar for CodeMirror 6, in place of its own",
   "license": "MIT",

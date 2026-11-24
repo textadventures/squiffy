@@ -1,5 +1,29 @@
 # Changelog
 
+## [7.0.0-beta.17](https://github.com/textadventures/squiffy/compare/v7.0.0-beta.16...v7.0.0-beta.17) (2026-11-24)
+
+
+### Features
+
+* **vscode:** a getting-started walkthrough ([#638](https://github.com/textadventures/squiffy/issues/638)) ([2a7d1e0](https://github.com/textadventures/squiffy/commit/2a7d1e07f71238b561a7e32608f469053af27dbd))
+* **vscode:** a Squiffy sidebar with the story's sections ([#635](https://github.com/textadventures/squiffy/issues/635)) ([98cf7cd](https://github.com/textadventures/squiffy/commit/98cf7cd370cc1c30dd799d12ceac62012a857a60))
+* **vscode:** convert a Twine story or Quest gamebook ([#637](https://github.com/textadventures/squiffy/issues/637)) ([3093b2f](https://github.com/textadventures/squiffy/commit/3093b2fabb2978135b5a1a56b67e6bbad940ff4e))
+
+
+### Bug Fixes
+
+* --convert-v5 converts setters too, and a link to a missing section no longer breaks passage links ([#661](https://github.com/textadventures/squiffy/issues/661)) ([6be746d](https://github.com/textadventures/squiffy/commit/6be746d304c937252550a5d7fbb2d5ec7534fe1d))
+* accessibility pass on the player and docs site ([#651](https://github.com/textadventures/squiffy/issues/651)) ([8a9a954](https://github.com/textadventures/squiffy/commit/8a9a9547c6ad013dee20477382038472d3d9c229))
+* **desktop:** play a story in a window of its own ([#652](https://github.com/textadventures/squiffy/issues/652)) ([c69df4d](https://github.com/textadventures/squiffy/commit/c69df4d14ff5954cb1b84b712d6987fd04cb7542))
+* **editor:** accessibility pass on contrast, motion and keyboard ([#650](https://github.com/textadventures/squiffy/issues/650)) ([b60f4a0](https://github.com/textadventures/squiffy/commit/b60f4a079b27a49190dc564c326cd628acb337f7))
+* Play in a new tab plays the story on the player's domain ([#653](https://github.com/textadventures/squiffy/issues/653)) ([3ae49e0](https://github.com/textadventures/squiffy/commit/3ae49e066d1f9c89547217d16fef356a6ad614eb))
+* **runtime:** a continue animation can be used from the keyboard ([#657](https://github.com/textadventures/squiffy/issues/657)) ([f947365](https://github.com/textadventures/squiffy/commit/f9473655b347b5781444a6e06f9d257e8784df40))
+* **runtime:** keyboard focus and screen reader states for links ([#648](https://github.com/textadventures/squiffy/issues/648)) ([635283a](https://github.com/textadventures/squiffy/commit/635283a70bb844ade70fd56831aceef9a9a8a440))
+* **runtime:** the fade under the header changes colour with the header ([#649](https://github.com/textadventures/squiffy/issues/649)) ([8d2b117](https://github.com/textadventures/squiffy/commit/8d2b117e086ca73e1609117c1b70451c83c6c3e6))
+* settle public formats and APIs before 7.0 ([#659](https://github.com/textadventures/squiffy/issues/659)) ([47919a9](https://github.com/textadventures/squiffy/commit/47919a929b5c708685c31aad4222a72d382c6416))
+* the CLI's server is for this computer only, and the editor can't be framed ([#654](https://github.com/textadventures/squiffy/issues/654)) ([07d29b4](https://github.com/textadventures/squiffy/commit/07d29b4a30ecfe957deb949a51ed440378b79a7e))
+* the security review's smaller findings ([#655](https://github.com/textadventures/squiffy/issues/655)) ([ff90564](https://github.com/textadventures/squiffy/commit/ff90564bc5fab7bd51e3f2913fe8c2957c46117d))
+
 ## [7.0.0-beta.16](https://github.com/textadventures/squiffy/compare/v7.0.0-beta.15...v7.0.0-beta.16) (2026-11-24)
 
 
