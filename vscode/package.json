@@ -84,6 +84,122 @@
         "when": "squiffyNoStory"
       }
     ],
+    "walkthroughs": [
+      {
+        "id": "gettingStarted",
+        "title": "Get Started with Squiffy",
+        "description": "Write an interactive story, play it as you write, and publish it.",
+        "steps": [
+          {
+            "id": "newStory",
+            "title": "Make a new story",
+            "description": "A story is a folder with a ``squiffy.json`` and its ``.squiffy`` files. Make a new one to start from, or open a folder with a story in it. The Squiffy sidebar lists its sections.\n[New Story](command:squiffy.newStory)\n[Open Folder](command:workbench.action.files.openFolder)\nYou can also bring in a story from [Twine](https://squiffystory.com/converting-from-twine/) or a gamebook from [Quest](https://squiffystory.com/converting-from-quest/).",
+            "media": {
+              "image": {
+                "light": "media/walkthrough/story.png",
+                "dark": "media/walkthrough/story-dark.png",
+                "hc": "media/walkthrough/story-dark.png",
+                "hcLight": "media/walkthrough/story.png"
+              },
+              "altText": "VS Code, with a story's script in the editor and its sections listed in the Squiffy sidebar"
+            },
+            "completionEvents": [
+              "onCommand:squiffy.newStory",
+              "onCommand:squiffy.newStoryInFolder",
+              "onContext:squiffyHasStory"
+            ]
+          },
+          {
+            "id": "preview",
+            "title": "Play it as you write",
+            "description": "The preview runs your story beside the script, and updates as you type. Open it with the ▷ button at the top of a ``.squiffy`` file, or **Preview** in the status bar.\n[Show Preview](command:squiffy.showPreview)",
+            "media": {
+              "image": {
+                "light": "media/walkthrough/preview.png",
+                "dark": "media/walkthrough/preview-dark.png",
+                "hc": "media/walkthrough/preview-dark.png",
+                "hcLight": "media/walkthrough/preview.png"
+              },
+              "altText": "VS Code, with a story's script on the left and the story running in the Squiffy Preview on the right"
+            },
+            "completionEvents": [
+              "onCommand:squiffy.showPreview",
+              "onContext:squiffyPreviewOpen"
+            ]
+          },
+          {
+            "id": "addSection",
+            "title": "Add a section, and link to it",
+            "description": "A section starts with its name in double square brackets and a colon, such as ``\\[\\[the garden\\]\\]:``. Link to it from another section with ``\\[\\[the garden\\]\\]``, or ``\\[\\[Go outside\\]\\](the garden)`` for a link with words of its own. The names of your sections come up as you type a link.\n[Add Section](command:squiffy.addSection)\nThe [docs](https://squiffystory.com/basic-concepts/) have more about sections, and passages, which add to the section you're in.",
+            "media": {
+              "image": {
+                "light": "media/walkthrough/link.png",
+                "dark": "media/walkthrough/link-dark.png",
+                "hc": "media/walkthrough/link-dark.png",
+                "hcLight": "media/walkthrough/link.png"
+              },
+              "altText": "A link being typed in a story's script, with a list of its sections to choose from"
+            },
+            "completionEvents": [
+              "onCommand:squiffy.addSection",
+              "onCommand:squiffy.addPassage"
+            ]
+          },
+          {
+            "id": "previewFromHere",
+            "title": "Start the preview at a section",
+            "description": "There's no need to play from the start to try a section: click **Preview from here** above it, or its ▷ in the Squiffy sidebar.\n[Show Sections](command:squiffy.sections.focus)",
+            "media": {
+              "image": {
+                "light": "media/walkthrough/preview-from-here.png",
+                "dark": "media/walkthrough/preview-from-here-dark.png",
+                "hc": "media/walkthrough/preview-from-here-dark.png",
+                "hcLight": "media/walkthrough/preview-from-here.png"
+              },
+              "altText": "A section in a story's script, with Preview from here above it"
+            },
+            "completionEvents": [
+              "onCommand:squiffy.previewFromHere",
+              "onCommand:squiffy.previewSection"
+            ]
+          },
+          {
+            "id": "storyMap",
+            "title": "See the story map",
+            "description": "The story map shows your sections and passages as boxes, and the links between them as arrows, marking any problems. Drag from one box to another to add a link.\n[Show Story Map](command:squiffy.showMap)",
+            "media": {
+              "image": {
+                "light": "media/walkthrough/map.png",
+                "dark": "media/walkthrough/map-dark.png",
+                "hc": "media/walkthrough/map-dark.png",
+                "hcLight": "media/walkthrough/map.png"
+              },
+              "altText": "VS Code, with a story's script on the left and its story map on the right"
+            },
+            "completionEvents": [
+              "onCommand:squiffy.showMap"
+            ]
+          },
+          {
+            "id": "export",
+            "title": "Publish it",
+            "description": "Export builds your story into a web page that anyone can play: a folder or a zip to upload to a website, or a single HTML file to share.\n[Export](command:squiffy.export)\nThere's more about writing in VS Code in [Squiffy's documentation](https://squiffystory.com/vscode/).",
+            "media": {
+              "image": {
+                "light": "media/walkthrough/export.png",
+                "dark": "media/walkthrough/export-dark.png",
+                "hc": "media/walkthrough/export-dark.png",
+                "hcLight": "media/walkthrough/export.png"
+              },
+              "altText": "Squiffy: Export's choices: to a folder, as a zip, as a single HTML file, or only story.js"
+            },
+            "completionEvents": [
+              "onCommand:squiffy.export"
+            ]
+          }
+        ]
+      }
+    ],
     "commands": [
       {
         "command": "squiffy.showPreview",

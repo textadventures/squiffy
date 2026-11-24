@@ -215,16 +215,20 @@ interface CaptureOptions {
     themes?: boolean;
     // How to switch between them, for a page that doesn't follow the system's light or dark mode
     setTheme?: (dark: boolean) => Promise<void>;
+    // Another folder (relative to the repo) to save it in, such as the VS Code extension's
+    // walkthrough pictures, in vscode/media/walkthrough/
+    dir?: string;
 }
 
-// Saves a screenshot as site/src/assets/screenshots/<name>.png
+// Saves a screenshot as site/src/assets/screenshots/<name>.png (or in options.dir)
 export async function capture(page: Page, name: string, options: CaptureOptions = {}) {
     const { clip, themes = true } = options;
     const setTheme = options.setTheme ?? (dark => page.emulateMedia({ colorScheme: dark ? "dark" : "light" }));
-    mkdirSync(outDir, { recursive: true });
+    const dir = options.dir ? join(repoRoot, options.dir) : outDir;
+    mkdirSync(dir, { recursive: true });
     const shoot = async (file: string) => {
         await settle(page);
-        const path = join(outDir, file);
+        const path = join(dir, file);
         if (clip && "screenshot" in clip) await clip.screenshot({ path, animations: "disabled" });
         else await page.screenshot({ path, animations: "disabled", clip });
     };

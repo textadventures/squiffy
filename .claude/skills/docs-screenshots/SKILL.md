@@ -58,7 +58,10 @@ first time. Both servers are reused if they're already running.
   - `capture(page, name, options)` saves `site/src/assets/screenshots/<name>.png` and
     `<name>-dark.png`. It switches the theme by emulating the system's light or dark mode, which
     the editor follows; pass `setTheme` for a page that doesn't (VS Code). `clip` takes an element
-    or a rectangle.
+    or a rectangle. `dir` saves it somewhere else in the repo, for the pictures in the VS Code
+    extension's getting-started walkthrough (`vscode/media/walkthrough/`, taken by
+    `vscode.capture.ts` at 1.5 times the pixels and, if `pngquant` is installed, compressed, as
+    they're in the extension's download: install it with `brew install pngquant` before taking them).
   - `settle(page)` waits until nothing on the map or in the preview has moved or faded for a
     moment. The runtime's `{{#animate}}` and transitions take no notice of reduced motion, so a
     story with a typewriter intro takes a few seconds.

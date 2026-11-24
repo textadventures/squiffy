@@ -81,6 +81,8 @@ export class SectionsView implements vscode.TreeDataProvider<SectionsItem>, vsco
         const editor = vscode.window.activeTextEditor;
         if (editor && isStoryEditor(editor)) this.storyUri = editor.document.uri;
         this.update();
+        // The view only looks for a story while it can be seen
+        void findStory().then(story => story && setHasStory());
     }
 
     private isInStory(uri: vscode.Uri) {
@@ -176,6 +178,7 @@ export class SectionsView implements vscode.TreeDataProvider<SectionsItem>, vsco
         this.items.forEach(index);
         // Which buttons the view has, and whether it shows its welcome content
         void vscode.commands.executeCommand("setContext", "squiffyNoStory", !result);
+        if (result) setHasStory();
         this.changed.fire();
         const editor = vscode.window.activeTextEditor;
         if (editor?.document.languageId == "squiffy" && this.isInStory(editor.document.uri)) this.revealCursor(editor);
@@ -198,6 +201,10 @@ export class SectionsView implements vscode.TreeDataProvider<SectionsItem>, vsco
 }
 
 const isStoryEditor = (editor: vscode.TextEditor) => editor.document.languageId == "squiffy" || isProjectFile(editor.document.uri);
+
+// The workspace has a story: ticks off the first step of the getting-started walkthrough
+// (contributes.walkthroughs in package.json)
+const setHasStory = () => void vscode.commands.executeCommand("setContext", "squiffyHasStory", true);
 
 // The first story in the workspace, before a file in one is opened: a squiffy.json, or a .squiffy file
 async function findStory(): Promise<vscode.Uri | undefined> {
