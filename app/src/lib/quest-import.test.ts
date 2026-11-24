@@ -34,4 +34,13 @@ describe("converting a zip", () => {
         expect(paths).toContain(converted!.mainFile);
         expect(paths.some(p => p.includes("MACOSX") || p.includes("readme") || p.endsWith(".aslx"))).toBe(false);
     });
+
+    test("a zip that would unpack to too much isn't converted", async () => {
+        const zip = zipSync({ "game.aslx": strToU8(GAME), "cave.png": new Uint8Array([1, 2]) });
+        // Its directory says a file unpacks to nearly 4 GB, which it doesn't (#644)
+        const view = new DataView(zip.buffer, zip.byteOffset, zip.byteLength);
+        const entry = zip.findLastIndex((_, i) => i + 4 <= zip.length && view.getUint32(i, true) === 0x02014b50);
+        view.setUint32(entry + 24, 0xfffffff0, true);
+        await expect(convertQuestFile("Viva.quest", zip)).rejects.toThrow("Viva.quest is too big to convert");
+    });
 });

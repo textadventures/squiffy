@@ -61,6 +61,11 @@ describe("reading Quest games", () => {
         expect(a.children.map(c => [c.name, c.text])).toEqual([["b", "<i> AB"], ["c", "<br/> & {if x:y}"], ["d", ""]]);
     });
 
+    test("a reference to something that isn't a character, or an object's own property, is left as it is", () => {
+        const root = parseXml("<a>&#x110000; &#99999999999; &constructor; &toString;</a>");
+        expect(root.children[0].text).toBe("&#x110000; &#99999999999; &constructor; &toString;");
+    });
+
     test("the game, its settings and pages", () => {
         const game = parseQuestGame(gamebook(
             page("Start", "Hello", [["Inner", "Go in"]], "<object name=\"Inner\"><description>Inside</description></object>") + page("Other", "There"),

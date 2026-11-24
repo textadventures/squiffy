@@ -63,6 +63,14 @@
       }
     ],
     "afterSign": "scripts/adhoc-sign.cjs",
+    "electronFuses": {
+      "runAsNode": false,
+      "enableNodeOptionsEnvironmentVariable": false,
+      "enableNodeCliInspectArguments": false,
+      "enableEmbeddedAsarIntegrityValidation": true,
+      "onlyLoadAppFromAsar": true,
+      "grantFileProtocolExtraPrivileges": false
+    },
     "mac": {
       "category": "public.app-category.developer-tools",
       "target": [

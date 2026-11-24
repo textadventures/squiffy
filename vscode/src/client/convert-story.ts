@@ -6,6 +6,7 @@
 import { unzipSync } from "fflate";
 import {
     convertQuestGamebook, convertTwine, formatQuestProblems, formatTwineProblems, QuestParseError, TwineParseError,
+    unzipSizeLimit, ZipTooBigError,
 } from "squiffy-compiler";
 
 export const TWINE_EXTENSIONS = ["twee", "tw", "html", "htm"];
@@ -89,9 +90,10 @@ export async function convertQuestFile(fileName: string, data: Uint8Array, readF
     if (isArchive(fileName)) {
         let entries: Record<string, Uint8Array>;
         try {
-            entries = unzipSync(data);
+            entries = unzipSync(data, { filter: unzipSizeLimit() });
         }
         catch (e) {
+            if (e instanceof ZipTooBigError) throw new Error(`${fileName} is too big to convert. ${e.message}`, { cause: e });
             throw new Error(`${fileName} isn't a Quest game: it isn't a zip file.`, { cause: e });
         }
         // Folders, and the resource forks a Mac adds to a zip it makes

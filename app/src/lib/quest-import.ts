@@ -3,7 +3,7 @@
 // Quest Viva, into a new Squiffy story, asking first.
 
 import { unzipSync } from "fflate";
-import { convertQuestGamebook, formatQuestProblems, QuestParseError } from "squiffy-compiler";
+import { convertQuestGamebook, formatQuestProblems, QuestParseError, unzipSizeLimit, ZipTooBigError } from "squiffy-compiler";
 import { confirmDialog } from "./confirm.js";
 
 export const QUEST_FILE_PATTERN = /\.(aslx|quest)$/i;
@@ -39,9 +39,10 @@ function readGame(fileName: string, data: Uint8Array): { source: string, files: 
     }
     let entries: Record<string, Uint8Array>;
     try {
-        entries = unzipSync(data);
+        entries = unzipSync(data, { filter: unzipSizeLimit() });
     }
     catch (e) {
+        if (e instanceof ZipTooBigError) throw new Error(`${fileName} is too big to convert. ${e.message}`, { cause: e });
         throw new Error(`${fileName} isn't a Quest game: it isn't a zip file.`, { cause: e });
     }
     // Folders, and the resource forks a Mac adds to a zip it makes

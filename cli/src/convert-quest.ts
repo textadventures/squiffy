@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import path from "path";
 import { unzipSync } from "fflate";
-import { convertQuestGamebook, formatQuestProblems, QuestParseError } from "squiffy-compiler";
+import { convertQuestGamebook, formatQuestProblems, QuestParseError, unzipSizeLimit, ZipTooBigError } from "squiffy-compiler";
 
 export const PROBLEMS_FILENAME = "quest-import.txt";
 
@@ -26,10 +26,12 @@ function readGame(inputFilename: string): Game | undefined {
     if (inputFilename.toLowerCase().endsWith(".quest")) {
         let entries: Record<string, Uint8Array>;
         try {
-            entries = unzipSync(fs.readFileSync(inputFilename));
+            entries = unzipSync(fs.readFileSync(inputFilename), { filter: unzipSizeLimit() });
         }
-        catch {
-            console.error(`${inputFilename} isn't a Quest game: it isn't a zip file.`);
+        catch (e) {
+            console.error(e instanceof ZipTooBigError
+                ? `${inputFilename} is too big to convert. ${e.message}`
+                : `${inputFilename} isn't a Quest game: it isn't a zip file.`);
             return undefined;
         }
         const names = Object.keys(entries).filter(n => !n.endsWith("/"));
