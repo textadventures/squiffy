@@ -186,6 +186,25 @@ describe("preview", () => {
         expect(element.textContent).toContain("Welcome.");
     });
 
+    test("reads the opening text out with a screen reader when the story starts or restarts (#639)", async () => {
+        const { preview, element } = setUp();
+        const announcer = () => document.querySelector(".squiffy-preview-announcer")!;
+        await preview.receive({ type: "load", story: { js: await compileJs(script) } });
+        expect(announcer().getAttribute("aria-live")).toBe("polite");
+        await vi.waitFor(() => expect(announcer().textContent).toBe("Welcome. Go to the cellar or look."));
+
+        // Not what's shown after a link is clicked: the runtime moves the focus to that instead
+        element.querySelector<HTMLElement>("a[data-section='cellar']")!.click();
+        await vi.waitFor(() => expect(element.textContent).toContain("It's dark"));
+        await new Promise(resolve => setTimeout(resolve, 100));
+        expect(announcer().textContent).toBe("Welcome. Go to the cellar or look.");
+
+        // Something else, to see the opening is read out again
+        announcer().textContent = "";
+        await preview.receive({ type: "restart" });
+        await vi.waitFor(() => expect(announcer().textContent).toBe("Welcome. Go to the cellar or look."));
+    });
+
     test("hot updates replace the story's stylesheets, keeping its state", async () => {
         const { preview, element, messages } = setUp();
         const js = await compileJs(script);

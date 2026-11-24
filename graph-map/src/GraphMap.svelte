@@ -953,7 +953,9 @@
     {#if instructions}
         <p id={instructionsId} class="gm-sr-only">{instructions}</p>
     {/if}
-    <p class="gm-sr-only" aria-live="polite">{announcement}</p>
+    <!-- Atomic, as VoiceOver otherwise reads only the words that changed, which can leave out the
+         box's name (#639) -->
+    <p class="gm-sr-only" aria-live="polite" aria-atomic="true">{announcement}</p>
 </div>
 
 <style>

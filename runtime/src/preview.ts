@@ -104,6 +104,34 @@ export function createPreview(options: PreviewOptions) {
     systemDark?.addEventListener("change", () => updateThemeButton());
     // Each load gets a new number, so a slow load that's been replaced doesn't start
     let loadCount = 0;
+    // Reads the story's opening text out with a screen reader when it starts or restarts (#639).
+    // After a link is clicked, the runtime moves the focus to the new text, which a screen reader
+    // then reads, but nothing does that for the opening: the reader pressed Run in the host, or
+    // Restart, and the focus stays there. Outside the element the story is shown in, which is
+    // emptied on each load.
+    const announcer = document.createElement("div");
+    announcer.className = "squiffy-preview-announcer";
+    announcer.setAttribute("aria-live", "polite");
+    announcer.setAttribute("aria-atomic", "true");
+    Object.assign(announcer.style, {
+        position: "absolute", width: "1px", height: "1px", margin: "-1px", padding: "0", border: "0",
+        overflow: "hidden", clip: "rect(0, 0, 0, 0)", whiteSpace: "nowrap",
+    });
+    options.element.after(announcer);
+    // Whether to read out the text the story shows next
+    let announceNext = false;
+    function announce(container: Element) {
+        const sections = container.querySelectorAll(".squiffy-output-section");
+        const text = sections[sections.length - 1]?.textContent?.replace(/\s+/g, " ").trim();
+        if (!text) return;
+        // Emptied first, so the same opening is read out again after a restart
+        announcer.textContent = "";
+        setTimeout(() => { announcer.textContent = text; }, 50);
+    }
+    function restart() {
+        announceNext = true;
+        api?.restart();
+    }
     const assetUrls = new Map<string, string>();
     const objectUrls: string[] = [];
     // The story's own stylesheets and scripts
@@ -210,7 +238,7 @@ export function createPreview(options: PreviewOptions) {
             buttons.insertBefore(controlButton("squiffy-restart", RESTART_ICON, async () => {
                 const restarting = api;
                 if (!await confirmDialog({ message: string("restartConfirm"), confirm: string("restart"), cancel: string("cancel") })) return;
-                if (api == restarting) api?.restart();
+                if (api == restarting) restart();
             }, string("restart")), beforeSettings);
         }
         if (controls.mute) {
@@ -338,6 +366,7 @@ export function createPreview(options: PreviewOptions) {
 
     async function load(message: Extract<HostMessage, { type: "load" }>) {
         const thisLoad = ++loadCount;
+        announceNext = true;
         api?.dispose();
         api = undefined;
         classObserver?.disconnect();
@@ -388,7 +417,12 @@ export function createPreview(options: PreviewOptions) {
             if (thisLoad == loadCount) renderTitle();
         });
         newApi.on("navigated", e => {
-            if (thisLoad == loadCount) send({ type: "navigated", ...e });
+            if (thisLoad != loadCount) return;
+            send({ type: "navigated", ...e });
+            if (announceNext) {
+                announceNext = false;
+                announce(container);
+            }
         });
         newApi.on("sound", () => {
             if (thisLoad == loadCount && !usesSound) {
@@ -470,7 +504,7 @@ export function createPreview(options: PreviewOptions) {
                     }
                     break;
                 case "restart":
-                    api?.restart();
+                    restart();
                     break;
                 case "back":
                     api?.goBack();
