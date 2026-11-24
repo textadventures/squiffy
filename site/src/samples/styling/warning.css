@@ -1,4 +1,4 @@
 .warning {
-    color: red;
+    color: light-dark(firebrick, tomato);
     font-weight: bold;
 }

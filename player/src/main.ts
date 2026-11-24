@@ -12,10 +12,10 @@ const EDITOR_URL: string = import.meta.env.VITE_EDITOR_URL || (import.meta.env.D
 const HOME_URL = "https://squiffystory.com";
 
 const element = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
-// This page's own bar, shown only when there's no story to play: a playing story has its title
-// and an edit button in its own header, with its other buttons
+// This page's own bar, shown only when there's no story to play, with "Open in editor" for a story
+// that has a problem: a playing story has its title and an edit button in its own header, with
+// its other buttons
 const bar = element("bar");
-const title = element("title");
 const edit = element<HTMLAnchorElement>("edit");
 const frame = element<HTMLIFrameElement>("story");
 const message = element("message");
@@ -59,7 +59,8 @@ function show(heading: string, text: string, detail?: string) {
     bar.hidden = false;
     message.hidden = false;
     message.replaceChildren();
-    message.append(Object.assign(document.createElement("h2"), { textContent: heading }));
+    // The page's only heading, as the bar has no title (#640)
+    message.append(Object.assign(document.createElement("h1"), { textContent: heading }));
     message.append(Object.assign(document.createElement("p"), { textContent: text }));
     if (detail) message.append(Object.assign(document.createElement("pre"), { textContent: detail }));
     const about = document.createElement("p");
@@ -100,9 +101,9 @@ async function compile(story: LinkedStory) {
 
 async function play() {
     const payload = payloadFromFragment(location.hash);
-    title.textContent = "";
     edit.hidden = true;
     document.title = "A Squiffy story";
+    frame.title = "Story";
     if (!payload) {
         show("No story here", "This page plays a story from a link, and this link doesn't have one in it.");
         return;
@@ -130,8 +131,9 @@ async function play() {
         return;
     }
     if (compiled.title) {
-        title.textContent = compiled.title;
         document.title = compiled.title;
+        // What a screen reader calls the frame the story is in (#640)
+        frame.title = compiled.title;
     }
 
     if (!preview) {

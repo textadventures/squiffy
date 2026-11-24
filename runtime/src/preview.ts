@@ -33,6 +33,10 @@ const CONTROL_STRINGS: Record<string, string> = {
     settings: "Settings",
 };
 
+// How long the opening text stays in the preview's live region, for a screen reader to read it out
+// (see announce in createPreview). Emptying it doesn't stop what's being read.
+export const ANNOUNCEMENT_TIME = 3000;
+
 const mimeTypes: Record<string, string> = {
     png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", webp: "image/webp",
     avif: "image/avif", svg: "image/svg+xml", ico: "image/x-icon", bmp: "image/bmp",
@@ -120,13 +124,20 @@ export function createPreview(options: PreviewOptions) {
     options.element.after(announcer);
     // Whether to read out the text the story shows next
     let announceNext = false;
+    let announcing: ReturnType<typeof setTimeout> | undefined;
     function announce(container: Element) {
         const sections = container.querySelectorAll(".squiffy-output-section");
         const text = sections[sections.length - 1]?.textContent?.replace(/\s+/g, " ").trim();
         if (!text) return;
         // Emptied first, so the same opening is read out again after a restart
         announcer.textContent = "";
-        setTimeout(() => { announcer.textContent = text; }, 50);
+        clearTimeout(announcing);
+        announcing = setTimeout(() => {
+            announcer.textContent = text;
+            // And emptied again once it's been read, as it's still on the page, where a screen
+            // reader's browse mode would read the opening a second time after the story's own (#640)
+            announcing = setTimeout(() => { announcer.textContent = ""; }, ANNOUNCEMENT_TIME);
+        }, 50);
     }
     function restart() {
         announceNext = true;

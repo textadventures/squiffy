@@ -12,7 +12,7 @@ import { createLanguageService } from "squiffy-compiler/language-service";
 import { previewHtml } from "squiffy-runtime/preview-html";
 import { createPreviewHost, iframeChannel, type PreviewTheme } from "squiffy-runtime/preview-host";
 import debounce from "debounce";
-import { sampleEditorExtensions, setUpCopyButton, setUpOpenInEditor, SAMPLE_PROJECT_FILE as PROJECT_FILE } from "./sample-editor";
+import { sampleEditorExtensions, sampleEditorName, setUpCopyButton, setUpOpenInEditor, SAMPLE_PROJECT_FILE as PROJECT_FILE } from "./sample-editor";
 
 function languageFor(path: string) {
     if (path.endsWith(".squiffy")) return squiffyLanguage;
@@ -97,6 +97,7 @@ export async function setUpProjectSample(sample: HTMLElement) {
                 basicSetup,
                 languageFor(path),
                 ...sampleEditorExtensions,
+                sampleEditorName(path),
                 EditorView.updateListener.of(update => {
                     if (!update.docChanged) return;
                     const text = update.state.doc.toString();
@@ -204,9 +205,8 @@ export async function setUpProjectSample(sample: HTMLElement) {
     muteButton.addEventListener("click", () => {
         muted = !muted;
         host.setMuted(muted);
+        // Its name stays "Mute", as it's a toggle button: a screen reader says it's pressed (#640)
         muteButton.setAttribute("aria-pressed", String(muted));
-        muteButton.title = muted ? "Unmute" : "Mute";
-        muteButton.setAttribute("aria-label", muteButton.title);
     });
 
     await load();

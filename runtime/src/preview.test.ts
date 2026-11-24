@@ -1,7 +1,7 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import globalJsdom from "global-jsdom";
 import { compile } from "squiffy-compiler";
-import { createPreview } from "./preview.js";
+import { ANNOUNCEMENT_TIME, createPreview } from "./preview.js";
 import type { PreviewMessage } from "./preview-protocol.js";
 import type { Panel, PlayerSetting, Story } from "./types.js";
 
@@ -203,6 +203,20 @@ describe("preview", () => {
         announcer().textContent = "";
         await preview.receive({ type: "restart" });
         await vi.waitFor(() => expect(announcer().textContent).toBe("Welcome. Go to the cellar or look."));
+    });
+
+    test("empties the opening text it read out, so browse mode doesn't read it twice (#640)", async () => {
+        const { preview } = setUp();
+        const announcer = () => document.querySelector(".squiffy-preview-announcer")!;
+        vi.useFakeTimers({ shouldAdvanceTime: true });
+        try {
+            await preview.receive({ type: "load", story: { js: await compileJs(script) } });
+            await vi.waitFor(() => expect(announcer().textContent).toBe("Welcome. Go to the cellar or look."));
+            vi.advanceTimersByTime(ANNOUNCEMENT_TIME);
+            expect(announcer().textContent).toBe("");
+        } finally {
+            vi.useRealTimers();
+        }
     });
 
     test("hot updates replace the story's stylesheets, keeping its state", async () => {

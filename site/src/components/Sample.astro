@@ -56,6 +56,11 @@ const openInEditor = !assets;
     .viewer p {
         margin-bottom: 1rem;
     }
+    /* It has the focus after Restart, as the button may be hidden, but it isn't one of the page's
+       controls, so it has no outline */
+    .viewer:focus {
+        outline: none;
+    }
     /* Icon buttons, like the Back and Restart buttons in a published story's header
        (button.squiffy-header-button in the runtime's CSS), in Starlight's colours */
     .sample-buttons {
@@ -110,12 +115,16 @@ const openInEditor = !assets;
         background: var(--sl-color-gray-6);
         border-bottom: 1px solid var(--sl-color-hairline);
     }
+    /* Between gray-2 and gray-3: gray-3 on gray-6 is just under 4.5:1 in dark mode */
+    .sample {
+        --sample-muted: color-mix(in srgb, var(--sl-color-gray-2) 25%, var(--sl-color-gray-3));
+    }
     .sample .sample-tab {
         font: inherit;
         font-family: var(--sl-font-mono);
         font-size: 0.8rem;
         padding: 0.25rem 0.625rem;
-        color: var(--sl-color-gray-3);
+        color: var(--sample-muted);
         background: none;
         border: none;
         border-bottom: 2px solid transparent;
@@ -333,7 +342,7 @@ const openInEditor = !assets;
             </div>
         </div>
         <div slot="right" class="viewer-container">
-            <div class="viewer"></div>
+            {project ? <div class="viewer"></div> : <div class="viewer" role="group" aria-label="Story" tabindex="-1"></div>}
             <div class={buttonsClass}>
                 <button type="button" class="sample-button back" title="Back" aria-label="Back" disabled>
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
@@ -341,6 +350,7 @@ const openInEditor = !assets;
                 <button type="button" class="sample-button restart" title="Restart" aria-label="Restart">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
                 </button>
+                {/* A toggle button, so its name stays the same: a screen reader says whether it's pressed */}
                 {project && (
                     <button type="button" class="sample-button mute" title="Mute" aria-label="Mute" aria-pressed="false" hidden>
                         <svg class="sound-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
@@ -359,7 +369,7 @@ const openInEditor = !assets;
     import {init as runtimeInit} from 'squiffy-runtime';
     import type { SquiffyApi } from 'squiffy-runtime';
     import debounce from 'debounce';
-    import { sampleEditorExtensions, setUpCopyButton, setUpOpenInEditor, SAMPLE_PROJECT_FILE } from './sample-editor';
+    import { sampleEditorExtensions, sampleEditorName, setUpCopyButton, setUpOpenInEditor, SAMPLE_PROJECT_FILE } from './sample-editor';
 
     class Sample extends HTMLElement {
         connectedCallback() {
@@ -410,6 +420,7 @@ const openInEditor = !assets;
                     basicSetup,
                     squiffyLanguage,
                     ...sampleEditorExtensions,
+                    sampleEditorName('Story script'),
                     updateListener
                 ],
                 parent: editor
@@ -516,6 +527,9 @@ const openInEditor = !assets;
                         squiffyApi?.restart();
                         if (!alwaysShowRestart) {
                             buttons.classList.add('hidden');
+                            // The button that had the focus is hidden, so the story has it, rather
+                            // than the top of the page, and a screen reader reads its opening (#640)
+                            outputContainer.focus({ preventScroll: true });
                         }
                         showButtonsOnLinkClick();
                         updateBack();
