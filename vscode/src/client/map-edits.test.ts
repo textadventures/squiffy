@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { createLanguageService, type TextEdit } from "squiffy-compiler/language-service";
-import { linkEdit, movedPositions } from "./map-edits.js";
+import { addPassageEdits, linkEdit, movedPositions } from "./map-edits.js";
 
 async function graphOf(text: string) {
     const files: Record<string, string> = { "story.squiffy": text };
@@ -62,6 +62,16 @@ describe("linking on the map", () => {
         expect(linkEdit(graph, "section:left", "passage:start/look")).toEqual({ error: "A passage can only be linked to from its own section." });
         expect(linkEdit(graph, "section:left", "section:gone")).toEqual({ error: "The story has changed. Try again." });
     });
+});
+
+test("a passage goes at the end of its section, with a link to it after the section's text", async () => {
+    const graph = await graphOf(story);
+    const start = graph.nodes.find(n => n.id == "section:start")!;
+    const result = addPassageEdits(graph, start, "listen", story);
+    if (!result) throw new Error("No edits");
+    expect(result.file).toBe("story.squiffy");
+    const text = [...result.edits].reverse().reduce(apply, story);
+    expect(text).toContain("Go [[left]].\n\n[listen]\n\n[look]:\nNothing.\n\n[listen]:\n\n[[left]]:");
 });
 
 test("dropped sections and passages are kept by name, and markers aren't kept", async () => {

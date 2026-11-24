@@ -2,7 +2,8 @@
 // (app/src/routes/edit/+page.svelte). Kept apart from VS Code's API, to be tested.
 
 import type { MapPositions } from "squiffy-compiler";
-import type { Position, StoryGraph, TextEdit } from "squiffy-compiler/language-service";
+import type { GraphNode, Position, StoryGraph, TextEdit } from "squiffy-compiler/language-service";
+import { linkThenHeaderEdits, placeNewPassage } from "@textadventures/squiffy-app/map-edits";
 import { emptyPositions, linkTo, nodeAtLine, sectionKeys, withPosition } from "@textadventures/squiffy-app/story-map";
 import type { Point } from "../map/messages.js";
 
@@ -19,16 +20,35 @@ export function linkEdit(graph: StoryGraph, fromId: string, toId: string, cursor
     if (!from || !to) return { error: "The story has changed. Try again." };
     const link = linkTo(from, to);
     if ("error" in link) return link;
+    return { file: from.location.file, edit: addLink(graph, from, link.text, cursor) };
+}
+
+function addLink(graph: StoryGraph, from: GraphNode, text: string, cursor?: Cursor): TextEdit {
     const file = from.location.file;
     if (cursor?.file == file) {
         const at = cursor.position;
         if (nodeAtLine(graph, file, at.line)?.id == from.id && at.line > from.location.range.start.line) {
-            return { file, edit: { range: { start: at, end: at }, newText: link.text } };
+            return { range: { start: at, end: at }, newText: text };
         }
     }
     const at = from.contentEnd;
     const headerOnly = at.line == from.location.range.start.line;
-    return { file, edit: { range: { start: at, end: at }, newText: `${headerOnly ? "\n" : "\n\n"}${link.text}` } };
+    return { range: { start: at, end: at }, newText: `${headerOnly ? "\n" : "\n\n"}${text}` };
+}
+
+// The section a passage is to be added to, from the section or one of its passages
+export function sectionFor(graph: StoryGraph, node: GraphNode): GraphNode | undefined {
+    const name = node.kind == "section" ? node.name : node.section;
+    return graph.nodes.find(n => n.kind == "section" && n.name == name);
+}
+
+// The edits that add a passage to the section a node is in, at the end of the section, with a
+// link to it from the node (placed as linkEdit places one). `text` is the section's file's text.
+export function addPassageEdits(graph: StoryGraph, from: GraphNode, name: string, text: string, cursor?: Cursor): { file: string; edits: TextEdit[] } | undefined {
+    const section = sectionFor(graph, from);
+    if (!section) return undefined;
+    const place = placeNewPassage(section);
+    return { file: place.file, edits: linkThenHeaderEdits(text, addLink(graph, from, `[${name}]`, cursor), place.afterLine, `[${name}]:`) };
 }
 
 // The positions after nodes are dropped on the map. Only sections and passages are kept.

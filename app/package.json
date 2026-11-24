@@ -12,6 +12,7 @@
   "type": "module",
   "exports": {
     "./story-map": "./src/lib/story-map.ts",
+    "./map-edits": "./src/lib/map-edits.ts",
     "./StoryMapNode.svelte": "./src/components/StoryMapNode.svelte"
   },
   "scripts": {
