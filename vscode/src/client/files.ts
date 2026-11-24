@@ -14,6 +14,9 @@ const MAX_FILES = 5000;
 // squiffy.json, playthrough tests and backups
 export const isStoryFile = (path: string) => /\.(squiffy|squiffy-test)$/.test(path) || path == "squiffy.json" || path.endsWith(".bak");
 
+// A story's squiffy.json
+export const isProjectFile = (uri: vscode.Uri) => uri.path.endsWith("/squiffy.json");
+
 export async function findProjectFiles(): Promise<string[]> {
     const uris = await vscode.workspace.findFiles("**/squiffy.json", "**/{node_modules,.*}/**");
     return uris.map(uri => uri.toString());

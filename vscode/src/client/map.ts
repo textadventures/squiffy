@@ -70,7 +70,8 @@ export class StoryMap implements vscode.Disposable {
 
     // Shows the map of the story a file is part of
     async show(uri: vscode.Uri, reveal = true) {
-        const editor = vscode.window.visibleTextEditors.find(e => e.document.uri.toString() == uri.toString());
+        // Not a squiffy.json, which has no sections for the cursor to be in
+        const editor = vscode.window.visibleTextEditors.find(e => e.document.uri.toString() == uri.toString() && e.document.languageId == "squiffy");
         if (editor) this.editor = editor;
         this.storyUri = uri;
         if (!this.panel) this.createPanel();

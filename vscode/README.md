@@ -10,12 +10,12 @@ story map.
   and passages
 - Completion of section and passage names, attributes and directives, hover, and quick fixes
 - **Squiffy: Show Preview** (also the ▷ button in the editor's title bar, and Preview in the
-  status bar) runs the story beside the editor, updating as you type. **Preview from here** above
+  status bar, for a `.squiffy` file or the story's `squiffy.json`) runs the story beside the editor, updating as you type. **Preview from here** above
   each section and passage, or **Start Preview at This Section** in the editor's context menu,
   starts it there.
 - Above each section and passage, a count of the links to it, which lists them (code lenses, from
   the language server) The attributes the story sets are logged in the Squiffy Preview output.
-- **Squiffy: Show Story Map** (also a button in the editor's title bar) shows the Squiffy editor's map of the story beside the text: its
+- **Squiffy: Show Story Map** (also a button in the editor's title bar, for a `.squiffy` file or `squiffy.json`) shows the Squiffy editor's map of the story beside the text: its
   sections and passages as boxes and its links as arrows, with problems marked. Click a box to go
   to it, and drag from one box to another to add a link. Where boxes are dragged to is kept in
   `squiffy.json`, as the editor keeps it.
