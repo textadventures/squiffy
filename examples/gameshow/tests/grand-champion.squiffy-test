@@ -5,9 +5,6 @@ input player_name=priya
 input final_answer=hank spinneroni
 
 went "before the show"
-
-> Take your seat
-went "intro"
 set score = 0
 set round = 0
 set patience = 3
@@ -15,6 +12,9 @@ set prizes = []
 set rounds_tonight = 3
 set wheel = ["General Knowledge","Beat the Clock","Professor Boom's Lab","The Mystery Box","The Audience Decides"]
 set tonight = ["The Mystery Box","Professor Boom's Lab","General Knowledge"]
+
+> Take your seat
+went "intro"
 
 > Press Enter in the text box for player_name
 went "contestant"

@@ -466,11 +466,7 @@ story.sections = {
         }
     },
     "before the show": {
-        "text": "The studio is dark. A sign above the stage says ON AIR, but it isn't lit yet. Somewhere, someone is testing a microphone: \\"One, two. One, two. Is this thing... it is? Oh.\\"\\n\\n\\"Tonight's recording is about to begin,\\" says a voice. \\"Please switch off your phones, and laugh when the sign tells you to.\\"\\n\\n{{section \\"intro\\" text=\\"Take your seat\\"}}\\n"
-    },
-    "intro": {
-        "text": "**{{#animate \\"typewriter\\" interval=120}}WELCOME TO...{{/animate}}**\\n\\n# {{#animate \\"toast\\" interval=250}}THE WHEEL OF {{#style \\"sway\\"}}DUBIOUS{{/style}} FORTUNE!{{/animate}}\\n\\n{{#animate \\"fadeIn\\" duration=1500}}\\nThe studio lights flicker. {{#if settings.lights = \\"Budget\\"}}Most of them stay off. Someone has taped a torch to a broom handle.{{else}}A thousand bulbs blaze into life, and three of them explode.{{/if}} A man in a sequined jacket stumbles onto the stage, holding his cue cards upside down.\\n\\n\\"Hello, and welcome! I'm your host, Chuck Wheelsworth!\\" He squints at the cards. \\"No, wait. I'm Hank Spinneroni. Definitely Hank.\\"\\n\\nThe studio audience (three people and a cardboard cutout) applauds uncertainly.\\n\\n\\"And YOU are tonight's lucky contestant! What's your name?\\"\\n\\n<input type=\\"text\\" data-attribute=\\"player_name\\" data-section=\\"contestant\\" placeholder=\\"Your name\\" required minlength=\\"2\\" maxlength=\\"24\\">\\n\\n{{section \\"contestant\\" text=\\"That's me!\\"}}\\n{{/animate}}\\n",
-        "music": "sounds/theme.mp3",
+        "text": "The studio is dark. A sign above the stage says ON AIR, but it isn't lit yet. Somewhere, someone is testing a microphone: \\"One, two. One, two. Is this thing... it is? Oh.\\"\\n\\n\\"Tonight's recording is about to begin,\\" says a voice. \\"Please switch off your phones, and laugh when the sign tells you to.\\"\\n\\n{{section \\"intro\\" text=\\"Take your seat\\"}}\\n",
         "attributes": [
             "score = 0",
             "round = 0",
@@ -480,6 +476,10 @@ story.sections = {
             "wheel = [\\"General Knowledge\\", \\"Beat the Clock\\", \\"Professor Boom's Lab\\", \\"The Mystery Box\\", \\"The Audience Decides\\"]",
             "tonight = (slice (shuffle wheel) 0 rounds_tonight)"
         ]
+    },
+    "intro": {
+        "text": "**{{#animate \\"typewriter\\" interval=120}}WELCOME TO...{{/animate}}**\\n\\n# {{#animate \\"toast\\" interval=250}}THE WHEEL OF {{#style \\"sway\\"}}DUBIOUS{{/style}} FORTUNE!{{/animate}}\\n\\n{{#animate \\"fadeIn\\" duration=1500}}\\nThe studio lights flicker. {{#if settings.lights = \\"Budget\\"}}Most of them stay off. Someone has taped a torch to a broom handle.{{else}}A thousand bulbs blaze into life, and three of them explode.{{/if}} A man in a sequined jacket stumbles onto the stage, holding his cue cards upside down.\\n\\n\\"Hello, and welcome! I'm your host, Chuck Wheelsworth!\\" He squints at the cards. \\"No, wait. I'm Hank Spinneroni. Definitely Hank.\\"\\n\\nThe studio audience (three people and a cardboard cutout) applauds uncertainly.\\n\\n\\"And YOU are tonight's lucky contestant! What's your name?\\"\\n\\n<input type=\\"text\\" data-attribute=\\"player_name\\" data-section=\\"contestant\\" placeholder=\\"Your name\\" required minlength=\\"2\\" maxlength=\\"24\\">\\n\\n{{section \\"contestant\\" text=\\"That's me!\\"}}\\n{{/animate}}\\n",
+        "music": "sounds/theme.mp3"
     },
     "contestant": {
         "text": "{{#if (lower player_name) contains \\"hank\\"}}\\n\\"Another Hank!\\" Hank clutches his chest. \\"There can only be one, {{player_name}}. We'll settle this later. Possibly with swords.\\"\\n{{else if player_name.length > 12}}\\n\\"{{player_name}}! That's a lot of name. We'll need a bigger name badge.\\" A stagehand starts writing on a second badge.\\n{{else}}\\n\\"Welcome, {{player_name}}! Or as I like to call you... {{player_name}}!\\"\\n\\nHank waits for a laugh. None comes.\\n{{/if}}\\n\\n{{embed \\"motto\\"}}\\n\\n\\"Tonight, the wheel will choose your fate {{rounds_tonight}} times, from {{wheel.length}} exciting categories: {{join wheel \\", \\" \\" and \\"}}. Then it's the final question, for double or nothing! Now, {{#animate \\"continue\\" style=\\"wave\\"}}let's spin...{{/animate}}\\"\\n\\n{{#animate \\"typewriter\\"}}THE WHEEL OF DUBIOUS FORTUNE!{{/animate}}\\n\\n{{#animate \\"fadeIn\\"}}{{section \\"spin\\" text=\\"Spin the wheel!\\"}}{{/animate}}\\n",
