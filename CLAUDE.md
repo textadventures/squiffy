@@ -29,7 +29,8 @@ cd cli && npm run build
 cd app && npm run build
 cd site && npm run build
 
-# Run the editor locally (builds the packages it uses first; --skip-build, --port <n>)
+# Run the editor locally (builds the packages it uses first; --skip-build, --port <n>), with the
+# player on the next port, for share links and Play in a new tab
 ./dev.sh
 # or, if they're already built
 cd app && npm run dev
@@ -119,6 +120,7 @@ npx @textadventures/squiffy-cli -s
 CLI options:
 - `-s, --serve`: Start HTTP server after compiling. The page it serves is for the author to test, and can start at any section: `?start=section` on the address (`&set=score=5` sets an attribute first), and a Start at menu in the header (`runtime/src/startMenu.ts`). A section marked `@test` sets up a scene: the menu lists it first, it and what only it leads to aren't reported as unreachable (`compiler/src/story-graph.ts`), and a link to it from the story itself is a warning, because the published story is compiled without `@test` sections (`omitTestSections`) and without the menu. So the server sends its own `index.html` and `story.js`, built with both (`createTestingFiles` in `cli/src/file-packager.ts`, `cli/src/server.ts`), in place of the files in the build folder, which stay as they'll be published. `"startAnywhere": true` in `squiffy.json` publishes a story with both, for other people to test. The editor's preview has its own Start at menu (`app/src/lib/start-sections.ts`), and all this is documented on the docs' Testing page (`site/src/content/docs/testing.mdx`)
 - `-p, --port`: Port for HTTP server (default: 8282)
+- `--host`: Address for the HTTP server (default `127.0.0.1`, this computer only, #644; `0.0.0.0` for a phone on the network)
 - `--scriptonly [filename]`: Only generate JavaScript file
 - `--zip`: Create zip file
 - `--check`: Report problems without building, from the language service (`cli/src/check.ts`): what the build reports, plus unreachable sections, dead ends, and sound on the first screen (which browsers won't play before a click). The build reports a bare `{{name}}` that's neither a helper nor an attribute the story sets (#526), which needs `compiler/src/helpers.ts` to list the runtime's helpers (`runtime/src/helpers.test.ts` fails if it doesn't). A `{{!-- squiffy-ignore code --}}` comment turns a warning off for its section, or for the whole story in the master section (`compiler/src/ignore.ts`)

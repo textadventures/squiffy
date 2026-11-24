@@ -32,8 +32,15 @@ export function createServer(dir: string, testingFiles: Record<string, string> =
     });
 }
 
-export const serve = (directory: string, port: number, testingFiles: Record<string, string> = {}) => {
-    createServer(directory, testingFiles).listen(port);
+// Only this computer can see the server, unless host says otherwise: it serves the story's page,
+// which can start anywhere and has its @test sections, so it isn't for anyone else on the network
+// (#644). --host 0.0.0.0 lets a phone on the same network play it.
+export const DEFAULT_HOST = "127.0.0.1";
+
+export const serve = (directory: string, port: number, testingFiles: Record<string, string> = {}, host = DEFAULT_HOST) => {
+    const server = createServer(directory, testingFiles).listen(port, host);
     console.log("Started http://localhost:" + port + "/");
+    if (host != DEFAULT_HOST) console.log(`Listening on ${host}, so other devices on the network can play it too.`);
     console.log("To start at a section, use the flag button on the page, or add ?start=section to the address.");
+    return server;
 };

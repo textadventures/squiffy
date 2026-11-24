@@ -52,8 +52,10 @@ story does. Its messages are in `src/play-protocol.ts`, which the editor imports
 
 ## Running it
 
-    npm run dev --workspace player    # http://localhost:5181/v7/
-    ./dev.sh                          # the editor, whose links point there in development
+    ./dev.sh                          # the editor on 5180, and this on http://localhost:5181/v7/
+    npm run dev --workspace player    # just this
+
+`./dev.sh --port <n>` puts the editor on that port and this on the next, each pointing at the other.
 
 `VITE_PLAYER_URL` (for the editor's build) and `VITE_EDITOR_URL` (for this one) set where each
 finds the other. They default to `https://squiffystories.com` and `https://app.squiffystory.com`.

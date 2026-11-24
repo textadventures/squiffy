@@ -4,7 +4,7 @@ import * as os from "os";
 import * as path from "path";
 import type { AddressInfo } from "net";
 import type { Server } from "http";
-import { createServer } from "./server.js";
+import { createServer, serve } from "./server.js";
 
 let dir: string;
 let server: Server;
@@ -42,4 +42,19 @@ test("the files on disk, and the story's other files, are as they were built", a
     expect(fs.readFileSync(path.join(dir, "story.js"), "utf8")).toBe("var story = 'published';");
     expect(await (await fetch(url + "/style.css")).text()).toBe("body {}");
     expect((await fetch(url + "/missing.js")).status).toBe(404);
+});
+
+test("serve listens on this computer only, unless it's asked to listen on another address", async () => {
+    const log = console.log;
+    console.log = () => {};
+    try {
+        for (const [host, expected] of [[undefined, "127.0.0.1"], ["0.0.0.0", "0.0.0.0"]] as const) {
+            const served = serve(dir, 0, {}, host);
+            await new Promise<void>(resolve => served.once("listening", resolve));
+            expect((served.address() as AddressInfo).address).toBe(expected);
+            await new Promise(resolve => served.close(resolve));
+        }
+    } finally {
+        console.log = log;
+    }
 });

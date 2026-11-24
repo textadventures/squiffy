@@ -35,6 +35,8 @@ const argv = yargs(hideBin(process.argv))
     .alias("p", "port")
     .describe("s", "Start HTTP server after compiling")
     .describe("p", "Port for HTTP server (only with --serve)")
+    .describe("host", "Address for HTTP server to listen on (only with --serve). The default, 127.0.0.1, is this computer only; 0.0.0.0 lets other devices on the network play the story")
+    .string("host")
     .describe("scriptonly", "Only generate JavaScript file (and optionally specify a name)")
     .describe("zip", "Create zip file")
     .describe("inline", "Create single HTML file with everything inlined")
@@ -184,7 +186,7 @@ else {
         const port = (argv.p as number) || 8282;
         // The page that's served can start at any section, and has the story's @test sections.
         // The files just written don't, as they're the story as it'll be published.
-        serve(outputPath, port, await createTestingFiles(story, packageOptions));
+        serve(outputPath, port, await createTestingFiles(story, packageOptions), (argv.host as string | undefined) || undefined);
     }
 }
 

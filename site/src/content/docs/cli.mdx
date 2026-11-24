@@ -369,6 +369,12 @@ npx @textadventures/squiffy-cli --serve --port 3000
 
 The default port is 8282.
 
+Only your computer can see the server. To play the story on a phone or another computer on the same network, use `--host 0.0.0.0`, then open the address with your computer's network address in place of `localhost` (such as `http://192.168.1.20:8282/`):
+
+```bash
+npx @textadventures/squiffy-cli --serve --host 0.0.0.0
+```
+
 A story served this way can [start at any section](/testing/#starting-at-a-later-section), to test a late scene without playing up to it: click the flag button above the story, or add `?start=` and a section's name to the address, such as `http://localhost:8282/?start=the vault`. The files in the `build` folder are the story [as it's published](/testing/#when-you-publish), which can't do this and doesn't have the story's `@test` sections, unless its `squiffy.json` sets `startAnywhere`.
 
 ### Script only
