@@ -63,7 +63,10 @@ div#squiffy-header
     white-space: nowrap;
 }
 
-/* A short fade under the header, so the story scrolls under it rather than being cut off */
+/* A short fade under the header, so the story scrolls under it rather than being cut off. It's the
+   background colour faded out by a mask, not a gradient, because a gradient can't be transitioned:
+   so if a story transitions the header's background-color, the fade takes the same transition and
+   changes with it, rather than at once. */
 div#squiffy-header::after
 {
     content: "";
@@ -72,7 +75,10 @@ div#squiffy-header::after
     right: 0;
     top: 100%;
     height: 0.75rem;
-    background: linear-gradient(var(--squiffy-background), transparent);
+    background-color: var(--squiffy-background);
+    -webkit-mask-image: linear-gradient(black, transparent);
+    mask-image: linear-gradient(black, transparent);
+    transition: inherit;
     pointer-events: none;
 }
 
