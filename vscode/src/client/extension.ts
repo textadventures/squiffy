@@ -59,6 +59,9 @@ export async function activate(context: vscode.ExtensionContext, createClient: C
         if (target) return map.show(target);
     });
 
+    // Control or Command and F while the map has the focus, in place of the script's Find
+    command("squiffy.searchMap", () => map.search());
+
     command("squiffy.previewFromHere", async (...args: unknown[]) => {
         // From a code lens above a section, which says where to start
         if (typeof args[0] == "string") {

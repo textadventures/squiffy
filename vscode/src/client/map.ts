@@ -82,6 +82,13 @@ export class StoryMap implements vscode.Disposable {
         await this.queue;
     }
 
+    // Shows the map, with the focus in its search box
+    search() {
+        if (!this.panel) return;
+        this.panel.reveal(undefined, false);
+        this.post({ type: "search" });
+    }
+
     private createPanel() {
         const dist = vscode.Uri.joinPath(this.extensionUri, "dist", "map");
         const panel = vscode.window.createWebviewPanel("squiffy.map", "Story Map", { viewColumn: vscode.ViewColumn.Beside, preserveFocus: true }, {

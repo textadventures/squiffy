@@ -84,6 +84,12 @@
         "icon": "$(type-hierarchy)"
       },
       {
+        "command": "squiffy.searchMap",
+        "title": "Search Story Map",
+        "category": "Squiffy",
+        "icon": "$(search)"
+      },
+      {
         "command": "squiffy.previewFromHere",
         "title": "Start Preview at This Section",
         "category": "Squiffy"
@@ -192,6 +198,10 @@
       ],
       "commandPalette": [
         {
+          "command": "squiffy.searchMap",
+          "when": "squiffyMapOpen"
+        },
+        {
           "command": "squiffy.showPreview",
           "when": "editorLangId == squiffy || resourceFilename == squiffy.json"
         },
@@ -243,7 +253,15 @@
           "group": "navigation@10"
         }
       ]
-    }
+    },
+    "keybindings": [
+      {
+        "command": "squiffy.searchMap",
+        "key": "ctrl+f",
+        "mac": "cmd+f",
+        "when": "activeWebviewPanelId == 'squiffy.map'"
+      }
+    ]
   },
   "scripts": {
     "build": "tsc --noEmit && svelte-check --tsconfig src/map/tsconfig.json --fail-on-warnings && node esbuild.mjs",
