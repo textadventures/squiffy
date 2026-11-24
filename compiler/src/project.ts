@@ -49,6 +49,10 @@ export interface ProjectFile {
     // Attributes that belong to the player rather than the playthrough (#539), such as the endings
     // they've found: restarting, going back and loading a saved game leave them as they are
     persistent?: string[];
+    // Whether the published page shows the story's @title at the left of its header. Undefined
+    // means it doesn't, as many stories show their title in the text. {{headertitle}} can set one
+    // at any point either way.
+    headerTitle?: boolean;
     // What the story is about, in a sentence or two, for the published page's description (which
     // search results and link previews show) and for sites that list stories
     description?: string;
@@ -232,6 +236,11 @@ export function parseProjectFile(text: string): ParsedProjectFile {
         return fail(`${PROJECT_FILENAME}'s "startAnywhere" should be true or false.`);
     }
 
+    const headerTitle = data.headerTitle;
+    if (headerTitle !== undefined && typeof headerTitle != "boolean") {
+        return fail(`${PROJECT_FILENAME}'s "headerTitle" should be true or false.`);
+    }
+
     const strings = data.strings;
     if (strings !== undefined && (!isObject(strings) || Object.values(strings).some(value => typeof value != "string"))) {
         return fail(`${PROJECT_FILENAME}'s "strings" should be an object of text, such as { "restart": "Recommencer" }.`);
@@ -287,6 +296,7 @@ export function parseProjectFile(text: string): ParsedProjectFile {
             ...(panels !== undefined ? { panels } : {}),
             ...(settings !== undefined ? { settings } : {}),
             ...(persistent !== undefined ? { persistent } : {}),
+            ...(headerTitle !== undefined ? { headerTitle } : {}),
             ...(ignore !== undefined ? { ignore: (ignore as string[]).map(item => item.trim()) } : {}),
             ...details,
         },

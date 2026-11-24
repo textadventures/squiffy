@@ -74,6 +74,17 @@ test("Exported page has a Back button, unless it's turned off", async () => {
     expect(without).toContain('id="restart"');
 });
 
+test("Exported page has a place for a title at the left of its header, which the runtime fills", async () => {
+    const compileResult = await compile({ script: "Hello world!" });
+    if (!compileResult.success) throw new Error("Compile failed");
+
+    const html = (await createPackage(compileResult, {})).files["index.html"];
+    // Hidden until there's a title, and first in the header
+    expect(html).toMatch(/<div id="squiffy-header">\s*<span id="squiffy-header-title" hidden><\/span>/);
+    expect(html).toContain("showHeaderTitle(squiffyApi.headerTitle());");
+    expect(html).toContain("squiffyApi.on('headerTitleChanged'");
+});
+
 test("Exported page only lets anyone start at any section when it's asked to", async () => {
     const compileResult = await compile({ script: "Hello world!" });
     if (!compileResult.success) throw new Error("Compile failed");

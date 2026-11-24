@@ -1,6 +1,6 @@
 ---
 title: Buttons, panels and settings
-description: The Back and Save buttons, saved games, panels, player settings, and the page's text in another language, set in a story's squiffy.json
+description: The title in the header, the Back and Save buttons, saved games, panels, player settings, and the page's text in another language, set in a story's squiffy.json
 ---
 
 import Sample from "@components/Sample.astro";
@@ -10,7 +10,30 @@ import settings from "../../samples/panels/settings.squiffy?raw";
 import settingsJson from "../../samples/panels/settings.json?raw";
 import settingsCss from "../../samples/panels/settings.css?raw";
 
-A published story has buttons above it for going back, saving, restarting and switching between light and dark. You can change what's there, add [panels](#panels) that are always to hand, give the player [settings](#player-settings) to choose, and put the page's text into another language. All of these are set in the story's project file, `squiffy.json`: see [The project file](/project-file/) for what it is and how to add one.
+A published story has buttons above it for going back, saving, restarting and switching between light and dark. You can show the story's [title](#the-title-in-the-header) beside them, change what's there, add [panels](#panels) that are always to hand, give the player [settings](#player-settings) to choose, and put the page's text into another language. All of these are set in the story's project file, `squiffy.json`: see [The project file](/project-file/) for what it is and how to add one.
+
+## The title in the header
+
+The bar of buttons above a published story can show a title at its left, which stays in view as the player scrolls. It's off unless you turn it on, as many stories show their title in their first section. To show the story's [`@title`](/basic-concepts/#set-the-title) there, set `headerTitle` to `true`:
+
+```json
+{
+  "version": 1,
+  "main": "story.squiffy",
+  "headerTitle": true
+}
+```
+
+The story can change the title at any point with `{{headertitle}}`, for example to show which chapter the player is in. This works whether or not `headerTitle` is on:
+
+```squiffy
+[[chapter2]]:
+{{headertitle "Chapter 2: The Cave"}}You step inside.
+```
+
+`{{headertitle ""}}` hides the title, and `{{headertitle}}` on its own goes back to the story's `@title`, or to no title if `headerTitle` isn't on. The Back button and saved games put the title back as it was. A title too long for the space the buttons leave, as on a phone, is cut short with "…".
+
+The editor's preview shows the title too, as does a story shared as a link, which shows the story's `@title` there even without `headerTitle`.
 
 ## The Back button
 

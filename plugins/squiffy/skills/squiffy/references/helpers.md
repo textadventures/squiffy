@@ -121,6 +121,12 @@ On the story's element, for CSS. They stay until removed (unlike `@class`, which
 | `toggleclass` | Add, or take off if present |
 | `hasclass` | `{{#if (hasclass "dark")}}`: whether all these classes are on, from `@class` or `addclass` |
 
+## Header title
+
+| Helper | Description |
+|---|---|
+| `headertitle` | `{{headertitle "Chapter 2"}}` shows a title at the left of the page's header bar, whether or not `squiffy.json`'s `headerTitle` is on. `{{headertitle ""}}` hides it; `{{headertitle}}` goes back to the default (the `@title` if `headerTitle` is `true`, else none). Back and saved games restore it |
+
 ## Arrays
 
 These take the attribute's **name in quotes** and change or read the array in it:

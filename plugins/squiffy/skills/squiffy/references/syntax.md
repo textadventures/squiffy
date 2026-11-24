@@ -48,7 +48,7 @@ One per line, at the start of a section or passage, before its text. Those that 
 
 | Write | What it does |
 |---|---|
-| `@title The Island` | The story's title. Main file only |
+| `@title The Island` | The story's title. Main file only. Shown in the page's header with `squiffy.json`'s `headerTitle` |
 | `@start cave` | Start in section "cave". Main file only |
 | `@set gold = 10`, `@set name = "Alice"` | Set an attribute (see attributes.md for the Squiffy 6/7 rules) |
 | `@set gold += 5` | Also `-=`, `*=`, `/=` |

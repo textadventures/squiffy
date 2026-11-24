@@ -24,6 +24,7 @@ Docs: https://squiffystory.com/project-file/, https://squiffystory.com/multiple-
 | `language` | The language the story is written in, as a BCP 47 tag (`"en"`, `"fr"`, `"pt-BR"`), for the published page's `<html lang>`. Not a name such as `"English"`, which is refused |
 | `exclude` | Files that aren't part of the story: `["notes.squiffy", "drafts/**", "lib/demo.js"]` (`*`, `?`, `**`) |
 | `saveButton` | `false` leaves out the Save button. A `{{saves}}` link still opens the Saved games dialog |
+| `headerTitle` | `true` shows the `@title` at the left of the header bar of buttons. Off by default; `{{headertitle}}` (helpers.md) can set one either way |
 | `backButton` | `false` leaves out the Back button, so choices are final |
 | `startAnywhere` | `true` lets anyone start the published story at any section, for a test build (below). Take it out before publishing for players |
 | `panels` | Passages always to hand (below) |

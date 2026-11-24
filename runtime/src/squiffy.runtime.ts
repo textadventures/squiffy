@@ -723,6 +723,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         uiJsRun = false;
         sound.sync();
         syncClasses();
+        syncHeaderTitle();
         // TODO: This feels like the wrong way of triggering location.reload()
         // - should be a separate setting to the scroll setting.
         if (settings.scroll === "element" || settings.scroll === "none") {
@@ -765,6 +766,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         state.load();
         sound.sync();
         syncClasses();
+        syncHeaderTitle();
         const output = get("_output");
         if (!output) {
             runUiJs();
@@ -860,6 +862,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         }
         sound.sync();
         syncClasses();
+        syncHeaderTitle();
         undoLog = {};
         scrollPosition = 0;
         scrollToTop = false;
@@ -1227,6 +1230,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             state.reset();
             sound.sync();
             syncClasses();
+            syncHeaderTitle();
             sound.preload(story.audio ?? []);
             outputElement.innerHTML = "";
             go(story.start);
@@ -1239,6 +1243,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         story = newStory;
         // Its settings may have changed
         syncClasses();
+        syncHeaderTitle();
         sound.preload(story.audio ?? []);
 
         // When re-rendering a section or passage, {{embed}} should look up passages in the
@@ -1348,6 +1353,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         // The music goes back to what it was, as _music was undone
         sound.sync();
         syncClasses();
+        syncHeaderTitle();
         // The attributes were saved as they were undone, so save the output to match. Otherwise a saved
         // game would come back with the text that was undone.
         save();
@@ -1725,6 +1731,33 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         return names.length > 0 && names.every(c => classes.includes(c));
     });
 
+    // The title in the page's header (squiffy.json's "headerTitle", and {{headertitle}}): the one
+    // the story set last, which is an attribute so it comes back with Back and saved games, or else
+    // the story's @title if squiffy.json shows it. "" shows none.
+    const HEADER_TITLE = "_headertitle";
+    function headerTitle(): string {
+        const value = get(HEADER_TITLE);
+        return typeof value == "string" ? value : story.headerTitle ?? "";
+    }
+    let shownHeaderTitle: string | undefined;
+    function syncHeaderTitle() {
+        const title = headerTitle();
+        if (title === shownHeaderTitle) return;
+        shownHeaderTitle = title;
+        emitter.emit("headerTitleChanged", { title });
+    }
+    emitter.on("set", ({ attribute }) => {
+        if (attribute == HEADER_TITLE) syncHeaderTitle();
+    });
+    // {{headertitle "Chapter 2"}} sets it, {{headertitle ""}} hides it, and {{headertitle}} goes
+    // back to the default
+    textProcessor.handlebars.registerHelper("headertitle", (...args: unknown[]) => {
+        if (state.readOnly) return "";
+        const values = args.filter(v => !isHelperOptions(v));
+        set(HEADER_TITLE, values.length ? String(values[0] ?? "") : null);
+        return "";
+    });
+
     const linkHandler = new LinkHandler();
 
     // {{restart}} and {{saves}} links (#452). The page can handle them itself, with its own
@@ -1827,6 +1860,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
                 if (value !== before[name]) settingChanged(name, value);
             }
         },
+        headerTitle: headerTitle,
         getPersistent: () => state.getPersistent(),
         forget: (names?: string[]) => state.forget(names),
         dispose: () => {

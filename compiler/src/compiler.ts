@@ -57,6 +57,8 @@ interface CompilerSettings {
     settings?: PlayerSetting[];
     // squiffy.json's "persistent": see EmitSettings.persistent
     persistent?: string[];
+    // squiffy.json's "headerTitle": see EmitSettings.headerTitle
+    headerTitle?: boolean;
     // squiffy.json's "ignore": see AnalyseSettings.ignore
     ignore?: string[];
 }
@@ -87,5 +89,5 @@ export async function compile(settings: CompilerSettings): Promise<CompileSucces
         };
     }
 
-    return emit(analysis, { globalJs: settings.globalJs, omitTestSections: settings.omitTestSections, projectId: settings.projectId, panels: settings.panels, settings: settings.settings, persistent: settings.persistent });
+    return emit(analysis, { globalJs: settings.globalJs, omitTestSections: settings.omitTestSections, projectId: settings.projectId, panels: settings.panels, settings: settings.settings, persistent: settings.persistent, headerTitle: settings.headerTitle });
 }

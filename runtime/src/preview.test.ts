@@ -431,6 +431,31 @@ body { background: url("blob:preview/1"), url(https://example.com/x.png); }`);
         expect(items()).toEqual(["Another", "Status", "Settings"]);
     });
 
+    test("shows the title the story's own header would, in place of the host's", async () => {
+        const { preview, element } = setUp();
+        const titleScript = "@title The Cave\n[[start]]:\nOutside. [[Go in]](inside)\n\n[[inside]]:\n{{headertitle \"Chapter 2\"}}Inside.\n";
+        const result = await compile({ script: titleScript, headerTitle: true });
+        if (!result.success) throw new Error("Compile failed");
+        const title = () => element.querySelector(".squiffy-preview-title")?.textContent;
+        const header = () => element.querySelector(".squiffy-preview-header")!;
+
+        // As in the editor, which asks for no controls
+        await preview.receive({ type: "load", story: { js: await result.getJs() } });
+        expect(title()).toBe("The Cave");
+        expect(header().classList.contains("squiffy-preview-controls")).toBe(true);
+        element.querySelector<HTMLElement>("a.squiffy-link")!.click();
+        await vi.waitFor(() => expect(title()).toBe("Chapter 2"));
+
+        // The player's title is shown only when the story has none of its own
+        await preview.receive({ type: "controls", controls: { title: "From the host" } });
+        expect(title()).toBe("Chapter 2");
+        await preview.receive({ type: "load", story: { js: await compileJs(titleScript) } });
+        expect(title()).toBe("From the host");
+        await preview.receive({ type: "controls", controls: {} });
+        expect(title()).toBeUndefined();
+        expect(header().classList.contains("squiffy-preview-controls")).toBe(false);
+    });
+
     test("the mute button mutes the story, and tells the host (#444)", async () => {
         vi.stubGlobal("Audio", class {
             muted = false;

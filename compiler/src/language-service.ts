@@ -723,7 +723,7 @@ export function createLanguageService(options: LanguageServiceOptions): Language
                 return { success: false, errors: analysis.diagnostics.filter(d => d.severity == "error").map(formatDiagnostic) };
             }
             const { projectFile } = project;
-            const result = emit(analysis, { panels: projectFile?.panels, settings: projectFile?.settings, persistent: projectFile?.persistent });
+            const result = emit(analysis, { panels: projectFile?.panels, settings: projectFile?.settings, persistent: projectFile?.persistent, headerTitle: projectFile?.headerTitle });
             const info = result.getUiInfo();
             // The story's own stylesheets and scripts are named relative to the main file. One that
             // can't be read is left out, as the compiler does.
