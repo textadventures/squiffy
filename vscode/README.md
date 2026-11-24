@@ -22,7 +22,7 @@ story map.
   run the preview from it, start the story there, or delete it. Add a section with the map's
   button, by double-clicking the background, or by dragging a link to empty space, and make a
   broken link's missing section from its red box. Search it with the box at its top right (or
-  Ctrl/Cmd+F). Where boxes are dragged to is kept in
+  Ctrl/Cmd+F). The selected box's details, with its links in and out, are along the bottom. Where boxes are dragged to is kept in
   `squiffy.json`, as the editor keeps it.
 - **Squiffy: Export** builds the playable story (`index.html`, `story.js`, the page's stylesheets
   and the story's images, sounds and other files) into a folder, or a zip to upload to a website,

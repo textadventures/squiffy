@@ -230,3 +230,57 @@ button:focus-visible {
 .story-map .broken .gm-edge-arrow {
     fill: var(--sm-error);
 }
+
+/* The selected box's details, over the bottom of the map */
+.details {
+    position: absolute;
+    left: 8px;
+    bottom: 8px;
+    max-width: min(30rem, calc(100% - 16px));
+    max-height: 40%;
+    overflow-y: auto;
+    padding: 6px 10px;
+    color: var(--vscode-editorWidget-foreground, var(--vscode-foreground));
+    background-color: var(--vscode-editorWidget-background);
+    border: 1px solid var(--vscode-editorWidget-border, var(--vscode-widget-border, transparent));
+    border-radius: 4px;
+    box-shadow: 0 2px 8px var(--vscode-widget-shadow, rgba(0, 0, 0, 0.3));
+}
+.details p {
+    margin: 4px 0 0;
+}
+.details-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 4px;
+}
+.details-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 600;
+}
+.details-actions button {
+    padding: 0 6px;
+}
+.details-note,
+.details-links > span {
+    color: var(--sm-muted);
+}
+.details-links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px;
+}
+.details .chip {
+    min-width: 0;
+    padding: 0 6px;
+    border-radius: 3px;
+    white-space: normal;
+    text-align: left;
+}
+.details .chip-missing {
+    color: var(--sm-error);
+}

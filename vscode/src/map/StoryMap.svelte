@@ -5,11 +5,10 @@
     // to another adds a link, which the extension makes as an edit. Coloured by VS Code's theme.
     import { untrack } from "svelte";
     import type { MapPositions } from "squiffy-compiler";
-    import type { StoryGraph } from "squiffy-compiler/language-service";
-    import type { GraphNode } from "squiffy-compiler/language-service";
+    import type { GraphNode, StoryGraph } from "squiffy-compiler/language-service";
     import GraphMap, { type NodeState } from "@textadventures/graph-map/GraphMap.svelte";
     import StoryMapNodeBox from "@textadventures/squiffy-app/StoryMapNode.svelte";
-    import { buildStoryMap, linkTo, pinnedPositions, storyMapLayout, type StoryMapEdge, type StoryMapNode } from "@textadventures/squiffy-app/story-map";
+    import { buildStoryMap, linkTo, pinnedPositions, reachNote, storyMapLayout, type StoryMapEdge, type StoryMapNode } from "@textadventures/squiffy-app/story-map";
     import type { FromMap, Point, ToMap } from "./messages.js";
     import Menu, { type MenuItem } from "./Menu.svelte";
 
@@ -218,6 +217,35 @@
         menu = { ...screen, keyboard, items };
     }
 
+    // The selected box's details, along the bottom of the map: what it is, what it can do, and
+    // where it links to and from, as on the editor's map
+    const selectedNode = $derived(selected && base ? base.nodes.find(n => n.id == selected) : undefined);
+    const links = $derived.by(() => {
+        if (!base || !selectedNode) return { out: [], into: [] };
+        const byId = new Map(base.nodes.map(n => [n.id, n]));
+        const unique = (list: StoryMapNode[]) => [...new Map(list.map(n => [n.id, n])).values()];
+        return {
+            out: unique(base.edges.filter(e => e.from == selectedNode.id && e.kind != "auto").flatMap(e => byId.get(e.to) ?? [])),
+            into: unique(base.edges.filter(e => e.to == selectedNode.id && e.kind != "auto").flatMap(e => byId.get(e.from) ?? [])),
+        };
+    });
+    function notes(g: GraphNode, graph: StoryGraph) {
+        return [
+            g.start ? "The story starts here." : "",
+            g.ending ? "An ending." : "",
+            g.deadEnd && g.reachable ? "A dead end: there's no way out. If it's an ending, add @end." : "",
+            g.embedded ? "Shown inside other sections, with {{embed}} or {{live}}." : reachNote(g, graph),
+        ].filter(Boolean).join(" ");
+    }
+
+    // The selected box is brought out from under the details
+    let detailsHeight = $state(0);
+    $effect(() => {
+        const id = selected;
+        const bottom = detailsHeight;
+        if (id) untrack(() => { if (map?.has(id)) map.reveal(id, { bottom: bottom ? bottom + 16 : 0 }); });
+    });
+
     // The menu key, or Shift+F10, opens the menu for the selected box. In VS Code's webview,
     // they don't make a contextmenu event of their own, as they do in a browser, so the map's
     // keyboard menu gets one here.
@@ -281,6 +309,37 @@
                 oncreate={create}
                 node={drawNode}
             />
+            {#if selectedNode?.graphNode && graph}
+                {@const g = selectedNode.graphNode}
+                {@const note = notes(g, graph)}
+                <div class="details" bind:clientHeight={detailsHeight} role="region" aria-label="Selected {selectedNode.kind}">
+                    <div class="details-name" title={selectedNode.label}>{selectedNode.kind == "section" ? "Section" : "Passage"}: {selectedNode.label}</div>
+                    <div class="details-actions">
+                        <button type="button" title="Show in the script (Enter)" onclick={() => activate(selectedNode, "open")}>Show</button>
+                        {#if !g.detail}
+                            <button type="button" title="Rename (F2)" onclick={() => post({ type: "rename", id: g.id })}>Rename</button>
+                        {/if}
+                        <button type="button" title="Add a passage" onclick={() => post({ type: "addPassage", id: g.id })}>Add a passage</button>
+                        <button type="button" title="Run the preview from here" onclick={() => post({ type: "run", id: g.id })}>Run</button>
+                        {#if canDelete(g)}
+                            <button type="button" title="Delete (Del)" onclick={() => post({ type: "delete", ids: [g.id] })}>Delete</button>
+                        {/if}
+                    </div>
+                    {#if note}
+                        <p class="details-note">{note}</p>
+                    {/if}
+                    {#if links.out.length}
+                        <p class="details-links"><span>Links to</span>
+                            {#each links.out as n (n.id)}<button type="button" class="chip" class:chip-missing={n.kind == "missing"} title={n.kind == "missing" ? "Missing: add it" : `Select ${n.label}`} onclick={() => n.kind == "missing" ? activate(n, "open") : map?.select(n.id)}>{n.label}</button>{/each}
+                        </p>
+                    {/if}
+                    {#if links.into.length}
+                        <p class="details-links"><span>Linked from</span>
+                            {#each links.into as n (n.id)}<button type="button" class="chip" title="Select {n.label}" onclick={() => map?.select(n.id)}>{n.label}</button>{/each}
+                        </p>
+                    {/if}
+                </div>
+            {/if}
             {#if decorated.nodes.length === 0}
                 <p class="message overlay">No sections yet.</p>
             {/if}
