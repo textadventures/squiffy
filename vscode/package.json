@@ -63,7 +63,7 @@
         "command": "squiffy.showPreview",
         "title": "Show Preview",
         "category": "Squiffy",
-        "icon": "$(open-preview)"
+        "icon": "$(play)"
       },
       {
         "command": "squiffy.restartPreview",
@@ -110,7 +110,8 @@
       {
         "command": "squiffy.addSection",
         "title": "Add Section",
-        "category": "Squiffy"
+        "category": "Squiffy",
+        "icon": "$(add)"
       },
       {
         "command": "squiffy.addPassage",
@@ -123,7 +124,12 @@
         {
           "command": "squiffy.showPreview",
           "when": "editorLangId == squiffy",
-          "group": "navigation"
+          "group": "navigation@0"
+        },
+        {
+          "command": "squiffy.addSection",
+          "when": "editorLangId == squiffy && !editorReadonly",
+          "group": "navigation@1"
         },
         {
           "command": "squiffy.previewBack",
@@ -134,6 +140,26 @@
           "command": "squiffy.restartPreview",
           "when": "activeWebviewPanelId == squiffy.preview",
           "group": "navigation@2"
+        },
+        {
+          "command": "squiffy.addPassage",
+          "when": "editorLangId == squiffy && !editorReadonly",
+          "group": "1_squiffy@1"
+        },
+        {
+          "command": "squiffy.previewFromHere",
+          "when": "editorLangId == squiffy",
+          "group": "1_squiffy@2"
+        },
+        {
+          "command": "squiffy.export",
+          "when": "editorLangId == squiffy",
+          "group": "1_squiffy@3"
+        },
+        {
+          "command": "squiffy.setMainFile",
+          "when": "editorLangId == squiffy",
+          "group": "1_squiffy@4"
         }
       ],
       "editor/context": [

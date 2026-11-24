@@ -8,16 +8,20 @@ Write [Squiffy](https://squiffystory.com) interactive stories in VS Code, with a
 - The Outline view and breadcrumbs, Go to Definition, Find All References and Rename for sections
   and passages
 - Completion of section and passage names, attributes and directives, hover, and quick fixes
-- **Squiffy: Show Preview** runs the story beside the editor, updating as you type.
-  **Start Preview at This Section** (in the editor's context menu) starts it at the section the
-  cursor is in. The attributes the story sets are logged in the Squiffy Preview output.
+- **Squiffy: Show Preview** (also the ▷ button in the editor's title bar, and Preview in the
+  status bar) runs the story beside the editor, updating as you type. **Preview from here** above
+  each section and passage, or **Start Preview at This Section** in the editor's context menu,
+  starts it there.
+- Above each section and passage, a count of the links to it, which lists them (code lenses, from
+  the language server) The attributes the story sets are logged in the Squiffy Preview output.
 - **Squiffy: Export** builds the playable story (`index.html`, `story.js`, the page's stylesheets
   and the story's images, sounds and other files) into a folder, or a zip to upload to a website,
   as the Squiffy editor and command line tool build it. It can also make a single HTML file with
   everything in it, or only `story.js`, for a page of your own
 - **Squiffy: New Story** makes a new story in a folder: a `squiffy.json` and a `story.squiffy` to
   start from. **New Squiffy Story Here** in the Explorer's context menu makes one in that folder.
-- **Squiffy: Add Section** and **Add Passage** (also in the editor's context menu) add a section
+- **Squiffy: Add Section** and **Add Passage** (also in the editor's context menu, and its title
+  bar: **+** and the **...** menu) add a section
   or passage header at the cursor, to type its name into
 - **Squiffy: Convert from Squiffy 5** converts a Squiffy 5 file's text processor syntax
 
