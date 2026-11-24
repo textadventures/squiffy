@@ -3,6 +3,8 @@
 Write [Squiffy](https://squiffystory.com) interactive stories in VS Code, with a live preview and a
 story map.
 
+- A getting-started walkthrough on VS Code's Welcome page (**Help > Welcome**), which takes you
+  through making a story, previewing it, adding sections, the story map and exporting
 - Syntax highlighting, folding and snippets for `.squiffy` files
 - Problems as you type, for the whole story, including links to sections that don't exist, dead
   ends and sections nothing links to
