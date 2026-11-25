@@ -14,7 +14,7 @@ import { BOX_EXCERPT, checkSectionName, hasPositions, movedNodes, nodeAtLine, no
 import { STORY_GRAPH, type PreviewFromHereArgs, type StoryGraphParams, type StoryGraphResult } from "../protocol.js";
 import type { FromMap, Point, ToMap, TraceStep } from "../map/messages.js";
 import type { Preview } from "./preview.js";
-import { addPassageEdits, linkEdit, linkEndsEnding, missingTarget, movedPositions, newPassageEdit, newSectionEdits, sectionFor, type Cursor } from "./map-edits.js";
+import { addPassageEdits, linkEdit, linkEndsEnding, missingTarget, movedPositions, newPassageEdit, newSectionEdits, sectionFor, textStart, type Cursor } from "./map-edits.js";
 
 // How long to wait after typing before drawing the map again
 const UPDATE_DELAY = 300;
@@ -294,7 +294,17 @@ export class StoryMap implements vscode.Disposable {
     private async goto(location: Location, focus: boolean) {
         if (!this.root) return;
         const { start, end } = location.range;
-        const range = new vscode.Range(start.line, start.character, end.line, end.character);
+        let range = new vscode.Range(start.line, start.character, end.line, end.character);
+        // Opened to write in, from a box: at the start of its text, not with its name selected,
+        // which typing would replace (a broken link's marker goes to the link itself)
+        if (focus) {
+            const document = await vscode.workspace.openTextDocument(this.uriOf(location.file));
+            const lines = document.getText().split(/\r?\n/);
+            if (/^\s*(\[\[.*\]\]|\[[^[\]]*\]):/.test(lines[start.line] ?? "")) {
+                const at = textStart(lines, start.line);
+                range = new vscode.Range(at.line, at.character, at.line, at.character);
+            }
+        }
         this.editor = await vscode.window.showTextDocument(this.uriOf(location.file), {
             viewColumn: this.editor?.viewColumn ?? vscode.ViewColumn.One,
             preserveFocus: !focus,

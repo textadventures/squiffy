@@ -211,6 +211,7 @@
         "startAt": { "description": "The Start at button's tooltip and the Start at menu's heading, for a story with \"startAnywhere\".", "type": "string", "default": "Start at a section" },
         "findSection": { "description": "The Start at menu's search box.", "type": "string", "default": "Find a section" },
         "testSections": { "description": "The Start at menu's heading for sections marked with @test.", "type": "string", "default": "Test sections" },
+        "fromStart": { "description": "The Start at menu's way back to the start of the story.", "type": "string", "default": "From the beginning" },
         "allSections": { "description": "The Start at menu's heading for the other sections.", "type": "string", "default": "All sections" },
         "noSection": { "description": "Shown when the address names a section the story doesn't have. [name] is the name.", "type": "string", "default": "There's no section called \"[name]\"." }
       },

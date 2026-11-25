@@ -116,7 +116,7 @@ You're carrying nothing.
 "strings": { "back": "Retour", "restart": "Recommencer", "restartConfirm": "Voulez-vous vraiment recommencer ?" }
 ```
 
-Keys: `back`, `restart`, `restartConfirm`, `switchToDark`, `switchToLight`, `mute`, `unmute`, `saves`, `saveName`, `save`, `noSaves`, `savedGame`, `savedToday`, `savedYesterday`, `load`, `loadConfirm`, `saveOptions`, `overwrite`, `overwriteConfirm`, `rename`, `newName`, `saveToFile`, `loadFromFile`, `delete`, `deleteConfirm`, `cancel`, `close`, `wrongStory`, `notASave`, `newerSave`, `cantSave`, `settings`, `resetSettings`, and for the Start at list, `startAt`, `findSection`, `testSections`, `allSections`, `noSection`. `[name]` and `[time]` are filled in. Missing keys stay English.
+Keys: `back`, `restart`, `restartConfirm`, `switchToDark`, `switchToLight`, `mute`, `unmute`, `saves`, `saveName`, `save`, `noSaves`, `savedGame`, `savedToday`, `savedYesterday`, `load`, `loadConfirm`, `saveOptions`, `overwrite`, `overwriteConfirm`, `rename`, `newName`, `saveToFile`, `loadFromFile`, `delete`, `deleteConfirm`, `cancel`, `close`, `wrongStory`, `notASave`, `newerSave`, `cantSave`, `settings`, `resetSettings`, and for the Start at list, `startAt`, `findSection`, `fromStart`, `testSections`, `allSections`, `noSection`. `[name]` and `[time]` are filled in. Missing keys stay English.
 
 ## Starting at a later section
 
@@ -124,7 +124,7 @@ For the author testing a late scene in a browser without playing up to it. A sto
 
 - `http://localhost:8282/?start=the vault` starts at that section. Restart starts there again.
 - `&set=` sets an attribute first, once for each, written as after `@set`: `?start=the vault&set=has_key&set=score=5`.
-- The flag button above the story lists the sections, `@test` ones first.
+- The flag button above the story lists the sections, `@test` ones first, under **From the beginning**, which goes back to the story's start.
 
 When a scene needs more than an attribute or two, write a section that sets them and goes on to it, marked `@test`, and start there:
 

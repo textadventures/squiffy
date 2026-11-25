@@ -49,7 +49,7 @@ If your workspace has more than one story, the view shows the one you're working
 - **Go to Definition** goes from a link to its section or passage, **Find All References** lists every link to one, and **Rename Symbol** (**F2**) renames it everywhere at once.
 - The **Outline** view and breadcrumbs list the sections and passages in a file, and the [Squiffy sidebar](#the-squiffy-sidebar) lists the whole story's.
 - Above each section and passage, how many links lead to it: click it to see them.
-- **Squiffy: Add Section** and **Add Passage** add a header at the cursor to type a name into. They're also in the right-click menu, and at the top right of a `.squiffy` file: the **+** button adds a section, and the **...** menu beside it has Add Passage.
+- **Squiffy: Add Section** and **Add Passage** add a header at the cursor to type a name into. A passage belongs to the section it's in, so Add Passage needs the cursor in a section, or in the text at the start of the story, not above it. They're also in the right-click menu, and at the top right of a `.squiffy` file: the **+** button adds a section, and the **...** menu beside it has Add Passage.
 - The editor's [snippets](/snippets/#built-in-snippets) are offered as you type, such as `if` for an `{{#if}}` block.
 - Syntax highlighting and folding of sections and passages.
 
@@ -85,7 +85,7 @@ To try a part of the story without playing through from the start, click **Previ
 
 **Squiffy: Export** builds the playable story, as the editor and the command-line tool build it, to [publish](/publishing/) on a website. Choose:
 
-- a **folder**, with `index.html`, `story.js`, the page's stylesheets and your story's images, sounds and other files
+- a **folder**, with `index.html`, `story.js`, the page's stylesheets and your story's images, sounds and other files. It starts in the story's `build` folder, as the [command-line tool](/cli/) uses, which isn't part of the story, and asks first if you choose the story's own folder.
 - a **zip** of the same files, to upload to a site such as itch.io or textadventures.co.uk
 - a **single HTML file** with everything in it
 - only **`story.js`**, to [embed](/embedding/) in a page of your own

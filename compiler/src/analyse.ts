@@ -308,6 +308,15 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
                 report("warning", "squiffy/duplicate-section", filename, range,
                     `There's already a section called [[${name}]], at ${earlierLocation(earlier.filename, earlier.line)}. This one replaces it.`,
                     range.start.line + 1);
+                // And where the text that's lost is: the earlier section, with its passages, isn't
+                // part of the story at all
+                const earlierRange = earlier.node?.nameRange ?? earlier.node?.header?.range;
+                if (earlierRange) {
+                    const here = earlier.filename == filename || !filename ? `line ${range.start.line + 1}` : `${filename} line ${range.start.line + 1}`;
+                    report("warning", "squiffy/duplicate-section", earlier.filename, earlierRange,
+                        `The section [[${name}]] at ${here} replaces this one, so this section and its passages aren't part of the story. Rename one of them.`,
+                        earlierRange.start.line + 1);
+                }
             }
             return story.addSection(name, filename, line, node);
         };

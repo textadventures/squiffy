@@ -88,7 +88,7 @@ test("the menu's button is first in the header, and opens a list of the sections
     startMenu.button.click();
     expect(startMenu.element.hasAttribute("open")).toBe(true);
     // Test sections first, and no sections without names of their own
-    expect(listed()).toEqual(["# Test sections", ["shortcuts"], "# All sections", ["a", "the vault", "vault with key"]]);
+    expect(listed()).toEqual([["From the beginning"], "# Test sections", ["shortcuts"], "# All sections", ["a", "the vault", "vault with key"]]);
     expect(document.querySelector<HTMLAnchorElement>("a[data-section='the vault']")!.getAttribute("href")).toBe("?start=the%20vault");
 });
 
@@ -119,7 +119,27 @@ test("without test sections, the list has no headings", async () => {
     const story = await compileStory();
     delete story.sections.shortcuts.test;
     createStartMenu({ story, buttons: document.getElementById("header")!, search: "" }).open();
-    expect(listed()).toEqual([["a", "the vault", "shortcuts", "vault with key"]]);
+    expect(listed()).toEqual([["From the beginning"], ["a", "the vault", "shortcuts", "vault with key"]]);
+});
+
+test("the list starts with a way back to the beginning, even when that's text with no name", async () => {
+    const result = await squiffyCompile({ script: "Before any section. [[a]]\n\n" + script, expressions: true });
+    if (!result.success) throw new Error("Compile failed");
+    const story = { js: [], ...result.output.story } as unknown as Story;
+    const startMenu = createStartMenu({ story, buttons: document.getElementById("header")!, search: "?start=a", strings: { fromStart: "Depuis le début" } });
+    startMenu.open();
+    const first = document.querySelector<HTMLAnchorElement>(".squiffy-start-menu-list a")!;
+    expect(first.textContent).toBe("Depuis le début");
+    // An address with ?start=, so the browser's saved game doesn't carry on from where it was
+    expect(first.getAttribute("href")).toBe(addressForStart(story.start));
+    expect(startAtFromAddress(first.getAttribute("href")!, story).startAt).toEqual({ section: story.start });
+    expect(first.hasAttribute("aria-current")).toBe(false);
+
+    // It's not a section to find by name
+    const find = startMenu.element.querySelector<HTMLInputElement>("input")!;
+    find.value = "beg";
+    find.dispatchEvent(new window.Event("input"));
+    expect(listed()).toEqual([]);
 });
 
 const begin = async (search: string) => {

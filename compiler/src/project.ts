@@ -155,6 +155,7 @@ export const PAGE_STRINGS = {
     // The Start at menu, for testing a story: see "startAnywhere". [name] is filled in.
     startAt: "Start at a section",
     findSection: "Find a section",
+    fromStart: "From the beginning",
     testSections: "Test sections",
     allSections: "All sections",
     noSection: "There's no section called \"[name]\".",

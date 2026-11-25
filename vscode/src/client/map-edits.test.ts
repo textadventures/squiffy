@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { createLanguageService, type TextEdit } from "squiffy-compiler/language-service";
-import { addPassageEdits, linkEdit, linkEndsEnding, missingTarget, movedPositions, newPassageEdit, newSectionEdits } from "./map-edits.js";
+import { addPassageEdits, linkEdit, linkEndsEnding, missingTarget, movedPositions, newPassageEdit, newSectionEdits, textStart } from "./map-edits.js";
 
 async function graphOf(text: string) {
     const files: Record<string, string> = { "story.squiffy": text };
@@ -131,4 +131,22 @@ test("dropped sections and passages are kept by name, and markers aren't kept", 
         { id: "missing:whatever", at: { x: 0, y: 0 } },
     ]);
     expect(positions).toEqual({ sections: { left: [1, 2], start: [10, 21] }, passages: { start: { look: [5, 6] } } });
+});
+
+describe("where to start typing in a box opened from the map", () => {
+    const lines = ["[[a]]:", "@set x", "@end", "Text of a.", "", "[p]:", "Passage.", "", "[[empty]]:", "", "[[last]]:", "@end"];
+
+    test("the start of its text, past its @ lines", () => {
+        expect(textStart(lines, 0)).toEqual({ line: 3, character: 0 });
+        expect(textStart(lines, 5)).toEqual({ line: 6, character: 0 });
+    });
+
+    test("a blank line under a section with no text, ready to write on", () => {
+        expect(textStart(lines, 8)).toEqual({ line: 9, character: 0 });
+    });
+
+    test("with nothing after it, the end of its last line", () => {
+        expect(textStart(lines, 10)).toEqual({ line: 11, character: 4 });
+        expect(textStart(["[[a]]:", "[[b]]:"], 0)).toEqual({ line: 0, character: 6 });
+    });
 });

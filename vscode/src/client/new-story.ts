@@ -89,12 +89,30 @@ export async function newStory(folder?: vscode.Uri) {
     }
 }
 
+// Whether a passage header put after a line would be in a section. A passage belongs to the
+// section above it: one with a header, or the text at the start of the story, before any
+// section. Above the first of those, as on an @title line at the top of the file, it would
+// have no section, and would take the story's opening text for its own.
+export function passageHasSection(lines: string[], afterLine: number): boolean {
+    for (let i = Math.min(afterLine, lines.length - 1); i >= 0; i--) {
+        const line = lines[i].trim();
+        if (/^\[\[.*\]\]:$/.test(line) || /^\+\+\+/.test(line) || /^---/.test(line)) return true;
+        // Text, not a directive such as @title: the start of the story
+        if (line && !line.startsWith("@") && !/^\[[^[\]]*\]:$/.test(line)) return true;
+    }
+    return false;
+}
+
 // Add Section and Add Passage: a header at the cursor, as a snippet to type its name into. On a
 // line with text, it goes after that line. Either way, it's kept a blank line from the text around.
 export function insertHeader(editor: vscode.TextEditor, kind: "section" | "passage") {
     const header = kind == "section" ? "[[${1:section name}]]:\n$0" : "[${1:passage name}]:\n$0";
     const { document, selection } = editor;
     const line = document.lineAt(selection.active.line);
+    if (kind == "passage" && !passageHasSection(document.getText().split(/\r?\n/), line.lineNumber)) {
+        void vscode.window.showInformationMessage("A passage belongs to a section, and there's no section here yet. Put the cursor in a section's text, or add a section first with Squiffy: Add Section.");
+        return;
+    }
     const hasText = (lineNumber: number) => lineNumber >= 0 && lineNumber < document.lineCount && !document.lineAt(lineNumber).isEmptyOrWhitespace;
     const after = hasText(line.lineNumber + 1) ? "\n" : "";
     if (line.isEmptyOrWhitespace) {

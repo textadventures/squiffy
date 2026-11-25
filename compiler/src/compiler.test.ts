@@ -746,10 +746,15 @@ two
     expect(warnings).toEqual([
         "WARNING: story.squiffy line 5: There's already a passage called [p] in section 'a', at line 3. This one replaces it.",
         "WARNING: chapter2.squiffy line 1: There's already a section called [[b]], at story.squiffy line 8. This one replaces it.",
+        // The one that's replaced says so too, where its text is
+        "WARNING: story.squiffy line 8: The section [[b]] at chapter2.squiffy line 1 replaces this one, so this section and its passages aren't part of the story. Rename one of them.",
         "WARNING: story.squiffy line 13: There's already a section called [[a]], at line 1. This one replaces it.",
+        "WARNING: story.squiffy line 1: The section [[a]] at line 13 replaces this one, so this section and its passages aren't part of the story. Rename one of them.",
     ]);
     expect(result.diagnostics.map(d => d.code)).toEqual([
         "squiffy/duplicate-passage",
+        "squiffy/duplicate-section",
+        "squiffy/duplicate-section",
         "squiffy/duplicate-section",
         "squiffy/duplicate-section",
     ]);
@@ -780,6 +785,7 @@ test("Warning when a section is named like one the compiler names itself", async
     });
     expect(warnings).toEqual([
         "WARNING: story.squiffy line 3: There's already a section called [[_continue1]], at line 1. This one replaces it.",
+        "WARNING: story.squiffy line 1: The section [[_continue1]] at line 3 replaces this one, so this section and its passages aren't part of the story. Rename one of them.",
     ]);
 });
 

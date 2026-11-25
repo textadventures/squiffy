@@ -1,5 +1,5 @@
 import type {
-    DeactivateNode, EmbedNode, GotoNode, LinkNode, PassageNode, Range, SectionNode, SnippetNode, SquiffyFile, StatementNode, TextNode,
+    DeactivateNode, EmbedNode, GotoNode, LinkNode, PassageNode, Range, SectionNode, SeenNode, SnippetNode, SquiffyFile, StatementNode, TextNode,
 } from "./syntax.js";
 import { positionMapper, transformText } from "./text.js";
 
@@ -324,5 +324,11 @@ function findLinks(node: SectionNode | PassageNode, lines: string[]) {
         name: deactivate.name,
         range: toRange(deactivate.start, deactivate.end),
         nameRange: toRange(deactivate.nameStart, deactivate.nameEnd),
+    }));
+    node.seens = result.seens.map((seen): SeenNode => ({
+        type: "seen",
+        name: seen.name,
+        range: toRange(seen.start, seen.end),
+        nameRange: toRange(seen.nameStart, seen.nameEnd),
     }));
 }
