@@ -103,21 +103,56 @@ export function passageHasSection(lines: string[], afterLine: number): boolean {
     return false;
 }
 
-// Add Section and Add Passage: a header at the cursor, as a snippet to type its name into. On a
-// line with text, it goes after that line. Either way, it's kept a blank line from the text around.
-export function insertHeader(editor: vscode.TextEditor, kind: "section" | "passage") {
-    const header = kind == "section" ? "[[${1:section name}]]:\n$0" : "[${1:passage name}]:\n$0";
+// Where Add Section and Add Passage put a header, as the editor does (addSectionOrPassageSpec in
+// app/src/lib/editor-commands.ts): after the section the cursor's in, passages and all, or at the
+// end of the file. At the cursor, it would take the rest of the section, and its passages, for
+// its own. `sections` are the file's sections' line ranges; the header goes at the end of `line`.
+export function headerPlace(lines: string[], cursorLine: number, sections: { start: number; end: number }[]) {
+    const section = sections.find(s => s.start <= cursorLine && cursorLine <= s.end);
+    const line = Math.min(section ? section.end : lines.length - 1, lines.length - 1);
+    // A blank line before the header, and (when there's more after) one before what follows
+    const before = lines[line].trim() ? "\n\n" : "\n";
+    const after = line < lines.length - 1 ? "\n" : "";
+    return { line, before, after };
+}
+
+// The selected text, as the name of a new section or passage that it becomes a link to
+export function selectedName(text: string) {
+    return text.replace(/[[\]\r\n]/g, "").trim();
+}
+
+// Add Section and Add Passage: a header after the cursor's section. With text selected, the
+// selection becomes a link to it and its name; otherwise the header is a snippet to type a name into.
+export async function insertHeader(editor: vscode.TextEditor, kind: "section" | "passage") {
     const { document, selection } = editor;
-    const line = document.lineAt(selection.active.line);
-    if (kind == "passage" && !passageHasSection(document.getText().split(/\r?\n/), line.lineNumber)) {
+    const lines = document.getText().split(/\r?\n/);
+    if (kind == "passage" && !passageHasSection(lines, selection.active.line)) {
         void vscode.window.showInformationMessage("A passage belongs to a section, and there's no section here yet. Put the cursor in a section's text, or add a section first with Squiffy: Add Section.");
         return;
     }
-    const hasText = (lineNumber: number) => lineNumber >= 0 && lineNumber < document.lineCount && !document.lineAt(lineNumber).isEmptyOrWhitespace;
-    const after = hasText(line.lineNumber + 1) ? "\n" : "";
-    if (line.isEmptyOrWhitespace) {
-        const before = hasText(line.lineNumber - 1) ? "\n" : "";
-        return editor.insertSnippet(new vscode.SnippetString(before + header + after), line.range);
+    const symbols = await vscode.commands.executeCommand<vscode.DocumentSymbol[] | undefined>("vscode.executeDocumentSymbolProvider", document.uri) ?? [];
+    const sections = symbols.filter(s => s.kind == vscode.SymbolKind.Class).map(s => ({ start: s.range.start.line, end: s.range.end.line }));
+    const place = headerPlace(lines, selection.active.line, sections);
+    const at = document.lineAt(place.line).range.end;
+    const [open, close] = kind == "section" ? ["[[", "]]"] : ["[", "]"];
+    const name = selectedName(document.getText(selection));
+
+    if (!name) {
+        const header = kind == "section" ? "[[${1:section name}]]:\n$0" : "[${1:passage name}]:\n$0";
+        return editor.insertSnippet(new vscode.SnippetString(place.before + header + place.after), at);
     }
-    return editor.insertSnippet(new vscode.SnippetString("\n\n" + header + after), line.range.end);
+    // The link and the header in one edit, so one Undo takes both away; then the cursor goes on
+    // the line under the header, ready for its text
+    const link = `${open}${name}${close}`;
+    const header = `${link}:\n`;
+    const atOffset = document.offsetAt(at);
+    const shift = document.offsetAt(selection.end) <= atOffset ? link.length - document.getText(selection).length : 0;
+    const done = await editor.edit(edit => {
+        edit.replace(selection, link);
+        edit.insert(at, place.before + header + place.after);
+    });
+    if (!done) return;
+    const cursor = editor.document.positionAt(atOffset + shift + place.before.length + header.length);
+    editor.selection = new vscode.Selection(cursor, cursor);
+    editor.revealRange(new vscode.Range(cursor, cursor));
 }
