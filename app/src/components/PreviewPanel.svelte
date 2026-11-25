@@ -44,8 +44,9 @@
 
     let iframe = $state<HTMLIFrameElement>();
     let host: PreviewHost | null = null;
-    // Where the story was last run from, for Restart
-    let startAt = $state<StartAt | undefined>();
+    // Where the story was last run from, for Restart. Raw, not a deep proxy, as it's sent to the
+    // preview with postMessage, which can't copy a proxy.
+    let startAt = $state.raw<StartAt | undefined>();
     // The Start at menu: the story's sections, to run it from one of them, as on a story's page
     // served by the command-line tool. Sections marked @test, which set up a scene, come first.
     let startMenuOpen = $state(false);

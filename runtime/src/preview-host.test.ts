@@ -42,6 +42,28 @@ describe("preview host", () => {
         ]);
     });
 
+    test("sends where to start as a plain object, which postMessage can copy, even if it was given a proxy", () => {
+        // As postMessage does: a proxy, such as a Svelte $state object, can't be cloned
+        const sent: unknown[] = [];
+        let handler: ((data: unknown) => void) | undefined;
+        const channel: PreviewChannel = {
+            send: m => sent.push(structuredClone(m)),
+            onMessage: h => {
+                handler = h;
+                return () => { handler = undefined; };
+            },
+        };
+        const host = createPreviewHost(channel);
+        handler?.({ channel: PREVIEW_CHANNEL, type: "ready" });
+        const startAt = new Proxy({ section: "kitchen", passage: "sink", set: ["score = 5"] }, {});
+        expect(() => structuredClone(startAt)).toThrow();
+
+        host.load({ js: "export const story = {};" }, { startAt });
+        expect(sent).toEqual([
+            { channel: PREVIEW_CHANNEL, type: "load", story: { js: "export const story = {};" }, startAt: { section: "kitchen", passage: "sink", set: ["score = 5"] } },
+        ]);
+    });
+
     test("sends the theme when the page is ready, and again if it reloads", () => {
         const { channel, sent, receive } = fakeChannel();
         const host = createPreviewHost(channel);

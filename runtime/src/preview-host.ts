@@ -90,6 +90,14 @@ export function iframeChannel(iframe: HTMLIFrameElement): PreviewChannel {
     };
 }
 
+// A copy of where to start that postMessage can send. The host's own may be a proxy, such as a
+// Svelte $state object, which the structured clone that postMessage makes can't copy.
+const plainStartAt = (startAt: StartAt): StartAt => ({
+    section: startAt.section,
+    ...(startAt.passage !== undefined ? { passage: startAt.passage } : {}),
+    ...(startAt.set ? { set: [...startAt.set] } : {}),
+});
+
 export function createPreviewHost(channel: PreviewChannel, handlers: PreviewHandlers = {}): PreviewHost {
     let isReady = false;
     let queue: HostMessage[] = [];
@@ -186,7 +194,7 @@ export function createPreviewHost(channel: PreviewChannel, handlers: PreviewHand
                 reloading = true;
             }
             hadScripts = !!story.scripts?.length;
-            send({ type: "load", story, ...(options.startAt ? { startAt: options.startAt } : {}) });
+            send({ type: "load", story, ...(options.startAt ? { startAt: plainStartAt(options.startAt) } : {}) });
         },
         update: (js, css) => send({ type: "update", js, ...(css ? { css } : {}) }),
         restart: () => send({ type: "restart" }),
