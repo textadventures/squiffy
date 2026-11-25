@@ -10,6 +10,7 @@ import Screenshot from "@components/Screenshot.astro";
 <Screenshot name="story-map" alt="The story map, between the script and the preview, showing the way the player went through the story in green, a link to a missing section in red, a dead end in orange, and a section nothing links to faded" />
 
 - **Click** a section or passage to go to it in the script. Moving the cursor in the script highlights the section it's in on the map.
+- **Hover over** a box to see the start of its text, and what its marks mean. Selecting a box shows the start of its text too, at the bottom of the map, with its links in and out.
 - **Drag** the background to move around, and scroll or pinch to zoom. The buttons above the map zoom in and out, and fit the whole story in view. The editor remembers which of **Code**, **Code + Map** and **Map** you left a story on, so if you like to work on the map, that's where the story opens next time.
 - **Drag a box** to move it. It stays where you put it. Its passages come with it, and so does any box that's linked only to it, while everything else stays put.
 - To move several boxes at once, hold Shift and drag across empty space to select them, or Shift+click boxes to add them, then drag any one of them. Click empty space, or press Escape, to let them go.
@@ -59,16 +60,16 @@ Nothing that's already in the script is moved.
 
 ## Writing on the map
 
-You can write your story without leaving the map. Choose **Map** in the toolbar, then double-click a section (or select it and press Enter). Its text opens in a panel over the right of the map, on its own, without the rest of the script around it. The map stays where it is, moving only if the section's box would be hidden under the panel. The map carries on updating as you type. Drag the panel's left edge to make it wider or narrower.
+You can write your story without leaving the map. Choose **Map** in the toolbar, then double-click a section (or select it and press Enter). Its text opens in a panel beside the map, on the right, on its own, without the rest of the script around it. The map gets narrower, but its boxes stay where they are, moving only if the section's box would be hidden. The map carries on updating as you type. Drag the panel's left edge to make it wider or narrower.
 
-<Screenshot name="story-map-card" alt="The full-screen map with the right tunnel section open in a panel over its right side, showing the section's text to write in" />
+<Screenshot name="story-map-card" alt="The full-screen map with the right tunnel section open in a panel beside it, showing the section's text to write in" />
 
 - A section is shown with its passages, as passage links only work inside their section. Open a passage and its section is shown, with the cursor at that passage.
 - The section's name is above its text. Use the pencil there to rename it, which changes every link to it too.
 - While a section is open, clicking another box, or moving to it with the arrow keys, shows that one instead. So does going to a link's section or passage, with F12 or from the right-click menu.
 - It's the script you're editing, shown a section at a time, so completion, problems, and undo work as they do in the script. The line numbers are the script's.
 - The problems list, and Find in Files, open under the map. Choose a problem or a search result to open its section, with the cursor on it.
-- Press Escape to go back to the map with the keyboard, leaving the text open. The buttons above the text show it in the whole script (**Show in the whole script**) or close it (**Close**).
+- Press Escape to close it and go back to the map, with its box still selected. (If a list of completions or the Find panel is open, Escape closes that first.) The buttons above the text show it in the whole script (**Show in the whole script**) or close it (**Close**).
 
 Find and Replace search only the section that's open, and count and replace only what's in it. **Add** in the toolbar works here too: select some text, and it becomes a link to a new section or passage with that name. With nothing selected, you type the new one's name on the map.
 

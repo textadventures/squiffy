@@ -27,6 +27,15 @@ export const test = base.extend({
             };
             (window as unknown as { reseedRandom: () => void }).reseedRandom = () => { seed = 12345; };
         });
+        // The map's hint on how to open a box, which is shown until one's been opened, isn't
+        // what the shots are of
+        await context.addInitScript(() => {
+            try {
+                localStorage.setItem("squiffy-map-open-hint-done", "1");
+            } catch {
+                // A frame without storage, such as the preview's
+            }
+        });
         // The home page's "Made with Squiffy" comes from textadventures.co.uk, and changes
         await context.route("https://textadventures.co.uk/**", route => route.abort());
         await use(context);

@@ -40,6 +40,10 @@
         // `screen` the point in the window to show a menu at. Without this, the browser's own
         // menu is shown.
         onmenu?: (node: N | null, at: Point, screen: Point, keyboard: boolean) => void;
+        // The mouse has moved onto a node (with its box in the window), or off it (null). Not
+        // while a button's held, and the map's panning or zooming moves it off. With this, nodes
+        // have no tooltip of their own: the host shows its own, e.g. with a preview of the node.
+        onhover?: (node: N | null, box: DOMRect | null) => void;
     }
 
     export interface NodeState {
@@ -70,7 +74,7 @@
 
     let {
         graph, layout, pinned = NONE, selected = $bindable(null), longEdge = 400, label, instructions, node: drawNode, canConnect,
-        onactivate, onedgeactivate, onmove, onconnect, oncreate, onrename, ondelete, onmenu,
+        onactivate, onedgeactivate, onmove, onconnect, oncreate, onrename, ondelete, onmenu, onhover,
     }: GraphMapProps<N, E> = $props();
 
     // svelte-ignore state_referenced_locally
@@ -452,6 +456,19 @@
     function updateHover(e: PointerEvent) {
         const overNode = (e.target as Element).closest("[data-node], [data-handle]");
         hovered = overNode ? null : edgeAt(toMap(transform, local(e)))?.id ?? null;
+        const el = (e.target as Element).closest("[data-node]");
+        hoverNode(el ? el.getAttribute("data-node") : null, el);
+    }
+
+    // The node the mouse is over, for onhover
+    let hoveredNode: string | null = null;
+    function hoverNode(id: string | null, el?: Element | null) {
+        if (id == hoveredNode) return;
+        hoveredNode = id;
+        if (!onhover) return;
+        const n = id === null ? undefined : graph.nodes.find(node => node.id == id);
+        if (n && el) onhover(n, el.getBoundingClientRect());
+        else onhover(null, null);
     }
 
     // Registers a node's element, to move it
@@ -501,6 +518,12 @@
         const bounds = boundsOf([...model.nodes.values()]);
         if (!bounds || !width || !height) return;
         transform = fitTransform(bounds, { width, height }, 24, 1.25);
+    }
+
+    // Stops fitting the graph to the map as it's resized, as when the viewer pans or zooms, so that
+    // the nodes stay where they are on the screen: e.g. while the host shows something beside it
+    export function keepView() {
+        autoFit = false;
     }
 
     export function zoomBy(factor: number) {
@@ -637,6 +660,7 @@
     };
 
     function handlePointerDown(e: PointerEvent) {
+        hoverNode(null);
         if (e.button != 0 && e.pointerType == "mouse") return;
         container?.focus({ preventScroll: true });
         const p = local(e);
@@ -843,6 +867,7 @@
     // Scroll pans; pinch (which browsers send as Ctrl+scroll) or Ctrl/Cmd+scroll zooms
     function handleWheel(e: WheelEvent) {
         e.preventDefault();
+        hoverNode(null);
         autoFit = false;
         if (e.ctrlKey || e.metaKey) {
             transform = zoomAt(transform, Math.exp(-e.deltaY * (e.deltaMode == 1 ? 0.05 : 0.002) * (e.ctrlKey && !e.metaKey ? 4 : 1)), local(e));
@@ -871,6 +896,7 @@
     }
 
     function handleKeydown(e: KeyboardEvent) {
+        hoverNode(null);
         const directions: Record<string, "up" | "down" | "left" | "right"> = { ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right" };
         const direction = directions[e.key];
         const current = selected ? box(selected) : undefined;
@@ -952,7 +978,7 @@
     ondblclick={handleDoubleClick}
     oncontextmenu={handleContextMenu}
     onkeydown={handleKeydown}
-    onpointerleave={() => { hovered = null; }}
+    onpointerleave={() => { hovered = null; hoverNode(null); }}
 >
     <canvas bind:this={canvas} class="gm-canvas" style:width="{width}px" style:height="{height}px" aria-hidden="true"></canvas>
     <svg {width} {height} aria-hidden="true">
@@ -972,7 +998,7 @@
                         data-node={n.id}
                         use:placeNode={n.id}
                     >
-                        <title>{n.title ?? n.label}</title>
+                        {#if !onhover}<title>{n.title ?? n.label}</title>{/if}
                         {#if drawNode}
                             {@render drawNode(n, state)}
                         {:else}
