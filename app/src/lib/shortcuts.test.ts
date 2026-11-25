@@ -5,7 +5,7 @@ import { editorSearchKeymap } from "@textadventures/editor-search";
 import { foldKeymap } from "@codemirror/language";
 import { nextDiagnostic } from "@codemirror/lint";
 import { completionKeymap } from "@codemirror/autocomplete";
-import { EDITOR_KEYS, SHORTCUT_GROUPS, formatKey, keyNames } from "./shortcuts.js";
+import { EDITOR_KEYS, SHORTCUT_GROUPS, formatKey, keyNames, navigationKey } from "./shortcuts.js";
 
 // The keymaps CodeEditor.svelte loads
 const keymaps: KeyBinding[] = [...defaultKeymap, ...historyKeymap, ...editorSearchKeymap, ...foldKeymap, { key: "F8", run: nextDiagnostic }, ...completionKeymap];
@@ -50,5 +50,17 @@ describe("keyboard shortcuts", () => {
         expect(keyNames("Shift-Alt-ArrowUp", true)).toEqual(["⇧", "⌥", "↑"]);
         expect(formatKey("F12", true)).toBe("F12");
         expect(formatKey("Mod-click", false)).toBe("Ctrl+Click");
+    });
+
+    test("Back and Forward's keys", () => {
+        const key = (k: Partial<KeyboardEvent>) => ({ key: "", code: "", altKey: false, ctrlKey: false, metaKey: false, shiftKey: false, ...k });
+        expect(navigationKey(key({ key: "ArrowLeft", altKey: true }), false)).toBe("back");
+        expect(navigationKey(key({ key: "ArrowRight", altKey: true }), false)).toBe("forward");
+        expect(navigationKey(key({ key: "ArrowLeft", altKey: true, shiftKey: true }), false)).toBeNull();
+        expect(navigationKey(key({ key: "ArrowLeft", altKey: true }), true)).toBeNull();
+        expect(navigationKey(key({ key: "-", code: "Minus", ctrlKey: true }), true)).toBe("back");
+        expect(navigationKey(key({ key: "_", code: "Minus", ctrlKey: true, shiftKey: true }), true)).toBe("forward");
+        expect(navigationKey(key({ key: "-", code: "Minus", metaKey: true }), true)).toBeNull();
+        expect(formatKey("Ctrl-Shift--", false)).toBe("Ctrl+Shift+-");
     });
 });

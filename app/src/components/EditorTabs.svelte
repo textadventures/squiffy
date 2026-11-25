@@ -7,7 +7,8 @@
     import X from "@lucide/svelte/icons/x";
     import Star from "@lucide/svelte/icons/star";
 
-    let { project }: { project: OpenProject } = $props();
+    // onswitch: told before another tab's shown, so Back can come back to this one
+    let { project, onswitch }: { project: OpenProject; onswitch?: () => void } = $props();
 
     // A type of our own, so a tab dropped on the code editor or elsewhere doesn't insert anything
     const DRAG_TYPE = "application/x-squiffy-tab";
@@ -92,7 +93,10 @@
                 aria-current={selected ? "true" : undefined}
                 title={file.path}
                 class="flex items-center gap-1"
-                onclick={() => { project.activePath = file.path; }}
+                onclick={() => {
+                    if (file.path !== project.activePath) onswitch?.();
+                    project.activePath = file.path;
+                }}
                 onkeydown={e => handleKeydown(e, file.path, index)}
             >
                 {#if file.path === project.mainFile}
