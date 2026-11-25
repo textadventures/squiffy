@@ -520,6 +520,8 @@ export class StoryMap implements vscode.Disposable {
             const node = this.graph?.nodes.find(n => n.id == id);
             if (!node || !this.graph) return;
             this.positions = withSize(this.positions, sectionKeys(this.graph), node, size);
+            // The map draws sizes from the positions, which otherwise only come with a new graph
+            this.post({ type: "positions", positions: this.positions });
             await this.savePositions(this.positions);
         }).catch(e => void vscode.window.showWarningMessage(`Couldn't save the map: ${e instanceof Error ? e.message : e}`));
     }
