@@ -8,7 +8,7 @@
 
 import { analyse, Analysis, ExternalFiles, ParseCache } from "./analyse.js";
 import type {
-    DeactivateNode, Diagnostic, EmbedNode, GotoNode, LinkNode, PassageNode, Position, Range, SectionNode, SnippetNode, SquiffyFile,
+    DeactivateNode, Diagnostic, EmbedNode, GotoNode, LinkNode, PassageNode, Position, Range, SectionNode, SeenNode, SnippetNode, SquiffyFile,
 } from "./syntax.js";
 import { getStoryFiles, globToRegExp, parseProjectFile, PROJECT_FILENAME, ProjectFile, storyFileList } from "./project.js";
 import { convertV5Syntax, findV5Syntax } from "./v5.js";
@@ -194,9 +194,10 @@ interface Usage {
     embed?: EmbedNode;
     goto?: GotoNode;
     deactivate?: DeactivateNode;
+    seen?: SeenNode;
 }
 
-const usageRange = (usage: Usage) => (usage.link ?? usage.embed ?? usage.goto ?? usage.deactivate)!.range;
+const usageRange = (usage: Usage) => (usage.link ?? usage.embed ?? usage.goto ?? usage.deactivate ?? usage.seen)!.range;
 
 // The analysis, indexed for lookups
 interface Index {
@@ -490,6 +491,9 @@ export function createLanguageService(options: LanguageServiceOptions): Language
                     for (const deactivate of container.deactivates) {
                         index.usages.push({ file: path, container, sectionNode: node, deactivate });
                     }
+                    for (const seen of container.seens ?? []) {
+                        index.usages.push({ file: path, container, sectionNode: node, seen });
+                    }
                     for (const statement of container.body) {
                         if (statement.type == "attribute") {
                             addAttribute(attributeName(statement.value));
@@ -558,13 +562,19 @@ export function createLanguageService(options: LanguageServiceOptions): Language
 
     function resolveUsage(index: Index, usage: Usage): SymbolRef | undefined {
         const sectionName = index.nodeNames.get(usage.sectionNode);
-        if (usage.embed) {
-            const name = usage.embed.name;
+        if (usage.embed || usage.seen) {
+            const name = (usage.embed ?? usage.seen)!.name;
             const passages = passagesOf(index, usage.sectionNode);
             if (sectionName !== undefined && passages?.has(name)) return { kind: "passage", section: sectionName, name };
             if (index.sections.has(name)) return { kind: "section", name };
             // Like the runtime, the master section's passages can be embedded from any section
             if (index.sections.get("")?.passages.has(name)) return { kind: "passage", section: "", name };
+            // seen and visits go by name alone, so they can name a passage in another section,
+            // if only one section has a passage of that name
+            if (usage.seen) {
+                const owners = [...index.sections].filter(([, section]) => section.passages.has(name));
+                if (owners.length == 1) return { kind: "passage", section: owners[0][0], name };
+            }
             return undefined;
         }
         if (usage.goto) {
@@ -646,6 +656,7 @@ export function createLanguageService(options: LanguageServiceOptions): Language
         if (usage.embed) return usage.embed.nameRange;
         if (usage.goto) return usage.goto.nameRange;
         if (usage.deactivate) return usage.deactivate.nameRange;
+        if (usage.seen) return usage.seen.nameRange;
         const link = usage.link!;
         if (link.form == "next") return undefined;
         const range = link.targetRange;

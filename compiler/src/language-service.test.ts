@@ -338,6 +338,40 @@ describe("rename", () => {
         expect(apply(text, result.edit["s.squiffy"])).toBe("[[a]]:\nSee [c].\n\n[c]:\n@repeat\n{{#if done}}{{deactivate \"c\"}}{{/if}}");
     });
 
+    test("a section or passage, including seen, visits and lastvisited", async () => {
+        const text = [
+            "[[the bar]]:", "Drinks. [chat]", "", "[chat]:", "Hi.", "",
+            "[[street]]:", "{{#if seen \"the bar\"}}Back again.{{/if}} {{#if (visits 'the bar') > 1}}Again!{{/if}}",
+            "{{#unless (seen \"the bar\")}}New here.{{/unless}} {{lastvisited \"the bar\"}} {{visits \"chat\"}}",
+            "You have seen \"the bar\" before, says the text.", "[[the bar]]",
+        ].join("\n");
+        const ls = createLanguageService({ files: memoryFiles({ "s.squiffy": text }), mainFile: "s.squiffy" });
+
+        // Every literal name given to them inside {{...}} is a reference, but not text outside one
+        const references = await ls.getReferences("s.squiffy", positionOf(text, "[[the bar]]:", 3), false);
+        expect(references.map(r => slice(text, r.range))).toEqual([
+            "[[the bar]]", "seen \"the bar\"", "visits 'the bar'", "seen \"the bar\"", "lastvisited \"the bar\"",
+        ]);
+        // And F12 from one goes to the section
+        const definition = await ls.getDefinition("s.squiffy", positionOf(text, "(visits 'the bar')", 10));
+        expect(definition?.range.start.line).toBe(0);
+
+        const result = await ls.getRenameEdits("s.squiffy", positionOf(text, "[[the bar]]:", 3), "the pub");
+        if (!result || "error" in result) throw new Error("Expected edits");
+        const renamed = apply(text, result.edit["s.squiffy"]);
+        expect(renamed).toContain("{{#if seen \"the pub\"}}");
+        expect(renamed).toContain("{{#if (visits 'the pub') > 1}}");
+        expect(renamed).toContain("{{#unless (seen \"the pub\")}}");
+        expect(renamed).toContain("{{lastvisited \"the pub\"}}");
+        expect(renamed).toContain("You have seen \"the bar\" before");
+        expect(renamed).toContain("{{visits \"chat\"}}");
+
+        // A passage, from another section, as they go by name alone
+        const passage = await ls.getRenameEdits("s.squiffy", positionOf(text, "[chat]:", 1), "talk");
+        if (!passage || "error" in passage) throw new Error("Expected edits");
+        expect(apply(text, passage.edit["s.squiffy"])).toContain("{{visits \"talk\"}}");
+    });
+
     test("an unnamed link changes its text, which is its target", async () => {
         const { ls } = project();
         const result = await ls.getRenameEdits("story.squiffy", positionOf(main, "[[outside]]:", 3), "garden");

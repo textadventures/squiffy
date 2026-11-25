@@ -161,6 +161,8 @@ export interface TransformResult {
     embeds: TextEmbed[];
     gotos: TextGoto[];
     deactivates: TextDeactivate[];
+    // A literal name given to seen, visits or lastvisited inside {{...}}
+    seens: TextEmbed[];
     noNextSection: NoNextSection[];
     // Map the start and (exclusive) end of a range in output to the text that was transformed
     mapStart: (pos: number) => number;
@@ -391,8 +393,32 @@ export function transformText(text: string, getNextSectionName: () => string | n
         });
     }
 
+    // seen "name", visits "name" and lastvisited "name", anywhere inside {{...}}: as a helper
+    // of their own, or in brackets, or after #if, not, and and the like
+    const seens: TextEmbed[] = [];
+    const template = /\{\{[\s\S]*?\}\}/g;
+    const seenName = /\b(?:seen|visits|lastvisited)\s+(["'])(.*?)\1/g;
+    let block;
+    while ((block = template.exec(input.value))) {
+        seenName.lastIndex = 0;
+        let match;
+        while ((match = seenName.exec(block[0]))) {
+            const start = block.index + match.index;
+            const end = start + match[0].length;
+            const nameEnd = end - 1;
+            const nameStart = nameEnd - match[2].length;
+            seens.push({
+                name: match[2],
+                start: input.mapStart(start),
+                end: input.mapEnd(end),
+                nameStart: input.mapStart(nameStart),
+                nameEnd: input.mapEnd(nameEnd),
+            });
+        }
+    }
+
     return {
-        output: input.value, links, embeds, gotos: findNamed("goto"), deactivates: findNamed("deactivate"), noNextSection,
+        output: input.value, links, embeds, gotos: findNamed("goto"), deactivates: findNamed("deactivate"), seens, noNextSection,
         mapStart: pos => input.mapStart(pos),
         mapEnd: pos => input.mapEnd(pos),
     };

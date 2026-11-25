@@ -101,6 +101,8 @@ export interface SectionNode {
     embeds: EmbedNode[];
     gotos: GotoNode[];
     deactivates: DeactivateNode[];
+    // {{seen "name"}}, (visits "name") and the like, which name a section or passage
+    seens?: SeenNode[];
 }
 
 export interface PassageNode {
@@ -114,6 +116,7 @@ export interface PassageNode {
     embeds: EmbedNode[];
     gotos: GotoNode[];
     deactivates: DeactivateNode[];
+    seens?: SeenNode[];
 }
 
 // [snippet: name]: blocks run until the next section header. Their content isn't compiled.
@@ -344,6 +347,15 @@ export interface EmbedNode {
 // {{deactivate "name"}} with a literal name (#13)
 export interface DeactivateNode {
     type: "deactivate";
+    name: string;
+    range: Range;
+    nameRange: Range;
+}
+
+// A literal name given to seen, visits or lastvisited, as in {{seen "cave"}} or
+// {{#if (visits "cave") > 1}}: a section or passage, for Find References and Rename
+export interface SeenNode {
+    type: "seen";
     name: string;
     range: Range;
     nameRange: Range;
