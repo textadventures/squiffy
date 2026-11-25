@@ -128,6 +128,8 @@
             for (const [, to] of message.renamed) map?.rename(`\u0000${to}`, to);
             graph = message.graph;
             positions = message.positions;
+        } else if (message.type == "positions") {
+            positions = message.positions;
         } else if (message.type == "current") {
             current = message.id;
         } else if (message.type == "select") {

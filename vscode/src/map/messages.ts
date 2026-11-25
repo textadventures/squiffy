@@ -12,6 +12,8 @@ export type ToMap =
     // The story's graph, and where the author has put things on the map. `renamed` are the nodes
     // whose ids have changed since the last graph (renamed, say), which keep their places.
     | { type: "graph"; graph: StoryGraph; positions?: MapPositions; renamed: [string, string][] }
+    // Where the author has put things, and the boxes' sizes, changed from the map (a box resized)
+    | { type: "positions"; positions: MapPositions }
     // The section or passage the cursor is in, if it's in the story
     | { type: "current"; id: string | null }
     // Select a node once a graph has it (a section or passage just made from the map)
