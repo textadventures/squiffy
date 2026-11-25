@@ -64,7 +64,10 @@
     let loading = $state(true);
     // Each open .squiffy file's outline, from its last analysis
     let symbolsByPath = $state<Record<string, DocumentSymbol[]>>({});
-    let cursorLine = $state(0);
+    // Each open file's cursor line, so that showing another file doesn't pair its name with the
+    // last one's line (which, for a moment, made the map reveal a box nobody chose)
+    let cursorLines = $state<Record<string, number>>({});
+    const cursorLine = $derived(p ? cursorLines[p.activePath] ?? 0 : 0);
     // The editor for each open file
     const views = new Map<string, EditorView>();
     let outline = $state<ReturnType<typeof OutlinePanel>>();
@@ -281,6 +284,8 @@
             if (!now.includes(path)) {
                 if (isSquiffyFile(path)) void client?.call("updateFile", path, undefined);
                 views.delete(path);
+                // Reopened, it starts at the top
+                delete cursorLines[path];
             }
         }
         openPaths = now;
@@ -424,7 +429,7 @@
         if (await goToInCard(location, true)) return;
         narrowPane = "editor";
         try {
-            await p.open(location.file);
+            await openAt(location.file, location.range.start.line);
         } catch (err) {
             showToast(`Couldn't open ${location.file}: ${errorText(err)}`);
             return;
@@ -531,7 +536,7 @@
         if (!p || !client) return;
         const location = await client.call("findSection", section, passage);
         if (!location) return;
-        await p.open(location.file);
+        await openAt(location.file, location.range.start.line);
         const view = await viewFor(location.file);
         if (!view) return;
         const offset = toOffset(view.state.doc, location.range.start);
@@ -555,7 +560,23 @@
 
     function handleCursor(path: string, offset: number) {
         const view = views.get(path);
-        if (view && path === p?.activePath) cursorLine = view.state.doc.lineAt(offset).number - 1;
+        if (view) cursorLines[path] = view.state.doc.lineAt(offset).number - 1;
+    }
+
+    // Opens a file, about to put its cursor on a line: the line's set first, so the file never
+    // shows with the cursor where it was (or, if it wasn't open, at the top) on the way there,
+    // which the map would follow
+    async function openAt(path: string, line: number) {
+        if (!p) return;
+        const before = cursorLines[path];
+        cursorLines[path] = line;
+        try {
+            await p.open(path);
+        } catch (err) {
+            if (before === undefined) delete cursorLines[path];
+            else cursorLines[path] = before;
+            throw err;
+        }
     }
 
     // ---- Problems ----
@@ -824,8 +845,13 @@
         const section = graph?.nodes.find(n => n.kind === "section" && n.name === sectionName);
         if (!p || !graph || !section || section.name === "") return;
         const file = section.location.file;
+        const target = at ?? (node.kind === "passage" ? node.location.range.start : undefined);
+        const shown = views.get(file);
         try {
-            await p.open(file);
+            // Where the card will put the cursor: unless it's showing this section already, it
+            // moves to the section or to the target
+            if (!target && card?.id === section.id && shown && narrowed(shown.state)) await p.open(file);
+            else await openAt(file, (target ?? section.range.start).line);
         } catch (err) {
             showToast(`Couldn't open ${file}: ${errorText(err)}`);
             return;
@@ -847,7 +873,6 @@
             }
             view.dispatch({ effects: setNarrow.of(range), selection: { anchor: range.from } });
         }
-        const target = at ?? (node.kind === "passage" ? node.location.range.start : undefined);
         if (target) {
             const anchor = toOffset(view.state.doc, target);
             view.dispatch({ selection: { anchor }, effects: EditorView.scrollIntoView(anchor, { y: "start", yMargin: 24 }) });
@@ -1020,7 +1045,7 @@
         if (!p) return;
         if (await goToInCard(location, false)) return;
         try {
-            await p.open(location.file);
+            await openAt(location.file, location.range.start.line);
         } catch (err) {
             showToast(`Couldn't open ${location.file}: ${errorText(err)}`);
             return;

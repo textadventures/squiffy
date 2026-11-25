@@ -110,4 +110,26 @@ describe("viewport", () => {
         expect(revealTransform(t, { x: 100, y: 100, width: 50, height: 20 }, view, 10)).toBeUndefined();
         expect(revealTransform(t, { x: 500, y: 100, width: 50, height: 20 }, view, 10)).toEqual({ x: -160, y: 0, k: 1 });
     });
+
+    test("a rectangle that's all in view isn't moved, however near the edge", () => {
+        const view = { width: 400, height: 300 };
+        const t = { x: 0, y: 0, k: 1 };
+        expect(revealTransform(t, { x: 0, y: 0, width: 50, height: 20 }, view, 32)).toBeUndefined();
+        expect(revealTransform(t, { x: 350, y: 280, width: 50, height: 20 }, view, 32)).toBeUndefined();
+        // Partly out of view, it's brought in with the margin
+        expect(revealTransform(t, { x: -5, y: 100, width: 50, height: 20 }, view, 32)).toEqual({ x: 37, y: 0, k: 1 });
+    });
+
+    test("only what's under a panel over the view is moved out from under it, the shortest way", () => {
+        const view = { width: 400, height: 300 };
+        const t = { x: 0, y: 0, k: 1 };
+        // A panel in the bottom left corner
+        const panel = [{ x: 8, y: 220, width: 150, height: 72 }];
+        // Beside it, along the bottom, it's in view
+        expect(revealTransform(t, { x: 250, y: 260, width: 50, height: 20 }, view, 32, panel)).toBeUndefined();
+        // Under its top edge, it goes up
+        expect(revealTransform(t, { x: 40, y: 210, width: 50, height: 20 }, view, 32, panel)).toEqual({ x: 0, y: -26, k: 1 });
+        // Under its right edge, it goes right
+        expect(revealTransform(t, { x: 140, y: 260, width: 50, height: 20 }, view, 32, panel)).toEqual({ x: 34, y: 0, k: 1 });
+    });
 });

@@ -176,13 +176,17 @@
 
     // What's over the map: the card a section's written in, and the details of the selected box.
     // Neither takes space from the map, so that selecting a box or opening one doesn't move it.
+    let details = $state<HTMLDivElement>();
+    let detailsWidth = $state(0);
     let detailsHeight = $state(0);
-    const covered = () => ({ right: card ? cardWidth + 16 : 0, bottom: selectedNode?.graphNode ? detailsHeight + 16 : 0 });
+    const covered = () => ({ right: card ? cardWidth + 16 : 0, over: details ? [details.getBoundingClientRect()] : [] });
 
     // The selected box is brought out from under them
     $effect(() => {
         const id = selected;
         void card;
+        void details;
+        void detailsWidth;
         void detailsHeight;
         if (id) untrack(() => { if (map?.has(id)) map.reveal(id, covered()); });
     });
@@ -514,7 +518,7 @@
         {/if}
         {#if selectedNode?.graphNode}
             {@const g = selectedNode.graphNode}
-            <div bind:clientHeight={detailsHeight} class="map-details absolute left-2 bottom-2 rounded-md border border-surface-200-800 bg-surface-50-950 shadow-md px-3 py-2 text-xs space-y-1">
+            <div bind:this={details} bind:clientWidth={detailsWidth} bind:clientHeight={detailsHeight} class="map-details absolute left-2 bottom-2 rounded-md border border-surface-200-800 bg-surface-50-950 shadow-md px-3 py-2 text-xs space-y-1">
                 <div class="flex items-center gap-1">
                     <span class="font-semibold truncate flex-1" title={selectedNode.label}>
                         {selectedNode.kind === "section" ? "Section" : "Passage"}: {selectedNode.label}

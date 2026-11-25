@@ -277,11 +277,15 @@
     }
 
     // The selected box is brought out from under the details
+    let details = $state<HTMLDivElement>();
+    let detailsWidth = $state(0);
     let detailsHeight = $state(0);
     $effect(() => {
         const id = selected;
-        const bottom = detailsHeight;
-        if (id) untrack(() => { if (map?.has(id)) map.reveal(id, { bottom: bottom ? bottom + 16 : 0 }); });
+        const el = details;
+        void detailsWidth;
+        void detailsHeight;
+        if (id) untrack(() => { if (map?.has(id)) map.reveal(id, { over: el ? [el.getBoundingClientRect()] : [] }); });
     });
 
     // The menu key, or Shift+F10, opens the menu for the selected box. In VS Code's webview,
@@ -368,7 +372,7 @@
             {#if selectedNode?.graphNode && graph}
                 {@const g = selectedNode.graphNode}
                 {@const note = notes(g, graph)}
-                <div class="details" bind:clientHeight={detailsHeight} role="region" aria-label="Selected {selectedNode.kind}">
+                <div class="details" bind:this={details} bind:clientWidth={detailsWidth} bind:clientHeight={detailsHeight} role="region" aria-label="Selected {selectedNode.kind}">
                     <div class="details-name" title={selectedNode.label}>{selectedNode.kind == "section" ? "Section" : "Passage"}: {selectedNode.label}</div>
                     <div class="details-actions">
                         <button type="button" title="Show in the script (Enter)" onclick={() => activate(selectedNode, "open")}>Show</button>
