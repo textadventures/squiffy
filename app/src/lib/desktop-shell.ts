@@ -40,8 +40,22 @@ export async function openInEditor(pick: () => Promise<PickedFolder | null>, mis
     }
 }
 
-// Edit > Undo/Redo: CodeMirror's own history in an editor, else the browser's (text fields)
+// What the editor page does with Undo and Redo, which says if it did anything: the map, for
+// one, has a history of its own
+let undoHandler: ((redo: boolean) => boolean) | null = null;
+
+/** Returns a function that stops it */
+export function handleUndo(handler: (redo: boolean) => boolean): () => void {
+    undoHandler = handler;
+    return () => {
+        if (undoHandler === handler) undoHandler = null;
+    };
+}
+
+// Edit > Undo/Redo: the editor page's, or CodeMirror's own history in an editor, else the
+// browser's (text fields)
 function undoRedo(action: "undo" | "redo") {
+    if (undoHandler?.(action === "redo")) return;
     const focused = document.activeElement;
     const view = focused instanceof HTMLElement ? EditorView.findFromDOM(focused) : null;
     if (view) {

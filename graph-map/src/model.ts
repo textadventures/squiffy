@@ -23,6 +23,9 @@ export class MapModel<N extends MapNode = MapNode, E extends MapEdge = MapEdge> 
     // Held still while new nodes settle
     private held = new Set<string>();
     private dragging = new Set<string>();
+    // Where a node that wasn't pinned was before a drag pinned it, with what moved along with it,
+    // so that taking the pin away again (as undoing the drag does) puts them back
+    private returns = new Map<string, Map<string, { x: number; y: number; home?: Point }>>();
 
     constructor(private layout: Layout<N, E>, seed = 1) {
         this.sim = new Simulation({ seed });
@@ -53,11 +56,15 @@ export class MapModel<N extends MapNode = MapNode, E extends MapEdge = MapEdge> 
         for (const [id, was] of before) {
             if (this.dragging.has(id)) continue;
             const now = this.pinned.get(id);
-            if (!now) this.nodes.delete(id);
-            else if (now.x != was.x || now.y != was.y) repinned.push(id);
+            if (!now) {
+                if (!this.goBack(id)) this.nodes.delete(id);
+            } else if (now.x != was.x || now.y != was.y) repinned.push(id);
         }
         for (const id of [...this.held]) {
             if (!ids.has(id)) this.held.delete(id);
+        }
+        for (const id of [...this.returns.keys()]) {
+            if (!ids.has(id)) this.returns.delete(id);
         }
 
         const known = new Map<string, Point>();
@@ -102,6 +109,7 @@ export class MapModel<N extends MapNode = MapNode, E extends MapEdge = MapEdge> 
     relayout(pinned: ReadonlyMap<string, Point> = this.pinned) {
         this.nodes.clear();
         this.held.clear();
+        this.returns.clear();
         this.sim.alpha = 1;
         this.update(this.graph, pinned);
     }
@@ -114,6 +122,16 @@ export class MapModel<N extends MapNode = MapNode, E extends MapEdge = MapEdge> 
         node.id = to;
         this.nodes.set(to, node);
         if (this.held.delete(from)) this.held.add(to);
+        const back = this.returns.get(from);
+        if (back) {
+            this.returns.delete(from);
+            const at = back.get(from);
+            if (at) {
+                back.delete(from);
+                back.set(to, at);
+            }
+            this.returns.set(to, back);
+        }
         const pin = this.pinned.get(from);
         if (pin) {
             this.pinned.delete(from);
@@ -126,7 +144,17 @@ export class MapModel<N extends MapNode = MapNode, E extends MapEdge = MapEdge> 
         const dragging = (typeof ids == "string" ? [ids] : ids).filter(id => this.nodes.has(id));
         if (!dragging.length) return;
         this.dragging = new Set(dragging);
-        this.holdAllBut(this.followers(dragging));
+        const moving = this.followers(dragging);
+        for (const id of dragging) {
+            if (this.pinned.has(id)) continue;
+            const back = new Map<string, { x: number; y: number; home?: Point }>();
+            for (const other of moving) {
+                const n = this.nodes.get(other);
+                if (n && (other == id || !this.pinned.has(other))) back.set(other, { x: n.x, y: n.y, home: n.home && { ...n.home } });
+            }
+            this.returns.set(id, back);
+        }
+        this.holdAllBut(moving);
         this.updateFixed();
         this.sim.alphaTarget = 0.3;
         this.sim.reheat(0.3);
@@ -162,6 +190,24 @@ export class MapModel<N extends MapNode = MapNode, E extends MapEdge = MapEdge> 
         this.sim.alphaTarget = 0;
         this.updateFixed();
         return dropped;
+    }
+
+    // A node that's no longer pinned goes back to where it was before a drag pinned it, if it
+    // was, with what moved along with it (unless that's been pinned since)
+    private goBack(id: string): boolean {
+        const back = this.returns.get(id);
+        if (!back || !this.nodes.has(id)) return false;
+        this.returns.delete(id);
+        for (const [other, at] of back) {
+            const n = this.nodes.get(other);
+            if (!n || this.dragging.has(other) || (other != id && this.pinned.has(other))) continue;
+            n.x = at.x;
+            n.y = at.y;
+            n.vx = 0;
+            n.vy = 0;
+            n.home = at.home && { ...at.home };
+        }
+        return true;
     }
 
     isPinned(id: string) {

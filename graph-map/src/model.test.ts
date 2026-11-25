@@ -288,6 +288,29 @@ describe("stability", () => {
         expect(model.isPinned("l1")).toBe(false);
     });
 
+    test("taking away the pin a drag gave a node puts it back where it was, with what followed it", () => {
+        const model = new MapModel(layout());
+        model.update(story);
+        settle(model);
+        const before = positions(model);
+        model.startDrag("left");
+        for (let i = 0; i < 30; i++) {
+            model.drag("left", { x: -400, y: 300 });
+            model.step(1000, 1);
+        }
+        const dropped = model.endDrag();
+        // The host pins it there, as saving its position does
+        model.update(story, dropped);
+        settle(model);
+        expect(positions(model).left).toEqual([-400, 300]);
+        expect(positions(model).l1).not.toEqual(before.l1);
+        // Then undoes the drag
+        model.update(story, new Map());
+        settle(model);
+        expect(positions(model)).toEqual(before);
+        expect(model.isPinned("left")).toBe(false);
+    });
+
     test("a renamed node keeps its place", () => {
         const model = new MapModel(layout());
         model.update(story);
