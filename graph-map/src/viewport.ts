@@ -25,6 +25,17 @@ export function zoomAt(t: Transform, factor: number, at: Point): Transform {
     return { k, x: at.x - (at.x - t.x) * f, y: at.y - (at.y - t.y) * f };
 }
 
+// Zooms by a factor around a rectangle, such as the selected node, if its centre's in view, and
+// then keeps the whole of it in view; or else around the middle of the view
+export function zoomOn(t: Transform, factor: number, view: { width: number; height: number }, rect?: Rect): Transform {
+    const middle = { x: view.width / 2, y: view.height / 2 };
+    if (!rect) return zoomAt(t, factor, middle);
+    const at = toScreen(t, { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 });
+    if (at.x < 0 || at.y < 0 || at.x > view.width || at.y > view.height) return zoomAt(t, factor, middle);
+    const zoomed = zoomAt(t, factor, at);
+    return revealTransform(zoomed, rect, view) ?? zoomed;
+}
+
 // Shows the whole of a rectangle in a view, centred, no bigger than `maxZoom`
 export function fitTransform(bounds: Rect, view: { width: number; height: number }, padding = 24, maxZoom = 1): Transform {
     const w = Math.max(1, view.width - padding * 2), h = Math.max(1, view.height - padding * 2);

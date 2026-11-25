@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { arrowhead, arrowPoints, boundsOf, distanceToEdge, edgeBounds, edgeGeometry, edgeShape, exitPoint, nearestInDirection } from "./geometry.js";
-import { fitTransform, revealTransform, toMap, toScreen, zoomAt } from "./viewport.js";
+import { fitTransform, revealTransform, toMap, toScreen, zoomAt, zoomOn } from "./viewport.js";
 
 const box = (x: number, y: number, width = 100, height = 40) => ({ x, y, width, height });
 
@@ -94,6 +94,28 @@ describe("viewport", () => {
         expect(zoomed.k).toBe(2);
         expect(toScreen(zoomed, before)).toEqual(at);
         expect(zoomAt(t, 1000, at).k).toBe(3);
+    });
+
+    test("zooming on a rectangle keeps its centre still, if it's in view", () => {
+        const view = { width: 400, height: 300 };
+        const t = { x: 0, y: 0, k: 1 };
+        const rect = { x: 90, y: 90, width: 20, height: 20 };
+        expect(toScreen(zoomOn(t, 2, view, rect), { x: 100, y: 100 })).toEqual({ x: 100, y: 100 });
+        // Out of view, or with no rectangle, it zooms around the middle of the view
+        const middle = { x: 200, y: 150 };
+        const off = { x: 590, y: 90, width: 20, height: 20 };
+        expect(zoomOn(t, 2, view, off)).toEqual(zoomAt(t, 2, middle));
+        expect(zoomOn(t, 2, view)).toEqual(zoomAt(t, 2, middle));
+    });
+
+    test("zooming on a rectangle near the edge keeps the whole of it in view", () => {
+        const view = { width: 400, height: 300 };
+        const t = { x: 0, y: 0, k: 1 };
+        const rect = { x: 340, y: 100, width: 50, height: 20 };
+        const zoomed = zoomOn(t, 2, view, rect);
+        expect(zoomed.k).toBe(2);
+        expect(toScreen(zoomed, { x: 390, y: 120 }).x).toBeLessThanOrEqual(400);
+        expect(toScreen(zoomed, { x: 340, y: 100 }).x).toBeGreaterThanOrEqual(0);
     });
 
     test("fitting centres the bounds, no bigger than full size", () => {

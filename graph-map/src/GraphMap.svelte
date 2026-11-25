@@ -66,7 +66,7 @@
     import { onMount, untrack } from "svelte";
     import {
         arrowhead, arrowPoints, boundsOf, distanceToEdge, edgeBounds, edgeGeometry, edgeShape, fitTransform, identity, MapModel,
-        nearestInDirection, revealTransform, toMap, zoomAt, type EdgeGeometry, type Rect, type Transform,
+        nearestInDirection, revealTransform, toMap, zoomAt, zoomOn, type EdgeGeometry, type Rect, type Transform,
     } from "@textadventures/graph-map";
 
 
@@ -526,9 +526,11 @@
         autoFit = false;
     }
 
+    // Zooms around the selected node, if it's in view, or else the middle of the map
     export function zoomBy(factor: number) {
         autoFit = false;
-        transform = zoomAt(transform, factor, { x: width / 2, y: height / 2 });
+        const b = selected ? box(selected) : undefined;
+        transform = zoomOn(transform, factor, { width, height }, b && { ...b, x: b.x - b.width / 2, y: b.y - b.height / 2 });
     }
 
     // Pans as little as it can to bring a node into view, only if some of it is out of sight.

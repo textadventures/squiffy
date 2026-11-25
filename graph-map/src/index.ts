@@ -12,5 +12,5 @@ export {
     arrowhead, arrowPoints, boundsOf, distanceToEdge, edgeBounds, edgeGeometry, edgeShape, exitPoint, nearestInDirection,
     type Box, type EdgeGeometry, type EdgeShape,
 } from "./geometry.js";
-export { fitTransform, identity, MAX_ZOOM, MIN_ZOOM, revealTransform, toMap, toScreen, zoomAt, type Transform } from "./viewport.js";
+export { fitTransform, identity, MAX_ZOOM, MIN_ZOOM, revealTransform, toMap, toScreen, zoomAt, zoomOn, type Transform } from "./viewport.js";
 export { hashString, seededRandom } from "./random.js";
