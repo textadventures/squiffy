@@ -618,6 +618,84 @@ test.describe("editing from the map", () => {
     });
 });
 
+test.describe("Back and Forward (#678)", () => {
+    const backKey = process.platform === "darwin" ? "Control+Minus" : "Alt+ArrowLeft";
+    const forwardKey = process.platform === "darwin" ? "Control+Shift+Minus" : "Alt+ArrowRight";
+    const back = (page: Page) => page.getByRole("button", { name: "Go back" });
+    const forward = (page: Page) => page.getByRole("button", { name: "Go forward" });
+    const activeLine = (page: Page) => editor(page).locator(".cm-activeLine");
+
+    test("go through the sections opened beside the map, to where the cursor was", async ({ page }) => {
+        await openStory(page);
+        await expect(back(page)).toBeDisabled();
+        await write(page, "section:start");
+        await box(page, "section:cave").click();
+        await expect(cardTitle(page)).toHaveText("cave");
+        // The cursor on the passage's header, which Back comes back to
+        await editor(page).click();
+        await page.keyboard.press("ControlOrMeta+End");
+        await page.keyboard.press("ArrowUp");
+        await expect(activeLine(page)).toHaveText("[wall]:");
+        await box(page, "section:hill").click();
+        await expect(cardTitle(page)).toHaveText("hill");
+
+        await back(page).click();
+        await expect(cardTitle(page)).toHaveText("cave");
+        await expect(activeLine(page)).toHaveText("[wall]:");
+        await expect(page.getByText("Passage: wall").first()).toBeVisible();
+        await back(page).click();
+        await expect(cardTitle(page)).toHaveText("start");
+        await expect(back(page)).toBeDisabled();
+
+        await forward(page).click();
+        await expect(cardTitle(page)).toHaveText("cave");
+        await forward(page).click();
+        await expect(cardTitle(page)).toHaveText("hill");
+        await expect(forward(page)).toBeDisabled();
+    });
+
+    test("go back from a link's section in the script, with the keys", async ({ page }) => {
+        await openStory(page);
+        await page.getByRole("group", { name: "View" }).getByRole("button", { name: "Code", exact: true }).click();
+        await editor(page).click();
+        // Into the [[hill]] link at the end of the start section's line
+        await page.keyboard.press("ControlOrMeta+Home");
+        for (let i = 0; i < 3; i++) await page.keyboard.press("ArrowDown");
+        await page.keyboard.press("End");
+        for (let i = 0; i < 4; i++) await page.keyboard.press("ArrowLeft");
+        await page.keyboard.press("F12");
+        await expect(activeLine(page)).toHaveText("[[hill]]:");
+
+        await page.keyboard.press(backKey);
+        await expect(activeLine(page)).toHaveText("Go to the [[cave]] or the [[hill]].");
+        // Still where it was in the line: typing goes in the link
+        await page.keyboard.press(forwardKey);
+        await expect(activeLine(page)).toHaveText("[[hill]]:");
+        await page.keyboard.press(backKey);
+        await expect(activeLine(page)).toHaveText("Go to the [[cave]] or the [[hill]].");
+        await page.keyboard.type("x");
+        await expect(activeLine(page)).toHaveText("Go to the [[cave]] or the [[hilxl]].");
+    });
+
+    test("a section that's been deleted is passed over", async ({ page }) => {
+        await openStory(page);
+        await write(page, "section:start");
+        await box(page, "section:cave").click();
+        await expect(cardTitle(page)).toHaveText("cave");
+        await box(page, "section:hill").click();
+        await expect(cardTitle(page)).toHaveText("hill");
+        await page.locator("#editor header").getByRole("button", { name: "Close" }).click();
+        await box(page, "section:cave").click();
+        await page.keyboard.press("Delete");
+        await page.getByRole("button", { name: "Delete", exact: true }).last().click();
+        await expect(box(page, "section:cave")).toHaveCount(0);
+
+        await back(page).click();
+        await expect(cardTitle(page)).toHaveText("start");
+        await expect(back(page)).toBeDisabled();
+    });
+});
+
 test("a story opens with its map as it was left", async ({ page }) => {
     await openStory(page);
     await page.reload();

@@ -18,7 +18,7 @@ export interface ShortcutGroup {
 export const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform);
 
 // The editor's own, which aren't CodeMirror's
-export const EDITOR_KEYS = new Set(["Mod-s", "Mod-Enter", "Mod-Shift-Enter", "Mod-Shift-o", "Mod-Shift-m", "Mod-Shift-f", "F12", "Mod-click", "Mod-.", "Shift-F12", "F2"]);
+export const EDITOR_KEYS = new Set(["Alt-ArrowLeft", "Alt-ArrowRight", "Ctrl--", "Ctrl-Shift--", "Mod-s", "Mod-Enter", "Mod-Shift-Enter", "Mod-Shift-o", "Mod-Shift-m", "Mod-Shift-f", "F12", "Mod-click", "Mod-.", "Shift-F12", "F2"]);
 
 export const SHORTCUT_GROUPS: ShortcutGroup[] = [
     {
@@ -30,6 +30,7 @@ export const SHORTCUT_GROUPS: ShortcutGroup[] = [
             { keys: ["Mod-Shift-o"], description: "Go to a section or passage" },
             { keys: ["Mod-Shift-m"], description: "List every problem in the story" },
             { keys: ["F8"], description: "Go to the next problem in this file" },
+            { keys: ["Alt-ArrowLeft", "Alt-ArrowRight"], mac: ["Ctrl--", "Ctrl-Shift--"], description: "Go back to where you were before going somewhere else in the story, or forward again" },
         ],
     },
     {
@@ -108,4 +109,19 @@ export function formatKey(key: string, mac = isMac): string {
 
 export function shortcutKeys(shortcut: Shortcut, mac = isMac): string[] {
     return (mac && shortcut.mac) || shortcut.keys;
+}
+
+// Back and Forward through the places the author has jumped from: Alt+Left and Alt+Right, as in
+// a browser, or on a Mac (where Alt+Left moves by a word), Ctrl+- and Ctrl+Shift+-, as in VS Code
+export const BACK_KEY = isMac ? "Ctrl--" : "Alt-ArrowLeft";
+export const FORWARD_KEY = isMac ? "Ctrl-Shift--" : "Alt-ArrowRight";
+
+export function navigationKey(e: Pick<KeyboardEvent, "key" | "code" | "altKey" | "ctrlKey" | "metaKey" | "shiftKey">, mac = isMac): "back" | "forward" | null {
+    if (e.metaKey) return null;
+    if (mac) {
+        if (!e.ctrlKey || e.altKey || e.code !== "Minus") return null;
+        return e.shiftKey ? "forward" : "back";
+    }
+    if (!e.altKey || e.ctrlKey || e.shiftKey) return null;
+    return e.key === "ArrowLeft" ? "back" : e.key === "ArrowRight" ? "forward" : null;
 }

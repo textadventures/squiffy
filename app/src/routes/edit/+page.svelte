@@ -5,7 +5,7 @@
     import { goto } from "$app/navigation";
     import { page } from "$app/state";
     import { EditorView } from "@codemirror/view";
-    import type { Extension } from "@codemirror/state";
+    import { Text, type Extension } from "@codemirror/state";
     import type { DocumentSymbol, GraphNode, Location, StoryGraph, WorkspaceEdit } from "squiffy-compiler/language-service";
     import { PROJECT_FILENAME, type MapPositions } from "squiffy-compiler";
     import { basename, dirname, extname, guessMimeType, joinPath, parsePath } from "@textadventures/project-fs";
@@ -55,7 +55,8 @@
     import { narrowed, narrowing, narrowRange, setNarrow } from "#lib/narrow.js";
     import { checkPassageName, deleteLinesEdits, deletionMessage, endingEdit, endingRemovalEdits, insertHeaderEdit, isDirectiveLine, linkThenHeaderEdits, placeNewPassage, placeNewSection, planDeletion, startEdit, type Place } from "#lib/map-edits.js";
     import { addSectionOrPassage, clipboardCommand, insertSnippet, runCommand, userSnippets } from "#lib/editor-commands.js";
-    import { formatKey } from "#lib/shortcuts.js";
+    import { formatKey, navigationKey } from "#lib/shortcuts.js";
+    import { NavHistory, type Place as NavPlace } from "#lib/nav-history.js";
     import { desktopApi } from "#lib/desktop.js";
     import { handleUndo } from "#lib/desktop-shell.js";
     import { connectPlayTab, playPageUrl } from "#lib/play-in-tab.js";
@@ -194,6 +195,16 @@
         // Ctrl/Cmd+Enter: run the story; with Shift, from the section the cursor is in. Caught
         // before the editor sees them, since Ctrl/Cmd+Enter would otherwise add a line.
         function handleKeydown(e: KeyboardEvent) {
+            // Back and Forward: Alt+Left and Alt+Right, or Ctrl+- and Ctrl+Shift+- on a Mac.
+            // Before the editor (where Alt+Left moves by a word) and the browser (where it's the
+            // browser's own Back) see them. Not in a dialog, which has nowhere to go.
+            const direction = navigationKey(e);
+            if (direction && !(e.target instanceof Element && e.target.closest("dialog, [role=dialog], [role=alertdialog]"))) {
+                e.preventDefault();
+                e.stopPropagation();
+                void goBackOrForward(direction === "forward");
+                return;
+            }
             if (!(e.metaKey || e.ctrlKey)) return;
             if (e.shiftKey && e.key.toLowerCase() === "m") {
                 // Instead of CodeMirror's own panel, which only lists the open file's problems
@@ -219,13 +230,23 @@
                 void runPreview(e.shiftKey);
             }
         }
+        // A mouse's back and forward buttons, which would otherwise leave the editor
+        function handleMouseButton(e: MouseEvent) {
+            if (e.button !== 3 && e.button !== 4) return;
+            e.preventDefault();
+            if (e.type === "mouseup") void goBackOrForward(e.button === 4);
+        }
         document.addEventListener("visibilitychange", handleVisibilityChange);
         window.addEventListener("focus", handleFocus);
         window.addEventListener("keydown", handleKeydown, true);
+        window.addEventListener("mousedown", handleMouseButton);
+        window.addEventListener("mouseup", handleMouseButton);
         return () => {
             document.removeEventListener("visibilitychange", handleVisibilityChange);
             window.removeEventListener("focus", handleFocus);
             window.removeEventListener("keydown", handleKeydown, true);
+            window.removeEventListener("mousedown", handleMouseButton);
+            window.removeEventListener("mouseup", handleMouseButton);
         };
     });
 
@@ -310,13 +331,22 @@
     };
     const otherLanguageCache = new Map<string, Extension[]>();
 
+    // Keeps the places Back and Forward go to with the text they were at, as it's edited
+    const trackPlaces = EditorView.updateListener.of(update => {
+        if (!update.docChanged) return;
+        for (const [path, view] of views) {
+            if (view === update.view) navHistory.mapChanges(path, update.changes, update.startState.doc);
+        }
+    });
+    const plainExtensions = [trackPlaces];
+
     function otherLanguageFor(path: string): Extension[] {
         const ext = extname(path).toLowerCase();
         const make = otherLanguages[ext];
-        if (!make) return [];
+        if (!make) return plainExtensions;
         let extensions = otherLanguageCache.get(ext);
         if (!extensions) {
-            extensions = make();
+            extensions = [make(), trackPlaces];
             otherLanguageCache.set(ext, extensions);
         }
         return extensions;
@@ -331,6 +361,7 @@
         if (!extensions) {
             extensions = [
                 squiffyLanguage,
+                trackPlaces,
                 // For writing one section from the full-screen map. Escape closes it, back to the
                 // map, with its box selected.
                 narrowing(() => {
@@ -344,7 +375,8 @@
                         symbolsByPath = { ...symbolsByPath, [path]: s };
                         if (path === current.mainFile) current.setTitle(s.find(x => x.kind === "title")?.name ?? "");
                     },
-                    onNavigate: goToLocation,
+                    onNavigate: location => void goToLocation(location),
+                    onJump: recordJump,
                     takeNavigation: location => {
                         if (!cardShown) return false;
                         void goToLocation(location);
@@ -430,9 +462,11 @@
         return views.get(path);
     }
 
-    // Moves the editor to a location, opening its file if need be
-    async function goToLocation(location: Location) {
+    // Moves the editor to a location, opening its file if need be. Back comes back to where the
+    // author was, unless it's Back or Forward itself that's going there.
+    async function goToLocation(location: Location, record = true) {
         if (!p) return;
+        if (record) recordJump();
         if (await goToInCard(location, true)) return;
         narrowPane = "editor";
         try {
@@ -447,6 +481,55 @@
         const head = toOffset(view.state.doc, location.range.end);
         view.dispatch({ selection: { anchor, head }, effects: EditorView.scrollIntoView(anchor, { y: "center" }) });
         view.focus();
+    }
+
+    // ---- Back and Forward (#678) ----
+
+    // Whether there's anywhere to go, for the toolbar's buttons
+    let navState = $state({ back: false, forward: false });
+    const navHistory = new NavHistory(() => {
+        navState = { back: navHistory.canGoBack, forward: navHistory.canGoForward };
+    });
+
+    // Where the author is: the cursor in the section beside the map, or in the script. Nowhere,
+    // with the map full screen and no section open beside it.
+    function here(): NavPlace | null {
+        if (!p) return null;
+        const file = cardShown && card ? card.file : mapOpen && mapMaximized && !isNarrow.current ? null : p.activePath;
+        const view = file ? views.get(file) : undefined;
+        return file && view ? { file, offset: view.state.selection.main.head } : null;
+    }
+
+    // Before going somewhere, so Back comes back here
+    function recordJump() {
+        navHistory.record(here());
+    }
+
+    // Back or Forward, passing over places in files that have gone
+    async function goBackOrForward(forward: boolean) {
+        let current = here();
+        for (;;) {
+            const place = forward ? navHistory.goForward(current) : navHistory.goBack(current);
+            if (!place) return;
+            if (await goToPlace(place)) return;
+            current = null;
+        }
+    }
+
+    // Goes to a place as any other location: with the map full screen, in the section beside it
+    async function goToPlace(place: NavPlace): Promise<boolean> {
+        const current = p;
+        if (!current || !current.files.some(f => f.path === place.file)) return false;
+        let text: string;
+        try {
+            text = current.fileAt(place.file)?.text ?? await current.fs.readText(place.file);
+        } catch {
+            return false;
+        }
+        const doc = Text.of(text.split(/\r\n?|\n/));
+        const position = toPosition(doc, Math.min(place.offset, doc.length));
+        await goToLocation({ file: place.file, range: { start: position, end: position } }, false);
+        return true;
     }
 
     // Edits to other files, e.g. a rename that reaches into an @imported file. An open file is
@@ -551,6 +634,7 @@
     }
 
     function goToSymbol(symbol: DocumentSymbol) {
+        recordJump();
         narrowPane = "editor";
         // On a narrow screen the editor is only now coming back, so wait for it
         requestAnimationFrame(() => {
@@ -1089,6 +1173,7 @@
             mapMaximized = false;
             void goToLocation(location);
         } else {
+            recordJump();
             void showLocation(location);
         }
     }
@@ -1097,8 +1182,12 @@
     // which keeps the map on screen (showLocation falls back to the script if the link isn't in a
     // section the card can show)
     function goFromEdge(location: Location) {
-        if (mapMaximized && !isNarrow.current) void showLocation(location);
-        else goFromMap(location, false);
+        if (mapMaximized && !isNarrow.current) {
+            recordJump();
+            void showLocation(location);
+        } else {
+            goFromMap(location, false);
+        }
     }
 
     // Where a new link from a section or passage goes: at the cursor, if it's in there, or else
@@ -1678,6 +1767,7 @@
         if (!to || to === path || !validPath(to)) return;
         try {
             await p.renameFile(path, to);
+            navHistory.renameFile(path, to);
             if (isSquiffyFile(path)) showToast("If another file @imports this one by name, change its @import too.", "info");
         } catch (err) {
             showToast(errorText(err));
@@ -1718,6 +1808,7 @@
         if (!(await confirmDialog(`Delete ${path}? This can't be undone.`, { confirmLabel: "Delete", danger: true }))) return;
         try {
             await p.deleteFile(path);
+            navHistory.forgetFile(path);
         } catch (err) {
             showToast(errorText(err));
         }
@@ -1726,6 +1817,7 @@
     function handleOpenFile(path: string) {
         if (!p) return;
         if (isTextFile(path)) {
+            if (path !== p.activePath) recordJump();
             narrowPane = "editor";
             void p.open(path).catch(err => showToast(errorText(err)));
         } else {
@@ -1824,6 +1916,10 @@
             {snippets}
             onabout={() => { aboutOpen = true; }}
             onplaytab={handlePlayInTab}
+            canGoBack={navState.back}
+            canGoForward={navState.forward}
+            onback={() => void goBackOrForward(false)}
+            onforward={() => void goBackOrForward(true)}
         />
         <BackupBanner ondownload={handleDownloadProject} />
         <div class="flex flex-1 overflow-hidden">
@@ -1897,7 +1993,7 @@
                         <button type="button" class="btn-icon btn-icon-sm" title="Close" aria-label="Close" onclick={() => { closeCard(); mapPanel?.focus(); }}><X size={14} /></button>
                     </header>
                 {:else}
-                    <EditorTabs project={p} />
+                    <EditorTabs project={p} onswitch={recordJump} />
                 {/if}
                 <!-- One editor per open file, so each keeps its own cursor and undo history -->
                 {#each p.openFiles as file (file.path)}
@@ -1938,7 +2034,12 @@
                     {trace}
                     maximized={mapMaximized}
                     card={cardShown ? card?.id ?? null : null}
-                    onedit={(node, focus) => void openCard(node, focus)}
+                    onedit={(node, focus) => {
+                        // Not a passage in the section that's open, which is where Back to
+                        // a passage selects
+                        if ((node.kind === "section" ? node.name : node.section) !== cardNode?.name) recordJump();
+                        void openCard(node, focus);
+                    }}
                     width={isNarrow.current || mapMaximized ? undefined : mapWidth}
                     ongoto={(node, focus) => { const location = node.graphNode?.location; if (location) goFromMap(location, focus); }}
                     ongotoedge={(edge: StoryMapEdge) => { const location = edge.edges[0]?.location ?? edge.location; if (location) goFromEdge(location); }}

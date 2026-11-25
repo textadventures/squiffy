@@ -57,6 +57,8 @@ export interface LanguageFeatureOptions {
     onSymbols?(symbols: DocumentSymbol[]): void;
     // Go to a location in another file. Locations in this file are handled here.
     onNavigate?(location: Location): void;
+    // Told before the cursor jumps to a location in this file, so the app can come back
+    onJump?(): void;
     // Asked before going to a location in this file: return true if the app goes there itself,
     // e.g. while the editor shows only one section, and the location's in another
     takeNavigation?(location: Location): boolean;
@@ -169,6 +171,7 @@ export function languageFeatures(options: LanguageFeatureOptions): Extension[] {
             return;
         }
         if (options.takeNavigation?.(location)) return;
+        options.onJump?.();
         const anchor = toOffset(view.state.doc, location.range.start);
         const head = toOffset(view.state.doc, location.range.end);
         view.dispatch({

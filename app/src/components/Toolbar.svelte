@@ -1,7 +1,7 @@
 <script lang="ts">
     // The editor's toolbar, laid out like Quest Viva's: home, the story's name and save state on
     // the left; on the right, in groups, as a menu bar would be: File, adding to the story (Add,
-    // images), Undo and Redo, problems, what's shown (the script, the map or both), then Run and
+    // images), Undo and Redo, Back and Forward, problems, what's shown (the script, the map or both), then Run and
     // the overflow menu.
     // Menus open from their button's left edge, as a menu bar's do, unless that's off the screen.
     import { AppBar } from "@skeletonlabs/skeleton-svelte";
@@ -10,7 +10,7 @@
     import { project, closeProject, downloadFile } from "#lib/project.svelte.js";
     import { settings } from "#lib/settings.svelte.js";
     import { shortcutsDialog } from "#lib/shortcuts-dialog.svelte.js";
-    import { isMac } from "#lib/shortcuts.js";
+    import { BACK_KEY, FORWARD_KEY, formatKey, isMac } from "#lib/shortcuts.js";
     import { builtInSnippets, type Snippet } from "#lib/snippets.js";
     import type { EditorCommand } from "#lib/editor-commands.js";
     import { isNarrow } from "#lib/layout.svelte.js";
@@ -43,6 +43,8 @@
     import Plus from "@lucide/svelte/icons/plus";
     import Undo2 from "@lucide/svelte/icons/undo-2";
     import Redo2 from "@lucide/svelte/icons/redo-2";
+    import ArrowLeft from "@lucide/svelte/icons/arrow-left";
+    import ArrowRight from "@lucide/svelte/icons/arrow-right";
     import Search from "@lucide/svelte/icons/search";
     import FileSearch from "@lucide/svelte/icons/file-search";
     import FoldVertical from "@lucide/svelte/icons/fold-vertical";
@@ -98,9 +100,14 @@
         onabout?: () => void;
         // Plays the published story in a new tab, as players will see it
         onplaytab?: () => void;
+        // Back and Forward, through the places the author has gone to in the story from
+        canGoBack?: boolean;
+        canGoForward?: boolean;
+        onback?: () => void;
+        onforward?: () => void;
     }
 
-    let { outlineOpen = false, ontoggleoutline, mapOpen = false, ontogglemap, view = "code", onview, problemCounts = { error: 0, warning: 0, hint: 0 }, problemsOpen = false, ontoggleproblems, onfindinfiles, onrun, onassets, onfonts, ondownloadproject, onpublish, oncommand, onadd, onsnippet, snippets = [], onabout, onplaytab }: Props = $props();
+    let { outlineOpen = false, ontoggleoutline, mapOpen = false, ontogglemap, view = "code", onview, problemCounts = { error: 0, warning: 0, hint: 0 }, problemsOpen = false, ontoggleproblems, onfindinfiles, onrun, onassets, onfonts, ondownloadproject, onpublish, oncommand, onadd, onsnippet, snippets = [], onabout, onplaytab, canGoBack = false, canGoForward = false, onback, onforward }: Props = $props();
 
     const mod = isMac ? "⌘" : "Ctrl+";
 
@@ -165,6 +172,8 @@
         const edit: DropdownMenuItem[] = [
             { label: "Undo", action: () => oncommand?.("undo"), icon: Undo2 },
             { label: "Redo", action: () => oncommand?.("redo"), icon: Redo2 },
+            { label: "Go back", action: () => onback?.(), icon: ArrowLeft, disabled: !canGoBack },
+            { label: "Go forward", action: () => onforward?.(), icon: ArrowRight, disabled: !canGoForward },
         ];
         const view: DropdownMenuItem[] = [
             { label: "Find and replace", action: () => oncommand?.("find"), icon: Search },
@@ -278,6 +287,9 @@
                     <div class="toolbar-divider"></div>
                     <button type="button" class="toolbar-icon-btn" onclick={() => oncommand?.("undo")} title="Undo ({mod}Z)" aria-label="Undo"><Undo2 size={16} /></button>
                     <button type="button" class="toolbar-icon-btn" onclick={() => oncommand?.("redo")} title="Redo ({mod}Shift+Z)" aria-label="Redo"><Redo2 size={16} /></button>
+                    <div class="toolbar-divider"></div>
+                    <button type="button" class="toolbar-icon-btn" onclick={onback} disabled={!canGoBack} title="Go back ({formatKey(BACK_KEY)})" aria-label="Go back"><ArrowLeft size={16} /></button>
+                    <button type="button" class="toolbar-icon-btn" onclick={onforward} disabled={!canGoForward} title="Go forward ({formatKey(FORWARD_KEY)})" aria-label="Go forward"><ArrowRight size={16} /></button>
                     <div class="toolbar-divider"></div>
                 {/if}
                 <button
