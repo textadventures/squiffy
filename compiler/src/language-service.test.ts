@@ -154,8 +154,10 @@ describe("diagnostics", () => {
         const main = "[[a]]:\n[p]:\nx\n[p]:\ny\n@import b.squiffy";
         const b = "[[a]]:\n@end\nagain";
         const ls = createLanguageService({ files: memoryFiles({ "s.squiffy": main, "b.squiffy": b }), mainFile: "s.squiffy" });
-        expect((await ls.getDiagnostics("s.squiffy")).map(d => [d.code, d.severity, slice(main, d.range)])).toEqual([
-            ["squiffy/duplicate-passage", "warning", "p"],
+        expect((await ls.getDiagnostics("s.squiffy")).map(d => [d.code, d.severity, slice(main, d.range), d.message])).toEqual([
+            ["squiffy/duplicate-passage", "warning", "p", "There's already a passage called [p] in section 'a', at line 2. This one replaces it."],
+            // The section that's replaced says so too
+            ["squiffy/duplicate-section", "warning", "a", "The section [[a]] at b.squiffy line 1 replaces this one, so this section and its passages aren't part of the story. Rename one of them."],
         ]);
         const diagnostics = await ls.getDiagnostics("b.squiffy");
         expect(diagnostics.map(d => [d.code, d.severity, slice(b, d.range), d.message])).toEqual([
