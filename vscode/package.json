@@ -30,6 +30,12 @@
     "workspaceContains:**/*.squiffy"
   ],
   "contributes": {
+    "jsonValidation": [
+      {
+        "fileMatch": "squiffy.json",
+        "url": "https://squiffystory.com/schema/squiffy.json"
+      }
+    ],
     "languages": [
       {
         "id": "squiffy",
