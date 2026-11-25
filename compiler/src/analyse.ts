@@ -153,6 +153,8 @@ class TextContainer {
     leaveTime?: number;
     // Where @leave is, to say if there's nothing for it to do
     leaveNode?: { filename: string | undefined, range: Range };
+    // Where its JavaScript starts, to say if it isn't valid
+    jsRange?: Range;
     // The text after links have been converted
     output = "";
 
@@ -200,6 +202,18 @@ export interface AnalysisInternals {
 export const analysisInternals = new WeakMap<Analysis, AnalysisInternals>();
 
 const lineRange = (node: { range: Range }): Range => node.range;
+
+// Why some JavaScript, as the body of a section's or passage's function, doesn't parse, or null if
+// it does, or it can't be checked here (in a page that doesn't allow eval)
+function javaScriptError(code: string): string | null {
+    try {
+        new Function("squiffy", "get", "set", code);
+        return null;
+    }
+    catch (e) {
+        return e instanceof SyntaxError ? e.message : null;
+    }
+}
 
 // A @transition time (#489), such as "1s", "0.5s" or "400ms", in milliseconds
 function parseTransitionTime(time: string): number | undefined {
@@ -519,19 +533,24 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
                     }
                     return true;
                 }
-                case "js":
+                case "js": {
+                    let container: TextContainer;
                     if (inUiBlock) {
                         story.uiJs.push(node.code);
+                        return true;
                     }
                     else if (!passage) {
                         section = ensureSectionExists(lineCount);
                         if (!section) return sectionRequired(node);
-                        section.js.push(node.code);
+                        container = section;
                     }
                     else {
-                        passage.js.push(node.code);
+                        container = passage;
                     }
+                    container.js.push(node.code);
+                    container.jsRange ??= lineRange(node);
                     return true;
+                }
                 case "text":
                     if (inUiBlock) {
                         report("error", "squiffy/text-in-ui-block", filename, lineRange(node), "Unexpected text in @ui block.", lineCount);
@@ -661,6 +680,9 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
             else if (match.text.startsWith("{else:")) {
                 message += " Use {{else}} inside an {{#if}} block instead.";
             }
+            else if (match.text.startsWith("[")) {
+                message += " A link can't replace a label now: link to a passage that does it with {{#replace}} instead.";
+            }
             const line = match.line - 1;
             const lineText = lines[line] ?? "";
             const found = lineText.indexOf(match.text.split("\n")[0]);
@@ -712,6 +734,15 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
             for (const bare of names.bare) {
                 const range = toRange(result.mapStart(bare.start), result.mapEnd(bare.end));
                 bareNames.push({ ...bare, filename: section.filename, range, where });
+            }
+        }
+
+        // JavaScript that isn't valid stops the whole published story from running (#660)
+        if (container.jsRange) {
+            const error = javaScriptError(container.js.join("\n"));
+            if (error) {
+                report("error", "squiffy/javascript-syntax", section.filename, container.jsRange,
+                    `${where}, the JavaScript isn't valid: ${error}`, container.jsRange.start.line + 1);
             }
         }
 

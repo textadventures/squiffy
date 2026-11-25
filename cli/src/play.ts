@@ -47,7 +47,14 @@ export async function loadPlayableStory(story: StoryOnDisk): Promise<LoadResult>
         return { success: false, errors: analysis.diagnostics.filter(d => d.severity == "error").map(formatDiagnostic) };
     }
     const compiled = emit(analysis, { projectId: story.projectId, panels: story.panels, settings: story.settings, persistent: story.persistent, headerTitle: story.headerTitle });
-    const js = compiled.output.js.map(lines => new Function("squiffy", "get", "set", lines.join("\n")));
+    let js: ((...args: unknown[]) => unknown)[];
+    try {
+        js = compiled.output.js.map(lines => new Function("squiffy", "get", "set", lines.join("\n")) as (...args: unknown[]) => unknown);
+    }
+    catch (e) {
+        // The compiler reports JavaScript that doesn't parse, so this shouldn't happen
+        return { success: false, errors: [`The story's JavaScript isn't valid: ${e instanceof Error ? e.message : String(e)}`] };
+    }
 
     // Sections and passages that are only shown inside others, with {{embed}} or {{live}},
     // are never visited, so they're left out, as are the master section's passages that are

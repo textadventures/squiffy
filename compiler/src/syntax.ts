@@ -43,6 +43,7 @@ export type DiagnosticCode =
     | "squiffy/link-to-test-section"
     | "squiffy/sound-on-first-screen"
     | "squiffy/template-syntax"
+    | "squiffy/javascript-syntax"
     | "squiffy/unknown-name";
 
 export interface Diagnostic {

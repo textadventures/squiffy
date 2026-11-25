@@ -29,6 +29,11 @@ describe("convertSetter", () => {
         ["greeting := Hello, {{name}}!", "greeting := Hello, {{name}}!"],
         // Whitespace around the setter is kept
         [" weapon = sword ", " weapon = \"sword\" "],
+        // Names can have letters from any language in them (#660)
+        ["Zähler = drei", "Zähler = \"drei\""],
+        ["Zähler += @Josué", "Zähler += Josué"],
+        ["mönjääkäsissä", "mönjääkäsissä"],
+        ["not mönjääkäsissä", "not mönjääkäsissä"],
     ])("%j -> %j", (input, expected) => {
         expect(convertSetter(input)).toEqual({ text: expected });
     });

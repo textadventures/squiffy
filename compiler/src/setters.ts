@@ -55,7 +55,7 @@ function quote(text: string, preferSingle: boolean): string | null {
 
 // @name as an attribute in an expression: the name, or [name] if it isn't a plain word
 function attribute(name: string): string | null {
-    if (/^\w+$/.test(name) && !reservedWords.has(name) && !/^\d/.test(name)) return name;
+    if (/^[\p{L}\p{N}_]+$/u.test(name) && !reservedWords.has(name) && !/^\d/.test(name)) return name;
     if (name === "" || name.includes("]")) return null;
     return `[${name}]`;
 }
@@ -88,9 +88,9 @@ export function convertSetter(setter: string, options: { preferSingleQuotes?: bo
     const wrap = (c: SetterConversion): SetterConversion => "text" in c ? { text: leading + c.text + trailing } : c;
 
     // name := text processes {{...}} in the text, under both rules
-    if (/^\w*\s*:=/.test(expr)) return { text: setter };
+    if (/^[\p{L}\p{N}_]*\s*:=/u.test(expr)) return { text: setter };
 
-    const set = /^(\w*)(\s*=\s*)(.*)$/.exec(expr);
+    const set = /^([\p{L}\p{N}_]*)(\s*=\s*)(.*)$/u.exec(expr);
     if (set) {
         const [, lhs, eq, rhs] = set;
         if (!lhs) return { problem: "it has no attribute name before \"=\"" };
@@ -98,7 +98,7 @@ export function convertSetter(setter: string, options: { preferSingleQuotes?: bo
         return "text" in value ? wrap({ text: lhs + eq + value.text }) : value;
     }
 
-    const operate = /^(\w*)(\s*[+\-*/]=\s*)(.*)$/.exec(expr);
+    const operate = /^([\p{L}\p{N}_]*)(\s*[+\-*/]=\s*)(.*)$/u.exec(expr);
     if (operate) {
         const [, lhs, op, rhs] = operate;
         if (!lhs) return { problem: "it has no attribute name" };
@@ -107,7 +107,7 @@ export function convertSetter(setter: string, options: { preferSingleQuotes?: bo
     }
 
     // A flag: name or not name
-    if (/^(not )?\w+$/.test(expr)) return { text: setter };
+    if (/^(not )?[\p{L}\p{N}_]+$/u.test(expr)) return { text: setter };
     return { problem: "it isn't an attribute name, or name = value" };
 }
 
@@ -249,8 +249,8 @@ export function findAtAttributes(file: SquiffyFile): AtAttribute[] {
                 else if (c === quote) quote = null;
             }
             else if (c === "\"" || c === "'") quote = c;
-            else if (c === "@" && !/\w/.test(text[i - 1] ?? "") && /\w/.test(text[i + 1] ?? "")) {
-                const name = /^@\w+/.exec(text.substring(i))![0];
+            else if (c === "@" && !/[\p{L}\p{N}_]/u.test(text[i - 1] ?? "") && /[\p{L}\p{N}_]/u.test(text[i + 1] ?? "")) {
+                const name = /^@[\p{L}\p{N}_]+/u.exec(text.substring(i))![0];
                 result.push({ text: name, range: { start: { line, character: character + i }, end: { line, character: character + i + name.length } } });
                 i += name.length - 1;
             }
@@ -357,7 +357,7 @@ function setterSites(file: SquiffyFile): SetterSite[] {
 export function attributesSetIn(file: SquiffyFile, text: string): Set<string> {
     const names = new Set<string>();
     for (const site of setterSites(file)) {
-        const name = /^\s*(?:not\s+)?(\w+)/.exec(site.text);
+        const name = /^\s*(?:not\s+)?([\p{L}\p{N}_]+)/u.exec(site.text);
         if (name) names.add(name[1]);
     }
     for (const section of [file.preamble, ...file.sections] as (SectionNode | SnippetNode)[]) {
@@ -395,11 +395,11 @@ export function findUnquotedText(file: SquiffyFile, isSet: (name: string) => boo
     for (const site of setterSites(file)) {
         // Only plain "=": text with +=, -=, *= or /= is an error whatever it's written as
         // The attribute can be a value inside an object, as in hero.name = Ann (#442)
-        const match = /^(\s*)(\w+(?:\.\w+)*)(\s*=(?!=)\s*)(.*?)\s*$/.exec(site.text);
+        const match = /^(\s*)([\p{L}\p{N}_]+(?:\.[\p{L}\p{N}_]+)*)(\s*=(?!=)\s*)(.*?)\s*$/u.exec(site.text);
         if (!match) continue;
         const [, leading, attribute, eq, value] = match;
         let kind: UnquotedText["kind"] | null = null;
-        if (/^[A-Za-z_]\w*$/.test(value)) {
+        if (/^[\p{L}_][\p{L}\p{N}_]*$/u.test(value)) {
             if (!reservedWords.has(value) && !value.startsWith("_") && !isSet(value)) kind = "word";
         }
         else if (/\s/.test(value) && /^[^"'()+*%<>=!&|{}[\]@\\/]+$/.test(value) && !/(^|\s)-|\b(and|or|not)\b/.test(value)) {
@@ -444,7 +444,7 @@ export function findBuiltInAttributeSets(file: SquiffyFile, text: string): Built
         }
     };
     for (const site of setterSites(file)) {
-        const match = /^(\s*(?:not\s+)?)(\w+)/.exec(site.text);
+        const match = /^(\s*(?:not\s+)?)([\p{L}\p{N}_]+)/u.exec(site.text);
         if (match) add(match[2], site.line, site.character + match[1].length);
     }
     for (const section of [file.preamble, ...file.sections] as (SectionNode | SnippetNode)[]) {
@@ -452,13 +452,13 @@ export function findBuiltInAttributeSets(file: SquiffyFile, text: string): Built
         for (const container of [section, ...section.passages]) {
             for (const node of container.body) {
                 if (node.type !== "attribute" || node.directive === "set") continue;
-                const match = /^(\s*)(\w+)/.exec(node.value);
+                const match = /^(\s*)([\p{L}\p{N}_]+)/u.exec(node.value);
                 if (match) add(match[2], node.valueRange.start.line, node.valueRange.start.character + match[1].length);
             }
         }
     }
     text.replace(/\r/g, "").split("\n").forEach((line, i) => {
-        for (const match of line.matchAll(/\b(?:set|inc|dec|unset)\s*\(?\s*(["'])(\w+)\1/g)) {
+        for (const match of line.matchAll(/\b(?:set|inc|dec|unset)\s*\(?\s*(["'])([\p{L}\p{N}_]+)\1/gu)) {
             add(match[2], i, match.index! + match[0].length - match[2].length - 1);
         }
     });
@@ -482,7 +482,7 @@ function literalValue(text: string): { value?: string, unknown?: boolean } {
     const quoted = /^(["'])([^"'\\]*)\1$/.exec(value);
     if (quoted) return { value: quoted[2] };
     if (/^(true|false|null|undefined)$/.test(value) || numberPattern.test(value)) return {};
-    if (/^[A-Za-z_]\w*$/.test(value)) return { value, unknown: true };
+    if (/^[\p{L}_][\p{L}\p{N}_]*$/u.test(value)) return { value, unknown: true };
     return { unknown: true };
 }
 
@@ -499,7 +499,7 @@ export function attributeValues(files: Iterable<SquiffyFile>): Map<string, Attri
     };
     for (const file of files) {
         for (const site of setterSites(file)) {
-            const match = /^\s*(not\s+)?(\w+(?:\.\w+)*)\s*(?:(:?=(?!=)|[-+*/]=)\s*(.*?))?\s*$/.exec(site.text);
+            const match = /^\s*(not\s+)?([\p{L}\p{N}_]+(?:\.[\p{L}\p{N}_]+)*)\s*(?:(:?=(?!=)|[-+*/]=)\s*(.*?))?\s*$/u.exec(site.text);
             if (!match) continue;
             const [, not, attribute, operator, value] = match;
             if (not || operator === undefined) add(attribute, {});
@@ -510,12 +510,12 @@ export function attributeValues(files: Iterable<SquiffyFile>): Map<string, Attri
             for (const container of [section, ...section.passages]) {
                 for (const node of container.body) {
                     if (node.type === "text") {
-                        for (const match of node.text.matchAll(/\{\{~?\s*set\s+(["'])([\w.]+)\1\s+(.*?)\s*~?\}\}/g)) {
+                        for (const match of node.text.matchAll(/\{\{~?\s*set\s+(["'])([\p{L}\p{N}_.]+)\1\s+(.*?)\s*~?\}\}/gu)) {
                             add(match[2], literalValue(match[3]));
                         }
                     }
                     else if (node.type === "js") {
-                        for (const match of node.code.matchAll(/\bset\(\s*(["'])([\w.]+)\1\s*,\s*([^)]*?)\s*\)/g)) {
+                        for (const match of node.code.matchAll(/\bset\(\s*(["'])([\p{L}\p{N}_.]+)\1\s*,\s*([^)]*?)\s*\)/gu)) {
                             add(match[2], literalValue(match[3]));
                         }
                     }

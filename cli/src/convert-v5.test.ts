@@ -79,6 +79,39 @@ describe("convertV5File", () => {
         expect(console.warn).toHaveBeenCalledWith(expect.stringContaining("run with --convert-v6"));
     });
 
+    test("converts the files the story @imports too (#660)", async () => {
+        const chapter = path.join(TEST_DIR, "chapter.squiffy");
+        await fs.writeFile(storyFile, "@import chapter.squiffy\n[[a]]:\n{x} [[b]]");
+        await fs.writeFile(chapter, "[[b]]:\n{if x:yes}\n@set weapon = sword");
+
+        expect(await convertV5File(storyFile)).toBe(true);
+
+        expect(await fs.readFile(chapter, "utf8")).toBe("[[b]]:\n{{#if x}}yes{{/if}}\n@set weapon = \"sword\"");
+        expect(await fs.readFile(chapter + ".bak", "utf8")).toBe("[[b]]:\n{if x:yes}\n@set weapon = sword");
+        expect(await fs.readFile(storyFile, "utf8")).toBe("@import chapter.squiffy\n[[a]]:\n{{x}} [[b]]");
+        expect(await exists(projectFile)).toBe(true);
+    });
+
+    test("says which @imported file a problem is in", async () => {
+        await fs.writeFile(storyFile, "@import chapter.squiffy\n[[a]]:\nA");
+        await fs.writeFile(path.join(TEST_DIR, "chapter.squiffy"), "[[b]]:\n{@x*=2}");
+
+        expect(await convertV5File(storyFile)).toBe(true);
+
+        expect(console.warn).toHaveBeenCalledWith("  chapter.squiffy line 2: {@x*=2}");
+        expect(await exists(projectFile)).toBe(false);
+    });
+
+    test("lists jQuery it couldn't convert, but still converts the setters", async () => {
+        await fs.writeFile(storyFile, "[[a]]:\n    $(\"#x\").hide();\n@set weapon = sword\n{x}");
+
+        expect(await convertV5File(storyFile)).toBe(true);
+
+        expect(console.warn).toHaveBeenCalledWith("  line 2: $(\"#x\").hide();");
+        expect(await fs.readFile(storyFile, "utf8")).toBe("[[a]]:\n    $(\"#x\").hide();\n@set weapon = \"sword\"\n{{x}}");
+        expect(await exists(projectFile)).toBe(true);
+    });
+
     test("doesn't change the file when there's nothing to convert", async () => {
         await fs.writeFile(storyFile, "[[a]]:\n{{x}}");
 

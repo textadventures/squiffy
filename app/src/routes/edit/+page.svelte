@@ -1324,10 +1324,12 @@
         if (result.converted > 0) {
             view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: result.script } });
         }
-        const left = result.problems.length;
+        const javascript = result.problems.filter(problem => problem.javascript);
+        const left = result.problems.length - javascript.length;
         showToast(
             `Converted ${result.converted} Squiffy 5 ${result.converted === 1 ? "command" : "commands"}.`
-            + (left ? ` ${left} couldn't be converted automatically, and are marked as problems.` : ""),
+            + (left ? ` ${left} couldn't be converted automatically, and are marked as problems.` : "")
+            + (javascript.length ? ` The JavaScript on line ${javascript.map(problem => problem.line).join(", ")} uses jQuery, which Squiffy 7 doesn't load, so needs changing by hand.` : ""),
             "info",
             10000,
         );

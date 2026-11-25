@@ -171,6 +171,21 @@ This is a passage without a section.
     }
 });
 
+test("Error: JavaScript that isn't valid (#660)", async () => {
+    const script = `[[start]]:
+    var ok = 1;
+Text.
+
+[p]:
+    Oops, story text indented by mistake.
+More text.
+`;
+    const result = await analyse({ scriptBaseFilename: "test.squiffy", script });
+    expect(result.diagnostics.map(d => [d.severity, d.code, d.range.start.line, d.message])).toEqual([
+        ["error", "squiffy/javascript-syntax", 5, expect.stringMatching(/^In section 'start', passage 'p', the JavaScript isn't valid: \w/)],
+    ]);
+});
+
 test("Error: unexpected text in @ui block", async () => {
     const script = `
 @ui

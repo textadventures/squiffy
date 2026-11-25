@@ -2633,6 +2633,23 @@ Arrived.
 
 // ---- Expressions in @set and link setters, for a story with a squiffy.json (#373) ----
 
+test("attribute names can have letters from any language in them (#660)", async () => {
+    const script = `
+[[start]]:
+@set Zähler = 2
+@set Zähler += 1
+@set mönjääkäsissä
+@set größe.wert = "groß"
+{{Zähler}} {{#if mönjääkäsissä}}yes{{/if}} {{größe.wert}}
+`;
+    for (const expressions of [true, false]) {
+        const { squiffyApi, element } = await initScript(expressions ? script : script.replace("\"groß\"", "groß"), expressions);
+        expect(squiffyApi.get("Zähler")).toBe(3);
+        expect(squiffyApi.get("mönjääkäsissä")).toBe(true);
+        if (expressions) expect(element.textContent).toContain("3 yes groß");
+    }
+});
+
 test("@set takes expressions, with the same rules as {{#if}}", async () => {
     const script = `
 [[start]]:

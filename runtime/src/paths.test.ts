@@ -52,6 +52,7 @@ describe("valueAt and withValueAt", () => {
 describe("readTarget", () => {
     test.each([
         ["gold = 1", { attribute: "gold", segments: [], rest: " = 1" }],
+        ["Zähler.größe = 1", { attribute: "Zähler", segments: [{ name: "größe" }], rest: " = 1" }],
         ["hero.hp += 5", { attribute: "hero", segments: [{ name: "hp" }], rest: " += 5" }],
         ["inventory[i + 1].name = \"x\"", { attribute: "inventory", segments: [{ index: "i + 1" }, { name: "name" }], rest: " = \"x\"" }],
         ["grid[a[0]][\"]\"]", { attribute: "grid", segments: [{ index: "a[0]" }, { index: "\"]\"" }], rest: "" }],

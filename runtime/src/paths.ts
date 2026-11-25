@@ -113,12 +113,12 @@ export interface Target {
 // Reads a setter's target from the start of a setter, or returns null if it doesn't start with an
 // attribute name. Whitespace before it is skipped.
 export function readTarget(text: string): Target | null {
-    const start = /^\s*(\w+)/.exec(text);
+    const start = /^\s*([\p{L}\p{N}_]+)/u.exec(text);
     if (!start) return null;
     const segments: TargetSegment[] = [];
     let i = start[0].length;
     for (;;) {
-        const name = /^\.(\w+)/.exec(text.substring(i));
+        const name = /^\.([\p{L}\p{N}_]+)/u.exec(text.substring(i));
         if (name) {
             segments.push({ name: name[1] });
             i += name[0].length;
