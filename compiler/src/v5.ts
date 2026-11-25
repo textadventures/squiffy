@@ -766,7 +766,7 @@ function convertJsLine(line: string): { line: string, converted: number } {
 // quotes in Handlebars in it, as in [[Talk to {{#if dad = "yes"}}Dad{{/if}}]](talk), is in single
 // quotes instead
 function singleQuoteLinkText(text: string): string {
-    return text.replace(/(\[\[?)([^\]]*?)(\]\]?\()/g, (link, open: string, linkText: string, close: string) =>
+    return text.replace(/(\[\[?)([^\]]*?)(\]\]?\()/g, (_link, open: string, linkText: string, close: string) =>
         open + linkText.replace(/\{\{[^}]*\}\}/g, expression => expression.replace(/"([^"'\\]*)"/g, "'$1'")) + close);
 }
 
