@@ -3,7 +3,7 @@ import { expect, test, vi } from "vitest";
 import { parseProjectFile } from "squiffy-compiler";
 
 vi.mock("vscode", () => ({}));
-const { MAIN_FILE, NEW_STORY, newStoryFiles } = await import("./new-story.js");
+const { MAIN_FILE, NEW_STORY, newStoryFiles, passageHasSection } = await import("./new-story.js");
 const { fileName } = await import("./export.js");
 
 // The editor's new story, read from its source: importing it would need the app's tsconfig
@@ -34,4 +34,20 @@ test("a title with $ in it is kept as it is", () => {
 test("an export's file name comes from the story's title", () => {
     expect(fileName("The Cave: Part 1?", ".zip")).toBe("The Cave Part 1.zip");
     expect(fileName(undefined, ".zip")).toBe("story.zip");
+});
+
+test("a passage needs a section above it to belong to", () => {
+    const lines = ["@title Story", "@start a", "", "Opening text.", "", "[[a]]:", "@end", "A."];
+    // On @title or @start, above everything, it would take the opening text for its own
+    expect(passageHasSection(lines, 0)).toBe(false);
+    expect(passageHasSection(lines, 1)).toBe(false);
+    expect(passageHasSection(lines, 2)).toBe(false);
+    // After the opening text, it belongs to the start of the story
+    expect(passageHasSection(lines, 3)).toBe(true);
+    expect(passageHasSection(lines, 6)).toBe(true);
+    // A file that starts with a section
+    expect(passageHasSection(["[[b]]:", "B."], 0)).toBe(true);
+    expect(passageHasSection(["+++Next"], 0)).toBe(true);
+    // A passage header above isn't a section of its own
+    expect(passageHasSection(["@title x", "[p]:"], 1)).toBe(false);
 });
