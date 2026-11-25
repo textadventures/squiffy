@@ -4,6 +4,8 @@ import { sveltekit } from "@sveltejs/kit/vite";
 import { defineConfig } from "vite";
 import tailwindcss from "@tailwindcss/vite";
 import { readFileSync } from "node:fs";
+// The compiler's Handlebars brings in the source-map library, which the editor never uses
+import { noSourceMap } from "../runtime/vite.no-source-map.js";
 
 // Where the app is served from ("" at the root). Also exposed to the app as #lib/base-path's `base`.
 const basePath = (process.env.BASE_PATH ?? "") as "" | `/${string}`;
@@ -17,6 +19,7 @@ export default defineConfig({
         __APP_VERSION__: JSON.stringify(version),
     },
     plugins: [
+        noSourceMap,
         tailwindcss(),
         // SvelteKit 3 takes its config here; there's no svelte.config.js.
         sveltekit({
@@ -30,6 +33,7 @@ export default defineConfig({
     ],
     worker: {
         format: "es",
+        plugins: () => [noSourceMap],
     },
     server: {
         port: Number(process.env.PORT) || 5180,

@@ -108,6 +108,7 @@
         // Edges' styles can change with the page's theme, e.g. a class or color-scheme on <html>
         const restyle = () => {
             edgeStyles.clear();
+            paths = null;
             scheduleDraw();
         };
         const observer = new MutationObserver(restyle);
@@ -190,6 +191,8 @@
     function paint() {
         const started = performance.now();
         for (const n of graph.nodes) paintNode(n.id);
+        // The nodes may have moved, or the edges changed
+        geometries = null;
         drawEdges();
         stale = false;
         drewAt = shownAt = performance.now();
@@ -211,9 +214,22 @@
         edge: E;
         geometry: EdgeGeometry;
         bounds: Rect;
+        // Longer than longEdge, between the centres of its ends
+        long: boolean;
     }
-    // Every edge as last drawn (on screen or not), to find the one under the pointer
-    let drawn: DrawnEdge[] = [];
+    // Every edge where the nodes are now (on screen or not), to draw them and to find the one under
+    // the pointer. Worked out again only when the nodes move or the edges change (in paint), so
+    // panning and zooming a big map only draws them again.
+    let geometries: DrawnEdge[] | null = null;
+    // Every edge as a few long paths, for when most of them are in view, as on a big map zoomed
+    // out, where building the paths takes longer than drawing them. Kept until the edges'
+    // geometry, the selection, the hovered edge or their styles change.
+    interface StyledPaths {
+        style: EdgeStyle;
+        strokes: Path2D[];
+        fills: Path2D[];
+    }
+    let paths: { geometries: DrawnEdge[]; selected: string | null; hovered: string | null; layers: StyledPaths[][] } | null = null;
     // What the edges were last drawn with, so they're only drawn again when it changes
     let drawnWith: { transform: Transform; width: number; height: number; selected: string | null; hovered: string | null } | null = null;
     let drawRaf = 0;
@@ -223,6 +239,9 @@
         stroke: string | null;
         width: number;
         dash: number[];
+        // How long the dash pattern is, and the fraction of it that's drawn
+        dashPeriod: number;
+        dashOn: number;
         cap: CanvasLineCap;
         strokeAlpha: number;
         fill: string | null;
@@ -251,12 +270,18 @@
         const gs = getComputedStyle(g), ls = getComputedStyle(line), as = getComputedStyle(arrow);
         const paintOf = (value: string) => !value || value == "none" || value.startsWith("url(") ? null : value;
         const opacity = num(gs.opacity, 1);
-        const dash = ls.strokeDasharray == "none" ? [] : ls.strokeDasharray.split(/[\s,]+/).map(parseFloat).filter(n => n >= 0);
+        let dash = ls.strokeDasharray == "none" ? [] : ls.strokeDasharray.split(/[\s,]+/).map(parseFloat).filter(n => n >= 0);
+        // All zeros is a solid line, as in SVG. An odd number of lengths is repeated, as in SVG
+        // and setLineDash.
+        if (!dash.some(n => n > 0)) dash = [];
+        if (dash.length % 2) dash = [...dash, ...dash];
+        const dashPeriod = dash.reduce((a, b) => a + b, 0);
         style = {
             stroke: paintOf(ls.stroke),
             width: num(ls.strokeWidth, 1),
-            // All zeros is a solid line, as in SVG
-            dash: dash.some(n => n > 0) ? dash : [],
+            dash,
+            dashPeriod,
+            dashOn: dashPeriod ? dash.filter((_, i) => i % 2 == 0).reduce((a, b) => a + b, 0) / dashPeriod : 1,
             cap: (["butt", "round", "square"].includes(ls.strokeLinecap) ? ls.strokeLinecap : "butt") as CanvasLineCap,
             strokeAlpha: opacity * num(ls.opacity, 1) * num(ls.strokeOpacity, 1),
             fill: paintOf(as.fill),
@@ -271,6 +296,9 @@
         const n = parseFloat(value);
         return Number.isFinite(n) ? n : fallback;
     }
+
+    // A dash pattern shorter than this on screen is drawn as a solid line
+    const MIN_DASH_PIXELS = 4;
 
     // Draws the edges at the next frame, unless the layout does first
     function scheduleDraw() {
@@ -300,68 +328,98 @@
         const margin = 10;
         const x0 = -t.x / t.k - margin, y0 = -t.y / t.k - margin;
         const x1 = (width - t.x) / t.k + margin, y1 = (height - t.y) / t.k + margin;
-        // Edges that look the same are drawn together, which is much quicker than one at a time.
-        // The selected node's edges go on top, and the hovered edge above them.
-        const layers = [new Map<EdgeStyle, DrawnEdge[]>(), new Map<EdgeStyle, DrawnEdge[]>(), new Map<EdgeStyle, DrawnEdge[]>()];
-        const next: DrawnEdge[] = [];
+        const edges = edgeGeometries();
+        const visible = edges.filter(({ bounds: r }) => !(r.x > x1 || r.y > y1 || r.x + r.width < x0 || r.y + r.height < y0));
+        let layers: StyledPaths[][];
+        // With most of the edges in view, all of them are drawn, from paths built once, and the
+        // canvas leaves out what's out of view. Otherwise just those in view are.
+        if (visible.length > edges.length / 2) {
+            if (!paths || paths.geometries !== edges || paths.selected !== selected || paths.hovered !== hovered) {
+                paths = { geometries: edges, selected, hovered, layers: buildPaths(edges) };
+            }
+            layers = paths.layers;
+        } else {
+            layers = buildPaths(visible);
+        }
+
+        for (const layer of layers) {
+            for (const { style, strokes, fills } of layer) {
+                if (strokes.length) {
+                    // Dashes too small to see are drawn as a fainter solid line, as they look.
+                    // Drawing them takes far longer: zoomed out on a big map, millions of them.
+                    const tiny = style.dash.length > 0 && style.dashPeriod * t.k * ratio < MIN_DASH_PIXELS;
+                    ctx.globalAlpha = style.strokeAlpha * (tiny ? style.dashOn : 1);
+                    ctx.strokeStyle = style.stroke!;
+                    ctx.lineWidth = style.width;
+                    ctx.lineCap = style.cap;
+                    ctx.setLineDash(tiny ? [] : style.dash);
+                    for (const path of strokes) ctx.stroke(path);
+                }
+                if (fills.length) {
+                    ctx.globalAlpha = style.fillAlpha;
+                    ctx.fillStyle = style.fill!;
+                    for (const path of fills) ctx.fill(path);
+                }
+            }
+        }
+        ctx.globalAlpha = 1;
+    }
+
+    function edgeGeometries(): DrawnEdge[] {
+        if (geometries) return geometries;
+        const edges: DrawnEdge[] = [];
         for (const edge of graph.edges) {
             const a = box(edge.from), b = box(edge.to);
             if (!a || !b) continue;
             const geometry = edgeGeometry(a, b, bends.get(edge.id) ?? 0, 3);
             if (!geometry) continue;
-            const item = { edge, geometry, bounds: edgeBounds(geometry) };
-            next.push(item);
-            const r = item.bounds;
-            if (r.x > x1 || r.y > y1 || r.x + r.width < x0 || r.y + r.height < y0) continue;
+            edges.push({ edge, geometry, bounds: edgeBounds(geometry), long: Math.hypot(b.x - a.x, b.y - a.y) > longEdge });
+        }
+        return geometries = edges;
+    }
+
+    // Edges that look the same are drawn together, which is much quicker than one at a time. The
+    // selected node's edges go on top, and the hovered edge above them.
+    function buildPaths(edges: DrawnEdge[]): StyledPaths[][] {
+        const layers = [new Map<EdgeStyle, DrawnEdge[]>(), new Map<EdgeStyle, DrawnEdge[]>(), new Map<EdgeStyle, DrawnEdge[]>()];
+        for (const item of edges) {
+            const { edge } = item;
             const isSelected = selected !== null && (edge.from == selected || edge.to == selected);
             const isHovered = edge.id == hovered;
-            const style = edgeStyle(edge.class ?? "", isSelected, isHovered, Math.hypot(b.x - a.x, b.y - a.y) > longEdge);
+            const style = edgeStyle(edge.class ?? "", isSelected, isHovered, item.long);
             const layer = layers[isHovered ? 2 : isSelected ? 1 : 0];
             let list = layer.get(style);
             if (!list) layer.set(style, list = []);
             list.push(item);
         }
-        drawn = next;
+        return layers.map(layer => [...layer].map(([style, items]) => ({
+            style,
+            strokes: style.stroke && style.strokeAlpha > 0 ? inBatches(items, (path, g) => {
+                path.moveTo(g.start.x, g.start.y);
+                if (g.control) path.quadraticCurveTo(g.control.x, g.control.y, g.end.x, g.end.y);
+                else path.lineTo(g.end.x, g.end.y);
+            }) : [],
+            // fill() closes each triangle. closePath() would too, but it slows down badly as a
+            // path gets longer.
+            fills: style.fill && style.fillAlpha > 0 ? inBatches(items, (path, g) => {
+                const [tip, a, b] = arrowPoints(g.tip, g.angle);
+                path.moveTo(tip.x, tip.y);
+                path.lineTo(a.x, a.y);
+                path.lineTo(b.x, b.y);
+            }) : [],
+        })));
+    }
 
-        for (const layer of layers) {
-            for (const [style, items] of layer) {
-                if (style.stroke && style.strokeAlpha > 0) {
-                    ctx.globalAlpha = style.strokeAlpha;
-                    ctx.strokeStyle = style.stroke;
-                    ctx.lineWidth = style.width;
-                    ctx.lineCap = style.cap;
-                    ctx.setLineDash(style.dash);
-                    inBatches(items, g => {
-                        ctx.moveTo(g.start.x, g.start.y);
-                        if (g.control) ctx.quadraticCurveTo(g.control.x, g.control.y, g.end.x, g.end.y);
-                        else ctx.lineTo(g.end.x, g.end.y);
-                    }, () => ctx.stroke());
-                }
-                if (style.fill && style.fillAlpha > 0) {
-                    ctx.globalAlpha = style.fillAlpha;
-                    ctx.fillStyle = style.fill;
-                    // fill() closes each triangle. closePath() would too, but it slows down badly as
-                    // a path gets longer.
-                    inBatches(items, g => {
-                        const [tip, a, b] = arrowPoints(g.tip, g.angle);
-                        ctx.moveTo(tip.x, tip.y);
-                        ctx.lineTo(a.x, a.y);
-                        ctx.lineTo(b.x, b.y);
-                    }, () => ctx.fill());
-                }
-            }
+    // The edges as paths of a thousand at a time: a path with too many parts in it gets slower to
+    // build
+    function inBatches(items: DrawnEdge[], add: (path: Path2D, g: EdgeGeometry) => void): Path2D[] {
+        const batches: Path2D[] = [];
+        for (let i = 0; i < items.length; i += 1000) {
+            const path = new Path2D();
+            for (let j = i; j < Math.min(i + 1000, items.length); j++) add(path, items[j].geometry);
+            batches.push(path);
         }
-        ctx.globalAlpha = 1;
-
-        // Adds edges to the path a batch at a time, drawing each batch: a canvas path with too
-        // many parts in it gets slower to build
-        function inBatches(items: DrawnEdge[], add: (g: EdgeGeometry) => void, draw: () => void) {
-            for (let i = 0; i < items.length; i += 1000) {
-                ctx!.beginPath();
-                for (const item of items.slice(i, i + 1000)) add(item.geometry);
-                draw();
-            }
-        }
+        return batches;
     }
 
     // Panning, zooming, resizing, selecting and hovering draw the edges again, if the layout
@@ -380,7 +438,7 @@
         const tolerance = Math.max(5, 3 / transform.k);
         let best: E | undefined;
         let bestDistance = tolerance;
-        for (const { edge, geometry, bounds: r } of drawn) {
+        for (const { edge, geometry, bounds: r } of edgeGeometries()) {
             if (p.x < r.x - tolerance || p.x > r.x + r.width + tolerance || p.y < r.y - tolerance || p.y > r.y + r.height + tolerance) continue;
             const d = distanceToEdge(geometry, p);
             if (d <= bestDistance) {
