@@ -107,6 +107,12 @@ export interface CodeAction {
     // The diagnostic this fixes, if any
     diagnostic?: Diagnostic;
     edit: WorkspaceEdit;
+    // The fix to make without asking which, as LSP's isPreferred: the editor offers it at the
+    // cursor. "Ignore" fixes never are, so silencing a warning isn't the easy thing to do.
+    isPreferred?: boolean;
+    // For a fix that adds a missing section or passage: what it adds, so an editor can put it
+    // somewhere else, e.g. after the section the link's in
+    create?: { kind: "section" | "passage"; name: string };
 }
 
 export interface SectionAt {
@@ -232,7 +238,7 @@ const DIRECTIVES: [string, string][] = [
 ];
 
 // The warnings with a quick fix that adds a squiffy-ignore comment
-const IGNORE_ACTION_CODES = new Set<Diagnostic["code"]>(["squiffy/unknown-name", "squiffy/sound-on-first-screen", "squiffy/unreachable-section", "squiffy/link-to-test-section"]);
+const IGNORE_ACTION_CODES = new Set<Diagnostic["code"]>(["squiffy/unknown-name", "squiffy/sound-on-first-screen", "squiffy/unreachable-section", "squiffy/link-to-test-section", "squiffy/end-with-way-out"]);
 
 const contains = (range: Range, pos: Position) =>
     comparePositions(range.start, pos) <= 0 && comparePositions(pos, range.end) <= 0;
@@ -1012,14 +1018,14 @@ export function createLanguageService(options: LanguageServiceOptions): Language
                         const end = endOfText(tree.text.replace(/\r/g, ""));
                         const before = lines[lines.length - 1] == "" ? "\n" : "\n\n";
                         addEdit(edit, path, { range: { start: end, end }, newText: `${before}[[${name}]]:\n` });
-                        actions.push({ title: `Create section '${name}'`, kind: "quickfix", diagnostic, edit });
+                        actions.push({ title: `Create section '${name}'`, kind: "quickfix", diagnostic, edit, isPreferred: true, create: { kind: "section", name } });
                     }
                     else {
                         // At the end of the section the link is in
                         const end = usage.sectionNode.range.end;
                         const blank = !lines[end.line]?.trim();
                         addEdit(edit, path, { range: { start: end, end }, newText: `${blank ? "" : "\n\n"}[${name}]:\n` });
-                        actions.push({ title: `Create passage '${name}'`, kind: "quickfix", diagnostic, edit });
+                        actions.push({ title: `Create passage '${name}'`, kind: "quickfix", diagnostic, edit, isPreferred: true, create: { kind: "passage", name } });
                     }
                 }
                 else if (diagnostic.code == "squiffy/at-attribute") {
@@ -1027,7 +1033,7 @@ export function createLanguageService(options: LanguageServiceOptions): Language
                     const name = lines[start.line].substring(start.character + 1, diagnostic.range.end.character);
                     const edit: WorkspaceEdit = {};
                     addEdit(edit, path, { range: { start, end: { line: start.line, character: start.character + 1 } }, newText: "" });
-                    actions.push({ title: `Change to ${name}`, kind: "quickfix", diagnostic, edit });
+                    actions.push({ title: `Change to ${name}`, kind: "quickfix", diagnostic, edit, isPreferred: true });
                 }
                 else if (diagnostic.code == "squiffy/unquoted-text") {
                     const start = diagnostic.range.start;
@@ -1036,7 +1042,7 @@ export function createLanguageService(options: LanguageServiceOptions): Language
                     if (!found?.quoted) continue;
                     const edit: WorkspaceEdit = {};
                     addEdit(edit, path, { range: found.range, newText: found.quoted });
-                    actions.push({ title: `Change to ${found.quoted}`, kind: "quickfix", diagnostic, edit });
+                    actions.push({ title: `Change to ${found.quoted}`, kind: "quickfix", diagnostic, edit, isPreferred: true });
                 }
                 else if (diagnostic.code == "squiffy/v5-syntax") {
                     const line = diagnostic.range.start.line;
@@ -1049,7 +1055,7 @@ export function createLanguageService(options: LanguageServiceOptions): Language
                         range: { start, end: { line, character: start.character + match.text.length } },
                         newText: match.suggestion,
                     });
-                    actions.push({ title: `Convert to ${match.suggestion}`, kind: "quickfix", diagnostic, edit });
+                    actions.push({ title: `Convert to ${match.suggestion}`, kind: "quickfix", diagnostic, edit, isPreferred: true });
                 }
             }
 
@@ -1063,7 +1069,18 @@ export function createLanguageService(options: LanguageServiceOptions): Language
                 addEdit(edit, path, line < lines.length
                     ? { range: lineRange(line, 0, 0), newText: "@end\n" }
                     : { range: lineRange(line - 1, lines[line - 1].length, lines[line - 1].length), newText: "\n@end" });
-                actions.push({ title: "Mark this section as an ending", kind: "quickfix", diagnostic, edit });
+                actions.push({ title: "Mark this section as an ending", kind: "quickfix", diagnostic, edit, isPreferred: true });
+            }
+
+            for (const diagnostic of diagnostics) {
+                if (diagnostic.code != "squiffy/end-with-way-out") continue;
+                // The whole line, including its line break
+                const line = diagnostic.range.start.line;
+                const end = line + 1 < lines.length ? { line: line + 1, character: 0 } : { line, character: lines[line].length };
+                const start = line + 1 < lines.length || line == 0 ? { line, character: 0 } : { line: line - 1, character: lines[line - 1].length };
+                const edit: WorkspaceEdit = {};
+                addEdit(edit, path, { range: { start, end }, newText: "" });
+                actions.push({ title: "Take out the @end", kind: "quickfix", diagnostic, edit, isPreferred: true });
             }
 
             for (const diagnostic of diagnostics) {
@@ -1074,7 +1091,7 @@ export function createLanguageService(options: LanguageServiceOptions): Language
                 const start = line + 1 < lines.length || line == 0 ? { line, character: 0 } : { line: line - 1, character: lines[line - 1].length };
                 const edit: WorkspaceEdit = {};
                 addEdit(edit, path, { range: { start, end }, newText: "" });
-                actions.push({ title: "Remove this @import", kind: "quickfix", diagnostic, edit });
+                actions.push({ title: "Remove this @import", kind: "quickfix", diagnostic, edit, isPreferred: true });
             }
 
             // A warning that may be what the author meant can be turned off with a squiffy-ignore

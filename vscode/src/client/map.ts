@@ -9,12 +9,12 @@ import * as vscode from "vscode";
 import type { BaseLanguageClient } from "vscode-languageclient";
 import { parseProjectFile, updateProjectFile, type MapPositions } from "squiffy-compiler";
 import type { GraphNode, Location, StoryGraph, TextEdit } from "squiffy-compiler/language-service";
-import { checkPassageName, deleteLinesEdits, deletionMessage, planDeletion, startEdit } from "@textadventures/squiffy-app/map-edits";
+import { checkPassageName, deleteLinesEdits, deletionMessage, endingEdit, planDeletion, startEdit } from "@textadventures/squiffy-app/map-edits";
 import { checkSectionName, emptyPositions, movedNodes, nodeAtLine, renamePositions, withPosition } from "@textadventures/squiffy-app/story-map";
 import { STORY_GRAPH, type PreviewFromHereArgs, type StoryGraphParams, type StoryGraphResult } from "../protocol.js";
 import type { FromMap, Point, ToMap, TraceStep } from "../map/messages.js";
 import type { Preview } from "./preview.js";
-import { addPassageEdits, linkEdit, missingTarget, movedPositions, newPassageEdit, newSectionEdits, sectionFor, type Cursor } from "./map-edits.js";
+import { addPassageEdits, linkEdit, linkEndsEnding, missingTarget, movedPositions, newPassageEdit, newSectionEdits, sectionFor, type Cursor } from "./map-edits.js";
 
 // How long to wait after typing before drawing the map again
 const UPDATE_DELAY = 300;
@@ -155,6 +155,9 @@ export class StoryMap implements vscode.Disposable {
             case "start":
                 void this.act([message.id], "change where the story starts", ([node]) => this.startAt(node));
                 break;
+            case "ending":
+                void this.act([message.id], "mark the ending", ([node]) => this.markEnding(node));
+                break;
             case "delete":
                 void this.act(message.ids, "delete", nodes => this.delete(nodes));
                 break;
@@ -227,7 +230,7 @@ export class StoryMap implements vscode.Disposable {
         const file = pathIn(this.root, editor.document.uri);
         if (file === undefined) return undefined;
         const { line, character } = editor.selection.active;
-        return { file, position: { line, character } };
+        return { file, position: { line, character }, lineText: editor.document.lineAt(line).text };
     }
 
     private uriOf(file: string) {
@@ -255,10 +258,14 @@ export class StoryMap implements vscode.Disposable {
             void vscode.window.showInformationMessage(result.error);
             return;
         }
-        const { start } = result.edit.range;
-        const edit = new vscode.WorkspaceEdit();
-        edit.insert(this.uriOf(result.file), new vscode.Position(start.line, start.character), result.edit.newText);
-        if (!(await vscode.workspace.applyEdit(edit))) void vscode.window.showWarningMessage("Couldn't add the link.");
+        const fromNode = this.graph.nodes.find(n => n.id == from)!;
+        const text = (await vscode.workspace.openTextDocument(this.uriOf(result.file))).getText();
+        const ending = fromNode.location.file == result.file ? linkEndsEnding(this.graph, fromNode, to, text) : [];
+        try {
+            await this.applyEdits(new Map([[result.file, [result.edit, ...ending]]]));
+        } catch {
+            void vscode.window.showWarningMessage("Couldn't add the link.");
+        }
     }
 
     // Something from the map's menu, for the nodes it's for, once the graph's up to date
@@ -329,6 +336,14 @@ export class StoryMap implements vscode.Disposable {
         await this.applyEdits(new Map([[this.mainFile, [startEdit(text, node.name)]]]));
     }
 
+    // With @end under the section's header
+    private async markEnding(node: GraphNode) {
+        if (node.kind != "section" || !node.deadEnd) return;
+        const file = node.location.file;
+        const text = (await vscode.workspace.openTextDocument(this.uriOf(file))).getText();
+        await this.applyEdits(new Map([[file, [endingEdit(text, node)]]]));
+    }
+
     // A new section, after asking its name: linked from `from` (a link dragged to empty space), or
     // after `near` in the script. Its box goes where it was made.
     private async createSection(at: Point, from: GraphNode | undefined, near: GraphNode | undefined) {
@@ -345,7 +360,8 @@ export class StoryMap implements vscode.Disposable {
         const cursor = this.cursor();
         const file = from?.location.file ?? near?.location.file ?? (cursor?.file.endsWith(".squiffy") ? cursor.file : this.mainFile!);
         const text = (await vscode.workspace.openTextDocument(this.uriOf(file))).getText();
-        await this.applyEdits(new Map([[file, newSectionEdits(graph, name, { from, near, file }, text, cursor)]]));
+        const ending = from && from.location.file == file ? linkEndsEnding(graph, from, undefined, text) : [];
+        await this.applyEdits(new Map([[file, [...newSectionEdits(graph, name, { from, near, file }, text, cursor), ...ending]]]));
         this.placeNew({ kind: "section", name }, at);
     }
 

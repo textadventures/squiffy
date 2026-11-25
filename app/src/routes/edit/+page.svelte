@@ -50,9 +50,10 @@
     import Play from "@lucide/svelte/icons/play";
     import Code from "@lucide/svelte/icons/code";
     import X from "@lucide/svelte/icons/x";
+    import TriangleAlert from "@lucide/svelte/icons/triangle-alert";
     import { readMapLayout, saveMapLayout } from "#lib/map-layout.js";
     import { narrowed, narrowing, narrowRange, setNarrow } from "#lib/narrow.js";
-    import { checkPassageName, deleteLinesEdits, deletionMessage, insertHeaderEdit, linkThenHeaderEdits, placeNewPassage, placeNewSection, planDeletion, startEdit, type Place } from "#lib/map-edits.js";
+    import { checkPassageName, deleteLinesEdits, deletionMessage, endingEdit, endingRemovalEdits, insertHeaderEdit, isDirectiveLine, linkThenHeaderEdits, placeNewPassage, placeNewSection, planDeletion, startEdit, type Place } from "#lib/map-edits.js";
     import { addSectionOrPassage, clipboardCommand, insertSnippet, runCommand, userSnippets } from "#lib/editor-commands.js";
     import { formatKey } from "#lib/shortcuts.js";
     import { desktopApi } from "#lib/desktop.js";
@@ -355,6 +356,7 @@
                     prompt: (message, initial) => promptDialog(message, initial, "Rename"),
                     applyEdits,
                     notify: message => showToast(message, "info"),
+                    onCreate: fix => void createFromLink(fix),
                 }),
             ];
             extensionCache.set(path, extensions);
@@ -758,6 +760,11 @@
             void refreshProblems();
             return;
         }
+        if (fix.create) {
+            await createFromLink(fix);
+            void refreshProblems();
+            return;
+        }
         await applyEdits(fix.edit);
         void refreshProblems();
     }
@@ -845,6 +852,8 @@
     // (or at `at`). If it's the section already shown, the cursor stays where it is.
     async function openCard(node: GraphNode, focus: boolean, at?: Location["range"]["start"]) {
         if (!p) return;
+        // If the card's closed meanwhile (Escape, as it opens), it stays closed
+        const closes = cardCloses;
         if (graphStale) await refreshGraph();
         const graph = storyGraph;
         const sectionName = node.kind === "section" ? node.name : node.section!;
@@ -863,7 +872,7 @@
             return;
         }
         const view = await viewFor(file);
-        if (!view) return;
+        if (!view || closes !== cardCloses) return;
         const same = card?.id === section.id && !!narrowed(view.state);
         if (!same) {
             card = { id: section.id, file };
@@ -941,7 +950,10 @@
         if (range && (range.from !== now?.from || range.to !== now.to)) view.dispatch({ effects: setNarrow.of(range) });
     }
 
+    // How many times the card's been closed, so one that's opening can tell
+    let cardCloses = 0;
     function closeCard() {
+        cardCloses++;
         if (!card) return;
         card = null;
         for (const view of views.values()) {
@@ -1100,7 +1112,8 @@
         if (view && cursorSeen && p?.activePath === file && storyGraph) {
             const head = view.state.selection.main.head;
             const at = toPosition(view.state.doc, head);
-            if (nodeAtLine(storyGraph, file, at.line)?.id === from.id && at.line > from.location.range.start.line) {
+            if (nodeAtLine(storyGraph, file, at.line)?.id === from.id && at.line > from.location.range.start.line
+                && !isDirectiveLine(view.state.doc.line(at.line + 1).text)) {
                 return { [file]: [{ range: { start: at, end: at }, newText: text }] };
             }
         }
@@ -1251,18 +1264,22 @@
     //
     // `from` is the section or passage it's for: the one a link was dragged from (so a link to the
     // new section is added there, unless `link` is false, for a link that's there already).
-    // `at` is where its box goes, if the author chose.
-    async function createSectionFromMap(name: string, where: { at?: Point; near?: GraphNode; from?: GraphNode; link?: boolean }) {
+    // `at` is where its box goes, if the author chose. `select` is false to leave the map's
+    // selection (and so the card) as it is, for a section added while writing.
+    async function createSectionFromMap(name: string, where: { at?: Point; near?: GraphNode; from?: GraphNode; link?: boolean; select?: boolean }) {
+        // Where things are in the script as it is now, not as it was when the map last drew it
+        if (graphStale) await refreshGraph();
         const graph = storyGraph;
         if (!p || !graph) return;
-        const { at, near, from } = where;
+        const { at } = where;
+        const near = latest(where.near), from = latest(where.from);
         const file = from?.location.file ?? near?.location.file ?? (isSquiffyFile(p.activePath) ? p.activePath : p.mainFile);
         try {
             const place = placeNewSection(graph, { from, near, file });
             const edit = from && where.link !== false
-                ? await linkThenHeader(linkEdit(from, `[[${name}]]`), place, `[[${name}]]:`)
+                ? await withoutEnding(await linkThenHeader(linkEdit(from, `[[${name}]]`), place, `[[${name}]]:`), from)
                 : await headerEdit(place, `[[${name}]]:`);
-            selectWhenReady = `section:${name}`;
+            if (where.select !== false) selectWhenReady = `section:${name}`;
             await applyMapEdit(edit, at && {
                 before: mapPositions ?? emptyPositions(),
                 after: withPosition(mapPositions, new Map(), { kind: "section", name }, at),
@@ -1275,7 +1292,7 @@
     // Adds a passage to a section, with a link to it from the section (or from the passage it
     // was added from), so it can be reached (unless `link` is false, for a link that's there
     // already)
-    async function addPassageFromMap(from: GraphNode, name: string, link = true) {
+    async function addPassageFromMap(from: GraphNode, name: string, link = true, select = true) {
         const graph = storyGraph;
         if (!p || !graph) return;
         const sectionName = from.kind === "section" ? from.name : from.section!;
@@ -1284,11 +1301,29 @@
         try {
             const place = placeNewPassage(section);
             const edit = link ? await linkThenHeader(linkEdit(from, `[${name}]`), place, `[${name}]:`) : await headerEdit(place, `[${name}]:`);
-            selectWhenReady = `passage:${sectionName}/${name}`;
+            if (select) selectWhenReady = `passage:${sectionName}/${name}`;
             await applyMapEdit(edit);
         } catch (err) {
             showToast(`Couldn't add the passage: ${errorText(err)}`);
         }
+    }
+
+    // Adds the section or passage a broken link points to, from a quick fix (in the script, the
+    // map's card, or the Problems panel), where the map's red marker for that link would put it
+    // (or, for a link before the file's first section, where the fix itself would)
+    async function createFromLink(fix: CodeAction) {
+        const { create, diagnostic: link } = fix;
+        if (!create || !link) return;
+        await refreshGraph();
+        const graph = storyGraph;
+        const from = graph && nodeAtLine(graph, link.file, link.range.start.line);
+        if (!from) {
+            await applyEdits(fix.edit);
+            return;
+        }
+        // The author carries on writing where they were
+        if (create.kind === "passage") await addPassageFromMap(from, create.name, false, false);
+        else await createSectionFromMap(create.name, { from, link: false, select: false });
     }
 
     async function deleteFromMap(nodes: GraphNode[]) {
@@ -1326,17 +1361,51 @@
         }
     }
 
+    // Marks a dead end as one of the story's endings, with @end under its header. From the map,
+    // or from the card, which doesn't show the header, so the quick fix can't be reached there.
+    async function endingFromMap(node: GraphNode) {
+        if (!p) return;
+        await refreshGraph();
+        const section = storyGraph?.nodes.find(n => n.id === node.id);
+        if (!p || !section) return;
+        const file = section.location.file;
+        try {
+            await applyMapEdit({ [file]: [endingEdit(await currentText(file), section)] });
+        } catch (err) {
+            showToast(`Couldn't mark the ending: ${errorText(err)}`);
+        }
+    }
+
     async function linkFromMap(from: GraphNode, to: GraphNode | null, at: Point, name?: string) {
         if (!to) {
             if (name) await createSectionFromMap(name, { at, from });
             return;
         }
+        if (graphStale) await refreshGraph();
+        from = latest(from) ?? from;
+        to = latest(to) ?? to;
         const link = linkTo(from, to);
         if ("error" in link) {
             showToast(link.error, "info");
             return;
         }
-        await applyMapEdit(linkEdit(from, link.text));
+        const edit = linkEdit(from, link.text);
+        await applyMapEdit(to.kind === "section" && !to.start ? await withoutEnding(edit, from) : edit);
+    }
+
+    // A node as it is in the story graph now, which may have been read again since it was given
+    function latest(node: GraphNode | undefined): GraphNode | undefined {
+        return node && (storyGraph?.nodes.find(n => n.id === node.id) ?? node);
+    }
+
+    // A link added from a section marked with @end to another section means the story doesn't
+    // stop there any more, so its @end goes, in the same change
+    async function withoutEnding(edit: WorkspaceEdit, from: GraphNode): Promise<WorkspaceEdit> {
+        const graph = storyGraph;
+        if (!graph) return edit;
+        const file = from.location.file;
+        const removal = endingRemovalEdits(graph, from, await currentText(file));
+        return removal.length ? mergeEdits(edit, { [file]: removal }) : edit;
     }
 
     // Renames a section or passage everywhere it's used. With a name (typed on the map), says why
@@ -1817,6 +1886,9 @@
                     <!-- The section being written from the map, in place of the tabs -->
                     <header class="flex items-center gap-0.5 px-2 py-1 border-b border-surface-200-800 bg-surface-50-950">
                         <h2 class="flex-1 min-w-0 truncate pl-1 text-sm font-semibold" title={cardNode.detail ?? cardNode.name}>{cardNode.detail ?? cardNode.name}</h2>
+                        {#if cardNode.kind === "section" && cardNode.deadEnd && cardNode.reachable}
+                            <button type="button" class="btn btn-xs preset-tonal-warning text-xs py-0.5 mr-1" title="A dead end: there's no way out. If it's one of the story's endings, mark it with @end." onclick={() => void endingFromMap(cardNode)}><TriangleAlert size={12} /> Mark as an ending</button>
+                        {/if}
                         {#if !cardNode.detail}
                             <button type="button" class="btn-icon btn-icon-sm" title="Rename" aria-label="Rename" onclick={() => void renameFromMap(cardNode)}><Pencil size={14} /></button>
                         {/if}
@@ -1880,6 +1952,7 @@
                     onaddpassage={(from, name, link) => void addPassageFromMap(from, name, link)}
                     ondelete={nodes => void deleteFromMap(nodes)}
                     onstart={node => void startFromMap(node)}
+                    onending={node => void endingFromMap(node)}
                     onundo={undoFromMap}
                     onrun={node => void runPreview(false, node.kind === "section" ? { section: node.name } : { section: node.section!, passage: node.name })}
                     onrelayout={relayoutMap}

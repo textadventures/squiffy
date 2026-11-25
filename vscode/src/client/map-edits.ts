@@ -3,7 +3,7 @@
 
 import type { MapPositions } from "squiffy-compiler";
 import type { GraphNode, Position, StoryGraph, TextEdit } from "squiffy-compiler/language-service";
-import { insertHeaderEdit, linkThenHeaderEdits, placeNewPassage, placeNewSection } from "@textadventures/squiffy-app/map-edits";
+import { endingRemovalEdits, insertHeaderEdit, isDirectiveLine, linkThenHeaderEdits, placeNewPassage, placeNewSection } from "@textadventures/squiffy-app/map-edits";
 import { emptyPositions, linkTo, nodeAtLine, sectionKeys, withPosition } from "@textadventures/squiffy-app/story-map";
 import type { Point } from "../map/messages.js";
 
@@ -11,6 +11,8 @@ import type { Point } from "../map/messages.js";
 export interface Cursor {
     file: string;
     position: Position;
+    // The text of the cursor's line
+    lineText?: string;
 }
 
 // The edit that adds a link from one node to another: at the cursor, if it's in the node the link
@@ -27,13 +29,22 @@ function addLink(graph: StoryGraph, from: GraphNode, text: string, cursor?: Curs
     const file = from.location.file;
     if (cursor?.file == file) {
         const at = cursor.position;
-        if (nodeAtLine(graph, file, at.line)?.id == from.id && at.line > from.location.range.start.line) {
+        if (nodeAtLine(graph, file, at.line)?.id == from.id && at.line > from.location.range.start.line
+            && !(cursor.lineText !== undefined && isDirectiveLine(cursor.lineText))) {
             return { range: { start: at, end: at }, newText: text };
         }
     }
     const at = from.contentEnd;
     const headerOnly = at.line == from.location.range.start.line;
     return { range: { start: at, end: at }, newText: `${headerOnly ? "\n" : "\n\n"}${text}` };
+}
+
+// A link from a section marked with @end to another section (other than the start, to play
+// again) means the story doesn't stop there any more, so its @end goes with the same change
+export function linkEndsEnding(graph: StoryGraph, from: GraphNode, toId: string | undefined, text: string): TextEdit[] {
+    const to = toId === undefined ? undefined : graph.nodes.find(n => n.id == toId);
+    if (to && (to.kind != "section" || to.start)) return [];
+    return endingRemovalEdits(graph, from, text);
 }
 
 // The section a passage is to be added to, from the section or one of its passages

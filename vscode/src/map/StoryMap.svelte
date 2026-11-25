@@ -241,6 +241,7 @@
                 { label: "Add a passage…", action: () => post({ type: "addPassage", id }) },
                 { label: "Run from here", divider: true, action: () => post({ type: "run", id }) },
                 ...(g.kind == "section" ? [{ label: "Start the story here", disabled: !!g.start || !!g.detail || g.name == "", action: () => post({ type: "start", id }) }] : []),
+                ...(isDeadEnd(g) ? [{ label: "Mark as an ending", action: () => post({ type: "ending", id }) }] : []),
                 { label: "Delete…", shortcut: "Del", divider: true, disabled: !canDelete(g), action: () => post({ type: "delete", ids: [id] }) },
             ];
         } else {
@@ -267,11 +268,14 @@
             into: unique(base.edges.filter(e => e.to == selectedNode.id && e.kind != "auto").flatMap(e => byId.get(e.from) ?? [])),
         };
     });
+    // A section the player can reach with no way out, which isn't marked as an ending
+    const isDeadEnd = (g: GraphNode) => g.kind == "section" && !!g.deadEnd && g.reachable;
+
     function notes(g: GraphNode, graph: StoryGraph) {
         return [
             g.start ? "The story starts here." : "",
             g.ending ? "An ending." : "",
-            g.deadEnd && g.reachable ? "A dead end: there's no way out. If it's an ending, add @end." : "",
+            isDeadEnd(g) ? "A dead end: there's no way out." : "",
             g.embedded ? "Shown inside other sections, with {{embed}} or {{live}}." : reachNote(g, graph),
         ].filter(Boolean).join(" ");
     }
@@ -381,6 +385,9 @@
                         {/if}
                         <button type="button" title="Add a passage" onclick={() => post({ type: "addPassage", id: g.id })}>Add a passage</button>
                         <button type="button" title="Run the preview from here" onclick={() => post({ type: "run", id: g.id })}>Run</button>
+                        {#if isDeadEnd(g)}
+                            <button type="button" title="Mark it as one of the story's endings, with @end" onclick={() => post({ type: "ending", id: g.id })}>Mark as an ending</button>
+                        {/if}
                         {#if canDelete(g)}
                             <button type="button" title="Delete (Del)" onclick={() => post({ type: "delete", ids: [g.id] })}>Delete</button>
                         {/if}

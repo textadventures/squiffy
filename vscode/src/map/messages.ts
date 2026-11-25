@@ -40,7 +40,7 @@ export type FromMap =
     | { type: "move"; moves: { id: string; at: Point }[] }
     // From the right-click menu (or F2 and Delete): a section or passage to rename, add a passage
     // to, run the preview from or start the story at, or sections and passages to delete
-    | { type: "rename" | "addPassage" | "run" | "start"; id: string }
+    | { type: "rename" | "addPassage" | "run" | "start" | "ending"; id: string }
     | { type: "delete"; ids: string[] }
     // Make a new section, its box at `at`: linked from `from` (a link dragged to empty space), or
     // near `near` in the script (the selected box, or the nearest one)

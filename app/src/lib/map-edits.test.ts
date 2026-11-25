@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 import { createLanguageService, type GraphNode, type StoryGraph } from "squiffy-compiler/language-service";
 import { applyEditsToString } from "./language/codemirror.js";
 import {
-    blockOf, checkPassageName, deleteLinesEdits, deletionMessage, insertHeaderEdit, linkThenHeaderEdits, placeNewPassage, placeNewSection, planDeletion, startEdit,
+    blockOf, checkPassageName, deleteLinesEdits, deletionMessage, endingEdit, endingRemovalEdits, insertHeaderEdit, isDirectiveLine, linkThenHeaderEdits, placeNewPassage, placeNewSection, planDeletion, startEdit,
 } from "./map-edits.js";
 
 async function graphOf(text: string, others: Record<string, string> = {}) {
@@ -247,5 +247,39 @@ describe("starting the story at a section", () => {
         expect(set("[[hall]]:\n")).toBe("@start cave\n[[hall]]:\n");
         expect(set("@title T")).toBe("@title T\n@start cave\n");
         expect(set("")).toBe("@start cave\n");
+    });
+});
+
+describe("marking an ending", () => {
+    test("adds @end under the section's header, or after it at the end of the file", async () => {
+        const text = "[[a]]:\nGo [[b]].\n\n[[b]]:\nThe end.\n\n[[c]]:";
+        const graph = await graphOf(text);
+        const mark = (id: string) => applyEditsToString(text, [endingEdit(text, node(graph, id))]);
+        expect(mark("section:b")).toBe("[[a]]:\nGo [[b]].\n\n[[b]]:\n@end\nThe end.\n\n[[c]]:");
+        expect(mark("section:c")).toBe(text + "\n@end");
+    });
+});
+
+describe("taking out an ending's @end, for a link from it", () => {
+    test("takes out each @end in the section and its passages, with the line break before it", async () => {
+        const text = "[[a]]:\nGo [[b]].\n\n[[b]]:\n@end\nStop.\n\n[p]:\n@end\nP.\n\n[[c]]:\nC.";
+        const graph = await graphOf(text);
+        const out = applyEditsToString(text, endingRemovalEdits(graph, node(graph, "passage:b/p"), text));
+        expect(out).toBe("[[a]]:\nGo [[b]].\n\n[[b]]:\nStop.\n\n[p]:\nP.\n\n[[c]]:\nC.");
+        expect(endingRemovalEdits(graph, node(graph, "section:a"), text)).toEqual([]);
+    });
+
+    test("doesn't overlap a link added after the @end, at the end of the section's text", async () => {
+        const text = "[[a]]:\nGo [[b]].\n\n[[b]]:\n@end";
+        const graph = await graphOf(text);
+        const b = node(graph, "section:b");
+        const link = { range: { start: b.contentEnd, end: b.contentEnd }, newText: "\n\n[[c]]" };
+        expect(applyEditsToString(text, [link, ...endingRemovalEdits(graph, b, text)])).toBe("[[a]]:\nGo [[b]].\n\n[[b]]:\n\n[[c]]");
+    });
+
+    test("a directive line isn't somewhere to type a link", () => {
+        expect(isDirectiveLine("@end")).toBe(true);
+        expect(isDirectiveLine("  @set score = 1")).toBe(true);
+        expect(isDirectiveLine("Some text, with an @ in it.")).toBe(false);
     });
 });

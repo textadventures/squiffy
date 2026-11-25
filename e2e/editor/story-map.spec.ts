@@ -229,6 +229,73 @@ test.describe("writing on the map", () => {
         await expect(editor(page).locator(".cm-activeLine")).toHaveText("[wall]:");
     });
 
+    test("typing a link to a new section in the card offers to add it, at the cursor (#677)", async ({ page }) => {
+        await openStory(page);
+        await write(page, "section:hill");
+        await page.keyboard.press("ControlOrMeta+End");
+        await page.keyboard.type(" Or the [[cellar]]");
+        const bar = page.locator(".cm-squiffy-bar");
+        // Not while the link's being typed, and not for a link somewhere else
+        await page.keyboard.type(".");
+        await expect(bar).toBeHidden();
+        await page.keyboard.press("ArrowLeft");
+        await page.keyboard.press("ArrowLeft");
+        await expect(bar.getByRole("button", { name: /Create section 'cellar'/ })).toBeVisible();
+        await bar.getByRole("button", { name: /Create section 'cellar'/ }).click();
+        await expect(box(page, "section:cellar")).toBeVisible();
+        // Still writing the same section, with no second link
+        await expect(editor(page)).toBeFocused();
+        expect(await lines(page)).toEqual(["@end", "The end. [[empty]] Or the [[cellar]]."]);
+        // Now it's there, the bar goes to it
+        await expect(bar.getByRole("button", { name: /Go to \[\[cellar\]\]/ })).toBeVisible();
+        await bar.getByRole("button", { name: /Go to/ }).click();
+        await expect(cardTitle(page)).toHaveText("cellar");
+        expect(await wholeScript(page)).toContain("Or the [[cellar]].\n\n[[cellar]]:\n");
+    });
+
+    test("the fix at the cursor is a keypress away, and one undo takes it back (#677)", async ({ page }) => {
+        await openStory(page);
+        await write(page, "section:cave");
+        await page.keyboard.press("ControlOrMeta+End");
+        await page.keyboard.type(" Or [ledge]");
+        await page.keyboard.press("ArrowLeft");
+        await expect(page.locator(".cm-squiffy-bar")).toContainText("Create passage 'ledge'");
+        await page.keyboard.press("ControlOrMeta+.");
+        await expect(box(page, "passage:cave/ledge")).toBeVisible();
+        await page.keyboard.press("ControlOrMeta+Z");
+        await expect(box(page, "passage:cave/ledge")).toHaveCount(0);
+        expect((await lines(page)).join("\n")).toContain("Or [ledge]");
+    });
+
+    test("a dead end being written can be marked as an ending, from the card's header (#677)", async ({ page }) => {
+        await openStory(page, "[[start]]:\nGo [[on]].\n\n[[on]]:\nNothing more.\n");
+        await write(page, "section:on");
+        const mark = page.locator("#editor header").getByRole("button", { name: "Mark as an ending" });
+        await mark.click();
+        await expect(mark).toBeHidden();
+        expect(await lines(page)).toEqual(["@end", "Nothing more."]);
+        await page.keyboard.press("ControlOrMeta+Z");
+        await expect(mark).toBeVisible();
+    });
+
+    test("a link dragged out of an ending takes its @end out, and doesn't go into the @end line (#677)", async ({ page }) => {
+        await openStory(page, "[[start]]:\nGo [[on]].\n\n[[on]]:\nNothing more.\n");
+        await write(page, "section:on");
+        await page.locator("#editor header").getByRole("button", { name: "Mark as an ending" }).click();
+        await expect.poll(() => lines(page)).toEqual(["@end", "Nothing more."]);
+        // The cursor's on the @end line now
+        await page.keyboard.press("ControlOrMeta+Home");
+        const handle = await page.locator('[data-handle="section:on"]').boundingBox();
+        await page.mouse.move(handle!.x + handle!.width / 2, handle!.y + handle!.height / 2);
+        await page.mouse.down();
+        await page.mouse.move(120, 600, { steps: 5 });
+        await page.mouse.up();
+        await page.keyboard.type("beyond");
+        await page.keyboard.press("Enter");
+        await expect(box(page, "section:beyond")).toBeVisible();
+        expect(await wholeScript(page)).toBe("[[start]]:\nGo [[on]].\n\n[[on]]:\nNothing more.\n\n[[beyond]]\n\n[[beyond]]:\n");
+    });
+
     test("renaming from the card changes the links to it", async ({ page }) => {
         await openStory(page);
         await write(page, "section:cave");
@@ -461,7 +528,9 @@ test.describe("editing from the map", () => {
         await page.keyboard.type("summit");
         await page.keyboard.press("Enter");
         await expect(box(page, "section:summit")).toBeVisible();
-        expect(await script()).toBe(`${story.trimEnd()}\n\n[[summit]]\n\n[[summit]]:\n`);
+        // The hill isn't an ending any more, now there's a way on from it
+        const withoutEnd = story.trimEnd().replace("[[hill]]:\n@end\n", "[[hill]]:\n");
+        expect(await script()).toBe(`${withoutEnd}\n\n[[summit]]\n\n[[summit]]:\n`);
 
         await box(page, "section:summit").click();
         await page.keyboard.press("Delete");
@@ -470,7 +539,7 @@ test.describe("editing from the map", () => {
         await expect(box(page, "section:summit")).toHaveCount(0);
         // No red box for a link left behind
         await expect(page.locator('[data-node^="missing:"]')).toHaveCount(0);
-        expect(await script()).toBe(`${story.trimEnd()}\n`);
+        expect(await script()).toBe(`${withoutEnd}\n`);
     });
 
     test("a passage added from the menu goes at the end of its section, with a link", async ({ page }) => {
@@ -517,6 +586,23 @@ test.describe("editing from the map", () => {
         await expect(box(page, "section:grotto")).toBeVisible();
         await expect(box(page, "section:cave")).toHaveCount(0);
         await expect(box(page, "passage:grotto/wall")).toBeVisible();
+    });
+
+    test("a dead end can be marked as an ending from its menu, or from the details (#677)", async ({ page }) => {
+        await openStory(page, "[[start]]:\nGo [[on]] or [[off]].\n\n[[on]]:\nNothing more.\n\n[[off]]:\nNothing here either.\n");
+        await box(page, "section:on").click({ button: "right" });
+        await page.getByRole("menuitem", { name: "Mark as an ending" }).click();
+        await box(page, "section:off").click();
+        await page.locator(".map-details").getByRole("button", { name: "Mark as an ending" }).click();
+        await expect(page.locator(".map-details").getByRole("button", { name: "Mark as an ending" })).toBeHidden();
+        await page.getByRole("button", { name: "Code + Map", exact: true }).click();
+        const script = (await lines(page)).join("\n");
+        expect(script).toContain("[[on]]:\n@end\nNothing more.");
+        expect(script).toContain("[[off]]:\n@end\nNothing here either.");
+        // Not offered for a section that isn't a dead end
+        await box(page, "section:start").click({ button: "right" });
+        await expect(page.getByRole("menuitem", { name: "Start the story here" })).toBeVisible();
+        await expect(page.getByRole("menuitem", { name: "Mark as an ending" })).toHaveCount(0);
     });
 
     test("double-clicking a broken link's red box adds what's missing", async ({ page }) => {
