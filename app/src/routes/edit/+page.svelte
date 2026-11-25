@@ -53,7 +53,7 @@
     import TriangleAlert from "@lucide/svelte/icons/triangle-alert";
     import { readMapLayout, saveMapLayout } from "#lib/map-layout.js";
     import { narrowed, narrowing, narrowRange, setNarrow } from "#lib/narrow.js";
-    import { checkPassageName, deleteLinesEdits, deletionMessage, endingEdit, insertHeaderEdit, linkThenHeaderEdits, placeNewPassage, placeNewSection, planDeletion, startEdit, type Place } from "#lib/map-edits.js";
+    import { checkPassageName, deleteLinesEdits, deletionMessage, endingEdit, endingRemovalEdits, insertHeaderEdit, isDirectiveLine, linkThenHeaderEdits, placeNewPassage, placeNewSection, planDeletion, startEdit, type Place } from "#lib/map-edits.js";
     import { addSectionOrPassage, clipboardCommand, insertSnippet, runCommand, userSnippets } from "#lib/editor-commands.js";
     import { formatKey } from "#lib/shortcuts.js";
     import { desktopApi } from "#lib/desktop.js";
@@ -1112,7 +1112,8 @@
         if (view && cursorSeen && p?.activePath === file && storyGraph) {
             const head = view.state.selection.main.head;
             const at = toPosition(view.state.doc, head);
-            if (nodeAtLine(storyGraph, file, at.line)?.id === from.id && at.line > from.location.range.start.line) {
+            if (nodeAtLine(storyGraph, file, at.line)?.id === from.id && at.line > from.location.range.start.line
+                && !isDirectiveLine(view.state.doc.line(at.line + 1).text)) {
                 return { [file]: [{ range: { start: at, end: at }, newText: text }] };
             }
         }
@@ -1266,14 +1267,17 @@
     // `at` is where its box goes, if the author chose. `select` is false to leave the map's
     // selection (and so the card) as it is, for a section added while writing.
     async function createSectionFromMap(name: string, where: { at?: Point; near?: GraphNode; from?: GraphNode; link?: boolean; select?: boolean }) {
+        // Where things are in the script as it is now, not as it was when the map last drew it
+        if (graphStale) await refreshGraph();
         const graph = storyGraph;
         if (!p || !graph) return;
-        const { at, near, from } = where;
+        const { at } = where;
+        const near = latest(where.near), from = latest(where.from);
         const file = from?.location.file ?? near?.location.file ?? (isSquiffyFile(p.activePath) ? p.activePath : p.mainFile);
         try {
             const place = placeNewSection(graph, { from, near, file });
             const edit = from && where.link !== false
-                ? await linkThenHeader(linkEdit(from, `[[${name}]]`), place, `[[${name}]]:`)
+                ? await withoutEnding(await linkThenHeader(linkEdit(from, `[[${name}]]`), place, `[[${name}]]:`), from)
                 : await headerEdit(place, `[[${name}]]:`);
             if (where.select !== false) selectWhenReady = `section:${name}`;
             await applyMapEdit(edit, at && {
@@ -1377,12 +1381,31 @@
             if (name) await createSectionFromMap(name, { at, from });
             return;
         }
+        if (graphStale) await refreshGraph();
+        from = latest(from) ?? from;
+        to = latest(to) ?? to;
         const link = linkTo(from, to);
         if ("error" in link) {
             showToast(link.error, "info");
             return;
         }
-        await applyMapEdit(linkEdit(from, link.text));
+        const edit = linkEdit(from, link.text);
+        await applyMapEdit(to.kind === "section" && !to.start ? await withoutEnding(edit, from) : edit);
+    }
+
+    // A node as it is in the story graph now, which may have been read again since it was given
+    function latest(node: GraphNode | undefined): GraphNode | undefined {
+        return node && (storyGraph?.nodes.find(n => n.id === node.id) ?? node);
+    }
+
+    // A link added from a section marked with @end to another section means the story doesn't
+    // stop there any more, so its @end goes, in the same change
+    async function withoutEnding(edit: WorkspaceEdit, from: GraphNode): Promise<WorkspaceEdit> {
+        const graph = storyGraph;
+        if (!graph) return edit;
+        const file = from.location.file;
+        const removal = endingRemovalEdits(graph, from, await currentText(file));
+        return removal.length ? mergeEdits(edit, { [file]: removal }) : edit;
     }
 
     // Renames a section or passage everywhere it's used. With a name (typed on the map), says why

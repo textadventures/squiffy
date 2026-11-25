@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { createLanguageService, type TextEdit } from "squiffy-compiler/language-service";
-import { addPassageEdits, linkEdit, missingTarget, movedPositions, newPassageEdit, newSectionEdits } from "./map-edits.js";
+import { addPassageEdits, linkEdit, linkEndsEnding, missingTarget, movedPositions, newPassageEdit, newSectionEdits } from "./map-edits.js";
 
 async function graphOf(text: string) {
     const files: Record<string, string> = { "story.squiffy": text };
@@ -55,6 +55,22 @@ describe("linking on the map", () => {
         const after = linkEdit(graph, "section:start", "section:right");
         expect(onHeader).toEqual(after);
         expect(elsewhere).toEqual(after);
+    });
+
+    test("a link isn't typed into a directive line at the cursor, such as @end", async () => {
+        const text = "[[start]]:\n@end\nThe end.\n\n[[left]]:\nLeft.";
+        const graph = await graphOf(text);
+        const cursor = { file: "story.squiffy", position: { line: 1, character: 0 }, lineText: "@end" };
+        expect(linkEdit(graph, "section:start", "section:left", cursor)).toEqual(linkEdit(graph, "section:start", "section:left"));
+    });
+
+    test("a link from an ending to another section takes out its @end, but not one back to the start", async () => {
+        const text = "[[start]]:\nGo [[end]].\n\n[[end]]:\n@end\nThe end.\n\n[[more]]:\nMore.";
+        const graph = await graphOf(text);
+        const end = graph.nodes.find(n => n.id == "section:end")!;
+        expect(linkEndsEnding(graph, end, "section:more", text).map(e => e.range.start.line)).toEqual([3]);
+        expect(linkEndsEnding(graph, end, undefined, text)).toHaveLength(1);
+        expect(linkEndsEnding(graph, end, "section:start", text)).toEqual([]);
     });
 
     test("says why there can't be a link", async () => {

@@ -14,7 +14,7 @@ import { checkSectionName, emptyPositions, movedNodes, nodeAtLine, renamePositio
 import { STORY_GRAPH, type PreviewFromHereArgs, type StoryGraphParams, type StoryGraphResult } from "../protocol.js";
 import type { FromMap, Point, ToMap, TraceStep } from "../map/messages.js";
 import type { Preview } from "./preview.js";
-import { addPassageEdits, linkEdit, missingTarget, movedPositions, newPassageEdit, newSectionEdits, sectionFor, type Cursor } from "./map-edits.js";
+import { addPassageEdits, linkEdit, linkEndsEnding, missingTarget, movedPositions, newPassageEdit, newSectionEdits, sectionFor, type Cursor } from "./map-edits.js";
 
 // How long to wait after typing before drawing the map again
 const UPDATE_DELAY = 300;
@@ -230,7 +230,7 @@ export class StoryMap implements vscode.Disposable {
         const file = pathIn(this.root, editor.document.uri);
         if (file === undefined) return undefined;
         const { line, character } = editor.selection.active;
-        return { file, position: { line, character } };
+        return { file, position: { line, character }, lineText: editor.document.lineAt(line).text };
     }
 
     private uriOf(file: string) {
@@ -258,10 +258,14 @@ export class StoryMap implements vscode.Disposable {
             void vscode.window.showInformationMessage(result.error);
             return;
         }
-        const { start } = result.edit.range;
-        const edit = new vscode.WorkspaceEdit();
-        edit.insert(this.uriOf(result.file), new vscode.Position(start.line, start.character), result.edit.newText);
-        if (!(await vscode.workspace.applyEdit(edit))) void vscode.window.showWarningMessage("Couldn't add the link.");
+        const fromNode = this.graph.nodes.find(n => n.id == from)!;
+        const text = (await vscode.workspace.openTextDocument(this.uriOf(result.file))).getText();
+        const ending = fromNode.location.file == result.file ? linkEndsEnding(this.graph, fromNode, to, text) : [];
+        try {
+            await this.applyEdits(new Map([[result.file, [result.edit, ...ending]]]));
+        } catch {
+            void vscode.window.showWarningMessage("Couldn't add the link.");
+        }
     }
 
     // Something from the map's menu, for the nodes it's for, once the graph's up to date
@@ -356,7 +360,8 @@ export class StoryMap implements vscode.Disposable {
         const cursor = this.cursor();
         const file = from?.location.file ?? near?.location.file ?? (cursor?.file.endsWith(".squiffy") ? cursor.file : this.mainFile!);
         const text = (await vscode.workspace.openTextDocument(this.uriOf(file))).getText();
-        await this.applyEdits(new Map([[file, newSectionEdits(graph, name, { from, near, file }, text, cursor)]]));
+        const ending = from && from.location.file == file ? linkEndsEnding(graph, from, undefined, text) : [];
+        await this.applyEdits(new Map([[file, [...newSectionEdits(graph, name, { from, near, file }, text, cursor), ...ending]]]));
         this.placeNew({ kind: "section", name }, at);
     }
 

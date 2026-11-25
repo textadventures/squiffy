@@ -71,7 +71,7 @@ One per line, at the start of a section or passage, before its text. Those that 
 
 ## Endings and dead ends
 
-A section with no links to another section is where the story stops. If it's meant to be an ending, put `@end` in it, and perhaps `{{restart text="Play again"}}`. Otherwise it's a dead end, which `--check` and `--random` report. A section that's only used by `{{embed}}` isn't reported as unreachable.
+A section with no links to another section is where the story stops. If it's meant to be an ending, put `@end` in it, and perhaps `{{restart text="Play again"}}`. Otherwise it's a dead end, which `--check` and `--random` report. Don't put `@end` in a section that links on to another section: `--check` warns about that too (a link back to the start is fine). A section that's only used by `{{embed}}` isn't reported as unreachable.
 
 ## JavaScript
 

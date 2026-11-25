@@ -549,6 +549,33 @@ describe("diagnostics", () => {
         }
     });
 
+    test("an ending that links to another section is a warning on its @end, which a quick fix takes out", async () => {
+        const main = "[[a]]:\nGo to [[b]].\n\n[[b]]:\n@end\nOn to [[c]].\n\n[[c]]:\n@end\nThe end.";
+        const ls = service({ "story.squiffy": main });
+        const [diagnostic, ...others] = await ls.getDiagnostics("story.squiffy");
+        expect(others).toEqual([]);
+        expect(diagnostic).toMatchObject({ code: "squiffy/end-with-way-out", severity: "warning", range: { start: { line: 4 } } });
+        expect(diagnostic.message).toBe("The section \"b\" is marked as an ending with @end, but it links to another section, so the story doesn't stop here. Take out the @end, or the link.");
+        const actions = await ls.getCodeActions("story.squiffy", diagnostic.range);
+        expect(actions.map(a => [a.title, !!a.isPreferred])).toEqual([
+            ["Take out the @end", true], ["Ignore this warning in this section", false],
+        ]);
+        const fixed = apply(main, actions[0].edit["story.squiffy"]);
+        expect(fixed).toBe("[[a]]:\nGo to [[b]].\n\n[[b]]:\nOn to [[c]].\n\n[[c]]:\n@end\nThe end.");
+        ls.updateFile("story.squiffy", fixed);
+        expect(await ls.getDiagnostics("story.squiffy")).toEqual([]);
+    });
+
+    test("an ending can link back to the start, to play again, and the master section's links don't count", async () => {
+        const main = "[[]]:\n[[Help]]\n\n[[a]]:\nGo to [[b]].\n\n[[b]]:\n@end\nThe end. [[Play again]](a)\n\n[[Help]]:\nNone. [[a]]";
+        expect(await service({ "story.squiffy": main }).getDiagnostics("story.squiffy")).toEqual([]);
+    });
+
+    test("the graph says where a section's @end lines are, its passages' too", async () => {
+        const graph = await one("[[a]]:\n@end\nEnd.\n\n[p]:\n@end\nP.");
+        expect(nodeOf(graph, "section:a").endRanges?.map(r => r.start.line)).toEqual([1, 5]);
+    });
+
     test("a section that's only shown inside others isn't unreachable, or a dead end", async () => {
         const ls = service({ "story.squiffy": "[[a]]:\n{{live \"x\" section=\"panel\"}} {{embed \"shared\"}} [[b]]\n\n[[panel]]:\nJust text.\n\n[[shared]]:\nMore text.\n\n[[b]]:\n@end" });
         expect(await ls.getDiagnostics("story.squiffy")).toEqual([]);

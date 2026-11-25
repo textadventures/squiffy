@@ -55,6 +55,8 @@ export interface GraphNode {
     deadEnd: boolean;
     // A section marked with @end as one of the story's endings
     ending?: boolean;
+    // Where its @end lines are (in it or its passages), e.g. to take them out
+    endRanges?: Range[];
     // For testing the story, not part of what players see: "marked" for a section marked with
     // @test, and "reached" for anything that isn't reachable from the start but is from one of
     // those (or is shown inside one), such as the sections a list of shortcuts links to
@@ -181,7 +183,7 @@ export function buildStoryGraph(source: GraphSource): StoryGraph {
     const containerIds = new Map<SectionNode | PassageNode, string>();
     // Containers with navigation that can't be followed
     const unknown = new Set<string>();
-    const endings = new Set<string>();
+    const endings = new Map<string, Range[]>();
     // Sections marked with @test
     const tests = new Set<string>();
     // {{live}} helpers that show a section or passage
@@ -225,7 +227,7 @@ export function buildStoryGraph(source: GraphSource): StoryGraph {
             const from = containerIds.get(container)!;
             for (const statement of container.body) {
                 if (statement.type == "end") {
-                    endings.add(name);
+                    endings.set(name, [...endings.get(name) ?? [], statement.range]);
                 }
                 else if (statement.type == "test") {
                     tests.add(name);
@@ -476,8 +478,12 @@ export function buildStoryGraph(source: GraphSource): StoryGraph {
         : [];
     for (const node of nodes) {
         if (node.kind != "section") continue;
-        const ending = endings.has(node.name);
-        if (ending) node.ending = true;
+        const endRanges = endings.get(node.name);
+        const ending = !!endRanges;
+        if (endRanges) {
+            node.ending = true;
+            node.endRanges = endRanges;
+        }
         // What's shown in this section: its own content, its passages', the master section's,
         // and anything those embed
         const seen = new Set<string>();
@@ -528,6 +534,29 @@ export function storyGraphDiagnostics(graph: StoryGraph): Diagnostic[] {
                 severity: "warning",
                 code: "squiffy/dead-end",
                 message: `${capitalise(node.label ?? `the section "${node.name}"`)} has no way out, as it has no links to another section. If it's one of the story's endings, add @end to say so.`,
+            });
+        }
+    }
+    // An ending with a way out of it: @end only says a section with no way out is meant to be
+    // an ending, so here it's in the wrong section, or the link is. A link back to the start
+    // ("Play again") doesn't count.
+    const start = sections.find(n => n.start)?.id;
+    const sectionOf = new Map(graph.nodes.map(n => [n.id, n.kind == "section" ? n.name : n.section!]));
+    const leaving = new Set<string>();
+    for (const edge of graph.edges) {
+        if (!NAVIGATION.has(edge.kind) || (edge.to !== undefined && edge.to === start)) continue;
+        const section = sectionOf.get(edge.from);
+        if (section !== undefined && section != "") leaving.add(section);
+    }
+    for (const node of sections) {
+        if (!node.endRanges || !leaving.has(node.name)) continue;
+        for (const range of node.endRanges) {
+            diagnostics.push({
+                file: node.location.file,
+                range,
+                severity: "warning",
+                code: "squiffy/end-with-way-out",
+                message: `${capitalise(node.label ?? `the section "${node.name}"`)} is marked as an ending with @end, but it links to another section, so the story doesn't stop here. Take out the @end, or the link.`,
             });
         }
     }

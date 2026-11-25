@@ -238,7 +238,7 @@ const DIRECTIVES: [string, string][] = [
 ];
 
 // The warnings with a quick fix that adds a squiffy-ignore comment
-const IGNORE_ACTION_CODES = new Set<Diagnostic["code"]>(["squiffy/unknown-name", "squiffy/sound-on-first-screen", "squiffy/unreachable-section", "squiffy/link-to-test-section"]);
+const IGNORE_ACTION_CODES = new Set<Diagnostic["code"]>(["squiffy/unknown-name", "squiffy/sound-on-first-screen", "squiffy/unreachable-section", "squiffy/link-to-test-section", "squiffy/end-with-way-out"]);
 
 const contains = (range: Range, pos: Position) =>
     comparePositions(range.start, pos) <= 0 && comparePositions(pos, range.end) <= 0;
@@ -1070,6 +1070,17 @@ export function createLanguageService(options: LanguageServiceOptions): Language
                     ? { range: lineRange(line, 0, 0), newText: "@end\n" }
                     : { range: lineRange(line - 1, lines[line - 1].length, lines[line - 1].length), newText: "\n@end" });
                 actions.push({ title: "Mark this section as an ending", kind: "quickfix", diagnostic, edit, isPreferred: true });
+            }
+
+            for (const diagnostic of diagnostics) {
+                if (diagnostic.code != "squiffy/end-with-way-out") continue;
+                // The whole line, including its line break
+                const line = diagnostic.range.start.line;
+                const end = line + 1 < lines.length ? { line: line + 1, character: 0 } : { line, character: lines[line].length };
+                const start = line + 1 < lines.length || line == 0 ? { line, character: 0 } : { line: line - 1, character: lines[line - 1].length };
+                const edit: WorkspaceEdit = {};
+                addEdit(edit, path, { range: { start, end }, newText: "" });
+                actions.push({ title: "Take out the @end", kind: "quickfix", diagnostic, edit, isPreferred: true });
             }
 
             for (const diagnostic of diagnostics) {

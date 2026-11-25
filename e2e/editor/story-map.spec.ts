@@ -278,6 +278,24 @@ test.describe("writing on the map", () => {
         await expect(mark).toBeVisible();
     });
 
+    test("a link dragged out of an ending takes its @end out, and doesn't go into the @end line (#677)", async ({ page }) => {
+        await openStory(page, "[[start]]:\nGo [[on]].\n\n[[on]]:\nNothing more.\n");
+        await write(page, "section:on");
+        await page.locator("#editor header").getByRole("button", { name: "Mark as an ending" }).click();
+        await expect.poll(() => lines(page)).toEqual(["@end", "Nothing more."]);
+        // The cursor's on the @end line now
+        await page.keyboard.press("ControlOrMeta+Home");
+        const handle = await page.locator('[data-handle="section:on"]').boundingBox();
+        await page.mouse.move(handle!.x + handle!.width / 2, handle!.y + handle!.height / 2);
+        await page.mouse.down();
+        await page.mouse.move(120, 600, { steps: 5 });
+        await page.mouse.up();
+        await page.keyboard.type("beyond");
+        await page.keyboard.press("Enter");
+        await expect(box(page, "section:beyond")).toBeVisible();
+        expect(await wholeScript(page)).toBe("[[start]]:\nGo [[on]].\n\n[[on]]:\nNothing more.\n\n[[beyond]]\n\n[[beyond]]:\n");
+    });
+
     test("renaming from the card changes the links to it", async ({ page }) => {
         await openStory(page);
         await write(page, "section:cave");
@@ -510,7 +528,9 @@ test.describe("editing from the map", () => {
         await page.keyboard.type("summit");
         await page.keyboard.press("Enter");
         await expect(box(page, "section:summit")).toBeVisible();
-        expect(await script()).toBe(`${story.trimEnd()}\n\n[[summit]]\n\n[[summit]]:\n`);
+        // The hill isn't an ending any more, now there's a way on from it
+        const withoutEnd = story.trimEnd().replace("[[hill]]:\n@end\n", "[[hill]]:\n");
+        expect(await script()).toBe(`${withoutEnd}\n\n[[summit]]\n\n[[summit]]:\n`);
 
         await box(page, "section:summit").click();
         await page.keyboard.press("Delete");
@@ -519,7 +539,7 @@ test.describe("editing from the map", () => {
         await expect(box(page, "section:summit")).toHaveCount(0);
         // No red box for a link left behind
         await expect(page.locator('[data-node^="missing:"]')).toHaveCount(0);
-        expect(await script()).toBe(`${story.trimEnd()}\n`);
+        expect(await script()).toBe(`${withoutEnd}\n`);
     });
 
     test("a passage added from the menu goes at the end of its section, with a link", async ({ page }) => {

@@ -414,6 +414,8 @@ The current carries you away. THE END.
 
 An `@end` in one of a section's passages marks the whole section as an ending. `@end` doesn't change what the player sees.
 
+A section with `@end` that links to another section isn't where the story stops, so the editor warns about that too: take out the `@end`, or the link. A link back to the story's start, to play again, is fine (though [`{{restart}}`](#restarting-and-saving-from-the-story) starts the story afresh, which a link doesn't).
+
 ### Restarting and saving from the story
 
 A published story has Restart and Save buttons above it. To give the player those choices in the story itself, such as "Play again" at an ending, use `{{restart}}` and `{{saves}}`:
