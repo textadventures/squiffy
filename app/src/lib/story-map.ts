@@ -6,7 +6,7 @@
 // they're embedded. Sections that can't be reached from the start are a group of their own, to the
 // side, ranked from wherever their own chains begin.
 import type { DocumentSymbol, GraphEdge, GraphEdgeKind, GraphNode, Location, StoryGraph } from "squiffy-compiler/language-service";
-import type { MapPositions } from "squiffy-compiler";
+import type { MapBoxSize, MapPositions, MapSizes } from "squiffy-compiler";
 import { layeredLayout, type Layout, type MapEdge, type MapGraph, type MapNode } from "@textadventures/graph-map";
 
 export interface StoryMapNode extends MapNode {
@@ -21,6 +21,8 @@ export interface StoryMapNode extends MapNode {
     group: number;
     // The section it's in: its own name, for a section
     section: string;
+    // If the author has made its box bigger (#681)
+    size?: MapBoxSize;
 }
 
 export interface StoryMapEdge extends MapEdge {
@@ -47,8 +49,31 @@ const sectionId = (name: string) => `section:${name}`;
 // What the map's rows follow: navigation, and embeds, whose links show where they're embedded
 const NAVIGATION = new Set<GraphEdgeKind>(["section-link", "goto", "script", "embed"]);
 
-const SECTION_HEIGHT = 30;
+// Tall enough for the start of a section's text under its name when zoomed in (#681)
+const SECTION_HEIGHT = 40;
 const PASSAGE_HEIGHT = 22;
+
+// Zooms from which boxes show the start of their text (#681): a section of the usual size two
+// lines of it from the first zoom in from 100%, then three smaller lines, and a passage one, from
+// the third. A box the author has made bigger shows it at any zoom.
+export const DETAIL_ZOOMS = [1.2, 1.8];
+
+// The sizes a box can be, for its right-click menu, with undefined for the usual size
+export const BOX_SIZE_CHOICES: [MapBoxSize | undefined, string][] = [[undefined, "Box: usual size"], ["wide", "Box: wide"], ["tall", "Box: tall"], ["large", "Box: large"]];
+
+// How much of a section's or passage's text to show on its box: about as much as the largest box
+// has room for
+export const BOX_EXCERPT = 900;
+
+// A box's size, which the author can make bigger (#681): wider, taller or both
+function boxSize(kind: "section" | "passage", width: number, size: MapBoxSize | undefined) {
+    const section = kind == "section";
+    const wide = size == "wide" || size == "large", tall = size == "tall" || size == "large";
+    return {
+        width: wide ? Math.max(width, section ? 280 : 220) : width,
+        height: section ? (tall ? 100 : SECTION_HEIGHT) : (tall ? 56 : PASSAGE_HEIGHT),
+    };
+}
 
 // A rough width for a label, without measuring text (which a worker or a test can't do)
 function labelWidth(label: string, charWidth: number, min: number, max: number) {
@@ -70,7 +95,8 @@ export function nodeLabel(node: GraphNode): string {
     return node.detail ?? (node.name || "(untitled)");
 }
 
-export function buildStoryMap(graph: StoryGraph): StoryMap {
+// `sizes` are the boxes the author has made bigger, by id (see nodeSizes)
+export function buildStoryMap(graph: StoryGraph, sizes?: ReadonlyMap<string, MapBoxSize>): StoryMap {
     const nodes: StoryMapNode[] = [];
     const byId = new Map<string, StoryMapNode>();
     const add = (node: StoryMapNode) => {
@@ -192,8 +218,8 @@ export function buildStoryMap(graph: StoryGraph): StoryMap {
             id: n.id,
             kind: n.kind,
             label,
-            width: n.kind == "section" ? labelWidth(label, 7.4, 60, 190) + (n.start ? 12 : 0) : labelWidth(label, 6.8, 36, 150),
-            height: n.kind == "section" ? SECTION_HEIGHT : PASSAGE_HEIGHT,
+            ...boxSize(n.kind, n.kind == "section" ? labelWidth(label, 7.4, 60, 190) + (n.start ? 12 : 0) : labelWidth(label, 6.8, 36, 150), sizes?.get(n.id)),
+            ...(sizes?.has(n.id) ? { size: sizes.get(n.id) } : {}),
             class: classes.join(" "),
             graphNode: n,
             ...(n.kind == "section" ? { rank: rank.get(n.id) } : { parent: sectionId }),
@@ -375,67 +401,115 @@ export function sectionKeys(graph: StoryGraph): Map<string, string> {
     return keys;
 }
 
-// The saved positions, by node id
-export function pinnedPositions(positions: MapPositions | undefined, graph: StoryGraph | null): Map<string, Point> {
-    const pinned = new Map<string, Point>();
-    if (!positions || !graph) return pinned;
-    for (const [name, key] of sectionKeys(graph)) {
-        const at = positions.sections[key];
-        if (at) pinned.set(sectionId(name), { x: at[0], y: at[1] });
-    }
+// What's saved for sections by their keys (see sectionKeys), and for passages by their section's
+// key and their own name: positions, and sizes
+interface ByName<T> {
+    sections: Record<string, T>;
+    passages: Record<string, Record<string, T>>;
+}
+
+const copyByName = <T>(values: ByName<T> | undefined): ByName<T> => ({
+    sections: { ...values?.sections },
+    passages: Object.fromEntries(Object.entries(values?.passages ?? {}).map(([s, byName]) => [s, { ...byName }])),
+});
+
+// What's saved for each node, by node id
+function byNodeId<T>(values: ByName<T> | undefined, graph: StoryGraph | null): Map<string, T> {
+    const result = new Map<string, T>();
+    if (!values || !graph) return result;
     const keys = sectionKeys(graph);
+    for (const [name, key] of keys) {
+        const value = values.sections[key];
+        if (value !== undefined) result.set(sectionId(name), value);
+    }
     for (const n of graph.nodes) {
         if (n.kind != "passage") continue;
         const key = keys.get(n.section!);
-        const at = key === undefined ? undefined : positions.passages[key]?.[n.name];
-        if (at) pinned.set(n.id, { x: at[0], y: at[1] });
+        const value = key === undefined ? undefined : values.passages[key]?.[n.name];
+        if (value !== undefined) result.set(n.id, value);
     }
-    return pinned;
+    return result;
 }
 
-// A copy of the positions with one node's changed (or removed, with undefined). Only sections and
-// passages have positions saved.
-export function withPosition(positions: MapPositions | undefined, keys: Map<string, string>, node: Pick<GraphNode, "kind" | "name" | "section">, at: Point | undefined): MapPositions {
-    const next: MapPositions = {
-        sections: { ...positions?.sections },
-        passages: Object.fromEntries(Object.entries(positions?.passages ?? {}).map(([s, byName]) => [s, { ...byName }])),
-    };
-    const value: [number, number] | undefined = at && [Math.round(at.x), Math.round(at.y)];
+// A copy with one node's value changed (or removed, with undefined)
+function withValue<T>(values: ByName<T> | undefined, keys: Map<string, string>, node: Pick<GraphNode, "kind" | "name" | "section">, value: T | undefined): ByName<T> {
+    const next = copyByName(values);
     if (node.kind == "section") {
         const key = keys.get(node.name) ?? node.name;
-        if (value) next.sections[key] = value;
+        if (value !== undefined) next.sections[key] = value;
         else delete next.sections[key];
     } else {
         const key = keys.get(node.section!) ?? node.section!;
         const byName = next.passages[key] ??= {};
-        if (value) byName[node.name] = value;
+        if (value !== undefined) byName[node.name] = value;
         else delete byName[node.name];
         if (!Object.keys(byName).length) delete next.passages[key];
     }
     return next;
 }
 
+// The saved positions, by node id
+export function pinnedPositions(positions: MapPositions | undefined, graph: StoryGraph | null): Map<string, Point> {
+    return new Map([...byNodeId(positions, graph)].map(([id, at]) => [id, { x: at[0], y: at[1] }]));
+}
+
+// The boxes the author has made bigger, by node id
+export function nodeSizes(positions: MapPositions | undefined, graph: StoryGraph | null): Map<string, MapBoxSize> {
+    return byNodeId(positions?.sizes, graph);
+}
+
+// Whether anything's been moved by hand, which Lay out again forgets
+export const hasPositions = (positions: MapPositions | undefined) => !!positions && (Object.keys(positions.sections).length > 0 || Object.keys(positions.passages).length > 0);
+
+// Whether there's anything to save: positions, or sizes
+export const hasMapData = (positions: MapPositions | undefined) => hasPositions(positions)
+    || !!positions?.sizes && (Object.keys(positions.sizes.sections).length > 0 || Object.keys(positions.sizes.passages).length > 0);
+
+// No positions, keeping the boxes' sizes, for Lay out again
+export const withoutPositions = (positions: MapPositions | undefined): MapPositions =>
+    positions?.sizes ? { ...emptyPositions(), sizes: positions.sizes } : emptyPositions();
+
+const withSizes = (positions: Omit<MapPositions, "sizes">, sizes: MapSizes | undefined): MapPositions => {
+    const any = sizes && (Object.keys(sizes.sections).length || Object.keys(sizes.passages).length);
+    return any ? { ...positions, sizes } : { sections: positions.sections, passages: positions.passages };
+};
+
+// A copy of the positions with one node's changed (or removed, with undefined). Only sections and
+// passages have positions saved.
+export function withPosition(positions: MapPositions | undefined, keys: Map<string, string>, node: Pick<GraphNode, "kind" | "name" | "section">, at: Point | undefined): MapPositions {
+    return withSizes(withValue(positions, keys, node, at && [Math.round(at.x), Math.round(at.y)] as [number, number]), positions?.sizes);
+}
+
+// A copy of the positions with one node's box size changed (undefined for the usual size)
+export function withSize(positions: MapPositions | undefined, keys: Map<string, string>, node: Pick<GraphNode, "kind" | "name" | "section">, size: MapBoxSize | undefined): MapPositions {
+    return withSizes(copyByName(positions), withValue(positions?.sizes, keys, node, size));
+}
+
 // Undoes (or redoes) a change to the positions: wherever `from` and `to` differ, `current` takes
 // what `to` has. Anything else in `current` is left alone, as it may have changed since (a
 // section renamed, or another box moved).
 export function revertPositions(current: MapPositions | undefined, from: MapPositions, to: MapPositions): MapPositions {
-    const same = (a: [number, number] | undefined, b: [number, number] | undefined) => a?.[0] === b?.[0] && a?.[1] === b?.[1];
-    const revert = (now: Record<string, [number, number]>, a: Record<string, [number, number]>, b: Record<string, [number, number]>) => {
+    return withSizes(revertByName(current, from, to), revertByName(current?.sizes, from.sizes, to.sizes));
+}
+
+function revertByName<T>(current: ByName<T> | undefined, from: ByName<T> | undefined, to: ByName<T> | undefined): ByName<T> {
+    const same = (a: T | undefined, b: T | undefined) => JSON.stringify(a) === JSON.stringify(b);
+    const revert = (now: Record<string, T>, a: Record<string, T>, b: Record<string, T>) => {
         const next = { ...now };
         for (const key of new Set([...Object.keys(a), ...Object.keys(b)])) {
             if (same(a[key], b[key])) continue;
-            if (b[key]) next[key] = b[key];
+            if (b[key] !== undefined) next[key] = b[key];
             else delete next[key];
         }
         return next;
     };
-    const passages: MapPositions["passages"] = {};
-    const sections = new Set([...Object.keys(current?.passages ?? {}), ...Object.keys(from.passages), ...Object.keys(to.passages)]);
+    const passages: ByName<T>["passages"] = {};
+    const sections = new Set([...Object.keys(current?.passages ?? {}), ...Object.keys(from?.passages ?? {}), ...Object.keys(to?.passages ?? {})]);
     for (const section of sections) {
-        const next = revert(current?.passages[section] ?? {}, from.passages[section] ?? {}, to.passages[section] ?? {});
+        const next = revert(current?.passages[section] ?? {}, from?.passages[section] ?? {}, to?.passages[section] ?? {});
         if (Object.keys(next).length) passages[section] = next;
     }
-    return { sections: revert(current?.sections ?? {}, from.sections, to.sections), passages };
+    return { sections: revert(current?.sections ?? {}, from?.sections ?? {}, to?.sections ?? {}), passages };
 }
 
 // Sections and passages that have been renamed between two versions of the story: one that's
@@ -499,6 +573,14 @@ export function movedNodes(before: StoryGraph, after: StoryGraph): [string, stri
 // A renamed section's passages keep theirs too.
 export function renamePositions(positions: MapPositions | undefined, before: StoryGraph, after: StoryGraph): MapPositions | undefined {
     if (!positions) return undefined;
+    const moved = renameByName(positions, before, after);
+    const sized = positions.sizes && renameByName(positions.sizes, before, after);
+    if (!moved && !sized) return undefined;
+    return withSizes(moved ?? positions, sized ?? positions.sizes);
+}
+
+// The same for positions or sizes: undefined if none changed
+function renameByName<T>(positions: ByName<T>, before: StoryGraph, after: StoryGraph): ByName<T> | undefined {
     const beforeKeys = nodeKeys(before), afterKeys = nodeKeys(after);
     const afterById = new Map(after.nodes.map(n => [n.id, n]));
     // The same node: renamed, or with the same id and its header on the same line
@@ -508,17 +590,14 @@ export function renamePositions(positions: MapPositions | undefined, before: Sto
         if (same && same.location.file == n.location.file && same.location.range.start.line == n.location.range.start.line) pairs.push([n, same]);
     }
     let changed = false;
-    const next: MapPositions = {
-        sections: { ...positions.sections },
-        passages: Object.fromEntries(Object.entries(positions.passages).map(([s, byName]) => [s, { ...byName }])),
-    };
+    const next = copyByName(positions);
     const split = (key: string) => key.split("\u0000") as [string, string?];
     // Sections first, as a renamed section's passages are renamed too
     for (const [from, to] of pairs) {
         if (from.kind != "section") continue;
         const a = beforeKeys.get(from.id), b = afterKeys.get(to.id);
         if (a === undefined || b === undefined || a == b) continue;
-        if (next.sections[a]) {
+        if (next.sections[a] !== undefined) {
             next.sections[b] = next.sections[a];
             delete next.sections[a];
             changed = true;
@@ -537,7 +616,7 @@ export function renamePositions(positions: MapPositions | undefined, before: Sto
         // Its section's move has already brought it along
         const byName = next.passages[aSection] ?? next.passages[bSection];
         const at = byName?.[aName!];
-        if (at) {
+        if (at !== undefined) {
             delete byName[aName!];
             (next.passages[bSection] ??= {})[bName!] = at;
             changed = true;
@@ -599,6 +678,37 @@ export function nodeExcerpt(text: string, node: GraphNode, max = 240): string {
         .replace(/\s+/g, " ")
         .trim();
     return prose.length > max ? `${prose.slice(0, max - 1).trimEnd()}…` : prose;
+}
+
+// An excerpt broken into at most `lines` lines of at most `chars` characters, at spaces where it
+// can be, for the map to draw on a box when it's zoomed in (#681). The last line ends with an
+// ellipsis if there's more.
+export function wrapExcerpt(text: string, chars: number, lines: number): string[] {
+    chars = Math.max(2, Math.floor(chars));
+    const out: string[] = [];
+    let rest = text.replace(/\s+/g, " ").trim();
+    while (rest && out.length < lines) {
+        if (rest.length <= chars) {
+            out.push(rest);
+            rest = "";
+            break;
+        }
+        const space = rest.lastIndexOf(" ", chars);
+        const end = space > chars / 3 ? space : chars;
+        out.push(rest.slice(0, end).trimEnd());
+        rest = rest.slice(end).trimStart();
+    }
+    if (rest && out.length) {
+        const last = out[out.length - 1].replace(/…$/, "");
+        // Room for the ellipsis, leaving out the last word rather than cutting it if there's one
+        let cut = last;
+        if (cut.length >= chars) {
+            const space = cut.lastIndexOf(" ", chars - 1);
+            cut = (space > 0 ? cut.slice(0, space) : cut.slice(0, chars - 1)).trimEnd();
+        }
+        out[out.length - 1] = `${cut.replace(/[\s,;:.]+$/, "")}…`;
+    }
+    return out;
 }
 
 // The lines of a section's or passage's own text, from its header at `start` to `end`, without

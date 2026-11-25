@@ -165,6 +165,17 @@ export const PAGE_STRINGS = {
 export interface MapPositions {
     sections: Record<string, [number, number]>;
     passages: Record<string, Record<string, [number, number]>>;
+    // Boxes the author has made bigger, by the same names (#681). The rest are the usual size.
+    sizes?: MapSizes;
+}
+
+// The sizes a box on the story map can be made, besides the usual one
+export const MAP_BOX_SIZES = ["wide", "tall", "large"] as const;
+export type MapBoxSize = typeof MAP_BOX_SIZES[number];
+
+export interface MapSizes {
+    sections: Record<string, MapBoxSize>;
+    passages: Record<string, Record<string, MapBoxSize>>;
 }
 
 export type ParsedProjectFile =
@@ -502,18 +513,29 @@ const isObject = (value: unknown): value is Record<string, unknown> =>
 // left out rather than stopping the story from building.
 function parseMapPositions(value: unknown): MapPositions | undefined {
     if (!isObject(value)) return undefined;
-    const sections: MapPositions["sections"] = {};
-    const passages: MapPositions["passages"] = {};
+    const { sections, passages } = parseByName(value, isPosition);
+    const sizes = isObject(value.sizes) ? parseByName(value.sizes, isBoxSize) : undefined;
+    const anySizes = sizes && (Object.keys(sizes.sections).length || Object.keys(sizes.passages).length);
+    return { sections, passages, ...(anySizes ? { sizes } : {}) };
+}
+
+const isBoxSize = (value: unknown): value is MapBoxSize => (MAP_BOX_SIZES as readonly unknown[]).includes(value);
+
+// Sections' values by name, and passages' by section and passage name, leaving out any that
+// aren't `valid`
+function parseByName<T>(value: Record<string, unknown>, valid: (v: unknown) => v is T) {
+    const sections: Record<string, T> = {};
+    const passages: Record<string, Record<string, T>> = {};
     if (isObject(value.sections)) {
-        for (const [name, position] of Object.entries(value.sections)) {
-            if (isPosition(position)) sections[name] = position;
+        for (const [name, v] of Object.entries(value.sections)) {
+            if (valid(v)) sections[name] = v;
         }
     }
     if (isObject(value.passages)) {
         for (const [section, byName] of Object.entries(value.passages)) {
             if (!isObject(byName)) continue;
-            for (const [name, position] of Object.entries(byName)) {
-                if (isPosition(position)) (passages[section] ??= {})[name] = position;
+            for (const [name, v] of Object.entries(byName)) {
+                if (valid(v)) (passages[section] ??= {})[name] = v;
             }
         }
     }
@@ -694,14 +716,21 @@ export function updateProjectFile(text: string, changes: { main?: string; exclud
         else delete data[name];
     }
     if (changes.map !== undefined) {
-        const { sections, passages } = changes.map;
-        const used = Object.fromEntries(Object.entries(passages).filter(([, byName]) => Object.keys(byName).length));
-        // Anything else that's in "map" stays, but empty lists of positions don't
+        const { sections, passages, sizes } = changes.map;
+        const used = <T>(byName: Record<string, Record<string, T>>) => Object.fromEntries(Object.entries(byName).filter(([, values]) => Object.keys(values).length));
+        // Anything else that's in "map" stays, but empty lists of positions and sizes don't
         const map: Record<string, unknown> = { ...(isObject(data.map) ? data.map : {}) };
         delete map.sections;
         delete map.passages;
+        delete map.sizes;
         if (Object.keys(sections).length) map.sections = sections;
-        if (Object.keys(used).length) map.passages = used;
+        if (Object.keys(used(passages)).length) map.passages = used(passages);
+        if (sizes) {
+            const sized: Record<string, unknown> = {};
+            if (Object.keys(sizes.sections).length) sized.sections = sizes.sections;
+            if (Object.keys(used(sizes.passages)).length) sized.passages = used(sizes.passages);
+            if (Object.keys(sized).length) map.sizes = sized;
+        }
         if (Object.keys(map).length) data.map = map;
         else delete data.map;
     }

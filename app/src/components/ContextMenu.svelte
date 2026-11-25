@@ -10,6 +10,8 @@
         shortcut?: string;
         disabled?: boolean;
         divider?: boolean;
+        // One of a set of choices, marked when it's the one chosen
+        checked?: boolean;
     }
 
     interface Props {
@@ -107,12 +109,16 @@
         <button
             bind:this={itemEls[i]}
             type="button"
-            role="menuitem"
+            role={item.checked === undefined ? "menuitem" : "menuitemradio"}
+            aria-checked={item.checked}
             tabindex="-1"
             class="w-full text-left px-3 py-1.5 text-xs flex items-center gap-6 hover:bg-surface-200-800 focus:bg-surface-200-800 outline-none disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
             disabled={item.disabled}
             onclick={() => select(item)}
         >
+            {#if item.checked !== undefined}
+                <span class="w-3 -mr-4 text-center" aria-hidden="true">{item.checked ? "✓" : ""}</span>
+            {/if}
             <span class="flex-1">{item.label}</span>
             {#if item.shortcut}
                 <span class="text-surface-600-400">{item.shortcut}</span>

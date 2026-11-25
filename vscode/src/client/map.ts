@@ -7,10 +7,10 @@
 
 import * as vscode from "vscode";
 import type { BaseLanguageClient } from "vscode-languageclient";
-import { parseProjectFile, updateProjectFile, type MapPositions } from "squiffy-compiler";
+import { parseProjectFile, updateProjectFile, type MapBoxSize, type MapPositions } from "squiffy-compiler";
 import type { GraphNode, Location, StoryGraph, TextEdit } from "squiffy-compiler/language-service";
 import { checkPassageName, deleteLinesEdits, deletionMessage, endingEdit, planDeletion, startEdit } from "@textadventures/squiffy-app/map-edits";
-import { checkSectionName, emptyPositions, movedNodes, nodeAtLine, nodeExcerpt, nodeText, renamePositions, withPosition } from "@textadventures/squiffy-app/story-map";
+import { BOX_EXCERPT, checkSectionName, hasPositions, movedNodes, nodeAtLine, nodeExcerpt, nodeText, renamePositions, sectionKeys, withoutPositions, withPosition, withSize } from "@textadventures/squiffy-app/story-map";
 import { STORY_GRAPH, type PreviewFromHereArgs, type StoryGraphParams, type StoryGraphResult } from "../protocol.js";
 import type { FromMap, Point, ToMap, TraceStep } from "../map/messages.js";
 import type { Preview } from "./preview.js";
@@ -145,6 +145,9 @@ export class StoryMap implements vscode.Disposable {
             case "move":
                 this.move(message.moves);
                 break;
+            case "resize":
+                this.resize(message.id, message.size);
+                break;
             case "rename":
                 void this.act([message.id], "rename", ([node]) => this.rename(node));
                 break;
@@ -173,7 +176,7 @@ export class StoryMap implements vscode.Disposable {
                 void this.relayout();
                 break;
             case "excerpt":
-                void this.sendExcerpt(message.request, message.id);
+                void this.sendExcerpt(message.request, message.id, message.long);
                 break;
             case "searching":
                 this.searching = message.on;
@@ -247,12 +250,12 @@ export class StoryMap implements vscode.Disposable {
         if (this.graph === graph) this.post({ type: "texts", texts });
     }
 
-    private async sendExcerpt(request: number, id: string) {
+    private async sendExcerpt(request: number, id: string, long?: boolean) {
         const node = this.graph?.nodes.find(n => n.id == id);
         let text = "";
         if (node && this.root) {
             try {
-                text = nodeExcerpt((await vscode.workspace.openTextDocument(this.uriOf(node.location.file))).getText(), node);
+                text = nodeExcerpt((await vscode.workspace.openTextDocument(this.uriOf(node.location.file))).getText(), node, long ? BOX_EXCERPT : undefined);
             } catch {
                 // No preview, then
             }
@@ -450,7 +453,7 @@ export class StoryMap implements vscode.Disposable {
     // Lay out again: forgets where boxes have been put, after asking, as the editor does
     private async relayout() {
         await this.queue;
-        const saved = this.positions && (Object.keys(this.positions.sections).length || Object.keys(this.positions.passages).length);
+        const saved = hasPositions(this.positions);
         if (saved) {
             const answer = await vscode.window.showWarningMessage("Lay out the map again?", { modal: true, detail: "Everything you've moved by hand goes back to where the map puts it." }, "Lay out again");
             if (answer != "Lay out again") return;
@@ -458,7 +461,7 @@ export class StoryMap implements vscode.Disposable {
         this.post({ type: "relayout" });
         if (!saved) return;
         this.queue = this.queue.then(async () => {
-            this.positions = emptyPositions();
+            this.positions = withoutPositions(this.positions);
             await this.savePositions(this.positions);
         }).catch(e => void vscode.window.showWarningMessage(`Couldn't save the map: ${e instanceof Error ? e.message : e}`));
     }
@@ -507,6 +510,16 @@ export class StoryMap implements vscode.Disposable {
         this.queue = this.queue.then(async () => {
             if (!this.graph) return;
             this.positions = movedPositions(this.graph, this.positions, moves);
+            await this.savePositions(this.positions);
+        }).catch(e => void vscode.window.showWarningMessage(`Couldn't save the map: ${e instanceof Error ? e.message : e}`));
+    }
+
+    // A box made bigger, or the usual size again
+    private resize(id: string, size: MapBoxSize | undefined) {
+        this.queue = this.queue.then(async () => {
+            const node = this.graph?.nodes.find(n => n.id == id);
+            if (!node || !this.graph) return;
+            this.positions = withSize(this.positions, sectionKeys(this.graph), node, size);
             await this.savePositions(this.positions);
         }).catch(e => void vscode.window.showWarningMessage(`Couldn't save the map: ${e instanceof Error ? e.message : e}`));
     }

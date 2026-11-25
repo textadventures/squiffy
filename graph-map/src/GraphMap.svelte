@@ -20,6 +20,9 @@
         instructions?: string;
         // Draws a node, inside a <g> whose origin is the node's top left corner
         node?: Snippet<[N, NodeState]>;
+        // Zooms from which nodes are drawn with more detail, as there's room on the screen for it,
+        // in increasing order: NodeState's `detail` says how many of them the zoom is past
+        detailZooms?: number[];
         // Whether a link can be dragged from one node to another (or to empty space, with null)
         canConnect?: (from: N, to: N | null) => boolean;
         // A node was clicked ("click"), or double-clicked or Enter pressed on it ("open")
@@ -52,6 +55,8 @@
         target: boolean;
         // Being dragged
         dragging: boolean;
+        // How many of `detailZooms` the zoom is past: 0 for none
+        detail: number;
     }
 </script>
 
@@ -71,15 +76,18 @@
 
 
     const NONE: ReadonlyMap<string, Point> = new Map();
+    const NO_ZOOMS: number[] = [];
 
     let {
-        graph, layout, pinned = NONE, selected = $bindable(null), longEdge = 400, label, instructions, node: drawNode, canConnect,
+        graph, layout, pinned = NONE, selected = $bindable(null), longEdge = 400, label, instructions, node: drawNode, detailZooms = NO_ZOOMS, canConnect,
         onactivate, onedgeactivate, onmove, onconnect, oncreate, onrename, ondelete, onmenu, onhover,
     }: GraphMapProps<N, E> = $props();
 
     // svelte-ignore state_referenced_locally
     const model = new MapModel<N, E>(layout);
     let transform = $state<Transform>(identity);
+    // Only changes as the zoom crosses one of detailZooms, so panning and zooming don't draw nodes again
+    const detail = $derived(detailZooms.filter(z => transform.k >= z).length);
     let width = $state(0);
     let height = $state(0);
     let container = $state<HTMLDivElement>();
@@ -991,7 +999,7 @@
         <g transform="translate({transform.x},{transform.y}) scale({transform.k})">
             <g class="gm-nodes">
                 {#each graph.nodes as n (n.id)}
-                    {@const state = { selected: n.id == selected, target: gesture?.kind == "connect" && gesture.target == n.id, dragging: gesture?.kind == "node" && gesture.dragging && gesture.id == n.id }}
+                    {@const state = { selected: n.id == selected, target: gesture?.kind == "connect" && gesture.target == n.id, dragging: gesture?.kind == "node" && gesture.dragging && gesture.id == n.id, detail }}
                     <g
                         class="gm-node {n.class ?? ""}"
                         class:gm-node-selected={state.selected || group.has(n.id) || (gesture?.kind == "lasso" && lassoIds.has(n.id))}
