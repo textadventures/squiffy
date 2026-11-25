@@ -67,13 +67,14 @@ To try a part of the story without playing through from the start, click **Previ
 
 - **Click** a box to go to it in your script, or **double-click** it (or select it and press **Enter**) to go there and start typing. A broken link's red box goes to the link.
 - The box for the section the cursor is in is highlighted.
-- The selected box's details are shown at the bottom of the map: whether the story starts or ends there, or can't be reached, buttons to show it in your script, rename it, add a passage, run the preview from it or delete it (and, for a dead end, mark it as an ending, with `@end`), and the sections it links to and is linked from. Click one of those to select it.
+- **Hover over** a box to see the start of its text, and what its marks mean.
+- The selected box's details are shown at the bottom of the map: the start of its text, whether the story starts or ends there, or can't be reached, buttons to show it in your script, rename it, add a passage, run the preview from it or delete it (and, for a dead end, mark it as an ending, with `@end`), and the sections it links to and is linked from. Click one of those to select it.
 - **Drag** a box to move it. Where you put it is saved in `squiffy.json`, as the editor saves it, so the editor's map and VS Code's look the same.
 - To **add a link**, click a box, then drag the dot under it to another box. The link is added to your script, at the cursor if it's in that section, and **Undo** takes it out again.
 - **Right-click** a box (or select it and press **Shift+F10**) for a menu: **Rename** it and the links to it (or press **F2**), **Add a passage** to it with a link to it, **Run from here** in the preview, **Start the story here**, or **Delete** it (or press **Delete**), with the links to it that are on lines of their own. **Undo** takes out any of these changes to your script.
 
 - To **add a section**, click **Add a section**, double-click an empty part of the map, or right-click it and choose **Add a section here**, and give it a name. It goes in your script after the selected section, or the one nearest on the map. Drag the dot under a box to empty space instead to add a section with a link to it.
-- To **search** the map, type in the box at its top right, or press **Ctrl+F** (**Cmd+F** on a Mac) while the map has the focus. Boxes whose names don't match are dimmed, **Enter** selects each match in turn (**Shift+Enter** goes back), and **Escape** clears the search.
+- To **search** the map, type in the box at its top right, or press **Ctrl+F** (**Cmd+F** on a Mac) while the map has the focus. It finds sections and passages by their names and by what's in them, as the editor's map does, and dims the rest. **Enter** selects each match in turn (**Shift+Enter** goes back), and **Escape** clears the search.
 - A broken link's red box can make what it's missing: double-click it, or right-click it and choose **Add this section** (or **Add this passage**).
 
 - While you play the story in the **Squiffy Preview**, the sections and passages you've been to are outlined in green on the map, and so are the links you took between them. Starting the story again clears them.

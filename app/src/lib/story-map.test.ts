@@ -1,14 +1,17 @@
 import { describe, expect, test } from "vitest";
 import { createLanguageService } from "squiffy-compiler/language-service";
-import { buildStoryMap, checkSectionName, findRenames, linkTo, movedNodes, nodeAtLine, nodeExcerpt, pinnedPositions, renamePositions, revertPositions, sectionKeys, withPosition } from "./story-map.js";
+import { buildStoryMap, checkSectionName, findRenames, linkTo, movedNodes, nodeAtLine, nodeExcerpt, nodeText, pinnedPositions, renamePositions, revertPositions, searchMap, sectionKeys, symbolText, withPosition } from "./story-map.js";
 
-async function graphOf(text: string) {
+function serviceOf(text: string) {
     const files: Record<string, string> = { "story.squiffy": text };
-    const service = createLanguageService({
+    return createLanguageService({
         mainFile: "story.squiffy",
         files: { list: async () => Object.keys(files).map(path => ({ path })), readText: async path => files[path] },
     });
-    return service.getStoryGraph();
+}
+
+async function graphOf(text: string) {
+    return serviceOf(text).getStoryGraph();
 }
 
 const story = `@title Test
@@ -259,5 +262,57 @@ Right.`;
         const start = graph.nodes.find(n => n.kind === "section" && n.detail)!;
         expect(nodeExcerpt(text, start)).toBe("Once upon a time.");
         expect(nodeExcerpt(text, graph.nodes.find(n => n.id === "section:end")!)).toBe("");
+    });
+});
+
+describe("searching the map by text (#679)", () => {
+    const text = `[[start]]:
+You find a **Rusty Key** here. Go [[on]].
+@set gold = 5
+
+[look]:
+A lamp, unlit.
+
+[[on]]:
+The key opens the door.
+
+[[key room]]:
+Empty.
+`;
+
+    test("a node's own text, in lower case, with its directives but not its header or passages", async () => {
+        const graph = await graphOf(text);
+        const lines = text.split("\n");
+        const node = (id: string) => graph.nodes.find(n => n.id === id)!;
+        const start = nodeText(lines, node("section:start"));
+        expect(start).toContain("rusty key");
+        expect(start).toContain("@set gold = 5");
+        expect(start).not.toContain("[[start]]");
+        expect(start).not.toContain("lamp");
+        expect(nodeText(lines, node("passage:start/look"))).toBe("a lamp, unlit.");
+    });
+
+    test("finds boxes by name first, then by text, and fades the rest", async () => {
+        const graph = await graphOf(text);
+        const lines = text.split("\n");
+        const texts = new Map(graph.nodes.map(n => [n.id, nodeText(lines, n)]));
+        const nodes = buildStoryMap(graph).nodes;
+        const ids = (q: string, t?: Map<string, string>) => searchMap(nodes, q, t)?.map(n => n.id);
+        expect(ids("", texts)).toBeUndefined();
+        // Without the text, only the name
+        expect(ids("key")).toEqual(["section:key room"]);
+        expect(ids(" KEY ", texts)).toEqual(["section:key room", "section:start", "section:on"]);
+        expect(ids("lamp", texts)).toEqual(["passage:start/look"]);
+        expect(ids("gold", texts)).toEqual(["section:start"]);
+        expect(ids("dragon", texts)).toEqual([]);
+    });
+
+    test("the outline's sections and passages by their own text", async () => {
+        const symbols = await serviceOf(text).getDocumentSymbols("story.squiffy");
+        const lines = text.split("\n");
+        const start = symbols.find(s => s.name === "start")!;
+        expect(symbolText(lines, start)).toContain("rusty key");
+        expect(symbolText(lines, start)).not.toContain("lamp");
+        expect(symbolText(lines, start.children[0])).toContain("lamp");
     });
 });

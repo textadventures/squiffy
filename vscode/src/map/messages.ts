@@ -21,7 +21,12 @@ export type ToMap =
     // Where the player has been in the preview, in order, since the story last started
     | { type: "trace"; steps: TraceStep[] }
     // Lay the map out again, forgetting where boxes were moved to
-    | { type: "relayout" };
+    | { type: "relayout" }
+    // Each section's and passage's own text in lower case, by id, while the map is searching:
+    // sent after each graph until the search is cleared
+    | { type: "texts"; texts: Record<string, string> }
+    // The start of a section's or passage's text, answering an "excerpt" request
+    | { type: "excerpt"; request: number; text: string };
 
 export interface TraceStep {
     section: string;
@@ -48,4 +53,9 @@ export type FromMap =
     // Make what a broken link is missing: its marker's box is at `at`
     | { type: "createMissing"; edge: { from: string; kind: string; target?: string }; at?: Point }
     // Forget where boxes have been moved to (Lay out again)
-    | { type: "relayout" };
+    | { type: "relayout" }
+    // The search box has something in it, so the map wants the story's text, or it's been cleared
+    | { type: "searching"; on: boolean }
+    // The start of a section's or passage's text, to show when the mouse is over its box and in
+    // the selected box's details, as in the editor
+    | { type: "excerpt"; request: number; id: string };

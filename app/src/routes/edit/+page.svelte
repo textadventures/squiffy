@@ -38,7 +38,7 @@
     import type { CodeAction } from "squiffy-compiler/language-service";
     import PreviewPanel from "#components/PreviewPanel.svelte";
     import MapPanel, { type TraceStep } from "#components/MapPanel.svelte";
-    import { checkSectionName, emptyPositions, linkTo, movedNodes, nodeAtLine, nodeExcerpt, renamePositions, revertPositions, sectionKeys, withPosition, type Point, type StoryMapEdge, type StoryMapNode } from "#lib/story-map.js";
+    import { checkSectionName, emptyPositions, linkTo, movedNodes, nodeAtLine, nodeExcerpt, nodeText, renamePositions, revertPositions, sectionKeys, withPosition, type NodeTexts, type Point, type StoryMapEdge, type StoryMapNode } from "#lib/story-map.js";
     import AssetManagerModal from "#components/AssetManagerModal.svelte";
     import FontsModal from "#components/FontsModal.svelte";
     import StoryDetailsModal from "#components/StoryDetailsModal.svelte";
@@ -117,7 +117,7 @@
     let storyGraph = $state.raw<StoryGraph | null>(null);
     // Bumped when a file changes in the project, to read the graph again
     let filesVersion = $state(0);
-    // The outline's search, which filters the map too
+    // The search in the outline and on the map, which share it
     let outlineQuery = $state("");
     // Where the player's been in the preview since it last started
     let trace = $state.raw<TraceStep[]>([]);
@@ -954,6 +954,44 @@
             await tick();
             mapPanel?.focusNode(id);
         }
+    }
+
+    // The text of every section and passage, for the map's search to find them by it (#679).
+    // Only read while there's a search, and again when the graph is.
+    let nodeTexts = $state.raw<NodeTexts | undefined>();
+    const searching = $derived(outlineQuery.trim() !== "");
+    $effect(() => {
+        const graph = storyGraph;
+        if (!searching || !graph) return;
+        // Untracked, so typing in the script doesn't read them all again before the graph does
+        let stale = false;
+        untrack(() => void readNodeTexts(graph).then(texts => { if (!stale) nodeTexts = texts; }));
+        return () => { stale = true; };
+    });
+
+    async function readNodeTexts(graph: StoryGraph): Promise<NodeTexts> {
+        const current = p;
+        const texts = new Map<string, string>();
+        if (!current) return texts;
+        const byFile = new Map<string, GraphNode[]>();
+        for (const node of graph.nodes) {
+            // Not the master section, whose text is part of every section
+            if (node.name === "") continue;
+            const list = byFile.get(node.location.file);
+            if (list) list.push(node);
+            else byFile.set(node.location.file, [node]);
+        }
+        for (const [file, nodes] of byFile) {
+            let text: string;
+            try {
+                text = current.fileAt(file)?.text ?? await current.fs.readText(file);
+            } catch {
+                continue;
+            }
+            const lines = text.split(/\r?\n/);
+            for (const node of nodes) texts.set(node.id, nodeText(lines, node));
+        }
+        return texts;
     }
 
     // ---- Writing on the map (#542) ----
@@ -1988,6 +2026,7 @@
                         bind:this={outline}
                         bind:query={outlineQuery}
                         {symbols}
+                        text={p.fileAt(p.activePath)?.text ?? ""}
                         {cursorLine}
                         onselect={goToSymbol}
                     />
@@ -2073,7 +2112,8 @@
                     bind:this={mapPanel}
                     graph={storyGraph}
                     positions={mapPositions}
-                    query={outlineQuery}
+                    bind:query={outlineQuery}
+                    texts={nodeTexts}
                     current={currentNode}
                     {trace}
                     maximized={mapMaximized}

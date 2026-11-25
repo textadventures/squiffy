@@ -5,7 +5,7 @@
 // from the start at the top to the endings at the bottom. Embeds count, as their links show where
 // they're embedded. Sections that can't be reached from the start are a group of their own, to the
 // side, ranked from wherever their own chains begin.
-import type { GraphEdge, GraphEdgeKind, GraphNode, Location, StoryGraph } from "squiffy-compiler/language-service";
+import type { DocumentSymbol, GraphEdge, GraphEdgeKind, GraphNode, Location, StoryGraph } from "squiffy-compiler/language-service";
 import type { MapPositions } from "squiffy-compiler";
 import { layeredLayout, type Layout, type MapEdge, type MapGraph, type MapNode } from "@textadventures/graph-map";
 
@@ -586,13 +586,7 @@ export function nodeAtLine(graph: StoryGraph, file: string, line: number): Graph
 // to show before it's opened: without its header, its passages, directives, JavaScript and
 // comments, with links as their text and Markdown and HTML left out. Empty if there's no text.
 export function nodeExcerpt(text: string, node: GraphNode, max = 240): string {
-    const lines = text.split(/\r?\n/);
-    // A section without a name of its own (its +++ or --- line, or the text before the first
-    // section) has no header line to leave out
-    const first = node.detail ? node.range.start.line : node.range.start.line + 1;
-    const own = lines.slice(first, node.contentEnd.line + 1);
-    if (node.detail && own.length) own[0] = own[0].replace(/^(\+\+\+|---)/, "");
-    const prose = own
+    const prose = ownLines(text.split(/\r?\n/), node.range.start.line, node.contentEnd.line, !!node.detail)
         // JavaScript is indented
         .filter(line => !/^(\t| {4})/.test(line) && !/^\s*@/.test(line))
         .join("\n")
@@ -605,4 +599,44 @@ export function nodeExcerpt(text: string, node: GraphNode, max = 240): string {
         .replace(/\s+/g, " ")
         .trim();
     return prose.length > max ? `${prose.slice(0, max - 1).trimEnd()}…` : prose;
+}
+
+// The lines of a section's or passage's own text, from its header at `start` to `end`, without
+// the header. A section without a name of its own (`unnamed`: its +++ or --- line, or the text
+// before the first section) has no header to leave out, only the +++ or ---.
+function ownLines(lines: string[], start: number, end: number, unnamed: boolean): string[] {
+    const own = lines.slice(unnamed ? start : start + 1, end + 1);
+    if (unnamed && own.length) own[0] = own[0].replace(/^(\+\+\+|---)/, "");
+    return own;
+}
+
+// A section's or passage's own text as it is in the script, for the map's search (#679): its
+// directives, JavaScript and markup too, so a search can find where an attribute is set, but not
+// its passages, which have their own boxes. In lower case, to compare with a search.
+export function nodeText(lines: string[], node: GraphNode): string {
+    return ownLines(lines, node.range.start.line, node.contentEnd.line, !!node.detail).join("\n").toLowerCase();
+}
+
+// The same for one of the outline's sections or passages, whose own text ends at its first passage
+export function symbolText(lines: string[], symbol: DocumentSymbol): string {
+    const end = symbol.children.length ? symbol.children[0].range.start.line - 1 : symbol.range.end.line;
+    return ownLines(lines, symbol.range.start.line, end, !!symbol.detail).join("\n").toLowerCase();
+}
+
+// Lower-case text of each section and passage in the story, by id, for the map's search
+export type NodeTexts = ReadonlyMap<string, string>;
+
+// The boxes on the map a search finds, in the order they're listed: those whose names (or their
+// sections' names) have it in them, then those whose text has, if `texts` has it. Broken links'
+// markers only by what's missing. Null for no search.
+export function searchMap(nodes: readonly StoryMapNode[], query: string, texts?: NodeTexts): StoryMapNode[] | null {
+    const q = query.trim().toLowerCase();
+    if (!q) return null;
+    const byName: StoryMapNode[] = [];
+    const byText: StoryMapNode[] = [];
+    for (const n of nodes) {
+        if (n.label.toLowerCase().includes(q) || n.section.toLowerCase().includes(q)) byName.push(n);
+        else if (n.graphNode && texts?.get(n.id)?.includes(q)) byText.push(n);
+    }
+    return [...byName, ...byText];
 }

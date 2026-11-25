@@ -21,7 +21,7 @@
     import ContextMenu, { type ContextMenuItem } from "#components/ContextMenu.svelte";
     import StoryMapNodeBox from "#components/StoryMapNode.svelte";
     import { checkPassageName } from "#lib/map-edits.js";
-    import { buildStoryMap, checkSectionName, linkTo, pinnedPositions, reachNote, storyMapLayout, type Point, type StoryMapEdge, type StoryMapNode } from "#lib/story-map.js";
+    import { buildStoryMap, checkSectionName, linkTo, pinnedPositions, reachNote, searchMap, storyMapLayout, type NodeTexts, type Point, type StoryMapEdge, type StoryMapNode } from "#lib/story-map.js";
     import ZoomIn from "@lucide/svelte/icons/zoom-in";
     import ZoomOut from "@lucide/svelte/icons/zoom-out";
     import Scan from "@lucide/svelte/icons/scan";
@@ -29,6 +29,7 @@
     import CircleHelp from "@lucide/svelte/icons/circle-help";
     import Plus from "@lucide/svelte/icons/plus";
     import X from "@lucide/svelte/icons/x";
+    import Search from "@lucide/svelte/icons/search";
     import Pencil from "@lucide/svelte/icons/pencil";
     import Play from "@lucide/svelte/icons/play";
     import Code from "@lucide/svelte/icons/code";
@@ -40,8 +41,10 @@
         graph: StoryGraph | null;
         // Positions the author has chosen, from squiffy.json
         positions: MapPositions | undefined;
-        // The outline's search: nodes that don't match fade
+        // The search, shared with the outline's search box: nodes that don't match fade
         query: string;
+        // Each section's and passage's text, for the search to find them by it too (#679)
+        texts?: NodeTexts;
         // The section or passage the editor's cursor is in
         current: string | null;
         // Where the player has been in the preview, in order
@@ -85,7 +88,7 @@
     }
 
     let {
-        graph, positions, query, current, trace, maximized, card, onedit, width, ongoto, ongotoedge, onmove, onlink, oncreate, onrename,
+        graph, positions, query = $bindable(), texts, current, trace, maximized, card, onedit, width, ongoto, ongotoedge, onmove, onlink, oncreate, onrename,
         onrun, onaddpassage, ondelete, onstart, onending, onundo, onrelayout, onclose, excerpt,
     }: Props = $props();
 
@@ -131,12 +134,14 @@
         return { visited, taken };
     });
 
+    // The search: boxes whose names, or text, have it in them. The rest fade.
+    const matching = $derived(base ? searchMap(base.nodes, query, texts) : null);
+
     // The map's graph, with the cursor, the search and the trace as classes
     const decorated = $derived.by(() => {
         if (!base) return null;
-        const q = query.trim().toLowerCase();
-        const matches = (n: StoryMapNode) => !q || n.label.toLowerCase().includes(q) || n.section.toLowerCase().includes(q);
-        const hidden = new Set(base.nodes.filter(n => !matches(n)).map(n => n.id));
+        const found = matching && new Set(matching.map(n => n.id));
+        const hidden = new Set(found ? base.nodes.filter(n => !found.has(n.id)).map(n => n.id) : []);
         const nodes = base.nodes.map(n => {
             const extra = [
                 n.id == current ? "current" : "",
@@ -480,9 +485,53 @@
         if (deletable.length) ondelete(deletable);
     }
 
+    // Typing in the search box brings the first match into view
+    $effect(() => {
+        const first = matching?.[0];
+        if (first) untrack(() => { if (map?.has(first.id)) map.reveal(first.id); });
+    });
+
+    let searchInput = $state<HTMLInputElement>();
+
+    export function focusSearch() {
+        searchInput?.focus();
+        searchInput?.select();
+    }
+
+    // Enter selects the next match (Shift+Enter the one before), and Escape clears the search
+    function searchKey(e: KeyboardEvent) {
+        if (e.key == "Escape") {
+            e.preventDefault();
+            query = "";
+            map?.focus();
+        } else if (e.key == "Enter" && matching?.length) {
+            e.preventDefault();
+            const index = matching.findIndex(n => n.id == selected);
+            const step = e.shiftKey ? -1 : 1;
+            const next = matching[index < 0 ? (e.shiftKey ? matching.length - 1 : 0) : (index + step + matching.length) % matching.length];
+            map?.select(next.id);
+            map?.reveal(next.id);
+        }
+    }
+
+    // "3 matches", or "2 of 3" once Enter has gone to one
+    const matchCount = $derived.by(() => {
+        if (!matching) return "";
+        if (!matching.length) return "No matches";
+        const index = matching.findIndex(n => n.id == selected);
+        if (index >= 0) return `${index + 1} of ${matching.length}`;
+        return matching.length == 1 ? "1 match" : `${matching.length} matches`;
+    });
+
     function handleKeydown(e: KeyboardEvent) {
         if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
         const key = e.key.toLowerCase();
+        // Ctrl/Cmd+F searches the map, rather than the browser's own Find
+        if (key == "f" && !e.shiftKey) {
+            e.preventDefault();
+            focusSearch();
+            return;
+        }
         if (key != "z" && key != "y") return;
         e.preventDefault();
         onundo(key == "y" || e.shiftKey);
@@ -522,7 +571,7 @@
         menu = { ...screen, keyboard, items };
     }
 
-    const instructions = "Arrow keys move between sections and passages. Enter goes to one in the editor, or with just the map showing, shows it beside the map to write there. F2 renames it and Delete deletes it. The menu key, or Shift and F10, opens a menu for it. Control or Command and Z undoes the last change. Plus and minus zoom, and 0 fits the whole story in view. Drag the background to pan, a box to move it, or the dot under the selected box to add a link. Shift and drag the background to select several boxes, or Shift and click one, then drag one of them to move them all.";
+    const instructions = "Arrow keys move between sections and passages. Enter goes to one in the editor, or with just the map showing, shows it beside the map to write there. F2 renames it and Delete deletes it. The menu key, or Shift and F10, opens a menu for it. Control or Command and Z undoes the last change, and Control or Command and F searches the map. Plus and minus zoom, and 0 fits the whole story in view. Drag the background to pan, a box to move it, or the dot under the selected box to add a link. Shift and drag the background to select several boxes, or Shift and click one, then drag one of them to move them all.";
 </script>
 
 <section
@@ -531,7 +580,23 @@
     style={width === undefined ? undefined : `width: ${width}px`}
 >
     <header class="flex items-center gap-0.5 px-2 py-1 border-b border-surface-200-800">
-        <h2 class="text-[11px] font-semibold text-surface-600-400 uppercase tracking-wide flex-1 pl-1">Map</h2>
+        <h2 class="text-[11px] font-semibold text-surface-600-400 uppercase tracking-wide pl-1 pr-2">Map</h2>
+        <div class="flex items-center gap-1.5 flex-1 min-w-0 mr-1">
+            <div class="relative flex-1 min-w-16 max-w-56">
+                <Search size={13} class="absolute z-10 left-2 top-1/2 -translate-y-1/2 opacity-50 pointer-events-none" />
+                <input
+                    bind:this={searchInput}
+                    bind:value={query}
+                    type="search"
+                    class="input text-xs py-0.5 pl-7"
+                    placeholder="Search"
+                    aria-label="Search the map"
+                    title="Search the map, by name or text (Enter goes to the next match, Escape clears it)"
+                    onkeydown={searchKey}
+                />
+            </div>
+            <span class="text-xs text-surface-600-400 whitespace-nowrap truncate" aria-live="polite">{matchCount}</span>
+        </div>
         <button type="button" class="btn-icon btn-icon-sm" title="Add a section" aria-label="Add a section" onclick={() => create(map?.centre() ?? { x: 0, y: 0 })}><Plus size={14} /></button>
         <button type="button" class="btn-icon btn-icon-sm" title="Zoom in (+)" aria-label="Zoom in" onclick={() => map?.zoomBy(1.25)}><ZoomIn size={14} /></button>
         <button type="button" class="btn-icon btn-icon-sm" title="Zoom out (-)" aria-label="Zoom out" onclick={() => map?.zoomBy(0.8)}><ZoomOut size={14} /></button>

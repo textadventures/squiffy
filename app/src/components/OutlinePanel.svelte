@@ -1,7 +1,8 @@
 <script lang="ts">
     // The story's outline: its sections, with their passages under them, and snippets, from the
     // language service's document symbols. Clicking one moves the editor there. The search box
-    // (Ctrl/Cmd+Shift+O) filters it, and Enter goes to the first match. Takes the place of the 6.x
+    // (Ctrl/Cmd+Shift+O) filters it, by names and then by text, as the story map's search does
+    // (#679), and Enter goes to the first match. Takes the place of the 6.x
     // editor's section and passage dropdowns (#174).
     import type { DocumentSymbol } from "squiffy-compiler/language-service";
     import BookOpen from "@lucide/svelte/icons/book-open";
@@ -9,6 +10,7 @@
     import Hash from "@lucide/svelte/icons/hash";
     import Scissors from "@lucide/svelte/icons/scissors";
     import Search from "@lucide/svelte/icons/search";
+    import { symbolText } from "#lib/story-map.js";
 
     interface Props {
         symbols: DocumentSymbol[];
@@ -18,9 +20,11 @@
         width?: number;
         // The search box's text, which the story map filters by too
         query?: string;
+        // The file's text, for the search to find sections and passages by
+        text?: string;
     }
 
-    let { symbols, cursorLine, onselect, width, query = $bindable("") }: Props = $props();
+    let { symbols, cursorLine, onselect, width, query = $bindable(""), text = "" }: Props = $props();
 
     const contains = (s: DocumentSymbol, line: number) => s.range.start.line <= line && line <= s.range.end.line;
 
@@ -31,7 +35,11 @@
         searchEl?.select();
     }
 
-    const matches = (s: DocumentSymbol, q: string) => label(s).toLowerCase().includes(q);
+    const named = (s: DocumentSymbol, q: string) => label(s).toLowerCase().includes(q);
+    // Only split while searching
+    const lines = $derived(query.trim() ? text.split(/\r?\n/) : []);
+    const matches = (s: DocumentSymbol, q: string) =>
+        named(s, q) || (s.kind !== "snippet" && symbolText(lines, s).includes(q));
 
     // Sections that match, with all their passages; otherwise sections with matching passages,
     // showing just those
@@ -46,13 +54,12 @@
         });
     });
 
+    // The first that matches by name, or else the first by text
     function first(): DocumentSymbol | undefined {
         const q = query.trim().toLowerCase();
-        for (const s of items) {
-            if (!q || matches(s, q)) return s;
-            if (s.children.length) return s.children[0];
-        }
-        return undefined;
+        if (!q) return items[0];
+        const listed = items.flatMap(s => [s, ...s.children]);
+        return listed.find(s => named(s, q)) ?? listed.find(s => matches(s, q));
     }
 
     function handleSearchKeydown(e: KeyboardEvent) {

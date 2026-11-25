@@ -351,3 +351,38 @@ button:focus-visible {
     border-style: dashed;
     opacity: 0.5;
 }
+
+/* The start of a box's text, in its details and when the mouse is over it, as in the editor */
+.excerpt {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+    line-clamp: 4;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+}
+.hover {
+    position: fixed;
+    z-index: 40;
+    width: 18rem;
+    padding: 6px 10px;
+    line-height: 1.4;
+    color: var(--vscode-editorHoverWidget-foreground, var(--vscode-foreground));
+    background-color: var(--vscode-editorHoverWidget-background, var(--vscode-editorWidget-background));
+    border: 1px solid var(--vscode-editorHoverWidget-border, var(--vscode-widget-border, transparent));
+    border-radius: 4px;
+    box-shadow: 0 2px 8px var(--vscode-widget-shadow, rgba(0, 0, 0, 0.3));
+    pointer-events: none;
+}
+.hover p {
+    margin: 0;
+}
+.hover p + p {
+    margin-top: 4px;
+}
+.hover-name {
+    font-weight: 600;
+}
+.hover-note {
+    color: var(--sm-muted);
+}
