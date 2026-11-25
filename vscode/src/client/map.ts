@@ -10,7 +10,7 @@ import type { BaseLanguageClient } from "vscode-languageclient";
 import { parseProjectFile, updateProjectFile, type MapPositions } from "squiffy-compiler";
 import type { GraphNode, Location, StoryGraph, TextEdit } from "squiffy-compiler/language-service";
 import { checkPassageName, deleteLinesEdits, deletionMessage, endingEdit, planDeletion, startEdit } from "@textadventures/squiffy-app/map-edits";
-import { checkSectionName, emptyPositions, movedNodes, nodeAtLine, renamePositions, withPosition } from "@textadventures/squiffy-app/story-map";
+import { checkSectionName, emptyPositions, movedNodes, nodeAtLine, nodeExcerpt, nodeText, renamePositions, withPosition } from "@textadventures/squiffy-app/story-map";
 import { STORY_GRAPH, type PreviewFromHereArgs, type StoryGraphParams, type StoryGraphResult } from "../protocol.js";
 import type { FromMap, Point, ToMap, TraceStep } from "../map/messages.js";
 import type { Preview } from "./preview.js";
@@ -39,6 +39,8 @@ export class StoryMap implements vscode.Disposable {
     private disposables: vscode.Disposable[] = [];
     // Where the player has been in the preview, and the story's folder
     private trace: { root: string; steps: TraceStep[] } | undefined;
+    // The map is searching, so it wants the sections' and passages' text with each graph (#679)
+    private searching = false;
 
     constructor(private client: BaseLanguageClient, private extensionUri: vscode.Uri, preview: Preview) {
         this.disposables.push(
@@ -170,6 +172,13 @@ export class StoryMap implements vscode.Disposable {
             case "relayout":
                 void this.relayout();
                 break;
+            case "excerpt":
+                void this.sendExcerpt(message.request, message.id);
+                break;
+            case "searching":
+                this.searching = message.on;
+                if (message.on) this.queue = this.queue.then(() => this.sendTexts()).catch(e => console.error("Couldn't search the story map", e));
+                break;
             case "createMissing":
                 void this.act([message.edge.from], "add it", () => this.createMissing(message.edge, message.at));
                 break;
@@ -206,8 +215,49 @@ export class StoryMap implements vscode.Disposable {
         this.graph = result.graph;
         this.positions = positions;
         this.post({ type: "graph", graph: result.graph, positions, renamed });
+        if (this.searching) await this.sendTexts();
         this.sendCurrent();
         if (!before) this.sendTrace();
+    }
+
+    // The text of every section and passage in the graph, for the map's search to find them by, as
+    // in the editor. From the documents, so it's what's in an editor even before it's saved.
+    private async sendTexts() {
+        const graph = this.graph;
+        if (!graph || !this.root) return;
+        const byFile = new Map<string, GraphNode[]>();
+        for (const node of graph.nodes) {
+            // Not the master section, whose text is part of every section
+            if (node.name === "") continue;
+            const list = byFile.get(node.location.file);
+            if (list) list.push(node);
+            else byFile.set(node.location.file, [node]);
+        }
+        const texts: Record<string, string> = {};
+        for (const [file, nodes] of byFile) {
+            let lines: string[];
+            try {
+                lines = (await vscode.workspace.openTextDocument(this.uriOf(file))).getText().split(/\r?\n/);
+            } catch {
+                continue;
+            }
+            for (const node of nodes) texts[node.id] = nodeText(lines, node);
+        }
+        // Only for the graph it was read for
+        if (this.graph === graph) this.post({ type: "texts", texts });
+    }
+
+    private async sendExcerpt(request: number, id: string) {
+        const node = this.graph?.nodes.find(n => n.id == id);
+        let text = "";
+        if (node && this.root) {
+            try {
+                text = nodeExcerpt((await vscode.workspace.openTextDocument(this.uriOf(node.location.file))).getText(), node);
+            } catch {
+                // No preview, then
+            }
+        }
+        this.post({ type: "excerpt", request, text });
     }
 
     // The preview's trace, if it's of the story the map shows

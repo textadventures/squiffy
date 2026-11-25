@@ -8,7 +8,7 @@
     import type { GraphNode, StoryGraph } from "squiffy-compiler/language-service";
     import GraphMap, { type NodeState } from "@textadventures/graph-map/GraphMap.svelte";
     import StoryMapNodeBox from "@textadventures/squiffy-app/StoryMapNode.svelte";
-    import { buildStoryMap, linkTo, pinnedPositions, reachNote, storyMapLayout, type StoryMapEdge, type StoryMapNode } from "@textadventures/squiffy-app/story-map";
+    import { buildStoryMap, linkTo, pinnedPositions, reachNote, searchMap, storyMapLayout, type NodeTexts, type StoryMapEdge, type StoryMapNode } from "@textadventures/squiffy-app/story-map";
     import type { FromMap, Point, ToMap, TraceStep } from "./messages.js";
     import Menu, { type MenuItem } from "./Menu.svelte";
 
@@ -31,15 +31,18 @@
     const tooLarge = $derived(!!base && base.nodes.length > LARGE && !showLarge);
 
     // The map's graph, with the cursor's section or passage marked
-    // The search: boxes whose names (or their sections' names) have it in them. The rest are
-    // dimmed, as on the editor's map.
+    // The search: boxes whose names, or text, have it in them (#679). The rest are dimmed, as on
+    // the editor's map. The extension sends the text while there's a search.
     let query = $state("");
     let searchInput = $state<HTMLInputElement>();
-    const matching = $derived.by(() => {
-        const q = query.trim().toLowerCase();
-        if (!q || !base) return null;
-        return base.nodes.filter(n => n.graphNode && (n.label.toLowerCase().includes(q) || n.section.toLowerCase().includes(q)));
+    let texts = $state.raw<NodeTexts | undefined>(undefined);
+    const searching = $derived(query.trim() != "");
+    $effect(() => {
+        const on = searching;
+        untrack(() => post({ type: "searching", on }));
+        if (!on) texts = undefined;
     });
+    const matching = $derived(base ? searchMap(base.nodes, query, texts) : null);
 
     // Where the player has been in the preview, and the links they took between those places,
     // as on the editor's map
@@ -136,7 +139,70 @@
         } else if (message.type == "search") {
             searchInput?.focus();
             searchInput?.select();
+        } else if (message.type == "texts") {
+            if (searching) texts = new Map(Object.entries(message.texts));
+        } else if (message.type == "excerpt") {
+            waiting.get(message.request)?.(message.text);
+            waiting.delete(message.request);
         }
+    }
+
+    // ---- Previews, as on the editor's map ----
+
+    // Each node's excerpt, asked for from the extension once for each version of the story
+    let excerpts = new Map<string, Promise<string>>();
+    let excerptsFor: StoryGraph | null = null;
+    const waiting = new Map<number, (text: string) => void>();
+    let nextRequest = 0;
+    function excerptOf(g: GraphNode): Promise<string> {
+        if (excerptsFor !== graph) {
+            excerpts = new Map();
+            excerptsFor = graph;
+        }
+        let found = excerpts.get(g.id);
+        if (!found) {
+            const request = ++nextRequest;
+            found = new Promise<string>(resolve => waiting.set(request, resolve));
+            excerpts.set(g.id, found);
+            post({ type: "excerpt", request, id: g.id });
+        }
+        return found;
+    }
+
+    // The selected box's excerpt, for its details
+    let selectedExcerpt = $state("");
+    $effect(() => {
+        const g = selectedNode?.graphNode;
+        void graph;
+        selectedExcerpt = "";
+        if (!g) return;
+        let current = true;
+        void excerptOf(g).then(text => { if (current) selectedExcerpt = text; });
+        return () => { current = false; };
+    });
+
+    // A card shown a moment after the mouse moves onto a box: what it is and the start of its text,
+    // in place of a tooltip, which takes longer to appear
+    const HOVER_DELAY = 350;
+    let hover = $state<{ node: StoryMapNode; box: DOMRect; excerpt: string } | null>(null);
+    let hoverTimer: ReturnType<typeof setTimeout> | undefined;
+    function handleHover(node: StoryMapNode | null, box: DOMRect | null) {
+        clearTimeout(hoverTimer);
+        hover = null;
+        if (!node || !box || menu) return;
+        hoverTimer = setTimeout(async () => {
+            const text = node.graphNode ? await excerptOf(node.graphNode) : "";
+            hover = { node, box, excerpt: text };
+        }, HOVER_DELAY);
+    }
+    $effect(() => () => clearTimeout(hoverTimer));
+    // What the box's marks mean: its tooltip, after its name
+    const hoverNotes = (n: StoryMapNode) => (n.title ?? "").split("\n").slice(1);
+    // Below the box, or above it if there's no room below
+    function hoverStyle(box: DOMRect) {
+        const below = window.innerHeight - box.bottom > 160;
+        const left = Math.max(8, Math.min(box.left + box.width / 2 - 144, window.innerWidth - 296));
+        return below ? `left: ${left}px; top: ${box.bottom + 6}px;` : `left: ${left}px; bottom: ${window.innerHeight - box.top + 6}px;`;
     }
 
     // A section or passage just made from the map is selected once the map has it
@@ -318,7 +384,7 @@
                 type="search"
                 placeholder="Search"
                 aria-label="Search the map"
-                title="Search the map (Enter goes to the next match, Escape clears it)"
+                title="Search the map, by name or text (Enter goes to the next match, Escape clears it)"
                 onkeydown={searchKey}
             />
             <span class="count" aria-live="polite">{matchCount}</span>
@@ -371,6 +437,7 @@
                     else if (to.graphNode) post({ type: "link", from: from.graphNode.id, to: to.graphNode.id });
                 }}
                 oncreate={create}
+                onhover={handleHover}
                 node={drawNode}
             />
             {#if selectedNode?.graphNode && graph}
@@ -392,6 +459,9 @@
                             <button type="button" title="Delete (Del)" onclick={() => post({ type: "delete", ids: [g.id] })}>Delete</button>
                         {/if}
                     </div>
+                    {#if selectedExcerpt}
+                        <p class="excerpt">{selectedExcerpt}</p>
+                    {/if}
                     {#if note}
                         <p class="details-note">{note}</p>
                     {/if}
@@ -415,6 +485,24 @@
 </main>
 
 <svelte:window onkeydown={menuKey} />
+
+{#if hover}
+    {@const n = hover.node}
+    <div class="hover" style={hoverStyle(hover.box)} aria-hidden="true">
+        <p class="hover-name">{n.kind == "missing" ? n.label : `${n.kind == "section" ? "Section" : "Passage"}: ${n.label}`}</p>
+        {#if hover.excerpt}
+            <p class="excerpt">{hover.excerpt}</p>
+        {:else if n.graphNode}
+            <p class="hover-note"><em>No text yet.</em></p>
+        {/if}
+        {#each hoverNotes(n) as note, i (i)}
+            <p class="hover-note">{note}</p>
+        {/each}
+        {#if n.graphNode}
+            <p class="hover-note">Double-click to go to it in the script.</p>
+        {/if}
+    </div>
+{/if}
 
 {#if menu}
     <Menu x={menu.x} y={menu.y} keyboard={menu.keyboard} items={menu.items} onclose={() => { menu = null; map?.focus(); }} />

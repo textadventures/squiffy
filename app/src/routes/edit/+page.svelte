@@ -38,7 +38,7 @@
     import type { CodeAction } from "squiffy-compiler/language-service";
     import PreviewPanel from "#components/PreviewPanel.svelte";
     import MapPanel, { type TraceStep } from "#components/MapPanel.svelte";
-    import { checkSectionName, emptyPositions, linkTo, movedNodes, nodeAtLine, nodeExcerpt, renamePositions, revertPositions, sectionKeys, withPosition, type Point, type StoryMapEdge, type StoryMapNode } from "#lib/story-map.js";
+    import { checkSectionName, emptyPositions, linkTo, movedNodes, nodeAtLine, nodeExcerpt, nodeText, renamePositions, revertPositions, sectionKeys, withPosition, type NodeTexts, type Point, type StoryMapEdge, type StoryMapNode } from "#lib/story-map.js";
     import AssetManagerModal from "#components/AssetManagerModal.svelte";
     import FontsModal from "#components/FontsModal.svelte";
     import StoryDetailsModal from "#components/StoryDetailsModal.svelte";
@@ -53,6 +53,7 @@
     import TriangleAlert from "@lucide/svelte/icons/triangle-alert";
     import { readMapLayout, saveMapLayout } from "#lib/map-layout.js";
     import { narrowed, narrowing, narrowRange, setNarrow } from "#lib/narrow.js";
+    import { findMatch, searchHighlight, setSearchHighlight } from "#lib/search-highlight.js";
     import { checkPassageName, deleteLinesEdits, deletionMessage, endingEdit, endingRemovalEdits, insertHeaderEdit, isDirectiveLine, linkThenHeaderEdits, placeNewPassage, placeNewSection, planDeletion, startEdit, type Place } from "#lib/map-edits.js";
     import { addSectionOrPassage, clipboardCommand, insertSnippet, runCommand, userSnippets } from "#lib/editor-commands.js";
     import { formatKey, navigationKey } from "#lib/shortcuts.js";
@@ -117,7 +118,7 @@
     let storyGraph = $state.raw<StoryGraph | null>(null);
     // Bumped when a file changes in the project, to read the graph again
     let filesVersion = $state(0);
-    // The outline's search, which filters the map too
+    // The search in the outline and on the map, which share it
     let outlineQuery = $state("");
     // Where the player's been in the preview since it last started
     let trace = $state.raw<TraceStep[]>([]);
@@ -362,6 +363,8 @@
             extensions = [
                 squiffyLanguage,
                 trackPlaces,
+                // What the map's and the outline's search finds
+                searchHighlight(() => outlineQuery),
                 // For writing one section from the full-screen map. Escape closes it, back to the
                 // map, with its box selected.
                 narrowing(() => {
@@ -956,6 +959,50 @@
         }
     }
 
+    // The text of every section and passage, for the map's search to find them by it (#679).
+    // Only read while there's a search, and again when the graph is.
+    let nodeTexts = $state.raw<NodeTexts | undefined>();
+    const searching = $derived(outlineQuery.trim() !== "");
+    $effect(() => {
+        const graph = storyGraph;
+        if (!searching || !graph) return;
+        // Untracked, so typing in the script doesn't read them all again before the graph does
+        let stale = false;
+        untrack(() => void readNodeTexts(graph).then(texts => { if (!stale) nodeTexts = texts; }));
+        return () => { stale = true; };
+    });
+
+    // Highlighted in the script too, so a section opened from the map shows where it matched
+    $effect(() => {
+        const effects = setSearchHighlight.of(outlineQuery);
+        untrack(() => { for (const view of views.values()) view.dispatch({ effects }); });
+    });
+
+    async function readNodeTexts(graph: StoryGraph): Promise<NodeTexts> {
+        const current = p;
+        const texts = new Map<string, string>();
+        if (!current) return texts;
+        const byFile = new Map<string, GraphNode[]>();
+        for (const node of graph.nodes) {
+            // Not the master section, whose text is part of every section
+            if (node.name === "") continue;
+            const list = byFile.get(node.location.file);
+            if (list) list.push(node);
+            else byFile.set(node.location.file, [node]);
+        }
+        for (const [file, nodes] of byFile) {
+            let text: string;
+            try {
+                text = current.fileAt(file)?.text ?? await current.fs.readText(file);
+            } catch {
+                continue;
+            }
+            const lines = text.split(/\r?\n/);
+            for (const node of nodes) texts.set(node.id, nodeText(lines, node));
+        }
+        return texts;
+    }
+
     // ---- Writing on the map (#542) ----
 
     // With the map full screen, a section can be written without leaving it: its file's editor is
@@ -1020,7 +1067,11 @@
             const anchor = toOffset(view.state.doc, target);
             view.dispatch({ selection: { anchor }, effects: EditorView.scrollIntoView(anchor, { y: "start", yMargin: 24 }) });
         } else if (!same) {
-            view.dispatch({ effects: EditorView.scrollIntoView(view.state.selection.main.head, { y: "start" }) });
+            // The first thing the search found in it, if it was found by its text
+            const shown = narrowed(view.state);
+            const match = shown && findMatch(view.state, outlineQuery, shown.from, shown.to);
+            const to = match && match.from > view.state.doc.lineAt(shown.from).to ? match.from : view.state.selection.main.head;
+            view.dispatch({ effects: EditorView.scrollIntoView(to, { y: match ? "center" : "start" }) });
         }
         if (focus) {
             // Once the card's on screen: an editor that's hidden can't take the focus
@@ -1988,6 +2039,7 @@
                         bind:this={outline}
                         bind:query={outlineQuery}
                         {symbols}
+                        text={p.fileAt(p.activePath)?.text ?? ""}
                         {cursorLine}
                         onselect={goToSymbol}
                     />
@@ -2073,7 +2125,8 @@
                     bind:this={mapPanel}
                     graph={storyGraph}
                     positions={mapPositions}
-                    query={outlineQuery}
+                    bind:query={outlineQuery}
+                    texts={nodeTexts}
                     current={currentNode}
                     {trace}
                     maximized={mapMaximized}

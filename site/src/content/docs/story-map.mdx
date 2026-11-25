@@ -15,7 +15,7 @@ import Screenshot from "@components/Screenshot.astro";
 - **Drag a box** to move it. It stays where you put it. Its passages come with it, and so does any box that's linked only to it, while everything else stays put.
 - To move several boxes at once, hold Shift and drag across empty space to select them, or Shift+click boxes to add them, then drag any one of them. Click empty space, or press Escape, to let them go.
 - Where you've put things is saved in `squiffy.json`, so it's the same next time you open the story, and a section keeps its place if you rename it or move it to another file. A section without a name of its own, started with `+++` or `---`, is saved under what the map calls it, such as `+++Day Two`. If you edit `squiffy.json` while the map's open, it follows: take a position out and that box is laid out again. A story from an earlier version of Squiffy may not have a `squiffy.json`, so the editor adds one, leaving out any `.squiffy` files in the folder that aren't part of the story, so the story stays the same. **Lay out again** forgets where you've put things.
-- The **search box** in the outline also fades out the sections and passages that don't match.
+- **Search** with the box above the map, or press Ctrl+F (Cmd+F on a Mac) while the map has the focus. It finds sections and passages by their names, and by what's in them, such as a word in their text or an attribute they set, and fades out the rest. Press Enter to go to each match in turn, Shift+Enter to go back, and Escape to clear the search. What it finds is highlighted in the script, and in a section you open from the map, which scrolls to the first match. The outline's search box is the same search, so either one filters both.
 
 ## Problems on the map
 
