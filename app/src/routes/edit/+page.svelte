@@ -53,6 +53,7 @@
     import TriangleAlert from "@lucide/svelte/icons/triangle-alert";
     import { readMapLayout, saveMapLayout } from "#lib/map-layout.js";
     import { narrowed, narrowing, narrowRange, setNarrow } from "#lib/narrow.js";
+    import { findMatch, searchHighlight, setSearchHighlight } from "#lib/search-highlight.js";
     import { checkPassageName, deleteLinesEdits, deletionMessage, endingEdit, endingRemovalEdits, insertHeaderEdit, isDirectiveLine, linkThenHeaderEdits, placeNewPassage, placeNewSection, planDeletion, startEdit, type Place } from "#lib/map-edits.js";
     import { addSectionOrPassage, clipboardCommand, insertSnippet, runCommand, userSnippets } from "#lib/editor-commands.js";
     import { formatKey, navigationKey } from "#lib/shortcuts.js";
@@ -362,6 +363,8 @@
             extensions = [
                 squiffyLanguage,
                 trackPlaces,
+                // What the map's and the outline's search finds
+                searchHighlight(() => outlineQuery),
                 // For writing one section from the full-screen map. Escape closes it, back to the
                 // map, with its box selected.
                 narrowing(() => {
@@ -969,6 +972,12 @@
         return () => { stale = true; };
     });
 
+    // Highlighted in the script too, so a section opened from the map shows where it matched
+    $effect(() => {
+        const effects = setSearchHighlight.of(outlineQuery);
+        untrack(() => { for (const view of views.values()) view.dispatch({ effects }); });
+    });
+
     async function readNodeTexts(graph: StoryGraph): Promise<NodeTexts> {
         const current = p;
         const texts = new Map<string, string>();
@@ -1058,7 +1067,11 @@
             const anchor = toOffset(view.state.doc, target);
             view.dispatch({ selection: { anchor }, effects: EditorView.scrollIntoView(anchor, { y: "start", yMargin: 24 }) });
         } else if (!same) {
-            view.dispatch({ effects: EditorView.scrollIntoView(view.state.selection.main.head, { y: "start" }) });
+            // The first thing the search found in it, if it was found by its text
+            const shown = narrowed(view.state);
+            const match = shown && findMatch(view.state, outlineQuery, shown.from, shown.to);
+            const to = match && match.from > view.state.doc.lineAt(shown.from).to ? match.from : view.state.selection.main.head;
+            view.dispatch({ effects: EditorView.scrollIntoView(to, { y: match ? "center" : "start" }) });
         }
         if (focus) {
             // Once the card's on screen: an editor that's hidden can't take the focus

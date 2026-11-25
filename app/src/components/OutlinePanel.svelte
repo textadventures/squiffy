@@ -9,7 +9,7 @@
     import FileText from "@lucide/svelte/icons/file-text";
     import Hash from "@lucide/svelte/icons/hash";
     import Scissors from "@lucide/svelte/icons/scissors";
-    import Search from "@lucide/svelte/icons/search";
+    import SearchField from "#components/SearchField.svelte";
     import { symbolText } from "#lib/story-map.js";
 
     interface Props {
@@ -98,18 +98,13 @@
 >
     <div class="px-3 pt-2 pb-1 text-[11px] font-semibold text-surface-600-400 uppercase tracking-wide">Outline</div>
     <div class="px-2 pb-2">
-        <div class="relative">
-            <Search size={13} class="absolute left-2 top-1/2 -translate-y-1/2 opacity-50 pointer-events-none" />
-            <input
-                bind:this={searchEl}
-                bind:value={query}
-                type="search"
-                class="input text-xs py-1 pl-7"
-                placeholder="Go to section or passage"
-                aria-label="Go to section or passage"
-                onkeydown={handleSearchKeydown}
-            />
-        </div>
+        <SearchField
+            bind:input={searchEl}
+            bind:value={query}
+            placeholder="Go to section or passage"
+            label="Go to section or passage"
+            onkeydown={handleSearchKeydown}
+        />
     </div>
     <ul class="flex-1 overflow-y-auto pb-2 text-sm">
         {#each items as symbol, i (i)}

@@ -29,7 +29,7 @@
     import CircleHelp from "@lucide/svelte/icons/circle-help";
     import Plus from "@lucide/svelte/icons/plus";
     import X from "@lucide/svelte/icons/x";
-    import Search from "@lucide/svelte/icons/search";
+    import SearchField from "#components/SearchField.svelte";
     import Pencil from "@lucide/svelte/icons/pencil";
     import Play from "@lucide/svelte/icons/play";
     import Code from "@lucide/svelte/icons/code";
@@ -582,19 +582,16 @@
     <header class="flex items-center gap-0.5 px-2 py-1 border-b border-surface-200-800">
         <h2 class="text-[11px] font-semibold text-surface-600-400 uppercase tracking-wide pl-1 pr-2">Map</h2>
         <div class="flex items-center gap-1.5 flex-1 min-w-0 mr-1">
-            <div class="relative flex-1 min-w-16 max-w-56">
-                <Search size={13} class="absolute z-10 left-2 top-1/2 -translate-y-1/2 opacity-50 pointer-events-none" />
-                <input
-                    bind:this={searchInput}
-                    bind:value={query}
-                    type="search"
-                    class="input text-xs py-0.5 pl-7"
-                    placeholder="Search"
-                    aria-label="Search the map"
-                    title="Search the map, by name or text (Enter goes to the next match, Escape clears it)"
-                    onkeydown={searchKey}
-                />
-            </div>
+            <SearchField
+                bind:input={searchInput}
+                bind:value={query}
+                class="flex-1 min-w-16 max-w-56"
+                compact
+                placeholder="Search"
+                label="Search the map"
+                title="Search the map, by name or text (Enter goes to the next match, Escape clears it)"
+                onkeydown={searchKey}
+            />
             <span class="text-xs text-surface-600-400 whitespace-nowrap truncate" aria-live="polite">{matchCount}</span>
         </div>
         <button type="button" class="btn-icon btn-icon-sm" title="Add a section" aria-label="Add a section" onclick={() => create(map?.centre() ?? { x: 0, y: 0 })}><Plus size={14} /></button>
