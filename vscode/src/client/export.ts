@@ -6,6 +6,7 @@
 import * as vscode from "vscode";
 import type { BaseLanguageClient } from "vscode-languageclient";
 import { strToU8, zipSync } from "fflate";
+import { BUILD_FOLDER } from "squiffy-compiler";
 import { EXPORT_STORY, type ExportStoryParams, type ExportStoryResult, toBase64 } from "../protocol.js";
 import { isStoryFile, listFiles } from "./files.js";
 
@@ -30,6 +31,15 @@ const describe = (uri: vscode.Uri) => {
     if (folder && sameFolder(folder.uri, uri)) return folder.name;
     return vscode.workspace.asRelativePath(uri);
 };
+
+// The files an export would replace, by name: "story.js", "story.js and style.css", or the first
+// few of a longer list
+export function clashMessage(names: string[]): string {
+    const sorted = [...names].sort();
+    if (sorted.length == 1) return sorted[0];
+    if (sorted.length <= 4) return `${sorted.slice(0, -1).join(", ")} and ${sorted[sorted.length - 1]}`;
+    return `${sorted.slice(0, 3).join(", ")} and ${sorted.length - 3} other files`;
+}
 
 const exists = async (uri: vscode.Uri) => {
     try {
@@ -125,14 +135,47 @@ export async function exportStory(client: BaseLanguageClient, storyUri: vscode.U
         return;
     }
 
+    // The build folder by default, as the command-line tool builds into, which isn't part of the
+    // story. The dialog needs it to be there to start in it, so it's made, and taken away again
+    // if it's left empty.
+    const build = vscode.Uri.joinPath(root, BUILD_FOLDER);
+    const madeBuild = !(await exists(build));
+    if (madeBuild) {
+        try {
+            await vscode.workspace.fs.createDirectory(build);
+        }
+        catch {
+            // The dialog starts in the story's folder instead
+        }
+    }
     const picked = await vscode.window.showOpenDialog({
         title: "Export the story to a folder",
-        defaultUri: root,
+        defaultUri: await exists(build) ? build : root,
         canSelectFiles: false,
         canSelectFolders: true,
         openLabel: "Export Here",
     });
-    const folder = picked?.[0];
+    let folder = picked?.[0];
+    if (folder && sameFolder(folder, root)) {
+        // Next to the story's own files, a published style.css would replace one of the author's,
+        // and then be left out of the story as an old build
+        const answer = await vscode.window.showWarningMessage(
+            `Export into the story's own folder? index.html, story.js, style.css and the Squiffy runtime would go next to your script, replacing any files of yours with those names. The ${BUILD_FOLDER} folder keeps them apart.`,
+            { modal: true }, `Export to ${BUILD_FOLDER}`, "Export Here");
+        if (answer == `Export to ${BUILD_FOLDER}`) {
+            await vscode.workspace.fs.createDirectory(build);
+            folder = build;
+        }
+        else if (answer != "Export Here") folder = undefined;
+    }
+    if (madeBuild && (!folder || !sameFolder(folder, build))) {
+        try {
+            if (!(await vscode.workspace.fs.readDirectory(build)).length) await vscode.workspace.fs.delete(build);
+        }
+        catch {
+            // It's already gone
+        }
+    }
     if (!folder) return;
     const intoRoot = sameFolder(folder, root);
     // Its assets are already in the story's own folder
@@ -145,7 +188,7 @@ export async function exportStory(client: BaseLanguageClient, storyUri: vscode.U
     // be the author's own
     if (clashes.length) {
         const replace = await vscode.window.showWarningMessage(
-            `${describe(folder)} already has ${clashes.length == 1 ? clashes[0] : `${clashes.length} of the exported files`}. Replace ${clashes.length == 1 ? "it" : "them"}?`,
+            `${describe(folder)} already has ${clashMessage(clashes)}. Replace ${clashes.length == 1 ? "it" : "them"}?`,
             { modal: true }, "Replace");
         if (replace != "Replace") return;
     }
