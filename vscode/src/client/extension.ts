@@ -166,8 +166,13 @@ export async function activate(context: vscode.ExtensionContext, createClient: C
         const whole = new vscode.Range(editor.document.positionAt(0), editor.document.positionAt(text.length));
         // One edit, so Undo puts it all back
         await editor.edit(edit => edit.replace(whole, result.script));
-        if (result.problems.length) {
-            void vscode.window.showWarningMessage(`Converted, but ${result.problems.length} part(s) need checking by hand. They're in the Problems panel.`);
+        const javascript = result.problems.filter(problem => problem.javascript);
+        const others = result.problems.length - javascript.length;
+        if (others) {
+            void vscode.window.showWarningMessage(`Converted, but ${others} part(s) need checking by hand. They're in the Problems panel.`);
+        }
+        if (javascript.length) {
+            void vscode.window.showWarningMessage(`The JavaScript on line ${javascript.map(problem => problem.line).join(", ")} uses jQuery, which Squiffy 7 doesn't load, so needs changing by hand.`);
         }
     });
 }

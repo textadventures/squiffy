@@ -391,8 +391,8 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     // A story without a squiffy.json, as in Squiffy 6: the right-hand side is a number, true,
     // false, @attribute, or else text
     function setWithoutExpression(expr: string) {
-        expr = expr.replace(/^(\w*\s*):=(.*)$/, (_, name, value) => (name + "=" + ui.processText(value, true)));
-        const setRegex = /^([\w]*)\s*=\s*(.*)$/;
+        expr = expr.replace(/^([\p{L}\p{N}_]*\s*):=(.*)$/u, (_, name, value) => (name + "=" + ui.processText(value, true)));
+        const setRegex = /^([\p{L}\p{N}_]*)\s*=\s*(.*)$/u;
         const setMatch = setRegex.exec(expr);
         if (setMatch) {
             const lhs = setMatch[1];
@@ -412,7 +412,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             }
         }
         else {
-            const incDecRegex = /^([\w]*)\s*([+\-*/])=\s*(.*)$/;
+            const incDecRegex = /^([\p{L}\p{N}_]*)\s*([+\-*/])=\s*(.*)$/u;
             const incDecMatch = incDecRegex.exec(expr);
             if (incDecMatch) {
                 const lhs = incDecMatch[1];

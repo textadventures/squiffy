@@ -10,6 +10,8 @@ Squiffy 6 was a complete rewrite of Squiffy 5, and Squiffy 7 builds on it. Stori
 - **The text processor.** Squiffy 5 had its own syntax for dynamic text. Squiffy now uses [Handlebars](https://handlebarsjs.com/), with `{{...}}`: see [Dynamic text](/dynamic-text/) and the [Helpers reference](/helpers-reference/).
 - **No account needed.** The old web editor needed a textadventures.co.uk account, and kept your stories on the server. The [editor](/editor/) at [app.squiffystory.com](https://app.squiffystory.com/) keeps them in your browser, or in a folder on your computer, and there's a [desktop app](/desktop-app/) too.
 - **Setting attributes.** Text in `@set` and in links now goes in quotes: `@set weapon = "sword"`. This changed in Squiffy 7, and is converted too: see [Coming from Squiffy 6](/coming-from-squiffy-6/#setting-attributes).
+- **No jQuery.** Squiffy 5 loaded [jQuery](https://jquery.com/), and many stories' JavaScript used it. Squiffy 7 doesn't, so `jQuery(...)` and `$(...)` stop with an error. The way the Squiffy 5 docs read a text box, `squiffy.set("name", jQuery("#name").val())`, is converted to the browser's own `document.getElementById("name")?.value`, but anything else that uses jQuery is listed for you to change by hand. For a text box, `<input type="text" data-attribute="name">` sets the attribute without any JavaScript: see [Player input](/player-input/).
+- **Replacing labels from a link.** In Squiffy 5, a link could replace a label as it was clicked: `[eat it](@replace 1=nothing)`. Now a passage's text does that, with `{{#replace "1"}}nothing{{/replace}}`, so a link like that is converted to a link to a new passage, at the end of the section, that does it. A link with `@replace` that goes to a passage or section of its own is listed for you to change by hand: move the `{{#replace}}` into the text of where it goes.
 
 For everything that's new since Squiffy 5, such as [animation](/dynamic-text/#animation), [live text](/dynamic-text/#live), [player input](/player-input/), the [story map](/story-map/) and single-file publishing, see [What's new in Squiffy 7](/whats-new/) and the rest of these docs.
 
@@ -19,7 +21,7 @@ For everything that's new since Squiffy 5, such as [animation](/dynamic-text/#an
 - **Command line:** run with `--convert-v5` to convert the file, and Squiffy 7's rules for setting attributes, keeping a backup of the original. See [Converting from Squiffy 5](/cli/#converting-from-squiffy-5).
 - **VS Code:** with a file open, choose **Squiffy: Convert from Squiffy 5** from the Command Palette. It converts the text processor syntax, but not the rules for setting attributes. See [VS Code](/vscode/#squiffy-5-stories).
 
-Anything that can't be converted reliably, such as an `{else:...}` that doesn't directly follow an `{if ...:...}`, is left as it is and listed with its line number. Squiffy also shows a warning when it builds a story that still contains Squiffy 5 syntax.
+Anything that can't be converted reliably is left as it is and listed with its line number. For example, an `{else:...}` belongs to the last `{if ...:...}` before it, but if something between them could have changed what the `{if}` depends on, it's not clear whether it would show. Squiffy also shows a warning when it builds a story that still contains Squiffy 5 syntax.
 
 Then play the story through, in the editor or with the command-line tool's `--serve`, to check that everything works.
 
@@ -31,12 +33,15 @@ Then play the story through, in the editor or with the command-line tool's `--se
 | `{if class=warrior:You are a warrior.}` | `{{#if class = "warrior"}}You are a warrior.{{/if}}` |
 | `{if score>100:High score!}` | `{{#if score > 100}}High score!{{/if}}` |
 | `{if condition:text}{else:other text}` | `{{#if condition}}text{{else}}other text{{/if}}` |
+| `{if condition:text}`, then later `{else:other text}` | `{{#if condition}}text{{/if}}`, then later `{{#unless condition}}other text{{/unless}}` |
 | `{@b+=1}` | `{{inc "b"}}` |
 | `{@b=5}` | `{{set "b" 5}}` |
 | `{if seen intro:...}` | `{{#if (seen "intro")}}...{{/if}}` |
 | `{passage name}` (embedding) | `{{embed "passage name"}}` |
 | `{rotate size:small:large}` | `{{rotate (array "small" "large") set="size"}}` |
 | `{label:1=text}` | `{{#label "1"}}text{{/label}}` |
+| `@replace 1=text` | `{{#replace "1"}}text{{/replace}}` |
+| `[link](@replace 1=text)` | `[link]`, and a passage `[link]:` with `{{#replace "1"}}text{{/replace}}` |
 
 ## The command-line tool
 

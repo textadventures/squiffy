@@ -115,6 +115,13 @@ describe("playStory", () => {
         expect(result.stopped).toBe("There's no link \"Go in\" to click. The links are: \"Leave\".");
     });
 
+    test("reports JavaScript that isn't valid, rather than crashing (#660)", async () => {
+        await fs.writeFile(path.join(dir, "story.squiffy"), "[[a]]:\n    Story text, indented by mistake.\nText.");
+        const loaded = await loadPlayableStory(await findStory(path.join(dir, "story.squiffy")));
+        expect(loaded.success).toBe(false);
+        if (!loaded.success) expect(loaded.errors).toEqual([expect.stringMatching(/the JavaScript isn't valid/)]);
+    });
+
     test("carries on from a saved game", async () => {
         const playable = await load(SHOP);
         const first = await playStory(playable, { choose: ["Go in"] });
