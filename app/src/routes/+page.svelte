@@ -22,10 +22,11 @@
     import { checkBrowserStorage } from "#lib/storage.js";
     import HomeHeader from "#components/HomeHeader.svelte";
     import BetaBanner from "#components/BetaBanner.svelte";
+    import { builtForBetaSite } from "#lib/channel.js";
 
     // The banner points beta users at the current version. The first stable desktop app is 7.0.0,
     // so until then Squiffy Beta has nothing to point at, and doesn't show it.
-    const showBetaBanner = import.meta.env.VITE_BETA_APP === "true" && !(isDesktop && __APP_VERSION__.startsWith("7.0.0-"));
+    const showBetaBanner = builtForBetaSite && !(isDesktop && __APP_VERSION__.startsWith("7.0.0-"));
     import FilePlus from "@lucide/svelte/icons/file-plus";
     import FolderOpen from "@lucide/svelte/icons/folder-open";
     import FileUp from "@lucide/svelte/icons/file-up";

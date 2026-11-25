@@ -1,10 +1,10 @@
 // The desktop app's downloads (#276), for the home page's Desktop app button, with the installer for
 // the visitor's system first. From Quest Viva's src/AppShell/src/lib/download-links.ts. The same
 // rules as the docs site's site/src/components/DownloadButton.astro: the stable app offers GitHub's
-// latest release, and the beta app (VITE_BETA_APP) the newest prerelease, Squiffy Beta. Never shown
-// in the desktop app, which tells the author about updates itself (desktop-updates.svelte.ts).
-
-const isBetaApp = import.meta.env.VITE_BETA_APP === "true";
+// latest release, and the beta app (a prerelease built with VITE_BETA_APP) the newest prerelease,
+// Squiffy Beta. Never shown in the desktop app, which tells the author about updates itself
+// (desktop-updates.svelte.ts).
+import { isBetaApp } from "./channel.js";
 
 const REPO_API = "https://api.github.com/repos/textadventures/squiffy";
 const RELEASES_PAGE_URL = isBetaApp

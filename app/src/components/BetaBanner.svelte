@@ -1,8 +1,10 @@
 <script lang="ts">
-    // Only in a prerelease build: on app-beta.squiffystory.com (deploy-app.yml sets VITE_BETA_APP),
+    // Only in a build for the beta: on app-beta.squiffystory.com (deploy-app.yml sets VITE_BETA_APP),
     // as Quest Viva's beta site has, and in the Squiffy Beta desktop app (desktop-publish.yml).
-    // Stories kept in the browser are kept per site, so the web one says so.
+    // Stories kept in the browser are kept per site, so the web one says so. Between a stable release
+    // and the next beta, app-beta.squiffystory.com runs the stable release, and says that instead.
     import { isElectron } from "#lib/runtime.js";
+    import { isPrerelease } from "#lib/channel.js";
 
     const desktop = isElectron();
 </script>
@@ -13,11 +15,18 @@
             This is Squiffy Beta, the beta of the next version of Squiffy. It's a separate app from Squiffy, so you can have both.
         </span>
         <a href="https://squiffystory.com/desktop-app/" class="anchor font-semibold">Get the current version</a>
-    {:else}
+    {:else if isPrerelease}
         <span class="flex-1 basis-80">
             This is the beta of the next version of Squiffy. Stories kept in the browser here are separate from the ones on
             app.squiffystory.com: use Download project and Open file to move a story between them.
         </span>
         <a href="https://app.squiffystory.com/" class="anchor font-semibold">Go to the current version</a>
+    {:else}
+        <span class="flex-1 basis-80">
+            There's no beta just now, so this is Squiffy {__APP_VERSION__}, the current version. Stories kept in the browser
+            here are separate from the ones on app.squiffystory.com: use Download project and Open file to move a story
+            between them.
+        </span>
+        <a href="https://app.squiffystory.com/" class="anchor font-semibold">Go to app.squiffystory.com</a>
     {/if}
 </div>

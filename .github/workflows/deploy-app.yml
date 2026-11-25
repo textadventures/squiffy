@@ -62,10 +62,22 @@ jobs:
       # stable release. Its Help menu links to the beta docs,
       # beta.squiffystory.com, which are built from main, and its home page
       # says it's the beta (VITE_BETA_APP).
+      #
+      # A stable release goes to the `beta` branch as well, unless a beta of
+      # a later version is out already, so app-beta.squiffystory.com is never
+      # older than app.squiffystory.com (#646): from 7.0.0 until 7.1.0-beta.1,
+      # it runs 7.0.0. That build has VITE_BETA_APP, for its home page to say
+      # there's no beta just now, but the stable docs, which match it.
       - name: Choose the Cloudflare Pages branch
         run: |
           if [ "$(.github/scripts/release-channel.sh "$GITHUB_REF_NAME")" == "stable" ]; then
             echo "PAGES_BRANCH=main" >> $GITHUB_ENV
+            newer="$(.github/scripts/newer-prerelease.sh "$GITHUB_REF_NAME")"
+            if [ -z "$newer" ]; then
+              echo "ALSO_BETA=true" >> $GITHUB_ENV
+            else
+              echo "Not deploying to the beta too: $newer is newer."
+            fi
           else
             echo "PAGES_BRANCH=beta" >> $GITHUB_ENV
             echo "VITE_DOCS_URL=https://beta.squiffystory.com" >> $GITHUB_ENV
@@ -81,3 +93,17 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy app/build --project-name=squiffy-app --branch=${{ env.PAGES_BRANCH }}
+
+      # The packages it uses are built already
+      - name: Build the editor again for the beta site
+        if: env.ALSO_BETA == 'true'
+        working-directory: app
+        run: VITE_BETA_APP=true npm run build
+
+      - name: Deploy to the beta site too
+        if: env.ALSO_BETA == 'true'
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy app/build --project-name=squiffy-app --branch=beta
