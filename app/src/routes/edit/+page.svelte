@@ -852,6 +852,8 @@
     // (or at `at`). If it's the section already shown, the cursor stays where it is.
     async function openCard(node: GraphNode, focus: boolean, at?: Location["range"]["start"]) {
         if (!p) return;
+        // If the card's closed meanwhile (Escape, as it opens), it stays closed
+        const closes = cardCloses;
         if (graphStale) await refreshGraph();
         const graph = storyGraph;
         const sectionName = node.kind === "section" ? node.name : node.section!;
@@ -870,7 +872,7 @@
             return;
         }
         const view = await viewFor(file);
-        if (!view) return;
+        if (!view || closes !== cardCloses) return;
         const same = card?.id === section.id && !!narrowed(view.state);
         if (!same) {
             card = { id: section.id, file };
@@ -948,7 +950,10 @@
         if (range && (range.from !== now?.from || range.to !== now.to)) view.dispatch({ effects: setNarrow.of(range) });
     }
 
+    // How many times the card's been closed, so one that's opening can tell
+    let cardCloses = 0;
     function closeCard() {
+        cardCloses++;
         if (!card) return;
         card = null;
         for (const view of views.values()) {
