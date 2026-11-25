@@ -485,6 +485,8 @@ describe("code actions", () => {
         const actions = await ls.getCodeActions("chapters/cellar.squiffy", diagnostic.range);
         expect(actions.map(a => a.title)).toEqual(["Create section 'missing room'"]);
         expect(apply(cellar, actions[0].edit["chapters/cellar.squiffy"])).toBe(cellar + "\n[[missing room]]:\n");
+        // So an editor can offer it at the cursor, and put the section where it chooses (#677)
+        expect(actions[0]).toMatchObject({ isPreferred: true, create: { kind: "section", name: "missing room" } });
     });
 
     test("create a missing passage", async () => {
@@ -493,6 +495,7 @@ describe("code actions", () => {
         const diagnostic = (await ls.getDiagnostics("s.squiffy"))[0];
         const actions = await ls.getCodeActions("s.squiffy", diagnostic.range);
         expect(actions[0].title).toBe("Create passage 'p'");
+        expect(actions[0]).toMatchObject({ isPreferred: true, create: { kind: "passage", name: "p" } });
         expect(apply(text, actions[0].edit["s.squiffy"])).toBe("[[a]]:\nSee [p].\n[p]:\n\n[[b]]:\nB");
     });
 

@@ -4,6 +4,7 @@
 //   - completion of section, passage, attribute and snippet names
 //   - hover previews of the section or passage a link goes to
 //   - go to definition (F12, or Ctrl/Cmd+click), find references (Shift+F12) and rename (F2)
+//   - a bar at the cursor offering to go where a link goes, or to fix a problem (cursor-bar.ts)
 // Things that need the app's UI (moving to another file, showing references, asking for a name)
 // go through the callbacks in LanguageFeatureOptions. The editor's right-click menu runs the same
 // commands, which it finds in the languageCommands facet.
@@ -20,6 +21,7 @@ import { refreshFolding } from "../codemirror-folding.js";
 import { diagnosticKey, fixesByDiagnostic } from "../problems.js";
 import { isMac } from "../shortcuts.js";
 import type { LanguageClient } from "./client.js";
+import { cursorBar } from "./cursor-bar.js";
 
 const DELAY_MS = 300;
 
@@ -66,6 +68,9 @@ export interface LanguageFeatureOptions {
     applyEdits?(edit: WorkspaceEdit): Promise<void>;
     // Tell the author something, e.g. why a rename isn't possible
     notify(message: string): void;
+    // Add the section or passage a broken link in this file points to, where the app chooses
+    // (e.g. where the story map would). Without this, a quick fix adds it at the end.
+    onCreate?(fix: CodeAction): void;
 }
 
 // The commands for the section or passage at the cursor, for the right-click menu
@@ -267,17 +272,34 @@ export function languageFeatures(options: LanguageFeatureOptions): Extension[] {
         return fixesByDiagnostic(actions, a => lintAction(a, doc));
     }
 
+    // The fixes to offer at the cursor (CodeAction.isPreferred)
+    const preferred = new WeakSet<Action>();
+
     function lintAction(action: CodeAction, doc: Text): Action {
-        return {
+        const lint: Action = {
             name: action.title,
             apply(view) {
                 if (view.state.doc !== doc) {
                     forceLinting(view);
                     return;
                 }
+                if (action.create && options.onCreate) {
+                    options.onCreate(action);
+                    return;
+                }
                 applyTextEdits(view, action.edit[path] ?? [], doc);
             },
         };
+        if (action.isPreferred) preferred.add(lint);
+        return lint;
+    }
+
+    // What the link at an offset goes to, as its hover names it
+    async function linkAt(view: EditorView, offset: number): Promise<string | undefined> {
+        const doc = view.state.doc;
+        await sync(doc);
+        const hover = await client.call("getHover", path, toPosition(doc, offset));
+        return hover?.contents.split("\n\n")[0].replace(/^\*\*(.*)\*\*$/, "$1");
     }
 
     return [
@@ -326,6 +348,7 @@ export function languageFeatures(options: LanguageFeatureOptions): Extension[] {
             };
         }),
         hoverTheme,
+        cursorBar({ linkAt, goTo: (view, offset) => void goToDefinition(view, offset), isPreferred: a => preferred.has(a) }),
         languageCommands.of({ definition: definitionCommand, references: referencesCommand, rename: renameCommand, hasDefinition }),
         keymap.of([
             { key: "F12", run: definitionCommand, preventDefault: true },

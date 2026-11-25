@@ -18,7 +18,7 @@ export interface ShortcutGroup {
 export const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform);
 
 // The editor's own, which aren't CodeMirror's
-export const EDITOR_KEYS = new Set(["Mod-s", "Mod-Enter", "Mod-Shift-Enter", "Mod-Shift-o", "Mod-Shift-m", "Mod-Shift-f", "F12", "Mod-click", "Shift-F12", "F2"]);
+export const EDITOR_KEYS = new Set(["Mod-s", "Mod-Enter", "Mod-Shift-Enter", "Mod-Shift-o", "Mod-Shift-m", "Mod-Shift-f", "F12", "Mod-click", "Mod-.", "Shift-F12", "F2"]);
 
 export const SHORTCUT_GROUPS: ShortcutGroup[] = [
     {
@@ -36,6 +36,7 @@ export const SHORTCUT_GROUPS: ShortcutGroup[] = [
         heading: "Sections and passages",
         shortcuts: [
             { keys: ["F12", "Mod-click"], description: "Go to the section or passage a link goes to" },
+            { keys: ["Mod-."], description: "Fix the problem at the cursor, such as adding the section a link goes to" },
             { keys: ["Shift-F12"], description: "List every link to a section or passage" },
             { keys: ["F2"], description: "Rename a section or passage everywhere" },
             { keys: ["Ctrl-Space"], mac: ["Ctrl-Space", "Alt-`"], description: "Suggest section, passage and attribute names" },

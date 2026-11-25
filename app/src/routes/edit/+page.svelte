@@ -351,6 +351,7 @@
                     prompt: (message, initial) => promptDialog(message, initial, "Rename"),
                     applyEdits,
                     notify: message => showToast(message, "info"),
+                    onCreate: fix => void createFromLink(fix),
                 }),
             ];
             extensionCache.set(path, extensions);
@@ -751,6 +752,11 @@
         });
         if (stale) {
             showToast("The story changed since that problem was found. Try again.", "info");
+            void refreshProblems();
+            return;
+        }
+        if (fix.create) {
+            await createFromLink(fix);
             void refreshProblems();
             return;
         }
@@ -1237,8 +1243,9 @@
     //
     // `from` is the section or passage it's for: the one a link was dragged from (so a link to the
     // new section is added there, unless `link` is false, for a link that's there already).
-    // `at` is where its box goes, if the author chose.
-    async function createSectionFromMap(name: string, where: { at?: Point; near?: GraphNode; from?: GraphNode; link?: boolean }) {
+    // `at` is where its box goes, if the author chose. `select` is false to leave the map's
+    // selection (and so the card) as it is, for a section added while writing.
+    async function createSectionFromMap(name: string, where: { at?: Point; near?: GraphNode; from?: GraphNode; link?: boolean; select?: boolean }) {
         const graph = storyGraph;
         if (!p || !graph) return;
         const { at, near, from } = where;
@@ -1248,7 +1255,7 @@
             const edit = from && where.link !== false
                 ? await linkThenHeader(linkEdit(from, `[[${name}]]`), place, `[[${name}]]:`)
                 : await headerEdit(place, `[[${name}]]:`);
-            selectWhenReady = `section:${name}`;
+            if (where.select !== false) selectWhenReady = `section:${name}`;
             await applyMapEdit(edit, at && {
                 before: mapPositions ?? emptyPositions(),
                 after: withPosition(mapPositions, new Map(), { kind: "section", name }, at),
@@ -1261,7 +1268,7 @@
     // Adds a passage to a section, with a link to it from the section (or from the passage it
     // was added from), so it can be reached (unless `link` is false, for a link that's there
     // already)
-    async function addPassageFromMap(from: GraphNode, name: string, link = true) {
+    async function addPassageFromMap(from: GraphNode, name: string, link = true, select = true) {
         const graph = storyGraph;
         if (!p || !graph) return;
         const sectionName = from.kind === "section" ? from.name : from.section!;
@@ -1270,11 +1277,29 @@
         try {
             const place = placeNewPassage(section);
             const edit = link ? await linkThenHeader(linkEdit(from, `[${name}]`), place, `[${name}]:`) : await headerEdit(place, `[${name}]:`);
-            selectWhenReady = `passage:${sectionName}/${name}`;
+            if (select) selectWhenReady = `passage:${sectionName}/${name}`;
             await applyMapEdit(edit);
         } catch (err) {
             showToast(`Couldn't add the passage: ${errorText(err)}`);
         }
+    }
+
+    // Adds the section or passage a broken link points to, from a quick fix (in the script, the
+    // map's card, or the Problems panel), where the map's red marker for that link would put it
+    // (or, for a link before the file's first section, where the fix itself would)
+    async function createFromLink(fix: CodeAction) {
+        const { create, diagnostic: link } = fix;
+        if (!create || !link) return;
+        await refreshGraph();
+        const graph = storyGraph;
+        const from = graph && nodeAtLine(graph, link.file, link.range.start.line);
+        if (!from) {
+            await applyEdits(fix.edit);
+            return;
+        }
+        // The author carries on writing where they were
+        if (create.kind === "passage") await addPassageFromMap(from, create.name, false, false);
+        else await createSectionFromMap(create.name, { from, link: false, select: false });
     }
 
     async function deleteFromMap(nodes: GraphNode[]) {

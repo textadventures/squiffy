@@ -188,6 +188,44 @@ test.describe("writing on the map", () => {
         await expect(editor(page).locator(".cm-activeLine")).toHaveText("[wall]:");
     });
 
+    test("typing a link to a new section in the card offers to add it, at the cursor (#677)", async ({ page }) => {
+        await openStory(page);
+        await write(page, "section:hill");
+        await page.keyboard.press("ControlOrMeta+End");
+        await page.keyboard.type(" Or the [[cellar]]");
+        const bar = page.locator(".cm-squiffy-bar");
+        // Not while the link's being typed, and not for a link somewhere else
+        await page.keyboard.type(".");
+        await expect(bar).toBeHidden();
+        await page.keyboard.press("ArrowLeft");
+        await page.keyboard.press("ArrowLeft");
+        await expect(bar.getByRole("button", { name: /Create section 'cellar'/ })).toBeVisible();
+        await bar.getByRole("button", { name: /Create section 'cellar'/ }).click();
+        await expect(box(page, "section:cellar")).toBeVisible();
+        // Still writing the same section, with no second link
+        await expect(editor(page)).toBeFocused();
+        expect(await lines(page)).toEqual(["@end", "The end. [[empty]] Or the [[cellar]]."]);
+        // Now it's there, the bar goes to it
+        await expect(bar.getByRole("button", { name: /Go to \[\[cellar\]\]/ })).toBeVisible();
+        await bar.getByRole("button", { name: /Go to/ }).click();
+        await expect(cardTitle(page)).toHaveText("cellar");
+        expect(await wholeScript(page)).toContain("Or the [[cellar]].\n\n[[cellar]]:\n");
+    });
+
+    test("the fix at the cursor is a keypress away, and one undo takes it back (#677)", async ({ page }) => {
+        await openStory(page);
+        await write(page, "section:cave");
+        await page.keyboard.press("ControlOrMeta+End");
+        await page.keyboard.type(" Or [ledge]");
+        await page.keyboard.press("ArrowLeft");
+        await expect(page.locator(".cm-squiffy-bar")).toContainText("Create passage 'ledge'");
+        await page.keyboard.press("ControlOrMeta+.");
+        await expect(box(page, "passage:cave/ledge")).toBeVisible();
+        await page.keyboard.press("ControlOrMeta+Z");
+        await expect(box(page, "passage:cave/ledge")).toHaveCount(0);
+        expect((await lines(page)).join("\n")).toContain("Or [ledge]");
+    });
+
     test("renaming from the card changes the links to it", async ({ page }) => {
         await openStory(page);
         await write(page, "section:cave");

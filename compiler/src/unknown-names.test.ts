@@ -191,6 +191,8 @@ describe("squiffy-ignore comments", () => {
         const diagnostic = (await ls.getAllDiagnostics()).find(d => d.code == "squiffy/unknown-name")!;
         const actions = await ls.getCodeActions("s.squiffy", diagnostic.range);
         expect(actions.map(a => a.title)).toEqual(["Ignore {{board}} in this section", "Ignore {{board}} everywhere"]);
+        // Not offered at the cursor, so silencing a warning isn't the easy thing to do (#677)
+        expect(actions.some(a => a.isPreferred)).toBe(false);
         expect(apply(text, actions[0].edit["s.squiffy"]))
             .toBe("[[a]]:\n@set gold = 1\n    var x = 1;\n{{!-- squiffy-ignore unknown-name board --}}\n{{board}} [[b]]\n\n[[b]]:\n@end\n\n[[]]:\n@set y = 1");
         expect(apply(text, actions[1].edit["s.squiffy"])).toBe(text + "\n{{!-- squiffy-ignore unknown-name board --}}");

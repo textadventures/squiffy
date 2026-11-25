@@ -93,6 +93,7 @@ export function toLspCodeAction(root: string, action: CodeAction): LspCodeAction
         kind: CodeActionKind.QuickFix,
         diagnostics: action.diagnostic ? [toLspDiagnostic(action.diagnostic)] : undefined,
         edit: toLspWorkspaceEdit(root, action.edit),
+        isPreferred: action.isPreferred,
     };
 }
 
