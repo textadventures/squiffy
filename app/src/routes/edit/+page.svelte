@@ -516,6 +516,50 @@
         }
     }
 
+    // The browser's own Back and Forward go back and forward in the editor too. Some mice's
+    // buttons (a Logitech's, through its own software) make the browser go back without the page
+    // seeing a click it could stop. So the editor keeps an entry in the browser's history on
+    // either side of the one it's on. Arriving at the one before is the editor's Back, and the
+    // browser then comes forward again; the one after is Forward. With nowhere to go back to,
+    // the browser carries on back, leaving the editor as before.
+    let browserHistorySet = false;
+    // While those entries are being added, which the browser's moves don't count as Back or Forward
+    let browserHistorySetting = true;
+    // Until the browser's back on the editor's own entry, after moving off it
+    let browserHistoryMoving = true;
+    $effect(() => {
+        if (loading || browserHistorySet) return;
+        browserHistorySet = true;
+        void (async () => {
+            const url = page.url.href;
+            await goto(url, { state: { nav: "back" }, shallow: true, replace: true });
+            await goto(url, { state: { nav: "here" }, shallow: true });
+            await goto(url, { state: { nav: "forward" }, shallow: true });
+            browserHistorySetting = false;
+            history.back();
+        })();
+    });
+    $effect(() => {
+        const nav = page.state.nav;
+        untrack(() => {
+            if (browserHistorySetting) return;
+            if (nav === "here") browserHistoryMoving = false;
+            if (browserHistoryMoving || (nav !== "back" && nav !== "forward")) return;
+            const forward = nav === "forward";
+            if (!(forward ? navHistory.canGoForward : navHistory.canGoBack)) {
+                // Nowhere to go forward to: back to the editor's entry. Nowhere to go back to:
+                // on back, out of the editor.
+                if (forward) browserHistoryMoving = true;
+                history.back();
+                return;
+            }
+            browserHistoryMoving = true;
+            if (forward) history.back();
+            else history.forward();
+            void goBackOrForward(forward);
+        });
+    });
+
     // Goes to a place as any other location: with the map full screen, in the section beside it
     async function goToPlace(place: NavPlace): Promise<boolean> {
         const current = p;

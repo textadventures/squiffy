@@ -677,6 +677,37 @@ test.describe("Back and Forward (#678)", () => {
         await expect(activeLine(page)).toHaveText("Go to the [[cave]] or the [[hilxl]].");
     });
 
+    test("the browser's own Back and Forward go back and forward in the editor, then leave it", async ({ page }) => {
+        // As a Logitech mouse's buttons do, through its software: the page sees no click
+        await openStory(page);
+        await page.getByRole("group", { name: "View" }).getByRole("button", { name: "Code", exact: true }).click();
+        await editor(page).click();
+        await page.keyboard.press("ControlOrMeta+Home");
+        for (let i = 0; i < 3; i++) await page.keyboard.press("ArrowDown");
+        await page.keyboard.press("End");
+        for (let i = 0; i < 4; i++) await page.keyboard.press("ArrowLeft");
+        await page.keyboard.press("F12");
+        await expect(activeLine(page)).toHaveText("[[hill]]:");
+        const url = page.url();
+
+        await page.evaluate(() => history.back());
+        await expect(activeLine(page)).toHaveText("Go to the [[cave]] or the [[hill]].");
+        expect(page.url()).toBe(url);
+        await page.evaluate(() => history.forward());
+        await expect(activeLine(page)).toHaveText("[[hill]]:");
+        // Forward with nowhere to go stays put
+        await page.evaluate(() => history.forward());
+        await page.waitForTimeout(300);
+        await expect(activeLine(page)).toHaveText("[[hill]]:");
+        expect(page.url()).toBe(url);
+        // And again, still the editor's Back
+        await page.evaluate(() => history.back());
+        await expect(activeLine(page)).toHaveText("Go to the [[cave]] or the [[hill]].");
+        // Nowhere left to go back to, so back out of the editor
+        await page.evaluate(() => history.back());
+        await expect(page).toHaveURL(/\/$/);
+    });
+
     test("a section that's been deleted is passed over", async ({ page }) => {
         await openStory(page);
         await write(page, "section:start");
