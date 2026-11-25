@@ -78,7 +78,9 @@ The Squiffy command-line tool runs with `npx` (Node.js required). Run it in the 
 
 Time is virtual in `--play` and `--random`: animations, `{{goto ... after=}}` and `{{#every}}` happen at once (a `{{#every}}` that never stops is left after 20 times). Scripts a story adds to its page aren't run.
 
-If the CLI says it doesn't know `--check`, `--play`, `--random` or `--test`, it's an older version: try `npx @textadventures/squiffy-cli@beta`, or tell the author to update.
+If the CLI says it doesn't know `--check`, `--play`, `--random` or `--test`, it's an older version: try `npx @textadventures/squiffy-cli@latest` (or `@beta`, if the story uses something from a beta), or tell the author to update.
+
+**Converting** a story from elsewhere, when the author asks: `npx @textadventures/squiffy-cli mygame.html --convert-twine` (Twine's published or archive HTML, or Twee; Harlowe or SugarCube) and `mygame.quest --convert-quest` (a Quest gamebook, or its `.aslx`) each make a new story folder next to the file (`--out folder` for another), with `twine-import.txt` / `quest-import.txt` listing what couldn't be converted exactly: read it, and `--check` the result. `story.squiffy --convert-v5` converts a Squiffy 5 story in place, and `--convert-v6` a Squiffy 6 one, keeping `.bak` copies.
 
 Don't write `game.json`, `build/` or `random/` output into the author's story files, and delete scratch save files you made when you're done.
 
@@ -87,6 +89,7 @@ Don't write `game.json`, `build/` or `random/` output into the author's story fi
 - Give each section a short, unique name. Passage names must be unique within their section.
 - Every section should lead somewhere or end with `@end`. Aim for `--check` with no warnings, and `--random` with no problems.
 - Use passages for looking around within a scene, and sections for decisions that move the story on.
+- Write for every player: alt text on images, link text that makes sense on its own, and nothing that's only shown by colour or sound (references/accessibility.md).
 - Keep the author's voice, formatting and naming conventions. Ask before restructuring their story.
 
 ## Reference files
@@ -100,4 +103,5 @@ Read these when you need more than the above:
 - [references/project.md](references/project.md): `squiffy.json` (main, exclude, panels, player settings, saves, Back button, strings), starting at a later section to test it (`?start=`, `@test`), stories in several files, `@import`, images, music and sound.
 - [references/player-input.md](references/player-input.md): asking the player for text, with validation.
 - [references/styling.md](references/styling.md): CSS variables, `@class` and the class helpers, custom transitions.
+- [references/accessibility.md](references/accessibility.md): writing a story that works with the keyboard and screen readers: alt text, link text, colour, timers, sound, text box labels. Read before adding images, timers, text boxes or custom HTML.
 - [references/javascript.md](references/javascript.md): JavaScript in sections, `@ui`, the `squiffy` API, custom helpers and animations.

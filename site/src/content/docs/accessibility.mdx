@@ -1,0 +1,81 @@
+---
+title: Writing an accessible story
+description: Making a story that everyone can play, with a keyboard, a screen reader, without colour or sound, and at their own pace
+---
+
+Some of your players will use the keyboard instead of a mouse, or a screen reader, which reads the page out loud. Some can't tell red from green, have the sound off, or need more time to read. Squiffy looks after most of this for you, and a few habits when you write do the rest.
+
+## What Squiffy does for you
+
+- **The keyboard.** Every link can be reached with Tab and clicked with Enter. A [continue](/dynamic-text/#click-to-continue) is a button, pressed with Enter or Space.
+- **New text is read out.** After a click, the keyboard focus moves to the text it showed, so a screen reader reads it, and the next Tab reaches its links.
+- **Old links.** A link that can't be clicked any more, because the player has clicked it already or left its section, is marked as disabled for screen readers, and Tab skips it.
+- **Links are underlined**, so they don't rely on colour to stand out, and Squiffy's own colours have enough contrast, in light and dark mode.
+- **Less motion.** If the player has asked their system for less motion, animations, transitions and moving text effects are toned down. See [Reduced motion](/dynamic-text/#reduced-motion).
+- **Pronunciation.** The story's [language](/publishing/#story-details) tells screen readers how to pronounce its text.
+
+## Images
+
+Give each image some alt text, which a screen reader reads in its place. Say what the picture shows that matters to the story:
+
+```squiffy
+![A rusty key on a velvet cushion](key.png)
+
+<img src="images/map.png" alt="Map of the island, with a cross on the north beach">
+```
+
+An image that's only decoration, such as a border or a flourish, should have empty alt text, so that a screen reader leaves it out: `![](flourish.png)`, or `alt=""` in an `<img>`.
+
+## Links
+
+Screen reader users often go through a page by its links alone, so make each link's text make sense on its own. "Open the door" and "Ask about the letter" say where they go; "click here" and "this" don't:
+
+```squiffy
+The door is locked. [[Try the key]] or [[go back downstairs]](hall).
+```
+
+## Colour
+
+Don't let colour carry the meaning alone. If a choice is red because it's dangerous, or text turns green when something works, say so in the words too. The same goes for a scene's look changed with [`@class`](/styling/#changing-the-look-for-a-scene): a dark red page can set the mood, but the text should still tell the player what's happening.
+
+If you change the [colour variables](/styling/#colours), keep enough contrast between the text, links and background, in both light and dark mode. A contrast checker, such as the one in your browser's developer tools, tells you whether two colours pass. Keep links underlined, too.
+
+## Timed text
+
+[`{{goto}}` with `after=`](/dynamic-text/#moving-on-after-a-delay) and [`{{#every}}`](/dynamic-text/#repeating-text) change the story without the player doing anything. A player using a screen reader, or who reads slowly, may not have finished the text before it changes. Give them enough time, or, unless the timing is part of the game, a link to go on when they're ready instead.
+
+When the timing is part of the game, such as a countdown, think about a [setting](/buttons-panels-settings/#player-settings) that turns it off, as the game show does with its timed rounds:
+
+```squiffy
+{{#if settings.timers}}{{goto "too late" after=10000}}{{/if}}
+```
+
+## Sound
+
+Don't put anything the player needs only in [music or a sound](/images-and-files/#music-and-sound): some play with the sound off, and some can't hear it. If a knock at the door matters, say there's a knock at the door. Remember too that sound on the story's first screen doesn't play until the player clicks something.
+
+## Text boxes
+
+Give each [text box](/player-input/) a label, so that a player using a screen reader knows what it's for: put the box and its text in a `<label>`, or give it an `aria-label`:
+
+```squiffy
+<label>Your name: <input type="text" data-attribute="name" required></label>
+```
+
+When [validation](/player-input/#input-validation) stops the links working until the box is filled in, say in the text what's needed, such as "at least two letters", as a screen reader doesn't say why the links can't be clicked.
+
+## Your own HTML and JavaScript
+
+If you add something clickable in HTML or [JavaScript](/javascript/), use a `<button>` or a link, not a `<div>` or `<span>` with an `onclick`. A button can be reached with Tab and pressed from the keyboard, and a screen reader tells the player it's there; a `<div>` can't, and doesn't.
+
+## Checking your story
+
+Play your story with the keyboard alone: Tab to each link, press Enter, and make sure you can get everywhere, and can always see where the focus is.
+
+Then try it with a screen reader. Every computer has one:
+
+- **Mac:** VoiceOver, which Command+F5 turns on and off.
+- **Windows:** Narrator, which Ctrl+Windows+Enter turns on and off, or [NVDA](https://www.nvaccess.org/), which is free.
+- **Phones:** VoiceOver on an iPhone, and TalkBack on Android, in their Accessibility settings.
+
+Listen to a few screens with your eyes closed. Does each new piece of text get read out? Do the links make sense? Is there anything you'd only know from a picture, a colour or a sound?
