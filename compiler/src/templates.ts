@@ -30,8 +30,16 @@ interface HandlebarsException {
     column?: number;
 }
 
-export function findTemplateError(text: string): TemplateError | null {
-    if (!text.includes("{{")) return null;
+// A section's or passage's text, read for findTemplateError and findTemplateNames with one parse
+export interface TemplateCheck {
+    error: TemplateError | null;
+    // Empty if the text has an error
+    names: TemplateNames;
+}
+
+export function checkTemplate(text: string): TemplateCheck {
+    const names: TemplateNames = { bare: [], embedParameters: new Set() };
+    if (!text.includes("{{")) return { error: null, names };
     const edits: InfixEdit[] = [];
     let rewritten: string;
     try {
@@ -40,27 +48,54 @@ export function findTemplateError(text: string): TemplateError | null {
         // An expression it can't read, e.g. {{set "gold" gold +}}
         if (!(e instanceof InfixRewriteError)) throw e;
         const end = e.end + (text.startsWith("~}}", e.end) ? 3 : 2);
-        return { start: e.start, end, message: `${describeTag(text.slice(e.start, end))} isn't valid: ${e.message}` };
+        return { error: { start: e.start, end, message: `${describeTag(text.slice(e.start, end))} isn't valid: ${e.message}` }, names };
     }
+    const lineStarts = [0];
+    for (let i = 0; i < rewritten.length; i++) {
+        if (rewritten[i] == "\n") lineStarts.push(i + 1);
+    }
+    const offset = (line: number, column: number) =>
+        mapRewrittenPosition(edits, Math.min((lineStarts[line - 1] ?? rewritten.length) + column, rewritten.length));
+
+    let ast: HbsNode;
     try {
-        Handlebars.parse(rewritten);
-        return null;
+        ast = Handlebars.parse(rewritten) as unknown as HbsNode;
     } catch (e) {
         const error = e as HandlebarsException;
-        const lineStarts = [0];
-        for (let i = 0; i < rewritten.length; i++) {
-            if (rewritten[i] == "\n") lineStarts.push(i + 1);
-        }
-        const offset = (line: number, column: number) =>
-            mapRewrittenPosition(edits, Math.min((lineStarts[line - 1] ?? rewritten.length) + column, rewritten.length));
-
         if (error.lineNumber !== undefined) {
-            return handlebarsError(text, error.message, offset(error.lineNumber, error.column ?? 0));
+            return { error: handlebarsError(text, error.message, offset(error.lineNumber, error.column ?? 0)), names };
         }
         const loc = lexer.yylloc;
         const pos = loc ? offset(loc.first_line, loc.first_column) : 0;
-        return parseError(text, error.message, pos);
+        return { error: parseError(text, error.message, pos), names };
     }
+
+    const visit = (node: HbsNode | undefined, sameContext: boolean) => {
+        if (!node) return;
+        if (node.path?.type == "PathExpression" && node.path.original == "embed") {
+            for (const pair of node.hash?.pairs ?? []) names.embedParameters.add(pair.key);
+        }
+        if (node.type == "MustacheStatement" && sameContext && node.loc) {
+            const path = node.path!;
+            if (path.type == "PathExpression" && !path.data && path.depth == 0 && !/^this\b/.test(path.original)
+                && path.parts.length && !node.params?.length && !node.hash?.pairs.length) {
+                names.bare.push({ start: offset(node.loc.start.line, node.loc.start.column), end: offset(node.loc.end.line, node.loc.end.column), name: path.original, root: path.parts[0] });
+            }
+        }
+        for (const child of [...node.params ?? [], ...(node.hash?.pairs ?? []).map(p => p.value)]) visit(child, sameContext);
+        if (node.type == "BlockStatement") {
+            const same = sameContext && node.path?.type == "PathExpression" && SAME_CONTEXT_BLOCKS.has(node.path.original);
+            visit(node.program, same);
+            visit(node.inverse, same);
+        }
+        for (const child of node.body ?? []) visit(child, sameContext);
+    };
+    visit(ast, true);
+    return { error: null, names };
+}
+
+export function findTemplateError(text: string): TemplateError | null {
+    return checkTemplate(text).error;
 }
 
 // "unless doesn't match if - 1:3", or "Invalid path: a/this - 1:31"
@@ -180,44 +215,5 @@ interface HbsNode {
 // The names used in a section's or passage's text, which it reads the way findTemplateError does.
 // Text with a syntax error has none.
 export function findTemplateNames(text: string): TemplateNames {
-    const result: TemplateNames = { bare: [], embedParameters: new Set() };
-    if (!text.includes("{{")) return result;
-    const edits: InfixEdit[] = [];
-    let ast: HbsNode;
-    let rewritten: string;
-    try {
-        rewritten = rewriteInfixExpressions(text, edits);
-        ast = Handlebars.parse(rewritten) as unknown as HbsNode;
-    } catch {
-        return result;
-    }
-    const lineStarts = [0];
-    for (let i = 0; i < rewritten.length; i++) {
-        if (rewritten[i] == "\n") lineStarts.push(i + 1);
-    }
-    const offset = (pos: { line: number; column: number }) =>
-        mapRewrittenPosition(edits, Math.min((lineStarts[pos.line - 1] ?? rewritten.length) + pos.column, rewritten.length));
-
-    const visit = (node: HbsNode | undefined, sameContext: boolean) => {
-        if (!node) return;
-        if (node.path?.type == "PathExpression" && node.path.original == "embed") {
-            for (const pair of node.hash?.pairs ?? []) result.embedParameters.add(pair.key);
-        }
-        if (node.type == "MustacheStatement" && sameContext && node.loc) {
-            const path = node.path!;
-            if (path.type == "PathExpression" && !path.data && path.depth == 0 && !/^this\b/.test(path.original)
-                && path.parts.length && !node.params?.length && !node.hash?.pairs.length) {
-                result.bare.push({ start: offset(node.loc.start), end: offset(node.loc.end), name: path.original, root: path.parts[0] });
-            }
-        }
-        for (const child of [...node.params ?? [], ...(node.hash?.pairs ?? []).map(p => p.value)]) visit(child, sameContext);
-        if (node.type == "BlockStatement") {
-            const same = sameContext && node.path?.type == "PathExpression" && SAME_CONTEXT_BLOCKS.has(node.path.original);
-            visit(node.program, same);
-            visit(node.inverse, same);
-        }
-        for (const child of node.body ?? []) visit(child, sameContext);
-    };
-    visit(ast, true);
-    return result;
+    return checkTemplate(text).names;
 }

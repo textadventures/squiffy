@@ -8,6 +8,7 @@ import { defineConfig } from "vite";
 import { build } from "esbuild";
 import { readFileSync, rmSync, writeFileSync } from "fs";
 import { resolve } from "path";
+import { noSourceMap } from "./vite.no-source-map";
 
 const template = (css: string, js: string) => `<!doctype html>
 <html lang="en">
@@ -62,6 +63,7 @@ export default defineConfig({
         },
     },
     plugins: [
+        noSourceMap,
         {
             name: "inline-preview-page",
             async closeBundle() {

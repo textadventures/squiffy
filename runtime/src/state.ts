@@ -24,8 +24,40 @@ export class State {
         this.onSetInternal = onSetInternal;
     }
 
+    // Set when localStorage couldn't be written, e.g. because it's full: the story's progress
+    // isn't kept there any more, until the story's restarted
+    private storageFailed = false;
+
     private usePersistentStorage() {
-        return this.persist && window.localStorage && this.storyId;
+        return this.persist && !this.storageFailed && window.localStorage && this.storyId;
+    }
+
+    private storeAttribute(attribute: string, value: any) {
+        try {
+            localStorage.setItem(this.storyId + "-" + attribute, JSON.stringify(value));
+        }
+        catch (e) {
+            // localStorage only holds a few megabytes for every story on the site. What's kept now
+            // would be partly from one turn and partly from another, so it's cleared, and reloading
+            // the page starts the story again rather than somewhere it couldn't have got to. The
+            // story carries on, and can still be saved with the Saves button.
+            console.warn(`Squiffy: the story's progress can't be kept in the browser's storage any more (${e instanceof Error ? e.message : e}).`);
+            this.clearStored();
+            this.storageFailed = true;
+        }
+    }
+
+    // Removes the story's attributes from localStorage. With the "-", so that the story at /story
+    // doesn't clear /story2's, nor the story at / every other story's on the site.
+    private clearStored() {
+        try {
+            for (const key of Object.keys(localStorage)) {
+                if (key.startsWith(this.storyId + "-")) localStorage.removeItem(key);
+            }
+        }
+        catch {
+            // Storage that can't be read or written
+        }
     }
 
     // The player's settings (#452), which the story reads as the attribute "settings", e.g.
@@ -146,7 +178,7 @@ export class State {
         this.store[attribute] = structuredClone(value);
 
         if (this.usePersistentStorage()) {
-            localStorage[this.storyId + "-" + attribute] = JSON.stringify(value);
+            this.storeAttribute(attribute, value);
         }
 
         if (raiseEvents) {
@@ -223,21 +255,16 @@ export class State {
     }
 
     // Persistent attributes are left as they are: forget() clears them
+    // Restarting tries keeping progress in localStorage again, if it had stopped.
     reset() {
         this.store = {};
+        this.storageFailed = false;
 
         if (!this.usePersistentStorage()) {
             return;
         }
 
-        // With the "-", so that restarting the story at /story doesn't clear /story2's, nor the
-        // story at / every other story's on the site
-        const keys = Object.keys(localStorage);
-        for (const key of keys) {
-            if (key.startsWith(this.storyId + "-")) {
-                localStorage.removeItem(key);
-            }
-        }
+        this.clearStored();
     }
 
     // Records a visit to a section or passage: adds it to _seen_sections, counts it in _visits

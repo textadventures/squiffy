@@ -125,6 +125,31 @@ describe("diagnostics", () => {
         expect(await ls.getDiagnostics("story.squiffy")).toEqual([]);
     });
 
+    test("for text that's unchanged by an edit, in the right place", async () => {
+        // Each section's Handlebars check is kept between analyses, as text it's seen before
+        const text = "[[a]]:\nSome {{#if x}}text.\n\n[[b]]:\nHello {{who}}.";
+        const files = memoryFiles({ "s.squiffy": text });
+        const ls = createLanguageService({ files, mainFile: "s.squiffy" });
+        const problems = async (text: string) => (await ls.getDiagnostics("s.squiffy"))
+            .filter(d => d.code == "squiffy/template-syntax" || d.code == "squiffy/unknown-name")
+            .map(d => [d.code, d.range.start.line, slice(text, d.range)]);
+        expect(await problems(text)).toEqual([
+            ["squiffy/template-syntax", 1, "{{#if x}}"],
+            ["squiffy/unknown-name", 4, "{{who}}"],
+        ]);
+
+        const moved = "[[a]]:\nFirst.\n\nSome {{#if x}}text.\n\n[[b]]:\nHello {{who}}.";
+        ls.updateFile("s.squiffy", moved);
+        expect(await problems(moved)).toEqual([
+            ["squiffy/template-syntax", 3, "{{#if x}}"],
+            ["squiffy/unknown-name", 6, "{{who}}"],
+        ]);
+
+        const fixed = moved.replace("text.", "text.{{/if}}");
+        ls.updateFile("s.squiffy", fixed);
+        expect(await problems(fixed)).toEqual([["squiffy/unknown-name", 6, "{{who}}"]]);
+    });
+
     test("for a section or passage defined twice, at the later name", async () => {
         const main = "[[a]]:\n[p]:\nx\n[p]:\ny\n@import b.squiffy";
         const b = "[[a]]:\n@end\nagain";

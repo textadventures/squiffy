@@ -20,6 +20,7 @@ import { confirmDialog } from "./confirmDialog.js";
 import { createSavesDialog, type SavesDialog } from "./savesDialog.js";
 import { createSettingsDialog, type SettingsDialog } from "./settingsDialog.js";
 import { PlayerSettings } from "./playerSettings.js";
+import { applyUndoChange, undoEntry, UndoChange } from "./undoChanges.js";
 
 export type { StartAt, SquiffyInitOptions, Story } from "./types.js";
 export type { SquiffyApi, SquiffyScriptApi, SquiffyScriptEvent, SavedGame, LoadSaveResult, PlayerSetting, PlayerSettingOption, SettingValue } from "./types.js";
@@ -1399,7 +1400,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         if (currentPassageElement) {
             const currentPassage = currentPassageElement.getAttribute("data-passage");
             const clicked = currentPassageElement.getAttribute("data-clicked-link");
-            doUndo(currentPassageElement.getAttribute("data-undo"));
+            doUndo(currentPassageElement);
             undoDeactivate(currentPassageElement);
             currentPassageElement.remove();
 
@@ -1443,7 +1444,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
             setCurrentPassageElement();
         }
         else {
-            doUndo(currentSectionElement.getAttribute("data-undo"));
+            doUndo(currentSectionElement);
             currentSectionElement.remove();
 
             // If there's nothing left in the outputElement except for the clear-stack, pop it
@@ -1539,8 +1540,30 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         undoLog[attribute] = oldValue;
     };
 
+    // Keeps the attributes' old values on the section or passage's element, for going back: an
+    // object or list as what changed in it, when it's still one (see undoChanges.ts)
+    const writeUndo = function(element: Element, oldValues: Record<string, any>) {
+        const { values, changes } = undoEntry(oldValues, attribute => state.store[attribute]);
+        element.setAttribute("data-undo", JSON.stringify(values));
+        if (Object.keys(changes).length) element.setAttribute("data-undo-changes", JSON.stringify(changes));
+        else element.removeAttribute("data-undo-changes");
+    };
+
+    // The old values kept on an element. The changes are undone from the attributes' values now,
+    // or, for one changed again since that isn't in the undo log yet, its value before that.
+    const readUndo = function(element: Element): { values: Record<string, any>; fromLog: string[] } {
+        const values = JSON.parse(element.getAttribute("data-undo") || "{}") ?? {};
+        const changes = JSON.parse(element.getAttribute("data-undo-changes") || "{}") as Record<string, UndoChange> ?? {};
+        const fromLog: string[] = [];
+        for (const [attribute, change] of Object.entries(changes)) {
+            if (attribute in undoLog) fromLog.push(attribute);
+            values[attribute] = applyUndoChange(attribute in undoLog ? undoLog[attribute] : state.store[attribute], change);
+        }
+        return { values, fromLog };
+    };
+
     const writeUndoLog = function() {
-        (currentPassageElement ?? currentSectionElement).setAttribute("data-undo", JSON.stringify(undoLog));
+        writeUndo(currentPassageElement ?? currentSectionElement, undoLog);
         undoLog = {};
     };
 
@@ -1548,11 +1571,11 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     // the value from before it was shown, e.g. for an {{#every}}'s text (#451)
     const mergeUndoLog = function() {
         const element = currentPassageElement ?? currentSectionElement;
-        const log = JSON.parse(element.getAttribute("data-undo") || "{}");
+        const { values } = readUndo(element);
         for (const [attribute, value] of Object.entries(undoLog)) {
-            if (!(attribute in log)) log[attribute] = value;
+            if (!(attribute in values)) values[attribute] = value;
         }
-        element.setAttribute("data-undo", JSON.stringify(log));
+        writeUndo(element, values);
         undoLog = {};
     };
 
@@ -1604,12 +1627,13 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         return true;
     }
 
-    const doUndo = function(undosJson: string | null) {
-        if (!undosJson) return;
-        const undos = JSON.parse(undosJson) as Record<string, any>;
-        if (!undos) return;
-        for (const attribute of Object.keys(undos)) {
-            state.setInternal(attribute, undos[attribute], false);
+    const doUndo = function(element: Element) {
+        const { values, fromLog } = readUndo(element);
+        // What was changed since, and put back now, is done with: going back further undoes the
+        // changes kept with earlier sections from the values as they are then
+        for (const attribute of fromLog) delete undoLog[attribute];
+        for (const attribute of Object.keys(values)) {
+            state.setInternal(attribute, values[attribute], false);
         }
     };
 

@@ -122,6 +122,8 @@ const squiffyApi = await squiffyRuntime.init({
 });
 ```
 
+The browser only keeps a few megabytes in localStorage for each site, shared by every story on it. If it's full, the story carries on, but its progress stops being kept there until the story's restarted, and a warning says so in the browser's console. Reloading the page then starts the story again. Saved games, from [`getSave()`](#getsave) or [the Saved games dialog](#the-saved-games-dialog), aren't affected.
+
 Set `persist: false` to disable saving:
 
 ```javascript
