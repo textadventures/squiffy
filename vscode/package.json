@@ -30,11 +30,6 @@
     "workspaceContains:**/*.squiffy"
   ],
   "contributes": {
-    "configurationDefaults": {
-      "json.schemaDownload.trustedDomains": {
-        "https://squiffystory.com/": true
-      }
-    },
     "languages": [
       {
         "id": "squiffy",

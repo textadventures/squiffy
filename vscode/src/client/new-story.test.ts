@@ -58,10 +58,3 @@ test("an export that would replace files names them", () => {
     expect(clashMessage(["style.css", "index.html", "story.js", "squiffy.runtime.global.js"])).toBe("index.html, squiffy.runtime.global.js, story.js and style.css");
     expect(clashMessage(["e", "d", "c", "b", "a"])).toBe("a, b, c and 2 other files");
 });
-
-test("VS Code trusts the schema a new story's squiffy.json names, so it doesn't warn about downloading it", async () => {
-    const { PROJECT_SCHEMA_URL } = await import("squiffy-compiler");
-    const manifest = JSON.parse(readFileSync(new URL("../../package.json", import.meta.url), "utf8"));
-    const trusted: Record<string, boolean> = manifest.contributes.configurationDefaults["json.schemaDownload.trustedDomains"];
-    expect(Object.entries(trusted).some(([prefix, on]) => on && PROJECT_SCHEMA_URL.startsWith(prefix))).toBe(true);
-});
