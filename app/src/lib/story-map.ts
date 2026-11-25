@@ -665,7 +665,7 @@ export function nodeAtLine(graph: StoryGraph, file: string, line: number): Graph
 // to show before it's opened: without its header, its passages, directives, JavaScript and
 // comments, with links as their text and Markdown and HTML left out. Empty if there's no text.
 export function nodeExcerpt(text: string, node: GraphNode, max = 240): string {
-    const prose = ownLines(text.split(/\r?\n/), node.range.start.line, node.contentEnd.line, !!node.detail)
+    const prose = ownLines(linesOf(text), node.range.start.line, node.contentEnd.line, !!node.detail)
         // JavaScript is indented
         .filter(line => !/^(\t| {4})/.test(line) && !/^\s*@/.test(line))
         .join("\n")
@@ -709,6 +709,20 @@ export function wrapExcerpt(text: string, chars: number, lines: number): string[
         out[out.length - 1] = `${cut.replace(/[\s,;:.]+$/, "")}…`;
     }
     return out;
+}
+
+// A file's text split into lines, kept for the last few texts, as the map asks for the excerpts of
+// every box in a file at once when it's zoomed in: splitting a big story's file for each of them
+// took seconds (#681)
+const splitTexts = new Map<string, string[]>();
+function linesOf(text: string): string[] {
+    let lines = splitTexts.get(text);
+    if (!lines) {
+        lines = text.split(/\r?\n/);
+        if (splitTexts.size >= 8) splitTexts.delete(splitTexts.keys().next().value!);
+        splitTexts.set(text, lines);
+    }
+    return lines;
 }
 
 // The lines of a section's or passage's own text, from its header at `start` to `end`, without

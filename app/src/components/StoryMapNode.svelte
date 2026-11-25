@@ -107,6 +107,11 @@
     .detail-label {
         font-weight: 600;
     }
+    /* Far out of sight, which the map marks: drawing thousands of boxes' text made panning a
+       big map slow */
+    :global(.gm-far) .excerpt {
+        display: none;
+    }
     .excerpt {
         fill: var(--gm-node-text);
         opacity: 0.75;
