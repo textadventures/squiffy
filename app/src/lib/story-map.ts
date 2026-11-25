@@ -581,3 +581,28 @@ export function nodeAtLine(graph: StoryGraph, file: string, line: number): Graph
     }
     return best;
 }
+
+// A short preview of a section's or passage's own text, as a player would read it, for the map
+// to show before it's opened: without its header, its passages, directives, JavaScript and
+// comments, with links as their text and Markdown and HTML left out. Empty if there's no text.
+export function nodeExcerpt(text: string, node: GraphNode, max = 240): string {
+    const lines = text.split(/\r?\n/);
+    // A section without a name of its own (its +++ or --- line, or the text before the first
+    // section) has no header line to leave out
+    const first = node.detail ? node.range.start.line : node.range.start.line + 1;
+    const own = lines.slice(first, node.contentEnd.line + 1);
+    if (node.detail && own.length) own[0] = own[0].replace(/^(\+\+\+|---)/, "");
+    const prose = own
+        // JavaScript is indented
+        .filter(line => !/^(\t| {4})/.test(line) && !/^\s*@/.test(line))
+        .join("\n")
+        .replace(/\{\{!--[\s\S]*?--\}\}|\{\{![\s\S]*?\}\}|<!--[\s\S]*?-->/g, "")
+        .replace(/<[^>]+>/g, "")
+        // [[text]](target), [text](target), [[name]], [name]
+        .replace(/\[\[([^\]]*)\]\]\([^)]*\)|\[([^\]]*)\]\([^)]*\)|\[\[([^\]]*)\]\]|\[([^\]]*)\]/g, (_, a, b, c, d) => a ?? b ?? c ?? d)
+        .replace(/^\s*#+\s*/gm, "")
+        .replace(/(\*\*|__|\*|_)(\S(?:.*?\S)?)\1/g, "$2")
+        .replace(/\s+/g, " ")
+        .trim();
+    return prose.length > max ? `${prose.slice(0, max - 1).trimEnd()}…` : prose;
+}

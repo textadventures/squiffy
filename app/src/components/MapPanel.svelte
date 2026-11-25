@@ -49,10 +49,6 @@
         maximized: boolean;
         // Full screen, the id of the section being written in a card over the map, if one is
         card: string | null;
-        // How much of the map's right edge that card covers
-        cardWidth?: number;
-        // Where the map itself is in the window (without its header), whenever that changes
-        onarea?: (area: DOMRect) => void;
         // Write a section (or the section a passage is in) beside the full-screen map, taking the
         // focus or not
         onedit: (node: GraphNode, focus: boolean) => void;
@@ -81,11 +77,14 @@
         // Forget every position the author chose
         onrelayout: () => Promise<boolean>;
         onclose: () => void;
+        // A short preview of a section's or passage's text, for hovering over its box and for the
+        // selected box's details
+        excerpt?: (node: GraphNode) => Promise<string>;
     }
 
     let {
-        graph, positions, query, current, trace, maximized, card, cardWidth = 0, onarea, onedit, width, ongoto, ongotoedge, onmove, onlink, oncreate, onrename,
-        onrun, onaddpassage, ondelete, onstart, onundo, onrelayout, onclose,
+        graph, positions, query, current, trace, maximized, card, onedit, width, ongoto, ongotoedge, onmove, onlink, oncreate, onrename,
+        onrun, onaddpassage, ondelete, onstart, onundo, onrelayout, onclose, excerpt,
     }: Props = $props();
 
     // Above this, the map is slow to lay out, so it asks first. Of about 12,000 stories on
@@ -174,12 +173,12 @@
         if (id && map?.has(id)) map.reveal(id, covered());
     });
 
-    // What's over the map: the card a section's written in, and the details of the selected box.
-    // Neither takes space from the map, so that selecting a box or opening one doesn't move it.
+    // What's over the map: the details of the selected box, which don't take space from the map,
+    // so that selecting a box doesn't move it
     let details = $state<HTMLDivElement>();
     let detailsWidth = $state(0);
     let detailsHeight = $state(0);
-    const covered = () => ({ right: card ? cardWidth + 16 : 0, over: details ? [details.getBoundingClientRect()] : [] });
+    const covered = () => ({ over: details ? [details.getBoundingClientRect()] : [] });
 
     // The selected box is brought out from under them
     $effect(() => {
@@ -191,18 +190,22 @@
         if (id) untrack(() => { if (map?.has(id)) map.reveal(id, covered()); });
     });
 
-    let area = $state<HTMLDivElement>();
+    // Opening a section beside the map makes the map narrower, but leaves its boxes where they are
     $effect(() => {
-        const el = area;
-        if (!el || !onarea) return;
-        const report = () => onarea(el.getBoundingClientRect());
-        const observer = new ResizeObserver(report);
-        observer.observe(el);
-        window.addEventListener("resize", report);
-        return () => {
-            observer.disconnect();
-            window.removeEventListener("resize", report);
-        };
+        if (card) untrack(() => map?.keepView());
+    });
+
+    // When the map's resized, e.g. as a section's opened beside it, the selected box stays in view.
+    // A frame later, once the map knows its new size.
+    let areaWidth = $state(0);
+    let areaHeight = $state(0);
+    $effect(() => {
+        void areaWidth;
+        void areaHeight;
+        const id = untrack(() => selected);
+        if (!id) return;
+        const frame = requestAnimationFrame(() => { if (map?.has(id)) map.reveal(id, covered()); });
+        return () => cancelAnimationFrame(frame);
     });
 
     // A node's id is changing (it's been renamed), so it keeps its place
@@ -235,6 +238,7 @@
     }
 
     function handleActivate(node: StoryMapNode, how: "click" | "open") {
+        if (how == "open") finishHint();
         if (node.kind == "missing") {
             // Opening a broken link's marker makes what's missing; otherwise, to the link
             if (how == "open" && createMissing(node)) return;
@@ -264,6 +268,80 @@
         followed = g.id;
         untrack(() => onedit(g, false));
     });
+
+    // ---- Previews ----
+
+    // Each node's excerpt, worked out once for each version of the story
+    let excerpts = new Map<string, Promise<string>>();
+    let excerptsFor: StoryGraph | null = null;
+    function excerptOf(g: GraphNode): Promise<string> {
+        if (!excerpt) return Promise.resolve("");
+        if (excerptsFor !== graph) {
+            excerpts = new Map();
+            excerptsFor = graph;
+        }
+        let found = excerpts.get(g.id);
+        if (!found) excerpts.set(g.id, found = excerpt(g).catch(() => ""));
+        return found;
+    }
+
+    // The selected box's excerpt, for its details
+    let selectedExcerpt = $state("");
+    $effect(() => {
+        const g = selectedNode?.graphNode;
+        void graph;
+        selectedExcerpt = "";
+        if (!g) return;
+        let current = true;
+        void excerptOf(g).then(text => { if (current) selectedExcerpt = text; });
+        return () => { current = false; };
+    });
+
+    // A card shown a moment after the mouse moves onto a box: what it is and the start of its text,
+    // in place of a tooltip, which takes longer to appear and can't be styled
+    const HOVER_DELAY = 350;
+    let hover = $state<{ node: StoryMapNode; box: DOMRect; excerpt: string } | null>(null);
+    let hoverTimer: ReturnType<typeof setTimeout> | undefined;
+    function handleHover(node: StoryMapNode | null, box: DOMRect | null) {
+        clearTimeout(hoverTimer);
+        hover = null;
+        if (!node || !box || naming || menu) return;
+        hoverTimer = setTimeout(async () => {
+            const text = node.graphNode ? await excerptOf(node.graphNode) : "";
+            hover = { node, box, excerpt: text };
+        }, HOVER_DELAY);
+    }
+    $effect(() => () => clearTimeout(hoverTimer));
+    // What the box's marks mean: its tooltip, after its name
+    const hoverNotes = (n: StoryMapNode) => (n.title ?? "").split("\n").slice(1);
+    // Below the box, or above it if there's no room below
+    function hoverStyle(box: DOMRect) {
+        const below = window.innerHeight - box.bottom > 160;
+        const left = Math.max(8, Math.min(box.left + box.width / 2 - 144, window.innerWidth - 296));
+        return below ? `left: ${left}px; top: ${box.bottom + 6}px;` : `left: ${left}px; bottom: ${window.innerHeight - box.top + 6}px;`;
+    }
+
+    // ---- Finding out how to open a box ----
+
+    // A hint at the top of the map, until a box has been opened from it (in this browser)
+    const HINT_KEY = "squiffy-map-open-hint-done";
+    let hintDone = $state(readHintDone());
+    function readHintDone() {
+        try {
+            return localStorage.getItem(HINT_KEY) === "1";
+        } catch {
+            return false;
+        }
+    }
+    function finishHint() {
+        if (hintDone) return;
+        hintDone = true;
+        try {
+            localStorage.setItem(HINT_KEY, "1");
+        } catch {
+            // Shown again next time, then
+        }
+    }
 
     async function handleRelayout() {
         if (await onrelayout()) map?.relayout(new Map());
@@ -474,13 +552,13 @@
             <span class="key-badge key-ending">■</span><span>An ending (@end)</span>
             <span class="key-badge key-dead-end">!</span><span>A dead end: no way out, and not an ending</span>
             <span class="key-badge key-unreachable"></span><span>Can't be reached from the start</span>
-            <span></span><span class="text-surface-600-400 pt-1">Drag the dot under the selected box to another to add a link, or to empty space for a new section. Double-click empty space to add a section, or a red box to add what's missing. Right-click a box for more, or press Delete to delete it. Shift+drag empty space, or Shift+click, to select several boxes and move them together.</span>
+            <span></span><span class="text-surface-600-400 pt-1">{maximized ? "Double-click a box, or select it and press Enter, to write in it beside the map." : "Double-click a box, or select it and press Enter, to go to it in the script."} Hover over a box to see the start of its text. Drag the dot under the selected box to another to add a link, or to empty space for a new section. Double-click empty space to add a section, or a red box to add what's missing. Right-click a box for more, or press Delete to delete it. Shift+drag empty space, or Shift+click, to select several boxes and move them together.</span>
         </div>
     {/if}
     <!-- The keydown catches Ctrl/Cmd+Z and Y as they bubble up from the map, which is the
          control, so undo works on the map's edits. This wrapper isn't a control itself (#639) -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div bind:this={area} class="relative flex-1 min-h-0" onkeydown={handleKeydown}>
+    <div bind:clientWidth={areaWidth} bind:clientHeight={areaHeight} class="relative flex-1 min-h-0" onkeydown={handleKeydown}>
         {#if !decorated}
             <p class="p-4 text-sm text-surface-600-400">Reading the story…</p>
         {:else if tooLarge}
@@ -510,10 +588,16 @@
                 onrename={n => { if (n.graphNode) renameNode(n.graphNode); }}
                 ondelete={handleDelete}
                 onmenu={showMenu}
+                onhover={excerpt ? handleHover : undefined}
                 node={drawNode}
             />
             {#if decorated.nodes.length === 0}
                 <p class="absolute inset-0 p-4 text-sm text-surface-600-400 pointer-events-none">No sections yet.</p>
+            {:else if !hintDone && !card}
+                <p class="map-hint pointer-events-none absolute left-1/2 top-2 -translate-x-1/2 rounded-full border border-surface-200-800 bg-surface-50-950 shadow-sm pl-3 pr-1 py-0.5 text-xs flex items-center gap-1">
+                    <span>{maximized ? "Double-click a box to write in it" : "Double-click a box to go to it in the script"}</span>
+                    <button type="button" class="btn-icon btn-icon-sm pointer-events-auto" title="Hide this" aria-label="Hide this hint" onclick={finishHint}><X size={12} /></button>
+                </p>
             {/if}
         {/if}
         {#if selectedNode?.graphNode}
@@ -523,8 +607,8 @@
                     <span class="font-semibold truncate flex-1" title={selectedNode.label}>
                         {selectedNode.kind === "section" ? "Section" : "Passage"}: {selectedNode.label}
                     </span>
-                    {#if maximized}
-                        <button type="button" class="btn-icon btn-icon-sm" title="Write here (Enter)" aria-label="Write here" onclick={() => onedit(g, true)}><SquarePen size={13} /></button>
+                    {#if maximized && card !== (g.kind == "section" ? g.id : `section:${g.section}`)}
+                        <button type="button" class="btn btn-sm preset-filled-primary-500 px-2 py-0.5 gap-1" title="Write here (Enter, or double-click the box)" onclick={() => { finishHint(); onedit(g, true); }}><SquarePen size={13} />Write</button>
                     {/if}
                     <button type="button" class="btn-icon btn-icon-sm" title={maximized ? "Show in the script" : "Go to it in the editor (Enter)"} aria-label={maximized ? "Show in the script" : "Go to it in the editor"} onclick={() => ongoto(selectedNode, true)}><Code size={13} /></button>
                     {#if !g.detail}
@@ -536,6 +620,9 @@
                         <button type="button" class="btn-icon btn-icon-sm" title="Delete (Del)" aria-label="Delete" onclick={() => ondelete([g])}><Trash2 size={13} /></button>
                     {/if}
                 </div>
+                {#if selectedExcerpt}
+                    <p class="map-excerpt text-surface-700-300">{selectedExcerpt}</p>
+                {/if}
                 {#if graph && (g.start || g.ending || (g.deadEnd && g.reachable) || !g.reachable)}
                     <p class="text-surface-600-400">
                         {[g.start ? "The story starts here." : "", g.ending ? "An ending." : "", g.deadEnd && g.reachable ? "A dead end: there's no way out. If it's an ending, add @end." : "", g.embedded ? "Shown inside other sections, with {{embed}} or {{live}}." : reachNote(g, graph)].filter(Boolean).join(" ")}
@@ -583,6 +670,24 @@
             <p id="map-name-error" role="alert" class="name-error">{naming.error}</p>
         {/if}
     </form>
+{/if}
+
+{#if hover}
+    {@const n = hover.node}
+    <div class="map-hover" style={hoverStyle(hover.box)} aria-hidden="true">
+        <p class="font-semibold">{n.kind == "missing" ? n.label : `${n.kind == "section" ? "Section" : "Passage"}: ${n.label}`}</p>
+        {#if hover.excerpt}
+            <p class="map-excerpt">{hover.excerpt}</p>
+        {:else if n.graphNode}
+            <p class="text-surface-600-400 italic">No text yet.</p>
+        {/if}
+        {#each hoverNotes(n) as note, i (i)}
+            <p class="text-surface-600-400">{note}</p>
+        {/each}
+        {#if n.graphNode}
+            <p class="text-surface-600-400 pt-1">{maximized ? "Double-click to write here." : "Double-click to go to it in the script."}</p>
+        {/if}
+    </div>
 {/if}
 
 {#if menu}
@@ -764,6 +869,30 @@
     }
     .map-details {
         max-width: min(28rem, calc(100% - 1rem));
+    }
+    .map-excerpt {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 4;
+        line-clamp: 4;
+        overflow: hidden;
+        overflow-wrap: anywhere;
+    }
+    .map-hover {
+        position: fixed;
+        z-index: 40;
+        width: 18rem;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.75rem;
+        line-height: 1.4;
+        border-radius: 0.375rem;
+        border: 1px solid var(--color-surface-200-800);
+        background-color: var(--color-surface-50-950);
+        box-shadow: 0 4px 12px rgb(0 0 0 / 0.15);
+        pointer-events: none;
+    }
+    .map-hover > * + * {
+        margin-top: 0.25rem;
     }
     .name-box input {
         background-color: light-dark(white, var(--color-surface-800));

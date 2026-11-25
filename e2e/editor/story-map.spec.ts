@@ -155,11 +155,52 @@ test.describe("writing on the map", () => {
         expect(await wholeScript(page)).toContain("[[empty]]:\nNot any more.\n\n[[hill]]:");
     });
 
-    test("selecting another box shows that one, and a passage shows its section", async ({ page }) => {
+    test("Escape closes the section, back to its box on the map", async ({ page }) => {
         await openStory(page);
         await write(page, "section:cave");
         await page.keyboard.press("Escape");
         await expect(map(page)).toBeFocused();
+        await expect(cardTitle(page)).toBeHidden();
+        await expect(page.getByText("Section: cave")).toBeVisible();
+    });
+
+    test("the section is beside the map, not over it", async ({ page }) => {
+        await openStory(page);
+        await write(page, "section:cave");
+        const m = (await map(page).boundingBox())!;
+        const card = (await page.locator("#editor").boundingBox())!;
+        expect(m.x + m.width).toBeLessThanOrEqual(card.x + 1);
+    });
+
+    test("hovering over a box shows the start of its text, as does selecting it", async ({ page }) => {
+        await openStory(page);
+        await box(page, "section:cave").hover();
+        const hover = page.locator(".map-hover");
+        await expect(hover).toContainText("Section: cave");
+        await expect(hover).toContainText("It's dark. Look at the wall, or go to the hill.");
+        await expect(hover).toContainText("Double-click to write here.");
+        await page.mouse.move(0, 0);
+        await expect(hover).toBeHidden();
+        await box(page, "section:cave").click();
+        await expect(page.locator(".map-details")).toContainText("It's dark. Look at the wall, or go to the hill.");
+    });
+
+    test("a hint says how to open a box, until one's been opened", async ({ page }) => {
+        await openStory(page);
+        const hint = page.getByText("Double-click a box to write in it");
+        await expect(hint).toBeVisible();
+        await box(page, "section:cave").dblclick();
+        await expect(cardTitle(page)).toHaveText("cave");
+        await page.keyboard.press("Escape");
+        await expect(hint).toBeHidden();
+        await page.reload();
+        await expect(page.locator("[data-node]").first()).toBeVisible();
+        await expect(hint).toBeHidden();
+    });
+
+    test("selecting another box shows that one, and a passage shows its section", async ({ page }) => {
+        await openStory(page);
+        await write(page, "section:cave");
         await box(page, "section:hill").click();
         await expect(cardTitle(page)).toHaveText("hill");
         expect(await lines(page)).toEqual(["@end", "The end. [[empty]]"]);
