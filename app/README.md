@@ -49,7 +49,7 @@ Parts copied from Quest Viva's `src/AppShell` are noted in their comments. Fixes
 
 ## Deployment
 
-`deploy-app.yml` builds this for each release and uploads it to the `squiffy-app` Cloudflare Pages project: stable releases to app.squiffystory.com, and prereleases to app-beta.squiffystory.com, whose home page says it's the beta (`VITE_BETA_APP`). `squiffy-app` also builds a preview for every PR and push. Its build settings:
+`deploy-app.yml` builds this for each release and uploads it to the `squiffy-app` Cloudflare Pages project: stable releases to app.squiffystory.com, and prereleases to app-beta.squiffystory.com, whose home page says it's the beta (`VITE_BETA_APP`). A stable release goes to app-beta.squiffystory.com too until there's a beta of a later version, and its home page then says there's no beta just now (`src/lib/channel.ts`). `squiffy-app` also builds a preview for every PR and push. Its build settings:
 
 | Setting | Value |
 |---|---|
