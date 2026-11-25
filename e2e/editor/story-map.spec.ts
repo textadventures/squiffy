@@ -321,6 +321,35 @@ test.describe("editing from the map", () => {
         await expect(box(page, "section:cave")).toBeVisible();
     });
 
+    test("the toolbar's Undo puts back a box that was dragged, and Redo moves it again", async ({ page }) => {
+        await openStory(page);
+        const middle = async (id: string) => {
+            const b = (await box(page, id).boundingBox())!;
+            return { x: b.x + b.width / 2, y: b.y + b.height / 2 };
+        };
+        // Where the hill is from the start, as a fraction of the distance across the map
+        // (which zooms to fit the whole story as boxes move)
+        const where = async () => {
+            const [hill, start, cave] = [await middle("section:hill"), await middle("section:start"), await middle("section:cave")];
+            const scale = Math.hypot(cave.x - start.x, cave.y - start.y);
+            return { x: Math.round((hill.x - start.x) / scale * 20), y: Math.round((hill.y - start.y) / scale * 20) };
+        };
+        const from = await where();
+        const hill = await middle("section:hill");
+        await page.mouse.move(hill.x, hill.y);
+        await page.mouse.down();
+        await page.mouse.move(hill.x + 150, hill.y + 80, { steps: 5 });
+        await page.mouse.up();
+        // Wait for it to settle where it was dropped
+        await expect.poll(async () => (await where()).x - from.x).toBeGreaterThan(2);
+        await page.waitForTimeout(500);
+        const to = await where();
+        await page.getByRole("button", { name: "Undo", exact: true }).click();
+        await expect.poll(where).toEqual(from);
+        await page.getByRole("button", { name: "Redo", exact: true }).click();
+        await expect.poll(where).toEqual(to);
+    });
+
     test("selecting a box, or opening one to write in, leaves the others where they are", async ({ page }) => {
         await openStory(page);
         // Where the other boxes are: the selected one grows an outline and a dot to drag

@@ -56,6 +56,7 @@
     import { addSectionOrPassage, clipboardCommand, insertSnippet, runCommand, userSnippets } from "#lib/editor-commands.js";
     import { formatKey } from "#lib/shortcuts.js";
     import { desktopApi } from "#lib/desktop.js";
+    import { handleUndo } from "#lib/desktop-shell.js";
     import { connectPlayTab, playPageUrl } from "#lib/play-in-tab.js";
     import type { ExportKind } from "#lib/language/protocol.js";
 
@@ -1174,6 +1175,42 @@
         await applyEdits(edit);
     }
 
+    // Undo and Redo from the toolbar or the desktop app's Edit menu go where the author was last
+    // working: in an editor, its history; on the map, the map's (as Ctrl/Cmd+Z there does), which
+    // has changes no editor's history has, such as moving a box. A text field keeps its own.
+    let workingOnMap = false;
+    $effect(() => {
+        const track = (e: FocusEvent) => {
+            const target = e.target instanceof Element ? e.target : null;
+            if (target?.closest(".cm-editor")) workingOnMap = false;
+            else if (target?.closest(".story-map") && !isTextField(target)) workingOnMap = true;
+        };
+        window.addEventListener("focusin", track);
+        const stop = handleUndo(undoRedo);
+        return () => {
+            window.removeEventListener("focusin", track);
+            stop();
+        };
+    });
+
+    const isTextField = (el: Element) => el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement
+        || (el instanceof HTMLElement && el.isContentEditable && !el.closest(".cm-editor"));
+
+    // Says whether it did anything, which it leaves to a text field with the focus
+    function undoRedo(isRedo: boolean): boolean {
+        const focused = document.activeElement;
+        if (focused && isTextField(focused)) return false;
+        const view = focused instanceof HTMLElement ? EditorView.findFromDOM(focused) : null;
+        if (view) (isRedo ? redo : undo)(view);
+        else if (workingOnMap && mapOpen) undoFromMap(isRedo);
+        else {
+            const active = activeView();
+            if (!active) return false;
+            (isRedo ? redo : undo)(active);
+        }
+        return true;
+    }
+
     // Undo or redo from the map: the last change made from it, or else the open file's last change
     function undoFromMap(isRedo: boolean) {
         const [stack, other] = isRedo ? [mapRedo, mapUndo] : [mapUndo, mapRedo];
@@ -1687,7 +1724,14 @@
             onfonts={() => { fontsOpen = true; }}
             onpublish={() => { publishOpen = true; }}
             ondownloadproject={handleDownloadProject}
-            oncommand={command => { const v = activeView(); if (v) runCommand(v, command); }}
+            oncommand={command => {
+                if (command === "undo" || command === "redo") {
+                    undoRedo(command === "redo");
+                    return;
+                }
+                const v = activeView();
+                if (v) runCommand(v, command);
+            }}
             onadd={kind => {
                 const v = activeView();
                 if (cardShown) void addFromCard(kind);
