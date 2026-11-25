@@ -102,3 +102,14 @@ export function movedPositions(graph: StoryGraph, positions: MapPositions | unde
     }
     return next;
 }
+
+// Where to start typing in a section or passage opened from the map: the start of its text,
+// under its header and the @ lines that follow it, so typing doesn't replace its name. With no
+// text, at the end of the last of those lines.
+export function textStart(lines: string[], headerLine: number): Position {
+    const isHeader = (line: string) => /^\s*(\[\[.*\]\]:|\[[^[\]]*\]:|\+\+\+|---)/.test(line);
+    let line = headerLine + 1;
+    while (line < lines.length && isDirectiveLine(lines[line])) line++;
+    if (line < lines.length && !isHeader(lines[line])) return { line, character: 0 };
+    return { line: line - 1, character: lines[line - 1]?.length ?? 0 };
+}
