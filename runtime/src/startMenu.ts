@@ -14,6 +14,7 @@ import type { StartAt, Story } from "./types.js";
 export const START_MENU_STRINGS = {
     startAt: "Start at a section",
     findSection: "Find a section",
+    fromStart: "From the beginning",
     testSections: "Test sections",
     allSections: "All sections",
     noSection: "There's no section called \"[name]\".",
@@ -132,30 +133,41 @@ export function createStartMenu(options: StartMenuOptions): StartMenu {
     const tests = names.filter(name => story.sections[name].test);
     const others = names.filter(name => !story.sections[name].test);
 
+    const link = (section: string, text: string) => {
+        const a = document.createElement("a");
+        a.href = addressForStart(section);
+        a.textContent = text;
+        a.dataset.section = section;
+        if (section === startAt?.section) a.setAttribute("aria-current", "true");
+        const li = document.createElement("li");
+        li.appendChild(a);
+        return li;
+    };
+
     // The sections whose names have the text typed in: the test sections first, under their own
-    // heading if there are any, and then the rest, in the story's order
+    // heading if there are any, and then the rest, in the story's order. Above them, with nothing
+    // typed, a way back to the beginning, which is often text before the first section, with no
+    // name to list it by (and an address without ?start= would carry on from the saved game).
     function render() {
         const text = find.value.trim().toLowerCase();
         const group = (heading: string, sections: string[]) => {
             const matching = sections.filter(name => name.toLowerCase().includes(text));
             if (!matching.length) return [];
             const ul = document.createElement("ul");
-            for (const name of matching) {
-                const link = document.createElement("a");
-                link.href = addressForStart(name);
-                link.textContent = name;
-                link.dataset.section = name;
-                if (name === startAt?.section) link.setAttribute("aria-current", "true");
-                const li = document.createElement("li");
-                li.appendChild(link);
-                ul.appendChild(li);
-            }
+            for (const name of matching) ul.appendChild(link(name, name));
             if (!tests.length) return [ul];
             const h3 = document.createElement("h3");
             h3.textContent = heading;
             return [h3, ul];
         };
-        list.replaceChildren(...group(strings.testSections, tests), ...group(strings.allSections, others));
+        const beginning = [];
+        if (!text && story.start !== undefined && Object.prototype.hasOwnProperty.call(story.sections, story.start)) {
+            const ul = document.createElement("ul");
+            ul.className = "squiffy-start-menu-beginning";
+            ul.appendChild(link(story.start, strings.fromStart));
+            beginning.push(ul);
+        }
+        list.replaceChildren(...beginning, ...group(strings.testSections, tests), ...group(strings.allSections, others));
     }
     find.addEventListener("input", render);
     // Enter goes to the first section listed

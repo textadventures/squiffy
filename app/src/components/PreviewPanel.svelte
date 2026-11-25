@@ -74,6 +74,11 @@
         void run({ section });
     }
 
+    function startFromBeginning() {
+        startMenuOpen = false;
+        void run();
+    }
+
     function startMenuKeydown(e: KeyboardEvent) {
         if (e.key === "Escape") {
             e.stopPropagation();
@@ -300,6 +305,16 @@
                                 </ul>
                             {/if}
                         {/snippet}
+                        <!-- The way back to the beginning, which is often text before the first
+                             section, with no name to list it by -->
+                        {#if !startFind.trim()}
+                            <button
+                                type="button"
+                                class="w-full text-left px-2 py-1 rounded hover:bg-surface-200-800 focus-visible:bg-surface-200-800 {startAt ? "" : "font-semibold text-primary-600-400"}"
+                                aria-current={startAt ? undefined : "true"}
+                                onclick={startFromBeginning}
+                            >From the beginning</button>
+                        {/if}
                         {@render group("Test sections", startTests)}
                         {@render group("All sections", startOthers)}
                         {#if !startFound.length}
