@@ -3,7 +3,7 @@ import { expect, test, vi } from "vitest";
 import { parseProjectFile } from "squiffy-compiler";
 
 vi.mock("vscode", () => ({}));
-const { MAIN_FILE, NEW_STORY, newStoryFiles, passageHasSection } = await import("./new-story.js");
+const { MAIN_FILE, NEW_STORY, headerPlace, newStoryFiles, passageHasSection, selectedName } = await import("./new-story.js");
 const { clashMessage, fileName } = await import("./export.js");
 
 // The editor's new story, read from its source: importing it would need the app's tsconfig
@@ -50,6 +50,24 @@ test("a passage needs a section above it to belong to", () => {
     expect(passageHasSection(["+++Next"], 0)).toBe(true);
     // A passage header above isn't a section of its own
     expect(passageHasSection(["@title x", "[p]:"], 1)).toBe(false);
+});
+
+test("a new header goes after the cursor's section, not into the middle of it", () => {
+    const lines = ["[[a]]:", "A.", "", "[p]:", "P.", "", "[[b]]:", "B."];
+    const sections = [{ start: 0, end: 5 }, { start: 6, end: 7 }];
+    // In the section's text, or its passage: after the passage, before [[b]]
+    expect(headerPlace(lines, 1, sections)).toEqual({ line: 5, before: "\n", after: "\n" });
+    expect(headerPlace(lines, 4, sections)).toEqual({ line: 5, before: "\n", after: "\n" });
+    // In the last section: at the end of the file, a blank line after its text
+    expect(headerPlace(lines, 7, sections)).toEqual({ line: 7, before: "\n\n", after: "" });
+    // Outside any section (@title, say): at the end of the file
+    expect(headerPlace(["@title x", "", "[[a]]:", "A."], 0, [{ start: 2, end: 3 }])).toEqual({ line: 3, before: "\n\n", after: "" });
+});
+
+test("selected text names the new section or passage", () => {
+    expect(selectedName(" the door ")).toBe("the door");
+    expect(selectedName("[[the\ndoor]]")).toBe("thedoor");
+    expect(selectedName("")).toBe("");
 });
 
 test("an export that would replace files names them", () => {
