@@ -87,6 +87,44 @@ test.describe("writing on the map", () => {
         expect(Math.round((await card.boundingBox())!.width)).toBe(Math.round(wider.width));
     });
 
+    test("selecting a box in another file brings only that box into view", async ({ page }) => {
+        await page.goto("/");
+        await page.getByText("New story").click();
+        await editor(page).click();
+        await page.keyboard.press("ControlOrMeta+A");
+        await page.keyboard.insertText("@title Test\n\n[[start]]:\nGo to the [[far]] or the [[near]].");
+        await page.getByRole("button", { name: "New file" }).click();
+        await page.getByRole("menuitem", { name: "Story file (.squiffy)" }).click();
+        await page.getByRole("dialog").getByRole("textbox").fill("chapter.squiffy");
+        await page.getByRole("dialog").getByRole("button", { name: "Create" }).click();
+        await expect(page.getByRole("dialog")).toBeHidden();
+        const chapter = page.getByRole("textbox", { name: "chapter.squiffy" });
+        // The focus goes back to the New file button as the dialog closes
+        await expect(async () => {
+            await chapter.click();
+            await expect(chapter).toBeFocused({ timeout: 500 });
+        }).toPass();
+        await page.keyboard.press("ControlOrMeta+A");
+        await page.keyboard.insertText("[[far]]:\nOne\n\nTwo\n\nThree\n\n[[near]]:\n@end\nThe end.");
+        await expect(editor(page)).toContainText("The end.");
+        await page.getByRole("group", { name: "View" }).getByRole("button", { name: "Map", exact: true }).click();
+        await expect(box(page, "section:near")).toBeVisible();
+        await write(page, "section:start");
+        await expect(cardTitle(page)).toHaveText("start");
+        // Which boxes the map takes the editor's cursor to be in, as it goes
+        await page.evaluate(() => {
+            const seen = (window as unknown as { seen: string[] }).seen = [];
+            new MutationObserver(() => {
+                for (const el of document.querySelectorAll(".gm-node.current")) seen.push(el.getAttribute("data-node")!);
+            }).observe(document.querySelector(".gm-nodes")!, { subtree: true, attributes: true, attributeFilter: ["class"] });
+        });
+        await box(page, "section:near").click();
+        await expect(cardTitle(page)).toHaveText("near");
+        // It went from the section in the first file straight to the one chosen, not by
+        // whichever section the other file has on the line the first file's cursor was on
+        expect(await page.evaluate(() => (window as unknown as { seen: string[] }).seen)).not.toContain("section:far");
+    });
+
     test("double-clicking a box opens it too", async ({ page }) => {
         await openStory(page);
         await box(page, "section:hill").dblclick();
@@ -298,6 +336,42 @@ test.describe("editing from the map", () => {
         await page.keyboard.press("Enter");
         await expect(cardTitle(page)).toHaveText("start");
         expect(await others()).toEqual(before);
+    });
+
+    test("a selected box only moves if the details would cover it", async ({ page }) => {
+        await openStory(page);
+        type Box = { x: number; y: number; width: number; height: number };
+        const overlaps = (a: Box, b: Box) => a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+        const details = page.locator(".map-details");
+        const start = box(page, "section:start");
+        await start.click();
+        const panel = (await details.boundingBox())!;
+        // Pans the map (with nothing selected) to put the start box's middle at a point, then
+        // selects it, and says where it was and where it ends up
+        const selectAt = async (x: number, y: number) => {
+            await page.keyboard.press("Escape");
+            await expect(details).toBeHidden();
+            const m = (await map(page).boundingBox())!;
+            await page.mouse.move(m.x + m.width / 2, m.y + 20);
+            const b = (await start.boundingBox())!;
+            await page.mouse.wheel(b.x + b.width / 2 - x, b.y + b.height / 2 - y);
+            await expect.poll(async () => { const n = (await start.boundingBox())!; return Math.abs(n.x + n.width / 2 - x) < 2; }).toBe(true);
+            const before = (await start.boundingBox())!;
+            // Its top edge, which is above the details
+            await start.click({ position: { x: before.width / 2, y: 3 } });
+            await expect(page.getByText("Section: start")).toBeVisible();
+            await page.waitForTimeout(100);
+            return { before, after: (await start.boundingBox())! };
+        };
+        // (Selected, a box grows an outline and a dot to drag, a few pixels)
+        const moved = (a: Box, b: Box) => Math.abs(a.x - b.x) > 8 || Math.abs(a.y - b.y) > 8;
+        // Beside the details, at the same height, it stays where it is
+        const beside = await selectAt(panel.x + panel.width + 80, panel.y + panel.height / 2);
+        expect(moved(beside.before, beside.after)).toBe(false);
+        // Partly under them, it's brought out
+        const under = await selectAt(panel.x + panel.width / 2, panel.y + 4);
+        expect(moved(under.before, under.after)).toBe(true);
+        expect(overlaps(under.after, (await details.boundingBox())!)).toBe(false);
     });
 
     test("a section dragged out from another, then deleted, leaves nothing behind", async ({ page }) => {

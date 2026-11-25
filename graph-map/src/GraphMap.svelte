@@ -508,19 +508,21 @@
         transform = zoomAt(transform, factor, { x: width / 2, y: height / 2 });
     }
 
-    // Pans to bring a node into view, if it isn't. While the map's fitting the whole graph in
-    // view, it already is.
-    // Pans as little as it can to bring a node into view. `covered` is how much of the map's right
-    // and bottom edges the host has put something over, such as a panel: a node under it isn't in
-    // view.
-    export function reveal(id: string, covered: { right?: number; bottom?: number } = {}) {
+    // Pans as little as it can to bring a node into view, only if some of it is out of sight.
+    // `covered` is what the host has put over the map: how much of its right edge (such as a
+    // panel down that side), and any other boxes, in the page's coordinates (such as an element's
+    // getBoundingClientRect()). A node under them isn't in view.
+    export function reveal(id: string, covered: { right?: number; over?: readonly Rect[] } = {}) {
         const b = box(id);
-        const right = covered.right ?? 0, bottom = covered.bottom ?? 0;
+        const right = covered.right ?? 0;
+        const page = container?.getBoundingClientRect();
+        const over = page ? (covered.over ?? []).map(r => ({ x: r.x - page.left, y: r.y - page.top, width: r.width, height: r.height })) : [];
         // While the whole graph is fitted in view, only what's covered can be out of sight
-        if (!b || !width || (autoFit && !right && !bottom)) return;
+        if (!b || !width || (autoFit && !right && !over.length)) return;
         const next = revealTransform(
             transform, { x: b.x - b.width / 2, y: b.y - b.height / 2, width: b.width, height: b.height },
-            { width: Math.max(width - right, 100), height: Math.max(height - bottom, 100) },
+            { width: Math.max(width - right, 100), height },
+            32, over,
         );
         if (next) {
             autoFit = false;
