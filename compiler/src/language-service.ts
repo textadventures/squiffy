@@ -17,10 +17,12 @@ import { ignoredDiagnostics } from "./ignore.js";
 import { emit } from "./emit.js";
 import { formatDiagnostic } from "./syntax.js";
 import { resolveCssUrl, rewriteCssUrls } from "./css-urls.js";
+import { insertHeaderEdit, placeNewSection } from "./placement.js";
 import { buildStoryGraph, firstScreenSoundDiagnostics, GraphUsage, StoryGraph, storyGraphDiagnostics } from "./story-graph.js";
 
 export type { Diagnostic, Position, Range } from "./syntax.js";
 export type { GraphEdge, GraphEdgeKind, GraphNode, StoryGraph } from "./story-graph.js";
+export { blockOf, insertHeaderEdit, placeNewSection, type Place } from "./placement.js";
 
 // Read access to the project. A ProjectFileSystem from @textadventures/project-fs fits as is.
 export interface ProjectFiles {
@@ -1015,9 +1017,13 @@ export function createLanguageService(options: LanguageServiceOptions): Language
                     if (!name) continue;
                     const edit: WorkspaceEdit = {};
                     if (diagnostic.code == "squiffy/unknown-section-link") {
-                        const end = endOfText(tree.text.replace(/\r/g, ""));
-                        const before = lines[lines.length - 1] == "" ? "\n" : "\n\n";
-                        addEdit(edit, path, { range: { start: end, end }, newText: `${before}[[${name}]]:\n` });
+                        // Where the story map would put it: after the link's section, or the
+                        // sections it already leads to
+                        const graph = getGraph(index).graph;
+                        const sectionName = index.nodeNames.get(usage.sectionNode);
+                        const from = sectionName === undefined ? undefined : graph.nodes.find(n => n.kind == "section" && n.name == sectionName);
+                        const place = placeNewSection(graph, { from, file: path });
+                        addEdit(edit, path, insertHeaderEdit(tree.text, place.afterLine, `[[${name}]]:`));
                         actions.push({ title: `Create section '${name}'`, kind: "quickfix", diagnostic, edit, isPreferred: true, create: { kind: "section", name } });
                     }
                     else {

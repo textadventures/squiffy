@@ -484,9 +484,26 @@ describe("code actions", () => {
         const diagnostic = (await ls.getDiagnostics("chapters/cellar.squiffy"))[0];
         const actions = await ls.getCodeActions("chapters/cellar.squiffy", diagnostic.range);
         expect(actions.map(a => a.title)).toEqual(["Create section 'missing room'"]);
-        expect(apply(cellar, actions[0].edit["chapters/cellar.squiffy"])).toBe(cellar + "\n[[missing room]]:\n");
+        // After the section the link's in, where the story map would put it (#680)
+        expect(apply(cellar, actions[0].edit["chapters/cellar.squiffy"])).toBe(cellar.replace("\n[snippet:", "\n[[missing room]]:\n\n[snippet:"));
         // So an editor can offer it at the cursor, and put the section where it chooses (#677)
         expect(actions[0]).toMatchObject({ isPreferred: true, create: { kind: "section", name: "missing room" } });
+    });
+
+    test("a missing section goes after the link's section, and the sections it leads to", async () => {
+        const text = "[[a]]:\n[[b]] or [[c]].\n\n[[b]]:\nB\n\n[[d]]:\nD";
+        const ls = createLanguageService({ files: memoryFiles({ "s.squiffy": text }), mainFile: "s.squiffy" });
+        const diagnostic = (await ls.getDiagnostics("s.squiffy")).find(d => d.code == "squiffy/unknown-section-link")!;
+        const actions = await ls.getCodeActions("s.squiffy", diagnostic.range);
+        expect(apply(text, actions[0].edit["s.squiffy"])).toBe("[[a]]:\n[[b]] or [[c]].\n\n[[b]]:\nB\n\n[[c]]:\n\n[[d]]:\nD");
+    });
+
+    test("a missing section linked from the master section goes at the end", async () => {
+        const text = "[[]]:\nSee [[x]].\n\n[[a]]:\nA";
+        const ls = createLanguageService({ files: memoryFiles({ "s.squiffy": text }), mainFile: "s.squiffy" });
+        const diagnostic = (await ls.getDiagnostics("s.squiffy")).find(d => d.code == "squiffy/unknown-section-link")!;
+        const actions = await ls.getCodeActions("s.squiffy", diagnostic.range);
+        expect(apply(text, actions[0].edit["s.squiffy"])).toBe(text + "\n\n[[x]]:\n");
     });
 
     test("create a missing passage", async () => {
