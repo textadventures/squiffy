@@ -1641,7 +1641,7 @@
         const count = await c.call("countV5Syntax", text);
         if (count === 0) return;
         const convert = await chooseDialog(
-            `${path} uses the Squiffy 5 text processor (${count} ${count === 1 ? "place" : "places"}). Convert it to Squiffy 6's?\n\nYou can undo this.`,
+            `${path} uses the Squiffy 5 text processor (${count} ${count === 1 ? "place" : "places"}). Convert it to today's {{...}} syntax?\n\nYou can undo this.`,
             [
                 { label: "Not now", value: false },
                 { label: "Convert", value: true },
