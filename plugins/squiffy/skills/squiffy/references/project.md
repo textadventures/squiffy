@@ -32,7 +32,7 @@ Docs: https://squiffystory.com/project-file/, https://squiffystory.com/multiple-
 | `persistent` | Attributes that last between playthroughs (below) |
 | `ignore` | Warnings turned off for the whole story, each as a `squiffy-ignore` comment has it: `["dead-end", "unknown-name board score"]`. Only add one when the author agrees |
 | `strings` | The page's button text, for a story in another language (below) |
-| `map` | Positions on the editor's story map. Written by the editor; leave it alone |
+| `map` | Positions and box sizes on the editor's story map. Written by the editor; leave it alone |
 
 Having a `squiffy.json` also switches on Squiffy 7's rules for setting attributes (attributes.md).
 

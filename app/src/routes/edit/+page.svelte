@@ -38,7 +38,7 @@
     import type { CodeAction } from "squiffy-compiler/language-service";
     import PreviewPanel from "#components/PreviewPanel.svelte";
     import MapPanel, { type TraceStep } from "#components/MapPanel.svelte";
-    import { checkSectionName, emptyPositions, linkTo, movedNodes, nodeAtLine, nodeExcerpt, nodeText, renamePositions, revertPositions, sectionKeys, withPosition, type NodeTexts, type Point, type StoryMapEdge, type StoryMapNode } from "#lib/story-map.js";
+    import { checkSectionName, emptyPositions, hasMapData, hasPositions, linkTo, movedNodes, nodeAtLine, nodeExcerpt, nodeText, renamePositions, revertPositions, sectionKeys, withoutPositions, withPosition, withSize, type NodeTexts, type Point, type StoryMapEdge, type StoryMapNode } from "#lib/story-map.js";
     import AssetManagerModal from "#components/AssetManagerModal.svelte";
     import FontsModal from "#components/FontsModal.svelte";
     import StoryDetailsModal from "#components/StoryDetailsModal.svelte";
@@ -1162,12 +1162,12 @@
     }
 
     // The start of a section's or passage's text, for the map's previews
-    async function excerptFor(node: GraphNode): Promise<string> {
+    async function excerptFor(node: GraphNode, max?: number): Promise<string> {
         const current = p;
         if (!current) return "";
         const file = node.location.file;
         const text = current.fileAt(file)?.text ?? await current.fs.readText(file);
-        return nodeExcerpt(text, node);
+        return nodeExcerpt(text, node, max);
     }
 
     // The toolbar's Code, Code + Map and Map
@@ -1195,7 +1195,7 @@
     function savePositions(next: MapPositions) {
         const current = p;
         if (!current) return;
-        const empty = !Object.keys(next.sections).length && !Object.keys(next.passages).length;
+        const empty = !hasMapData(next);
         if (!current.projectFile && (empty || declinedProjectFile || current.projectText !== null)) {
             // Nothing worth adding a squiffy.json for, the author doesn't want one, or there's one
             // that can't be read
@@ -1612,10 +1612,9 @@
     }
 
     async function relayoutMap(): Promise<boolean> {
-        const saved = mapPositions && (Object.keys(mapPositions.sections).length || Object.keys(mapPositions.passages).length);
-        if (saved) {
+        if (hasPositions(mapPositions)) {
             if (!(await confirmDialog("Lay out the map again? Everything you've moved by hand goes back to where the map puts it.", { confirmLabel: "Lay out again" }))) return false;
-            moveOnMap(emptyPositions());
+            moveOnMap(withoutPositions(mapPositions));
         }
         return true;
     }
@@ -2144,6 +2143,7 @@
                         const keys = storyGraph ? sectionKeys(storyGraph) : new Map<string, string>();
                         moveOnMap(moves.reduce((positions, { node, at }) => withPosition(positions, keys, node, at), mapPositions ?? emptyPositions()));
                     }}
+                    onresize={(node, size) => moveOnMap(withSize(mapPositions, storyGraph ? sectionKeys(storyGraph) : new Map(), node, size))}
                     onlink={linkFromMap}
                     oncreate={(name, where) => void createSectionFromMap(name, where)}
                     onrename={renameFromMap}

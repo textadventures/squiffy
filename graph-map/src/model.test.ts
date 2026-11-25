@@ -182,6 +182,20 @@ describe("stability", () => {
         expect(model.settled).toBe(true);
     });
 
+    test("a node made taller pushes its children down, and what isn't linked to it stays put", () => {
+        const model = new MapModel(layout());
+        model.update(story);
+        settle(model);
+        const before = positions(model);
+        model.update({ nodes: story.nodes.map(n => n.id == "start" ? { ...n, height: 100 } : n), edges: story.edges });
+        expect(model.settled).toBe(false);
+        settle(model);
+        const after = positions(model);
+        const start = model.nodes.get("start")!, look = model.nodes.get("look")!;
+        expect(look.y - look.height / 2).toBeGreaterThan(start.y + start.height / 2);
+        for (const id of ["l1", "l2", "r1", "r2"]) expect(after[id]).toEqual(before[id]);
+    });
+
     test("pinned nodes stay where they're pinned", () => {
         const model = new MapModel(layout());
         model.update(story, new Map([["right", { x: 500, y: 40 }]]));

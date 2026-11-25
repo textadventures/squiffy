@@ -1,6 +1,6 @@
 // The messages between the story map's webview (main.ts) and the extension (client/map.ts)
 
-import type { MapPositions } from "squiffy-compiler";
+import type { MapBoxSize, MapPositions } from "squiffy-compiler";
 import type { Location, StoryGraph } from "squiffy-compiler/language-service";
 
 export interface Point {
@@ -43,6 +43,8 @@ export type FromMap =
     | { type: "link"; from: string; to: string }
     // Nodes were dropped somewhere, and are now pinned there
     | { type: "move"; moves: { id: string; at: Point }[] }
+    // A section's or passage's box was made bigger, or the usual size again (no size)
+    | { type: "resize"; id: string; size?: MapBoxSize }
     // From the right-click menu (or F2 and Delete): a section or passage to rename, add a passage
     // to, run the preview from or start the story at, or sections and passages to delete
     | { type: "rename" | "addPassage" | "run" | "start" | "ending"; id: string }
@@ -57,5 +59,6 @@ export type FromMap =
     // The search box has something in it, so the map wants the story's text, or it's been cleared
     | { type: "searching"; on: boolean }
     // The start of a section's or passage's text, to show when the mouse is over its box and in
-    // the selected box's details, as in the editor
-    | { type: "excerpt"; request: number; id: string };
+    // the selected box's details, as in the editor, and (`long`, as much as a big box can show)
+    // on the box itself when zoomed in
+    | { type: "excerpt"; request: number; id: string; long?: boolean };

@@ -8,7 +8,7 @@
     import type { GraphNode, StoryGraph } from "squiffy-compiler/language-service";
     import GraphMap, { type NodeState } from "@textadventures/graph-map/GraphMap.svelte";
     import StoryMapNodeBox from "@textadventures/squiffy-app/StoryMapNode.svelte";
-    import { buildStoryMap, linkTo, pinnedPositions, reachNote, searchMap, storyMapLayout, type NodeTexts, type StoryMapEdge, type StoryMapNode } from "@textadventures/squiffy-app/story-map";
+    import { BOX_SIZE_CHOICES, DETAIL_ZOOMS, buildStoryMap, linkTo, nodeSizes, pinnedPositions, reachNote, searchMap, storyMapLayout, type NodeTexts, type StoryMapEdge, type StoryMapNode } from "@textadventures/squiffy-app/story-map";
     import type { FromMap, Point, ToMap, TraceStep } from "./messages.js";
     import Menu, { type MenuItem } from "./Menu.svelte";
 
@@ -26,7 +26,7 @@
     let map = $state<ReturnType<typeof GraphMap<StoryMapNode, StoryMapEdge>>>();
     const layout = storyMapLayout();
 
-    const base = $derived(graph ? buildStoryMap(graph) : null);
+    const base = $derived(graph ? buildStoryMap(graph, nodeSizes(positions, graph)) : null);
     const pinned = $derived(pinnedPositions(positions, graph));
     const tooLarge = $derived(!!base && base.nodes.length > LARGE && !showLarge);
 
@@ -154,17 +154,19 @@
     let excerptsFor: StoryGraph | null = null;
     const waiting = new Map<number, (text: string) => void>();
     let nextRequest = 0;
-    function excerptOf(g: GraphNode): Promise<string> {
+    // `long` for the box itself, which may be big (#681)
+    function excerptOf(g: GraphNode, long = false): Promise<string> {
         if (excerptsFor !== graph) {
             excerpts = new Map();
             excerptsFor = graph;
         }
-        let found = excerpts.get(g.id);
+        const key = long ? `long:${g.id}` : g.id;
+        let found = excerpts.get(key);
         if (!found) {
             const request = ++nextRequest;
             found = new Promise<string>(resolve => waiting.set(request, resolve));
-            excerpts.set(g.id, found);
-            post({ type: "excerpt", request, id: g.id });
+            excerpts.set(key, found);
+            post({ type: "excerpt", request, id: g.id, ...(long ? { long } : {}) });
         }
         return found;
     }
@@ -288,7 +290,26 @@
     }
 
     // The right-click menu, for a box, a broken link's marker, or the background
-    let menu = $state<{ x: number; y: number; keyboard: boolean; items: MenuItem[] } | null>(null);
+    // `back` is what has the focus again when it closes, if not the map
+    let menu = $state<{ x: number; y: number; keyboard: boolean; items: MenuItem[]; back?: HTMLElement } | null>(null);
+
+    // Choices of the box's size (#681), after the rest of a menu (`divider`), or on their own
+    function sizeItems(node: StoryMapNode, id: string, divider = true): MenuItem[] {
+        return BOX_SIZE_CHOICES.map(([size, label], i) => ({
+            label,
+            checked: node.size === size,
+            divider: divider && i == 0,
+            action: () => { if (node.size !== size) post({ type: "resize", id, ...(size ? { size } : {}) }); },
+        }));
+    }
+
+    // The Size button in the selected box's details: the same choices, under it
+    function showSizes(e: MouseEvent, node: StoryMapNode, id: string) {
+        const button = e.currentTarget as HTMLElement;
+        const rect = button.getBoundingClientRect();
+        // detail is 0 for Enter or Space, so the first choice gets the focus
+        menu = { x: rect.left, y: rect.bottom + 2, keyboard: e.detail === 0, items: sizeItems(node, id, false), back: button };
+    }
 
     function showMenu(node: StoryMapNode | null, at: Point, screen: Point, keyboard: boolean) {
         const g = node?.graphNode;
@@ -308,6 +329,7 @@
                 { label: "Run from here", divider: true, action: () => post({ type: "run", id }) },
                 ...(g.kind == "section" ? [{ label: "Start the story here", disabled: !!g.start || !!g.detail || g.name == "", action: () => post({ type: "start", id }) }] : []),
                 ...(isDeadEnd(g) ? [{ label: "Mark as an ending", action: () => post({ type: "ending", id }) }] : []),
+                ...sizeItems(node, id),
                 { label: "Delete…", shortcut: "Del", divider: true, disabled: !canDelete(g), action: () => post({ type: "delete", ids: [id] }) },
             ];
         } else {
@@ -439,6 +461,7 @@
                 oncreate={create}
                 onhover={handleHover}
                 node={drawNode}
+                detailZooms={DETAIL_ZOOMS}
             />
             {#if selectedNode?.graphNode && graph}
                 {@const g = selectedNode.graphNode}
@@ -452,6 +475,7 @@
                         {/if}
                         <button type="button" title="Add a passage" onclick={() => post({ type: "addPassage", id: g.id })}>Add a passage</button>
                         <button type="button" title="Run the preview from here" onclick={() => post({ type: "run", id: g.id })}>Run</button>
+                        <button type="button" title="Make the box bigger, or the usual size" aria-haspopup="menu" aria-expanded={!!menu?.back} onclick={e => showSizes(e, selectedNode, g.id)}>Size…</button>
                         {#if isDeadEnd(g)}
                             <button type="button" title="Mark it as one of the story's endings, with @end" onclick={() => post({ type: "ending", id: g.id })}>Mark as an ending</button>
                         {/if}
@@ -505,9 +529,9 @@
 {/if}
 
 {#if menu}
-    <Menu x={menu.x} y={menu.y} keyboard={menu.keyboard} items={menu.items} onclose={() => { menu = null; map?.focus(); }} />
+    <Menu x={menu.x} y={menu.y} keyboard={menu.keyboard} items={menu.items} onclose={() => { const back = menu?.back; menu = null; (back?.isConnected ? back : map)?.focus(); }} />
 {/if}
 
 {#snippet drawNode(n: StoryMapNode, state: NodeState)}
-    <StoryMapNodeBox node={n} {state} />
+    <StoryMapNodeBox node={n} {state} excerpt={n.graphNode ? () => excerptOf(n.graphNode!, true) : undefined} />
 {/snippet}

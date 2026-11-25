@@ -15,13 +15,13 @@
     // Problems (broken links, sections that can't be reached, dead ends) show on the map, and so
     // does the path the player took in the preview.
     import type { GraphNode, StoryGraph } from "squiffy-compiler/language-service";
-    import type { MapPositions } from "squiffy-compiler";
+    import type { MapBoxSize, MapPositions } from "squiffy-compiler";
     import GraphMap from "@textadventures/graph-map/GraphMap.svelte";
     import type { NodeState } from "@textadventures/graph-map/GraphMap.svelte";
     import ContextMenu, { type ContextMenuItem } from "#components/ContextMenu.svelte";
     import StoryMapNodeBox from "#components/StoryMapNode.svelte";
     import { checkPassageName } from "#lib/map-edits.js";
-    import { buildStoryMap, checkSectionName, linkTo, pinnedPositions, reachNote, searchMap, storyMapLayout, type NodeTexts, type Point, type StoryMapEdge, type StoryMapNode } from "#lib/story-map.js";
+    import { BOX_EXCERPT, BOX_SIZE_CHOICES, DETAIL_ZOOMS, buildStoryMap, checkSectionName, linkTo, nodeSizes, pinnedPositions, reachNote, searchMap, storyMapLayout, type NodeTexts, type Point, type StoryMapEdge, type StoryMapNode } from "#lib/story-map.js";
     import ZoomIn from "@lucide/svelte/icons/zoom-in";
     import ZoomOut from "@lucide/svelte/icons/zoom-out";
     import Scan from "@lucide/svelte/icons/scan";
@@ -31,6 +31,7 @@
     import X from "@lucide/svelte/icons/x";
     import SearchField from "#components/SearchField.svelte";
     import Pencil from "@lucide/svelte/icons/pencil";
+    import Scaling from "@lucide/svelte/icons/scaling";
     import Play from "@lucide/svelte/icons/play";
     import Code from "@lucide/svelte/icons/code";
     import ListPlus from "@lucide/svelte/icons/list-plus";
@@ -61,6 +62,8 @@
         ongotoedge: (edge: StoryMapEdge) => void;
         // Sections and passages were dropped somewhere (several, if they were dragged together)
         onmove: (moves: { node: GraphNode; at: Point }[]) => void;
+        // A section's or passage's box was made bigger, or the usual size again (undefined)
+        onresize: (node: GraphNode, size: MapBoxSize | undefined) => void;
         // Add a link from one node to another, or to a new section called `name`
         onlink: (from: GraphNode, to: GraphNode | null, at: Point, name?: string) => void;
         // Add a section: at a place on the map, after `near` in the script; or for a broken link
@@ -82,13 +85,13 @@
         // Forget every position the author chose
         onrelayout: () => Promise<boolean>;
         onclose: () => void;
-        // A short preview of a section's or passage's text, for hovering over its box and for the
-        // selected box's details
-        excerpt?: (node: GraphNode) => Promise<string>;
+        // A short preview of a section's or passage's text, at most `max` characters, for
+        // hovering over its box, the selected box's details, and the box itself when zoomed in
+        excerpt?: (node: GraphNode, max?: number) => Promise<string>;
     }
 
     let {
-        graph, positions, query = $bindable(), texts, current, trace, maximized, card, onedit, width, ongoto, ongotoedge, onmove, onlink, oncreate, onrename,
+        graph, positions, query = $bindable(), texts, current, trace, maximized, card, onedit, width, ongoto, ongotoedge, onmove, onresize, onlink, oncreate, onrename,
         onrun, onaddpassage, ondelete, onstart, onending, onundo, onrelayout, onclose, excerpt,
     }: Props = $props();
 
@@ -103,7 +106,7 @@
     let keyOpen = $state(false);
     const layout = storyMapLayout();
 
-    const base = $derived(graph ? buildStoryMap(graph) : null);
+    const base = $derived(graph ? buildStoryMap(graph, nodeSizes(positions, graph)) : null);
     const pinned = $derived(pinnedPositions(positions, graph));
     const tooLarge = $derived(!!base && base.nodes.length > LARGE && !showLarge);
 
@@ -278,19 +281,22 @@
 
     // ---- Previews ----
 
-    // Each node's excerpt, worked out once for each version of the story
+    // Each node's excerpt, worked out once for each version of the story: the short one, and a
+    // longer one for the box itself, which may be big
     let excerpts = new Map<string, Promise<string>>();
     let excerptsFor: StoryGraph | null = null;
-    function excerptOf(g: GraphNode): Promise<string> {
+    function excerptOf(g: GraphNode, long = false): Promise<string> {
         if (!excerpt) return Promise.resolve("");
         if (excerptsFor !== graph) {
             excerpts = new Map();
             excerptsFor = graph;
         }
-        let found = excerpts.get(g.id);
-        if (!found) excerpts.set(g.id, found = excerpt(g).catch(() => ""));
+        const key = long ? `long:${g.id}` : g.id;
+        let found = excerpts.get(key);
+        if (!found) excerpts.set(key, found = (long ? excerpt(g, BOX_EXCERPT) : excerpt(g)).catch(() => ""));
         return found;
     }
+
 
     // The selected box's excerpt, for its details
     let selectedExcerpt = $state("");
@@ -538,7 +544,8 @@
     }
 
     // The right-click menu, for a box or for the background
-    let menu = $state<{ x: number; y: number; keyboard: boolean; items: ContextMenuItem[] } | null>(null);
+    // `back` is what has the focus again when it closes, if not the map
+    let menu = $state<{ x: number; y: number; keyboard: boolean; items: ContextMenuItem[]; back?: HTMLElement } | null>(null);
 
     function showMenu(node: StoryMapNode | null, at: Point, screen: Point, keyboard: boolean) {
         const g = node?.graphNode;
@@ -560,6 +567,7 @@
                 { label: "Run from here", divider: true, action: () => onrun(g) },
                 ...(section ? [{ label: "Start the story here", disabled: !!g.start || !!g.detail || g.name == "", action: () => onstart(g) }] : []),
                 ...(isDeadEnd(g) ? [{ label: "Mark as an ending", action: () => onending(g) }] : []),
+                ...sizeItems(node, g),
                 { label: "Delete…", shortcut: "Del", divider: true, disabled: !canDelete(g), action: () => ondelete([g]) },
             ];
         } else {
@@ -569,6 +577,24 @@
             ];
         }
         menu = { ...screen, keyboard, items };
+    }
+
+    // Choices of the box's size (#681), after the rest of a menu (`divider`), or on their own
+    function sizeItems(node: StoryMapNode, g: GraphNode, divider = true): ContextMenuItem[] {
+        return BOX_SIZE_CHOICES.map(([size, label], i) => ({
+            label,
+            checked: node.size === size,
+            divider: divider && i == 0,
+            action: () => { if (node.size !== size) onresize(g, size); },
+        }));
+    }
+
+    // The size button in the selected box's details: the same choices, under it
+    function showSizes(e: MouseEvent, node: StoryMapNode, g: GraphNode) {
+        const button = e.currentTarget as HTMLElement;
+        const rect = button.getBoundingClientRect();
+        // detail is 0 for Enter or Space, so the first choice gets the focus
+        menu = { x: rect.left, y: rect.bottom + 2, keyboard: e.detail === 0, items: sizeItems(node, g, false), back: button };
     }
 
     const instructions = "Arrow keys move between sections and passages. Enter goes to one in the editor, or with just the map showing, shows it beside the map to write there. F2 renames it and Delete deletes it. The menu key, or Shift and F10, opens a menu for it. Control or Command and Z undoes the last change, and Control or Command and F searches the map. Plus and minus zoom, and 0 fits the whole story in view. Drag the background to pan, a box to move it, or the dot under the selected box to add a link. Shift and drag the background to select several boxes, or Shift and click one, then drag one of them to move them all.";
@@ -658,6 +684,7 @@
                 onmenu={showMenu}
                 onhover={excerpt ? handleHover : undefined}
                 node={drawNode}
+                detailZooms={DETAIL_ZOOMS}
             />
             {#if decorated.nodes.length === 0}
                 <p class="absolute inset-0 p-4 text-sm text-surface-600-400 pointer-events-none">No sections yet.</p>
@@ -684,6 +711,7 @@
                     {/if}
                     <button type="button" class="btn-icon btn-icon-sm" title="Add a passage" aria-label="Add a passage" onclick={() => addPassage(g)}><ListPlus size={13} /></button>
                     <button type="button" class="btn-icon btn-icon-sm" title="Run from here" aria-label="Run from here" onclick={() => onrun(g)}><Play size={13} /></button>
+                    <button type="button" class="btn-icon btn-icon-sm" title="Box size" aria-label="Box size" aria-haspopup="menu" aria-expanded={!!menu?.back} onclick={e => showSizes(e, selectedNode, g)}><Scaling size={13} /></button>
                     {#if canDelete(g)}
                         <button type="button" class="btn-icon btn-icon-sm" title="Delete (Del)" aria-label="Delete" onclick={() => ondelete([g])}><Trash2 size={13} /></button>
                     {/if}
@@ -762,11 +790,11 @@
 {/if}
 
 {#if menu}
-    <ContextMenu x={menu.x} y={menu.y} keyboard={menu.keyboard} items={menu.items} onclose={() => { menu = null; map?.focus(); }} />
+    <ContextMenu x={menu.x} y={menu.y} keyboard={menu.keyboard} items={menu.items} onclose={() => { const back = menu?.back; menu = null; (back?.isConnected ? back : map)?.focus(); }} />
 {/if}
 
 {#snippet drawNode(n: StoryMapNode, state: NodeState)}
-    <StoryMapNodeBox node={n} {state} />
+    <StoryMapNodeBox node={n} {state} excerpt={excerpt && n.graphNode ? () => excerptOf(n.graphNode!, true) : undefined} />
 {/snippet}
 
 

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { createLanguageService } from "squiffy-compiler/language-service";
-import { buildStoryMap, checkSectionName, findRenames, linkTo, movedNodes, nodeAtLine, nodeExcerpt, nodeText, pinnedPositions, renamePositions, revertPositions, searchMap, sectionKeys, symbolText, withPosition } from "./story-map.js";
+import { buildStoryMap, checkSectionName, findRenames, linkTo, movedNodes, nodeAtLine, nodeExcerpt, nodeSizes, nodeText, pinnedPositions, renamePositions, revertPositions, searchMap, sectionKeys, symbolText, withoutPositions, withPosition, withSize, wrapExcerpt } from "./story-map.js";
 
 function serviceOf(text: string) {
     const files: Record<string, string> = { "story.squiffy": text };
@@ -181,6 +181,45 @@ describe("positions", () => {
     });
 });
 
+describe("box sizes (#681)", () => {
+    test("saved by name beside the positions, and read back by node id", async () => {
+        const graph = await graphOf(story);
+        const keys = sectionKeys(graph);
+        const left = graph.nodes.find(n => n.id == "section:left")!;
+        const look = graph.nodes.find(n => n.id == "passage:start/look")!;
+        let positions = withPosition(undefined, keys, left, { x: 1, y: 2 });
+        positions = withSize(positions, keys, left, "wide");
+        positions = withSize(positions, keys, look, "large");
+        expect(positions).toEqual({ sections: { left: [1, 2] }, passages: {}, sizes: { sections: { left: "wide" }, passages: { start: { look: "large" } } } });
+        // Moving a box keeps the sizes
+        expect(withPosition(positions, keys, look, { x: 3, y: 4 }).sizes).toEqual(positions.sizes);
+        expect([...nodeSizes(positions, graph)]).toEqual([["section:left", "wide"], ["passage:start/look", "large"]]);
+        // Back to the usual size, and with none left, no sizes at all
+        positions = withSize(withSize(positions, keys, left, undefined), keys, look, undefined);
+        expect(positions).toEqual({ sections: { left: [1, 2] }, passages: {} });
+    });
+
+    test("a bigger box is wider, taller or both", async () => {
+        const graph = await graphOf(story);
+        const usual = buildStoryMap(graph).nodes.find(n => n.id == "section:left")!;
+        const sized = (size: "wide" | "tall" | "large") => buildStoryMap(graph, new Map([["section:left", size]])).nodes.find(n => n.id == "section:left")!;
+        expect(sized("wide")).toMatchObject({ width: 280, height: usual.height, size: "wide" });
+        expect(sized("tall")).toMatchObject({ width: usual.width, size: "tall" });
+        expect(sized("tall").height).toBeGreaterThan(usual.height);
+        expect(sized("large")).toMatchObject({ width: 280, height: sized("tall").height });
+    });
+
+    test("a renamed section keeps its size, Lay out again keeps them all, and undo puts one back", async () => {
+        const before = await graphOf(story);
+        const after = await graphOf(story.replace("[[start]]:", "[[begin]]:"));
+        const positions = { sections: { start: [1, 2] as [number, number] }, passages: {}, sizes: { sections: { start: "tall" as const }, passages: { start: { look: "wide" as const } } } };
+        expect(renamePositions(positions, before, after)).toEqual({ sections: { begin: [1, 2] }, passages: {}, sizes: { sections: { begin: "tall" }, passages: { begin: { look: "wide" } } } });
+        expect(withoutPositions(positions)).toEqual({ sections: {}, passages: {}, sizes: positions.sizes });
+        const bigger = { ...positions, sizes: { ...positions.sizes, sections: { start: "large" as const } } };
+        expect(revertPositions(bigger, bigger, positions)).toEqual(positions);
+    });
+});
+
 describe("rows", () => {
     test("links back round a loop don't push sections down", async () => {
         const map = buildStoryMap(await graphOf("[[a]]:\n[[b]]\n\n[[b]]:\n[[c]] [[d]]\n\n[[c]]:\n[[next]]\n\n[[d]]:\n[[next]]\n\n[[next]]:\n[[a]] [[end]]\n\n[[end]]:\n@end"));
@@ -314,5 +353,20 @@ Empty.
         expect(symbolText(lines, start)).toContain("rusty key");
         expect(symbolText(lines, start)).not.toContain("lamp");
         expect(symbolText(lines, start.children[0])).toContain("lamp");
+    });
+});
+
+describe("wrapExcerpt", () => {
+    test("breaks at spaces, into as many lines as fit", () => {
+        expect(wrapExcerpt("You're in a dark cave.", 12, 2)).toEqual(["You're in a", "dark cave."]);
+        expect(wrapExcerpt("Short.", 12, 2)).toEqual(["Short."]);
+        expect(wrapExcerpt("", 12, 2)).toEqual([]);
+    });
+    test("ends with an ellipsis when there's more", () => {
+        expect(wrapExcerpt("You're in a dark cave. Go left or right.", 12, 2)).toEqual(["You're in a", "dark cave…"]);
+        expect(wrapExcerpt("Once upon a time…", 9, 1)).toEqual(["Once…"]);
+    });
+    test("breaks a long word where it has to", () => {
+        expect(wrapExcerpt("Supercalifragilistic", 8, 3)).toEqual(["Supercal", "ifragili", "stic"]);
     });
 });

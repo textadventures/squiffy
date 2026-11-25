@@ -202,6 +202,11 @@ describe("story map positions", () => {
             map: { sections: { a: [1, 2], b: "here", c: [1], d: [1, "2"] }, passages: { a: { p: [3, 4], q: null }, b: [1, 2] } },
         }));
         expect(parsed.success && parsed.project.map).toEqual({ sections: { a: [1, 2] }, passages: { a: { p: [3, 4] } } });
+        const sized = parseProjectFile(JSON.stringify({
+            version: 1, main: "a.squiffy",
+            map: { sizes: { sections: { a: "wide", b: "huge", c: 2 }, passages: { a: { p: "tall", q: "small" }, b: "large" } } },
+        }));
+        expect(sized.success && sized.project.map).toEqual({ sections: {}, passages: {}, sizes: { sections: { a: "wide" }, passages: { a: { p: "tall" } } } });
         const notAMap = parseProjectFile(JSON.stringify({ version: 1, main: "a.squiffy", map: "no" }));
         expect(notAMap.success && notAMap.project.map).toBeUndefined();
     });
@@ -302,6 +307,17 @@ describe("writing project files", () => {
         expect(JSON.parse(updated)).toEqual({ version: 1, main: "a.squiffy", description: "A cave.", author: "Ann", cover: "cover.png" });
         expect(updateProjectFile(updated, { description: "", author: " ", cover: "" })).toBe(text);
         expect(JSON.parse(updateProjectFile(updated, { author: "Bo" })!).description).toBe("A cave.");
+    });
+
+    test("story map box sizes, and removed when there are none", () => {
+        const text = "{\n  \"version\": 1,\n  \"main\": \"a.squiffy\"\n}\n";
+        const map = { sections: { Cave: [1, 2] as [number, number] }, passages: {}, sizes: { sections: { Cave: "wide" as const }, passages: { Cave: { look: "large" as const }, Empty: {} } } };
+        const updated = updateProjectFile(text, { map })!;
+        expect(JSON.parse(updated).map).toEqual({ sections: { Cave: [1, 2] }, sizes: { sections: { Cave: "wide" }, passages: { Cave: { look: "large" } } } });
+        const parsed = parseProjectFile(updated);
+        expect(parsed.success && parsed.project.map).toEqual({ sections: { Cave: [1, 2] }, passages: {}, sizes: { sections: { Cave: "wide" }, passages: { Cave: { look: "large" } } } });
+        expect(updateProjectFile(updated, { map: { sections: {}, passages: {}, sizes: { sections: {}, passages: {} } } })).toBe(text);
+        expect(updateProjectFile(updated, { map: { sections: {}, passages: {} } })).toBe(text);
     });
 
     test("story map positions, one to a line, and removed when there are none", () => {

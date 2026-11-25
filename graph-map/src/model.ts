@@ -74,6 +74,8 @@ export class MapModel<N extends MapNode = MapNode, E extends MapEdge = MapEdge> 
         }
         const placed = this.layout.place(graph, known);
         const added: string[] = [];
+        // Ones whose size has changed, whose neighbours (and passages) move to make room
+        const resized: string[] = [];
         for (const node of graph.nodes) {
             let sim = this.nodes.get(node.id);
             if (!sim) {
@@ -82,6 +84,7 @@ export class MapModel<N extends MapNode = MapNode, E extends MapEdge = MapEdge> 
                 this.nodes.set(node.id, sim);
                 if (!this.pinned.has(node.id)) added.push(node.id);
             }
+            if (sim.width != node.width || sim.height != node.height) resized.push(node.id);
             sim.width = node.width;
             sim.height = node.height;
             const pin = this.pinned.get(node.id);
@@ -97,9 +100,10 @@ export class MapModel<N extends MapNode = MapNode, E extends MapEdge = MapEdge> 
 
         if (first) {
             this.sim.alpha = 1;
-        } else if (added.length || repinned.length) {
-            // Hold everything else still, apart from what the new (or moved) nodes are linked to
-            this.holdAllBut(this.neighbourhood([...added, ...repinned]));
+        } else if (added.length || repinned.length || resized.length) {
+            // Hold everything else still, apart from what the new (moved, or resized) nodes are
+            // linked to
+            this.holdAllBut(this.neighbourhood([...added, ...repinned, ...resized]));
             this.sim.reheat(0.5);
         }
         this.updateFixed();

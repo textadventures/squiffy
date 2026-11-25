@@ -452,10 +452,16 @@ test.describe("editing from the map", () => {
         await expect.poll(async () => (await where()).x - from.x).toBeGreaterThan(2);
         await page.waitForTimeout(500);
         const to = await where();
+        // Within one either way, as rounding can tip a box that's back where it was by a fraction
+        // of a pixel to the next whole number
+        const near = (a: { x: number; y: number }) => async () => {
+            const b = await where();
+            return Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
+        };
         await page.getByRole("button", { name: "Undo", exact: true }).click();
-        await expect.poll(where).toEqual(from);
+        await expect.poll(near(from)).toBeLessThanOrEqual(1);
         await page.getByRole("button", { name: "Redo", exact: true }).click();
-        await expect.poll(where).toEqual(to);
+        await expect.poll(near(to)).toBeLessThanOrEqual(1);
     });
 
     test("selecting a box, or opening one to write in, leaves the others where they are", async ({ page }) => {
@@ -551,6 +557,33 @@ test.describe("editing from the map", () => {
         await expect(box(page, "passage:cave/floor")).toBeVisible();
         await page.getByRole("button", { name: "Code + Map", exact: true }).click();
         expect((await lines(page)).join("\n")).toContain("go to the [[hill]].\n\n[floor]\n\n[wall]:\nDamp.\n\n[floor]:\n\n[[empty]]:");
+    });
+
+    test("a box made bigger from the menu shows its text, moves its passages down, and goes back with Undo (#681)", async ({ page }) => {
+        await openStory(page);
+        const height = async (id: string) => (await box(page, id).locator(".gm-node-box").boundingBox())!.height;
+        const usual = await height("section:cave");
+        await box(page, "section:cave").click({ button: "right" });
+        await expect(page.getByRole("menuitemradio", { name: "Box: usual size" })).toHaveAttribute("aria-checked", "true");
+        await page.getByRole("menuitemradio", { name: "Box: tall" }).click();
+        await expect.poll(() => height("section:cave")).toBeGreaterThan(usual * 2);
+        // Its text, at any zoom
+        await expect(box(page, "section:cave").locator(".excerpt")).toContainText("dark");
+        // Its passage moves down, clear of it
+        await expect.poll(async () => {
+            const [cave, wall] = [(await box(page, "section:cave").boundingBox())!, (await box(page, "passage:cave/wall").boundingBox())!];
+            return wall.y - (cave.y + cave.height);
+        }).toBeGreaterThan(0);
+        // The size button in the selected box's details has the same choices
+        await box(page, "section:cave").click();
+        await page.getByRole("button", { name: "Box size" }).click();
+        await expect(page.getByRole("menuitemradio", { name: "Box: tall" })).toHaveAttribute("aria-checked", "true");
+        await page.keyboard.press("Escape");
+        await expect(page.getByRole("button", { name: "Box size" })).toBeFocused();
+        await map(page).focus();
+        await page.keyboard.press("ControlOrMeta+Z");
+        // The map zooms to fit the story as boxes move, so not exactly as it was
+        await expect.poll(() => height("section:cave")).toBeLessThan(usual * 1.5);
     });
 
     test("a new section is named where its box will be", async ({ page }) => {

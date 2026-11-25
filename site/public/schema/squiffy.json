@@ -232,6 +232,25 @@
             "type": "object",
             "additionalProperties": { "$ref": "#/definitions/position" }
           }
+        },
+        "sizes": {
+          "description": "Boxes that have been made bigger than usual on the story map, by the same names as the positions. The editor writes this too.",
+          "type": "object",
+          "properties": {
+            "sections": {
+              "description": "Sizes of sections' boxes, by name.",
+              "type": "object",
+              "additionalProperties": { "$ref": "#/definitions/boxSize" }
+            },
+            "passages": {
+              "description": "Sizes of passages' boxes, by their section's name and then their own.",
+              "type": "object",
+              "additionalProperties": {
+                "type": "object",
+                "additionalProperties": { "$ref": "#/definitions/boxSize" }
+              }
+            }
+          }
         }
       }
     }
@@ -242,6 +261,10 @@
       "items": { "type": "number" },
       "minItems": 2,
       "maxItems": 2
+    },
+    "boxSize": {
+      "description": "Wider, taller, or both, than the usual size.",
+      "enum": ["wide", "tall", "large"]
     }
   }
 }
