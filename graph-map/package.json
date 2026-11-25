@@ -1,6 +1,6 @@
 {
   "name": "@textadventures/graph-map",
-  "version": "7.0.0-beta.17",
+  "version": "7.0.0-beta.18",
   "private": true,
   "description": "A map of a directed graph, as a Svelte component: pan, zoom, dragging, keyboard access and a live force-directed layout",
   "license": "MIT",

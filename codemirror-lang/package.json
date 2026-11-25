@@ -1,6 +1,6 @@
 {
   "name": "@textadventures/squiffy-codemirror",
-  "version": "7.0.0-beta.17",
+  "version": "7.0.0-beta.18",
   "private": true,
   "description": "A CodeMirror 6 highlighting mode for .squiffy files, shared by the editor and the docs' editable samples",
   "license": "MIT",

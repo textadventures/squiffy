@@ -1,5 +1,28 @@
 # Changelog
 
+## [7.0.0-beta.18](https://github.com/textadventures/squiffy/compare/v7.0.0-beta.17...v7.0.0-beta.18) (2026-11-25)
+
+
+### Features
+
+* **editor:** a bar at the cursor goes to a link, or adds what a broken link points to ([#683](https://github.com/textadventures/squiffy/issues/683)) ([e1ed25f](https://github.com/textadventures/squiffy/commit/e1ed25f002abdd5b7f5be06ba85578e7c6880a8d))
+* **editor:** Back and Forward through the places you've jumped from, in the script and on the map ([#684](https://github.com/textadventures/squiffy/issues/684)) ([3510eec](https://github.com/textadventures/squiffy/commit/3510eecb38778442bc28d9be269fc0f93947e650))
+* story map boxes show the start of their text when zoomed in, and can be made bigger ([#681](https://github.com/textadventures/squiffy/issues/681)) ([#688](https://github.com/textadventures/squiffy/issues/688)) ([c5f0588](https://github.com/textadventures/squiffy/commit/c5f0588feef3a8ac4af2b2d867b0ff6e0ffa2160))
+* the story map's search finds sections and passages by their text ([#686](https://github.com/textadventures/squiffy/issues/686)) ([8bfa49f](https://github.com/textadventures/squiffy/commit/8bfa49ff9babf9dfd2d3ae10e17fc8fe8d83d0fb))
+
+
+### Bug Fixes
+
+* --convert-v5 converts detached {else}, [@replace](https://github.com/replace) links, jQuery input and [@imported](https://github.com/imported) files ([#674](https://github.com/textadventures/squiffy/issues/674)) ([3e36da1](https://github.com/textadventures/squiffy/commit/3e36da16bfe8b0e33657c3855560277dc8abf5f6))
+* **editor:** app-beta runs the stable release until the next beta ([#665](https://github.com/textadventures/squiffy/issues/665)) ([9ab89a0](https://github.com/textadventures/squiffy/commit/9ab89a0288fffa2257d28e9b83c31f37881ce913))
+* **editor:** easier writing on the story map: previews, a docked editor and Escape to close ([#682](https://github.com/textadventures/squiffy/issues/682)) ([fdc3928](https://github.com/textadventures/squiffy/commit/fdc392848aabe4099d97bcea7166e6cebaf0372c))
+* **editor:** zooming in on the story map zooms on the selected box ([#685](https://github.com/textadventures/squiffy/issues/685)) ([06e520a](https://github.com/textadventures/squiffy/commit/06e520a57c55eaf5b2533b49db4e4277a352aeeb))
+* faster re-analysis, smaller saves and a smaller runtime for large stories ([#662](https://github.com/textadventures/squiffy/issues/662)) ([c9558da](https://github.com/textadventures/squiffy/commit/c9558dac3930a8378cc146fec43efadf32cdacf6))
+* the story map only moves to show a box when it has to ([#675](https://github.com/textadventures/squiffy/issues/675)) ([0800e0f](https://github.com/textadventures/squiffy/commit/0800e0f0f259c8c2c4a48fb09ef39830e843b625))
+* the story map pans smoothly on big stories, and the editor leaves out source-map ([#664](https://github.com/textadventures/squiffy/issues/664)) ([6719b63](https://github.com/textadventures/squiffy/commit/6719b63661887d419e845226589e851b031371f3))
+* undoing a drag on the story map puts the box back ([#676](https://github.com/textadventures/squiffy/issues/676)) ([a0830c9](https://github.com/textadventures/squiffy/commit/a0830c9b24576a86d69c8492f466bbd1fcce775d))
+* **vscode:** a broken link's Create section fix puts it where the map would ([#687](https://github.com/textadventures/squiffy/issues/687)) ([900f772](https://github.com/textadventures/squiffy/commit/900f77299f2c4553e243623fe616f5da42d9ae8a))
+
 ## [7.0.0-beta.17](https://github.com/textadventures/squiffy/compare/v7.0.0-beta.16...v7.0.0-beta.17) (2026-11-24)
 
 
