@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { createLanguageService } from "squiffy-compiler/language-service";
-import { buildStoryMap, checkSectionName, findRenames, linkTo, movedNodes, nodeAtLine, pinnedPositions, renamePositions, revertPositions, sectionKeys, withPosition } from "./story-map.js";
+import { buildStoryMap, checkSectionName, findRenames, linkTo, movedNodes, nodeAtLine, nodeExcerpt, pinnedPositions, renamePositions, revertPositions, sectionKeys, withPosition } from "./story-map.js";
 
 async function graphOf(text: string) {
     const files: Record<string, string> = { "story.squiffy": text };
@@ -222,4 +222,42 @@ test("undoing a change to the positions leaves what's changed since", () => {
     expect(revertPositions(now, after, before)).toEqual({ sections: { a: [1, 1], c: [9, 9] }, passages: { a: { p: [5, 5] } } });
     expect(revertPositions(revertPositions(now, after, before), before, after)).toEqual(now);
     expect(revertPositions(undefined, before, after)).toEqual(after);
+});
+
+describe("excerpts", () => {
+    test("a section's own text, as a player reads it", async () => {
+        const text = `[[start]]:
+@set score = 1
+# Welcome
+You're in a **dark** cave. Go [[left]] or [[right]](cave right), or [look].
+    console.log("hi");
+{{!-- a note --}}
+<p class="x">Mind the step.</p>
+
+[look]:
+Nothing.
+
+[[left]]:
+Left.
+
+[[right]]:
+Right.`;
+        const graph = await graphOf(text);
+        const node = (id: string) => graph.nodes.find(n => n.id === id)!;
+        expect(nodeExcerpt(text, node("section:start"))).toBe("Welcome You're in a dark cave. Go left or right, or look. Mind the step.");
+        expect(nodeExcerpt(text, node("passage:start/look"))).toBe("Nothing.");
+        expect(nodeExcerpt(text, node("section:right"))).toBe("Right.");
+        expect(nodeExcerpt(text, node("section:start"), 20)).toBe("Welcome You're in a…");
+    });
+
+    test("the text before the first section, and an empty section", async () => {
+        const text = `Once upon a time.
+
+[[end]]:
+`;
+        const graph = await graphOf(text);
+        const start = graph.nodes.find(n => n.kind === "section" && n.detail)!;
+        expect(nodeExcerpt(text, start)).toBe("Once upon a time.");
+        expect(nodeExcerpt(text, graph.nodes.find(n => n.id === "section:end")!)).toBe("");
+    });
 });

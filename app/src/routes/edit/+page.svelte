@@ -38,7 +38,7 @@
     import type { CodeAction } from "squiffy-compiler/language-service";
     import PreviewPanel from "#components/PreviewPanel.svelte";
     import MapPanel, { type TraceStep } from "#components/MapPanel.svelte";
-    import { checkSectionName, emptyPositions, linkTo, movedNodes, nodeAtLine, renamePositions, revertPositions, sectionKeys, withPosition, type Point, type StoryMapEdge, type StoryMapNode } from "#lib/story-map.js";
+    import { checkSectionName, emptyPositions, linkTo, movedNodes, nodeAtLine, nodeExcerpt, renamePositions, revertPositions, sectionKeys, withPosition, type Point, type StoryMapEdge, type StoryMapNode } from "#lib/story-map.js";
     import AssetManagerModal from "#components/AssetManagerModal.svelte";
     import FontsModal from "#components/FontsModal.svelte";
     import StoryDetailsModal from "#components/StoryDetailsModal.svelte";
@@ -139,7 +139,7 @@
     const MAP_LIMITS = [280, 1400] as const;
     const CARD_LIMITS = [280, Infinity] as const;
     // How much of the map the card always leaves showing on its left
-    const CARD_MAP_LEFT = 160;
+    const CARD_MAP_LEFT = 240;
 
     // On a narrow screen one pane shows at a time: the editor, the sidebar or the preview
     let narrowPane = $state<"editor" | "outline" | "preview" | "map">("editor");
@@ -331,8 +331,12 @@
         if (!extensions) {
             extensions = [
                 squiffyLanguage,
-                // For writing one section from the full-screen map. Escape goes back to the map.
-                narrowing(() => mapPanel?.focus()),
+                // For writing one section from the full-screen map. Escape closes it, back to the
+                // map, with its box selected.
+                narrowing(() => {
+                    closeCard();
+                    mapPanel?.focus();
+                }),
                 languageFeatures({
                     client: c,
                     path,
@@ -832,15 +836,16 @@
     let card = $state<{ id: string; file: string } | null>(null);
     const cardNode = $derived(card ? storyGraph?.nodes.find(n => n.id === card?.id) : undefined);
     const cardShown = $derived(!!card && mapOpen && mapMaximized && !isNarrow.current);
-    // The card floats over the right of the map, so opening it doesn't move the map. Where the
-    // map is in the window:
-    let mapArea = $state<{ top: number; right: number; width: number; height: number }>({ top: 0, right: 0, width: 0, height: 0 });
-    // Its width can be dragged from its left edge, for the rest of the session. Until it has been,
-    // it's under half the map. Either way it leaves some of the map showing.
+    // The card is docked on the right of the map, which is narrower while it's open. The map
+    // keeps its boxes where they were on the screen, only moving to show the box being written if
+    // the card's covered it. The width of the map and the card together:
+    let workWidth = $state(0);
+    // The card's width can be dragged from its left edge, for the rest of the session. Until it
+    // has been, it's under half the space. Either way it leaves some of the map showing.
     let cardWidthChosen = $state<number | null>(null);
-    const cardWidth = $derived(Math.round(Math.max(CARD_LIMITS[0], Math.min(cardWidthChosen ?? Math.min(544, mapArea.width * 0.45), cardMaxWidth()))));
+    const cardWidth = $derived(Math.round(Math.max(CARD_LIMITS[0], Math.min(cardWidthChosen ?? Math.min(544, workWidth * 0.45), cardMaxWidth()))));
     function cardMaxWidth() {
-        return Math.max(CARD_LIMITS[0], mapArea.width - CARD_MAP_LEFT);
+        return Math.max(CARD_LIMITS[0], workWidth - CARD_MAP_LEFT);
     }
 
     // Shows a section in the card, or the section a passage is in, with the cursor at the passage
@@ -970,6 +975,15 @@
         await openCard(node, focus, location.range.start);
         mapPanel?.focusNode(node.id, false, false);
         return true;
+    }
+
+    // The start of a section's or passage's text, for the map's previews
+    async function excerptFor(node: GraphNode): Promise<string> {
+        const current = p;
+        if (!current) return "";
+        const file = node.location.file;
+        const text = current.fileAt(file)?.text ?? await current.fs.readText(file);
+        return nodeExcerpt(text, node);
     }
 
     // The toolbar's Code, Code + Map and Map
@@ -1822,13 +1836,13 @@
             <!-- The script and the map, with the Problems, Find in Files and References panels
                  below both, so they're there with the map full screen too -->
             <div class="flex-1 min-w-0 flex flex-col {isNarrow.current && narrowPane !== "editor" && narrowPane !== "map" ? "hidden" : ""}">
-            <div class="flex-1 min-h-0 flex">
+            <div class="flex-1 min-h-0 flex" bind:clientWidth={workWidth}>
             <!-- Kept mounted (hidden, not removed) on a narrow screen so the cursor and undo
                  history survive opening the sidebar or the preview -->
             <div
                 id="editor"
-                style={cardShown ? `position: fixed; top: ${mapArea.top + 8}px; left: ${mapArea.right - cardWidth - 8}px; width: ${cardWidth}px; height: ${Math.max(mapArea.height - 16, 0)}px;` : undefined}
-                class="min-w-0 flex flex-col {cardShown ? "z-10 overflow-hidden rounded-md border border-surface-200-800 bg-surface-50-950 shadow-xl" : "flex-1"} {(isNarrow.current && narrowPane !== "editor") || (!isNarrow.current && mapOpen && mapMaximized && !cardShown) ? "hidden" : ""}"
+                style={cardShown ? `width: ${cardWidth}px;` : undefined}
+                class="min-w-0 flex flex-col {cardShown ? "relative order-last shrink-0 border-l border-surface-200-800 bg-surface-50-950" : "flex-1"} {(isNarrow.current && narrowPane !== "editor") || (!isNarrow.current && mapOpen && mapMaximized && !cardShown) ? "hidden" : ""}"
             >
                 {#if cardShown}
                     <!-- Its left edge, dragged to make it wider or narrower -->
@@ -1896,8 +1910,6 @@
                     {trace}
                     maximized={mapMaximized}
                     card={cardShown ? card?.id ?? null : null}
-                    {cardWidth}
-                    onarea={rect => { mapArea = rect; }}
                     onedit={(node, focus) => void openCard(node, focus)}
                     width={isNarrow.current || mapMaximized ? undefined : mapWidth}
                     ongoto={(node, focus) => { const location = node.graphNode?.location; if (location) goFromMap(location, focus); }}
@@ -1916,6 +1928,7 @@
                     onundo={undoFromMap}
                     onrun={node => void runPreview(false, node.kind === "section" ? { section: node.name } : { section: node.section!, passage: node.name })}
                     onrelayout={relayoutMap}
+                    excerpt={excerptFor}
                     onclose={() => { mapOpen = false; mapMaximized = false; narrowPane = "editor"; }}
                 />
             {/if}
