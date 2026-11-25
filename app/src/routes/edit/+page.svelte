@@ -50,9 +50,10 @@
     import Play from "@lucide/svelte/icons/play";
     import Code from "@lucide/svelte/icons/code";
     import X from "@lucide/svelte/icons/x";
+    import TriangleAlert from "@lucide/svelte/icons/triangle-alert";
     import { readMapLayout, saveMapLayout } from "#lib/map-layout.js";
     import { narrowed, narrowing, narrowRange, setNarrow } from "#lib/narrow.js";
-    import { checkPassageName, deleteLinesEdits, deletionMessage, insertHeaderEdit, linkThenHeaderEdits, placeNewPassage, placeNewSection, planDeletion, startEdit, type Place } from "#lib/map-edits.js";
+    import { checkPassageName, deleteLinesEdits, deletionMessage, endingEdit, insertHeaderEdit, linkThenHeaderEdits, placeNewPassage, placeNewSection, planDeletion, startEdit, type Place } from "#lib/map-edits.js";
     import { addSectionOrPassage, clipboardCommand, insertSnippet, runCommand, userSnippets } from "#lib/editor-commands.js";
     import { formatKey } from "#lib/shortcuts.js";
     import { desktopApi } from "#lib/desktop.js";
@@ -1337,6 +1338,21 @@
         }
     }
 
+    // Marks a dead end as one of the story's endings, with @end under its header. From the map,
+    // or from the card, which doesn't show the header, so the quick fix can't be reached there.
+    async function endingFromMap(node: GraphNode) {
+        if (!p) return;
+        await refreshGraph();
+        const section = storyGraph?.nodes.find(n => n.id === node.id);
+        if (!p || !section) return;
+        const file = section.location.file;
+        try {
+            await applyMapEdit({ [file]: [endingEdit(await currentText(file), section)] });
+        } catch (err) {
+            showToast(`Couldn't mark the ending: ${errorText(err)}`);
+        }
+    }
+
     async function linkFromMap(from: GraphNode, to: GraphNode | null, at: Point, name?: string) {
         if (!to) {
             if (name) await createSectionFromMap(name, { at, from });
@@ -1828,6 +1844,9 @@
                     <!-- The section being written from the map, in place of the tabs -->
                     <header class="flex items-center gap-0.5 px-2 py-1 border-b border-surface-200-800 bg-surface-50-950">
                         <h2 class="flex-1 min-w-0 truncate pl-1 text-sm font-semibold" title={cardNode.detail ?? cardNode.name}>{cardNode.detail ?? cardNode.name}</h2>
+                        {#if cardNode.kind === "section" && cardNode.deadEnd && cardNode.reachable}
+                            <button type="button" class="btn btn-xs preset-tonal-warning text-xs py-0.5 mr-1" title="A dead end: there's no way out. If it's one of the story's endings, mark it with @end." onclick={() => void endingFromMap(cardNode)}><TriangleAlert size={12} /> Mark as an ending</button>
+                        {/if}
                         {#if !cardNode.detail}
                             <button type="button" class="btn-icon btn-icon-sm" title="Rename" aria-label="Rename" onclick={() => void renameFromMap(cardNode)}><Pencil size={14} /></button>
                         {/if}
@@ -1893,6 +1912,7 @@
                     onaddpassage={(from, name, link) => void addPassageFromMap(from, name, link)}
                     ondelete={nodes => void deleteFromMap(nodes)}
                     onstart={node => void startFromMap(node)}
+                    onending={node => void endingFromMap(node)}
                     onundo={undoFromMap}
                     onrun={node => void runPreview(false, node.kind === "section" ? { section: node.name } : { section: node.section!, passage: node.name })}
                     onrelayout={relayoutMap}

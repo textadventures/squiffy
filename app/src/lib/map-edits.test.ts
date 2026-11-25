@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 import { createLanguageService, type GraphNode, type StoryGraph } from "squiffy-compiler/language-service";
 import { applyEditsToString } from "./language/codemirror.js";
 import {
-    blockOf, checkPassageName, deleteLinesEdits, deletionMessage, insertHeaderEdit, linkThenHeaderEdits, placeNewPassage, placeNewSection, planDeletion, startEdit,
+    blockOf, checkPassageName, deleteLinesEdits, deletionMessage, endingEdit, insertHeaderEdit, linkThenHeaderEdits, placeNewPassage, placeNewSection, planDeletion, startEdit,
 } from "./map-edits.js";
 
 async function graphOf(text: string, others: Record<string, string> = {}) {
@@ -247,5 +247,15 @@ describe("starting the story at a section", () => {
         expect(set("[[hall]]:\n")).toBe("@start cave\n[[hall]]:\n");
         expect(set("@title T")).toBe("@title T\n@start cave\n");
         expect(set("")).toBe("@start cave\n");
+    });
+});
+
+describe("marking an ending", () => {
+    test("adds @end under the section's header, or after it at the end of the file", async () => {
+        const text = "[[a]]:\nGo [[b]].\n\n[[b]]:\nThe end.\n\n[[c]]:";
+        const graph = await graphOf(text);
+        const mark = (id: string) => applyEditsToString(text, [endingEdit(text, node(graph, id))]);
+        expect(mark("section:b")).toBe("[[a]]:\nGo [[b]].\n\n[[b]]:\n@end\nThe end.\n\n[[c]]:");
+        expect(mark("section:c")).toBe(text + "\n@end");
     });
 });

@@ -76,6 +76,8 @@
         ondelete: (nodes: GraphNode[]) => void;
         // Make the story start at a section
         onstart: (node: GraphNode) => void;
+        // Mark a dead end as one of the story's endings, with @end
+        onending: (node: GraphNode) => void;
         // Undo or redo the last change to the script
         onundo: (redo: boolean) => void;
         // Forget every position the author chose
@@ -85,7 +87,7 @@
 
     let {
         graph, positions, query, current, trace, maximized, card, cardWidth = 0, onarea, onedit, width, ongoto, ongotoedge, onmove, onlink, oncreate, onrename,
-        onrun, onaddpassage, ondelete, onstart, onundo, onrelayout, onclose,
+        onrun, onaddpassage, ondelete, onstart, onending, onundo, onrelayout, onclose,
     }: Props = $props();
 
     // Above this, the map is slow to lay out, so it asks first. Of about 12,000 stories on
@@ -388,6 +390,9 @@
         return true;
     }
 
+    // A section the player can reach with no way out, which isn't marked as an ending
+    const isDeadEnd = (g: GraphNode) => g.kind == "section" && !!g.deadEnd && g.reachable;
+
     // Named sections and passages can be deleted here. A section without a name of its own
     // (+++, ---, the text before the first section) is part of what's around it in the script.
     const canDelete = (g: GraphNode) => g.kind == "passage" || (!g.detail && g.name != "");
@@ -427,6 +432,7 @@
                 { label: "Add a passage…", action: () => addPassage(g) },
                 { label: "Run from here", divider: true, action: () => onrun(g) },
                 ...(section ? [{ label: "Start the story here", disabled: !!g.start || !!g.detail || g.name == "", action: () => onstart(g) }] : []),
+                ...(isDeadEnd(g) ? [{ label: "Mark as an ending", action: () => onending(g) }] : []),
                 { label: "Delete…", shortcut: "Del", divider: true, disabled: !canDelete(g), action: () => ondelete([g]) },
             ];
         } else {
@@ -536,9 +542,12 @@
                         <button type="button" class="btn-icon btn-icon-sm" title="Delete (Del)" aria-label="Delete" onclick={() => ondelete([g])}><Trash2 size={13} /></button>
                     {/if}
                 </div>
-                {#if graph && (g.start || g.ending || (g.deadEnd && g.reachable) || !g.reachable)}
+                {#if graph && (g.start || g.ending || isDeadEnd(g) || !g.reachable)}
                     <p class="text-surface-600-400">
-                        {[g.start ? "The story starts here." : "", g.ending ? "An ending." : "", g.deadEnd && g.reachable ? "A dead end: there's no way out. If it's an ending, add @end." : "", g.embedded ? "Shown inside other sections, with {{embed}} or {{live}}." : reachNote(g, graph)].filter(Boolean).join(" ")}
+                        {[g.start ? "The story starts here." : "", g.ending ? "An ending." : "", isDeadEnd(g) ? "A dead end: there's no way out." : "", g.embedded ? "Shown inside other sections, with {{embed}} or {{live}}." : reachNote(g, graph)].filter(Boolean).join(" ")}
+                        {#if isDeadEnd(g)}
+                            <button type="button" class="btn btn-xs preset-tonal-warning text-xs py-0.5 ml-1" onclick={() => onending(g)}>Mark as an ending</button>
+                        {/if}
                     </p>
                 {/if}
                 {#if links.out.length}

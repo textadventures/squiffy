@@ -1,5 +1,5 @@
 // Edits to the script made from the story map: where a new section or passage goes, what deleting
-// one removes, and setting where the story starts. All worked out from the story graph and a
+// one removes, setting where the story starts, and marking an ending. All worked out from the story graph and a
 // file's text, so they can be tested without an editor.
 import type { GraphNode, StoryGraph, TextEdit } from "squiffy-compiler/language-service";
 
@@ -268,6 +268,16 @@ export function checkPassageName(name: string, section: string, graph: StoryGrap
 
 // Makes the story start at a section: changes the main file's @start line, or adds one at the top
 // (after @title, if that's there)
+// Marks a section as one of the story's endings: @end on the line after its header, as the
+// language service's quick fix for a dead end does
+export function endingEdit(text: string, section: GraphNode): TextEdit {
+    const lines = splitLines(text);
+    const line = section.location.range.start.line + 1;
+    if (line < lines.length) return { range: { start: { line, character: 0 }, end: { line, character: 0 } }, newText: "@end\n" };
+    const end = { line: line - 1, character: lines[line - 1].length };
+    return { range: { start: end, end }, newText: "\n@end" };
+}
+
 export function startEdit(mainText: string, name: string): TextEdit {
     const lines = splitLines(mainText);
     const existing = lines.findIndex(line => /^@start /.test(line));

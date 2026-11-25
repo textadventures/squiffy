@@ -9,7 +9,7 @@ import * as vscode from "vscode";
 import type { BaseLanguageClient } from "vscode-languageclient";
 import { parseProjectFile, updateProjectFile, type MapPositions } from "squiffy-compiler";
 import type { GraphNode, Location, StoryGraph, TextEdit } from "squiffy-compiler/language-service";
-import { checkPassageName, deleteLinesEdits, deletionMessage, planDeletion, startEdit } from "@textadventures/squiffy-app/map-edits";
+import { checkPassageName, deleteLinesEdits, deletionMessage, endingEdit, planDeletion, startEdit } from "@textadventures/squiffy-app/map-edits";
 import { checkSectionName, emptyPositions, movedNodes, nodeAtLine, renamePositions, withPosition } from "@textadventures/squiffy-app/story-map";
 import { STORY_GRAPH, type PreviewFromHereArgs, type StoryGraphParams, type StoryGraphResult } from "../protocol.js";
 import type { FromMap, Point, ToMap, TraceStep } from "../map/messages.js";
@@ -154,6 +154,9 @@ export class StoryMap implements vscode.Disposable {
                 break;
             case "start":
                 void this.act([message.id], "change where the story starts", ([node]) => this.startAt(node));
+                break;
+            case "ending":
+                void this.act([message.id], "mark the ending", ([node]) => this.markEnding(node));
                 break;
             case "delete":
                 void this.act(message.ids, "delete", nodes => this.delete(nodes));
@@ -327,6 +330,14 @@ export class StoryMap implements vscode.Disposable {
         if (node.kind != "section" || node.start || node.detail || !node.name || !this.mainFile) return;
         const text = (await vscode.workspace.openTextDocument(this.uriOf(this.mainFile))).getText();
         await this.applyEdits(new Map([[this.mainFile, [startEdit(text, node.name)]]]));
+    }
+
+    // With @end under the section's header
+    private async markEnding(node: GraphNode) {
+        if (node.kind != "section" || !node.deadEnd) return;
+        const file = node.location.file;
+        const text = (await vscode.workspace.openTextDocument(this.uriOf(file))).getText();
+        await this.applyEdits(new Map([[file, [endingEdit(text, node)]]]));
     }
 
     // A new section, after asking its name: linked from `from` (a link dragged to empty space), or
