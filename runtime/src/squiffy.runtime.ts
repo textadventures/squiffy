@@ -1250,14 +1250,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
 
     function update(newStory: Story) {
         if (newStory.start != story.start) {
-            story = newStory;
-            state.reset();
-            sound.sync();
-            syncClasses();
-            syncHeaderTitle();
-            sound.preload(story.audio ?? []);
-            outputElement.innerHTML = "";
-            go(story.start);
+            startAgain(newStory);
             return;
         }
 
@@ -1288,6 +1281,13 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         };
 
         updateStory(oldStory, newStory, outputElement, processTextInSection, disableLink, (attrs) => processAttributes(attrs));
+
+        // Every section on the screen has gone, such as the one the story was started at, which
+        // has been renamed or deleted, so there's nowhere to carry on from: start again
+        if (!lastSectionElement()) {
+            startAgain(newStory);
+            return;
+        }
 
         setCurrentSectionElement();
         setCurrentPassageElement();
@@ -1323,11 +1323,28 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         return template.innerHTML;
     }
 
-    function setCurrentSectionElement() {
+    // Starts a new version of the story again from its start, after an edit has left nothing to
+    // carry on from
+    function startAgain(newStory: Story) {
+        story = newStory;
+        state.reset();
+        sound.sync();
+        syncClasses();
+        syncHeaderTitle();
+        sound.preload(story.audio ?? []);
+        outputElement.innerHTML = "";
+        go(story.start);
+    }
+
+    function lastSectionElement(): HTMLElement | undefined {
         // Multiple .squiffy-output-section elements may be "last-child" if some have been moved to the clear-stack,
         // so we want the very last one
         const allSectionElements = outputElement.querySelectorAll<HTMLElement>(".squiffy-output-section:last-child");
-        currentSectionElement = allSectionElements[allSectionElements.length - 1];
+        return allSectionElements[allSectionElements.length - 1];
+    }
+
+    function setCurrentSectionElement() {
+        currentSectionElement = lastSectionElement()!;
         const sectionName = currentSectionElement.getAttribute("data-section");
         currentSection = story.sections[sectionName!];
     }

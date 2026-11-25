@@ -131,6 +131,21 @@ describe("analyse", () => {
         ]);
     });
 
+    test("@start naming a section that doesn't exist is an error", async () => {
+        const script = "@title Lost\n@start nowhere\n\nHello [[a]].\n\n[[a]]:\n@end\nDone.";
+        const analysis = await analyse({ script, scriptBaseFilename: "story.squiffy" });
+        expect(analysis.success).toBe(false);
+        expect(analysis.diagnostics.map(d => [d.severity, d.code, slice(script, d.range), d.message])).toEqual([
+            ["error", "squiffy/unknown-start", "nowhere",
+                "@start names a section called [[nowhere]], which doesn't exist, so the story has nowhere to start."],
+        ]);
+
+        // One that exists is fine
+        const fine = await analyse({ script: script.replace("@start nowhere", "@start a"), scriptBaseFilename: "story.squiffy" });
+        expect(fine.success).toBe(true);
+        expect(fine.diagnostics.filter(d => d.code == "squiffy/unknown-start")).toEqual([]);
+    });
+
     test("{{deactivate}} of a passage that isn't in the section (#13)", async () => {
         const script = "[[start]]:\nSee [a] or [b].\n\n[a]:\n{{deactivate \"b\"}} {{deactivate \"nowhere\"}} {{deactivate}}\n\n[b]:\nB.\n\n[[]]:\n\n[m]:\n{{deactivate 'm'}}";
         const analysis = await analyse({ script, scriptBaseFilename: "story.squiffy" });

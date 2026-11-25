@@ -240,6 +240,21 @@ describe("getStoryFiles", () => {
         expect(result.excluded).toEqual([]);
     });
 
+    test("a subfolder with a squiffy.json of its own is a story of its own, so it's left out", () => {
+        const result = getStoryFiles(project("story.squiffy"), [
+            "story.squiffy", "squiffy.json", "a.squiffy",
+            "other/squiffy.json", "other/story.squiffy", "other/style.css", "other/deeper/b.squiffy",
+            "others/c.squiffy",
+        ]);
+        expect(storyFileList(result)).toEqual(["a.squiffy", "others/c.squiffy"]);
+        expect(result.excluded).toEqual([]);
+    });
+
+    test("a subfolder's squiffy.json doesn't leave out the folder the main file is in", () => {
+        const result = getStoryFiles(project("src/story.squiffy"), ["src/story.squiffy", "src/squiffy.json", "src/b.squiffy", "squiffy.json"]);
+        expect(storyFileList(result)).toEqual(["src/b.squiffy"]);
+    });
+
     test("an old build next to the main file is left out, if there's an index.html with it", () => {
         const old = ["story.js", "style.css", "squiffy.runtime.js", "squiffy.runtime.global.js"];
         expect(storyFileList(getStoryFiles(project("story.squiffy"), ["story.squiffy", "index.html", ...old, "mine.css"])))

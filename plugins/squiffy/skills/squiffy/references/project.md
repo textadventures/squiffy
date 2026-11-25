@@ -40,7 +40,7 @@ Having a `squiffy.json` also switches on Squiffy 7's rules for setting attribute
 
 With `squiffy.json`:
 
-- Every `.squiffy`, `.css` and `.js` file in the folder and subfolders is part of the story; no `@import` needed. `node_modules`, dot-folders and `build/` are left out.
+- Every `.squiffy`, `.css` and `.js` file in the folder and subfolders is part of the story; no `@import` needed. `node_modules`, dot-folders, `build/` and any subfolder with a `squiffy.json` of its own (another story) are left out.
 - The main file comes first, then the others in path order. That decides `+++` numbering and, for duplicate section names, which wins (with a warning).
 - The story starts in the main file (first section, or `@start`). `@title` and `@start` in other files are ignored.
 - Links work between files. Paths to images and in `@import` are relative to the main file's folder.

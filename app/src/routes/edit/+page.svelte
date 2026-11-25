@@ -1513,16 +1513,17 @@
     async function deleteFromMap(nodes: GraphNode[]) {
         const graph = storyGraph;
         if (!p || !graph) return;
-        // The text of every file with links in it, to find the links on lines of their own
+        // The text of every file with links in it, to find the links on lines of their own, and
+        // of the main file, for its @start line
         const texts = new Map<string, string>();
-        for (const file of new Set(graph.edges.map(e => e.location.file))) {
+        for (const file of new Set([...graph.edges.map(e => e.location.file), p.mainFile])) {
             try {
                 texts.set(file, await currentText(file));
             } catch {
                 // Its links are left as they are
             }
         }
-        const plan = planDeletion(graph, nodes, texts);
+        const plan = planDeletion(graph, nodes, texts, p.mainFile);
         if (!p || !plan) return;
         if (!(await confirmDialog(deletionMessage(plan), { confirmLabel: "Delete", danger: true })) || !p) return;
         try {

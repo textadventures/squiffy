@@ -250,6 +250,8 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
     };
 
     const storyFiles = settings.storyFiles && new Set(settings.storyFiles);
+    // Where @start was, to say if it names a section that doesn't exist
+    let startDirective: { filename: string | undefined; range: Range; line: number } | undefined;
     // The .squiffy files processed so far, so a story file the main file has already @imported
     // isn't processed again
     const processed = new Set<string | undefined>();
@@ -439,6 +441,7 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
                     }
                     else {
                         story.start = node.value;
+                        startDirective = { filename, range: node.valueRange, line: lineCount };
                     }
                     return true;
                 case "import": {
@@ -823,6 +826,11 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
         }
         const content = await settings.externalFiles.getContent(storyFile);
         success = await processFile(content, storyFile, false) && success;
+    }
+    // @start naming a section that doesn't exist leaves the story with nothing to show
+    if (startDirective && !hasOwn(story.sections, story.start)) {
+        report("error", "squiffy/unknown-start", startDirective.filename, startDirective.range,
+            `@start names a section called [[${story.start}]], which doesn't exist, so the story has nowhere to start.`, startDirective.line);
     }
     success &&= !legacyErrors.length;
 

@@ -38,6 +38,16 @@ describe("findStory", () => {
         });
     });
 
+    test("a subfolder with a squiffy.json of its own isn't part of the story", async () => {
+        await write({
+            "squiffy.json": project, "story.squiffy": "", "b.squiffy": "",
+            "inner/squiffy.json": project, "inner/story.squiffy": "", "inner/c.squiffy": "",
+        });
+        expect((await findStory(dir)).storyFiles).toEqual([path.join(dir, "b.squiffy")]);
+        // And it's a story in its own right
+        expect((await findStory(path.join(dir, "inner"))).storyFiles).toEqual([path.join(dir, "inner/c.squiffy")]);
+    });
+
     test("a project's backButton setting comes with it", async () => {
         await write({ "squiffy.json": "{ \"version\": 1, \"main\": \"story.squiffy\", \"backButton\": false }", "story.squiffy": "" });
         expect((await findStory(dir)).backButton).toBe(false);

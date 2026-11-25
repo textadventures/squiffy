@@ -5787,3 +5787,40 @@ describe("{{#animate}} times", () => {
         warn.mockRestore();
     });
 });
+
+test("Renaming the section the story was started at starts the story again", async () => {
+    const element = document.getElementById("squiffy")!;
+    const script = "Start [[a]].\n\n[[a]]:\nSection a.";
+    const squiffyApi = await init({ element, story: (await compile(script)).story });
+    await squiffyApi.begin({ section: "a" });
+    expect(getSectionContent(element, "a")).toBe("Section a.");
+
+    // As when the author types into its name, with the preview started from it
+    const renamed = (await compile(script.replace("[[a]]:", "[[ab]]:"))).story;
+    expect(() => squiffyApi.update(renamed)).not.toThrow();
+    await vi.waitFor(() => expect(getSectionContent(element, "_default")).toBe("Start a."));
+    expect(getSectionContent(element, "a")).toBeNull();
+
+    // And it carries on updating
+    squiffyApi.update((await compile(script.replace("Start", "Begin"))).story);
+    expect(getSectionContent(element, "_default")).toBe("Begin a.");
+});
+
+test("A story whose start doesn't exist shows nothing, and an edit doesn't crash it", async () => {
+    // The compiler reports this as an error, but a story built by an older one could have it
+    const element = document.getElementById("squiffy")!;
+    const withStart = async (text: string, start: string) => {
+        const { story } = await compile(text);
+        return { ...story, start };
+    };
+    const squiffyApi = await init({ element, story: await withStart("[[a]]:\nSection a.", "nowhere") });
+    await squiffyApi.begin();
+    expect(element.querySelector(".squiffy-output-section")).toBeNull();
+
+    const edited = await withStart("[[a]]:\nSection A.", "nowhere");
+    expect(() => squiffyApi.update(edited)).not.toThrow();
+    expect(element.querySelector(".squiffy-output-section")).toBeNull();
+
+    squiffyApi.update(await withStart("[[a]]:\nSection A.", "a"));
+    await vi.waitFor(() => expect(getSectionContent(element, "a")).toBe("Section A."));
+});

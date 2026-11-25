@@ -28,6 +28,7 @@ export type DiagnosticCode =
     | "squiffy/no-next-section"
     | "squiffy/unknown-embed"
     | "squiffy/unknown-goto"
+    | "squiffy/unknown-start"
     | "squiffy/unknown-deactivate"
     | "squiffy/unknown-section-link"
     | "squiffy/unknown-passage-link"
