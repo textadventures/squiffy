@@ -642,14 +642,19 @@ export const comparePaths = (a: string, b: string) => a < b ? -1 : a > b ? 1 : 0
 // Which of a project's files make up the story: its .squiffy files, stylesheets and scripts.
 // `paths` are relative to the project file's folder, with "/" separators, as from a recursive
 // listing of the folder; files of other kinds are ignored. Pass `skip` to leave out more files
-// or folders, such as a build's output folder.
+// or folders, such as a build's output folder. A folder with a project file of its own is a
+// story of its own, so its files aren't part of this one (unless the main file is in it).
 export function getStoryFiles(project: ProjectFile, paths: Iterable<string>, skip: string[] = []): StoryFiles {
     const included: string[] = [];
     const stylesheets: string[] = [];
     const scripts: string[] = [];
     const excluded: string[] = [];
     const all = new Set(paths);
-    const skipped = [BUILD_FOLDER, ...skip].map(folder => normalisePath(folder)).filter(folder => folder !== null);
+    const otherStories = [...all]
+        .filter(path => path.endsWith("/" + PROJECT_FILENAME))
+        .map(path => path.substring(0, path.length - PROJECT_FILENAME.length - 1))
+        .filter(folder => !project.main.startsWith(folder + "/"));
+    const skipped = [BUILD_FOLDER, ...skip, ...otherStories].map(folder => normalisePath(folder)).filter(folder => folder !== null);
     const mainSlash = project.main.lastIndexOf("/");
     const mainFolder = mainSlash < 0 ? "" : project.main.substring(0, mainSlash + 1);
     const oldBuild = all.has(mainFolder + "index.html") ? new Set(OLD_BUILD_FILES.map(file => mainFolder + file)) : new Set();

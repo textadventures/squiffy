@@ -97,7 +97,8 @@ export const listSquiffyFiles = (folder: string) => listFiles(folder, isSquiffyP
 
 // Every .squiffy, .css and .js file in a folder and its subfolders, as listSquiffyFiles, and any
 // index.html, which getStoryFiles needs to see to leave out an old build
-export const listStoryFiles = (folder: string) => listFiles(folder, name => isStoryFilePath(name) || name == "index.html");
+// With index.html, to tell an old build's files, and squiffy.json, to tell a story of its own in a subfolder
+export const listStoryFiles = (folder: string) => listFiles(folder, name => isStoryFilePath(name) || name == "index.html" || name == PROJECT_FILENAME);
 
 async function listFiles(folder: string, include: (name: string) => boolean): Promise<string[]> {
     const result: string[] = [];
