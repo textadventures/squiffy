@@ -1,6 +1,6 @@
 import { readFileSync } from "fs";
 import { expect, test, vi } from "vitest";
-import { parseProjectFile } from "squiffy-compiler";
+import { parseProjectFile, PROJECT_SCHEMA_URL } from "squiffy-compiler";
 
 vi.mock("vscode", () => ({}));
 const { MAIN_FILE, NEW_STORY, headerPlace, newStoryFiles, passageHasSection, selectedName } = await import("./new-story.js");
@@ -75,4 +75,11 @@ test("an export that would replace files names them", () => {
     expect(clashMessage(["style.css", "index.html"])).toBe("index.html and style.css");
     expect(clashMessage(["style.css", "index.html", "story.js", "squiffy.runtime.global.js"])).toBe("index.html, squiffy.runtime.global.js, story.js and style.css");
     expect(clashMessage(["e", "d", "c", "b", "a"])).toBe("a, b, c and 2 other files");
+});
+
+// The schema URL that new stories' squiffy.json gives as $schema. Declaring it makes VS Code trust
+// it, so it downloads it without an "untrusted" warning, and validates squiffy.json without $schema too.
+test("the extension declares the squiffy.json schema", () => {
+    const manifest = JSON.parse(readFileSync(new URL("../../package.json", import.meta.url), "utf8"));
+    expect(manifest.contributes.jsonValidation).toContainEqual({ fileMatch: "squiffy.json", url: PROJECT_SCHEMA_URL });
 });
