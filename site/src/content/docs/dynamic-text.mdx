@@ -286,7 +286,7 @@ Some players ask their system to reduce motion, because movement on the screen m
 - `typewriter` and `toast` animations fade the whole text in quickly, instead of a letter or word at a time. They still wait for their `start` time, and the text after them still waits for them.
 - `fadeIn` stays as it is, as it doesn't move.
 - Every `@transition` and `@leave`, including your own, is a plain fade, taking the same time.
-- `{{#style}}` effects that move or keep repeating, such as `sway`, `shudder` and `blink`, stay still, and so do the `continue` animation's styles. It's still a link to click.
+- `{{#style}}` effects that move or keep repeating, such as `sway`, `shudder` and `blink`, stay still, and so do the `continue` animation's styles. It can still be pressed.
 - An animation with `loop=true` shows its text without playing.
 
 Everything else, such as [moving on after a delay](#moving-on-after-a-delay), happens as usual. The editor's preview follows the setting too, so you can turn it on in your system to see what these players see. On a Mac, it's in System Settings, Accessibility, Display; on Windows, Settings, Accessibility, Visual effects, Animation effects.
