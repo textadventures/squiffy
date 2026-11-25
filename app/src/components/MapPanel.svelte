@@ -646,7 +646,7 @@
             <span class="key-badge key-ending">■</span><span>An ending (@end)</span>
             <span class="key-badge key-dead-end">!</span><span>A dead end: no way out, and not an ending</span>
             <span class="key-badge key-unreachable"></span><span>Can't be reached from the start</span>
-            <span></span><span class="text-surface-600-400 pt-1">{maximized ? "Double-click a box, or select it and press Enter, to write in it beside the map." : "Double-click a box, or select it and press Enter, to go to it in the script."} Hover over a box to see the start of its text. Drag the dot under the selected box to another to add a link, or to empty space for a new section. Double-click empty space to add a section, or a red box to add what's missing. Right-click a box for more, or press Delete to delete it. Shift+drag empty space, or Shift+click, to select several boxes and move them together.</span>
+            <span></span><span class="text-surface-600-400 pt-1">{maximized ? "Double-click a box, or select it and press Enter, to write in it beside the map." : "Click a box to see it in the script, or double-click it (or select it and press Enter) to write there."} Hover over a box to see the start of its text. Drag the dot under the selected box to another to add a link, or to empty space for a new section. Double-click empty space to add a section, or a red box to add what's missing. Right-click a box for more, or press Delete to delete it. Shift+drag empty space, or Shift+click, to select several boxes and move them together.</span>
         </div>
     {/if}
     <!-- The keydown catches Ctrl/Cmd+Z and Y as they bubble up from the map, which is the
@@ -690,7 +690,7 @@
                 <p class="absolute inset-0 p-4 text-sm text-surface-600-400 pointer-events-none">No sections yet.</p>
             {:else if !hintDone && !card}
                 <p class="map-hint pointer-events-none absolute left-1/2 top-2 -translate-x-1/2 rounded-full border border-surface-200-800 bg-surface-50-950 shadow-sm pl-3 pr-1 py-0.5 text-xs flex items-center gap-1">
-                    <span>{maximized ? "Double-click a box to write in it" : "Double-click a box to go to it in the script"}</span>
+                    <span>{maximized ? "Double-click a box to write in it" : "Click a box to see it in the script, double-click to write there"}</span>
                     <button type="button" class="btn-icon btn-icon-sm pointer-events-auto" title="Hide this" aria-label="Hide this hint" onclick={finishHint}><X size={12} /></button>
                 </p>
             {/if}
