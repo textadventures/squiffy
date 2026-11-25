@@ -1900,6 +1900,103 @@ Done.
     expect(squiffyApi.get("test")).toBe(789);
 });
 
+// Going back keeps only what changed in an object or list, such as _visits, so the text, which is
+// saved, doesn't keep a copy of every section visited for each one (#645)
+describe("Going back with objects and lists", () => {
+    const script = `
+[[start]]:
+@set bag = { lamp: 1 }
+[[cave]]
+
+[[cave]]:
+[[lake]] or [Look]
+
+[Look]:
+@set bag.rope = 1
+You find a rope.
+
+[[lake]]:
+@set bag.lamp = 0
+Back to the [[cave]].
+`;
+    const tracked = ["_visits", "_lastvisit", "_seen_sections", "bag", "_section"];
+    const snapshot = (api: { get: (a: string) => any }) => Object.fromEntries(tracked.map(a => [a, api.get(a)]));
+
+    test("puts them back as they were, one step at a time", async () => {
+        const { squiffyApi, element } = await initScript(script, true);
+        const steps = [snapshot(squiffyApi)];
+        for (const [type, text] of [["section", "cave"], ["passage", "Look"], ["section", "lake"], ["section", "cave"]]) {
+            await squiffyApi.clickLink(findLink(element, type, text, true));
+            steps.push(snapshot(squiffyApi));
+        }
+        expect(steps.at(-1)!._visits).toEqual({ start: 1, cave: 2, Look: 1, lake: 1 });
+        // Only what changed is kept, not a copy of each
+        for (const el of element.querySelectorAll("[data-undo]")) {
+            expect(JSON.parse(el.getAttribute("data-undo")!)._visits ?? null).toBeNull();
+        }
+        expect(element.querySelector("[data-undo-changes]")).not.toBeNull();
+
+        for (let i = steps.length - 2; i >= 0; i--) {
+            squiffyApi.goBack();
+            expect(snapshot(squiffyApi)).toEqual(steps[i]);
+        }
+    });
+
+    test("a game saved with whole old values still goes back", async () => {
+        const { squiffyApi, element } = await initScript(script, true);
+        const before = snapshot(squiffyApi);
+        await squiffyApi.clickLink(findLink(element, "section", "cave"));
+        // As Squiffy 7.0 betas saved it: the section's old values in full, in data-undo
+        const save = squiffyApi.getSave();
+        const output = document.createElement("div");
+        output.innerHTML = save.state._output as string;
+        const cave = output.querySelector("[data-section=cave]")!;
+        const old = { ...JSON.parse(cave.getAttribute("data-undo")!), _visits: before._visits, _lastvisit: before._lastvisit, _seen_sections: before._seen_sections };
+        cave.setAttribute("data-undo", JSON.stringify(old));
+        cave.removeAttribute("data-undo-changes");
+        save.state._output = output.innerHTML;
+
+        expect(await squiffyApi.loadSave(save)).toEqual({ success: true });
+        squiffyApi.goBack();
+        expect(snapshot(squiffyApi)).toEqual(before);
+    });
+
+    test("a change made after the section's shown is undone too", async () => {
+        const { squiffyApi, element } = await initScript("[[start]]:\n@set bag = { lamp: 1 }\n[[cave]]\n\n[[cave]]:\n@set bag.lamp = 2\n[[lake]]\n\n[[lake]]:\nA lake.", true);
+        await squiffyApi.clickLink(findLink(element, "section", "cave"));
+        await squiffyApi.clickLink(findLink(element, "section", "lake"));
+        squiffyApi.set("bag.torch", 1);
+        squiffyApi.goBack();
+        expect(squiffyApi.get("bag")).toEqual({ lamp: 2, torch: 1 });
+        squiffyApi.goBack();
+        expect(squiffyApi.get("bag")).toEqual({ lamp: 1 });
+    });
+
+    test("what an {{#every}} changes is undone with the section", async () => {
+        vi.useFakeTimers();
+        try {
+            const everyScript = `
+[[start]]:
+@set counts = { a: 0 }
+[[Next]](next)
+
+[[next]]:
+@set counts.b = 1
+{{#every 1000}}{{inc "counts.a"}}{{/every}}
+`;
+            const { squiffyApi, element } = await initScript(everyScript, true);
+            await squiffyApi.clickLink(findLink(element, "section", "Next"));
+            await vi.advanceTimersByTimeAsync(3000);
+            expect(squiffyApi.get("counts")).toEqual({ a: 3, b: 1 });
+            squiffyApi.goBack();
+            expect(squiffyApi.get("counts")).toEqual({ a: 0 });
+        }
+        finally {
+            vi.useRealTimers();
+        }
+    });
+});
+
 // State Persistence Tests
 test("State persistence: attributes saved to localStorage", async () => {
     const script = `
@@ -2189,6 +2286,46 @@ test("State persistence: restart only clears current storyId", async () => {
 
     // Clean up localStorage
     localStorage.clear();
+});
+
+// localStorage holds a few megabytes for every story on the site (#645)
+test("State persistence: a story carries on when localStorage is full, and stops keeping its progress there", async () => {
+    const storyId = "full-story";
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+        const script = "[[start]]:\n@set gold = 1\n[[cave]]\n\n[[cave]]:\n@set gold = 2\nA cave. [[lake]]\n\n[[lake]]:\nA lake.";
+        const element = document.getElementById("squiffy")!;
+        const { story } = await compile(script);
+        // Restarting starts again in the element, rather than reloading the page
+        const squiffyApi = await init({ element, story, persist: true, storyId, scroll: "element" });
+        await squiffyApi.begin();
+        expect(localStorage.getItem(`${storyId}-gold`)).toBe("1");
+
+        // Nearly all of jsdom's 5,000,000 code units
+        const room = 5_000_000 - Object.keys(localStorage).reduce((n, k) => n + k.length + localStorage.getItem(k)!.length, 0);
+        localStorage.setItem("filler", "x".repeat(room - 20 - "filler".length));
+        await squiffyApi.clickLink(findLink(element, "section", "cave"));
+        expect(squiffyApi.get("gold")).toBe(2);
+        expect(element.textContent).toContain("A cave.");
+        expect(warn).toHaveBeenCalledWith(expect.stringContaining("can't be kept in the browser's storage"));
+        // What was kept would be partly from one turn and partly from another
+        expect(Object.keys(localStorage).filter(k => k.startsWith(storyId + "-"))).toEqual([]);
+
+        // It isn't tried again for each attribute
+        warn.mockClear();
+        await squiffyApi.clickLink(findLink(element, "section", "lake"));
+        expect(element.textContent).toContain("A lake.");
+        expect(warn).not.toHaveBeenCalled();
+
+        // Restarting tries again
+        localStorage.removeItem("filler");
+        squiffyApi.restart();
+        await vi.waitFor(() => expect(localStorage.getItem(`${storyId}-gold`)).toBe("1"));
+    }
+    finally {
+        warn.mockRestore();
+        localStorage.clear();
+    }
 });
 
 // Edge Case Tests

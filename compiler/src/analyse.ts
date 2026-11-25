@@ -5,7 +5,7 @@ import type {
 import { positionMapper, SourceLine, transformText } from "./text.js";
 import { isScriptPath, isSquiffyPath, isStylesheetPath, PROJECT_FILENAME } from "./project.js";
 import { findV5Syntax } from "./v5.js";
-import { BareName, findTemplateError, findTemplateNames } from "./templates.js";
+import { BareName, checkTemplate, TemplateCheck } from "./templates.js";
 import { BUILT_IN_HELPERS } from "./helpers.js";
 import { ignoredDiagnostics } from "./ignore.js";
 import { sectionLabels } from "./section-labels.js";
@@ -42,9 +42,25 @@ export interface AnalyseSettings {
     ignore?: string[];
 }
 
-// Caches the syntax tree of each file by filename, reparsing a file only when its text changes.
+// Caches the syntax tree of each file by filename, reparsing a file only when its text changes,
+// and the Handlebars check of each section's and passage's text (the slowest part of analysing
+// it), so that after an edit only the text that changed is parsed again. Checks are kept for the
+// text in this analysis and the one before, so text that's gone is dropped.
 export class ParseCache {
     private files = new Map<string, { text: string; file: SquiffyFile }>();
+    private templates = new Map<string, TemplateCheck>();
+    private previousTemplates = new Map<string, TemplateCheck>();
+
+    startAnalysis() {
+        this.previousTemplates = this.templates;
+        this.templates = new Map();
+    }
+
+    checkTemplate(text: string): TemplateCheck {
+        const check = this.templates.get(text) ?? this.previousTemplates.get(text) ?? checkTemplate(text);
+        this.templates.set(text, check);
+        return check;
+    }
 
     parse(text: string, filename?: string): SquiffyFile {
         const key = filename ?? "";
@@ -196,6 +212,7 @@ function parseTransitionTime(time: string): number | undefined {
 export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
     const story = new Story();
     const cache = settings.parseCache ?? new ParseCache();
+    cache.startAnalysis();
     const files: SquiffyFile[] = [];
     // Each file's text, in the same order as files
     const texts: string[] = [];
@@ -684,14 +701,13 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
         };
 
         // Handlebars syntax errors, which would stop the text being shown at all
-        const templateError = findTemplateError(result.output);
+        const { error: templateError, names } = cache.checkTemplate(result.output);
         if (templateError) {
             const range = toRange(result.mapStart(templateError.start), result.mapEnd(templateError.end));
             report("error", "squiffy/template-syntax", section.filename, range, `${where}, ${templateError.message}`,
                 range.start.line + 1);
         }
         else {
-            const names = findTemplateNames(result.output);
             names.embedParameters.forEach(name => embedParameters.add(name));
             for (const bare of names.bare) {
                 const range = toRange(result.mapStart(bare.start), result.mapEnd(bare.end));

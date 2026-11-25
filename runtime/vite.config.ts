@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
 import { copyFileSync, mkdirSync } from "fs";
 import { resolve } from "path";
+import { noSourceMap } from "./vite.no-source-map";
 
 export default defineConfig({
     build: {
@@ -30,6 +31,7 @@ export default defineConfig({
     },
 
     plugins: [
+        noSourceMap,
         dts({
             entryRoot: "src",
             outDir: "dist"
