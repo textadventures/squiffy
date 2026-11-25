@@ -480,12 +480,15 @@ export class StoryMap implements vscode.Disposable {
     // After asking, as the editor's map does
     private async delete(nodes: GraphNode[]) {
         const graph = this.graph!;
-        // The text of every file with links in it, to find the links on lines of their own
+        // The text of every file with links in it, to find the links on lines of their own, and
+        // of the main file, for its @start line
         const texts = new Map<string, string>();
-        for (const file of new Set(graph.edges.map(e => e.location.file))) {
+        const files = new Set(graph.edges.map(e => e.location.file));
+        if (this.mainFile) files.add(this.mainFile);
+        for (const file of files) {
             texts.set(file, (await vscode.workspace.openTextDocument(this.uriOf(file))).getText());
         }
-        const plan = planDeletion(graph, nodes, texts);
+        const plan = planDeletion(graph, nodes, texts, this.mainFile);
         if (!plan) return;
         const answer = await vscode.window.showWarningMessage(deletionMessage(plan), { modal: true }, "Delete");
         if (answer != "Delete" || this.graph != graph) return;

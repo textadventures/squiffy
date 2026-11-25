@@ -81,6 +81,9 @@ export interface Deletion {
     brokenLinks: number;
     // The story starts at one of them
     start: boolean;
+    // The @start line that names it, in the main file, goes too, so the story starts at the main
+    // file's first section rather than nowhere
+    startLine: boolean;
 }
 
 // What deleting sections and passages from the map removes. A section goes with its passages and
@@ -92,7 +95,11 @@ export interface Deletion {
 // link, so deleting a section just made from the map leaves nothing behind. It needs the text of
 // the files (`texts`, by path) to tell; without it, every link is left, and counted as broken. A
 // link in among other text is always left for the author to reword.
-export function planDeletion(graph: StoryGraph, nodes: GraphNode[], texts?: ReadonlyMap<string, string>): Deletion | undefined {
+//
+// If the story starts at a section that's going, because the main file's @start names it, that
+// line goes too, so the story doesn't start at a section that isn't there. It needs `mainFile`,
+// with its text in `texts`.
+export function planDeletion(graph: StoryGraph, nodes: GraphNode[], texts?: ReadonlyMap<string, string>, mainFile?: string): Deletion | undefined {
     const sections = nodes.filter(n => n.kind == "section" && !n.detail && n.name != "");
     const goingSections = new Map<string, GraphNode>();
     let continuations = 0;
@@ -148,10 +155,29 @@ export function planDeletion(graph: StoryGraph, nodes: GraphNode[], texts?: Read
         if (!list) ranges.set(file, list = []);
         list.push({ start: range.start.line, end: range.start.line });
     }
+    const startSection = [...goingSections.values()].find(s => s.start);
+    let startLine = false;
+    const mainText = mainFile === undefined ? undefined : texts?.get(mainFile);
+    if (startSection && mainFile !== undefined && mainText !== undefined) {
+        // The last @start is the one that counts
+        const mainLines = splitLines(mainText);
+        for (let line = mainLines.length - 1; line >= 0; line--) {
+            const match = /^\s*@start (.*)$/.exec(mainLines[line]);
+            if (!match) continue;
+            if (match[1].trim() == startSection.name) {
+                let list = ranges.get(mainFile);
+                if (!list) ranges.set(mainFile, list = []);
+                list.push({ start: line, end: line });
+                startLine = true;
+            }
+            break;
+        }
+    }
     return {
         chosen, ranges, continuations, removedLinks, brokenLinks,
         passages: withSections,
-        start: [...goingSections.values()].some(s => s.start),
+        start: !!startSection,
+        startLine,
     };
 }
 
@@ -169,7 +195,8 @@ export function deletionMessage(d: Deletion): string {
         d.continuations ? `So ${d.continuations == 1 ? "does the section" : `do the ${d.continuations} sections`} that ${d.continuations == 1 ? "follows" : "follow"} on from ${one ? "it" : "them"} (+++ or ---).` : "",
         d.removedLinks ? `${d.removedLinks == 1 ? "The link" : `The ${d.removedLinks} links`} to ${d.chosen.length == 1 ? "it" : "them"} on ${d.removedLinks == 1 ? "a line of its own goes" : "lines of their own go"} too.` : "",
         d.brokenLinks ? `${count(d.brokenLinks, d.removedLinks ? "other link" : "link")} to ${d.chosen.length == 1 ? "it" : "them"} will be broken.` : "",
-        d.start ? "The story starts there, so it will start somewhere else." : "",
+        d.startLine ? "The story starts there, so its @start line goes too, and the story will start at the beginning of the main file."
+            : d.start ? "The story starts there, so it will start somewhere else." : "",
     ].filter(Boolean);
     return [`Delete ${what}?`, ...notes].join(" ");
 }

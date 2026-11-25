@@ -5807,13 +5807,20 @@ test("Renaming the section the story was started at starts the story again", asy
 });
 
 test("A story whose start doesn't exist shows nothing, and an edit doesn't crash it", async () => {
-    const { squiffyApi, element } = await initScript("@start nowhere\n\n[[a]]:\nSection a.");
+    // The compiler reports this as an error, but a story built by an older one could have it
+    const element = document.getElementById("squiffy")!;
+    const withStart = async (text: string, start: string) => {
+        const { story } = await compile(text);
+        return { ...story, start };
+    };
+    const squiffyApi = await init({ element, story: await withStart("[[a]]:\nSection a.", "nowhere") });
+    await squiffyApi.begin();
     expect(element.querySelector(".squiffy-output-section")).toBeNull();
 
-    const edited = (await compile("@start nowhere\n\n[[a]]:\nSection A.")).story;
+    const edited = await withStart("[[a]]:\nSection A.", "nowhere");
     expect(() => squiffyApi.update(edited)).not.toThrow();
     expect(element.querySelector(".squiffy-output-section")).toBeNull();
 
-    squiffyApi.update((await compile("@start a\n\n[[a]]:\nSection A.")).story);
+    squiffyApi.update(await withStart("[[a]]:\nSection A.", "a"));
     await vi.waitFor(() => expect(getSectionContent(element, "a")).toBe("Section A."));
 });

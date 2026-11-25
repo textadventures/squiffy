@@ -190,6 +190,23 @@ The end.
         expect(deletionMessage(plan)).toBe('Delete the section "start"? Its 2 passages go too. 1 link to it will be broken. The story starts there, so it will start somewhere else.');
     });
 
+    test("the section @start names takes its @start line with it", async () => {
+        const withStart = `@title Story\n@start right\n\n${story}`;
+        const graph = await graphOf(withStart);
+        const plan = planDeletion(graph, [node(graph, "section:right")], new Map([["story.squiffy", withStart]]), "story.squiffy")!;
+        expect(plan).toMatchObject({ start: true, startLine: true });
+        expect(deletionMessage(plan)).toBe('Delete the section "right"? 1 link to it will be broken. The story starts there, so its @start line goes too, and the story will start at the beginning of the main file.');
+        const text = applyEditsToString(withStart, deleteLinesEdits(withStart, plan.ranges.get("story.squiffy")!));
+        expect(text).toBe(`@title Story\n${story.replace("\n[[right]]:\nThe end.\n", "")}`);
+        // So the story has somewhere to start
+        expect((await graphOf(text)).nodes.find(n => n.start)?.name).toBe("start");
+
+        // An @start in another file than the main one isn't the story's, so it stays
+        const other = planDeletion(graph, [node(graph, "section:right")], new Map([["story.squiffy", withStart]]), "other.squiffy")!;
+        expect(other).toMatchObject({ start: true, startLine: false });
+        expect(other.ranges.get("story.squiffy")!.some(r => r.start <= 1 && r.end >= 1)).toBe(false);
+    });
+
     test("a passage", async () => {
         const { plan, text } = await remove(story, "passage:start/sign");
         expect(text).toBe(story.replace("[sign]:\nIt points [[left]].\n\n", ""));
