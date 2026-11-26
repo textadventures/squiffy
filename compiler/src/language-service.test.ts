@@ -523,7 +523,7 @@ describe("completion", () => {
 
         test("block helpers after {{#, replacing the }} an editor closed {{ with", async () => {
             const { items, text } = await applied("{{#i}}", 4, "if");
-            expect(items.map(i => i.label)).toEqual(["animate", "each", "embed", "every", "firsttime", "if", "label", "once", "replace", "style", "unless", "with"]);
+            expect(items.map(i => i.label)).toEqual(["animate", "each", "embed", "every", "firsttime", "if", "label", "once", "replace", "style", "unless"]);
             expect(text).toBe("{{#if ${1:condition}}}\n$0\n{{/if}}");
         });
 
@@ -565,6 +565,33 @@ describe("completion", () => {
             expect(await ls.getCompletions("s.squiffy", { line: 1, character: 11 })).toEqual([]);
             expect((await ls.getCompletions("s.squiffy", { line: 2, character: 7 })).map(i => i.kind)).not.toContain("helper");
             expect(await ls.getCompletions("s.squiffy", { line: 3, character: 8 })).toEqual([]);
+        });
+
+        test("not the helpers Squiffy has a simpler way for", async () => {
+            const labels = (await applied("{{#w", 4, "with")).items.map(i => i.label);
+            expect(labels).not.toContain("with");
+            expect((await applied("{{lo", 4, "lower")).items.map(i => i.label)).not.toContain("lookup");
+        });
+
+        test("with the helper's arguments and a link to its docs", async () => {
+            const { item } = await applied("{{#i", 4, "if");
+            expect(item!.documentation).toBe("`{{#if condition}}…{{/if}}`\n\n[More about {{#if}}](https://squiffystory.com/helpers-reference/#conditions)");
+        });
+
+        test("hover over a helper's name", async () => {
+            const files = memoryFiles({ "s.squiffy": "[[a]]:\n{{#if (seen \"a\")}}{{section \"a\"}}{{/if}} {{score}} (seen x)" });
+            const ls = createLanguageService({ files, mainFile: "s.squiffy", docsUrl: "https://beta.squiffystory.com" });
+            const hover = await ls.getHover("s.squiffy", { line: 1, character: 4 });
+            expect(hover).toEqual({
+                contents: "`{{#if condition}}…{{/if}}`\n\nShow the text only if a condition is true\n\n[More about {{#if}}](https://beta.squiffystory.com/helpers-reference/#conditions)",
+                range: { start: { line: 1, character: 3 }, end: { line: 1, character: 5 } },
+            });
+            expect((await ls.getHover("s.squiffy", { line: 1, character: 8 }))?.contents).toMatch(/^`\{\{seen "name"\}\}`/);
+            expect((await ls.getHover("s.squiffy", { line: 1, character: 21 }))?.contents).toMatch(/^`\{\{section "name" text="label"\}\}`/);
+            expect((await ls.getHover("s.squiffy", { line: 1, character: 36 }))?.contents).toMatch(/^`\{\{#if/);
+            // Not an attribute, nor a word in brackets in the text
+            expect(await ls.getHover("s.squiffy", { line: 1, character: 45 })).toBeUndefined();
+            expect(await ls.getHover("s.squiffy", { line: 1, character: 52 })).toBeUndefined();
         });
 
         test("the innermost open block after {{/", async () => {

@@ -78,6 +78,7 @@ export function toLspCompletion(item: CompletionItem): LspCompletionItem {
         label: item.label,
         kind: COMPLETION_KINDS[item.kind],
         detail: item.detail,
+        documentation: item.documentation === undefined ? undefined : markdown(item.documentation),
         textEdit: { range: item.range, newText: item.insertText ?? item.label },
         insertTextFormat: item.isSnippet ? InsertTextFormat.Snippet : InsertTextFormat.PlainText,
         // VS Code filters on the text the edit replaces up to the cursor, which is what's been

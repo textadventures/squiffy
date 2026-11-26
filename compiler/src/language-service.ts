@@ -21,7 +21,8 @@ import { insertHeaderEdit, placeNewSection } from "./placement.js";
 import { buildStoryGraph, firstScreenSoundDiagnostics, GraphUsage, StoryGraph, storyGraphDiagnostics } from "./story-graph.js";
 import { squiffyLinkFor, twineLinkParts } from "./twine/link-syntax.js";
 import { BUILT_IN_HELPERS } from "./helpers.js";
-import { HELPER_INFO } from "./helper-info.js";
+import { DEFAULT_DOCS_URL, HELPER_INFO } from "./helper-info.js";
+import { snippetText } from "./snippets.js";
 import { BUILT_IN_SNIPPETS } from "./snippets.js";
 
 export type { Diagnostic, Position, Range } from "./syntax.js";
@@ -40,6 +41,8 @@ export interface LanguageServiceOptions {
     // The project path of the story's main .squiffy file, which @imports the others. A
     // squiffy.json at the root of the project takes precedence.
     mainFile: string;
+    // The docs site that hovers and completions link to, https://squiffystory.com by default
+    docsUrl?: string;
 }
 
 // How the project's files make up the story
@@ -97,6 +100,8 @@ export interface CompletionItem {
     // The text matched against what's typed, if it isn't the label
     filterText?: string;
     detail?: string;
+    // More about it, in Markdown, such as a helper's arguments and a link to its docs
+    documentation?: string;
     // The text the item replaces: what has been typed of it so far, and sometimes what follows the
     // cursor, such as the }} an editor closed {{ with.
     range: Range;
@@ -314,9 +319,46 @@ const lineRange = (line: number, start: number, end: number): Range => ({
     end: { line, character: end },
 });
 
+// How a helper is written, such as {{section "name" text="label"}} or {{#if condition}}…{{/if}}
+function helperSignature(name: string): string {
+    const info = HELPER_INFO[name];
+    const args = info?.args ? ` ${snippetText(info.args)}` : "";
+    return info?.block == "only" ? `{{#${name}${args}}}…{{/${name}}}` : `{{${name}${args}}}`;
+}
+
+// A helper's signature and a link to its docs, in Markdown, with its description first if `detail`
+function helperDocs(name: string, docsUrl: string, detail: boolean): string {
+    const info = HELPER_INFO[name];
+    const parts = [`\`${helperSignature(name)}\``];
+    if (detail) parts.push(info.detail);
+    const title = info.block == "only" ? `{{#${name}}}` : `{{${name}}}`;
+    if (info.docs) parts.push(`[More about ${title}](${docsUrl}${info.docs})`);
+    return parts.join("\n\n");
+}
+
+// The helper whose name is at a position in a line, written as {{name, {{#name, {{/name or, inside
+// {{ }}, (name
+function helperAt(line: string, character: number): { name: string; start: number; end: number } | undefined {
+    const before = /\w*$/.exec(line.substring(0, character))![0];
+    const after = /^\w*/.exec(line.substring(character))![0];
+    const name = before + after;
+    const start = character - before.length;
+    const info = HELPER_INFO[name];
+    if (!name || !info || info.hidden) return undefined;
+    const prefix = line.substring(0, start);
+    if (/\{\{~?\s*[#/]?\s*$/.test(prefix)) return { name, start, end: start + name.length };
+    if (/\(\s*$/.test(prefix)) {
+        const open = prefix.lastIndexOf("{{");
+        if (open >= 0 && prefix.indexOf("}}", open) < 0 && !/^\{\{~?!/.test(prefix.substring(open))) {
+            return { name, start, end: start + name.length };
+        }
+    }
+    return undefined;
+}
+
 // Completion of helper names in {{name, {{#name, {{/name and, inside {{ }}, (name, or undefined if
 // the cursor isn't at one. `before` is the file's text up to the cursor, `after` the rest of its line.
-function helperCompletions(before: string, after: string, position: Position, attributes: string[]): CompletionItem[] | undefined {
+function helperCompletions(before: string, after: string, position: Position, attributes: string[], docsUrl: string): CompletionItem[] | undefined {
     const match = /\{\{(~?)\s*([#/]?)(\w*)$/.exec(before) ?? /(\()\s*(\w*)$/.exec(before);
     if (!match) return undefined;
     const isSubexpression = match[1] == "(";
@@ -366,24 +408,25 @@ function helperCompletions(before: string, after: string, position: Position, at
     const items: CompletionItem[] = [];
     for (const name of [...BUILT_IN_HELPERS].sort()) {
         const info = HELPER_INFO[name];
-        if (!info) continue;
+        if (!info || info.hidden) continue;
+        const documentation = helperDocs(name, docsUrl, false);
         if (mark == "#") {
             if (!info.block) continue;
             items.push(whole
-                ? { label: name, kind: "helper", detail: info.detail, insertText: blockBody(name, info.args), isSnippet: true, range: withCloser }
-                : plain({ label: name, kind: "helper", detail: info.detail }));
+                ? { label: name, kind: "helper", detail: info.detail, documentation, insertText: blockBody(name, info.args), isSnippet: true, range: withCloser }
+                : plain({ label: name, kind: "helper", detail: info.detail, documentation }));
         }
         else if (info.block == "only") {
             // {{if offers {{#if, as that's what's meant
             if (isSubexpression) continue;
             items.push(whole
-                ? { label: `#${name}`, filterText: name, kind: "helper", detail: info.detail, insertText: `#${blockBody(name, info.args)}`, isSnippet: true, range: withCloser }
-                : plain({ label: `#${name}`, filterText: name, kind: "helper", detail: info.detail }));
+                ? { label: `#${name}`, filterText: name, kind: "helper", detail: info.detail, documentation, insertText: `#${blockBody(name, info.args)}`, isSnippet: true, range: withCloser }
+                : plain({ label: `#${name}`, filterText: name, kind: "helper", detail: info.detail, documentation }));
         }
         else {
             items.push(whole && info.args
-                ? { label: name, kind: "helper", detail: info.detail, insertText: `${name} ${info.args}${closing}`, isSnippet: true, range: withCloser }
-                : plain({ label: name, kind: "helper", detail: info.detail }));
+                ? { label: name, kind: "helper", detail: info.detail, documentation, insertText: `${name} ${info.args}${closing}`, isSnippet: true, range: withCloser }
+                : plain({ label: name, kind: "helper", detail: info.detail, documentation }));
         }
     }
     if (mark == "") {
@@ -400,6 +443,7 @@ function helperCompletions(before: string, after: string, position: Position, at
 export function createLanguageService(options: LanguageServiceOptions): LanguageService {
     const files = options.files;
     let mainFile = options.mainFile;
+    const docsUrl = options.docsUrl ?? DEFAULT_DOCS_URL;
     const openFiles = new Map<string, string>();
     const diskTexts = new Map<string, Promise<string>>();
     const parseCache = new ParseCache();
@@ -1052,7 +1096,7 @@ export function createLanguageService(options: LanguageServiceOptions): Language
                 return passageItems(match[1]);
             }
             const helpers = helperCompletions(
-                [...lines.slice(0, position.line), prefix].join("\n"), lineText.substring(position.character), position, [...index.attributes]);
+                [...lines.slice(0, position.line), prefix].join("\n"), lineText.substring(position.character), position, [...index.attributes], docsUrl);
             if (helpers) return helpers;
             if ((match = /^\s*(@\w*)$/.exec(prefix))) {
                 return DIRECTIVES.map(([name, detail]) => ({
@@ -1085,6 +1129,11 @@ export function createLanguageService(options: LanguageServiceOptions): Language
 
         async getHover(path, position) {
             const index = await getIndex();
+            // A helper's name, which comes before the section it may name, as in (seen "name")
+            const tree = await getFile(index, path);
+            const line = tree?.text.replace(/\r/g, "").split("\n")[position.line];
+            const helper = line === undefined ? undefined : helperAt(line, position.character);
+            if (helper) return { contents: helperDocs(helper.name, docsUrl, true), range: lineRange(position.line, helper.start, helper.end) };
             const found = await symbolAt(index, path, position);
             if (!found?.usage) return undefined;
             const { symbol } = found;

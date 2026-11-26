@@ -3,6 +3,7 @@
 // being edited with updateFile() as it changes.
 import { convertV5Syntax, emit, findV5Syntax, formatDiagnostic } from "squiffy-compiler";
 import { createLanguageService, type LanguageService } from "squiffy-compiler/language-service";
+import { DOCS_URL } from "../links.js";
 import { connect, type Handlers, type Port } from "../rpc.js";
 import type { ExportKind, ExportResult, HostApi, WorkerApi } from "./protocol.js";
 
@@ -43,6 +44,8 @@ const handlers: WorkerApi = {
     open(path) {
         service = createLanguageService({
             mainFile: path,
+            // The beta editor's links go to the beta docs
+            docsUrl: DOCS_URL,
             files: {
                 list: () => host.call("list"),
                 readText: path => host.call("readText", path),
