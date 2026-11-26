@@ -501,7 +501,78 @@ describe("completion", () => {
 
     test("snippets at the start of a line", async () => {
         const items = await complete("\nde", "");
-        expect(items).toMatchObject([{ label: "description", kind: "snippet", insertText: "A damp cellar." }]);
+        expect(items[0]).toMatchObject({ label: "description", kind: "snippet", insertText: "A damp cellar." });
+        // and the built-in snippets, by their prefixes
+        expect(items.find(i => i.label == "ifelse")).toMatchObject({
+            kind: "snippet", detail: "If… otherwise…", isSnippet: true, insertText: "{{#if ${1:condition}}}\n$2\n{{else}}\n$0\n{{/if}}",
+        });
+    });
+
+    describe("helpers", () => {
+        // The text of the cursor's line, with the item applied
+        const applied = async (line: string, cursor: number, label: string) => {
+            const files = memoryFiles({ "s.squiffy": `[[a]]:\n@set score = 1\n${line}` });
+            const ls = createLanguageService({ files, mainFile: "s.squiffy" });
+            const items = await ls.getCompletions("s.squiffy", { line: 2, character: cursor });
+            const item = items.find(i => i.label == label);
+            if (!item) return { items, text: undefined };
+            expect(item.range.start.line).toBe(2);
+            const text = line.substring(0, item.range.start.character) + (item.insertText ?? item.label) + line.substring(item.range.end.character);
+            return { items, item, text };
+        };
+
+        test("block helpers after {{#, replacing the }} an editor closed {{ with", async () => {
+            const { items, text } = await applied("{{#i}}", 4, "if");
+            expect(items.map(i => i.label)).toEqual(["animate", "each", "embed", "every", "firsttime", "if", "label", "once", "replace", "style", "unless", "with"]);
+            expect(text).toBe("{{#if ${1:condition}}}\n$0\n{{/if}}");
+        });
+
+        test("a block in a line of text stays on the line", async () => {
+            expect((await applied("You {{#if", 9, "if")).text).toBe("You {{#if ${1:condition}}}$0{{/if}}");
+            expect((await applied("{{#once", 7, "once")).text).toBe("{{#once}}\n$0\n{{/once}}");
+        });
+
+        test("only the name, in a call that's already written", async () => {
+            const { item, text } = await applied("{{#i x}}", 4, "if");
+            expect(item!.isSnippet).toBeFalsy();
+            expect(text).toBe("{{#if x}}");
+            expect((await applied("{{sec \"a\"}}", 5, "section")).text).toBe("{{section \"a\"}}");
+        });
+
+        test("helpers and attributes after {{", async () => {
+            const { items, text } = await applied("{{sec}}", 5, "section");
+            expect(text).toBe("{{section \"${1:name}\" text=\"${2:label}\"}}");
+            expect(items.find(i => i.label == "score")).toMatchObject({ kind: "attribute", insertText: "score}}" });
+            expect(items.find(i => i.label == "else")).toMatchObject({ kind: "keyword" });
+            // A block helper is offered with its #
+            const block = items.find(i => i.label == "#if")!;
+            expect(block.filterText).toBe("if");
+            expect((await applied("{{i", 3, "#if")).text).toBe("{{#if ${1:condition}}}\n$0\n{{/if}}");
+            expect((await applied("{{cl", 4, "clear")).text).toBe("{{clear}}");
+        });
+
+        test("in a subexpression inside {{ }}", async () => {
+            const { items, text } = await applied("{{#if (se)}}", 9, "seen");
+            expect(text).toBe("{{#if (seen \"${1:name}\")}}");
+            expect(items.some(i => i.label.startsWith("#"))).toBe(false);
+            expect(items.some(i => i.label == "else")).toBe(false);
+            expect((await applied("{{#if (seen \"a\") and (", 23, "not")).text).toBe("{{#if (seen \"a\") and (not ${1:value})");
+        });
+
+        test("not ( in text, a link or a comment", async () => {
+            const files = memoryFiles({ "s.squiffy": "[[a]]:\nSome (aside\n[[a]](a\n{{!-- (x" });
+            const ls = createLanguageService({ files, mainFile: "s.squiffy" });
+            expect(await ls.getCompletions("s.squiffy", { line: 1, character: 11 })).toEqual([]);
+            expect((await ls.getCompletions("s.squiffy", { line: 2, character: 7 })).map(i => i.kind)).not.toContain("helper");
+            expect(await ls.getCompletions("s.squiffy", { line: 3, character: 8 })).toEqual([]);
+        });
+
+        test("the innermost open block after {{/", async () => {
+            const files = memoryFiles({ "s.squiffy": "[[a]]:\n{{#if x}}\n{{#each y}}{{/each}}\n{{#once}}\n{{/once}}\n{{/}}" });
+            const ls = createLanguageService({ files, mainFile: "s.squiffy" });
+            const items = await ls.getCompletions("s.squiffy", { line: 5, character: 3 });
+            expect(items).toMatchObject([{ label: "if", insertText: "if}}", range: { start: { character: 3 }, end: { character: 5 } } }]);
+        });
     });
 });
 

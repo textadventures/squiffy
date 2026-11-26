@@ -42,6 +42,10 @@
       "types": "./dist/language-service.d.ts",
       "default": "./dist/language-service.js"
     },
+    "./snippets": {
+      "types": "./dist/snippets.d.ts",
+      "default": "./dist/snippets.js"
+    },
     "./infix-expressions": {
       "types": "./dist/infix-expressions.d.ts",
       "default": "./dist/infix-expressions.js"

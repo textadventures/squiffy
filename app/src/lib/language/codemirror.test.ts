@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { Text } from "@codemirror/state";
-import { applyEditsToString, toOffset, toPosition } from "./codemirror.js";
+import { applyEditsToString, toCodeMirrorSnippet, toOffset, toPosition } from "./codemirror.js";
 
 describe("positions", () => {
     const doc = Text.of(["[[start]]:", "Hello", ""]);
@@ -32,4 +32,8 @@ describe("applyEditsToString", () => {
         expect(applyEditsToString("[[a]]:\r\nx\r\n", [{ range: range(1, 0, 1), newText: "y\nz" }]))
             .toBe("[[a]]:\r\ny\r\nz\r\n");
     });
+});
+
+test("LSP snippets as CodeMirror's, with their braces escaped", () => {
+    expect(toCodeMirrorSnippet("{{#if ${1:condition}}}\n$0\n{{/if}}")).toBe("\\{\\{#if ${1:condition}\\}\\}\n${0}\n\\{\\{/if\\}\\}");
 });

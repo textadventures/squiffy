@@ -1,7 +1,7 @@
 // Connects a CodeMirror editor to the language service worker:
 //   - diagnostics as lint markers, with quick fixes (e.g. creating a missing section, #173)
 //   - the document outline, and folding ranges
-//   - completion of section, passage, attribute and snippet names
+//   - completion of section, passage, attribute, helper and snippet names
 //   - hover previews of the section or passage a link goes to
 //   - go to definition (F12, or Ctrl/Cmd+click), find references (Shift+F12) and rename (F2)
 //   - a bar at the cursor offering to go where a link goes, or to fix a problem (cursor-bar.ts)
@@ -11,7 +11,7 @@
 import { Facet, StateEffect, StateField, Text, type EditorState, type Extension } from "@codemirror/state";
 import { EditorView, hoverTooltip, keymap, type Command } from "@codemirror/view";
 import { foldService } from "@codemirror/language";
-import type { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
+import { snippet, type Completion, type CompletionContext, type CompletionResult } from "@codemirror/autocomplete";
 import { forceLinting, linter, lintGutter, type Action, type Diagnostic as CmDiagnostic } from "@codemirror/lint";
 import type {
     CodeAction, CompletionItem, DocumentSymbol, FoldingRange, Location, Position, TextEdit, WorkspaceEdit,
@@ -94,7 +94,16 @@ const COMPLETION_TYPES: Record<CompletionItem["kind"], string> = {
     attribute: "variable",
     snippet: "text",
     directive: "keyword",
+    helper: "function",
+    keyword: "keyword",
 };
+
+// An LSP snippet's tab stops (${1:placeholder}, $0) as a CodeMirror snippet's, whose other braces
+// have to be escaped
+export function toCodeMirrorSnippet(text: string): string {
+    return text.replace(/\$\{(\d+)(?::([^}]*))?\}|\$(\d+)|[{}]/g, (match, n, placeholder, bare) =>
+        n !== undefined ? `\${${n}:${placeholder ?? ""}}` : bare !== undefined ? `\${${bare}}` : `\\${match}`);
+}
 
 // Folding ranges from the last analysis, as document offsets, kept in step with edits
 const setFoldRanges = StateEffect.define<{ from: number; to: number }[]>();
@@ -259,13 +268,28 @@ export function languageFeatures(options: LanguageFeatureOptions): Extension[] {
         if (onlySnippets && !context.explicit && !context.matchBefore(/\w+$/)) return null;
         return {
             from: toOffset(doc, items[0].range.start),
-            options: items.map(item => ({
-                label: item.label,
-                type: COMPLETION_TYPES[item.kind],
-                detail: item.detail ?? item.kind,
-                apply: item.insertText ?? item.label,
-            })),
-            validFor: /^[^[\]()\n,"']*$/,
+            options: items.map((item): Completion => {
+                // What the item replaces after the cursor, such as the }} closeBrackets added
+                const beyond = toOffset(doc, item.range.end) - context.pos;
+                const text = item.insertText ?? item.label;
+                const insert = item.isSnippet ? snippet(toCodeMirrorSnippet(text)) : undefined;
+                return {
+                    label: item.filterText ?? item.label,
+                    displayLabel: item.label,
+                    type: COMPLETION_TYPES[item.kind],
+                    detail: item.detail ?? item.kind,
+                    apply: (view, completion, from, to) => {
+                        if (insert) insert(view, completion, from, to + beyond);
+                        else view.dispatch({
+                            changes: { from, to: to + beyond, insert: text },
+                            selection: { anchor: from + text.length },
+                            userEvent: "input.complete",
+                        });
+                    },
+                };
+            }),
+            // A helper's name is a word
+            validFor: items.some(i => i.kind === "helper" || i.kind === "keyword") ? /^\w*$/ : /^[^[\]()\n,"']*$/,
         };
     }
 

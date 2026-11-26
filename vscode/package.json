@@ -58,12 +58,6 @@
         }
       }
     ],
-    "snippets": [
-      {
-        "language": "squiffy",
-        "path": "./snippets/squiffy.code-snippets"
-      }
-    ],
     "viewsContainers": {
       "activitybar": [
         {
