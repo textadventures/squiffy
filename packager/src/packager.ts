@@ -45,6 +45,11 @@ export interface PackageOptions {
      */
     startAnywhere?: boolean;
     /**
+     * Whether a bare {{name}} that isn't set shows as a faint {{name}}, in place of nothing, for
+     * the author testing the story (#712). The CLI's --serve builds the page it shows with it.
+     */
+    showUnsetNames?: boolean;
+    /**
      * The page's own text, such as the Restart button's tooltip, from the story's squiffy.json's
      * "strings". Anything left out is in English.
      */
@@ -264,6 +269,7 @@ export const createPackage = async (input: CompileSuccess, createZipOrOptions: b
     htmlData = htmlData.replace("/* PAGE_STRINGS */", () => scriptSafeJson(strings));
     const projectId = input.output.story.projectId;
     htmlData = htmlData.replace("/* STORAGE_KEY */", () => projectId ? scriptSafeJson(projectId) : "window.location.pathname");
+    htmlData = htmlData.replace(/\n([ \t]*)\/\* SHOW_UNSET_NAMES \*\//, (_, indent: string) => options.showUnsetNames === true ? "\n" + indent + "showUnsetNames: true," : "");
     htmlData = htmlData.replace("/* START_ANYWHERE */", () => options.startAnywhere === true ? "true" : "false");
     htmlData = htmlData.replace("<!-- INFO -->", () => infoComment);
     htmlData = htmlData.replace("<!-- TITLE -->", () => uiInfo.title);

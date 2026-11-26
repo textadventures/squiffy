@@ -37,7 +37,7 @@ When [playing from the command line](/cli/#other-options), use `--start`.
 
 ### Setting up a scene
 
-Most late sections need some attributes to be set, such as the key the player picked up on the way. Write a section that sets them and then [goes to](/basic-concepts/#go-to-another-section) the scene, and mark it with `@test`:
+Most late sections need some attributes to be set, such as the key the player picked up on the way. When you're testing, in the editor's preview, VS Code's preview or a story served by `--serve`, an attribute shown with `{{name}}` that hasn't been set appears faintly as `{{name}}`, so you can see what the scene is missing. Players never see this: in the published story it shows nothing. Write a section that sets them and then [goes to](/basic-concepts/#go-to-another-section) the scene, and mark it with `@test`:
 
 ```squiffy
 [[vault with the key]]:

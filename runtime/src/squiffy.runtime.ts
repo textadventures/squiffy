@@ -384,7 +384,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         const textMatch = target && /^\s*:=(.*)$/.exec(target.rest);
         if (target && textMatch) {
             // Text with {{...}} processed, as before
-            state.setAt(targetPath(target), ui.processText(textMatch[1], true));
+            state.setAt(targetPath(target), textProcessor.process(textMatch[1], true, false));
             return;
         }
         const match = target && /^\s*([+\-*/]?)=(?!=)(.*)$/.exec(target.rest);
@@ -411,7 +411,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     // A story without a squiffy.json, as in Squiffy 6: the right-hand side is a number, true,
     // false, @attribute, or else text
     function setWithoutExpression(expr: string) {
-        expr = expr.replace(/^([\p{L}\p{N}_]*\s*):=(.*)$/u, (_, name, value) => (name + "=" + ui.processText(value, true)));
+        expr = expr.replace(/^([\p{L}\p{N}_]*\s*):=(.*)$/u, (_, name, value) => (name + "=" + textProcessor.process(value, true, false)));
         const setRegex = /^([\p{L}\p{N}_]*)\s*=\s*(.*)$/u;
         const setMatch = setRegex.exec(expr);
         if (setMatch) {
@@ -1692,6 +1692,7 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     };
 
     const textProcessor = new TextProcessor(() => story, state, () => currentSection);
+    textProcessor.showUnsetNames = !!options.showUnsetNames;
     const strings = options.strings ?? {};
     if (typeof strings.restart == "string") textProcessor.strings.restart = strings.restart;
     if (typeof strings.saves == "string") textProcessor.strings.saves = strings.saves;

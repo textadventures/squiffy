@@ -98,6 +98,18 @@ test("Exported page only lets anyone start at any section when it's asked to", a
     expect(testing).toContain("if (true && window.location.protocol !== 'blob:') {");
 });
 
+test("Exported page only shows unset names when it's asked to (#712)", async () => {
+    const compileResult = await compile({ script: "Hello world!" });
+    if (!compileResult.success) throw new Error("Compile failed");
+
+    const html = (await createPackage(compileResult, {})).files["index.html"];
+    expect(html).not.toContain("SHOW_UNSET_NAMES");
+    expect(html).not.toContain("showUnsetNames");
+
+    const testing = (await createPackage(compileResult, { showUnsetNames: true })).files["index.html"];
+    expect(testing).toContain("                showUnsetNames: true,\n");
+});
+
 test("Exported page has a Save button, which opens the Saved games dialog, unless it's turned off", async () => {
     const compileResult = await compile({ script: "Hello world!" });
     if (!compileResult.success) throw new Error("Compile failed");

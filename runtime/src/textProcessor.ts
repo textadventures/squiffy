@@ -35,6 +35,61 @@ interface EmbedScope {
 // The comment {{clear}} writes (#524)
 export const CLEAR_MARKER = "squiffy-clear";
 
+// The marker an unset {{name}} leaves in the text being processed, when it's shown (#712): the
+// name's number in TextProcessor's unsetNames, between two private-use characters, which nothing
+// escapes and no story has
+const UNSET_START = "\uE000";
+const UNSET_END = "\uE001";
+const UNSET_MARKER = /\uE000(\d+)\uE001/g;
+
+// Where text isn't shown as text, so an unset name in it is taken out
+const NOT_SHOWN = new Set(["SCRIPT", "STYLE", "TEXTAREA", "TITLE", "OPTION"]);
+
+// html with each unset name's marker in its text made a faint {{name}}, and every other marker
+// (in an attribute, such as a link's setters or an image's src) taken out
+function showUnsetNames(html: string, names: string[]): string {
+    const template = document.createElement("template");
+    template.innerHTML = html;
+    const strip = (s: string) => s.replace(UNSET_MARKER, "");
+    // 1 | 4: NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT
+    const walker = document.createTreeWalker(template.content, 1 | 4);
+    const texts: Text[] = [];
+    while (walker.nextNode()) {
+        const node = walker.currentNode;
+        if (node.nodeType == 1) {
+            for (const attr of Array.from((node as Element).attributes)) {
+                if (attr.value.includes(UNSET_START)) attr.value = strip(attr.value);
+            }
+        }
+        else if (node.nodeValue?.includes(UNSET_START)) {
+            texts.push(node as Text);
+        }
+    }
+    for (const text of texts) {
+        const value = text.nodeValue ?? "";
+        if (text.parentElement && NOT_SHOWN.has(text.parentElement.tagName)) {
+            text.nodeValue = strip(value);
+            continue;
+        }
+        const fragment = document.createDocumentFragment();
+        let last = 0;
+        for (const match of value.matchAll(UNSET_MARKER)) {
+            if (match.index > last) fragment.append(value.substring(last, match.index));
+            last = match.index + match[0].length;
+            const name = names[Number(match[1])];
+            if (name === undefined) continue;
+            const span = document.createElement("span");
+            span.className = "squiffy-unset";
+            span.title = `${name} isn't set`;
+            span.textContent = `{{${name}}}`;
+            fragment.append(span);
+        }
+        if (last < value.length) fragment.append(value.substring(last));
+        text.replaceWith(fragment);
+    }
+    return template.innerHTML;
+}
+
 // What's left of html once everything before its last {{clear}} is taken out, or null if it has none
 export function afterClear(html: string): string | null {
     if (!html.includes(`<!--${CLEAR_MARKER}-->`)) return null;
@@ -129,6 +184,18 @@ export class TextProcessor {
             } finally {
                 processor.scopes = callerScopes;
             }
+        });
+
+        // A bare {{name}} that's neither a helper nor an attribute with a value comes here. In the
+        // author's testing views (showUnsetNames), it's left as a marker, which process() makes
+        // into a faint {{name}} in the text, and takes out of everything else (#712).
+        // Otherwise, as Handlebars' own: nothing, or an error if it was given values.
+        this.registerOwnHelper("helperMissing", (...args: any[]) => {
+            const options = args.pop();
+            if (args.length) throw new Error(`Missing helper: "${options?.name}"`);
+            if (!this.showUnsetNames || typeof options?.name != "string") return undefined;
+            this.unsetNames.push(options.name);
+            return `${UNSET_START}${this.unsetNames.length - 1}${UNSET_END}`;
         });
 
         // Inside an embed that wraps text, that text (#450). A story can have an attribute
@@ -894,19 +961,31 @@ export class TextProcessor {
     // Where the __value helper puts the value of the expression being evaluated
     private evaluated: unknown;
 
-    process(text: string, inline: boolean) {
+    // Shows a bare {{name}} that isn't set as a faint {{name}}, in place of nothing, for the
+    // author's testing views (#712). The init option showUnsetNames.
+    showUnsetNames = false;
+    // The names of the unset {{name}}s in the text being processed, which their markers number
+    private unsetNames: string[] = [];
+
+    // html: whether the result is shown as HTML. If it isn't, such as the value of a := setter, an
+    // unset {{name}} in it is nothing, even when showUnsetNames is on.
+    process(text: string, inline: boolean, html = true) {
+        const outermost = !this.processing.length;
+        if (outermost) this.unsetNames = [];
         this.processing.push(text);
         try {
             // compat: inside an {{#each}}, a name that isn't one of the item's looks for an attribute
             const template = this.handlebars.compile(rewriteInfixExpressions(captureEveryBodies(text)), { compat: true });
             text = template(this.context());
 
-            if (inline) {
-                return marked.parseInline(text, { async: false }).trim();
+            let result = inline
+                ? marked.parseInline(text, { async: false }).trim()
+                : marked.parse(text, { async: false }).trim();
+            // An embed's text keeps its markers for the text it's in
+            if (outermost && result.includes(UNSET_START)) {
+                result = html ? showUnsetNames(result, this.unsetNames).trim() : result.replace(UNSET_MARKER, "");
             }
-            else {
-                return marked.parse(text, { async: false }).trim();
-            }
+            return result;
         } catch (e) {
             const errorMessage = e instanceof Error ? e.message : String(e);
             console.error("Squiffy template error:", errorMessage);

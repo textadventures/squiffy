@@ -126,6 +126,8 @@ For the author testing a late scene in a browser without playing up to it. A sto
 - `&set=` sets an attribute first, once for each, written as after `@set`: `?start=the vault&set=has_key&set=score=5`.
 - The flag button above the story lists the sections, `@test` ones first, under **From the beginning**, which goes back to the story's start.
 
+In the author's testing views (the editor's and VS Code's previews, and `--serve`'s page), a bare `{{name}}` that's neither a helper nor a set attribute shows faintly as `{{name}}`, so a scene started without its attributes shows what's missing. Not in the published story, where it's nothing, nor in `--play`'s text, nor for `{{#if name}}`, expressions or paths such as `{{hero.name}}`.
+
 When a scene needs more than an attribute or two, write a section that sets them and goes on to it, marked `@test`, and start there:
 
 ```squiffy

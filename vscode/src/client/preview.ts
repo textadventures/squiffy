@@ -157,7 +157,8 @@ export class Preview implements vscode.Disposable {
         this.log.clear();
         this.startedAgain();
         await this.sendAssets();
-        this.host.load({ js: result.js, css: result.css, scripts: result.scripts }, startAt ? { startAt } : {});
+        // An unset {{name}} shows faintly, for the author (#712)
+        this.host.load({ js: result.js, css: result.css, scripts: result.scripts }, { ...(startAt ? { startAt } : {}), showUnsetNames: true });
         this.running = true;
     }
 

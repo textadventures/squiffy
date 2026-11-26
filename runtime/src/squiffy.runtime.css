@@ -20,6 +20,12 @@
     --squiffy-success: light-dark(#2e7d32, #6cc070);
 }
 
+/* An attribute that isn't set, shown as {{name}} in the author's testing views (showUnsetNames, #712) */
+.squiffy-unset
+{
+    opacity: 0.5;
+}
+
 /* Link styles */
 a.squiffy-link
 {

@@ -115,7 +115,7 @@ export const createTestingFiles = async (input: string | StoryOnDisk, options: P
     const result = await getCompileResult(story, true);
     if (!result.success) return undefined;
     const assets = options.assets ?? storyAssets(story.mainFile, result, story.cover);
-    const pkg = await createPackage(result, { ...storyDetails(story, assets), ...options, createZip: false, startAnywhere: true, assets });
+    const pkg = await createPackage(result, { ...storyDetails(story, assets), ...options, createZip: false, startAnywhere: true, showUnsetNames: true, assets });
     return Object.fromEntries(Object.entries(pkg.files).filter(([name]) => name == "index.html" || name == "story.js"));
 };
 

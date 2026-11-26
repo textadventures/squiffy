@@ -160,11 +160,14 @@ Content for zip test.
         expect(await read("story.js")).toContain("\"hall\"");
         expect(await read("story.js")).not.toContain("shortcut");
         expect(await read("index.html")).toContain("if (false && ");
+        expect(await read("index.html")).not.toContain("showUnsetNames");
 
         const testing = await createTestingFiles(story);
         expect(Object.keys(testing!).sort()).toEqual(["index.html", "story.js"]);
         expect(testing!["story.js"]).toContain("\"shortcut\"");
         expect(testing!["index.html"]).toContain("if (true && ");
+        // and an unset {{name}} shows faintly (#712)
+        expect(testing!["index.html"]).toContain("showUnsetNames: true,");
         // The files on disk are still the published ones
         expect(await read("story.js")).not.toContain("shortcut");
 
@@ -173,6 +176,7 @@ Content for zip test.
         expect(await createPackageFiles(open, OUTPUT_DIR, { startAnywhere: open.startAnywhere })).toBe(true);
         expect(await read("story.js")).toContain("\"shortcut\"");
         expect(await read("index.html")).toContain("if (true && ");
+        expect(await read("index.html")).not.toContain("showUnsetNames");
     });
 
     test("the page has squiffy.json's id, description, author, cover and language, and the cover is copied with the story", async () => {

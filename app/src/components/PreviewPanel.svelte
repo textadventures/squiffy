@@ -232,7 +232,8 @@
         running = true;
         onStarted?.();
         host.setAssets({ files: await assets() });
-        host.load({ js: result.js, css: result.css, scripts: result.scripts }, at ? { startAt: at } : {});
+        // An unset {{name}} shows faintly, for the author (#712)
+        host.load({ js: result.js, css: result.css, scripts: result.scripts }, { ...(at ? { startAt: at } : {}), showUnsetNames: true });
     }
 
     // New or changed assets go to the running story; ones already on screen stay as they were
