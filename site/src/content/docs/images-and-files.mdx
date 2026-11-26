@@ -100,3 +100,13 @@ A published story plays the video in the page, as wide as the text. YouTube's pl
 Some places a story plays can't show YouTube's player inside it: the editor's preview, a story [shared as a link](/publishing/#sharing-a-link), and a story opened straight from its file rather than from a website. There, the video is its picture with a play button, which opens it on YouTube in a new tab. Its "Watch on YouTube" text is `watchOnYouTube` in [`strings`](/buttons-panels-settings/#the-pages-text-in-another-language), for a story in another language.
 
 The video isn't part of your story's files, so it needs the player to be online, and it can't play if it's taken down or made private.
+
+### Your own video files
+
+A video can be one of your story's own files instead, shown with HTML's `<video>`, like an [image](#using-files-in-your-story):
+
+```squiffy
+<video src="intro.mp4" controls></video>
+```
+
+It plays everywhere, the editor's preview included, and needs nobody to keep it online. It's part of your story, though, so it makes the story bigger for players to download, it plays at the one quality you gave it, and a story [shared as a link](/publishing/#sharing-a-link) can't include it. Use MP4 for the widest browser support.
