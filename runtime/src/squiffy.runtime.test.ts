@@ -5806,6 +5806,33 @@ describe("{{#animate}} times", () => {
     });
 });
 
+test("Starting at a later section sets what the start's @set lines set first (#712)", async () => {
+    const element = document.getElementById("squiffy")!;
+    const script = `@set loot = 5
+@set heat = 1
+Welcome. [[vault]]
+
+    squiffy.set("fromJs", true);
+
+[[vault]]:
+@set heat = 2
+Loot: {{loot}}, heat: {{heat}}, js: {{fromJs}}.`;
+    const squiffyApi = await init({ element, story: (await compile(script)).story });
+    // The section's own @set and the address's &set= come after the start's, so win
+    await squiffyApi.begin({ section: "vault", set: ["loot = 7"] });
+    // Only the start's setters run, not its text or JavaScript
+    expect(getSectionContent(element, "vault")).toBe("Loot: 7, heat: 2, js: .");
+    expect(getSectionContent(element, "_default")).toBeNull();
+    expect(squiffyApi.get("loot")).toBe(7);
+});
+
+test("Starting at the start section itself runs its @set lines once", async () => {
+    const element = document.getElementById("squiffy")!;
+    const squiffyApi = await init({ element, story: (await compile("@inc count\nCount: {{count}}.")).story });
+    await squiffyApi.begin({ section: "_default" });
+    expect(getSectionContent(element, "_default")).toBe("Count: 1.");
+});
+
 test("Renaming the section the story was started at starts the story again", async () => {
     const element = document.getElementById("squiffy")!;
     const script = "Start [[a]].\n\n[[a]]:\nSection a.";

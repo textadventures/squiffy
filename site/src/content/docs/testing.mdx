@@ -37,7 +37,9 @@ When [playing from the command line](/cli/#other-options), use `--start`.
 
 ### Setting up a scene
 
-Most late sections need some attributes to be set, such as the key the player picked up on the way. Write a section that sets them and then [goes to](/basic-concepts/#go-to-another-section) the scene, and mark it with `@test`:
+Starting at a later section still sets what the start of your story sets with [`@set`](/attributes/#using-directives), so a line such as `@set loot = 0` at the top of the story works however it starts. The rest of the start, its text and any JavaScript, is skipped.
+
+What's set on the way to the scene isn't, though, such as the key the player picked up, and most late sections need some attributes like that. Write a section that sets them and then [goes to](/basic-concepts/#go-to-another-section) the scene, and mark it with `@test`:
 
 ```squiffy
 [[vault with the key]]:

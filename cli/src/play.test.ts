@@ -156,7 +156,7 @@ describe("playStory", () => {
 
     test("starts at another section", async () => {
         const result = await playStory(await load(SHOP), { start: "shop" });
-        expect(result.steps[0].text).toBe("\"Welcome!\" You have -3 gold left. [Leave]");
+        expect(result.steps[0].text).toBe("\"Welcome!\" You have 7 gold left. [Leave]");
 
         const missing = await playStory(await load(SHOP), { start: "nowhere" });
         expect(missing.stopped).toBe("There's no section called \"nowhere\".");

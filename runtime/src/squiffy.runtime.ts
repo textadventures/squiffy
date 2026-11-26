@@ -210,6 +210,14 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         if (startAt && startAt.section in story.sections) {
             // Start somewhere else in a fresh story, e.g. from the section being edited
             runUiJs();
+            // The start's @set lines (#712), which are often the story's "globals", such as
+            // @set loot = 0: without them a late scene shows its {{loot}} as nothing. Only its
+            // setters, not its text or JavaScript, which could write to the page or go elsewhere.
+            // The address's &set= and the section's own @set lines come after, so win.
+            const start = story.sections[story.start];
+            if (start?.attributes && startAt.section != story.start) {
+                await processAttributes(start.attributes);
+            }
             if (startAt.set) await processAttributes(startAt.set);
             await go(startAt.section);
             if (startAt.passage !== undefined && get("_section") == startAt.section) {
