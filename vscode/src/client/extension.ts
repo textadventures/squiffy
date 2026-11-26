@@ -14,7 +14,7 @@ import { convertQuestGamebook, convertTwineStory } from "./convert.js";
 import { insertHeader, newStory } from "./new-story.js";
 import { Preview } from "./preview.js";
 import { StoryMap } from "./map.js";
-import { SectionsView } from "./sections-view.js";
+import { findStory, SectionsView } from "./sections-view.js";
 import { startAt, type NodeItem } from "./sections.js";
 
 export type CreateClient = (options: LanguageClientOptions) => BaseLanguageClient;
@@ -49,19 +49,21 @@ export async function activate(context: vscode.ExtensionContext, createClient: C
         const uri = editor.document.uri;
         return editor.document.languageId == "squiffy" || isProjectFile(uri) ? uri : undefined;
     };
-    // The story to act on: the active editor's, or the one the Sections view shows, for its buttons
-    const storyUri = () => activeStoryUri() ?? sections.storyUri;
+    // The story to act on: the active editor's, or the one the Sections view shows, for its buttons,
+    // or else the workspace's, from the Command Palette or the walkthrough with no story file in
+    // front and the Sections view not yet shown (#700)
+    const storyUri = async () => activeStoryUri() ?? sections.storyUri ?? await findStory();
 
     const command = (id: string, run: (...args: unknown[]) => unknown) =>
         context.subscriptions.push(vscode.commands.registerCommand(id, run));
 
-    command("squiffy.showPreview", (uri?: unknown) => {
-        const target = uri instanceof vscode.Uri ? uri : storyUri();
+    command("squiffy.showPreview", async (uri?: unknown) => {
+        const target = uri instanceof vscode.Uri ? uri : await storyUri();
         if (target) return preview.show(target);
     });
 
-    command("squiffy.showMap", (uri?: unknown) => {
-        const target = uri instanceof vscode.Uri ? uri : storyUri();
+    command("squiffy.showMap", async (uri?: unknown) => {
+        const target = uri instanceof vscode.Uri ? uri : await storyUri();
         if (target) return map.show(target);
     });
 
@@ -115,8 +117,8 @@ export async function activate(context: vscode.ExtensionContext, createClient: C
         }
     });
 
-    command("squiffy.export", (uri?: unknown) => {
-        const target = uri instanceof vscode.Uri ? uri : storyUri();
+    command("squiffy.export", async (uri?: unknown) => {
+        const target = uri instanceof vscode.Uri ? uri : await storyUri();
         if (target) return exportStory(client!, target);
         void vscode.window.showInformationMessage("Open a .squiffy file or squiffy.json to export its story.");
     });

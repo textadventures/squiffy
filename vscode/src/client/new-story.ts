@@ -3,6 +3,7 @@
 
 import * as vscode from "vscode";
 import { formatProjectFile } from "squiffy-compiler";
+import { setHasStory } from "./has-story.js";
 
 export const MAIN_FILE = "story.squiffy";
 const PROJECT_FILENAME = "squiffy.json";
@@ -83,6 +84,8 @@ export async function newStory(folder?: vscode.Uri) {
         await vscode.workspace.fs.writeFile(vscode.Uri.joinPath(folder, name), new TextEncoder().encode(text));
     }
     await vscode.window.showTextDocument(main);
+    // Only now, not when New Story is clicked, as the folder or title may be cancelled (#700)
+    setHasStory();
     if (!vscode.workspace.getWorkspaceFolder(main)) {
         void vscode.window.showInformationMessage("The new story isn't in the open folder, so links and problems are only checked in its own folder. Open its folder to work on it.", "Open Folder")
             .then(action => action && vscode.commands.executeCommand("vscode.openFolder", folder));

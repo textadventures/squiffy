@@ -110,8 +110,6 @@
               "altText": "VS Code, with a story's script in the editor and its sections listed in the Squiffy sidebar"
             },
             "completionEvents": [
-              "onCommand:squiffy.newStory",
-              "onCommand:squiffy.newStoryInFolder",
               "onContext:squiffyHasStory"
             ]
           },
@@ -367,11 +365,11 @@
         },
         {
           "command": "squiffy.showPreview",
-          "when": "editorLangId == squiffy || resourceFilename == squiffy.json"
+          "when": "editorLangId == squiffy || resourceFilename == squiffy.json || squiffyHasStory"
         },
         {
           "command": "squiffy.showMap",
-          "when": "editorLangId == squiffy || resourceFilename == squiffy.json"
+          "when": "editorLangId == squiffy || resourceFilename == squiffy.json || squiffyHasStory"
         },
         {
           "command": "squiffy.previewFromHere",
@@ -395,7 +393,7 @@
         },
         {
           "command": "squiffy.export",
-          "when": "editorLangId == squiffy || resourceFilename == squiffy.json"
+          "when": "editorLangId == squiffy || resourceFilename == squiffy.json || squiffyHasStory"
         },
         {
           "command": "squiffy.newStoryInFolder",
