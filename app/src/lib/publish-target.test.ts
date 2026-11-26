@@ -19,9 +19,9 @@ describe("parsePublishTargets", () => {
 });
 
 describe("chooseTarget", () => {
-    test("is textadventures.co.uk the first time", () => {
-        expect(chooseTarget({}, "abc")).toBe("online");
-        expect(chooseTarget({}, undefined)).toBe("online");
+    test("is a link the first time", () => {
+        expect(chooseTarget({}, "abc")).toBe("link");
+        expect(chooseTarget({}, undefined)).toBe("link");
     });
 
     test("is the story's own last choice", () => {

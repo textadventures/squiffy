@@ -59,7 +59,7 @@
     import { formatKey, navigationKey } from "#lib/shortcuts.js";
     import { NavHistory, type Place as NavPlace } from "#lib/nav-history.js";
     import { desktopApi } from "#lib/desktop.js";
-    import { handleUndo } from "#lib/desktop-shell.js";
+    import { handleShare, handleUndo } from "#lib/desktop-shell.js";
     import { connectPlayTab, playPageUrl } from "#lib/play-in-tab.js";
     import { convertPastedTwee } from "#lib/twine-import.js";
     import { twinePaste } from "#lib/twine-paste.js";
@@ -1409,9 +1409,11 @@
         };
         window.addEventListener("focusin", track);
         const stop = handleUndo(undoRedo);
+        const stopShare = handleShare(() => { publishOpen = true; });
         return () => {
             window.removeEventListener("focusin", track);
             stop();
+            stopShare();
         };
     });
 

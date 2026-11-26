@@ -55,16 +55,16 @@ test("writing a section beside the full-screen map", async ({ page }) => {
 test("sharing a story as a link", async ({ page }) => {
     await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
     await openStory(page, "e2e/screenshots/stories/cave");
-    await menu(page, "File", "Publish…");
+    await menu(page, "File", "Share or publish…");
     await dialog(page).getByRole("radio", { name: /A link/ }).check();
-    await dialog(page).getByRole("button", { name: "Publish", exact: true }).click();
+    await dialog(page).getByRole("button", { name: "Make the link", exact: true }).click();
     await expect(dialog(page).getByText("Share a link")).toBeVisible();
     await capture(page, "publish-link", { clip: await around(dialog(page)) });
 });
 
 test("Story details", async ({ page }) => {
     await openStory(page, "examples/gameshow");
-    await menu(page, "File", "Publish…");
+    await menu(page, "File", "Share or publish…");
     await dialog(page).getByRole("button", { name: "Edit details" }).or(dialog(page).getByRole("link", { name: "Edit details" })).click();
     await expect(dialog(page).getByText("Story details").first()).toBeVisible();
     await capture(page, "story-details", { clip: await around(dialog(page)) });

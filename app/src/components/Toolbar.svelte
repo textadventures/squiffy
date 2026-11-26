@@ -1,8 +1,8 @@
 <script lang="ts">
     // The editor's toolbar, laid out like Quest Viva's: home, the story's name and save state on
     // the left; on the right, in groups, as a menu bar would be: File, adding to the story (Add,
-    // images), Undo and Redo, Back and Forward, problems, what's shown (the script, the map or both), then Run and
-    // the overflow menu.
+    // images), Undo and Redo, Back and Forward, problems, what's shown (the script, the map or both), then Run,
+    // Share (#719) and the overflow menu.
     // Menus open from their button's left edge, as a menu bar's do, unless that's off the screen.
     import { AppBar } from "@skeletonlabs/skeleton-svelte";
     import { goto } from "$app/navigation";
@@ -64,7 +64,7 @@
     import Bug from "@lucide/svelte/icons/bug";
     import DiscordIcon from "#components/DiscordIcon.svelte";
     import CircleX from "@lucide/svelte/icons/circle-x";
-    import CloudUpload from "@lucide/svelte/icons/cloud-upload";
+    import Share2 from "@lucide/svelte/icons/share-2";
     import CircleCheck from "@lucide/svelte/icons/circle-check";
     import type { ProblemCounts } from "#lib/problems.js";
 
@@ -92,7 +92,7 @@
         onfonts?: () => void;
         // Downloads the whole project as a zip, which Open file can read back
         ondownloadproject?: () => void;
-        // Opens the Publish dialog
+        // Opens the Share or publish dialog
         onpublish?: () => void;
         // Undo, redo, find, fold all and unfold all, in the editor
         oncommand?: (command: EditorCommand) => void;
@@ -181,7 +181,7 @@
         ...(reveal ? [{ label: reveal.label, action: () => reveal.show(""), icon: FolderOpen }] : []),
         { label: "Download project (.zip)", action: () => ondownloadproject?.(), icon: FolderDown },
         { label: `Download ${p?.activePath ?? ""}`, action: () => { if (p?.activePath) void downloadFile(p.activePath); }, icon: Download, disabled: !p?.activePath },
-        { label: "Publish…", action: () => onpublish?.(), icon: CloudUpload, divider: true },
+        { label: "Share or publish…", action: () => onpublish?.(), icon: Share2, divider: true },
     ]);
 
     // Add: a section or passage, or a snippet, as the 6.x editor's Add and Snippets menus
@@ -397,6 +397,14 @@
                         </div>
                     {/snippet}
                 </DropdownMenu>
+                <!-- Share on the toolbar, where people look for it, as well as in File (#719) -->
+                <button
+                    type="button"
+                    class="btn btn-xs preset-outlined-primary-500"
+                    onclick={onpublish}
+                    title="Share or publish your story"
+                    aria-label="Share"
+                ><Share2 size={14} /> <span class="hidden md:inline">Share</span></button>
                 <DropdownMenu items={overflowItems} align="left">
                     {#snippet trigger(toggle, open)}
                         <button type="button" class="toolbar-icon-btn" onclick={toggle} title="More" aria-label="More" aria-haspopup="menu" aria-expanded={open}><Ellipsis size={16} /></button>

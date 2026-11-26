@@ -27,7 +27,9 @@ codemirror-lang editor-search graph-map project-fs vscode; do (cd $p && npm run 
 Check with `ls -la runtime/dist` that the dates are today's.
 
 `playwright.screenshots.config.ts` starts the editor's dev server on port 5188 (with
-`VITE_PLAYER_URL` set to squiffystories.com, so a shared link shows the real address), and VS Code for
+`VITE_PLAYER_URL` set to squiffystories.com, so a shared link shows the real address), the
+player's dev server on port 5181 (which `lib.ts` serves in place of squiffystories.com, as the real
+play page only takes a story from the real editors, so **Play in a new tab** works), and VS Code for
 the web (`@vscode/test-web`, stable quality) on port 3123 with the extension from `vscode/` and
 `examples/gameshow` open. VS Code is downloaded into `node_modules/.cache/vscode-test-web` the
 first time. Both servers are reused if they're already running.
@@ -45,7 +47,7 @@ first time. Both servers are reused if they're already running.
     the home page's **Open file**, as a project `.zip`. Sounds and images come too.
   - `setView`, `run` (returns the preview's frame), `choose` (clicks a link in the preview, and
     clicks again if the preview wasn't ready for it), `goToLine` (scrolls the script to a line),
-    `resizePane` (drags the preview's or map's splitter), `menu(page, "File", "Publish…")`.
+    `resizePane` (drags the preview's or map's splitter), `menu(page, "File", "Share or publish…")`.
   - `newStory(page, text)` starts a new story and types this in place of the starter story, as
     the tutorial has the reader do, with `repoFile()` to read a step from `site/src/tutorial/`.
     It dismisses the reminder to download a copy. `openStory(page, folder, extraFiles)` can add
