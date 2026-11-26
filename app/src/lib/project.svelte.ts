@@ -56,12 +56,13 @@ This is the text for the passage. The @set above makes the story remember that y
 [[next section]]:
 @end
 
-{{!-- This is how the story remembers a choice. The @set in the passage above sets an attribute called clicked_passage. {{#if clicked_passage}} starts some text that's only shown if it's set (the # says that a block starts here). {{else}} starts the text to show if it isn't, and {{/if}} ends the block. --}}
 {{#if clicked_passage}}
 You clicked the passage link, so you see this.
 {{else}}
 You didn't click the passage link, so you see this instead.
 {{/if}}
+
+That's how the story remembers a choice: the @set in the passage sets an attribute, and the #if, else and /if lines above choose which text to show.
 
 When a new section appears, any passage links in the previous section that weren't clicked are disabled.
 
