@@ -3,8 +3,9 @@
 // On a page served over http(s), such as a published story or the CLI's test server, the video is
 // embedded in YouTube's player. Where it can't be, it's a link instead, with the video's picture
 // and a play button, which opens the video on YouTube in a new tab. That's:
-// - the sandboxed preview (the editor, VS Code, the docs' samples and squiffystories.com's player
-//   for shared links), whose frame has an opaque origin. A frame inside it is sandboxed too, so
+// - the sandboxed preview (the editor, VS Code, the docs' samples that have files, and
+//   squiffystories.com's player for shared links), whose frame has an opaque origin. (The docs'
+//   other samples run in the docs page itself, so they embed it.) A frame inside it is sandboxed too, so
 //   YouTube's player stays black, and the player's Content-Security-Policy allows no frames at all,
 //   so that a story shared as a link can't show another site under squiffystories.com's address.
 // - a page opened as a file, or in the desktop app's own window, which YouTube won't play in, as
