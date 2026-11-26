@@ -45,7 +45,8 @@ story map.
 - **Squiffy: Publish to textadventures.co.uk** uploads the published story, opens
   textadventures.co.uk to finish publishing it there, and says when it's published, as the editor
   does. The story is given an `id` in its `squiffy.json` first if it has none, which is how
-  textadventures.co.uk knows it next time
+  textadventures.co.uk knows it next time, and a story with no `squiffy.json` is given one, with
+  its setters converted to Squiffy 7's rules
 - **Squiffy: New Story** makes a new story in a folder: a `squiffy.json` and a `story.squiffy` to
   start from. **New Squiffy Story Here** in the Explorer's context menu makes one in that folder.
 - **Squiffy: Add Section** and **Add Passage** (also in the editor's context menu, and its title
@@ -88,7 +89,8 @@ This is the `vscode/` workspace in the [Squiffy repository](https://github.com/t
   Share as a Link and Play in Browser (`share.ts`) make the link with the editor's
   `story-link.ts` (exported by `@textadventures/squiffy-app`), from every file in the story's
   folder but the build folder, tests and backups. Publish to textadventures.co.uk (`publish.ts`)
-  uploads Export's zip with the editor's `publish-api.ts`, with `fetch`, as the web extension host
+  uploads Export's zip with the editor's `publish-api.ts` (after the server's `squiffy/newProjectFile`
+  works out a `squiffy.json` for a story with none, and its converted setters, as `--convert-v6` does), with `fetch`, as the web extension host
   is a worker, and asks what became of it until it's published.
   Convert Twine Story and Convert Quest Gamebook (`convert.ts`) pick the file and a folder, and
   write what `convert-story.ts` makes with the compiler's converters, as the command line tool does

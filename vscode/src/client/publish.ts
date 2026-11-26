@@ -3,14 +3,15 @@
 // textadventures.co.uk gives back a page where the author, signed in there, finishes publishing
 // it. The extension then asks what became of the upload, to say when it's published. The story's
 // ID in squiffy.json is how the site knows, next time, that it's an update to the same story, so
-// a story without one is given one first.
+// a story without one is given one first, and a story without a squiffy.json is given one,
+// which turns on Squiffy 7's rules for setters, so its setters are converted, as the editor does.
 
 import * as vscode from "vscode";
 import type { BaseLanguageClient } from "vscode-languageclient";
 import { strToU8, zipSync } from "fflate";
-import { BUILD_FOLDER, updateProjectFile } from "squiffy-compiler";
+import { BUILD_FOLDER, setterConversionMessage, updateProjectFile } from "squiffy-compiler";
 import { checkStatus, DEFAULT_PUBLISH_API_URL, postStory, UploadError, type PublishClient, type PublishStatus, type Upload } from "@textadventures/squiffy-app/publish-api";
-import { EXPORT_STORY, type ExportStoryParams, type ExportStoryResult } from "../protocol.js";
+import { EXPORT_STORY, NEW_PROJECT_FILE, type ExportStoryParams, type ExportStoryResult, type NewProjectFileParams, type NewProjectFileResult } from "../protocol.js";
 import { fileName, storyAssets } from "./export.js";
 
 // How often to ask textadventures.co.uk whether the author has finished there, and for how long:
@@ -59,6 +60,37 @@ async function addStoryId(projectFile: vscode.Uri): Promise<string | null> {
     return null;
 }
 
+// What to say about a new squiffy.json
+export function projectFileMessage(added: { exclude: string[]; converted: number; problems: string[] }): string {
+    const exclude = added.exclude.length
+        ? ` It leaves out the folder's files that aren't part of this story: ${added.exclude.slice(0, 3).join(", ")}${added.exclude.length > 3 ? ` and ${added.exclude.length - 3} more` : ""}.`
+        : "";
+    const converted = setterConversionMessage(added.converted, added.problems);
+    return `Added squiffy.json, so textadventures.co.uk knows next time that it's the same story.${exclude}${converted ? ` ${converted}` : ""}`;
+}
+
+// Gives a story with no squiffy.json one, converting its setters. Says why it couldn't, if it couldn't.
+async function addProjectFile(client: BaseLanguageClient, storyUri: vscode.Uri): Promise<{ uri: vscode.Uri } | { error: string }> {
+    const added = await client.sendRequest<NewProjectFileResult>(NEW_PROJECT_FILE, { uri: storyUri.toString() } satisfies NewProjectFileParams);
+    if (!added.success) return { error: errorsMessage(added.errors) };
+    // The setters first, as squiffy.json turns their new rules on. One edit, so Undo puts them back.
+    const documents = await Promise.all(Object.keys(added.changes).map(uri => vscode.workspace.openTextDocument(vscode.Uri.parse(uri))));
+    if (documents.length) {
+        const edit = new vscode.WorkspaceEdit();
+        for (const document of documents) {
+            edit.replace(document.uri, new vscode.Range(document.positionAt(0), document.positionAt(document.getText().length)), added.changes[document.uri.toString()]);
+        }
+        if (!(await vscode.workspace.applyEdit(edit))) return { error: "Couldn't convert the story's setters to Squiffy 7's rules." };
+        for (const document of documents) await document.save();
+    }
+    const uri = vscode.Uri.parse(added.uri);
+    await vscode.workspace.fs.writeFile(uri, strToU8(added.text));
+    const message = projectFileMessage(added);
+    if (added.problems.length) void vscode.window.showWarningMessage(message);
+    else void vscode.window.showInformationMessage(message);
+    return { uri };
+}
+
 // The story waiting to be published on textadventures.co.uk, if there is one: a new upload stops
 // the last one's waiting
 let waiting: AbortController | undefined;
@@ -74,12 +106,18 @@ export async function publishOnline(client: BaseLanguageClient, storyUri: vscode
         return;
     }
     if (!result.projectFile) {
-        void vscode.window.showErrorMessage(
-            "To publish to textadventures.co.uk, a story needs a squiffy.json, so the site knows next time that it's the same story. "
-            + "Squiffy: New Story makes one for a new story, and the command-line tool's --convert-v6 adds one to a Squiffy 6 story.");
-        return;
+        const added = await addProjectFile(client, storyUri);
+        if ("error" in added) {
+            void vscode.window.showErrorMessage(added.error);
+            return;
+        }
+        result = await exportRequest(client, { uri: storyUri.toString(), changed: added.uri.toString() });
+        if (!result.success) {
+            void vscode.window.showErrorMessage(errorsMessage(result.errors));
+            return;
+        }
     }
-    if (!result.id) {
+    else if (!result.id) {
         const projectFile = vscode.Uri.parse(result.projectFile);
         const problem = await addStoryId(projectFile);
         if (problem) {

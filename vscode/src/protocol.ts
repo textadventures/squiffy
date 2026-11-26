@@ -40,6 +40,23 @@ export type ExportStoryResult =
     }
     | { success: false; errors: string[] };
 
+// A squiffy.json for a story that hasn't one, to publish it: its text, which leaves out the folder's
+// files that aren't part of the story, and the story's .squiffy files with their setters converted
+// to Squiffy 7's rules, which a squiffy.json turns on. The client writes them.
+export const NEW_PROJECT_FILE = "squiffy/newProjectFile";
+export interface NewProjectFileParams { uri: string }
+export type NewProjectFileResult =
+    | {
+        success: true; uri: string; text: string;
+        // The files it leaves out, as paths from the story's folder
+        exclude: string[];
+        // The new text of each .squiffy file with setters that changed, by URI
+        changes: Record<string, string>;
+        // How many setters were converted, and where the ones that couldn't be are
+        converted: number; problems: string[];
+    }
+    | { success: false; errors: string[] };
+
 // The section (and passage) at a position, to start the preview there
 export const SECTION_AT = "squiffy/sectionAt";
 export interface SectionAtParams { uri: string; position: { line: number; character: number } }

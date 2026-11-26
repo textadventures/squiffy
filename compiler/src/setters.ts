@@ -525,3 +525,16 @@ export function attributeValues(files: Iterable<SquiffyFile>): Map<string, Attri
     }
     return result;
 }
+
+// What to tell the author about converting a story's setters, or "" if nothing happened:
+// `problems` are where the setters that couldn't be converted are, e.g. "story.squiffy line 12"
+export function setterConversionMessage(converted: number, problems: string[]): string {
+    if (!converted && !problems.length) return "";
+    let message = converted
+        ? `Converted ${converted} setter${converted === 1 ? "" : "s"} to Squiffy 7's rules, where text is in quotes and attributes don't need "@" (e.g. @set weapon = "sword").`
+        : "";
+    if (problems.length) {
+        message += `${message ? " " : ""}${problems.length === 1 ? "One setter" : `${problems.length} setters`} couldn't be converted, and may need changing by hand: ${problems.slice(0, 3).join(", ")}${problems.length > 3 ? ", ..." : ""}.`;
+    }
+    return message;
+}

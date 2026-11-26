@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { convertSetter, convertSetters } from "./setters.js";
+import { convertSetter, convertSetters, setterConversionMessage } from "./setters.js";
 
 describe("convertSetter", () => {
     test.each([
@@ -116,5 +116,14 @@ describe("convertSetters", () => {
     test("does nothing to a story with no setters to change", () => {
         const script = "[[start]]:\n@set gold = 10\nHello [[next]].\n\n[[next]]:\nBye.";
         expect(convertSetters(script)).toEqual({ script, converted: 0, problems: [] });
+    });
+});
+
+describe("setterConversionMessage", () => {
+    test("says how many were converted, and where the rest are", () => {
+        expect(setterConversionMessage(0, [])).toBe("");
+        expect(setterConversionMessage(1, [])).toMatch(/^Converted 1 setter to Squiffy 7's rules/);
+        expect(setterConversionMessage(2, ["a.squiffy line 3"])).toMatch(/^Converted 2 setters .* One setter couldn't be converted, and may need changing by hand: a\.squiffy line 3\.$/);
+        expect(setterConversionMessage(0, ["a line 1", "a line 2", "a line 3", "a line 4"])).toBe("4 setters couldn't be converted, and may need changing by hand: a line 1, a line 2, a line 3, ....");
     });
 });

@@ -2,7 +2,7 @@ import { describe, expect, test, vi } from "vitest";
 import type { PublishStatus } from "@textadventures/squiffy-app/publish-api";
 
 vi.mock("vscode", () => ({ UIKind: { Desktop: 1, Web: 2 } }));
-const { publishClient, waitForPublishing, withStoryId } = await import("./publish.js");
+const { projectFileMessage, publishClient, waitForPublishing, withStoryId } = await import("./publish.js");
 
 describe("withStoryId", () => {
     test("adds an ID after the version, keeping the rest", () => {
@@ -51,5 +51,14 @@ describe("waitForPublishing", () => {
         await expect(waitForPublishing("k3J9", abort.signal, { check, interval: 1 })).resolves.toBeUndefined();
         expect(check).toHaveBeenCalledTimes(1);
         await expect(waitForPublishing("k3J9", new AbortController().signal, { check: answers(), interval: 5, timeout: 20 })).resolves.toBeUndefined();
+    });
+});
+
+describe("projectFileMessage", () => {
+    test("says what the new squiffy.json leaves out, and what was converted", () => {
+        expect(projectFileMessage({ exclude: [], converted: 0, problems: [] })).toBe("Added squiffy.json, so textadventures.co.uk knows next time that it's the same story.");
+        const message = projectFileMessage({ exclude: ["a.squiffy", "b.squiffy", "c.css", "d.js"], converted: 2, problems: [] });
+        expect(message).toContain(" It leaves out the folder's files that aren't part of this story: a.squiffy, b.squiffy, c.css and 1 more.");
+        expect(message).toContain(" Converted 2 setters to Squiffy 7's rules");
     });
 });
