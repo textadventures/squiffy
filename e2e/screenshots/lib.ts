@@ -103,8 +103,6 @@ export async function newStory(page: Page, text?: string) {
     await page.keyboard.insertText(text.trimEnd());
     await expect(editor(page)).toContainText(text.trimEnd().split("\n").pop()!);
     await expect(page.getByText("Saved", { exact: true })).toBeVisible();
-    // A story kept in the browser shows a reminder to download a copy, once it's been changed
-    await page.getByRole("button", { name: "Dismiss", exact: true }).click({ timeout: 5000 }).catch(() => {});
 }
 
 // A file in the repo, as text

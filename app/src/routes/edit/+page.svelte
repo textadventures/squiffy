@@ -22,9 +22,9 @@
     import { showToast } from "#lib/toast.js";
     import { chooseDialog, confirmDialog, promptDialog } from "#lib/confirm.js";
     import { redo, undo } from "@codemirror/commands";
-    import BackupBanner from "#components/BackupBanner.svelte";
     import DiskChangeBar from "#components/DiskChangeBar.svelte";
     import Toolbar from "#components/Toolbar.svelte";
+    import BackupCard, { BACKUP_CARD_DOWNLOAD_ID } from "#components/BackupCard.svelte";
     import FilesPanel from "#components/FilesPanel.svelte";
     import OutlinePanel from "#components/OutlinePanel.svelte";
     import EditorTabs from "#components/EditorTabs.svelte";
@@ -148,6 +148,17 @@
 
     // On a narrow screen one pane shows at a time: the editor, the sidebar or the preview
     let narrowPane = $state<"editor" | "outline" | "preview" | "map">("editor");
+    // The sidebar, with the files and the outline: on a phone, in place of the editor; otherwise,
+    // unless the map's full screen
+    let sidebarShown = $derived(isNarrow.current ? narrowPane === "outline" : !(mapOpen && mapMaximized));
+
+    // From the toolbar's Saved chip, when the sidebar with the reminder to download a copy is hidden
+    async function showBackupCard() {
+        if (isNarrow.current) narrowPane = "outline";
+        else mapMaximized = false;
+        await tick();
+        document.getElementById(BACKUP_CARD_DOWNLOAD_ID)?.focus();
+    }
 
     const activeView = () => (p ? views.get(p.activePath) : undefined);
     let symbols = $derived(p ? symbolsByPath[p.activePath] ?? [] : []);
@@ -2028,10 +2039,11 @@
             canGoForward={navState.forward}
             onback={() => void goBackOrForward(false)}
             onforward={() => void goBackOrForward(true)}
+            backupCardShown={sidebarShown}
+            onshowbackup={() => void showBackupCard()}
         />
-        <BackupBanner ondownload={handleDownloadProject} />
         <div class="flex flex-1 overflow-hidden">
-            {#if isNarrow.current ? narrowPane === "outline" : !(mapOpen && mapMaximized)}
+            {#if sidebarShown}
                 <div
                     class="flex flex-col shrink-0 overflow-hidden bg-surface-50-950 border-r border-surface-200-800 {isNarrow.current ? "flex-1" : ""}"
                     style={isNarrow.current ? undefined : `width: ${sidebarWidth}px`}
@@ -2047,6 +2059,7 @@
                             onexclude={handleExclude}
                             onopen={handleOpenFile}
                         />
+                        <BackupCard ondownload={handleDownloadProject} />
                     </div>
                     <OutlinePanel
                         bind:this={outline}
