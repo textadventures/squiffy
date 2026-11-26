@@ -26,7 +26,7 @@
     opacity: 0.5;
 }
 
-/* {{youtube}} and {{vimeo}}: a video in a 16:9 frame, as wide as the text, or where it can't be
+/* {{youtube}}: a video in a 16:9 frame, as wide as the text, or where it can't be
    embedded (as in the editor's preview), a link to it with its picture and a play button */
 .squiffy-video
 {

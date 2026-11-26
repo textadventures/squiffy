@@ -1,10 +1,10 @@
-// {{youtube}} and {{vimeo}}: embedded on a page served over http(s), and a link with the video's
+// {{youtube}}: embedded on a page served over http(s), and a link with the video's
 // picture elsewhere, such as the sandboxed preview
 import { expect, test, describe, afterEach, vi } from "vitest";
 import globalJsdom from "global-jsdom";
 import { init } from "./squiffy.runtime.js";
 import { compile as squiffyCompile } from "squiffy-compiler";
-import { canEmbedVideos, embedUrl, parseStart, parseVimeo, parseYouTube, thumbnailUrl, watchUrl } from "./videos.js";
+import { canEmbedVideos, embedUrl, parseStart, parseYouTube, thumbnailUrl, watchUrl } from "./videos.js";
 
 let cleanup: (() => void) | undefined;
 
@@ -40,29 +40,17 @@ describe("finding the video", () => {
             `https://youtu.be/${id}`, `https://youtu.be/${id}?si=abc`, `https://www.youtube.com/embed/${id}`,
             `https://www.youtube-nocookie.com/embed/${id}`, `https://www.youtube.com/shorts/${id}`, `https://www.youtube.com/live/${id}`,
         ]) {
-            expect(parseYouTube(value), value).toEqual({ site: "youtube", id });
+            expect(parseYouTube(value), value).toEqual({ id });
         }
-        expect(parseYouTube(`https://youtu.be/${id}?t=90`)).toEqual({ site: "youtube", id, start: 90 });
-        expect(parseYouTube(`https://www.youtube.com/watch?v=${id}&t=1m30s`)).toEqual({ site: "youtube", id, start: 90 });
-        expect(parseYouTube(`https://www.youtube.com/embed/${id}?start=5`)).toEqual({ site: "youtube", id, start: 5 });
+        expect(parseYouTube(`https://youtu.be/${id}?t=90`)).toEqual({ id, start: 90 });
+        expect(parseYouTube(`https://www.youtube.com/watch?v=${id}&t=1m30s`)).toEqual({ id, start: 90 });
+        expect(parseYouTube(`https://www.youtube.com/embed/${id}?start=5`)).toEqual({ id, start: 5 });
     });
 
     test("not YouTube", () => {
         for (const value of ["", "short", "https://example.com/watch?v=aqz-KE-bpKQ", "https://youtube.com/watch?v=bad", "https://www.youtube.com/@channel",
             "javascript:alert(1)", "aqz-KE-bpKQ\"><script>"]) {
             expect(parseYouTube(value), value).toBeUndefined();
-        }
-    });
-
-    test("Vimeo, from its number or its addresses, with a private video's hash", () => {
-        expect(parseVimeo("1084537")).toEqual({ site: "vimeo", id: "1084537" });
-        expect(parseVimeo("https://vimeo.com/1084537")).toEqual({ site: "vimeo", id: "1084537" });
-        expect(parseVimeo("https://vimeo.com/channels/staffpicks/1084537")).toEqual({ site: "vimeo", id: "1084537" });
-        expect(parseVimeo("https://player.vimeo.com/video/1084537?h=ab12cd")).toEqual({ site: "vimeo", id: "1084537", hash: "ab12cd" });
-        expect(parseVimeo("https://vimeo.com/1084537/ab12cd")).toEqual({ site: "vimeo", id: "1084537", hash: "ab12cd" });
-        expect(parseVimeo("https://vimeo.com/1084537#t=30s")).toEqual({ site: "vimeo", id: "1084537", start: 30 });
-        for (const value of ["", "abc", "https://example.com/1084537", "https://vimeo.com/channels/staffpicks"]) {
-            expect(parseVimeo(value), value).toBeUndefined();
         }
     });
 
@@ -78,14 +66,10 @@ describe("finding the video", () => {
     });
 
     test("its addresses", () => {
-        const youtube = { site: "youtube" as const, id: "aqz-KE-bpKQ", start: 90 };
+        const youtube = { id: "aqz-KE-bpKQ", start: 90 };
         expect(watchUrl(youtube)).toBe("https://www.youtube.com/watch?v=aqz-KE-bpKQ&t=90s");
         expect(embedUrl(youtube)).toBe("https://www.youtube-nocookie.com/embed/aqz-KE-bpKQ?start=90");
         expect(thumbnailUrl(youtube)).toBe("https://i.ytimg.com/vi/aqz-KE-bpKQ/hqdefault.jpg");
-        const vimeo = { site: "vimeo" as const, id: "1084537", hash: "ab12cd", start: 30 };
-        expect(watchUrl(vimeo)).toBe("https://vimeo.com/1084537/ab12cd#t=30s");
-        expect(embedUrl(vimeo)).toBe("https://player.vimeo.com/video/1084537?h=ab12cd&dnt=1#t=30s");
-        expect(thumbnailUrl(vimeo)).toBeUndefined();
     });
 });
 
@@ -105,44 +89,43 @@ describe("whether it can be embedded", () => {
 
 describe("the helpers", () => {
     test("embed the player on a published page", async () => {
-        const { element } = await start("Watch this. {{youtube \"https://youtu.be/aqz-KE-bpKQ\" start=\"1:30\" title=\"Big Buck Bunny\"}} And {{vimeo \"1084537\"}}", { published: true });
+        const { element } = await start("Watch this. {{youtube \"https://youtu.be/aqz-KE-bpKQ\" start=\"1:30\" title=\"Big Buck Bunny\"}} And {{youtube \"aqz-KE-bpKQ\"}}", { published: true });
         const frames = element.querySelectorAll<HTMLIFrameElement>(".squiffy-video iframe");
         expect(frames).toHaveLength(2);
         expect(frames[0].src).toBe("https://www.youtube-nocookie.com/embed/aqz-KE-bpKQ?start=90");
         expect(frames[0].title).toBe("Big Buck Bunny");
         expect(frames[0].hasAttribute("allowfullscreen")).toBe(true);
-        expect(frames[1].src).toBe("https://player.vimeo.com/video/1084537?dnt=1");
-        expect(frames[1].title).toBe("Vimeo video");
+        expect(frames[1].src).toBe("https://www.youtube-nocookie.com/embed/aqz-KE-bpKQ");
+        expect(frames[1].title).toBe("YouTube video");
         expect(element.querySelector("a.squiffy-video-link")).toBeNull();
     });
 
     test("link to the video where it can't be embedded, such as the preview", async () => {
-        const { element } = await start("{{youtube \"aqz-KE-bpKQ\" title=\"Big Buck Bunny\"}}\n\n{{vimeo \"https://vimeo.com/1084537\"}}");
+        const { element } = await start("{{youtube \"aqz-KE-bpKQ\" title=\"Big Buck Bunny\"}}\n\n{{youtube \"https://youtu.be/aqz-KE-bpKQ?t=30\"}}");
         expect(element.querySelector("iframe")).toBeNull();
-        const [youtube, vimeo] = element.querySelectorAll<HTMLAnchorElement>("a.squiffy-video-link");
+        const [youtube, untitled] = element.querySelectorAll<HTMLAnchorElement>("a.squiffy-video-link");
         expect(youtube.href).toBe("https://www.youtube.com/watch?v=aqz-KE-bpKQ");
         expect(youtube.target).toBe("_blank");
         expect(youtube.rel).toBe("noopener noreferrer");
         expect(youtube.querySelector("img")!.src).toBe("https://i.ytimg.com/vi/aqz-KE-bpKQ/hqdefault.jpg");
         expect(youtube.textContent).toBe("Big Buck Bunny Watch on YouTube");
-        expect(vimeo.href).toBe("https://vimeo.com/1084537");
-        expect(vimeo.querySelector("img")).toBeNull();
-        expect(vimeo.textContent).toBe("Watch on Vimeo");
+        expect(untitled.href).toBe("https://www.youtube.com/watch?v=aqz-KE-bpKQ&t=30s");
+        expect(untitled.textContent).toBe("Watch on YouTube");
         // It isn't a story link, so it stays clickable after the reader moves on
         expect(youtube.classList.contains("squiffy-link")).toBe(false);
     });
 
     test("the link's text in another language", async () => {
-        const { element } = await start("{{youtube \"aqz-KE-bpKQ\"}}", { strings: { watchVideo: "Regarder sur [site]" } });
+        const { element } = await start("{{youtube \"aqz-KE-bpKQ\"}}", { strings: { watchOnYouTube: "Regarder sur YouTube" } });
         expect(element.querySelector(".squiffy-video-watch")!.textContent).toBe("Regarder sur YouTube");
     });
 
     test("show nothing for something that isn't a video", async () => {
         const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-        const { element } = await start("Before{{youtube \"https://example.com/\"}}{{vimeo \"nope\"}}After");
+        const { element } = await start("Before{{youtube \"https://example.com/\"}}{{youtube 42}}After");
         expect(element.textContent).toContain("BeforeAfter");
         expect(warn).toHaveBeenCalledWith("Not a YouTube video: https://example.com/");
-        expect(warn).toHaveBeenCalledWith("Not a Vimeo video: nope");
+        expect(warn).toHaveBeenCalledWith("Not a YouTube video: 42");
     });
 
     test("escape the title", async () => {

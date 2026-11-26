@@ -116,7 +116,7 @@ You're carrying nothing.
 "strings": { "back": "Retour", "restart": "Recommencer", "restartConfirm": "Voulez-vous vraiment recommencer ?" }
 ```
 
-Keys: `back`, `restart`, `restartConfirm`, `switchToDark`, `switchToLight`, `mute`, `unmute`, `saves`, `saveName`, `save`, `noSaves`, `savedGame`, `savedToday`, `savedYesterday`, `load`, `loadConfirm`, `saveOptions`, `overwrite`, `overwriteConfirm`, `rename`, `newName`, `saveToFile`, `loadFromFile`, `delete`, `deleteConfirm`, `cancel`, `close`, `wrongStory`, `notASave`, `newerSave`, `cantSave`, `settings`, `resetSettings`, `watchVideo` (`Watch on [site]`, a video's link where it can't play in the page), and for the Start at list, `startAt`, `findSection`, `fromStart`, `testSections`, `allSections`, `noSection`. `[name]`, `[time]` and `[site]` are filled in. Missing keys stay English.
+Keys: `back`, `restart`, `restartConfirm`, `switchToDark`, `switchToLight`, `mute`, `unmute`, `saves`, `saveName`, `save`, `noSaves`, `savedGame`, `savedToday`, `savedYesterday`, `load`, `loadConfirm`, `saveOptions`, `overwrite`, `overwriteConfirm`, `rename`, `newName`, `saveToFile`, `loadFromFile`, `delete`, `deleteConfirm`, `cancel`, `close`, `wrongStory`, `notASave`, `newerSave`, `cantSave`, `settings`, `resetSettings`, `watchOnYouTube` (a `{{youtube}}` video's link where it can't play in the page), and for the Start at list, `startAt`, `findSection`, `fromStart`, `testSections`, `allSections`, `noSection`. `[name]` and `[time]` are filled in. Missing keys stay English.
 
 ## Starting at a later section
 
