@@ -138,13 +138,35 @@ Attributes don't start with `$`, and you set them with `@set`, on a line of its 
 
 Text goes in quotes, but numbers don't, and `@set hasKey` on its own sets it to `true`. See [Attributes](/attributes/).
 
+### Setting up the story at the start
+
+Squiffy has no `startup` passage or `StoryInit`. The text before the first section is the start of the story, so put the `@set` lines that set up the story there, at the top:
+
+```squiffy
+@set gold = 10
+@set health = 3
+
+You wake on a beach. [[Look around]](beach)
+
+[[beach]]:
+...
+```
+
+An `@set` runs each time its section is shown, not just once. So if the story can come back to the start, or to a hub section with `@set` lines of its own, they set the attributes again, and the player's gold goes back to 10. Keep the setting up in a section the player never comes back to, and link on from there to the hub. Or, to set something only the first time a section is shown, use `{{set}}` inside an `{{#unless}}`, which only runs when its condition is false:
+
+```squiffy
+[[hub]]:
+{{#unless ready}}{{set "gold" 10}}{{set "ready" true}}{{/unless}}
+You're in the village square.
+```
+
 <Aside type="caution">
 An `@set` line always runs when its section or passage is shown, even if it's inside an `{{#if}}`. To change an attribute only when a condition is true, use the `{{set}}`, `{{inc}}` and `{{dec}}` helpers inside the `{{#if}}` instead, as you would `(set:)` or `<<set>>` in Twine. See [Conditional attribute changes](/attributes/#conditional-attribute-changes).
 </Aside>
 
 ### Conditions and text
 
-Squiffy's dynamic text uses [Handlebars](https://handlebarsjs.com/): things in `{{double curly brackets}}`, with blocks like `{{#if}}...{{/if}}` in place of Harlowe's hooks or SugarCube's `<<if>>...<</if>>`. Comparisons use `=` and `!=`, rather than `is` or `eq`, and `and`, `or` and `not` work as you'd expect. See [Dynamic text](/dynamic-text/).
+Squiffy's dynamic text uses [Handlebars](https://handlebarsjs.com/): things in `{{double curly brackets}}`, with blocks like `{{#if}}...{{/if}}` in place of Harlowe's hooks or SugarCube's `<<if>>...<</if>>`. Comparisons use `=` and `!=`, rather than `is` or `eq`, and `and`, `or` and `not` work as you'd expect. SugarCube's `==`, `&&`, `||` and `!` work too. See [Dynamic text](/dynamic-text/).
 
 ### Formatting is Markdown
 
@@ -282,7 +304,7 @@ Squiffy fades from one track to the next by itself, and players get a mute butto
 | To... | Harlowe | SugarCube | Squiffy |
 |---|---|---|---|
 | Show something before every passage | A passage tagged `header` | `PassageHeader` | A [master section](/basic-concepts/#master-sections-and-passages), `[[]]:` |
-| Run something when the story starts | A passage tagged `startup` | `StoryInit` | `@set` lines in the start section, or JavaScript in a [`@ui` block](/javascript/#running-code-when-the-story-starts) |
+| Run something when the story starts | A passage tagged `startup` | `StoryInit` | `@set` lines at the top of the story, before the first section, or JavaScript in a [`@ui` block](/javascript/#running-code-when-the-story-starts): see [Setting up the story at the start](#setting-up-the-story-at-the-start) |
 | Add JavaScript | Story JavaScript | Story JavaScript | A [`@ui` block](/javascript/#running-code-when-the-story-starts), or indented lines in a section |
 | Add CSS | Story Stylesheet | Story Stylesheet | A `.css` file in the story's folder: see [Customising styles](/styling/) |
 | Show something in the sidebar | `(replace: ?sidebar)` | `StoryCaption`, `StoryMenu` | A [panel](/buttons-panels-settings/#panels), beside the story or opened from a button in the header |

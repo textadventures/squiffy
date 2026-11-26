@@ -113,8 +113,19 @@ All of these are optional. A story without a `squiffy.json` only has its title. 
 ## Where to put it
 
 - **[textadventures.co.uk](https://textadventures.co.uk/)** lists games made with any system, and the editor can [publish straight to it](#publishing-to-textadventurescouk). See the [catalogue of Squiffy games](https://textadventures.co.uk/games/platform/squiffy) for what other people have made.
-- **[itch.io](https://itch.io/)** can host HTML games: upload the **Zip for a website** and mark it to be played in the browser.
+- **[itch.io](https://itch.io/)** can host HTML games, played in the browser: see [Publishing on itch.io](#publishing-on-itchio).
 - **Your own website**: upload the files from the zip, or the single HTML file.
+
+### Publishing on itch.io
+
+1. In the editor, click **Share**, then **Zip for a website**, to download your story as a zip. Its `index.html` is at the top of the zip, which is where itch.io looks for it. From the command line, `npx @textadventures/squiffy-cli --zip` makes the same zip, as `build/output.zip`.
+2. On itch.io, choose **Upload new project** from the menu under your name.
+3. Set **Kind of project** to **HTML**.
+4. Under **Uploads**, upload the zip, and tick **This file will be played in the browser**.
+5. Under **Embed options**, set the **Viewport dimensions**. The game's frame is this size on the page, and the story scrolls inside it, so make it taller than itch.io's suggestion: 960 × 720, say. Tick **Mobile friendly** too, as a Squiffy story fits a phone's screen, and **Fullscreen button** if you like.
+6. Fill in the rest of the page, such as the title, description and cover image, then save it, and look at it before you make it public.
+
+To publish a new version, upload the new zip, tick **This file will be played in the browser** for it, and delete the old one.
 
 ## What players get
 

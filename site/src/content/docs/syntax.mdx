@@ -102,8 +102,8 @@ Anything in `{{double curly brackets}}` is worked out as the text is shown. See 
 | `{{#if gold > 5}}...{{/if}}` | Shows text only if a condition is true | [Conditions](/dynamic-text/#conditions) |
 | `{{else if gold > 2}}`, `{{else}}` | Other choices inside `{{#if}}` | [Conditions](/dynamic-text/#conditions) |
 | `{{#unless has_key}}...{{/unless}}` | Shows text only if a condition is false | [Conditions](/dynamic-text/#conditions) |
-| `=`, `!=`, `>`, `>=`, `<`, `<=` | Comparisons | [Conditions](/helpers-reference/#conditions) |
-| `and`, `or`, `not` | Combine conditions | [Conditions](/helpers-reference/#conditions) |
+| `=` (or `==`), `!=`, `>`, `>=`, `<`, `<=` | Comparisons | [Conditions](/helpers-reference/#conditions) |
+| `and`, `or`, `not` (or `&&`, `\|\|`, `!`) | Combine conditions | [Conditions](/helpers-reference/#conditions) |
 | `+`, `-`, `*`, `/`, `%` | Calculations. Put spaces around `-` and `/` | [Calculations](/helpers-reference/#calculations) |
 | `{{set "gold" 10}}`, `{{inc "gold" 5}}`, `{{dec "gold"}}`, `{{unset "has_key"}}` | Change an attribute at that point in the text, so they respect `{{#if}}` | [Conditional attribute changes](/attributes/#conditional-attribute-changes) |
 | `(seen "cave")`, `(visits "cave")`, `(at "cave")` | Whether the player has seen a section or passage, how many times, and whether they're there now | [Tracking sections and passages](/attributes/#tracking-sections-and-passages) |

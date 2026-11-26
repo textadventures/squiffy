@@ -104,6 +104,15 @@ Text for when they don't.
 
 The `#` in `{{#if}}` says that a block starts here, with text inside it. `{{else}}` has no `#`, as it's part of the same block, and the `/` in `{{/if}}` ends the block, like a closing tag. In the editor, **Add > If… otherwise…** puts all three in for you.
 
+Choices don't have to lead to different places. Two links can go to the same section, so the story branches and then joins up again, and you only write what comes next once. Here, however the player gets into the cave, the story carries on from the same place:
+
+<Sample script="At the mouth of the cave, you can [[walk straight in]](inside) or [[creep in quietly]](inside).
+
+[[inside]]:
+The cave opens out into a wide chamber, lit by a small fire."></Sample>
+
+To remember which way the player chose, a link can set an attribute as it goes, such as `[[creep in quietly]](inside, quiet = true)`, and the section they both go to can check it with `{{#if quiet}}`. See [Setting from links](/attributes/#setting-from-links).
+
 Look at the sections for the endings in the editor. Each one is underlined: the editor warns that the player has no way out. That's because nothing tells it these are endings, rather than sections you haven't finished yet.
 
 <Screenshot name="tutorial-dead-ends" alt="The endings underlined in the script, and a warning that run back to the boat has no way out, with a quick fix to mark it as an ending" />
@@ -166,4 +175,4 @@ Here are some other ideas for taking your story further, and where to find out h
 - **Borrow some patterns** from the [Cookbook](/cookbook/), such as an inventory, health, or a shop.
 - **Play some complete stories**, and see how they work, in [Examples](/featured-examples/).
 
-For everything else about writing stories, start with [Basic concepts](/basic-concepts/).
+For everything else about writing stories, start with [Basic concepts](/basic-concepts/), and keep the [Syntax cheat sheet](/syntax/) to hand: it has everything you can write in a story, on one page.

@@ -261,7 +261,7 @@ You can compare attribute values in `{{#if}}` and `{{#unless}}` conditions. See 
 
 ### Equality comparisons
 
-Use `=` to check if two values are equal, and `!=` to check if they're not equal:
+Use `=` to check if two values are equal, and `!=` to check if they're not equal. `==` works too:
 
 <Sample script="@set choice = &quot;red&quot;
 
@@ -309,6 +309,8 @@ You can combine conditions using `and`, `or` and `not`:
 - `a and b` — true if both are true
 - `a or b` — true if either is true
 - `not a` — true if `a` is not true
+
+`&&`, `||` and `!` work too, if you're used to them from a programming language.
 
 <Sample script="@set has_key = true
 @set has_map = true
