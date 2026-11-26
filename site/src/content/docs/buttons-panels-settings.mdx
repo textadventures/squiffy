@@ -74,11 +74,35 @@ To leave out the Save button, set `saveButton` to `false`. A `{{saves}}` link st
 
 ## Panels
 
-A panel shows a passage that's always to hand, such as the player's stats, their inventory, a map or some help. It's rendered again each time the story moves on, so it's always up to date. List your panels under `panels`:
+A panel shows a passage that's always to hand, such as the player's stats, their inventory, a map or some help. It's rendered again each time the story moves on, so it's always up to date. There are two steps:
 
-<Sample script={panels} files={{ "squiffy.json": panelsJson }}></Sample>
+1. Write each panel's text as a passage in the [master section](/basic-concepts/#master-sections-and-passages), `[[]]:`, at the end of your story:
 
-Each panel's passage is in the [master section](/basic-concepts/#master-sections-and-passages) `[[]]:`. Here, the sample is too narrow for a panel beside the story, so all three are buttons at the top: try them before and after you buy the sword.
+   ```squiffy
+   [[]]:
+
+   [status]:
+   **Gold:** {{gold}}
+
+   [inventory]:
+   {{#each inventory}}
+   - {{this}}
+   {{/each}}
+   ```
+
+2. List your panels under `panels` in `squiffy.json`, giving each one's `passage` and `label`:
+
+   ```json
+   {
+     "version": 1,
+     "panels": [
+       { "passage": "status", "label": "Status", "position": "side" },
+       { "passage": "inventory", "label": "Inventory", "icon": "bag" }
+     ]
+   }
+   ```
+
+In the sample below, `story.squiffy` is the script and `squiffy.json` the project file. Here, the sample is too narrow for a panel beside the story, so all three are buttons at the top: try them before and after you buy the sword.
 
 - `"position": "side"` shows the panel beside the story. On a narrower screen, such as a phone's, it's a button in the header instead, which shows the panel in a dialog.
 - Any other panel is a button in the header, next to the Back and Restart buttons, which shows its passage in a dialog. The dialog follows the story while it's open.

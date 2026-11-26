@@ -49,7 +49,7 @@ export default defineConfig({
             sidebar: [
                 {
                     label: "Start here",
-                    items: ["getting-started", "tutorial", "tutorial-part-2", "whats-new", "featured-examples"],
+                    items: ["getting-started", "tutorial", "tutorial-part-2", "syntax", "whats-new", "featured-examples"],
                 },
                 {
                     label: "Writing stories",
@@ -98,7 +98,7 @@ export default defineConfig({
                 },
                 {
                     label: "Reference",
-                    items: ["syntax", "helpers-reference"],
+                    items: ["helpers-reference"],
                 },
             ],
             editLink: {
