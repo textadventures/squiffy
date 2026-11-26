@@ -823,11 +823,13 @@ export function createLanguageService(options: LanguageServiceOptions): Language
                     continue;
                 }
                 const header = node.header!;
-                const detail = header.type == "continue" ? `+++${header.text}` : header.type == "separator" ? "---" : undefined;
+                // A [[]]: header is the master section, as the VS Code extension's Sections view calls it (#696)
+                const detail = header.type == "continue" ? `+++${header.text}` : header.type == "separator" ? "---"
+                    : node.name === "" ? "Master section" : undefined;
                 symbols.push({
                     name: node.name ?? storyName ?? detail ?? "",
                     kind: "section",
-                    ...(node.kind != "named" && detail ? { detail } : {}),
+                    ...((node.kind != "named" || node.name === "") && detail ? { detail } : {}),
                     range: node.range,
                     selectionRange: node.nameRange ?? header.range,
                     children: passageSymbols(node),
@@ -905,8 +907,10 @@ export function createLanguageService(options: LanguageServiceOptions): Language
             const sectionName = section && index.nodeNames.get(section);
             const replace = (typed: string): Range => lineRange(position.line, position.character - typed.length, position.character);
 
+            // Not the names the story gives the text before the first section and the sections
+            // without names of their own (#696), which the author never wrote, nor the master section
             const sectionItems = (typed: string): CompletionItem[] => index.sectionNames
-                .filter(name => !name.startsWith("_continue"))
+                .filter(name => name != "" && name != "_default" && !name.startsWith("_continue"))
                 .map(name => ({ label: name, kind: "section", range: replace(typed) }));
             const passageItems = (typed: string): CompletionItem[] => {
                 const passages = sectionName === undefined ? undefined : index.sections.get(sectionName)?.passages;

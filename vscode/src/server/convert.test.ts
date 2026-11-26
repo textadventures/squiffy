@@ -21,8 +21,13 @@ describe("conversion to LSP", () => {
         const symbol = toLspSymbol({ name: "", detail: "(Start)", kind: "section", range, selectionRange: range, children: [
             { name: "door", kind: "passage", range, selectionRange: range, children: [] },
         ] });
-        expect(symbol).toMatchObject({ name: "(Start)", detail: undefined, kind: SymbolKind.Class });
+        expect(symbol).toMatchObject({ name: "(Start)", kind: SymbolKind.Class });
+        expect(symbol.detail).toBeUndefined();
         expect(symbol.children![0]).toMatchObject({ name: "door", kind: SymbolKind.Method });
+        // Not the names the story gives them, in the breadcrumbs (#696)
+        expect(toLspSymbol({ name: "_default", detail: "(Start)", kind: "section", range, selectionRange: range, children: [] }).name).toBe("(Start)");
+        expect(toLspSymbol({ name: "_continue1", detail: "+++Next", kind: "section", range, selectionRange: range, children: [] }).name).toBe("+++Next");
+        expect(toLspSymbol({ name: "", detail: "Master section", kind: "section", range, selectionRange: range, children: [] }).name).toBe("Master section");
     });
 
     test("completes with an edit of what's been typed", () => {

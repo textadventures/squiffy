@@ -53,8 +53,9 @@ const SYMBOL_KINDS: Record<DocumentSymbol["kind"], SymbolKind> = {
 
 export function toLspSymbol(symbol: DocumentSymbol): LspDocumentSymbol {
     return {
-        name: symbol.name || symbol.detail || "(unnamed)",
-        detail: symbol.name ? symbol.detail : undefined,
+        // A section without a name of its own by what it's called in the outline and the Sections
+        // view ("(Start)", "+++Next", "---", "Master section"), not the name the story gives it (#696)
+        name: symbol.detail || symbol.name || "(unnamed)",
         kind: SYMBOL_KINDS[symbol.kind],
         range: symbol.range,
         selectionRange: symbol.selectionRange,
