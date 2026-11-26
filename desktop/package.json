@@ -28,7 +28,7 @@
   "devDependencies": {
     "@textadventures/project-fs": "file:../project-fs",
     "@types/node": "^26.6.6",
-    "electron": "^45.3.3",
+    "electron": "^45.4.1",
     "esbuild": "^0.28.2",
     "typescript": "^6.0.3",
     "electron-builder": "^26.18.0"
