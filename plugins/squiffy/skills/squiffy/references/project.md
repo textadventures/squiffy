@@ -126,6 +126,8 @@ For the author testing a late scene in a browser without playing up to it. A sto
 - `&set=` sets an attribute first, once for each, written as after `@set`: `?start=the vault&set=has_key&set=score=5`.
 - The flag button above the story lists the sections, `@test` ones first, under **From the beginning**, which goes back to the story's start.
 
+Starting anywhere other than the start still runs the start section's `@set` (and `@inc`, `@dec`...) lines first, so the story's "globals" such as `@set loot = 0` are set, but not its text or JavaScript: an attribute set from the start's JavaScript, or on the way to the scene, is empty unless something sets it. The section's own setters, and `&set=`, come after, so win.
+
 When a scene needs more than an attribute or two, write a section that sets them and goes on to it, marked `@test`, and start there:
 
 ```squiffy
