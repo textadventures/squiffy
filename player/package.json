@@ -1,6 +1,6 @@
 {
   "name": "@textadventures/squiffy-player",
-  "version": "7.0.0-beta.18",
+  "version": "7.0.0-beta.19",
   "private": true,
   "description": "The page at squiffystories.com that plays a story from a link, with the story in the link itself",
   "license": "MIT",
@@ -21,8 +21,8 @@
   },
   "dependencies": {
     "fflate": "^0.8.3",
-    "squiffy-compiler": "^7.0.0-beta.18",
-    "squiffy-runtime": "^7.0.0-beta.18"
+    "squiffy-compiler": "^7.0.0-beta.19",
+    "squiffy-runtime": "^7.0.0-beta.19"
   },
   "devDependencies": {
     "typescript": "^6.0.3",
