@@ -7,7 +7,14 @@
     import { AppBar } from "@skeletonlabs/skeleton-svelte";
     import { goto } from "$app/navigation";
     import { base } from "#lib/base-path.js";
-    import { project, closeProject, downloadFile } from "#lib/project.svelte.js";
+    import { tick } from "svelte";
+    import { project, closeProject, downloadFile, canOpenFolders, isDesktop } from "#lib/project.svelte.js";
+    import { newStory, openFile, openStoryFolder } from "#lib/switch-story.js";
+    import { TWINE_ACCEPT } from "#lib/twine-import.js";
+    import { QUEST_ACCEPT } from "#lib/quest-import.js";
+    import FilePlus from "@lucide/svelte/icons/file-plus";
+    import FileUp from "@lucide/svelte/icons/file-up";
+    import FileInput from "@lucide/svelte/icons/file-input";
     import { settings } from "#lib/settings.svelte.js";
     import { shortcutsDialog } from "#lib/shortcuts-dialog.svelte.js";
     import { BACK_KEY, FORWARD_KEY, formatKey, isMac } from "#lib/shortcuts.js";
@@ -144,8 +151,33 @@
     // In the desktop app, the story's folder in Finder, Explorer or the file manager
     const reveal = $derived(p ? folderReveal(p.fs) : null);
 
+    const IMPORT_ACCEPT = `${TWINE_ACCEPT},${QUEST_ACCEPT}`;
+    const OPEN_ACCEPT = `.squiffy,.zip,${IMPORT_ACCEPT}`;
+
+    // New and Open, in the browser (#711). The desktop app has them in its own File menu.
+    let fileInput = $state<HTMLInputElement>();
+    let fileAccept = $state(OPEN_ACCEPT);
+    function chooseFile(accept: string) {
+        fileAccept = accept;
+        // So the input has the new accept before it opens
+        void tick().then(() => fileInput?.click());
+    }
+    function handleFileChosen(e: Event) {
+        const input = e.currentTarget as HTMLInputElement;
+        const file = input.files?.[0];
+        input.value = "";
+        if (file) void openFile(file);
+    }
+    const openItems: DropdownMenuItem[] = isDesktop ? [] : [
+        { label: "New story", action: () => void newStory(), icon: FilePlus },
+        { label: "Open file…", action: () => chooseFile(OPEN_ACCEPT), icon: FileUp },
+        ...(canOpenFolders ? [{ label: "Open folder…", action: () => void openStoryFolder(), icon: FolderOpen }] : []),
+        { label: "Import from Twine or Quest…", action: () => chooseFile(IMPORT_ACCEPT), icon: FileInput },
+    ];
+
     let fileMenuItems = $derived<DropdownMenuItem[]>([
-        { label: "Save", action: () => void p?.save(), icon: Save },
+        ...openItems,
+        { label: "Save", action: () => void p?.save(), icon: Save, divider: openItems.length > 0 },
         ...(reveal ? [{ label: reveal.label, action: () => reveal.show(""), icon: FolderOpen }] : []),
         { label: "Download project (.zip)", action: () => ondownloadproject?.(), icon: FolderDown },
         { label: `Download ${p?.activePath ?? ""}`, action: () => { if (p?.activePath) void downloadFile(p.activePath); }, icon: Download, disabled: !p?.activePath },
@@ -374,6 +406,9 @@
         </AppBar.Trail>
     </AppBar.Toolbar>
 </AppBar>
+{#if !isDesktop}
+    <input bind:this={fileInput} type="file" accept={fileAccept} class="hidden" onchange={handleFileChosen} />
+{/if}
 
 <style>
     .toolbar-icon-btn {

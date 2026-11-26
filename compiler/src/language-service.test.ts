@@ -551,6 +551,45 @@ describe("code actions", () => {
         expect(actions.map(a => a.title)).toEqual(["Create section 'Shop'"]);
     });
 
+    test("a link in Twine's style says what to write instead, and changes it (#711)", async () => {
+        const text = "[[a]]:\n[[Go inside->Mill floor]] [[Mill floor<-Enter]] [[Leave|Road]] [[Road->Road]]\n\n[[Mill floor]]:\nDusty.";
+        const ls = createLanguageService({ files: memoryFiles({ "s.squiffy": text }), mainFile: "s.squiffy" });
+        const diagnostics = (await ls.getDiagnostics("s.squiffy")).filter(d => d.code != "squiffy/unreachable-section");
+        expect(diagnostics.map(d => [d.code, slice(text, d.range)])).toEqual([
+            ["squiffy/twine-syntax", "[[Go inside->Mill floor]]"],
+            ["squiffy/twine-syntax", "[[Mill floor<-Enter]]"],
+            ["squiffy/twine-syntax", "[[Leave|Road]]"],
+            ["squiffy/twine-syntax", "[[Road->Road]]"],
+        ]);
+        expect(diagnostics[0].message).toBe("In section 'a' there is a link in Twine's style, [[Go inside->Mill floor]]. In Squiffy, write [[Go inside]](Mill floor)");
+        const fixes = await Promise.all(diagnostics.map(d => ls.getCodeActions("s.squiffy", d.range)));
+        expect(fixes.map(actions => actions.map(a => a.title))).toEqual([
+            ["Change to [[Go inside]](Mill floor)"],
+            ["Change to [[Enter]](Mill floor)"],
+            ["Change to [[Leave]](Road)"],
+            ["Change to [[Road]]"],
+        ]);
+        expect(apply(text, fixes[0][0].edit["s.squiffy"])).toBe(text.replace("[[Go inside->Mill floor]]", "[[Go inside]](Mill floor)"));
+    });
+
+    test("a section whose name has Twine's link syntax in it is still linked to", async () => {
+        const text = "[[a]]:\n[[Left|Right]]\n\n[[Left|Right]]:\nHere.\n@end";
+        const ls = createLanguageService({ files: memoryFiles({ "s.squiffy": text }), mainFile: "s.squiffy" });
+        expect((await ls.getDiagnostics("s.squiffy")).map(d => d.code)).toEqual([]);
+    });
+
+    test("a Harlowe hook says it's Twine code (#711)", async () => {
+        const text = "[[a]]:\n(if: $key)[You unlock it.](else:)[It's locked.]";
+        const ls = createLanguageService({ files: memoryFiles({ "s.squiffy": text }), mainFile: "s.squiffy" });
+        const diagnostics = (await ls.getDiagnostics("s.squiffy")).filter(d => d.code.startsWith("squiffy/twine") || d.code.includes("link"));
+        expect(diagnostics.map(d => [d.code, slice(text, d.range)])).toEqual([
+            ["squiffy/twine-syntax", "(if: $key)[You unlock it.]"],
+            ["squiffy/twine-syntax", "(else:)[It's locked.]"],
+        ]);
+        expect(diagnostics[1].message).toBe("In section 'a' there is Twine code, (else:)[...], which Squiffy doesn't run. Use {{#if}}...{{else}}...{{/if}} for text that depends on an attribute");
+        expect(await ls.getCodeActions("s.squiffy", diagnostics[1].range)).toEqual([]);
+    });
+
     test("a missing section goes after the link's section, and the sections it leads to", async () => {
         const text = "[[a]]:\n[[b]] or [[c]].\n\n[[b]]:\nB\n\n[[d]]:\nD";
         const ls = createLanguageService({ files: memoryFiles({ "s.squiffy": text }), mainFile: "s.squiffy" });

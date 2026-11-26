@@ -59,6 +59,7 @@ export function buildMenu(options: MenuOptions): void {
                 { label: "New Story…", accelerator: "CmdOrCtrl+N", click: () => onAction("new-story") },
                 { label: "Open Folder…", accelerator: "CmdOrCtrl+O", click: () => onAction("open-folder") },
                 { label: "Open File…", click: () => onAction("open-file") },
+                { label: "Import from Twine or Quest…", click: () => onAction("import-story") },
                 { label: "Open Recent", submenu: recentItems },
                 { type: "separator" },
                 { label: "Save", accelerator: "CmdOrCtrl+S", click: () => onAction("save") },

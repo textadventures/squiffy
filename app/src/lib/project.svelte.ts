@@ -28,7 +28,7 @@ import { desktopApi } from "./desktop.js";
 import { newStoryDialog, newStoryText } from "./new-story.js";
 import { needsBackup } from "./backup.js";
 import { changedPaths, readDisk, reconcile } from "./disk-changes.js";
-import { convertTwineFile, TWINE_FILE_PATTERN, twineImportMessage } from "./twine-import.js";
+import { convertTwineFile, type ConvertedTwine, TWINE_FILE_PATTERN, twineImportMessage } from "./twine-import.js";
 import { openNextStoryOnMap } from "./map-layout.js";
 import { suggestedLanguage } from "./languages.js";
 import { convertQuestFile, findQuestGame, QUEST_FILE_PATTERN, questImportMessage } from "./quest-import.js";
@@ -739,13 +739,7 @@ export async function importFile(file: File): Promise<string | null> {
     }
     if (TWINE_FILE_PATTERN.test(file.name)) {
         const converted = await convertTwineFile(file.name, await file.text());
-        if (!converted) return null;
-        const id = crypto.randomUUID();
-        const fs = await browserStories.create(id, { title: converted.title, mainFile: converted.mainFile, lastOpened: Date.now() });
-        for (const [path, text] of converted.files) await fs.write(path, text);
-        showToast(twineImportMessage(converted), "info", 12000);
-        openNextStoryOnMap();
-        return id;
+        return converted && browserStoryFromTwine(converted);
     }
     if (file.name.toLowerCase().endsWith(".zip")) {
         const story = await readZip(file.name, new Uint8Array(await file.arrayBuffer()));
@@ -762,9 +756,20 @@ export async function importFile(file: File): Promise<string | null> {
     return createBrowserStory(name, text);
 }
 
+// A new story in the browser from a converted Twine story. Returns its id.
+export async function browserStoryFromTwine(converted: ConvertedTwine): Promise<string> {
+    const id = crypto.randomUUID();
+    const fs = await browserStories.create(id, { title: converted.title, mainFile: converted.mainFile, lastOpened: Date.now() });
+    for (const [path, text] of converted.files) await fs.write(path, text);
+    showToast(twineImportMessage(converted), "info", 12000);
+    openNextStoryOnMap();
+    return id;
+}
+
 // Opens a folder with File System Access, and the main .squiffy file in it, and adds it to the
-// recent folders. Returns the folder's id there, or null if the user cancels.
-export async function openFolder(): Promise<string | null> {
+// recent folders. Returns the folder's id there, or null if the user cancels. `beforeOpening` is
+// called once a folder is picked, before it's opened, to close the story that's open (#711).
+export async function openFolder(beforeOpening?: () => Promise<void>): Promise<string | null> {
     if (desktop) {
         const picked = await pickDesktopFolder();
         return picked && openPicked(picked);
@@ -774,6 +779,7 @@ export async function openFolder(): Promise<string | null> {
     const mainFile = await chooseMainFile(fs);
     if (!mainFile) return null;
     const id = await rememberFolder(fs.root, mainFile);
+    await beforeOpening?.();
     await start(fs, { kind: "folder", id }, mainFile);
     return id;
 }
@@ -853,13 +859,15 @@ export async function pickDesktopFolder(): Promise<PickedFolder | null> {
 }
 
 // Open file: a .squiffy file opens its folder, a project zip (from Download project) is
-// unpacked into a folder the author chooses, and a Twine story or Quest gamebook is converted into one
-export async function pickDesktopFile(): Promise<PickedFolder | null> {
+// unpacked into a folder the author chooses, and a Twine story or Quest gamebook is converted into one.
+// "import" is File > Import, which only offers Twine stories and Quest gamebooks (#711).
+export async function pickDesktopFile(kind: "open" | "import" = "open"): Promise<PickedFolder | null> {
     // On macOS, a dialog with several filters only allows the first one's files until the
     // author picks another from its Format menu, so the first filter takes them all
-    const filters = [...SQUIFFY_FILES, ...ZIP_FILES, ...TWINE_FILES, ...QUEST_FILES];
+    const filters = kind == "import" ? [...TWINE_FILES, ...QUEST_FILES] : [...SQUIFFY_FILES, ...ZIP_FILES, ...TWINE_FILES, ...QUEST_FILES];
     const all: FileTypeFilter = { description: "All supported files", extensions: filters.flatMap(f => f.extensions) };
-    const picked = await desktopOrThrow().opener.openFile({ title: "Open a story file", filters: [all, ...filters] });
+    const title = kind == "import" ? "Import a Twine story or Quest gamebook" : "Open a story file";
+    const picked = await desktopOrThrow().opener.openFile({ title, filters: [all, ...filters] });
     if (!picked) return null;
     const { fs, mainFile } = picked;
     if (mainFile.toLowerCase().endsWith(".zip")) {
@@ -942,6 +950,16 @@ async function writeIntoNewFolder(
     }
     for (const [path, content] of files) await fs.write(path, content);
     return { fs, mainFile };
+}
+
+// A folder the author chooses for a converted Twine story, pasted into the script (#711)
+export async function pickDesktopFolderForTwine(converted: ConvertedTwine, name: string): Promise<PickedFolder | null> {
+    const folder = await writeIntoNewFolder(name, converted.files, converted.mainFile);
+    if (folder) {
+        showToast(twineImportMessage(converted), "info", 12000);
+        openNextStoryOnMap();
+    }
+    return folder;
 }
 
 // New story: the author names it, and it's made in a new folder of that name (newStoryDialog),
