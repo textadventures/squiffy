@@ -243,6 +243,23 @@ Hello world!`;
     expect(pkg.files["index.html"]).toContain('<script src="external.js"></script>');
 });
 
+test("Squiffy's own styles are minified, and the story's aren't", async () => {
+    const result = await compileWithImports("@import my_style.css\n\nHello", ["my_style.css"]);
+    const storyCss = "/* The story's own comment */\nbody {\n    color: red;\n}";
+    const css = (await createPackage(result)).files["style.css"];
+    expect(css).toContain(".squiffy-continue{");
+    expect(css).toContain("light-dark(");
+    expect(css).not.toContain("/*");
+    expect(css).not.toContain("\n    ");
+
+    const html = (await createPackage(result, {
+        inlineHtml: true,
+        assets: { "my_style.css": new TextEncoder().encode(storyCss) }
+    })).files["index.html"];
+    expect(html).toContain(storyCss);
+    expect(html.match(/\/\*/g)).toHaveLength(1);
+});
+
 test("Package includes external stylesheets", async () => {
     const script = `@import styles.css
 

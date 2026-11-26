@@ -174,7 +174,8 @@ export const createPackage = async (input: CompileSuccess, createZipOrOptions: b
     const uiInfo = input.getUiInfo();
 
     const infoComment = `<!--\n\nCreated with Squiffy ${version}\n\nhttps://squiffystory.com\nhttps://github.com/textadventures/squiffy\n\n-->`;
-    const combinedCss = runtimeCss.toString() + "\n\n" + pageCss.toString();
+    // Both are minified when the packager is built (vite.config.ts)
+    const combinedCss = runtimeCss.toString() + "\n" + pageCss.toString();
 
     const storyJs = await input.getJs();
 

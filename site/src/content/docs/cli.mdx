@@ -40,7 +40,7 @@ Giving it the folder, or the main file named in `squiffy.json`, does the same. E
 
 Squiffy writes the game to a `build` folder next to `squiffy.json`, so it's kept apart from your story's own files:
 - `index.html` - the main HTML page
-- `style.css` - the stylesheet
+- `style.css` - Squiffy's own styles
 - `story.js` - your compiled story
 - `squiffy.runtime.global.js` - the Squiffy runtime
 
@@ -385,7 +385,7 @@ A story served this way can [start at any section](/testing/#starting-at-a-later
 
 ### Script only
 
-Use `--scriptonly` to generate *only* the `story.js` file, without overwriting the other files. This is useful when you've customized `index.html` or `style.css` and only want to update the story:
+Use `--scriptonly` to generate *only* the `story.js` file, without overwriting the other files. This is useful when you've customized `index.html` and only want to update the story. (To change how the story looks, [use a stylesheet of your own](/styling/#where-to-put-your-styles) in place of editing `style.css`, which is Squiffy's own styles, minified.)
 
 ```bash
 npx @textadventures/squiffy-cli --scriptonly
