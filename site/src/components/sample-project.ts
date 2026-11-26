@@ -141,11 +141,11 @@ export async function setUpProjectSample(sample: HTMLElement) {
     const iframe = document.createElement("iframe");
     iframe.className = "sample-frame";
     iframe.title = "The story";
-    // As setUpPreviewFrame does, but without its allow="autoplay", which lets the editor's preview
-    // start music when the author presses Run. On a docs page, that would let a sample start its
-    // music as the page loads, so a sample's sound waits until the reader clicks in it, as a
-    // published story's does.
-    iframe.setAttribute("sandbox", "allow-scripts");
+    // As setUpPreviewFrame does, with new tabs for links to other sites, but without its
+    // allow="autoplay", which lets the editor's preview start music when the author presses Run.
+    // On a docs page, that would let a sample start its music as the page loads, so a sample's
+    // sound waits until the reader clicks in it, as a published story's does.
+    iframe.setAttribute("sandbox", "allow-scripts allow-popups allow-popups-to-escape-sandbox");
     iframe.srcdoc = previewHtml;
     viewer.appendChild(iframe);
     let started = false;

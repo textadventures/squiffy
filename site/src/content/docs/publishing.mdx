@@ -74,6 +74,7 @@ A few things are different from a story published the other ways:
 - **A player's progress isn't saved.** Closing the page starts the story again, and there are no [saved games](/buttons-panels-settings/#saved-games).
 - **Every link looks the same** when it's pasted into a chat or a social media post: its preview can't show the story's title or cover, because the site never sees which story it is.
 - **The link says which version of Squiffy plays it** (the `v7`), so a story goes on working as it does now when later versions of Squiffy change things.
+- **Links to other sites open in a new tab**, and the story's [JavaScript](/javascript/) can't load another page in its place, show another site in a frame, or `fetch()` anything. That's so that anyone opening a link can trust it to show a story, not a page pretending to be some other site. Images, sounds and fonts from other sites still work, but a video embedded from another site doesn't.
 
 For a story that's finished, or one with pictures and sound, publish it [to textadventures.co.uk](#publishing-to-textadventurescouk) or [somewhere else](#where-to-put-it).
 

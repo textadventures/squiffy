@@ -26,14 +26,33 @@ body { font-family: system-ui, sans-serif; max-width: 32rem; margin: 20vh auto 0
 </html>
 `;
 
-// For Cloudflare Pages. There's no Content-Security-Policy: the story's frame is a srcdoc one,
-// which takes its policy from this page, so one strict enough to mean anything here would stop
-// stories loading their own images, fonts and scripts. The frame's sandbox is what keeps a story
-// away from this page. The player page itself only ever puts text into the document.
+// What a story in the player can reach, so that a story shared as a link can't pass
+// itself off as another site. The story's frame is a srcdoc one, which takes this page's policy.
+// - frame-src and object-src: nothing can be loaded into a frame, so a story can't put another
+//   site, such as a fake sign-in page, in its frame, under squiffystories.com's address, by
+//   navigating it, a <meta http-equiv="refresh">, or an <iframe> or <object> of its own. The srcdoc
+//   frame itself isn't loaded from anywhere, so it isn't stopped. Its links to other sites open in
+//   a new tab instead (openOtherSitesInNewTab in squiffy-runtime's preview.ts).
+// - connect-src: no fetch(), WebSockets and the like, which a story has no need of, so it can't
+//   send what a reader types to a server of its choosing, except in the address of an image.
+// - form-action: no forms are sent (the frame's sandbox stops them too).
+// Images, sounds and fonts from other sites are allowed, as stories use them, and so are scripts
+// (the story's own run from blob: URLs). The frame's sandbox is what keeps a story away from this
+// page, its storage, and the reader's tab. The player page itself only ever puts text into the
+// document.
+const policy = (connect: string) => ["frame-src 'none'", "object-src 'none'", `connect-src ${connect}`, "form-action 'none'"].join("; ");
+const CONTENT_SECURITY_POLICY = policy("'none'");
+// The dev server's page needs its WebSocket, for hot reloading, which 'self' covers. Not ws:,
+// which WebKit takes to allow http: as well.
+const DEV_CONTENT_SECURITY_POLICY = policy("'self'");
+
+// For Cloudflare Pages. A path that matches more than one rule gets the headers of each, so the
+// play page has both Content-Security-Policy headers, and a browser enforces both.
 const headers = `/*
   X-Content-Type-Options: nosniff
   Referrer-Policy: no-referrer
   X-Robots-Tag: noindex
+  Content-Security-Policy: ${CONTENT_SECURITY_POLICY}
 
 # The play page, which the editor's Play in a new tab sends a story to (src/play.ts), is only ever
 # a tab of its own, so no other site can put it in a frame
@@ -60,6 +79,10 @@ export default defineConfig({
     server: {
         port: Number(process.env.PORT) || 5181,
         strictPort: true,
+        headers: { "Content-Security-Policy": DEV_CONTENT_SECURITY_POLICY },
+    },
+    preview: {
+        headers: { "Content-Security-Policy": CONTENT_SECURITY_POLICY },
     },
     plugins: [
         {

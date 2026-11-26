@@ -411,6 +411,35 @@ body { background: url("blob:preview/1"), url(https://example.com/x.png); }`);
         }
     });
 
+    test("opens links to other sites in a new tab, and leaves the story's own links alone", async () => {
+        const { preview, element } = setUp();
+        await preview.receive({ type: "load", story: { js: await compileJs("[[start]]:\nSee [the site](https://example.com/), the [[cellar]], <a href=\"https://example.com/a.zip\" download>a file</a>, <a href=\"mailto:a@example.com\">mail</a>.\n\n[[cellar]]:\nDark.") } });
+        // jsdom doesn't follow links, so a click only shows what the link is set to do
+        const site = element.querySelector<HTMLAnchorElement>('a[href="https://example.com/"]')!;
+        site.rel = "external";
+        site.click();
+        expect(site.target).toBe("_blank");
+        expect(site.rel).toBe("external noopener noreferrer");
+
+        for (const link of element.querySelectorAll<HTMLAnchorElement>('a[href^="mailto:"], a[download]')) {
+            link.click();
+            expect(link.target).toBe("");
+        }
+        expect(element.querySelectorAll('a[href^="mailto:"], a[download]')).toHaveLength(2);
+
+        // A story that handles a link's click itself keeps it
+        const handled = Object.assign(document.createElement("a"), { href: "https://example.com/handled" });
+        element.append(handled);
+        handled.addEventListener("click", event => event.preventDefault());
+        handled.click();
+        expect(handled.target).toBe("");
+
+        const cellar = element.querySelector<HTMLAnchorElement>("a[data-section='cellar']")!;
+        cellar.click();
+        expect(cellar.target).toBe("");
+        await vi.waitFor(() => expect(element.textContent).toContain("Dark."));
+    });
+
     test("shows no buttons of its own unless the host asks", async () => {
         const { preview, element } = setUp();
         await preview.receive({ type: "load", story: { js: await compileJs(script) } });
