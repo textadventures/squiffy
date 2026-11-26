@@ -95,6 +95,9 @@
     // The story's attributes as it sets them, as the 6.x editor's debugger logs them
     let attributes = $state<Record<string, unknown>>({});
     let attributesOpen = $state(false);
+    // The text before the first section is "_default" in the story, as previous_section says, but
+    // "(Start)" in the outline and on the map (#696)
+    const attributeText = (value: unknown) => value === "_default" ? "(Start)" : JSON.stringify(value);
     // Navigations while the story starts are where it starts, not the player clicking
     let following = false;
     // Where the story last said it was
@@ -158,7 +161,12 @@
                     following = true;
                 },
                 onAttributeSet: (name, value) => {
-                    attributes = { ...attributes, [name]: value };
+                    // null is an attribute that isn't set, as after Back undoes it (#696)
+                    if (value === null || value === undefined) {
+                        const { [name]: _, ...rest } = attributes;
+                        attributes = rest;
+                    }
+                    else attributes = { ...attributes, [name]: value };
                 },
                 onCanGoBackChanged: value => {
                     canGoBack = value;
@@ -377,7 +385,7 @@
                 <dl class="max-h-40 overflow-y-auto grid grid-cols-[auto_1fr] gap-x-3 px-3 pb-2 font-mono">
                     {#each Object.entries(attributes).sort(([a], [b]) => a.localeCompare(b)) as [name, value] (name)}
                         <dt class="text-surface-600-400">{name}</dt>
-                        <dd class="truncate" title={JSON.stringify(value)}>{JSON.stringify(value)}</dd>
+                        <dd class="truncate" title={JSON.stringify(value)}>{attributeText(value)}</dd>
                     {/each}
                 </dl>
             {/if}

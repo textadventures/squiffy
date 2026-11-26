@@ -257,6 +257,15 @@ describe("document symbols", () => {
         ]);
     });
 
+    test("the master section (#696)", async () => {
+        const text = "[[]]:\nEvery section.\n\n[[a]]:\nA";
+        const ls = createLanguageService({ files: memoryFiles({ "s.squiffy": text }), mainFile: "s.squiffy" });
+        expect((await ls.getDocumentSymbols("s.squiffy")).map(s => [s.name, s.detail])).toEqual([
+            ["", "Master section"],
+            ["a", undefined],
+        ]);
+    });
+
     test("work for files that aren't imported", async () => {
         const files = memoryFiles({ "s.squiffy": "[[a]]:", "other.squiffy": "[[b]]:\n[p]:" });
         const ls = createLanguageService({ files, mainFile: "s.squiffy" });
@@ -420,6 +429,13 @@ describe("completion", () => {
         expect(items.map(i => i.label)).toEqual(["cellar", "start", "outside"]);
         expect(items[0].range.end.character - items[0].range.start.character).toBe(2);
         expect((await complete("[[Go]](o", "")).map(i => i.label)).toEqual(["cellar", "start", "outside"]);
+    });
+
+    test("not the names the story gives the start, the master section or +++ sections (#696)", async () => {
+        const files = memoryFiles({ "s.squiffy": "Intro [[\n+++Next\n[[]]:\n[[a]]:\nA" });
+        const ls = createLanguageService({ files, mainFile: "s.squiffy" });
+        const items = await ls.getCompletions("s.squiffy", { line: 0, character: 8 });
+        expect(items.map(i => i.label)).toEqual(["a"]);
     });
 
     test("passage names after [ in the current section", async () => {
