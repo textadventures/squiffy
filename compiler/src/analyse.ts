@@ -780,12 +780,12 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
             else if (link.linkType == "section") {
                 if (!linkDestinationExists(link.target, story.sections)) {
                     warn("squiffy/unknown-section-link", link.start, link.end,
-                        `${where} there is a link to a section called [[${link.target}]], which doesn't exist`);
+                        `${where} there is a link to a section called [[${linkDestination(link.target)}]], which doesn't exist`);
                 }
             }
             else if (!linkDestinationExists(link.target, section.passages) && !linkDestinationExists(link.target, masterPassages)) {
                 warn("squiffy/unknown-passage-link", link.start, link.end,
-                    `${where} there is a link to a passage called [${link.target}], which doesn't exist`);
+                    `${where} there is a link to a passage called [${linkDestination(link.target)}], which doesn't exist`);
             }
         }
 
@@ -970,8 +970,13 @@ function linkDestinationExists(link: string, keys: Record<string, unknown>) {
         return true;
     }
     // Otherwise, assume a comma separates the destination from setters.
-    const linkDestination = trimmedLink.split(",")[0].trim();
-    return hasOwn(keys, linkDestination);
+    return hasOwn(keys, linkDestination(trimmedLink));
+}
+
+// The name a link goes to when it doesn't exist, without any setters after a comma, so the
+// warning names the same section or passage as its "Create section" quick fix (#705)
+function linkDestination(link: string) {
+    return link.trim().split(",")[0].trim();
 }
 
 // The same as Object.keys(keys).includes(key) for the plain objects used here, without building

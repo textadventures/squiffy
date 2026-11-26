@@ -171,10 +171,10 @@ describe("analyse", () => {
             range: range(2, 18, 2, 40),
             severity: "warning",
             code: "squiffy/unknown-section-link",
-            message: "In section 'start' there is a link to a section called [[missing, x=1]], which doesn't exist",
+            message: "In section 'start' there is a link to a section called [[missing]], which doesn't exist",
         });
         expect(formatDiagnostic(analysis.diagnostics[0])).toBe(
-            "WARNING: story.squiffy line 3: In section 'start' there is a link to a section called [[missing, x=1]], which doesn't exist");
+            "WARNING: story.squiffy line 3: In section 'start' there is a link to a section called [[missing]], which doesn't exist");
     });
 
     test("next-section link with no next section", async () => {
