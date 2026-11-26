@@ -29,7 +29,7 @@ export type NewStoryResult =
     | { ok: true; root: OpenedRoot }
     | { ok: false; reason: "exists" | "invalid-name" };
 
-export type MenuAction = "new-story" | "open-folder" | "open-file" | "import-story" | "save" | "close-story" | "settings" | "undo" | "redo" | "keyboard-shortcuts";
+export type MenuAction = "new-story" | "open-folder" | "open-file" | "import-story" | "save" | "share" | "close-story" | "settings" | "undo" | "redo" | "keyboard-shortcuts";
 
 export interface SquiffyDesktopApi {
     platform: "mac" | "windows" | "linux";

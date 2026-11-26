@@ -63,6 +63,7 @@ export function buildMenu(options: MenuOptions): void {
                 { label: "Open Recent", submenu: recentItems },
                 { type: "separator" },
                 { label: "Save", accelerator: "CmdOrCtrl+S", click: () => onAction("save") },
+                { label: "Share or Publish…", click: () => onAction("share") },
                 { type: "separator" },
                 { label: "Close Story", click: () => onAction("close-story") },
                 ...(isMac

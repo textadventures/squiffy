@@ -10,6 +10,10 @@ import { fileURLToPath } from "node:url";
 const here = dirname(fileURLToPath(import.meta.url));
 export const repoRoot = resolve(here, "../..");
 export const outDir = join(repoRoot, "site/src/assets/screenshots");
+// The player the shots' editor makes links to (its VITE_PLAYER_URL), and its dev server, which
+// plays them (both in playwright.screenshots.config.ts)
+const PLAYER_URL = "https://squiffystories.com";
+const LOCAL_PLAYER_URL = "http://localhost:5181";
 
 type Rect = { x: number; y: number; width: number; height: number };
 
@@ -38,6 +42,14 @@ export const test = base.extend({
         });
         // The home page's "Made with Squiffy" comes from textadventures.co.uk, and changes
         await context.route("https://textadventures.co.uk/**", route => route.abort());
+        // The player, from its dev server in place of squiffystories.com: Play in a new tab sends
+        // the story to its play page, which only takes one from the real editors, or (in
+        // development) from one on this machine, as the shots' editor is (#644). Its links still
+        // say squiffystories.com.
+        await context.route(`${PLAYER_URL}/**`, async route => {
+            const url = new URL(route.request().url());
+            await route.fulfill({ response: await route.fetch({ url: `${LOCAL_PLAYER_URL}${url.pathname}${url.search}` }) });
+        });
         await use(context);
     },
 });
@@ -126,7 +138,7 @@ export async function playInNewTab(page: Page): Promise<Page> {
         page.getByRole("button", { name: "Run options" }).click().then(() =>
             page.getByRole("menuitem", { name: "Play in a new tab" }).click()),
     ]);
-    await tab.waitForURL(/^blob:/);
+    await tab.waitForURL(`${PLAYER_URL}/v7/play`);
     await tab.setViewportSize(page.viewportSize()!);
     await expect(tab.locator("a.squiffy-link").first()).toBeVisible();
     return tab;

@@ -52,6 +52,17 @@ export function handleUndo(handler: (redo: boolean) => boolean): () => void {
     };
 }
 
+// What the editor page does with File > Share or Publish: opens its dialog. Nothing, with no story open.
+let shareHandler: (() => void) | null = null;
+
+/** Returns a function that stops it */
+export function handleShare(handler: () => void): () => void {
+    shareHandler = handler;
+    return () => {
+        if (shareHandler === handler) shareHandler = null;
+    };
+}
+
 // Edit > Undo/Redo: the editor page's, or CodeMirror's own history in an editor, else the
 // browser's (text fields)
 function undoRedo(action: "undo" | "redo") {
@@ -80,6 +91,8 @@ async function handleAction(action: MenuAction) {
             return openInEditor(() => pickDesktopFile("import"));
         case "save":
             return project.current?.save();
+        case "share":
+            return shareHandler?.();
         case "close-story":
             await closeProject();
             return goto(`${base}/`);

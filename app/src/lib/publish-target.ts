@@ -1,11 +1,12 @@
-// Where the Publish dialog last sent each story, so it opens on the same choice next time: most
+// Where the Share or publish dialog last sent each story, so it opens on the same choice next time: most
 // authors publish a story the same way every time. Kept in this browser, by the story's ID in
 // squiffy.json. A story without one opens on whatever was last chosen for any story.
 export const PUBLISH_TARGETS = ["online", "link", "zip", "html", "js"] as const;
 export type PublishTarget = typeof PUBLISH_TARGETS[number];
 
-// The first choice for a story that hasn't been published from here: textadventures.co.uk
-export const DEFAULT_PUBLISH_TARGET: PublishTarget = "online";
+// The first choice for a story that hasn't been published from here: a link, which needs no
+// account and no upload, and is what a newcomer sharing a story wants (#719)
+export const DEFAULT_PUBLISH_TARGET: PublishTarget = "link";
 
 const STORAGE_KEY = "squiffy-publish-targets";
 // The key for the last choice made for any story

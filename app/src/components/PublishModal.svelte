@@ -1,5 +1,5 @@
 <script lang="ts">
-    // Publish: every way of getting a story out to players, with what each is for. Three of them
+    // Share or publish (#719): every way of getting a story out to players, with what each is for. Three of them
     // save files for the author to put somewhere. One makes a link with the whole story in it, for
     // a small story (#lib/share-link.ts). The other sends the story to textadventures.co.uk:
     // the editor has no login there, so it uploads the published story and then sends the author to
@@ -42,8 +42,9 @@
     const POLL_INTERVAL = 3000;
 
     const options: { value: PublishTarget; title: string; detail: string }[] = [
+        // A link first, as it's what someone sharing a story for the first time wants (#719)
+        { value: "link", title: "A link", detail: "The whole story in a web address, to send to anyone, with no account and nothing to upload. For a small story: its text, and a few small images." },
         { value: "online", title: "textadventures.co.uk", detail: "Put your story online for free, where players can find it. Publishing again updates it." },
-        { value: "link", title: "A link", detail: "The whole story in a web address, with nothing to upload. For a small story: its text, and a few small images." },
         { value: "zip", title: "Zip for a website", detail: "HTML, JavaScript and your story's files, to upload to itch.io or your own site." },
         { value: "html", title: "One HTML file", detail: "Everything in a single page, for sharing, or for sites that take one file." },
         { value: "js", title: "JavaScript only", detail: "Just story.js, for embedding the story in a page of your own." },
@@ -191,7 +192,7 @@
         onsubmit={e => { e.preventDefault(); if (stage.name === "choose") void publish(); }}
     >
         <h2 id="publish-title" class="text-base font-semibold">
-            {stage.name === "choose" || stage.name === "saving" ? "Publish" : stage.name === "link" ? "Share a link" : "Publish to textadventures.co.uk"}
+            {stage.name === "choose" || stage.name === "saving" ? "Share or publish" : stage.name === "link" ? "Share a link" : "Publish to textadventures.co.uk"}
         </h2>
 
         {#if stage.name === "choose" || stage.name === "saving"}
@@ -247,7 +248,10 @@
         {:else if stage.name === "link"}
             {@const length = linkUrl.length}
             <div class="publish-link flex flex-col gap-3 text-sm">
-                <p>This link is your story. Anyone who opens it can play it, and nothing has been uploaded.</p>
+                <p>
+                    This link is your story. Anyone who opens it can play it on squiffystories.com, Squiffy's own site
+                    for playing stories, and nothing has been uploaded.
+                </p>
                 <div class="flex gap-2">
                     <input
                         id="publish-link"
@@ -364,7 +368,7 @@
             </button>
             {#if stage.name === "choose" || stage.name === "saving"}
                 <button type="submit" class="btn btn-sm preset-filled-primary-500" disabled={busy}>
-                    {stage.name === "saving" ? "Publishing…" : "Publish"}
+                    {#if target === "link"}{stage.name === "saving" ? "Making the link…" : "Make the link"}{:else}{stage.name === "saving" ? "Publishing…" : "Publish"}{/if}
                 </button>
             {/if}
         </div>

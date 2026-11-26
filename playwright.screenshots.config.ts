@@ -24,9 +24,17 @@ export default defineConfig({
     webServer: [
         {
             command: "npm run dev --workspace app",
-            // The links Publish's "A link" makes go to the real player, not a local one
+            // The links "A link" makes go to the real player, not a local one
             env: { PORT: "5188", VITE_PLAYER_URL: "https://squiffystories.com" },
             url: "http://localhost:5188",
+            reuseExistingServer: true,
+            timeout: 60_000,
+        },
+        {
+            // The player, which e2e/screenshots/lib.ts serves in place of squiffystories.com, for
+            // Play in a new tab
+            command: "npm run dev --workspace player",
+            url: "http://localhost:5181/v7/",
             reuseExistingServer: true,
             timeout: 60_000,
         },

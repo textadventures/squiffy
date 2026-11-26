@@ -1,6 +1,6 @@
 // The editor's home page, problems, Start at menu and dialogs: "Using the editor", "Testing your
 // story", "Publishing your story", "Images, sound and other files" and "Styling"
-import { test, expect, around, capture, dialog, menu, openStory, run, setView } from "./lib.js";
+import { test, expect, around, capture, dialog, openStory, run, setView } from "./lib.js";
 
 test("the home page, with a story kept in the browser", async ({ page }) => {
     // The list says when each story was last opened, and is in that order
@@ -34,9 +34,9 @@ test("the preview's Start at menu", async ({ page }) => {
     await capture(page, "start-at", { clip: { ...preview, height: list.y + list.height + 24 - preview.y } });
 });
 
-test("the Publish dialog", async ({ page }) => {
+test("the Share or publish dialog", async ({ page }) => {
     await openStory(page, "examples/gameshow");
-    await menu(page, "File", "Publish…");
+    await page.getByRole("button", { name: "Share", exact: true }).click();
     await expect(dialog(page)).toBeVisible();
     await capture(page, "publish", { clip: await around(dialog(page)) });
 });
