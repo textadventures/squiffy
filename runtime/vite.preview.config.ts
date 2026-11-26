@@ -32,6 +32,9 @@ div#squiffy-container { max-width: none; height: 100%; padding: 0; }
 .squiffy-preview-buttons { flex: none; white-space: nowrap; }
 /* With the published page's own buttons (for a reader, as in the player), the header lines up with the story's text, as it does on that page */
 .squiffy-preview-header.squiffy-preview-controls { padding: 0.5rem max(1.25rem, calc((100% - var(--squiffy-max-width)) / 2)) 0; font-family: var(--squiffy-font-family); }
+/* Says why a link to a section or passage that doesn't exist did nothing (#704) */
+.squiffy-preview-note { position: fixed; left: 50%; bottom: 1rem; transform: translateX(-50%); max-width: calc(100% - 2rem); box-sizing: border-box; padding: 0.5rem 0.75rem; border-radius: 6px; background: #333; color: #fff; font-family: system-ui, sans-serif; font-size: 0.875rem; box-shadow: 0 2px 8px rgb(0 0 0 / 0.3); }
+.squiffy-preview-note[hidden] { display: none; }
 .squiffy-preview-title { flex: 1; min-width: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* The player's edit button, set apart from the story's own buttons */
 button#squiffy-edit { margin-left: 0.75em; }
