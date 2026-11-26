@@ -526,6 +526,15 @@ describe("code actions", () => {
         expect(actions[0]).toMatchObject({ isPreferred: true, create: { kind: "section", name: "missing room" } });
     });
 
+    test("a missing section linked with a setter: the warning and the fix name the same section (#705)", async () => {
+        const text = "[[a]]:\n[[Shop]](Shop, score+=5)";
+        const ls = createLanguageService({ files: memoryFiles({ "s.squiffy": text }), mainFile: "s.squiffy" });
+        const diagnostic = (await ls.getDiagnostics("s.squiffy")).find(d => d.code == "squiffy/unknown-section-link")!;
+        expect(diagnostic.message).toBe("In section 'a' there is a link to a section called [[Shop]], which doesn't exist");
+        const actions = await ls.getCodeActions("s.squiffy", diagnostic.range);
+        expect(actions.map(a => a.title)).toEqual(["Create section 'Shop'"]);
+    });
+
     test("a missing section goes after the link's section, and the sections it leads to", async () => {
         const text = "[[a]]:\n[[b]] or [[c]].\n\n[[b]]:\nB\n\n[[d]]:\nD";
         const ls = createLanguageService({ files: memoryFiles({ "s.squiffy": text }), mainFile: "s.squiffy" });
