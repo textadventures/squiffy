@@ -76,6 +76,8 @@ async function handleAction(action: MenuAction) {
             return openInEditor(pickDesktopFolder);
         case "open-file":
             return openInEditor(pickDesktopFile);
+        case "import-story":
+            return openInEditor(() => pickDesktopFile("import"));
         case "save":
             return project.current?.save();
         case "close-story":

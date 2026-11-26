@@ -61,6 +61,9 @@
     import { desktopApi } from "#lib/desktop.js";
     import { handleUndo } from "#lib/desktop-shell.js";
     import { connectPlayTab, playPageUrl } from "#lib/play-in-tab.js";
+    import { convertPastedTwee } from "#lib/twine-import.js";
+    import { twinePaste } from "#lib/twine-paste.js";
+    import { openConvertedTwine } from "#lib/switch-story.js";
     import type { ExportKind } from "#lib/language/protocol.js";
 
     const p = $derived(project.current);
@@ -341,6 +344,12 @@
     });
     const plainExtensions = [trackPlaces];
 
+    const tweePaste = twinePaste((text, paste) => void (async () => {
+        const converted = await convertPastedTwee(text);
+        if (converted) await openConvertedTwine(converted);
+        else paste();
+    })());
+
     function otherLanguageFor(path: string): Extension[] {
         const ext = extname(path).toLowerCase();
         const make = otherLanguages[ext];
@@ -363,6 +372,8 @@
             extensions = [
                 squiffyLanguage,
                 trackPlaces,
+                // A Twine story pasted in, which can be converted into a new story instead (#711)
+                tweePaste,
                 // What the map's and the outline's search finds
                 searchHighlight(() => outlineQuery),
                 // For writing one section from the full-screen map. Escape closes it, back to the

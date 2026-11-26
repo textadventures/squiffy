@@ -19,6 +19,8 @@ The home page lets you start a new story, open a folder, or open a file.
 
 Stories kept in your browser are listed on the home page, under **In this browser**.
 
+While you're editing a story, the toolbar's **File** menu has **New story**, **Open file** and **Open folder** too, and **Import from Twine or Quest**, which is **Open file** for just those. Each one saves the story you're editing and opens the other in its place. In the [desktop app](/desktop-app/), these are in the app's own **File** menu.
+
 <Screenshot name="editor-home" alt="The editor's home page, with New story, Open folder and Open file, and two stories kept in the browser" />
 
 Under **Made with Squiffy**, the home page shows some of the games featured on [textadventures.co.uk](https://textadventures.co.uk/games/platform/squiffy), to see what other people have made. To get the list, the editor tells textadventures.co.uk whether it's the web editor or the desktop app, which version it is, and in the desktop app, whether it's running on Mac, Windows or Linux. Nothing about you or your stories is sent.
@@ -142,6 +144,8 @@ If you open a story that uses the Squiffy 5 text processor syntax, such as `{if 
 ## Opening Twine stories
 
 **Open file** can also open a [Twine](https://twinery.org/) story, written in Harlowe or SugarCube: its published or archive HTML file, or a Twee file, on its own or in a `.zip` file. The editor asks before converting it to Squiffy. The converted story has a file called `twine-import.txt`, which lists anything that couldn't be converted exactly. See [Converting a Twine story](/converting-from-twine/).
+
+If you paste a Twine story into the script, as Twee text, the editor offers to convert it into a new story instead, leaving the story you pasted into as it was. A link written as Twine writes it, such as `[[Go in->Cave]]`, gets a warning, with a quick fix that changes it to Squiffy's `[[Go in]](Cave)`.
 
 ## Opening Quest gamebooks
 

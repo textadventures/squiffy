@@ -19,6 +19,7 @@ import { formatDiagnostic } from "./syntax.js";
 import { resolveCssUrl, rewriteCssUrls } from "./css-urls.js";
 import { insertHeaderEdit, placeNewSection } from "./placement.js";
 import { buildStoryGraph, firstScreenSoundDiagnostics, GraphUsage, StoryGraph, storyGraphDiagnostics } from "./story-graph.js";
+import { squiffyLinkFor, twineLinkParts } from "./twine/link-syntax.js";
 
 export type { Diagnostic, Position, Range } from "./syntax.js";
 export type { GraphEdge, GraphEdgeKind, GraphNode, StoryGraph } from "./story-graph.js";
@@ -1024,6 +1025,18 @@ export function createLanguageService(options: LanguageServiceOptions): Language
             const lines = tree.text.replace(/\r/g, "").split("\n");
 
             for (const diagnostic of diagnostics) {
+                // Twine's [[text->target]]: rewritten as Squiffy's [[text]](target) (#711)
+                if (diagnostic.code == "squiffy/twine-syntax") {
+                    const usage = index.usages.find(u => u.file == path && u.link
+                        && comparePositions(u.link.range.start, diagnostic.range.start) == 0);
+                    const parts = usage?.link ? twineLinkParts(usage.link.target) : null;
+                    if (!usage?.link || !parts) continue;
+                    const newText = squiffyLinkFor(parts);
+                    const edit: WorkspaceEdit = {};
+                    addEdit(edit, path, { range: usage.link.range, newText });
+                    actions.push({ title: `Change to ${newText}`, kind: "quickfix", diagnostic, edit, isPreferred: true });
+                    continue;
+                }
                 if (diagnostic.code == "squiffy/unknown-section-link" || diagnostic.code == "squiffy/unknown-passage-link") {
                     const usage = index.usages.find(u => u.file == path && u.link
                         && comparePositions(u.link.range.start, diagnostic.range.start) == 0);

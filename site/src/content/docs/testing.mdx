@@ -37,7 +37,9 @@ When [playing from the command line](/cli/#other-options), use `--start`.
 
 ### Setting up a scene
 
-Most late sections need some attributes to be set, such as the key the player picked up on the way. When you're testing, in the editor's preview, VS Code's preview or a story served by `--serve`, an attribute shown with `{{name}}` that hasn't been set appears faintly as `{{name}}`, so you can see what the scene is missing. Players never see this: in the published story it shows nothing. Write a section that sets them and then [goes to](/basic-concepts/#go-to-another-section) the scene, and mark it with `@test`:
+Starting at a later section still sets what the start of your story sets with [`@set`](/attributes/#using-directives), so a line such as `@set loot = 0` at the top of the story works however it starts. The rest of the start, its text and any JavaScript, is skipped.
+
+What's set on the way to the scene isn't, though, such as the key the player picked up, and most late sections need some attributes like that. Write a section that sets them and then [goes to](/basic-concepts/#go-to-another-section) the scene, and mark it with `@test`:
 
 ```squiffy
 [[vault with the key]]:
@@ -48,6 +50,8 @@ Most late sections need some attributes to be set, such as the key the player pi
 ```
 
 Start at that section, and you're in the vault with the key.
+
+When you're testing, in the editor's preview, VS Code's preview or a story served by `--serve`, an attribute shown with `{{name}}` that hasn't been set appears faintly as `{{name}}`, so you can see what a scene is missing. Players never see this: in the published story it shows nothing.
 
 `@test` says the section is for testing, so nothing in the story needs to link to it. The editor and `--check` don't warn that it [can't be reached](/cli/#checking-a-story), and [`--random`](/cli/#playing-at-random) doesn't expect to visit it. The flag button lists `@test` sections first.
 
