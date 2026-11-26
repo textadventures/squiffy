@@ -4461,6 +4461,24 @@ The passage.`);
     expect(element.textContent).toContain("The passage.");
 });
 
+test("A link to a section or passage that doesn't exist isn't a turn, and says so (#704)", async () => {
+    const { squiffyApi, element } = await initScript(`Start. [[Nowhere]](nowhere, score=5) [Not here] [a passage]
+
+[a passage]:
+The passage.`);
+    const broken: unknown[] = [];
+    squiffyApi.on("brokenLink", e => broken.push(e));
+    expect(await squiffyApi.clickLink(findLink(element, "section", "Nowhere"))).toBe(false);
+    expect(await squiffyApi.clickLink(findLink(element, "passage", "Not here"))).toBe(false);
+    expect(squiffyApi.get("turns")).toBe(0);
+    expect(squiffyApi.get("score")).toBeNull();
+    expect(broken).toEqual([{ linkType: "section", name: "nowhere" }, { linkType: "passage", name: "Not here" }]);
+    // The passage link can still be clicked, if the passage is added later
+    expect(findLink(element, "passage", "Not here").classList.contains("disabled")).toBe(false);
+    await squiffyApi.clickLink(findLink(element, "passage", "a passage"));
+    expect(squiffyApi.get("turns")).toBe(1);
+});
+
 test("A {{goto}} loop is stopped and reported", async () => {
     const errors = vi.spyOn(console, "error").mockImplementation(() => {});
     const script = `

@@ -37,6 +37,9 @@ const CONTROL_STRINGS: Record<string, string> = {
 // (see announce in createPreview). Emptying it doesn't stop what's being read.
 export const ANNOUNCEMENT_TIME = 3000;
 
+// How long the note saying a link goes nowhere stays (see showBrokenLinkNote in createPreview)
+export const BROKEN_LINK_NOTE_TIME = 4000;
+
 const mimeTypes: Record<string, string> = {
     png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", webp: "image/webp",
     avif: "image/avif", svg: "image/svg+xml", ico: "image/x-icon", bmp: "image/bmp",
@@ -304,6 +307,24 @@ export function createPreview(options: PreviewOptions) {
             controlButtons.length > 0 || !!header.querySelector(".squiffy-preview-title"));
     }
 
+    // Says why a link to a section or passage that doesn't exist did nothing (#704), for the author.
+    // Not for a reader: a host showing the published page's buttons is showing the story to one.
+    let brokenLinkNote: HTMLElement | undefined;
+    let brokenLinkTimer: ReturnType<typeof setTimeout> | undefined;
+    function showBrokenLinkNote(linkType: "section" | "passage", name: string) {
+        if (Object.values(controls).some(v => v === true)) return;
+        if (!brokenLinkNote) {
+            brokenLinkNote = document.createElement("div");
+            brokenLinkNote.className = "squiffy-preview-note";
+            brokenLinkNote.setAttribute("role", "status");
+            options.element.after(brokenLinkNote);
+        }
+        brokenLinkNote.textContent = `No ${linkType} called "${name}", so the link does nothing.`;
+        brokenLinkNote.hidden = false;
+        clearTimeout(brokenLinkTimer);
+        brokenLinkTimer = setTimeout(() => { if (brokenLinkNote) brokenLinkNote.hidden = true; }, BROKEN_LINK_NOTE_TIME);
+    }
+
     const resolveAssetUrl = (path: string) => assetUrls.get(normalisePath(path)) ?? path;
 
     function setAssets(assets: PreviewAssets) {
@@ -434,6 +455,9 @@ export function createPreview(options: PreviewOptions) {
                 announceNext = false;
                 announce(container);
             }
+        });
+        newApi.on("brokenLink", e => {
+            if (thisLoad == loadCount) showBrokenLinkNote(e.linkType, e.name);
         });
         newApi.on("sound", () => {
             if (thisLoad == loadCount && !usesSound) {

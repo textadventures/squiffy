@@ -1,7 +1,7 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import globalJsdom from "global-jsdom";
 import { compile } from "squiffy-compiler";
-import { ANNOUNCEMENT_TIME, createPreview } from "./preview.js";
+import { ANNOUNCEMENT_TIME, BROKEN_LINK_NOTE_TIME, createPreview } from "./preview.js";
 import type { PreviewMessage } from "./preview-protocol.js";
 import type { Panel, PlayerSetting, Story } from "./types.js";
 
@@ -370,6 +370,33 @@ body { background: url("blob:preview/1"), url(https://example.com/x.png); }`);
         // And a new story starts with none
         await preview.receive({ type: "load", story: { js: await compileJs(script) } });
         expect([...element.classList]).toEqual([]);
+    });
+
+    test("says why a link to a section that doesn't exist does nothing, but not to a reader (#704)", async () => {
+        vi.useFakeTimers();
+        try {
+            const { preview } = setUp();
+            const broken = "Go [[nowhere]].";
+            const note = () => document.querySelector<HTMLElement>(".squiffy-preview-note");
+            const click = () => document.querySelector<HTMLElement>("#squiffy a[data-section='nowhere']")!.click();
+            await preview.receive({ type: "load", story: { js: await compileJs(broken) } });
+            click();
+            await vi.waitFor(() => expect(note()?.hidden).toBe(false));
+            expect(note()!.textContent).toBe("No section called \"nowhere\", so the link does nothing.");
+            expect(note()!.getAttribute("role")).toBe("status");
+            vi.advanceTimersByTime(BROKEN_LINK_NOTE_TIME);
+            expect(note()!.hidden).toBe(true);
+
+            // The player at squiffystories.com, showing the published page's buttons to a reader
+            await preview.receive({ type: "controls", controls: { back: true, restart: true } });
+            await preview.receive({ type: "load", story: { js: await compileJs(broken) } });
+            click();
+            await vi.advanceTimersByTimeAsync(10);
+            expect(note()!.hidden).toBe(true);
+        }
+        finally {
+            vi.useRealTimers();
+        }
     });
 
     test("shows no buttons of its own unless the host asks", async () => {

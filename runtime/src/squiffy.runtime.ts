@@ -90,6 +90,15 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         const passage = link.getAttribute("data-passage");
         const section = link.getAttribute("data-section");
 
+        // A link to a section or passage that doesn't exist does nothing at all: it isn't a turn,
+        // its setters don't run, and a passage link can still be clicked (#704). The preview tells
+        // the author why.
+        const missing = missingLinkTarget(passage, section);
+        if (missing) {
+            emitter.emit("brokenLink", missing);
+            return false;
+        }
+
         if (passage !== null || section !== null) {
             gotoHops = 0;
             // A text box that goes somewhere when Enter is pressed (#454) keeps what was typed
@@ -298,6 +307,17 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         await go(pending.section);
     }
     
+    function missingLinkTarget(passage: string | null, section: string | null): SquiffyEventMap["brokenLink"] | undefined {
+        if (section && !Object.prototype.hasOwnProperty.call(story.sections, section)) {
+            return { linkType: "section", name: section };
+        }
+        if (passage) {
+            const has = (s: Section | undefined) => !!s?.passages && Object.prototype.hasOwnProperty.call(s.passages, passage);
+            if (!has(currentSection) && !has(story.sections[""])) return { linkType: "passage", name: passage };
+        }
+        return undefined;
+    }
+
     async function processLink(link: HTMLElement) {
         animation.runLinkAnimation(link);
         await runTransitions();

@@ -5,6 +5,8 @@ export type SquiffyEventMap = {
     set: { attribute: string, value: any }; // an attribute was set
     canGoBackChanged: { canGoBack: boolean }; // whether the "back" button should be enabled
     navigated: { section: string, passage?: string }; // a section or passage was shown, or Back went to one
+    // A link to a section or passage that doesn't exist was clicked, which does nothing (#704)
+    brokenLink: { linkType: "section" | "passage", name: string };
     sound: Record<string, never>; // music or a sound started playing (#444), even if it's muted
     storyUpdated: Record<string, never>; // update() changed the story, e.g. after an edit in the editor
     // A {{restart}} link was clicked (#452). With a handler, the page does the restarting, asking
