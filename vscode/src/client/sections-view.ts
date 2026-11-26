@@ -11,6 +11,7 @@ import { nodeAtLine } from "@textadventures/squiffy-app/story-map";
 import type { StoryGraph } from "squiffy-compiler/language-service";
 import { STORY_GRAPH, type StoryGraphParams, type StoryGraphResult } from "../protocol.js";
 import { findProjectFiles, isProjectFile } from "./files.js";
+import { setHasStory } from "./has-story.js";
 import { parentsOf, sectionsTree, type Mark, type NodeItem, type SectionsItem } from "./sections.js";
 
 // How long to wait after typing before updating the view
@@ -202,12 +203,8 @@ export class SectionsView implements vscode.TreeDataProvider<SectionsItem>, vsco
 
 const isStoryEditor = (editor: vscode.TextEditor) => editor.document.languageId == "squiffy" || isProjectFile(editor.document.uri);
 
-// The workspace has a story: ticks off the first step of the getting-started walkthrough
-// (contributes.walkthroughs in package.json)
-const setHasStory = () => void vscode.commands.executeCommand("setContext", "squiffyHasStory", true);
-
 // The first story in the workspace, before a file in one is opened: a squiffy.json, or a .squiffy file
-async function findStory(): Promise<vscode.Uri | undefined> {
+export async function findStory(): Promise<vscode.Uri | undefined> {
     const [project] = await findProjectFiles();
     if (project) return vscode.Uri.parse(project);
     const [file] = await vscode.workspace.findFiles("**/*.squiffy", "**/{node_modules,.*}/**", 1);
