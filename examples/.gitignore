@@ -5,6 +5,7 @@ squiffy.runtime.js
 squiffy.runtime.global.js
 story.js
 style.css
+squiffy.css
 # The Vite example's own source files, not CLI output
 !vite-app/index.html
 !vite-app/src/style.css

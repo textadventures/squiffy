@@ -247,13 +247,13 @@ export const createPackage = async (input: CompileSuccess, createZipOrOptions: b
         }
     } else {
         // Reference external files
-        styleContent = "<link rel=\"stylesheet\" href=\"style.css\"/>";
+        styleContent = "<link rel=\"stylesheet\" href=\"squiffy.css\"/>";
         runtimeContent = "<script src=\"squiffy.runtime.global.js\"></script>";
         storyContent = "<script src=\"story.js\"></script>";
 
         output["story.js"] = storyJs;
         output["squiffy.runtime.global.js"] = squiffyRuntime;
-        output["style.css"] = combinedCss;
+        output["squiffy.css"] = combinedCss;
     }
 
     let htmlData = htmlTemplateFile.toString();

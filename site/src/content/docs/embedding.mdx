@@ -20,7 +20,7 @@ npx @textadventures/squiffy-cli mygame.squiffy --scriptonly
 This creates `story.js` containing your compiled story.
 
 You'll also need the Squiffy runtime and its stylesheet. You can either:
-- Run a full export first and keep `squiffy.runtime.global.js` and `style.css`
+- Run a full export first and keep `squiffy.runtime.global.js` and `squiffy.css`
 - Or load them from a CDN such as jsDelivr, which serves the [`squiffy-runtime`](https://www.npmjs.com/package/squiffy-runtime) npm package. Use the same version of Squiffy that you compiled your story with. For the current version ({version}), that's:
 
 <Code lang="html" code={`<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/squiffy-runtime@${version}/dist/squiffy.runtime.css">
@@ -35,7 +35,7 @@ Here's a minimal HTML page that runs a Squiffy story:
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>My Story</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="squiffy.css">
     <script src="squiffy.runtime.global.js"></script>
     <script src="story.js"></script>
 </head>
@@ -497,7 +497,7 @@ Here's a more complete example with custom controls:
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>My Story</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="squiffy.css">
     <script src="squiffy.runtime.global.js"></script>
     <script src="story.js"></script>
     <style>
@@ -577,6 +577,6 @@ Squiffy adds CSS classes to its output that you can style:
 - `.squiffy-link` - All clickable links
 - `.squiffy-link.disabled` - Links that have been clicked/disabled
 
-You can include the default styles from a full export (`style.css`) and customize from there, or write your own styles from scratch. See [Customising styles](/styling/) for a reference to the default styles.
+You can include the default styles (`squiffy.css` from a full export, or `squiffy.runtime.css` from the CDN) and override what you want to change in a stylesheet of your own, linked after them, or write your own styles from scratch. See [Customising styles](/styling/) for a reference to the default styles.
 
 The colours in `squiffy.runtime.css` follow your page's [`color-scheme`](https://developer.mozilla.org/en-US/docs/Web/CSS/color-scheme). A page that doesn't set one is light, so an embedded story stays light unless your page supports dark mode, for example with `:root { color-scheme: light dark; }`. The page layout of an exported story, including its background and text colours, is in `squiffy.page.css` in the same package.

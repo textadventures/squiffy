@@ -38,7 +38,7 @@ With a `squiffy.json`, every `.css` file in the folder and its subfolders is one
 - They're added in order of their paths. Order rarely matters for stylesheets, but a script that uses another, such as a library, needs to come after it. To choose the order, `@import` the ones that need to come first in the main file: anything `@import`ed comes before the rest, and nothing is added twice.
 - A file you read with [`@ui filename.js`](/javascript/#running-code-when-the-story-starts) isn't added as a script too, so it doesn't run twice.
 - The `build` folder next to `squiffy.json`, where the [command-line tool](/cli/#usage) puts the published story, is never part of it.
-- Earlier versions of Squiffy wrote a published story's files next to its main file. So if there's an `index.html` there, the `story.js`, `style.css`, `squiffy.runtime.js` and `squiffy.runtime.global.js` with it are taken to be an old copy of the published story, and aren't part of the story unless you `@import` them. You can delete them.
+- Earlier versions of Squiffy wrote a published story's files next to its main file. So if there's an `index.html` there, the `story.js`, `style.css`, `squiffy.css`, `squiffy.runtime.js` and `squiffy.runtime.global.js` with it are taken to be an old copy of the published story, and aren't part of the story unless you `@import` them. You can delete them.
 - To keep any other file out of the story, such as a library's demo files, list it under [`exclude`](#leaving-files-out).
 
 ## Leaving files out

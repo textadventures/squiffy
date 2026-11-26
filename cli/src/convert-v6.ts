@@ -73,7 +73,7 @@ export const convertV6Story = async (inputFilename: string, backedUp: ReadonlySe
     }
 
     // squiffy.json makes every .squiffy, .css and .js file in the folder part of the story, so
-    // leave out the ones that weren't. That's usually an old build's story.js and style.css, but
+    // leave out the ones that weren't. That's usually an old build's story.js and squiffy.css, but
     // those are left out anyway, so they aren't listed.
     const main = path.basename(mainFile);
     const inStory = new Set([...storyFiles, ...analysis.stylesheets, ...analysis.scripts]);

@@ -46,7 +46,7 @@ With `squiffy.json`:
 - Links work between files. Paths to images and in `@import` are relative to the main file's folder.
 - Stylesheets and scripts go in path order; `@import` one in the main file to put it first.
 - `@ui file.js` reads a script as start-up code instead of adding it to the page.
-- An old `index.html`, `story.js`, `style.css`, `squiffy.runtime.global.js` next to the main file is treated as an old build and ignored.
+- An old `index.html`, `story.js`, `style.css` or `squiffy.css`, `squiffy.runtime.global.js` next to the main file is treated as an old build and ignored.
 
 Without `squiffy.json`, the story is its main file plus what it imports: `@import other.squiffy`, `@import *.squiffy`, `@import style.css`, `@import script.js`.
 

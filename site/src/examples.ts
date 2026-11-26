@@ -29,7 +29,7 @@ export interface ExampleFile {
 
 // The game show's source files, to show on the Examples page: the main file, then its project
 // file, its rounds, its stylesheet and its script. Named one by one, as a folder that's been built locally
-// may have an old build's files in it too (style.css, ...).
+// may have an old build's files in it too (squiffy.css, ...).
 const gameshowFiles = import.meta.glob<string>(
     ["../../examples/gameshow/gameshow.squiffy", "../../examples/gameshow/squiffy.json", "../../examples/gameshow/rounds/*.squiffy", "../../examples/gameshow/studio.css", "../../examples/gameshow/confetti.js"],
     { query: "?raw", import: "default", eager: true },

@@ -40,7 +40,7 @@ Giving it the folder, or the main file named in `squiffy.json`, does the same. E
 
 Squiffy writes the game to a `build` folder next to `squiffy.json`, so it's kept apart from your story's own files:
 - `index.html` - the main HTML page
-- `style.css` - Squiffy's own styles
+- `squiffy.css` - Squiffy's own styles
 - `story.js` - your compiled story
 - `squiffy.runtime.global.js` - the Squiffy runtime
 
@@ -385,7 +385,7 @@ A story served this way can [start at any section](/testing/#starting-at-a-later
 
 ### Script only
 
-Use `--scriptonly` to generate *only* the `story.js` file, without overwriting the other files. This is useful when you've customized `index.html` and only want to update the story. (To change how the story looks, [use a stylesheet of your own](/styling/#where-to-put-your-styles) in place of editing `style.css`, which is Squiffy's own styles, minified.)
+Use `--scriptonly` to generate *only* the `story.js` file, without overwriting the other files. This is useful when you've customized `index.html` and only want to update the story. (To change how the story looks, [use a stylesheet of your own](/styling/#where-to-put-your-styles) in place of editing `squiffy.css`, which is Squiffy's own styles, minified.)
 
 ```bash
 npx @textadventures/squiffy-cli --scriptonly
@@ -424,7 +424,7 @@ In a story with a `squiffy.json`, text in `@set` and link assignments goes in qu
 npx @textadventures/squiffy-cli mygame.squiffy --convert-v6
 ```
 
-This converts the main file and every `.squiffy` file it `@import`s, keeping each original as a `.bak` file. The new `squiffy.json` leaves out any other `.squiffy`, `.css` and `.js` files in the folder, so the story is made of the same files as before. From then on, the story is built into a `build` folder, so you can delete the `index.html`, `style.css`, `story.js` and `squiffy.runtime.global.js` that earlier builds left next to it. Anything that can't be converted exactly is left as it is, and listed with its line number so you can update it by hand. If the story still has Squiffy 5 syntax, run `--convert-v5` first.
+This converts the main file and every `.squiffy` file it `@import`s, keeping each original as a `.bak` file. The new `squiffy.json` leaves out any other `.squiffy`, `.css` and `.js` files in the folder, so the story is made of the same files as before. From then on, the story is built into a `build` folder, so you can delete the `index.html`, `style.css` (or `squiffy.css`), `story.js` and `squiffy.runtime.global.js` that earlier builds left next to it. Anything that can't be converted exactly is left as it is, and listed with its line number so you can update it by hand. If the story still has Squiffy 5 syntax, run `--convert-v5` first.
 
 ### Converting from Squiffy 5
 
