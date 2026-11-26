@@ -18,8 +18,13 @@ async function convert(format: "Harlowe" | "SugarCube", passages: string) {
     return { script, result };
 }
 
-// The text of one section of a converted story, up to the next section
+// The text of one section of a converted story, up to the next section, without the @end that
+// marks a passage with no links as an ending, which most of these tests' passages are
 function section(script: string, name: string): string {
+    return rawSection(script, name).replace(/^@end\n?/m, "").trim();
+}
+
+function rawSection(script: string, name: string): string {
     const start = script.indexOf(`[[${name}]]:\n`);
     expect(start, `section ${name}`).not.toBe(-1);
     const rest = script.substring(start + name.length + 6);
@@ -130,7 +135,7 @@ describe("the converted story's language", () => {
 describe("the converted story", () => {
     test("has a title, a start, one screen per passage and a squiffy.json", async () => {
         const { script, result } = await convert("Harlowe", ":: Intro\nNot the start.\n\n:: Start\nThe start.");
-        expect(script.startsWith("@title Test story\n@start Start\n\n[[]]:\n@clear\n\n[[Intro]]:\nNot the start.")).toBe(true);
+        expect(script.startsWith("@title Test story\n@start Start\n\n[[]]:\n@clear\n\n[[Intro]]:\n@end\nNot the start.")).toBe(true);
         expect(JSON.parse(result.files["squiffy.json"])).toMatchObject({ main: "story.squiffy" });
         expect(result.passages).toBe(2);
     });
@@ -1157,5 +1162,32 @@ describe("sound (#444)", () => {
         expect(result.problems.map(p => p.reason)).toEqual([
             "Squiffy stops every sound that's playing once, not just one track, so these stop the others too.",
         ]);
+    });
+});
+
+describe("endings (#698)", () => {
+    test("a passage with no links is marked as an ending, and one with links isn't", async () => {
+        const { script } = await convert("Harlowe", [
+            ":: Start", "[[Stay->Home]] or [[Go->Away]]",
+            ":: Home", "You stay. THE END.",
+            ":: Away", "(if: $x)[[[Start]]]",
+        ].join("\n"));
+        expect(rawSection(script, "Start")).not.toContain("@end");
+        expect(rawSection(script, "Home")).toBe("@end\nYou stay. THE END.");
+        expect(rawSection(script, "Away")).not.toContain("@end");
+    });
+
+    test("not if it has code that couldn't be converted, which might have gone somewhere", async () => {
+        const { script } = await convert("SugarCube", ":: Start\n<<back>>");
+        expect(rawSection(script, "Start")).toContain("Twine:");
+        expect(rawSection(script, "Start")).not.toContain("@end");
+    });
+
+    test("not if the passage, or a footer shown in every passage, has a link", async () => {
+        const footer = await convert("Harlowe", ":: Start\nHello.\n\n:: Foot [footer]\n[[Start]]");
+        expect(rawSection(footer.script, "Start")).not.toContain("@end");
+        expect(rawSection(footer.script, "Foot")).not.toContain("@end");
+        const header = await convert("SugarCube", ":: Start\nHello.\n\n:: PassageHeader\n[[Start]]");
+        expect(rawSection(header.script, "Start")).not.toContain("@end");
     });
 });

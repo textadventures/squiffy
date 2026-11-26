@@ -115,7 +115,7 @@ export const convertQuestFile = (inputFilename: string, outputFolder?: string): 
     const relative = path.relative(process.cwd(), folder) || ".";
     console.log(`Converted ${result.pages} page${result.pages == 1 ? "" : "s"} from a ${result.format} into ${path.join(relative, result.main)}.`);
     if (result.problems.length > 0) {
-        console.warn(`${result.problems.length} thing${result.problems.length == 1 ? "" : "s"} couldn't be converted exactly. They're listed in ${path.join(relative, PROBLEMS_FILENAME)}.`);
+        console.warn(`${result.problems.length == 1 ? "1 thing couldn't be converted exactly. It's" : `${result.problems.length} things couldn't be converted exactly. They're`} listed in ${path.join(relative, PROBLEMS_FILENAME)}.`);
     }
     console.log(`To try it: npx @textadventures/squiffy-cli ${relative} -s`);
     return true;
