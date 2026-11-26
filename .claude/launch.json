@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "editor",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["dev.sh", "--skip-build", "--port", "5190"],
+      "port": 5190
+    },
+    {
+      "name": "site",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--workspace", "site"],
+      "port": 4321
+    },
+    {
+      "name": "vscode-web",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vscode-test-web", "--browser", "none", "--quality", "stable", "--port", "3124", "--extensionDevelopmentPath=vscode", "--testRunnerDataDir=node_modules/.cache/vscode-test-web", "examples/gameshow"],
+      "port": 3124
+    }
+  ]
+}

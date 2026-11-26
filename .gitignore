@@ -37,9 +37,6 @@ site/public/tutorial/*.zip
 desktop/resources/
 desktop/release/
 
-# The in-app browser's launch config for Claude Code, local to each checkout
-.claude/launch.json
-
 # The VS Code extension: VS Code for the web, downloaded to try it, and packaged extensions
 .vscode-test-web
 *.vsix
