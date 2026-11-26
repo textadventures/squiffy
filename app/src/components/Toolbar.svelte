@@ -26,6 +26,7 @@
     import FolderOpen from "@lucide/svelte/icons/folder-open";
     import { folderReveal } from "#lib/desktop.js";
     import DropdownMenu from "#components/DropdownMenu.svelte";
+    import HardDriveDownload from "@lucide/svelte/icons/hard-drive-download";
     import type { DropdownMenuItem } from "#components/DropdownMenu.svelte";
     import Home from "@lucide/svelte/icons/home";
     import Save from "@lucide/svelte/icons/save";
@@ -91,7 +92,7 @@
         // Opens the Fonts dialog
         onfonts?: () => void;
         // Downloads the whole project as a zip, which Open file can read back
-        ondownloadproject?: () => void;
+        ondownloadproject?: () => Promise<void> | void;
         // Opens the Share or publish dialog
         onpublish?: () => void;
         // Undo, redo, find, fold all and unfold all, in the editor
@@ -112,9 +113,13 @@
         canGoForward?: boolean;
         onback?: () => void;
         onforward?: () => void;
+        // Whether the reminder to download a copy (BackupCard) can be seen in the sidebar, and
+        // what shows it when it can't
+        backupCardShown?: boolean;
+        onshowbackup?: () => void;
     }
 
-    let { outlineOpen = false, ontoggleoutline, mapOpen = false, ontogglemap, view = "code", onview, problemCounts = { error: 0, warning: 0, hint: 0 }, problemsOpen = false, ontoggleproblems, onfindinfiles, onrun, onassets, onfonts, ondownloadproject, onpublish, oncommand, onadd, onsnippet, snippets = [], onabout, onplaytab, canGoBack = false, canGoForward = false, onback, onforward }: Props = $props();
+    let { outlineOpen = false, ontoggleoutline, mapOpen = false, ontogglemap, view = "code", onview, problemCounts = { error: 0, warning: 0, hint: 0 }, problemsOpen = false, ontoggleproblems, onfindinfiles, onrun, onassets, onfonts, ondownloadproject, onpublish, oncommand, onadd, onsnippet, snippets = [], onabout, onplaytab, canGoBack = false, canGoForward = false, onback, onforward, backupCardShown = true, onshowbackup }: Props = $props();
 
     const mod = isMac ? "⌘" : "Ctrl+";
 
@@ -268,6 +273,16 @@
                                 onclick={() => p.save()}
                                 title="Save now"
                             ><Circle size={8} fill="currentColor" /> <span class="hidden md:inline">Unsaved</span></button>
+                        {:else if p.showBackupReminder && !backupCardShown}
+                            <!-- The reminder to download a copy is in the sidebar (BackupCard), which is
+                                 hidden, so this shows it. At the Saved chip's width, so nothing moves. -->
+                            <button
+                                type="button"
+                                class="save-chip save-chip-saved save-chip-backup shrink-0"
+                                onclick={() => onshowbackup?.()}
+                                title="Saved in this browser, but not backed up"
+                                aria-label="Saved, not backed up"
+                            ><Check size={13} /> <span class="hidden md:inline">Saved</span> <span class="save-chip-backup-icon"><HardDriveDownload size={13} /></span></button>
                         {:else}
                             <span class="save-chip save-chip-saved shrink-0"><Check size={13} /> <span class="hidden md:inline">Saved</span></span>
                         {/if}
@@ -547,6 +562,16 @@
     }
     .save-chip-unsaved:hover {
         text-decoration: underline;
+    }
+    .save-chip-backup {
+        cursor: pointer;
+    }
+    .save-chip-backup:hover {
+        background-color: color-mix(in srgb, var(--color-success-500) 22%, transparent);
+    }
+    .save-chip-backup-icon {
+        display: inline-flex;
+        color: var(--color-primary-600-400);
     }
     .save-chip-error {
         color: var(--color-error-600-400);

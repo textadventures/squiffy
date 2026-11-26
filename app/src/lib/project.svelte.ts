@@ -26,7 +26,7 @@ import { showToast } from "./toast.js";
 import { findRecentFolder, forgetFolder as forgetBrowserFolder, hasPermission, listRecentFolders as listBrowserFolders, rememberFolder, updateRecentFolder } from "./recent.js";
 import { desktopApi } from "./desktop.js";
 import { newStoryDialog, newStoryText } from "./new-story.js";
-import { needsBackup } from "./backup.js";
+import { needsBackup, storagePersisted } from "./backup.js";
 import { changedPaths, readDisk, reconcile } from "./disk-changes.js";
 import { convertTwineFile, type ConvertedTwine, TWINE_FILE_PATTERN, twineImportMessage } from "./twine-import.js";
 import { openNextStoryOnMap } from "./map-layout.js";
@@ -74,8 +74,9 @@ export interface BrowserStoryMeta {
     title: string;
     mainFile: string;
     lastOpened: number;
-    // When the author last changed a file, and when they last downloaded the project or
-    // dismissed the reminder to (backup.ts)
+    // When the author first and last changed a file, and when they last downloaded the project
+    // or dismissed the reminder to (backup.ts)
+    firstEdited?: number;
     lastEdited?: number;
     backupReminderResolved?: number;
 }
@@ -257,10 +258,14 @@ class OpenProject {
     saveError = $derived(this.openFiles.find(f => f.saveError)?.saveError ?? null);
 
     // For a story kept in the browser, from its meta.json: see needsBackup
+    firstEdited = $state<number | undefined>(undefined);
     lastEdited = $state<number | undefined>(undefined);
     backupReminderResolved = $state<number | undefined>(undefined);
+    // Whether the browser has agreed to keep its storage (storagePersisted), which makes the
+    // reminder come back less often
+    storagePersisted = $state(false);
     get showBackupReminder(): boolean {
-        return this.source.kind === "browser" && needsBackup(this, Date.now());
+        return this.source.kind === "browser" && needsBackup(this, Date.now(), this.storagePersisted);
     }
 
     // Told about every file this project adds, changes on disk, deletes or renames (after the
@@ -515,11 +520,16 @@ class OpenProject {
             return;
         }
         const now = Date.now();
-        if (edited) this.lastEdited = now;
+        if (edited) {
+            // A story changed before firstEdited was kept has none, and stays that way (needsBackup)
+            if (this.lastEdited === undefined) this.firstEdited = now;
+            this.lastEdited = now;
+        }
         await browserStories.setMeta(this.source.id, {
             title: this.title,
             mainFile: this.storedMainFile,
             lastOpened: now,
+            firstEdited: this.firstEdited,
             lastEdited: this.lastEdited,
             backupReminderResolved: this.backupReminderResolved,
         });
@@ -631,8 +641,10 @@ export async function projectMainFile(fs: ProjectFileSystem): Promise<string | n
 async function start(fs: ProjectFileSystem, source: ProjectSource, storedMainFile: string, meta?: BrowserStoryMeta | null) {
     const opened = new OpenProject(fs, source, (await projectMainFile(fs)) ?? storedMainFile);
     if (meta?.title) opened.title = meta.title;
+    opened.firstEdited = meta?.firstEdited;
     opened.lastEdited = meta?.lastEdited;
     opened.backupReminderResolved = meta?.backupReminderResolved;
+    if (source.kind === "browser") void storagePersisted(false).then(persisted => { opened.storagePersisted = persisted; });
     await opened.refreshFiles();
     // A squiffy.json whose main file is missing still leaves something to open
     await opened.open((await fs.exists(opened.mainFile)) ? opened.mainFile : opened.storedMainFile);
