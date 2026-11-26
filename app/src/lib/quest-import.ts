@@ -102,5 +102,5 @@ export async function convertQuestFile(fileName: string, data: Uint8Array): Prom
 export function questImportMessage(converted: ConvertedQuest): string {
     return converted.problems == 0
         ? "Converted from Quest."
-        : `Converted from Quest. ${converted.problems} thing${converted.problems == 1 ? "" : "s"} couldn't be converted exactly: they're listed in ${QUEST_PROBLEMS_FILE}.`;
+        : `Converted from Quest. ${converted.problems == 1 ? "1 thing couldn't be converted exactly: it's" : `${converted.problems} things couldn't be converted exactly: they're`} listed in ${QUEST_PROBLEMS_FILE}.`;
 }

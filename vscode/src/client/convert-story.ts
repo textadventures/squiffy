@@ -152,5 +152,5 @@ export async function convertQuestFile(fileName: string, data: Uint8Array, readF
 /** What to tell the author once it's converted */
 export function convertedMessage(converted: ConvertedStory): string {
     if (converted.problems == 0) return converted.summary;
-    return `${converted.summary} ${plural(converted.problems, "thing")} couldn't be converted exactly: they're listed in ${converted.problemsFile}.`;
+    return `${converted.summary} ${plural(converted.problems, "thing")} couldn't be converted exactly: ${converted.problems == 1 ? "it's" : "they're"} listed in ${converted.problemsFile}.`;
 }

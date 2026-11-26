@@ -123,7 +123,8 @@ describe("convertQuestFile", () => {
         expect(missing.files.has("cave.png")).toBe(false);
         expect(missing.problems).toBeGreaterThan(0);
         expect(text(missing.files.get(QUEST_PROBLEMS_FILE))).toContain("cave.png");
-        expect(convertedMessage(missing)).toMatch(/couldn't be converted exactly: they're listed in quest-import.txt\.$/);
+        expect(convertedMessage(missing)).toMatch(/1 thing couldn't be converted exactly: it's listed in quest-import.txt\.$/);
+        expect(convertedMessage({ ...missing, problems: 2 })).toMatch(/2 things couldn't be converted exactly: they're listed in quest-import.txt\.$/);
     });
 
     test("says when the file isn't a gamebook", async () => {

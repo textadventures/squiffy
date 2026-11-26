@@ -624,6 +624,12 @@ export function convertTwineStory(twine: TwineStory, options: TwineConversionOpt
     }
 
     const footerEmbeds = footers.map(p => `{{embed ${quote(story.sectionFor(p.name)!)}}}`);
+    // Whether some text might go to another section: a link, {{goto}}, JavaScript that goes
+    // somewhere, something whose text (and so whose links) is shown here, or Twine code that
+    // couldn't be converted, which might have. Erring on the side of "yes": that leaves a
+    // dead-end warning, where the author can decide.
+    const mightLeave = (text: string) => /\[\[|\]\(|<a\b|\{\{(goto|section|embed|live)\b|story\.go\(|\{\{!-- Twine:/.test(text);
+    const masterLeaves = [master.body, ...masterPassages].some(mightLeave);
     const sections: string[] = [];
     for (const p of sectionPassages) {
         const section = story.sectionFor(p.name)!;
@@ -644,6 +650,9 @@ export function convertTwineStory(twine: TwineStory, options: TwineConversionOpt
         if (!footers.includes(p) && footerEmbeds.length) {
             body = (body + "\n" + footerEmbeds.join("\n")).trim();
         }
+        // A passage with no links, and nothing that might go somewhere, is one of the story's
+        // endings, as in the Quest converter, so the editor doesn't warn that it's a dead end (#698)
+        if (!footers.includes(p) && !masterLeaves && ![body, ...directives, ...extraPassages].some(mightLeave)) directives.push("@end");
         sections.push([`[[${section}]]:\n${block({ directives, body })}`.trimEnd(), ...extraPassages.filter(p => p)].join("\n\n"));
     }
 

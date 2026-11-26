@@ -43,5 +43,5 @@ export async function convertTwineFile(fileName: string, text: string): Promise<
 export function twineImportMessage(converted: ConvertedTwine): string {
     return converted.problems == 0
         ? "Converted from Twine."
-        : `Converted from Twine. ${converted.problems} thing${converted.problems == 1 ? "" : "s"} couldn't be converted exactly: they're listed in ${TWINE_PROBLEMS_FILE}.`;
+        : `Converted from Twine. ${converted.problems == 1 ? "1 thing couldn't be converted exactly: it's" : `${converted.problems} things couldn't be converted exactly: they're`} listed in ${TWINE_PROBLEMS_FILE}.`;
 }

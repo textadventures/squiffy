@@ -43,6 +43,8 @@ The converted story is a folder with:
 
 Twine shows one passage at a time, so the story starts with a [master section](/basic-concepts/#master-sections-and-passages) that clears the screen before each section. Delete its `@clear` if you'd rather the story scrolled, as Squiffy stories usually do.
 
+A passage with no links is one of the story's endings, so its section is marked with [`@end`](/basic-concepts/#endings), and the editor doesn't warn that it's a dead end. One with Twine code that couldn't be converted isn't, in case that code went somewhere.
+
 Anything that couldn't be converted at all is kept in the story as a comment, so nothing's lost:
 
 ```squiffy
@@ -51,7 +53,7 @@ Anything that couldn't be converted at all is kept in the story as a comment, so
 
 Search for `Twine:` to find them all. A converted story opens on the editor's [story map](/story-map/), with **Map** chosen in the toolbar, as that's how you're used to seeing it. It's a good way to get to know the converted story, and to spot links that go nowhere. Double-click a section to [write it beside the map](/story-map/#writing-on-the-map), or choose **Code** or **Code + Map** in the toolbar to see the script.
 
-<Screenshot name="twine-map" alt="A converted Twine story on the story map, with its passages where they were on Twine's map, and its two endings marked as dead ends" />
+<Screenshot name="twine-map" alt="A converted Twine story on the story map, with its passages where they were on Twine's map, and its two endings marked as endings" />
 
 <Aside>
 Play the story through after converting it. Twine and Squiffy work differently in places, so some things are converted to the nearest thing Squiffy has, rather than exactly: these are listed in `twine-import.txt` too.
