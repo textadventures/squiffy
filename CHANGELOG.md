@@ -1,5 +1,33 @@
 # Changelog
 
+## [7.0.0-beta.19](https://github.com/textadventures/squiffy/compare/v7.0.0-beta.18...v7.0.0-beta.19) (2026-11-26)
+
+
+### Features
+
+* a {{youtube}} helper for videos ([#734](https://github.com/textadventures/squiffy/issues/734)) ([95c8ea8](https://github.com/textadventures/squiffy/commit/95c8ea818731d203286424a179eb47bb7f1e943c))
+* an unset {{name}} shows faintly in the preview ([#730](https://github.com/textadventures/squiffy/issues/730)) ([6339641](https://github.com/textadventures/squiffy/commit/6339641d9c4465cafb936a16a0d46f64bb9fe89a))
+* **editor:** a Share button, and Share or publish opens on A link ([#731](https://github.com/textadventures/squiffy/issues/731)) ([9219f79](https://github.com/textadventures/squiffy/commit/9219f7913b83e48ace6f8fd3f6e4af56ed0fb29b))
+* import from Twine inside the editor, and pasted Twine code is recognised ([#729](https://github.com/textadventures/squiffy/issues/729)) ([4e7daff](https://github.com/textadventures/squiffy/commit/4e7daff32afb033b156eaf7f43068bffe8f9986b))
+* medium-severity fixes from exploratory UI testing ([#693](https://github.com/textadventures/squiffy/issues/693)) ([d62d889](https://github.com/textadventures/squiffy/commit/d62d889a17a0191d2810d1846187aaffa119f05a))
+* show a newcomer how to make the story remember something ([#726](https://github.com/textadventures/squiffy/issues/726)) ([c8668af](https://github.com/textadventures/squiffy/commit/c8668af47c355cbd9e54efcf11870b815a98c4af))
+
+
+### Bug Fixes
+
+* a broken link isn't a turn, and the preview says why it did nothing ([#723](https://github.com/textadventures/squiffy/issues/723)) ([8c7358d](https://github.com/textadventures/squiffy/commit/8c7358d4e8a4289b843b57c4b764ec84fd78c7fc))
+* a broken link's warning names the section its quick fix creates ([#722](https://github.com/textadventures/squiffy/issues/722)) ([ad2a899](https://github.com/textadventures/squiffy/commit/ad2a8996e20eec22fcf44b6a0a4b55101e91b4a5))
+* a story shared as a link can't pass itself off as another site ([#732](https://github.com/textadventures/squiffy/issues/732)) ([a86935f](https://github.com/textadventures/squiffy/commit/a86935f164190ec4de09bde9002cbee1050376e1))
+* converted Twine endings are marked with [@end](https://github.com/end), and "1 thing... it's listed" ([#727](https://github.com/textadventures/squiffy/issues/727)) ([f784d7b](https://github.com/textadventures/squiffy/commit/f784d7ba206ff14f407218fcb4ef6fc4a91e1900))
+* four bugs found by exploratory UI testing ([#692](https://github.com/textadventures/squiffy/issues/692)) ([5bae621](https://github.com/textadventures/squiffy/commit/5bae6213e789be0accfde05175ff39baa0449e98))
+* starting at a later section runs the start's [@set](https://github.com/set) lines first ([#728](https://github.com/textadventures/squiffy/issues/728)) ([3bf77fd](https://github.com/textadventures/squiffy/commit/3bf77fdfde8ff4590517762a705c665a451fc069))
+* the map's hint and the docs say where things really are ([#709](https://github.com/textadventures/squiffy/issues/709)) ([33d43dd](https://github.com/textadventures/squiffy/commit/33d43dda6f236aab315b6e260b6049e2c082cbbf))
+* the start and the master section go by the names the Sections view and the map use ([#725](https://github.com/textadventures/squiffy/issues/725)) ([7fcb206](https://github.com/textadventures/squiffy/commit/7fcb2063fbde26e464cdfb92fefbd90f87362898))
+* **vscode:** Add Section and Add Passage go after the cursor's section, as in the editor ([#694](https://github.com/textadventures/squiffy/issues/694)) ([bf0e054](https://github.com/textadventures/squiffy/commit/bf0e0548c129d4977066af2307339db67021c02a))
+* **vscode:** no "untrusted" warning on squiffy.json's schema ([#708](https://github.com/textadventures/squiffy/issues/708)) ([e60251d](https://github.com/textadventures/squiffy/commit/e60251d894863ba5040735c09b10905ecb3d9ed1))
+* **vscode:** the story map shows a box's new size straight away ([#690](https://github.com/textadventures/squiffy/issues/690)) ([1b6a327](https://github.com/textadventures/squiffy/commit/1b6a327703d47eb6ab49f4331792541f83b74892))
+* **vscode:** walkthrough's first step waits for the story; Show Preview and Show Story Map in the palette ([#724](https://github.com/textadventures/squiffy/issues/724)) ([a446e6d](https://github.com/textadventures/squiffy/commit/a446e6d0a8bab94665159e55ef7d537aa7b986a6))
+
 ## [7.0.0-beta.18](https://github.com/textadventures/squiffy/compare/v7.0.0-beta.17...v7.0.0-beta.18) (2026-11-25)
 
 
