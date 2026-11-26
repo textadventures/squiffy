@@ -111,6 +111,14 @@ With no arguments, `{{passages}}`, `{{sections}}` and `{{tags}}` still show an a
 | `sound` | `"file" [volume=0 to 1]` | Play a sound once |
 | `stopsounds` | | Stop sounds playing once; music carries on |
 
+## Video
+
+| Helper | Parameters | Description |
+|---|---|---|
+| `youtube` | `"address or ID" [start=seconds] [title="name"]` | A YouTube video, 16:9 and as wide as the text: `{{youtube "https://youtu.be/aqz-KE-bpKQ"}}`. `start=` also takes `1:30`, and the address's `t=` works too |
+
+A published page over http(s) embeds YouTube's player (from youtube-nocookie.com). The sandboxed preview (editor, VS Code, shared links, docs samples with files) and a page opened as a file can't, so there it's the video's picture and a play button, which opens it on YouTube in a new tab; its text is the `watchOnYouTube` page string. Don't write your own `<iframe>` embed: it won't play in the preview or a shared link. There's no helper for other video sites.
+
 ## Classes
 
 On the story's element, for CSS. They stay until removed (unlike `@class`, which changes with the section).

@@ -152,6 +152,9 @@ export const PAGE_STRINGS = {
     // The Settings dialog, for a story with "settings"
     settings: "Settings",
     resetSettings: "Reset to defaults",
+    // A {{youtube}} video where it can't be played in the page, such as the editor's preview: a
+    // link that opens it on YouTube. (The runtime's WATCH_ON_YOUTUBE.)
+    watchOnYouTube: "Watch on YouTube",
     // The Start at menu, for testing a story: see "startAnywhere". [name] is filled in.
     startAt: "Start at a section",
     findSection: "Find a section",

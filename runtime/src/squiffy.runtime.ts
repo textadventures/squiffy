@@ -16,6 +16,7 @@ import { focusIsIn, focusNewText, holdFocus, isLinkActive, setLinkActive, syncLi
 import { createAssetHtmlResolver, isAbsolute } from "./assets.js";
 import { Sound, DEFAULT_FADE } from "./sound.js";
 import { EveryTimers } from "./every.js";
+import { canEmbedVideos, parseStart, parseYouTube, videoHtml, WATCH_ON_YOUTUBE } from "./videos.js";
 import { confirmDialog } from "./confirmDialog.js";
 import { createSavesDialog, type SavesDialog } from "./savesDialog.js";
 import { createSettingsDialog, type SettingsDialog } from "./settingsDialog.js";
@@ -1762,6 +1763,24 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
     textProcessor.handlebars.registerHelper("stopsounds", () => {
         if (!state.readOnly && !quiet) sound.stopSounds();
         return "";
+    });
+
+    // {{youtube}}: a video, embedded, or a link to it where it can't be (videos.ts)
+    textProcessor.handlebars.registerHelper("youtube", (value: unknown, options?: { hash?: Record<string, unknown> }) => {
+        if (isHelperOptions(value)) return "";
+        const video = typeof value == "string" ? parseYouTube(value) : undefined;
+        if (!video) {
+            console.warn(`Not a YouTube video: ${String(value)}`);
+            return "";
+        }
+        const start = parseStart(options?.hash?.start);
+        if (start) video.start = start;
+        const title = options?.hash?.title;
+        return new textProcessor.handlebars.SafeString(videoHtml(video, {
+            title: typeof title == "string" ? title : undefined,
+            embed: canEmbedVideos(),
+            watchText: typeof strings.watchOnYouTube == "string" ? strings.watchOnYouTube : WATCH_ON_YOUTUBE,
+        }));
     });
 
     // Classes on the story's element (#449): the current section's, from @class, which change with
