@@ -32,6 +32,7 @@ export type DiagnosticCode =
     | "squiffy/unknown-deactivate"
     | "squiffy/unknown-section-link"
     | "squiffy/unknown-passage-link"
+    | "squiffy/twine-syntax"
     | "squiffy/duplicate-section"
     | "squiffy/duplicate-passage"
     | "squiffy/not-in-main-file"

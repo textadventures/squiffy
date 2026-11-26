@@ -5,6 +5,7 @@ import type {
 import { positionMapper, SourceLine, transformText } from "./text.js";
 import { isScriptPath, isSquiffyPath, isStylesheetPath, PROJECT_FILENAME } from "./project.js";
 import { findV5Syntax } from "./v5.js";
+import { squiffyLinkFor, twineLinkParts } from "./twine/link-syntax.js";
 import { BareName, checkTemplate, TemplateCheck } from "./templates.js";
 import { BUILT_IN_HELPERS } from "./helpers.js";
 import { ignoredDiagnostics } from "./ignore.js";
@@ -720,7 +721,8 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
             return sectionNames[(sectionIndexes.get(section.name) ?? -1) + 1] || null;
         };
 
-        const result = transformText(container.text.join("\n"), getNextSectionName, settings.expressions);
+        const text = container.text.join("\n");
+        const result = transformText(text, getNextSectionName, settings.expressions);
         container.output = result.output;
 
         const toPosition = positionMapper(container.textSources, container.text.map(t => t.length));
@@ -778,14 +780,33 @@ export async function analyse(settings: AnalyseSettings): Promise<Analysis> {
                 }
             }
             else if (link.linkType == "section") {
-                if (!linkDestinationExists(link.target, story.sections)) {
+                if (linkDestinationExists(link.target, story.sections)) continue;
+                // Twine's [[text->target]], pasted in, which isn't a link to a section with that
+                // whole name (#711)
+                const twine = link.form == "unnamed" ? twineLinkParts(link.target) : null;
+                if (twine) {
+                    warn("squiffy/twine-syntax", link.start, link.end,
+                        `${where} there is a link in Twine's style, [[${link.target}]]. In Squiffy, write ${squiffyLinkFor(twine)}`);
+                }
+                else {
                     warn("squiffy/unknown-section-link", link.start, link.end,
                         `${where} there is a link to a section called [[${linkDestination(link.target)}]], which doesn't exist`);
                 }
             }
             else if (!linkDestinationExists(link.target, section.passages) && !linkDestinationExists(link.target, masterPassages)) {
-                warn("squiffy/unknown-passage-link", link.start, link.end,
-                    `${where} there is a link to a passage called [${linkDestination(link.target)}], which doesn't exist`);
+                // A Harlowe hook after its macro, such as (if: $key)[...], pasted in from Twine
+                // (#711). Followed by another macro, as in (if: $key)[...](else:)[...], it looks
+                // like a link to a passage called "else:", so that's left out of it.
+                const macro = harloweMacroBefore(text, link.start);
+                const beforeMacro = link.form == "named" && HARLOWE_MACRO_NAME.test(link.target);
+                if (macro && (link.form == "unnamed" || beforeMacro)) {
+                    warn("squiffy/twine-syntax", link.start - macro.length, beforeMacro ? link.targetStart - 1 : link.end,
+                        `${where} there is Twine code, ${macro}[...], which Squiffy doesn't run. Use {{#if}}...{{else}}...{{/if}} for text that depends on an attribute`);
+                }
+                else {
+                    warn("squiffy/unknown-passage-link", link.start, link.end,
+                        `${where} there is a link to a passage called [${linkDestination(link.target)}], which doesn't exist`);
+                }
             }
         }
 
@@ -971,6 +992,14 @@ function linkDestinationExists(link: string, keys: Record<string, unknown>) {
     }
     // Otherwise, assume a comma separates the destination from setters.
     return hasOwn(keys, linkDestination(trimmedLink));
+}
+
+// The Harlowe macro, such as "(else:)" or "(if: $key is true)", right before a [hook] at offset, if
+// there is one
+const HARLOWE_MACRO_NAME = /^[a-z][\w-]*:/i;
+
+function harloweMacroBefore(text: string, offset: number): string | null {
+    return /\([a-z][\w-]*:[^()\n]*\)$/i.exec(text.substring(Math.max(0, offset - 200), offset))?.[0] ?? null;
 }
 
 // The name a link goes to when it doesn't exist, without any setters after a comma, so the
