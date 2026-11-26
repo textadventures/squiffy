@@ -11,6 +11,16 @@ bytes, so there's room for a few small ones, and none for sounds. The page compi
 does. Its "Open in editor" button sends the same payload to the editor, which makes a new story
 from it, so a reader can change a story and share their own version.
 
+Anyone can make a link with any JavaScript in it, so a story mustn't be able to pass itself off
+as another site, such as a sign-in page, under squiffystories.com's address. The frame's sandbox
+stops it navigating the reader's tab, and the page's Content-Security-Policy (`vite.config.ts`,
+sent by `_headers` and the dev server) has `frame-src 'none'` and `object-src 'none'`, so nothing
+else can be loaded into the frame, however the story tries, and `connect-src 'none'`, so it can't
+`fetch()`. Its links to other sites open in a new tab, showing their own address
+(`openOtherSitesInNewTab` in squiffy-runtime's `preview.ts`), and it can still show images, sounds
+and fonts from other sites, but no frames, so a video embedded from another site won't play.
+`e2e/player/security.spec.ts` tries all this.
+
 A playing story has one bar, inside its frame, which the story's own CSS styles: its title, then
 the published page's buttons (its panels' buttons, Back, Restart, Settings, mute, light/dark) in
 the same order and with the same icons, then an edit button for "Open in editor", which asks this
@@ -47,7 +57,7 @@ story does. Its messages are in `src/play-protocol.ts`, which the editor imports
   (`window.opener = null`), so the story can't reach the editor's tab.
 - It keeps the story in `sessionStorage`, so it plays again when the page reloads, which is what
   the story's Restart does. A story too big to keep (with its sounds in it) doesn't.
-- `_headers` keeps it out of other sites' frames.
+- `_headers` keeps it out of other sites' frames, and gives it the player's Content-Security-Policy too.
 - In development, Play in a new tab needs this dev server running, as share links do.
 
 ## Running it

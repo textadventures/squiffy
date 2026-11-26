@@ -74,6 +74,23 @@ function errorMessage(error: unknown): PreviewMessage {
     return { type: "runtimeError", message: String(error) };
 }
 
+// A link to another site opens in a new tab, where its own address shows, and not in the preview's
+// frame. The player's frame can't load another site at all (its Content-Security-Policy has
+// frame-src 'none', in player/vite.config.ts), so a story shared as a link can't show another
+// site under squiffystories.com's address. The host's sandbox lets the new tab escape it.
+// The target is set as the link is clicked, rather than the click being cancelled, so that a host
+// that handles links itself, as a VS Code webview does, still sees an ordinary click on a link.
+function openOtherSitesInNewTab(event: MouseEvent) {
+    if (event.defaultPrevented || !(event.target instanceof Element)) return;
+    const link = event.target.closest("a[href]");
+    if (!(link instanceof HTMLAnchorElement) || link.hasAttribute("download")) return;
+    if (link.protocol != "http:" && link.protocol != "https:") return;
+    link.target = "_blank";
+    const rel = new Set(link.rel.split(/\s+/).filter(Boolean));
+    rel.add("noopener").add("noreferrer");
+    link.rel = [...rel].join(" ");
+}
+
 export function createPreview(options: PreviewOptions) {
     const loadModule = options.loadModule ?? importFromBlob;
     let api: SquiffyApi | undefined;
@@ -125,6 +142,7 @@ export function createPreview(options: PreviewOptions) {
         overflow: "hidden", clip: "rect(0, 0, 0, 0)", whiteSpace: "nowrap",
     });
     options.element.after(announcer);
+    document.addEventListener("click", openOtherSitesInNewTab);
     // Whether to read out the text the story shows next
     let announceNext = false;
     let announcing: ReturnType<typeof setTimeout> | undefined;

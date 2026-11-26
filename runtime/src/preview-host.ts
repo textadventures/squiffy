@@ -67,10 +67,13 @@ export interface PreviewHost {
     dispose(): void;
 }
 
-// Sandboxes an iframe and loads the preview page into it. The sandbox allows scripts only, so the
-// story runs with an opaque origin: it can't reach the host page, its storage or its cookies.
+// Sandboxes an iframe and loads the preview page into it. The sandbox allows scripts, so the
+// story runs with an opaque origin: it can't reach the host page, its storage or its cookies, or
+// navigate the host's tab. It also allows new tabs, which a browser only opens after a click, for
+// the story's links to other sites (see openOtherSitesInNewTab in preview.ts). They escape the
+// sandbox, so the site opens as it would from any other page.
 export function setUpPreviewFrame(iframe: HTMLIFrameElement, previewHtml: string) {
-    iframe.setAttribute("sandbox", "allow-scripts");
+    iframe.setAttribute("sandbox", "allow-scripts allow-popups allow-popups-to-escape-sandbox");
     // So a story's music can start when the author starts it from the host page (#444)
     iframe.setAttribute("allow", "autoplay");
     iframe.srcdoc = previewHtml;
