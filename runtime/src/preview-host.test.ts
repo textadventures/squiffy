@@ -30,6 +30,9 @@ describe("preview host", () => {
             { channel: PREVIEW_CHANNEL, type: "load", story: { js: "export const story = {};" }, startAt: { section: "s", passage: "p" } },
         ]);
 
+        host.load({ js: "" }, { showUnsetNames: true });
+        expect(sent.pop()).toEqual({ channel: PREVIEW_CHANNEL, type: "load", story: { js: "" }, showUnsetNames: true });
+
         host.update("x");
         host.update("y", ["body { color: red; }"]);
         host.restart();

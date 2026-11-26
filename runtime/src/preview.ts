@@ -436,6 +436,7 @@ export function createPreview(options: PreviewOptions) {
             persist: false,
             scroll: "element",
             resolveAssetUrl,
+            showUnsetNames: message.showUnsetNames === true,
             onSet: (name, value) => {
                 if (thisLoad == loadCount && !name.startsWith("_")) send({ type: "attributeSet", name, value });
             },

@@ -28,6 +28,12 @@ export interface SquiffyInitOptions {
      * to the next. getPersistent() gives them back.
      */
     persistent?: Record<string, unknown>,
+    /**
+     * Shows a bare {{name}} that isn't a helper or a set attribute as a faint {{name}}, in place of
+     * nothing, so the author can see what a story started at a later section is missing (#712).
+     * For the author's testing views, such as the editor's preview: a published story leaves it off.
+     */
+    showUnsetNames?: boolean,
 }
 
 export interface SquiffySettings {

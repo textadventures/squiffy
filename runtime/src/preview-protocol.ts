@@ -57,8 +57,9 @@ export interface PreviewControls {
 }
 
 export type HostMessage =
-    // Starts a story, replacing any that's running. Send assets first.
-    | { type: "load"; story: PreviewStory; startAt?: StartAt }
+    // Starts a story, replacing any that's running. Send assets first. showUnsetNames shows a bare
+    // {{name}} that isn't set as a faint {{name}}, for the author (#712), not for a reader.
+    | { type: "load"; story: PreviewStory; startAt?: StartAt; showUnsetNames?: boolean }
     // Hot-updates the running story, keeping its state. css, if given, replaces the story's own
     // stylesheets. Its scripts can't be replaced in a running story: that needs a load.
     | { type: "update"; js: string; css?: string[] }

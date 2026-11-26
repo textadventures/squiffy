@@ -139,6 +139,18 @@ describe("preview", () => {
         }
     });
 
+    test("shows an unset {{name}} faintly only when the host asks (#712)", async () => {
+        const { preview, element } = setUp();
+        const js = await compileJs("Loot: {{loot}}.");
+
+        await preview.receive({ type: "load", story: { js } });
+        expect(element.textContent).toContain("Loot: .");
+        expect(element.querySelector(".squiffy-unset")).toBeNull();
+
+        await preview.receive({ type: "load", story: { js }, showUnsetNames: true });
+        expect(element.querySelector(".squiffy-unset")?.textContent).toBe("{{loot}}");
+    });
+
     test("starts at a section or a passage", async () => {
         const { preview, messages, element } = setUp();
         const js = await compileJs(script);

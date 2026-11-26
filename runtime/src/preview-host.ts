@@ -47,8 +47,9 @@ export interface PreviewHandlers {
 export interface PreviewHost {
     // Resolves when the page has loaded. Messages sent before that are queued.
     readonly ready: Promise<void>;
-    // Starts a story, replacing any that's running
-    load(story: PreviewStory, options?: { startAt?: StartAt }): void;
+    // Starts a story, replacing any that's running. showUnsetNames shows a bare {{name}} that
+    // isn't set as a faint {{name}}, in place of nothing: for the author, not a reader (#712).
+    load(story: PreviewStory, options?: { startAt?: StartAt; showUnsetNames?: boolean }): void;
     // Hot-updates the running story, keeping its state. css, if given, replaces the story's own
     // stylesheets; its scripts only change with load().
     update(js: string, css?: string[]): void;
@@ -194,7 +195,12 @@ export function createPreviewHost(channel: PreviewChannel, handlers: PreviewHand
                 reloading = true;
             }
             hadScripts = !!story.scripts?.length;
-            send({ type: "load", story, ...(options.startAt ? { startAt: plainStartAt(options.startAt) } : {}) });
+            send({
+                type: "load",
+                story,
+                ...(options.startAt ? { startAt: plainStartAt(options.startAt) } : {}),
+                ...(options.showUnsetNames ? { showUnsetNames: true } : {}),
+            });
         },
         update: (js, css) => send({ type: "update", js, ...(css ? { css } : {}) }),
         restart: () => send({ type: "restart" }),
