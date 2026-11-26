@@ -13,6 +13,8 @@
   "exports": {
     "./story-map": "./src/lib/story-map.ts",
     "./map-edits": "./src/lib/map-edits.ts",
+    "./story-link": "./src/lib/story-link.ts",
+    "./publish-api": "./src/lib/publish-api.ts",
     "./StoryMapNode.svelte": "./src/components/StoryMapNode.svelte"
   },
   "scripts": {

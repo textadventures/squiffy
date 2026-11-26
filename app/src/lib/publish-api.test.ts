@@ -1,5 +1,5 @@
-import { describe, expect, test } from "vitest";
-import { parseStatus, parseUpload, statusUrl, uploadError, uploadUrl } from "./publish-online.js";
+import { afterEach, describe, expect, test, vi } from "vitest";
+import { MAX_UPLOAD_BYTES, parseStatus, parseUpload, postStory, statusUrl, uploadError, UploadError, uploadUrl } from "./publish-api.js";
 
 const base = "https://textadventures.co.uk/api/publish/uploads";
 
@@ -74,5 +74,45 @@ describe("uploadError", () => {
         expect(uploadError(429)).toContain("Wait a while");
         expect(uploadError(0)).toContain("Check you're online");
         expect(uploadError(500)).toContain("error 500");
+    });
+});
+
+describe("postStory", () => {
+    const zip = new Uint8Array([0x50, 0x4b, 3, 4]);
+    const client = { source: "vscode" as const, version: "7.0.0", platform: "web" };
+    const answer = (status: number, body: unknown) => vi.fn(async () => new Response(body === undefined ? null : JSON.stringify(body), { status }));
+
+    afterEach(() => vi.unstubAllGlobals());
+
+    test("sends the zip, and resolves to the page where the author finishes", async () => {
+        const fetch = answer(201, { id: "k3J9", claimUrl: "https://textadventures.co.uk/submit/from-editor/k3J9" });
+        vi.stubGlobal("fetch", fetch);
+        await expect(postStory(zip, "The Cave.zip", client, base)).resolves.toEqual({ id: "k3J9", claimUrl: "https://textadventures.co.uk/submit/from-editor/k3J9" });
+        const [url, init] = fetch.mock.calls[0] as unknown as [string, RequestInit];
+        expect(url).toBe(`${base}?filename=The+Cave.zip&source=vscode&version=7.0.0&platform=web`);
+        expect(init.method).toBe("POST");
+        expect(init.body).toBe(zip);
+    });
+
+    test("says why the site refused it", async () => {
+        vi.stubGlobal("fetch", answer(429, undefined));
+        await expect(postStory(zip, "story.zip", client, base)).rejects.toThrow(new UploadError(uploadError(429)));
+    });
+
+    test("says when the site can't be reached", async () => {
+        vi.stubGlobal("fetch", vi.fn(async () => { throw new TypeError("Failed to fetch"); }));
+        await expect(postStory(zip, "story.zip", client, base)).rejects.toThrow(uploadError(0));
+    });
+
+    test("doesn't send a story that's too big", async () => {
+        const fetch = answer(201, {});
+        vi.stubGlobal("fetch", fetch);
+        await expect(postStory(new Uint8Array(MAX_UPLOAD_BYTES + 1), "story.zip", client, base)).rejects.toThrow(uploadError(413));
+        expect(fetch).not.toHaveBeenCalled();
+    });
+
+    test("isn't fooled by an answer that isn't an upload", async () => {
+        vi.stubGlobal("fetch", answer(201, { id: "k3J9", claimUrl: "javascript:alert(1)" }));
+        await expect(postStory(zip, "story.zip", client, base)).rejects.toThrow(UploadError);
     });
 });

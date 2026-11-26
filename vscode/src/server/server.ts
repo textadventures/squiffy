@@ -248,7 +248,8 @@ export function startServer(connection: Connection) {
 
     // As the editor exports it (app/src/lib/language/worker.ts), and the CLI builds it: without
     // its @test sections, unless squiffy.json's startAnywhere keeps them for testers
-    connection.onRequest(EXPORT_STORY, async ({ uri, inlineAssets }: ExportStoryParams): Promise<ExportStoryResult> => {
+    connection.onRequest(EXPORT_STORY, async ({ uri, inlineAssets, changed }: ExportStoryParams): Promise<ExportStoryResult> => {
+        if (changed) await stories.fileChanged(changed);
         const story = await stories.storyFor(uri);
         const [analysis, { projectFile, mainFile }] = await Promise.all([story.service.getAnalysis(), story.service.getProjectInfo()]);
         if (!analysis.success) {
@@ -272,7 +273,10 @@ export function startServer(connection: Connection) {
             id: projectFile?.id, description: projectFile?.description, author: projectFile?.author, language: projectFile?.language,
             cover: hasCover ? cover : undefined,
         });
-        return { success: true, files: pkg.files, root, title: result.getUiInfo().title || undefined };
+        return {
+            success: true, files: pkg.files, root, title: result.getUiInfo().title || undefined,
+            storyRoot: story.root, mainFile, projectFile: story.project ? toUri(story.root, "squiffy.json") : undefined, id: projectFile?.id,
+        };
     });
 
     connection.onRequest(SECTION_AT, async ({ uri, position }: SectionAtParams): Promise<SectionAtResult> => {

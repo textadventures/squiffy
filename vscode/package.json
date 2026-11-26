@@ -181,7 +181,7 @@
           {
             "id": "export",
             "title": "Publish it",
-            "description": "Export builds your story into a web page that anyone can play: a folder or a zip to upload to a website, or a single HTML file to share.\n[Export](command:squiffy.export)\nThere's more about writing in VS Code in [Squiffy's documentation](https://squiffystory.com/vscode/).",
+            "description": "Share as a Link puts a small story in a web address, to send to anyone, with nothing to upload. Publish to textadventures.co.uk puts it online for free, where players can find it. Export builds it into a web page: a folder or a zip to upload to a website, or a single HTML file to share.\n[Share as a Link](command:squiffy.shareLink)\n[Publish to textadventures.co.uk](command:squiffy.publishOnline)\n[Export](command:squiffy.export)\nThere's more about writing in VS Code in [Squiffy's documentation](https://squiffystory.com/vscode/).",
             "media": {
               "image": {
                 "light": "media/walkthrough/export.png",
@@ -192,7 +192,9 @@
               "altText": "Squiffy: Export's choices: to a folder, as a zip, as a single HTML file, or only story.js"
             },
             "completionEvents": [
-              "onCommand:squiffy.export"
+              "onCommand:squiffy.export",
+              "onCommand:squiffy.shareLink",
+              "onCommand:squiffy.publishOnline"
             ]
           }
         ]
@@ -255,6 +257,24 @@
         "title": "Export",
         "category": "Squiffy",
         "icon": "$(export)"
+      },
+      {
+        "command": "squiffy.shareLink",
+        "title": "Share as a Link",
+        "category": "Squiffy",
+        "icon": "$(link)"
+      },
+      {
+        "command": "squiffy.publishOnline",
+        "title": "Publish to textadventures.co.uk",
+        "category": "Squiffy",
+        "icon": "$(cloud-upload)"
+      },
+      {
+        "command": "squiffy.playInBrowser",
+        "title": "Play in Browser",
+        "category": "Squiffy",
+        "icon": "$(link-external)"
       },
       {
         "command": "squiffy.newStory",
@@ -330,6 +350,21 @@
           "group": "1_squiffy@3"
         },
         {
+          "command": "squiffy.shareLink",
+          "when": "editorLangId == squiffy || resourceFilename == squiffy.json",
+          "group": "1_squiffy@3"
+        },
+        {
+          "command": "squiffy.publishOnline",
+          "when": "editorLangId == squiffy || resourceFilename == squiffy.json",
+          "group": "1_squiffy@3"
+        },
+        {
+          "command": "squiffy.playInBrowser",
+          "when": "editorLangId == squiffy || resourceFilename == squiffy.json",
+          "group": "1_squiffy@3"
+        },
+        {
           "command": "squiffy.setMainFile",
           "when": "editorLangId == squiffy",
           "group": "1_squiffy@4"
@@ -390,6 +425,18 @@
           "when": "editorLangId == squiffy || resourceFilename == squiffy.json || squiffyHasStory"
         },
         {
+          "command": "squiffy.shareLink",
+          "when": "editorLangId == squiffy || resourceFilename == squiffy.json || squiffyHasStory"
+        },
+        {
+          "command": "squiffy.publishOnline",
+          "when": "editorLangId == squiffy || resourceFilename == squiffy.json || squiffyHasStory"
+        },
+        {
+          "command": "squiffy.playInBrowser",
+          "when": "editorLangId == squiffy || resourceFilename == squiffy.json || squiffyHasStory"
+        },
+        {
           "command": "squiffy.newStoryInFolder",
           "when": "false"
         },
@@ -433,6 +480,21 @@
           "command": "squiffy.export",
           "when": "view == squiffy.sections && !squiffyNoStory",
           "group": "navigation@3"
+        },
+        {
+          "command": "squiffy.shareLink",
+          "when": "view == squiffy.sections && !squiffyNoStory",
+          "group": "1_squiffy@1"
+        },
+        {
+          "command": "squiffy.publishOnline",
+          "when": "view == squiffy.sections && !squiffyNoStory",
+          "group": "1_squiffy@2"
+        },
+        {
+          "command": "squiffy.playInBrowser",
+          "when": "view == squiffy.sections && !squiffyNoStory",
+          "group": "1_squiffy@3"
         }
       ],
       "view/item/context": [

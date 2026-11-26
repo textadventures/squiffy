@@ -4,14 +4,15 @@ Write [Squiffy](https://squiffystory.com) interactive stories in VS Code, with a
 story map.
 
 - A getting-started walkthrough on VS Code's Welcome page (**Help > Welcome**), which takes you
-  through making a story, previewing it, adding sections, the story map and exporting
+  through making a story, previewing it, adding sections, the story map and publishing it
 - Syntax highlighting and folding for `.squiffy` files
 - Problems as you type, for the whole story, including links to sections that don't exist, dead
   ends and sections nothing links to
 - A Squiffy sidebar in the Activity Bar, whose Sections view lists every section and passage in the
   story, across all its files, marking the start, endings, dead ends and sections that can't be
   reached. Click one to go to it, or its ▷ to start the preview there. Its buttons run the preview,
-  add a section, show the story map and export the story. In a folder with no story, it offers to
+  add a section, show the story map and export the story, and its **...** menu shares, publishes
+  or plays it in a browser. In a folder with no story, it offers to
   make one, or to convert a Twine story or Quest gamebook.
 - The Outline view and breadcrumbs, Go to Definition, Find All References and Rename for sections
   and passages
@@ -37,6 +38,14 @@ story map.
   and the story's images, sounds and other files) into a folder, or a zip to upload to a website,
   as the Squiffy editor and command line tool build it. It can also make a single HTML file with
   everything in it, or only `story.js`, for a page of your own
+- **Squiffy: Share as a Link** copies a squiffystories.com link with the whole story in it (its text,
+  and images of up to 4 KB), as the Squiffy editor's Share or publish makes one, and offers to open
+  it, or to copy it without the player's Open in editor button. **Squiffy: Play in Browser** opens
+  the story's link
+- **Squiffy: Publish to textadventures.co.uk** uploads the published story, opens
+  textadventures.co.uk to finish publishing it there, and says when it's published, as the editor
+  does. The story is given an `id` in its `squiffy.json` first if it has none, which is how
+  textadventures.co.uk knows it next time
 - **Squiffy: New Story** makes a new story in a folder: a `squiffy.json` and a `story.squiffy` to
   start from. **New Squiffy Story Here** in the Explorer's context menu makes one in that folder.
 - **Squiffy: Add Section** and **Add Passage** (also in the editor's context menu, and its title
@@ -76,6 +85,11 @@ This is the `vscode/` workspace in the [Squiffy repository](https://github.com/t
   `workspace.fs`, zipping them with fflate for a zip. For a single HTML file, it sends the assets
   to the server (in base64), which puts them in the page. New Story (`new-story.ts`) uses the editor's
   starter story (`src/client/new-story.test.ts` checks it matches `app/src/lib/project.svelte.ts`).
+  Share as a Link and Play in Browser (`share.ts`) make the link with the editor's
+  `story-link.ts` (exported by `@textadventures/squiffy-app`), from every file in the story's
+  folder but the build folder, tests and backups. Publish to textadventures.co.uk (`publish.ts`)
+  uploads Export's zip with the editor's `publish-api.ts`, with `fetch`, as the web extension host
+  is a worker, and asks what became of it until it's published.
   Convert Twine Story and Convert Quest Gamebook (`convert.ts`) pick the file and a folder, and
   write what `convert-story.ts` makes with the compiler's converters, as the command line tool does
   (`cli/src/convert-twine.ts` and `convert-quest.ts`), with `workspace.fs`.
