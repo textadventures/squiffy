@@ -316,6 +316,14 @@ describe("writing project files", () => {
         expect(updateProjectFile("{", { main: "x" })).toBeUndefined();
     });
 
+    test("an ID is added after the version, or changed where it is", () => {
+        const text = "{\n  \"$schema\": \"https://squiffystory.com/schema/squiffy.json\",\n  \"version\": 1,\n  \"main\": \"a.squiffy\"\n}\n";
+        expect(Object.keys(JSON.parse(updateProjectFile(text, { id: "abc" })!))).toEqual(["$schema", "version", "id", "main"]);
+        expect(Object.keys(JSON.parse(updateProjectFile("{\"main\": \"a.squiffy\"}", { id: "abc" })!))).toEqual(["id", "main"]);
+        const changed = JSON.parse(updateProjectFile("{\"main\": \"a.squiffy\", \"id\": \"old\"}", { id: "new" })!);
+        expect(changed).toEqual({ main: "a.squiffy", id: "new" });
+    });
+
     test("the story's details are set, trimmed, and removed when empty", () => {
         const text = "{\n  \"version\": 1,\n  \"main\": \"a.squiffy\"\n}\n";
         const updated = updateProjectFile(text, { description: " A cave. ", author: "Ann", cover: "cover.png" })!;

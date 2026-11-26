@@ -1,10 +1,19 @@
 import { describe, expect, test } from "vitest";
 import { decodeStory, mainFile, payloadFromFragment } from "@textadventures/squiffy-player/link";
-import { createStoryLink, linkedStoryFiles, MAX_ASSET_BYTES, MAX_LINK_LENGTH } from "./share-link.js";
+import { createStoryLink as linkFor, linkedStoryFiles, MAX_ASSET_BYTES, MAX_LINK_LENGTH, playerFolder } from "./story-link.js";
+
+const createStoryLink = (files: Map<string, string | Uint8Array>, main: string, version: string) => linkFor(files, main, playerFolder("https://squiffystories.com", version));
 
 const project = JSON.stringify({ $schema: "https://squiffystory.com/schema/squiffy.json", version: 1, id: "abc-123", main: "story.squiffy", map: { cave: [1, 2] }, backButton: true }, null, 2);
 
 const read = (url: string) => decodeStory(payloadFromFragment(new URL(url).hash)!)!;
+
+describe("playerFolder", () => {
+    test("is the folder for the version's major version", () => {
+        expect(playerFolder("https://squiffystories.com", "7.2.0-beta.1")).toBe("https://squiffystories.com/v7/");
+        expect(playerFolder("http://localhost:5181", "8.0.0")).toBe("http://localhost:5181/v8/");
+    });
+});
 
 describe("createStoryLink", () => {
     test("is a link to this version's player, with the story's text files and small images in it", () => {

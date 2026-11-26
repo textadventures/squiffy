@@ -704,7 +704,7 @@ export function formatProjectFile(project: { main: string; exclude?: string[]; m
 
 // Changes a project file's text, keeping any other properties it has. Returns undefined if the
 // text isn't a JSON object. A `map` with no positions removes it, as does an empty story detail.
-export function updateProjectFile(text: string, changes: { main?: string; exclude?: string[]; map?: MapPositions } & Partial<Record<StoryDetail, string>>): string | undefined {
+export function updateProjectFile(text: string, changes: { main?: string; exclude?: string[]; map?: MapPositions; id?: string } & Partial<Record<StoryDetail, string>>): string | undefined {
     let json: unknown;
     try {
         json = JSON.parse(text);
@@ -713,7 +713,14 @@ export function updateProjectFile(text: string, changes: { main?: string; exclud
         return undefined;
     }
     if (!json || typeof json != "object" || Array.isArray(json)) return undefined;
-    const data = { ...(json as Record<string, unknown>) };
+    let data = { ...(json as Record<string, unknown>) };
+    // A new ID goes after the version (or the $schema), where formatProjectFile puts it
+    if (changes.id !== undefined && !("id" in data)) {
+        const entries = Object.entries(data);
+        const at = Math.max(...["$schema", "version"].map(name => entries.findIndex(([key]) => key == name))) + 1;
+        data = Object.fromEntries([...entries.slice(0, at), ["id", changes.id], ...entries.slice(at)]);
+    }
+    else if (changes.id !== undefined) data.id = changes.id;
     if (changes.main !== undefined) data.main = changes.main;
     if (changes.exclude !== undefined) {
         if (changes.exclude.length) data.exclude = changes.exclude;

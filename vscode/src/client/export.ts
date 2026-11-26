@@ -55,7 +55,7 @@ const exists = async (uri: vscode.Uri) => {
 // (.squiffy files, squiffy.json, tests and backups) in the main file's folder, by its path from
 // there. Where the story's being exported to is left out when that's in the story's folder (a
 // build folder, or the zip), so an earlier export isn't copied in.
-async function storyAssets(root: vscode.Uri, target: vscode.Uri): Promise<Record<string, Uint8Array>> {
+export async function storyAssets(root: vscode.Uri, target: vscode.Uri): Promise<Record<string, Uint8Array>> {
     const skip = isIn(target, root) && !sameFolder(target, root) ? target : undefined;
     const assets: Record<string, Uint8Array> = {};
     for (const path of await listFiles(root)) {

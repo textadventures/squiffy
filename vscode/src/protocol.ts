@@ -24,9 +24,37 @@ export interface ExportStoryParams {
     // folder, which go in the page. Without them, the files are the page and story.js, to go
     // beside the story's assets.
     inlineAssets?: Record<string, string>;
+    // A file the client has just written (a squiffy.json given an ID, to publish it), which is
+    // read again first, as the file watcher might not have said so yet
+    changed?: string;
 }
 export type ExportStoryResult =
-    | { success: true; files: Record<string, string>; root: string; title?: string }
+    | {
+        success: true; files: Record<string, string>;
+        // The main file's folder, which the published story's assets are in
+        root: string;
+        title?: string;
+        // The story's own folder (squiffy.json's, if it has one), its main file's path there, its
+        // squiffy.json, and the ID that's in it, for a link to the story and for publishing it
+        storyRoot: string; mainFile: string; projectFile?: string; id?: string;
+    }
+    | { success: false; errors: string[] };
+
+// A squiffy.json for a story that hasn't one, to publish it: its text, which leaves out the folder's
+// files that aren't part of the story, and the story's .squiffy files with their setters converted
+// to Squiffy 7's rules, which a squiffy.json turns on. The client writes them.
+export const NEW_PROJECT_FILE = "squiffy/newProjectFile";
+export interface NewProjectFileParams { uri: string }
+export type NewProjectFileResult =
+    | {
+        success: true; uri: string; text: string;
+        // The files it leaves out, as paths from the story's folder
+        exclude: string[];
+        // The new text of each .squiffy file with setters that changed, by URI
+        changes: Record<string, string>;
+        // How many setters were converted, and where the ones that couldn't be are
+        converted: number; problems: string[];
+    }
     | { success: false; errors: string[] };
 
 // The section (and passage) at a position, to start the preview there

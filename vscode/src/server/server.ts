@@ -6,10 +6,10 @@ import {
     type CodeLens, CodeLensRefreshRequest, type Connection, DidChangeWatchedFilesNotification, FileChangeType, ResponseError, TextDocuments, TextDocumentSyncKind,
 } from "vscode-languageserver";
 import { TextDocument } from "vscode-languageserver-textdocument";
-import { emit, formatDiagnostic } from "squiffy-compiler";
+import { convertSetters, emit, formatDiagnostic, formatProjectFile, PROJECT_FILENAME } from "squiffy-compiler";
 import { createPackage } from "@textadventures/squiffy-packager";
 import {
-    EXPORT_STORY, FIND_PROJECT_FILES, fromBase64, LIST_FILES, PREVIEW_STORY, READ_TEXT, SECTION_AT, SET_MAIN_FILE, STORY_GRAPH,
+    EXPORT_STORY, FIND_PROJECT_FILES, NEW_PROJECT_FILE, type NewProjectFileParams, type NewProjectFileResult, fromBase64, LIST_FILES, PREVIEW_STORY, READ_TEXT, SECTION_AT, SET_MAIN_FILE, STORY_GRAPH,
     type ExportStoryParams, type ExportStoryResult, type FindProjectFilesResult, type ListFilesParams, type ListFilesResult, type PreviewStoryParams, type PreviewStoryResult,
     type PreviewFromHereArgs, type ReadTextParams, type ReadTextResult, type SectionAtParams, type SectionAtResult, type SetMainFileParams,
     type ShowLinksHereArgs,
@@ -17,6 +17,7 @@ import {
 } from "../protocol.js";
 import { groupDiagnostics, markdown, toLspCodeAction, toLspCompletion, toLspSymbol, toLspWorkspaceEdit } from "./convert.js";
 import { folderOf, Stories, type Story, toPath, toUri } from "./stories.js";
+import { projectFileExcludes } from "./project-file.js";
 
 // How long to wait after a change before checking the story again
 const DIAGNOSTICS_DELAY = 250;
@@ -248,7 +249,8 @@ export function startServer(connection: Connection) {
 
     // As the editor exports it (app/src/lib/language/worker.ts), and the CLI builds it: without
     // its @test sections, unless squiffy.json's startAnywhere keeps them for testers
-    connection.onRequest(EXPORT_STORY, async ({ uri, inlineAssets }: ExportStoryParams): Promise<ExportStoryResult> => {
+    connection.onRequest(EXPORT_STORY, async ({ uri, inlineAssets, changed }: ExportStoryParams): Promise<ExportStoryResult> => {
+        if (changed) await stories.fileChanged(changed);
         const story = await stories.storyFor(uri);
         const [analysis, { projectFile, mainFile }] = await Promise.all([story.service.getAnalysis(), story.service.getProjectInfo()]);
         if (!analysis.success) {
@@ -272,7 +274,37 @@ export function startServer(connection: Connection) {
             id: projectFile?.id, description: projectFile?.description, author: projectFile?.author, language: projectFile?.language,
             cover: hasCover ? cover : undefined,
         });
-        return { success: true, files: pkg.files, root, title: result.getUiInfo().title || undefined };
+        return {
+            success: true, files: pkg.files, root, title: result.getUiInfo().title || undefined,
+            storyRoot: story.root, mainFile, projectFile: story.project ? toUri(story.root, "squiffy.json") : undefined, id: projectFile?.id,
+        };
+    });
+
+    connection.onRequest(NEW_PROJECT_FILE, async ({ uri }: NewProjectFileParams): Promise<NewProjectFileResult> => {
+        const story = await stories.storyFor(uri);
+        if (story.project) return { success: false, errors: [`This story has a ${PROJECT_FILENAME} already.`] };
+        const [analysis, { mainFile }] = await Promise.all([story.service.getAnalysis(), story.service.getProjectInfo()]);
+        if (!analysis.success) {
+            return { success: false, errors: analysis.diagnostics.filter(d => d.severity == "error").map(formatDiagnostic) };
+        }
+        // The main file, and the files it @imports
+        const squiffyFiles = [mainFile, ...analysis.files.map(file => file.filename).filter((path): path is string => !!path && path != mainFile)];
+        const paths = await connection.sendRequest<ListFilesResult>(LIST_FILES, { root: story.root } satisfies ListFilesParams);
+        const exclude = projectFileExcludes(mainFile, paths, [...squiffyFiles, ...analysis.stylesheets, ...analysis.scripts]);
+        const changes: Record<string, string> = {};
+        let converted = 0;
+        const problems: string[] = [];
+        for (const path of squiffyFiles) {
+            const fileUri = toUri(story.root, path);
+            const result = convertSetters(await connection.sendRequest<ReadTextResult>(READ_TEXT, { uri: fileUri } satisfies ReadTextParams));
+            if (result.converted) changes[fileUri] = result.script;
+            converted += result.converted;
+            problems.push(...result.problems.map(problem => `${path} line ${problem.line}`));
+        }
+        return {
+            success: true, uri: toUri(story.root, PROJECT_FILENAME), text: formatProjectFile({ main: mainFile, exclude }),
+            exclude, changes, converted, problems,
+        };
     });
 
     connection.onRequest(SECTION_AT, async ({ uri, position }: SectionAtParams): Promise<SectionAtResult> => {

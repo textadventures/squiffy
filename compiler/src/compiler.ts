@@ -5,7 +5,7 @@ import type { Panel, PlayerSetting } from "./project.js";
 
 export { findV5Syntax, convertV5Syntax } from "./v5.js";
 export type { V5SyntaxMatch, V5ConversionProblem, V5ConversionResult } from "./v5.js";
-export { convertSetters, convertSetter } from "./setters.js";
+export { convertSetters, convertSetter, setterConversionMessage } from "./setters.js";
 export { convertTwine, convertTwineStory, formatTwineProblems } from "./twine/convert.js";
 export type { TwineConversionResult, TwineConversionProblem, TwineConversionOptions } from "./twine/convert.js";
 export { parseTwine, isTwineSource, TwineParseError } from "./twine/story.js";

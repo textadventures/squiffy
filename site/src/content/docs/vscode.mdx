@@ -38,7 +38,7 @@ Each one is marked as on the [story map](#the-story-map): where the story starts
 
 - Click a section or passage to go to it in your script.
 - Its ▷ button, or **Preview from Here** in its right-click menu, starts the preview there.
-- The buttons at the top of the view run the preview, add a section, show the story map, and export the story.
+- The buttons at the top of the view run the preview, add a section, show the story map, and export the story. Its **...** menu shares the story as a link, publishes it to textadventures.co.uk, or plays it in your browser.
 
 If your workspace has more than one story, the view shows the one you're working on.
 
@@ -89,6 +89,14 @@ To try a part of the story without playing through from the start, click **Previ
 - a **zip** of the same files, to upload to a site such as itch.io or textadventures.co.uk
 - a **single HTML file** with everything in it
 - only **`story.js`**, to [embed](/embedding/) in a page of your own
+
+## Sharing and publishing
+
+These are the editor's [Share or publish](/publishing/) choices that put your story online. Each is in the Command Palette, the Sections view's **...** menu, and the **...** menu in the editor's title bar.
+
+- **Squiffy: Share as a Link** copies a link with your whole story in it, to send to anyone, with nothing to upload, as the editor's **A link** does: see [Sharing a link](/publishing/#sharing-a-link). It's for a small story. If anything's left out, such as a sound or a bigger image, the message says so. Choose **Open in Browser** to try the link, or **Copy Without Edit Button** for a link that doesn't show players **Open in editor**.
+- **Squiffy: Publish to textadventures.co.uk** uploads your story, opens textadventures.co.uk in your browser to finish publishing it there, and says when it's published: see [Publishing to textadventures.co.uk](/publishing/#publishing-to-textadventurescouk). textadventures.co.uk knows a story by the `id` in its [`squiffy.json`](/project-file/), so a story without one is given one first. A story with no `squiffy.json` is given one, which also changes how it sets attributes to [Squiffy 7's rules](/coming-from-squiffy-6/), so its setters are converted, as the editor does.
+- **Squiffy: Play in Browser** plays the story from its link in your browser, as players of the link will see it.
 
 ## Squiffy 5 stories
 

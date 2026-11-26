@@ -10,6 +10,8 @@ import {
 } from "../protocol.js";
 import { findProjectFiles, isProjectFile, listFiles, readText } from "./files.js";
 import { exportStory } from "./export.js";
+import { playInBrowser, shareLink } from "./share.js";
+import { publishOnline, stopWaiting } from "./publish.js";
 import { convertQuestGamebook, convertTwineStory } from "./convert.js";
 import { insertHeader, newStory } from "./new-story.js";
 import { Preview } from "./preview.js";
@@ -122,6 +124,20 @@ export async function activate(context: vscode.ExtensionContext, createClient: C
         if (target) return exportStory(client!, target);
         void vscode.window.showInformationMessage("Open a .squiffy file or squiffy.json to export its story.");
     });
+
+    // The story's own version of Squiffy, for the player's folder in a link and for
+    // textadventures.co.uk's figures: the extension's, which compiles it
+    const version: string = context.extension.packageJSON.version;
+    // The commands that get a story out to players, with the story to act on
+    const forStory = (id: string, run: (target: vscode.Uri) => Promise<void>, what: string) => command(id, async (uri?: unknown) => {
+        const target = uri instanceof vscode.Uri ? uri : await storyUri();
+        if (target) return run(target);
+        void vscode.window.showInformationMessage(`Open a .squiffy file or squiffy.json to ${what}.`);
+    });
+    forStory("squiffy.shareLink", target => shareLink(client!, target, version), "share its story as a link");
+    forStory("squiffy.playInBrowser", target => playInBrowser(client!, target, version), "play its story in a browser");
+    forStory("squiffy.publishOnline", target => publishOnline(client!, target, version), "publish its story");
+    context.subscriptions.push({ dispose: stopWaiting });
 
     command("squiffy.newStory", () => newStory());
     // From the Explorer's context menu, in that folder

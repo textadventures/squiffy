@@ -18,7 +18,7 @@ import {
     type FileEntry, type FileTypeFilter, type ProjectFileSystem,
 } from "@textadventures/project-fs";
 import {
-    convertSetters, formatProjectFile, getStoryFiles, isExcluded, parseProjectFile, PROJECT_FILENAME, updateProjectFile,
+    convertSetters, setterConversionMessage as conversionMessage, formatProjectFile, getStoryFiles, isExcluded, parseProjectFile, PROJECT_FILENAME, updateProjectFile,
     type MapPositions, type ProjectFile, type StoryDetail, type StoryFiles,
 } from "squiffy-compiler";
 import { checklistDialog, chooseDialog, confirmDialog } from "./confirm.js";
@@ -678,15 +678,7 @@ export interface SetterConversion {
 
 // What to tell the author about a conversion, or "" if nothing happened
 export function setterConversionMessage(conversion: SetterConversion): string {
-    const { converted, problems } = conversion;
-    if (!converted && !problems.length) return "";
-    let message = converted
-        ? `Converted ${converted} setter${converted === 1 ? "" : "s"} to Squiffy 7's rules, where text is in quotes and attributes don't need "@" (e.g. @set weapon = "sword").`
-        : "";
-    if (problems.length) {
-        message += `${message ? " " : ""}${problems.length === 1 ? "One setter" : `${problems.length} setters`} couldn't be converted, and may need changing by hand: ${problems.slice(0, 3).join(", ")}${problems.length > 3 ? ", ..." : ""}.`;
-    }
-    return message;
+    return conversionMessage(conversion.converted, conversion.problems);
 }
 
 // A new story's language: the browser's, which the author is most likely writing in, as one of
