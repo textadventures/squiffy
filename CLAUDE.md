@@ -62,6 +62,10 @@ End-to-end tests use Playwright (`npm run test:e2e`, not run in CI): `e2e/` runs
 
 The docs' screenshots of the editor and the VS Code extension (`site/src/assets/screenshots/`, shown with `site/src/components/Screenshot.astro`) are taken by Playwright scripts in `e2e/screenshots/`: `npm run screenshots` (config in `playwright.screenshots.config.ts`, which starts the editor and VS Code for the web). They aren't tests. See `.claude/skills/docs-screenshots/SKILL.md`.
 
+`.claude/launch.json` (checked in) lists the dev servers for Claude Code's browser pane: `editor`, which is `./dev.sh --skip-build --port 5190`, so the editor is on 5190 and its player on 5191, away from the user's own `./dev.sh` on 5180 and 5181 (build the packages it uses first, each in its own folder); `site` (4321); and `vscode-web` (3124). A server worth having there goes in that file, in the same change, for every checkout.
+
+**A change to the VS Code extension can be tried in a browser, so try it, as for the editor.** Build it (`cd vscode && npm run build`, after building the compiler and runtime), then start `vscode-web` from `.claude/launch.json`: VS Code for the web on `examples/gameshow`, with the extension from `vscode/dist`, at http://localhost:3124 (it can take a minute to start the first time, while it downloads VS Code). Restart it after rebuilding. Drive it as `e2e/screenshots/vscode.capture.ts` does: F1 opens the Command Palette (type `>Squiffy: ...`, and wait for the command to be listed before pressing Enter), the extension's buttons can be found by name (Show Preview, Show Story Map), and a webview's page (the preview, the map) is in an `iframe.webview` with its own `iframe` inside. It's the web build, in a Web Worker, so for something only the Node build does, ask the user to try it in VS Code on the desktop (`code --extensionDevelopmentPath=$PWD ../examples/gameshow` from `vscode/`).
+
 The runtime tests run in the `node` environment, and each test creates a fresh DOM with `global-jsdom` (so use `window.Event` etc. rather than the Node globals).
 
 ## Linting
