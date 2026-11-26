@@ -14,7 +14,7 @@ beforeEach(async () => {
     dir = fs.mkdtempSync(path.join(os.tmpdir(), "squiffy-server-"));
     fs.writeFileSync(path.join(dir, "index.html"), "<html>published</html>");
     fs.writeFileSync(path.join(dir, "story.js"), "var story = 'published';");
-    fs.writeFileSync(path.join(dir, "style.css"), "body {}");
+    fs.writeFileSync(path.join(dir, "squiffy.css"), "body {}");
     server = createServer(dir, { "index.html": "<html>testing</html>", "story.js": "var story = 'testing';" });
     await new Promise<void>(resolve => server.listen(0, "127.0.0.1", resolve));
     url = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
@@ -40,7 +40,7 @@ test("the files on disk, and the story's other files, are as they were built", a
     await fetch(url + "/");
     expect(fs.readFileSync(path.join(dir, "index.html"), "utf8")).toBe("<html>published</html>");
     expect(fs.readFileSync(path.join(dir, "story.js"), "utf8")).toBe("var story = 'published';");
-    expect(await (await fetch(url + "/style.css")).text()).toBe("body {}");
+    expect(await (await fetch(url + "/squiffy.css")).text()).toBe("body {}");
     expect((await fetch(url + "/missing.js")).status).toBe(404);
 });
 

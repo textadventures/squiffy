@@ -616,9 +616,10 @@ export function isAlwaysSkipped(path: string): boolean {
 export const BUILD_FOLDER = "build";
 
 // The files that Squiffy 6, and Squiffy 7 without a squiffy.json, write next to the main file
-// when publishing a story, with its index.html. With an index.html beside them, they're taken to
-// be an old build, and aren't part of the story unless it @imports them.
-const OLD_BUILD_FILES = ["story.js", "style.css", "squiffy.runtime.js", "squiffy.runtime.global.js"];
+// when publishing a story, with its index.html (Squiffy's own styles were style.css until 7.0,
+// and are squiffy.css now). With an index.html beside them, they're taken to be an old build,
+// and aren't part of the story unless it @imports them.
+const OLD_BUILD_FILES = ["story.js", "style.css", "squiffy.css", "squiffy.runtime.js", "squiffy.runtime.global.js"];
 
 // The kinds of file that are part of a story
 export const isSquiffyPath = (path: string) => path.endsWith(".squiffy");

@@ -174,7 +174,8 @@ export const createPackage = async (input: CompileSuccess, createZipOrOptions: b
     const uiInfo = input.getUiInfo();
 
     const infoComment = `<!--\n\nCreated with Squiffy ${version}\n\nhttps://squiffystory.com\nhttps://github.com/textadventures/squiffy\n\n-->`;
-    const combinedCss = runtimeCss.toString() + "\n\n" + pageCss.toString();
+    // Both are minified when the packager is built (vite.config.ts)
+    const combinedCss = runtimeCss.toString() + "\n" + pageCss.toString();
 
     const storyJs = await input.getJs();
 
@@ -246,13 +247,13 @@ export const createPackage = async (input: CompileSuccess, createZipOrOptions: b
         }
     } else {
         // Reference external files
-        styleContent = "<link rel=\"stylesheet\" href=\"style.css\"/>";
+        styleContent = "<link rel=\"stylesheet\" href=\"squiffy.css\"/>";
         runtimeContent = "<script src=\"squiffy.runtime.global.js\"></script>";
         storyContent = "<script src=\"story.js\"></script>";
 
         output["story.js"] = storyJs;
         output["squiffy.runtime.global.js"] = squiffyRuntime;
-        output["style.css"] = combinedCss;
+        output["squiffy.css"] = combinedCss;
     }
 
     let htmlData = htmlTemplateFile.toString();

@@ -256,13 +256,13 @@ describe("getStoryFiles", () => {
     });
 
     test("an old build next to the main file is left out, if there's an index.html with it", () => {
-        const old = ["story.js", "style.css", "squiffy.runtime.js", "squiffy.runtime.global.js"];
+        const old = ["story.js", "style.css", "squiffy.css", "squiffy.runtime.js", "squiffy.runtime.global.js"];
         expect(storyFileList(getStoryFiles(project("story.squiffy"), ["story.squiffy", "index.html", ...old, "mine.css"])))
             .toEqual(["mine.css"]);
         // Next to the main file, wherever that is
         expect(storyFileList(getStoryFiles(project("src/story.squiffy"), ["src/story.squiffy", "src/index.html", ...old.map(f => "src/" + f), "story.js"])))
             .toEqual(["story.js"]);
-        expect(storyFileList(getStoryFiles(project("story.squiffy"), ["story.squiffy", "style.css"]))).toEqual(["style.css"]);
+        expect(storyFileList(getStoryFiles(project("story.squiffy"), ["story.squiffy", "style.css", "squiffy.css"]))).toEqual(["squiffy.css", "style.css"]);
     });
 
     test("exclude patterns, matching a file or a folder it's in", () => {

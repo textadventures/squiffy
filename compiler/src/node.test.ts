@@ -126,7 +126,7 @@ describe("findStory", () => {
     test("stylesheets and scripts come after the .squiffy files, leaving out the build folder and an old build", async () => {
         await write({
             "squiffy.json": project, "story.squiffy": "", "b.squiffy": "", "z.css": "", "a.js": "",
-            "build/index.html": "", "build/story.js": "", "index.html": "", "story.js": "", "style.css": "",
+            "build/index.html": "", "build/story.js": "", "index.html": "", "story.js": "", "style.css": "", "squiffy.css": "",
         });
         expect((await findStory(dir)).storyFiles).toEqual([path.join(dir, "b.squiffy"), path.join(dir, "z.css"), path.join(dir, "a.js")]);
     });

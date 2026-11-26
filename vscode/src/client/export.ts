@@ -32,7 +32,7 @@ const describe = (uri: vscode.Uri) => {
     return vscode.workspace.asRelativePath(uri);
 };
 
-// The files an export would replace, by name: "story.js", "story.js and style.css", or the first
+// The files an export would replace, by name: "story.js", "story.js and squiffy.css", or the first
 // few of a longer list
 export function clashMessage(names: string[]): string {
     const sorted = [...names].sort();
@@ -157,10 +157,10 @@ export async function exportStory(client: BaseLanguageClient, storyUri: vscode.U
     });
     let folder = picked?.[0];
     if (folder && sameFolder(folder, root)) {
-        // Next to the story's own files, a published style.css would replace one of the author's,
+        // Next to the story's own files, a published squiffy.css would replace one of the author's,
         // and then be left out of the story as an old build
         const answer = await vscode.window.showWarningMessage(
-            `Export into the story's own folder? index.html, story.js, style.css and the Squiffy runtime would go next to your script, replacing any files of yours with those names. The ${BUILD_FOLDER} folder keeps them apart.`,
+            `Export into the story's own folder? index.html, story.js, squiffy.css and the Squiffy runtime would go next to your script, replacing any files of yours with those names. The ${BUILD_FOLDER} folder keeps them apart.`,
             { modal: true }, `Export to ${BUILD_FOLDER}`, "Export Here");
         if (answer == `Export to ${BUILD_FOLDER}`) {
             await vscode.workspace.fs.createDirectory(build);

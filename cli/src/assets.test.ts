@@ -76,7 +76,7 @@ describe("createPackageFiles with assets", () => {
         expect(await createPackageFiles(storyFile, STORY_DIR, { createZip: true })).toBe(true);
 
         const zip = unzipSync(new Uint8Array(await fs.readFile(path.join(STORY_DIR, "output.zip"))));
-        expect(Object.keys(zip).sort()).toEqual(["cat.png", "index.html", "squiffy.runtime.global.js", "story.js", "style.css"]);
+        expect(Object.keys(zip).sort()).toEqual(["cat.png", "index.html", "squiffy.css", "squiffy.runtime.global.js", "story.js"]);
         expect(zip["cat.png"]).toEqual(pngBytes);
     });
 
@@ -134,6 +134,6 @@ The door creaks.`);
         expect(await createPackageFiles(storyFile, STORY_DIR, { createZip: true })).toBe(true);
 
         const zip = unzipSync(new Uint8Array(await fs.readFile(path.join(STORY_DIR, "output.zip"))));
-        expect(Object.keys(zip).sort()).toEqual(["cat.png", "index.html", "my_script.js", "my_style.css", "squiffy.runtime.global.js", "story.js", "style.css"]);
+        expect(Object.keys(zip).sort()).toEqual(["cat.png", "index.html", "my_script.js", "my_style.css", "squiffy.css", "squiffy.runtime.global.js", "story.js"]);
     });
 });

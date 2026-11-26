@@ -112,7 +112,7 @@ You clicked!
         // Check that all package files were created
         const files = await fs.readdir(OUTPUT_DIR);
         expect(files).toContain("index.html");
-        expect(files).toContain("style.css");
+        expect(files).toContain("squiffy.css");
         expect(files).toContain("story.js");
         expect(files).toContain("squiffy.runtime.global.js");
 
@@ -340,7 +340,7 @@ describe("external-files", () => {
         const html = await fs.readFile(path.join(build, "index.html"), "utf8");
         expect(html).toContain("<link rel=\"stylesheet\" href=\"my.css\"/>");
         expect(html).toContain("<script src=\"my.js\"></script>");
-        for (const file of ["my.css", "my.js", "cat.png", "fonts/f.woff2", "fonts/story/story.css", "fonts/story/latin-400-normal.woff2", "story.js", "style.css"]) {
+        for (const file of ["my.css", "my.js", "cat.png", "fonts/f.woff2", "fonts/story/story.css", "fonts/story/latin-400-normal.woff2", "story.js", "squiffy.css"]) {
             await expect(fs.access(path.join(build, file))).resolves.toBeUndefined();
         }
 

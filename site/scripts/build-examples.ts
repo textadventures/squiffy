@@ -29,7 +29,7 @@ async function packageExample(name: string): Promise<boolean> {
 }
 
 // A local build (the CLI's build/ folder, or an old build next to the main file) isn't source
-const OLD_BUILD_FILES = ["index.html", "story.js", "style.css", "squiffy.runtime.js", "squiffy.runtime.global.js"];
+const OLD_BUILD_FILES = ["index.html", "story.js", "style.css", "squiffy.css", "squiffy.runtime.js", "squiffy.runtime.global.js"];
 
 // The example's folder as a zip, with its files in a folder of the example's name
 function zipSource(name: string) {

@@ -16,7 +16,7 @@ test("Create package from compiled story", async () => {
 
     expect(pkg.files).toBeDefined();
     expect(pkg.files["index.html"]).toBeDefined();
-    expect(pkg.files["style.css"]).toBeDefined();
+    expect(pkg.files["squiffy.css"]).toBeDefined();
     expect(pkg.files["story.js"]).toBeDefined();
     expect(pkg.files["squiffy.runtime.global.js"]).toBeDefined();
 
@@ -42,7 +42,7 @@ test("Exported page has a light/dark button, and applies the saved choice before
     // The saved choice is applied in <head>, before the stylesheets
     const head = html.substring(0, html.indexOf("</head>"));
     expect(head).toContain("const themeKey = 'squiffy-theme:' + window.squiffyStorageKey;");
-    expect(head.indexOf("squiffyTheme")).toBeLessThan(head.indexOf('href="style.css"'));
+    expect(head.indexOf("squiffyTheme")).toBeLessThan(head.indexOf('href="squiffy.css"'));
 });
 
 test("Exported page shows the story's panels, with the page's strings", async () => {
@@ -243,6 +243,35 @@ Hello world!`;
     expect(pkg.files["index.html"]).toContain('<script src="external.js"></script>');
 });
 
+test("Squiffy's own styles are minified, and the story's aren't", async () => {
+    const result = await compileWithImports("@import my_style.css\n\nHello", ["my_style.css"]);
+    const storyCss = "/* The story's own comment */\nbody {\n    color: red;\n}";
+    const css = (await createPackage(result)).files["squiffy.css"];
+    expect(css).toContain(".squiffy-continue{");
+    expect(css).toContain("light-dark(");
+    expect(css).not.toContain("/*");
+    expect(css).not.toContain("\n    ");
+
+    const html = (await createPackage(result, {
+        inlineHtml: true,
+        assets: { "my_style.css": new TextEncoder().encode(storyCss) }
+    })).files["index.html"];
+    expect(html).toContain(storyCss);
+    expect(html.match(/\/\*/g)).toHaveLength(1);
+});
+
+// style.css is the name the editor suggests for a story's stylesheet, so Squiffy's own isn't called that
+test("A story's own style.css is published beside Squiffy's styles", async () => {
+    const result = await compileWithImports("@import style.css\n\nHello", ["style.css"]);
+    const storyCss = "body { color: red; }";
+    const pkg = await createPackage(result, { createZip: true, assets: { "style.css": new TextEncoder().encode(storyCss) } });
+    const links = pkg.files["index.html"].match(/<link rel="stylesheet" href="[^"]*"\/>/g);
+    expect(links).toEqual(['<link rel="stylesheet" href="squiffy.css"/>', '<link rel="stylesheet" href="style.css"/>']);
+    const zip = unzipSync(pkg.zip!);
+    expect(strFromU8(zip["style.css"])).toBe(storyCss);
+    expect(strFromU8(zip["squiffy.css"])).toContain(".squiffy-continue{");
+});
+
 test("Package includes external stylesheets", async () => {
     const script = `@import styles.css
 
@@ -333,7 +362,7 @@ Hello world!`;
     expect(pkg.files["index.html"]).toBeDefined();
 
     // Should NOT have separate files
-    expect(pkg.files["style.css"]).toBeUndefined();
+    expect(pkg.files["squiffy.css"]).toBeUndefined();
     expect(pkg.files["story.js"]).toBeUndefined();
     expect(pkg.files["squiffy.runtime.global.js"]).toBeUndefined();
 
@@ -346,7 +375,7 @@ Hello world!`;
     // Should contain inline scripts with content (not src references)
     expect(html).not.toContain('src="squiffy.runtime.global.js"');
     expect(html).not.toContain('src="story.js"');
-    expect(html).not.toContain('href="style.css"');
+    expect(html).not.toContain('href="squiffy.css"');
 
     // Should contain the story content inline
     expect(html).toContain("Hello world!");
@@ -400,11 +429,11 @@ test("Assets are added to the zip at their paths", async () => {
     });
 
     // Assets aren't text files, so aren't in pkg.files
-    expect(Object.keys(pkg.files).sort()).toEqual(["index.html", "squiffy.runtime.global.js", "story.js", "style.css"]);
+    expect(Object.keys(pkg.files).sort()).toEqual(["index.html", "squiffy.css", "squiffy.runtime.global.js", "story.js"]);
     expect(pkg.files["index.html"]).not.toContain("resolveAssetUrl: function");
 
     const zip = unzipSync(pkg.zip!);
-    expect(Object.keys(zip).sort()).toEqual(["cat.png", "index.html", "sounds/meow.mp3", "squiffy.runtime.global.js", "story.js", "style.css"]);
+    expect(Object.keys(zip).sort()).toEqual(["cat.png", "index.html", "sounds/meow.mp3", "squiffy.css", "squiffy.runtime.global.js", "story.js"]);
     expect(zip["cat.png"]).toEqual(pngBytes);
     expect(zip["sounds/meow.mp3"]).toEqual(mp3Bytes);
 });
