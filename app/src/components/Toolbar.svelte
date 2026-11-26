@@ -266,7 +266,7 @@
                             type="button"
                             class="btn btn-xs preset-outlined-primary-500"
                             onclick={toggle}
-                            title="Add a section, passage or snippet"
+                            title="Add a section, passage, link, condition or something to remember"
                             aria-haspopup="menu"
                             aria-expanded={open}
                         ><Plus size={14} /> <span class="hidden md:inline">Add</span> <ChevronDown size={12} class="hidden md:inline" /></button>

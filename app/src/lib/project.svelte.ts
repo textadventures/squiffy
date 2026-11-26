@@ -49,11 +49,19 @@ Start writing! Each choice is a [[new section]]: put double square brackets arou
 Sections can also have passages, which add text without moving the story on. Click this [passage link], and then carry on to the [[next section]].
 
 [passage link]:
+@set clicked_passage
 
-This is the text for the passage.
+This is the text for the passage. The @set above makes the story remember that you clicked it.
 
 [[next section]]:
 @end
+
+{{!-- This is how the story remembers a choice. The @set in the passage above sets an attribute called clicked_passage. {{#if clicked_passage}} starts some text that's only shown if it's set (the # says that a block starts here). {{else}} starts the text to show if it isn't, and {{/if}} ends the block. --}}
+{{#if clicked_passage}}
+You clicked the passage link, so you see this.
+{{else}}
+You didn't click the passage link, so you see this instead.
+{{/if}}
 
 When a new section appears, any passage links in the previous section that weren't clicked are disabled.
 
