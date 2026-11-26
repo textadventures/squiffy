@@ -305,6 +305,15 @@ See [Music and sound](/images-and-files/#music-and-sound) for examples.
 
 `{{music}}` and `{{sound}}` on their own, without a file, still show an attribute called `music` or `sound`.
 
+## Video helpers
+
+See [Videos](/images-and-files/#videos) for more.
+
+| Helper | Parameters | Description | Example |
+|--------|------------|-------------|---------|
+| `{{youtube}}` | `"address or ID" [start=seconds] [title="name"]` | Show a YouTube video. Where it can't play in the page, as in the editor's preview, it's a picture that opens it on YouTube | `{{youtube "https://youtu.be/aqz-KE-bpKQ"}}` |
+| `{{vimeo}}` | `"address or ID" [start=seconds] [title="name"]` | Show a Vimeo video, in the same way | `{{vimeo "https://vimeo.com/1084537" start=60}}` |
+
 ## Class helpers
 
 These change the classes on the element that holds the story, for your [CSS](/styling/#changing-the-look-for-a-scene). Unlike the classes from `@class`, which change with the section, these stay until they're taken off. The Back button and saved games put them back as they were.

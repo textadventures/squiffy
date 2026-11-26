@@ -16,6 +16,7 @@ import { focusIsIn, focusNewText, holdFocus, isLinkActive, setLinkActive, syncLi
 import { createAssetHtmlResolver, isAbsolute } from "./assets.js";
 import { Sound, DEFAULT_FADE } from "./sound.js";
 import { EveryTimers } from "./every.js";
+import { canEmbedVideos, parseStart, parseVimeo, parseYouTube, videoHtml, WATCH_VIDEO, type Video } from "./videos.js";
 import { confirmDialog } from "./confirmDialog.js";
 import { createSavesDialog, type SavesDialog } from "./savesDialog.js";
 import { createSettingsDialog, type SettingsDialog } from "./settingsDialog.js";
@@ -1763,6 +1764,27 @@ export const init = async (options: SquiffyInitOptions): Promise<SquiffyApi> => 
         if (!state.readOnly && !quiet) sound.stopSounds();
         return "";
     });
+
+    // {{youtube}} and {{vimeo}}: a video, embedded, or a link to it where it can't be (videos.ts)
+    const videoHelper = (parse: (value: string) => Video | undefined, site: string) =>
+        (value: unknown, options?: { hash?: Record<string, unknown> }) => {
+            if (isHelperOptions(value)) return "";
+            const video = typeof value == "string" || typeof value == "number" ? parse(String(value)) : undefined;
+            if (!video) {
+                console.warn(`Not a ${site} video: ${String(value)}`);
+                return "";
+            }
+            const start = parseStart(options?.hash?.start);
+            if (start) video.start = start;
+            const title = options?.hash?.title;
+            return new textProcessor.handlebars.SafeString(videoHtml(video, {
+                title: typeof title == "string" ? title : undefined,
+                embed: canEmbedVideos(),
+                watchText: typeof strings.watchVideo == "string" ? strings.watchVideo : WATCH_VIDEO,
+            }));
+        };
+    textProcessor.handlebars.registerHelper("youtube", videoHelper(parseYouTube, "YouTube"));
+    textProcessor.handlebars.registerHelper("vimeo", videoHelper(parseVimeo, "Vimeo"));
 
     // Classes on the story's element (#449): the current section's, from @class, which change with
     // the section, and ones from {{addclass}}, which stay until they're removed. They're attributes,

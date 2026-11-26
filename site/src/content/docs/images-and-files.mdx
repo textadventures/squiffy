@@ -6,6 +6,7 @@ description: Adding pictures, sound, video and fonts to a story
 import Sample from "@components/Sample.astro";
 import Screenshot from "@components/Screenshot.astro";
 import sea from "../../samples/sound/sea.squiffy?raw";
+import cinema from "../../samples/video/cinema.squiffy?raw";
 
 export const sounds = { "sea.mp3": "/tutorial/sounds/sea.mp3", "snuffle.mp3": "/tutorial/sounds/snuffle.mp3" };
 
@@ -80,3 +81,23 @@ The gate creaks open.
 ```
 
 The sound files go in your story's folder, like images, and are included when you publish it. They start loading when the story starts, so they're ready to play when they're needed. Use MP3 for the widest browser support.
+
+## Videos
+
+Show a video from YouTube with `{{youtube}}`, or one from Vimeo with `{{vimeo}}`. Give it the address of the video's page, or the video's ID:
+
+<Sample script={cinema}></Sample>
+
+```squiffy
+{{youtube "https://youtu.be/aqz-KE-bpKQ"}}
+{{youtube "aqz-KE-bpKQ" start=90 title="Big Buck Bunny"}}
+{{vimeo "https://vimeo.com/1084537"}}
+```
+
+`start=` is where it starts, in seconds or as `1:30`, and a `t=` in the address does the same. `title=` names the video for screen readers, and shows on it where it can't play in the page.
+
+A published story plays the video in the page, as wide as the text. YouTube's player comes from youtube-nocookie.com, so YouTube doesn't set cookies until the player plays it, and Vimeo's is told not to track the player.
+
+Some places a story plays can't show another site's player inside it: the editor's preview, the samples here, a story [shared as a link](/publishing/#sharing-a-link), and a story opened straight from its file rather than from a website. There, the video is a picture with a play button, which opens it on YouTube or Vimeo in a new tab. (A Vimeo video has no picture.) Its "Watch on YouTube" text is `watchVideo` in [`strings`](/buttons-panels-settings/#the-pages-text-in-another-language), for a story in another language.
+
+The video isn't part of your story's files, so it needs the player to be online, and it can't play if it's taken down or made private.

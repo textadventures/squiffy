@@ -436,6 +436,8 @@ export function createPreview(options: PreviewOptions) {
             persist: false,
             scroll: "element",
             resolveAssetUrl,
+            // For the text the story itself shows, such as a video's "Watch on YouTube"
+            strings: controls.strings,
             showUnsetNames: message.showUnsetNames === true,
             onSet: (name, value) => {
                 if (thisLoad == loadCount && !name.startsWith("_")) send({ type: "attributeSet", name, value });

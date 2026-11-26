@@ -10,5 +10,6 @@ export const BUILT_IN_HELPERS: ReadonlySet<string> = new Set([
     "length", "live", "lower", "lt", "lte", "max", "min", "mod", "mul", "music", "ne", "not", "once", "or",
     "passage", "passages", "pop", "prepend", "random", "range", "remove", "removeclass", "replace", "restart", "rotate",
     "round", "saves", "section", "sections", "seen", "sequence", "set", "settings", "shuffle", "slice", "sort",
-    "sound", "stop", "stopmusic", "stopsounds", "style", "sub", "tags", "toggleclass", "unset", "upper", "visits",
+    "sound", "stop", "stopmusic", "stopsounds", "style", "sub", "tags", "toggleclass", "unset", "upper", "vimeo", "visits",
+    "youtube",
 ]);
