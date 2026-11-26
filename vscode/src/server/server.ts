@@ -92,7 +92,7 @@ export function startServer(connection: Connection) {
                 definitionProvider: true,
                 referencesProvider: true,
                 renameProvider: { prepareProvider: true },
-                completionProvider: { triggerCharacters: ["[", "{", "@", "\""] },
+                completionProvider: { triggerCharacters: ["[", "{", "@", "\"", "#", "/", "("] },
                 hoverProvider: true,
                 foldingRangeProvider: true,
                 codeActionProvider: { codeActionKinds: ["quickfix"] },

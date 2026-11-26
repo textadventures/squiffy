@@ -5,7 +5,7 @@ story map.
 
 - A getting-started walkthrough on VS Code's Welcome page (**Help > Welcome**), which takes you
   through making a story, previewing it, adding sections, the story map and exporting
-- Syntax highlighting, folding and snippets for `.squiffy` files
+- Syntax highlighting and folding for `.squiffy` files
 - Problems as you type, for the whole story, including links to sections that don't exist, dead
   ends and sections nothing links to
 - A Squiffy sidebar in the Activity Bar, whose Sections view lists every section and passage in the
@@ -15,7 +15,8 @@ story map.
   make one, or to convert a Twine story or Quest gamebook.
 - The Outline view and breadcrumbs, Go to Definition, Find All References and Rename for sections
   and passages
-- Completion of section and passage names, attributes and directives, hover, and quick fixes
+- Completion of section and passage names, attributes, directives, helpers (after `{{`, `{{#`,
+  `{{/` and `(`) and the editor's snippets, hover, and quick fixes
 - **Squiffy: Show Preview** (also the ▷ button in the editor's title bar, and Preview in the
   status bar, for a `.squiffy` file or the story's `squiffy.json`) runs the story beside the editor, updating as you type. **Preview from here** above
   each section and passage, or **Start Preview at This Section** in the editor's context menu,
@@ -87,8 +88,9 @@ This is the `vscode/` workspace in the [Squiffy repository](https://github.com/t
 - The sidebar's Sections view (#616) is a `TreeDataProvider` (`src/client/sections-view.ts`) over
   the same graph as the map, made into a tree by `sections.ts`, which marks it as the map does.
 - The grammar is the compiler's (`compiler/syntaxes/squiffy.tmLanguage.json`), copied into `dist/`
-  by the build. The snippets are the editor's, with tab stops (`src/snippets.test.ts` checks they
-  match `app/src/lib/snippets.ts`).
+  by the build. The snippets are the editor's (`compiler/src/snippets.ts`), which the language
+  server offers as completions, rather than VS Code's own snippets, which can't tell `{{#if` from
+  `if`.
 
 ```bash
 npm run build      # type-check, then bundle into dist/ with esbuild (and the map's page with Vite)

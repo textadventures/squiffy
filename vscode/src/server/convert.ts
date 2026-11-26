@@ -2,7 +2,7 @@
 // mostly kinds, severities, and project paths to URIs.
 
 import {
-    CodeAction as LspCodeAction, CodeActionKind, CompletionItem as LspCompletionItem, CompletionItemKind, Diagnostic as LspDiagnostic,
+    CodeAction as LspCodeAction, CodeActionKind, CompletionItem as LspCompletionItem, CompletionItemKind, Diagnostic as LspDiagnostic, InsertTextFormat,
     DiagnosticSeverity, DiagnosticTag, DocumentSymbol as LspDocumentSymbol, MarkupKind, SymbolKind, WorkspaceEdit as LspWorkspaceEdit,
 } from "vscode-languageserver";
 import type {
@@ -69,6 +69,8 @@ const COMPLETION_KINDS: Record<CompletionItem["kind"], CompletionItemKind> = {
     attribute: CompletionItemKind.Variable,
     snippet: CompletionItemKind.Snippet,
     directive: CompletionItemKind.Keyword,
+    helper: CompletionItemKind.Function,
+    keyword: CompletionItemKind.Keyword,
 };
 
 export function toLspCompletion(item: CompletionItem): LspCompletionItem {
@@ -76,9 +78,12 @@ export function toLspCompletion(item: CompletionItem): LspCompletionItem {
         label: item.label,
         kind: COMPLETION_KINDS[item.kind],
         detail: item.detail,
+        documentation: item.documentation === undefined ? undefined : markdown(item.documentation),
         textEdit: { range: item.range, newText: item.insertText ?? item.label },
-        // VS Code filters on the text the edit replaces, so the label has to match what's typed
-        filterText: item.insertText ?? item.label,
+        insertTextFormat: item.isSnippet ? InsertTextFormat.Snippet : InsertTextFormat.PlainText,
+        // VS Code filters on the text the edit replaces up to the cursor, which is what's been
+        // typed of the label
+        filterText: item.filterText ?? item.label,
     };
 }
 

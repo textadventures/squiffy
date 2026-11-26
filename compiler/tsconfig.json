@@ -19,5 +19,5 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src/compiler.ts", "src/language-service.ts", "src/node.ts", "src/infix-expressions.ts"]
+  "include": ["src/compiler.ts", "src/language-service.ts", "src/node.ts", "src/infix-expressions.ts", "src/snippets.ts"]
 }

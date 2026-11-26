@@ -1,5 +1,6 @@
 // The helpers the runtime registers, and Handlebars' own, so that the compiler can tell a helper
-// from an attribute in {{name}}. runtime/src/helpers.test.ts fails if this goes out of date.
+// from an attribute in {{name}}. runtime/src/helpers.test.ts fails if this goes out of date, and
+// helper-info.ts describes each one, for completion.
 export const BUILT_IN_HELPERS: ReadonlySet<string> = new Set([
     // Handlebars' own
     "each", "if", "unless", "with", "log", "lookup",
