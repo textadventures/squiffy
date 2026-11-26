@@ -73,7 +73,7 @@ The hut has a lantern in it. Let the player pick it up, and let the story rememb
 <Sample script={step3}></Sample>
 
 - `[lantern]` is a passage link inside another passage. Passages can link to more passages.
-- `@set has_lantern`, on a line of its own, sets an attribute called `has_lantern` when the passage is shown. An attribute is something the story remembers, such as whether the player has the lantern, their name, or their score. You can call it anything you like, as long as it's one word (use `_` instead of spaces).
+- `@set has_lantern`, on a line of its own, sets an attribute called `has_lantern` when the passage is shown. An attribute is something the story remembers, such as whether the player has the lantern, their name, or their score. You can call it anything you like, as long as it's one word (use `_` instead of spaces). In the editor, **Add > Remember something (@set)** puts one in for you.
 - `{{#if has_lantern}}...{{/if}}` only shows the text inside it if `has_lantern` is set. So whether the player sees the lantern on the path depends on whether they picked it up.
 
 Play it twice: once taking the lantern, and once without.
@@ -91,6 +91,18 @@ Now give the player somewhere to use the lantern. Add a cave, where what happens
 - `[[Go into the cave]](cave)` shows the text "Go into the cave", and goes to the section called "cave". Use this when you want the link text to be different from the section's name.
 - `{{else}}` shows different text when the condition isn't true. With the lantern, the player finds someone in the cave. Without it, they run away.
 - Each of these has its own link, so the player's choice on the beach decides which way the story goes.
+
+Here's the shape of it on its own:
+
+```squiffy
+{{#if has_lantern}}
+Text for when the player has the lantern.
+{{else}}
+Text for when they don't.
+{{/if}}
+```
+
+The `#` in `{{#if}}` says that a block starts here, with text inside it. `{{else}}` has no `#`, as it's part of the same block, and the `/` in `{{/if}}` ends the block, like a closing tag. In the editor, **Add > If… otherwise…** puts all three in for you.
 
 Look at the sections for the endings in the editor. Each one is underlined: the editor warns that the player has no way out. That's because nothing tells it these are endings, rather than sections you haven't finished yet.
 

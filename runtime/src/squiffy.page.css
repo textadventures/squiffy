@@ -175,6 +175,13 @@ div#squiffy p
     text-wrap: pretty;
 }
 
+/* Code, such as `@set` in the text, at about the size of the text around it: a monospace font
+   at the same size looks bigger */
+div#squiffy code
+{
+    font-size: 0.875em;
+}
+
 /* Stop images overflowing the page */
 div#squiffy img
 {

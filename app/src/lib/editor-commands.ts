@@ -16,8 +16,30 @@ export function runCommand(view: EditorView, command: EditorCommand) {
 }
 
 export function insertSnippet(view: EditorView, content: string) {
-    view.dispatch(view.state.replaceSelection(content), { scrollIntoView: true });
+    view.dispatch(insertSnippetSpec(view.state, content), { scrollIntoView: true });
     view.focus();
+}
+
+// A snippet replaces the selection, except one that starts with @, such as @set, which only
+// works on a line of its own: that goes on the cursor's line if it's blank, or else on a new
+// line before it (with the cursor at its start, unless it's a section or passage's header) or
+// after it.
+export function insertSnippetSpec(state: EditorState, content: string): TransactionSpec {
+    if (!content.startsWith("@")) return state.replaceSelection(content);
+    const head = state.selection.main.head;
+    const line = state.doc.lineAt(head);
+    let from = line.from, to = line.to, insert = content;
+    if (line.text.trim()) {
+        if (state.sliceDoc(line.from, head).trim() || /^\[.*\]:\s*$/.test(line.text)) {
+            from = to = line.to;
+            insert = "\n" + content;
+        } else {
+            to = from;
+            insert = content + "\n";
+        }
+    }
+    const end = from + insert.length - (insert.endsWith("\n") ? 1 : 0);
+    return { changes: { from, to, insert }, selection: EditorSelection.cursor(end) };
 }
 
 // A new section or passage, after the section the cursor is in (passages belong to it). With

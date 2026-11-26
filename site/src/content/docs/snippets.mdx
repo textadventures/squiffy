@@ -16,18 +16,18 @@ The **Add** menu in the editor toolbar contains a set of ready-made templates fo
 
 | Snippet | Inserts |
 |---|---|
-| If block | `{{#if condition}}…{{/if}}` |
-| If/else block | `{{#if condition}}…{{else}}…{{/if}}` |
-| If (check variable) | `{{#if variable = "value"}}…{{/if}}` |
-| If (seen section) | `{{#if (seen "section")}}…{{/if}}` |
-| Set variable | `{{set "variable" "value"}}` |
-| Increment | `{{inc "variable"}}` |
-| Decrement | `{{dec "variable"}}` |
+| Remember something (@set) | `@set attribute` |
+| Show text only if… | `{{#if condition}}…{{/if}}` |
+| If… otherwise… | `{{#if condition}}…{{else}}…{{/if}}` |
+| If an attribute has a value | `{{#if attribute = "value"}}…{{/if}}` |
+| If a section has been seen | `{{#if (seen "section")}}…{{/if}}` |
+| Count up by 1 (@inc) | `@inc attribute` |
+| Count down by 1 (@dec) | `@dec attribute` |
 | Section link | `{{section "name" text="label"}}` |
 | Passage link | `{{passage "name" text="label"}}` |
 | Embed | `{{embed "name"}}` |
 
-Click a snippet to insert it at the current cursor position, then edit the placeholder values as needed.
+Click a snippet to insert it at the current cursor position, then edit the placeholder values as needed. The ones that start with `@` only work on a line of their own, so they go on a new line if the cursor's line already has text on it. See [Attributes](/attributes/) for what `@set`, `@inc` and `@dec` can do, and [Dynamic text](/dynamic-text/) for `{{#if}}`.
 
 ## User-defined snippets
 

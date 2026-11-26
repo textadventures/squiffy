@@ -19,15 +19,24 @@ Start writing! Each choice is a [[new section]]: put double square brackets arou
 Sections can also have passages, which add text without moving the story on. Click this [passage link], and then carry on to the [[next section]].
 
 [passage link]:
+@set clicked_passage
 
-This is the text for the passage.
+This is the text for the passage. The \`@set\` above makes the story remember that you clicked it.
 
 [[next section]]:
 @end
 
+{{#if clicked_passage}}
+You clicked the passage link, so you see this.
+{{else}}
+You didn't click the passage link, so you see this instead.
+{{/if}}
+
+That's how the story remembers a choice: the \`@set\` in the passage sets an attribute, and the \`#if\`, \`else\` and \`/if\` lines above choose which text to show.
+
 When a new section appears, any passage links in the previous section that weren't clicked are disabled.
 
-This section has no links, so the story ends here. The @end above says that's on purpose. Without it, the editor would warn you about a dead end.
+This section has no links, so the story ends here. The \`@end\` above says that's on purpose. Without it, the editor would warn you about a dead end.
 `;
 
 /** A story's title, tidied: one line, without extra spaces */

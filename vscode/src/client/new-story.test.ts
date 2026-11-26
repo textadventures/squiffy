@@ -8,7 +8,8 @@ const { clashMessage, fileName } = await import("./export.js");
 
 // The editor's new story, read from its source: importing it would need the app's tsconfig
 const source = readFileSync(new URL("../../../app/src/lib/project.svelte.ts", import.meta.url), "utf8");
-const editorNewStory = /export const NEW_STORY = `([\s\S]*?)`;/.exec(source)![1];
+// (evaluated as the template literal it is, for its escaped backticks)
+const editorNewStory: string = new Function(`return \`${/export const NEW_STORY = `([\s\S]*?)`;/.exec(source)![1]}\``)();
 
 test("the new story is the editor's", () => {
     expect(NEW_STORY).toBe(editorNewStory);
