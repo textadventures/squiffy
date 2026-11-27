@@ -17,12 +17,27 @@
     "vscode": "^1.91.0"
   },
   "categories": [
-    "Programming Languages"
+    "Programming Languages",
+    "Linters",
+    "Snippets"
   ],
   "keywords": [
     "squiffy",
     "interactive fiction",
-    "gamebook"
+    "gamebook",
+    "text adventure",
+    "choice-based",
+    "branching narrative",
+    "hypertext fiction",
+    "story",
+    "storytelling",
+    "narrative",
+    "game",
+    "twine",
+    "twee",
+    "harlowe",
+    "sugarcube",
+    "quest"
   ],
   "main": "./dist/node/extension.js",
   "browser": "./dist/web/extension.js",
