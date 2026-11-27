@@ -2,7 +2,7 @@
 
 ## [7.0.0](https://github.com/textadventures/squiffy/compare/v6.0.1...v7.0.0) (2026-11-27)
 
-Squiffy 7 is here, with a brand new editor, a desktop app, a VS Code extension, and many additions to the language. See [What's new in Squiffy 7](https://squiffystory.com/whats-new/) for everything, and the 7.0.0 betas below for each change. Squiffy 6 stories still work, and the editor and the command-line tool convert them to Squiffy 7's rules: see [Coming from Squiffy 6](https://squiffystory.com/coming-from-squiffy-6/).
+Squiffy 7 is here, with a brand new editor, a desktop app, a VS Code extension, and many additions to the language. See [What's new in Squiffy 7](https://squiffystory.com/whats-new/) for everything, and the 7.0.0 betas in [the changelog](https://github.com/textadventures/squiffy/blob/main/CHANGELOG.md) for each change. Squiffy 6 stories still work, and the editor and the command-line tool convert them to Squiffy 7's rules: see [Coming from Squiffy 6](https://squiffystory.com/coming-from-squiffy-6/).
 
 ### Highlights
 
