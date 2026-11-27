@@ -4,9 +4,10 @@ Squiffy is a free, open source tool for creating multiple-choice interactive sto
 
 - **Web editor**: [app.squiffystory.com](https://app.squiffystory.com) - works offline as a PWA, no account required
 - **Desktop app**: for Mac, Windows and Linux, from the [releases on GitHub](https://github.com/textadventures/squiffy/releases)
+- **VS Code extension**: [Squiffy on the Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=textadventures.squiffy)
 - **Documentation**: [squiffystory.com](https://squiffystory.com)
 
-> **Squiffy 7 is in beta.** This branch is Squiffy 7, which brings a new editor, a desktop app, a story map, importing from Twine and Quest, and many additions to the language. Try the beta editor at [app-beta.squiffystory.com](https://app-beta.squiffystory.com), and see [What's new](https://beta.squiffystory.com/whats-new/) in its docs at [beta.squiffystory.com](https://beta.squiffystory.com). Squiffy 6 stories still work in Squiffy 7. Squiffy 6 was a complete rewrite of [Squiffy 5](https://github.com/textadventures/squiffy/tree/v5).
+> **Squiffy 7** brings a new editor, a desktop app, a VS Code extension, a story map, importing from Twine and Quest, and many additions to the language: see [What's new](https://squiffystory.com/whats-new/). Squiffy 6 stories still work in Squiffy 7. Squiffy 6 was a complete rewrite of [Squiffy 5](https://github.com/textadventures/squiffy/tree/v5).
 
 ## Quick Example
 
@@ -37,7 +38,7 @@ You can also compile and preview Squiffy stories from the command line:
 npx @textadventures/squiffy-cli story.squiffy -s
 ```
 
-The command-line tool can also check a story for problems (`--check`), play it as text (`--play`) or at random to find dead ends (`--random`), with `--json` output for AI agents, and convert stories from Squiffy 5 and 6, Twine and Quest. See [Using Squiffy from the command line](https://beta.squiffystory.com/cli/) for all the options.
+The command-line tool can also check a story for problems (`--check`), play it as text (`--play`) or at random to find dead ends (`--random`), with `--json` output for AI agents, and convert stories from Squiffy 5 and 6, Twine and Quest. See [Using Squiffy from the command line](https://squiffystory.com/cli/) for all the options.
 
 ### Writing with AI
 
@@ -48,7 +49,7 @@ This repo is also a Claude Code plugin marketplace, with a Squiffy skill for an 
 /plugin install squiffy@squiffy
 ```
 
-See [Writing with AI](https://beta.squiffystory.com/writing-with-ai/).
+See [Writing with AI](https://squiffystory.com/writing-with-ai/).
 
 ## Features
 
