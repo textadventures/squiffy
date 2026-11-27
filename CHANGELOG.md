@@ -1,11 +1,18 @@
 # Changelog
 
-## [7.0.0](https://github.com/textadventures/squiffy/compare/v7.0.0-beta.21...v7.0.0) (2026-11-27)
+## [7.0.0](https://github.com/textadventures/squiffy/compare/v6.0.1...v7.0.0) (2026-11-27)
 
+Squiffy 7 is here, with a brand new editor, a desktop app, a VS Code extension, and many additions to the language. See [What's new in Squiffy 7](https://squiffystory.com/whats-new/) for everything, and the 7.0.0 betas below for each change. Squiffy 6 stories still work, and the editor and the command-line tool convert them to Squiffy 7's rules: see [Coming from Squiffy 6](https://squiffystory.com/coming-from-squiffy-6/).
 
-### Miscellaneous Chores
+### Highlights
 
-* release Squiffy 7.0.0 ([#750](https://github.com/textadventures/squiffy/issues/750)) ([47adee3](https://github.com/textadventures/squiffy/commit/47adee3de4d862f8c6fa666cfc94377951353d43))
+* **A new editor** at [app.squiffystory.com](https://app.squiffystory.com), which understands your story: a [story map](https://squiffystory.com/story-map/), problems underlined as you type with quick fixes, stories in several files with a `squiffy.json` project file, images, sounds and fonts, an outline, running from any section, and a dark theme
+* **A [desktop app](https://squiffystory.com/desktop-app/)** for Mac, Windows and Linux, and a **[VS Code extension](https://squiffystory.com/vscode/)** on the Visual Studio Marketplace
+* **Import from [Twine](https://squiffystory.com/converting-from-twine/)** (Harlowe and SugarCube) **and [Quest](https://squiffystory.com/converting-from-quest/)** gamebooks, and convert Squiffy 5 and 6 stories
+* **The language:** calculations with `{{= ...}}` and in `@set`, objects, maths, text and array helpers, `{{goto}}`, `{{embed}}` with parameters, `@end`, `@repeat`, `[@after]:`, `@tag`, visit and turn counts, `{{#once}}`, attributes that last between playthroughs, player settings, music and sound, transitions, text effects and `@class`
+* **Published stories:** a Back button, panels, as many saved games as players like, dark mode, keyboard and screen reader support, and a fresher look
+* **Testing:** `@test` sections, starting at a later section, and `--check`, `--play`, `--random` and playthrough tests (`--record`, `--test`) in the command-line tool, with `--json` for AI agents
+* **Sharing:** share a story as a link, played at squiffystories.com, or publish it to textadventures.co.uk
 
 ## [7.0.0-beta.21](https://github.com/textadventures/squiffy/compare/v7.0.0-beta.20...v7.0.0-beta.21) (2026-11-27)
 
