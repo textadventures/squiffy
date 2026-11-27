@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.0.0-beta.21](https://github.com/textadventures/squiffy/compare/v7.0.0-beta.20...v7.0.0-beta.21) (2026-11-27)
+
+
+### Bug Fixes
+
+* **vscode:** keep @types/vscode at the version engines.vscode supports ([#746](https://github.com/textadventures/squiffy/issues/746)) ([14ae79c](https://github.com/textadventures/squiffy/commit/14ae79c7e928ccc230a3f5eb636fe60bd04d0e58))
+
 ## [7.0.0-beta.20](https://github.com/textadventures/squiffy/compare/v7.0.0-beta.19...v7.0.0-beta.20) (2026-11-27)
 
 
