@@ -3,65 +3,84 @@
 Write [Squiffy](https://squiffystory.com) interactive stories in VS Code, with a live preview and a
 story map.
 
-- A getting-started walkthrough on VS Code's Welcome page (**Help > Welcome**), which takes you
-  through making a story, previewing it, adding sections, the story map and publishing it
+![A Squiffy story in VS Code, with the preview beside it](https://raw.githubusercontent.com/textadventures/squiffy/main/vscode/media/walkthrough/preview.png)
+
+It works in VS Code on the desktop, and on [vscode.dev](https://vscode.dev) and github.dev. To get
+started, open the walkthrough on VS Code's Welcome page (**Help > Welcome**), which takes you
+through making a story, previewing it, adding sections, the story map and publishing it. There's
+more in [Squiffy's documentation](https://squiffystory.com/vscode/).
+
+## Writing
+
 - Syntax highlighting and folding for `.squiffy` files
 - Problems as you type, for the whole story, including links to sections that don't exist, dead
   ends and sections nothing links to
-- A Squiffy sidebar in the Activity Bar, whose Sections view lists every section and passage in the
-  story, across all its files, marking the start, endings, dead ends and sections that can't be
-  reached. Click one to go to it, or its ▷ to start the preview there. Its buttons run the preview,
-  add a section, show the story map and export the story, and its **...** menu shares, publishes
-  or plays it in a browser. In a folder with no story, it offers to
-  make one, or to convert a Twine story or Quest gamebook.
+- Completion of section and passage names, attributes, directives, helpers (after `{{`, `{{#`,
+  `{{/` and `(`) and snippets, hover, and quick fixes
 - The Outline view and breadcrumbs, Go to Definition, Find All References and Rename for sections
   and passages
-- Completion of section and passage names, attributes, directives, helpers (after `{{`, `{{#`,
-  `{{/` and `(`) and the editor's snippets, hover, and quick fixes
-- **Squiffy: Show Preview** (also the ▷ button in the editor's title bar, and Preview in the
-  status bar, for a `.squiffy` file or the story's `squiffy.json`) runs the story beside the editor, updating as you type. **Preview from here** above
-  each section and passage, or **Start Preview at This Section** in the editor's context menu,
-  starts it there.
-- Above each section and passage, a count of the links to it, which lists them (code lenses, from
-  the language server) The attributes the story sets are logged in the Squiffy Preview output.
-- **Squiffy: Show Story Map** (also a button in the editor's title bar, for a `.squiffy` file or
-  `squiffy.json`) shows the Squiffy editor's map of the story beside the text: its sections and
-  passages as boxes and its links as arrows, with problems marked. Click a box to go to it, and
-  drag from one box to another to add a link. Right-click a box to rename it, add a passage to it,
-  run the preview from it, start the story there, or delete it. Add a section with the map's
-  button, by double-clicking the background, or by dragging a link to empty space, and make a
-  broken link's missing section from its red box. Search it with the box at its top right (or
-  Ctrl/Cmd+F). The selected box's details, with its links in and out, are along the bottom. Where you've been
-  in the preview is outlined in green, and Key explains the rest. Where boxes are dragged to is kept in
-  `squiffy.json`, as the editor keeps it.
+- Above each section and passage, a count of the links to it, which lists them
+- **Squiffy: Add Section** and **Add Passage** (also in the editor's context menu, and its title
+  bar: **+** and the **...** menu) add a section or passage header at the cursor, to type its name
+  into
+- **Squiffy: New Story** makes a new story in a folder: a `squiffy.json` and a `story.squiffy` to
+  start from. **New Squiffy Story Here** in the Explorer's context menu makes one in that folder.
+
+## The Squiffy sidebar
+
+The Squiffy icon in the Activity Bar opens the Sections view, which lists every section and passage
+in the story, across all its files, marking the start, endings, dead ends and sections that can't
+be reached. Click one to go to it, or its ▷ to start the preview there. Its buttons run the
+preview, add a section, show the story map and export the story, and its **...** menu shares,
+publishes or plays it in a browser. In a folder with no story, it offers to make one, or to convert
+a Twine story or Quest gamebook.
+
+## Preview
+
+**Squiffy: Show Preview** (also the ▷ button in the editor's title bar, and Preview in the status
+bar) runs the story beside the editor, updating as you type. **Preview from here** above each
+section and passage, or **Start Preview at This Section** in the editor's context menu, starts it
+there. The attributes the story sets are logged in the Squiffy Preview output.
+
+## Story map
+
+![The story map beside a story's text](https://raw.githubusercontent.com/textadventures/squiffy/main/vscode/media/walkthrough/map.png)
+
+**Squiffy: Show Story Map** (also a button in the editor's title bar) shows the story's sections
+and passages as boxes and its links as arrows, with problems marked, as the Squiffy editor does.
+
+- Click a box to go to it, and drag from one box to another to add a link
+- Right-click a box to rename it, add a passage to it, run the preview from it, start the story
+  there, or delete it
+- Add a section with the map's button, by double-clicking the background, or by dragging a link to
+  empty space, and make a broken link's missing section from its red box
+- Search it with the box at its top right (or Ctrl/Cmd+F). The selected box's details, with its
+  links in and out, are along the bottom
+- Where you've been in the preview is outlined in green, and Key explains the rest
+- Where you drag boxes to is kept in `squiffy.json`, as the Squiffy editor keeps it
+
+## Sharing and publishing
+
+- **Squiffy: Share as a Link** copies a squiffystories.com link with the whole story in it (its
+  text, and images of up to 4 KB), and offers to open it, or to copy it without the player's Open
+  in editor button. **Squiffy: Play in Browser** opens the story's link
+- **Squiffy: Publish to textadventures.co.uk** uploads the story, opens textadventures.co.uk to
+  finish publishing it there, and says when it's published. The story is given an `id` in its
+  `squiffy.json` first if it has none, which is how textadventures.co.uk knows it next time, and a
+  story with no `squiffy.json` is given one, with its setters converted to Squiffy 7's rules
 - **Squiffy: Export** builds the playable story (`index.html`, `story.js`, the page's stylesheets
   and the story's images, sounds and other files) into a folder, or a zip to upload to a website,
   as the Squiffy editor and command line tool build it. It can also make a single HTML file with
   everything in it, or only `story.js`, for a page of your own
-- **Squiffy: Share as a Link** copies a squiffystories.com link with the whole story in it (its text,
-  and images of up to 4 KB), as the Squiffy editor's Share or publish makes one, and offers to open
-  it, or to copy it without the player's Open in editor button. **Squiffy: Play in Browser** opens
-  the story's link
-- **Squiffy: Publish to textadventures.co.uk** uploads the published story, opens
-  textadventures.co.uk to finish publishing it there, and says when it's published, as the editor
-  does. The story is given an `id` in its `squiffy.json` first if it has none, which is how
-  textadventures.co.uk knows it next time, and a story with no `squiffy.json` is given one, with
-  its setters converted to Squiffy 7's rules
-- **Squiffy: New Story** makes a new story in a folder: a `squiffy.json` and a `story.squiffy` to
-  start from. **New Squiffy Story Here** in the Explorer's context menu makes one in that folder.
-- **Squiffy: Add Section** and **Add Passage** (also in the editor's context menu, and its title
-  bar: **+** and the **...** menu) add a section
-  or passage header at the cursor, to type its name into
+
+## Converting stories
+
 - **Squiffy: Convert Twine Story** and **Convert Quest Gamebook** convert a Twine story (a `.twee`
   file, or Twine's published or archive HTML) or a Quest gamebook (`.quest` or `.aslx`) into a new
-  story folder, as the Squiffy editor and command line tool convert them, with `twine-import.txt`
-  or `quest-import.txt` listing what couldn't be converted exactly, and a Quest game's images and
-  sounds. If the folder you choose isn't empty, the story goes in a new folder in it
+  story folder, with `twine-import.txt` or `quest-import.txt` listing what couldn't be converted
+  exactly, and a Quest game's images and sounds. If the folder you choose isn't empty, the story
+  goes in a new folder in it
 - **Squiffy: Convert from Squiffy 5** converts a Squiffy 5 file's text processor syntax
-
-It works in VS Code on the desktop, and on [vscode.dev](https://vscode.dev) and github.dev.
-
-There's more about it in [Squiffy's documentation](https://squiffystory.com/vscode/).
 
 ## Stories and their files
 
@@ -70,57 +89,8 @@ as the Squiffy editor and command line tool see it. A `.squiffy` file anywhere e
 the story in its own folder, whose main file is the first one opened there (with the files it
 `@import`s). **Squiffy: Use as Main File** picks another.
 
-## Development
+---
 
-This is the `vscode/` workspace in the [Squiffy repository](https://github.com/textadventures/squiffy)
-(#309). It's a thin host over the shared core the Squiffy editor uses:
-
-- `src/server/` is the language server: the compiler's language service
-  (`squiffy-compiler/language-service`) over LSP. It runs in a Node process on the desktop and in a
-  Web Worker on the web, and reads files through the client (`src/protocol.ts`), with
-  `workspace.fs`, so it works the same in both.
-- `src/client/` is the extension: it starts the server and adds the commands, and the preview
-  (`preview.ts`), which runs squiffy-runtime's preview page in a webview with
-  `squiffy-runtime/preview-host`. Export (`export.ts`) asks the server for the story built by
-  squiffy-packager's `createPackage()`, and adds the story's assets, read and written with
-  `workspace.fs`, zipping them with fflate for a zip. For a single HTML file, it sends the assets
-  to the server (in base64), which puts them in the page. New Story (`new-story.ts`) uses the editor's
-  starter story (`src/client/new-story.test.ts` checks it matches `app/src/lib/project.svelte.ts`).
-  Share as a Link and Play in Browser (`share.ts`) make the link with the editor's
-  `story-link.ts` (exported by `@textadventures/squiffy-app`), from every file in the story's
-  folder but the build folder, tests and backups. Publish to textadventures.co.uk (`publish.ts`)
-  uploads Export's zip with the editor's `publish-api.ts` (after the server's `squiffy/newProjectFile`
-  works out a `squiffy.json` for a story with none, and its converted setters, as `--convert-v6` does), with `fetch`, as the web extension host
-  is a worker, and asks what became of it until it's published.
-  Convert Twine Story and Convert Quest Gamebook (`convert.ts`) pick the file and a folder, and
-  write what `convert-story.ts` makes with the compiler's converters, as the command line tool does
-  (`cli/src/convert-twine.ts` and `convert-quest.ts`), with `workspace.fs`.
-- `src/map/` is the story map's page (#615), which runs in a webview: a Svelte page around
-  `@textadventures/graph-map`'s `GraphMap.svelte`, with the editor's `story-map.ts` and
-  `StoryMapNode.svelte` (which the app exports for it), styled with VS Code's theme variables.
-  Vite builds it into `dist/map/`, and the webview loads it with `asWebviewUri`, so it works on
-  the web too. `src/client/map.ts` gets the graph from the server, and makes the map's edits (a
-  link, with `map-edits.ts`, and positions in `squiffy.json`) as `WorkspaceEdit`s, so Undo works.
-- The sidebar's Sections view (#616) is a `TreeDataProvider` (`src/client/sections-view.ts`) over
-  the same graph as the map, made into a tree by `sections.ts`, which marks it as the map does.
-- The grammar is the compiler's (`compiler/syntaxes/squiffy.tmLanguage.json`), copied into `dist/`
-  by the build. The snippets are the editor's (`compiler/src/snippets.ts`), which the language
-  server offers as completions, rather than VS Code's own snippets, which can't tell `{{#if` from
-  `if`.
-
-```bash
-npm run build      # type-check, then bundle into dist/ with esbuild (and the map's page with Vite)
-npm test
-npm run package    # build squiffy-<version>.vsix
-```
-
-Build the compiler and runtime first, as the extension bundles them from their `dist/` folders.
-
-The extension has the same version as the rest of Squiffy, which release-please sets. Each
-release's `.vsix` is attached to its GitHub Release by `.github/workflows/vscode-publish.yml`, and
-a stable release is published to the VS Code Marketplace. The Marketplace doesn't take prerelease
-versions such as `7.0.0-beta.14`, so a beta is only on the GitHub Release.
-
-To try it in VS Code on the desktop, run `code --extensionDevelopmentPath=$PWD ../examples/gameshow`
-from this folder, or install the `.vsix` with **Extensions: Install from VSIX...**. To try the web
-build, `npm run open-web` opens VS Code for the web on `examples/`, in a browser.
+Squiffy is open source, in the [Squiffy repository](https://github.com/textadventures/squiffy) on
+GitHub, where you can report problems. To work on the extension itself, see
+[DEVELOPMENT.md](https://github.com/textadventures/squiffy/blob/main/vscode/DEVELOPMENT.md).
