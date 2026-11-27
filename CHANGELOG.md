@@ -1,5 +1,19 @@
 # Changelog
 
+## [7.0.0-beta.20](https://github.com/textadventures/squiffy/compare/v7.0.0-beta.19...v7.0.0-beta.20) (2026-11-27)
+
+
+### Features
+
+* complete helpers after {{, {{#, {{/ and ( in the editor and VS Code ([#736](https://github.com/textadventures/squiffy/issues/736)) ([df0912d](https://github.com/textadventures/squiffy/commit/df0912da9d77e68efd945322b1dff7d03486c072))
+* **editor:** a quieter reminder to download a story kept in the browser ([#737](https://github.com/textadventures/squiffy/issues/737)) ([bcdfd7f](https://github.com/textadventures/squiffy/commit/bcdfd7f9292309a5516e6f9075f8bd07d10ad4ce))
+* **vscode:** share a story as a link, and publish it to textadventures.co.uk ([#742](https://github.com/textadventures/squiffy/issues/742)) ([8efb7e6](https://github.com/textadventures/squiffy/commit/8efb7e6cb7bae9d25f35770086b392864fd2615a))
+
+
+### Bug Fixes
+
+* Squiffy's own styles are published minified, as squiffy.css ([#738](https://github.com/textadventures/squiffy/issues/738)) ([5d59afd](https://github.com/textadventures/squiffy/commit/5d59afd8208feea7956ba7b07eb96b091f714cc8))
+
 ## [7.0.0-beta.19](https://github.com/textadventures/squiffy/compare/v7.0.0-beta.18...v7.0.0-beta.19) (2026-11-26)
 
 

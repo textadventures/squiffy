@@ -1,6 +1,6 @@
 {
   "name": "@textadventures/vite-plugin-squiffy",
-  "version": "7.0.0-beta.19",
+  "version": "7.0.0-beta.20",
   "description": "Vite plugin that lets you import .squiffy files into a web app",
   "repository": {
     "type": "git",
@@ -38,9 +38,9 @@
   "author": "Alex Warren",
   "license": "MIT",
   "dependencies": {
-    "@textadventures/squiffy-types": "^7.0.0-beta.19",
+    "@textadventures/squiffy-types": "^7.0.0-beta.20",
     "glob": "^14.0.6",
-    "squiffy-compiler": "^7.0.0-beta.19"
+    "squiffy-compiler": "^7.0.0-beta.20"
   },
   "peerDependencies": {
     "vite": ">=6.0.0"
