@@ -533,7 +533,7 @@
     "@textadventures/squiffy-app": "^7.0.0-beta.20",
     "@textadventures/squiffy-packager": "^7.0.0-beta.20",
     "@types/node": "^26.6.6",
-    "@types/vscode": "~1.146.0",
+    "@types/vscode": "~1.91.0",
     "@vscode/test-web": "^0.0.81",
     "@vscode/vsce": "^4.1.1",
     "esbuild": "^0.28.2",
