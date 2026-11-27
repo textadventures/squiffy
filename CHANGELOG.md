@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.0.0](https://github.com/textadventures/squiffy/compare/v7.0.0-beta.21...v7.0.0) (2026-11-27)
+
+
+### Miscellaneous Chores
+
+* release Squiffy 7.0.0 ([#750](https://github.com/textadventures/squiffy/issues/750)) ([47adee3](https://github.com/textadventures/squiffy/commit/47adee3de4d862f8c6fa666cfc94377951353d43))
+
 ## [7.0.0-beta.21](https://github.com/textadventures/squiffy/compare/v7.0.0-beta.20...v7.0.0-beta.21) (2026-11-27)
 
 
