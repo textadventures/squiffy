@@ -528,7 +528,7 @@
     "open-web": "vscode-test-web --extensionDevelopmentPath=. ../examples"
   },
   "devDependencies": {
-    "@sveltejs/vite-plugin-svelte": "^7.3.1",
+    "@sveltejs/vite-plugin-svelte": "^7.3.2",
     "@textadventures/graph-map": "^7.0.0-beta.21",
     "@textadventures/squiffy-app": "^7.0.0-beta.21",
     "@textadventures/squiffy-packager": "^7.0.0-beta.21",

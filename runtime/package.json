@@ -57,7 +57,7 @@
   "dependencies": {
     "animejs": "^4.5.0",
     "handlebars": "^4.7.10",
-    "marked": "^18.2.1"
+    "marked": "^18.3.0"
   },
   "publishConfig": {
     "timeout": 60000
