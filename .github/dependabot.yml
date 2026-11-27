@@ -26,6 +26,10 @@ updates:
     ignore:
       - dependency-name: "typescript"
         update-types: ["version-update:semver-major"]
+      # Must match engines.vscode in vscode/package.json (the oldest VS Code the
+      # extension supports), or vsce package refuses to build the extension.
+      # Raise both together, by hand.
+      - dependency-name: "@types/vscode"
     commit-message:
       prefix: "chore"
 
